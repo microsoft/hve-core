@@ -1,0 +1,108 @@
+name: Extension Marketplace Publish
+
+on:
+  workflow_call:
+    inputs:
+      collections-matrix:
+        description: "JSON matrix of collections to publish"
+        required: true
+        type: string
+      pre-release:
+        description: "Publish as pre-release extension"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.id }}
+    runs-on: ubuntu-latest
+    environment: marketplace
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(inputs.collections-matrix) }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: extension-vsix-${{ matrix.id }}
+          path: ./dist
+
+      - name: Publish to VS Code Marketplace
+        id: publish
+        env:
+          PRE_RELEASE: ${{ inputs.pre-release }}
+          COLLECTION_ID: ${{ matrix.id }}
+        run: |
+          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX file found for collection $COLLECTION_ID"
+            exit 1
+          fi
+          VSIX_VERSION=$(basename "$VSIX_FILE" .vsix | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$')
+          echo "version=$VSIX_VERSION" >> "$GITHUB_OUTPUT"
+
+          CHANNEL_LABEL="Stable"
+          PRE_RELEASE_FLAG=""
+          if [ "$PRE_RELEASE" == "true" ]; then
+            CHANNEL_LABEL="Pre-Release"
+            PRE_RELEASE_FLAG="--pre-release"
+          fi
+
+          echo "📦 Publishing $COLLECTION_ID: $VSIX_FILE (v$VSIX_VERSION) [$CHANNEL_LABEL]"
+          npx vsce publish --packagePath "$VSIX_FILE" $PRE_RELEASE_FLAG --azure-credential
+
+      - name: Summary
+        env:
+          PRE_RELEASE: ${{ inputs.pre-release }}
+          COLLECTION_ID: ${{ matrix.id }}
+          COLLECTION_NAME: ${{ matrix.name }}
+          PUBLISH_VERSION: ${{ steps.publish.outputs.version }}
+        run: |
+          CHANNEL_LABEL="Stable"
+          EMOJI="🎉"
+          EXTRA=""
+          if [ "$PRE_RELEASE" == "true" ]; then
+            CHANNEL_LABEL="Pre-Release"
+            EMOJI="🚀"
+            EXTRA=$'\nUsers can install via **Switch to Pre-Release Version** in VS Code.\n'
+          fi
+
+          {
+            echo "## ${EMOJI} Extension Published: $COLLECTION_NAME"
+            echo ""
+            echo "**Collection:** $COLLECTION_ID"
+            echo "**Version:** $PUBLISH_VERSION"
+            echo "**Channel:** $CHANNEL_LABEL"
+            echo ""
+            if [ -n "$EXTRA" ]; then
+              echo "$EXTRA"
+            fi
+            echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${COLLECTION_NAME})"
+          } >> "$GITHUB_STEP_SUMMARY"

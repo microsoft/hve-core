@@ -1,8 +1,9 @@
 ---
 title: Mounted Directory Installation
-description: Advanced devcontainer setup mounting HVE-Core from host filesystem
+description: Advanced devcontainer setup mounting HVE Core from host filesystem
+sidebar_position: 5
 author: Microsoft
-ms.date: 2025-12-03
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - mounted directory
@@ -13,13 +14,13 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Mounted Directory installation shares a single HVE-Core clone across multiple devcontainer projects by mounting a peer directory from the host filesystem. This is an **advanced method** requiring container rebuilds.
+Mounted Directory installation shares a single HVE Core clone across multiple devcontainer projects by mounting a peer directory from the host filesystem. This is an **advanced method** requiring container rebuilds.
 
 ## When to Use This Method
 
 ✅ **Use this when:**
 
-* You have multiple devcontainer projects needing HVE-Core
+* You have multiple devcontainer projects needing HVE Core
 * You want a single shared installation (one update applies everywhere)
 * You're comfortable with devcontainer configuration
 * You're using local devcontainers only (not Codespaces)
@@ -35,11 +36,11 @@ Mounted Directory installation shares a single HVE-Core clone across multiple de
 
 **This method does NOT work in GitHub Codespaces.** Codespaces doesn't support `${localWorkspaceFolder}` or bind mounts to host filesystem.
 
-**Requires container rebuild.** After adding the mount, you must rebuild the devcontainer before HVE-Core becomes accessible.
+**Requires container rebuild.** After adding the mount, you must rebuild the devcontainer before HVE Core becomes accessible.
 
 ## How It Works
 
-HVE-Core is cloned on your **host machine** as a sibling to your project. The devcontainer mounts this directory into the container at `/workspaces/hve-core`.
+HVE Core is cloned on your **host machine** as a sibling to your project. The devcontainer mounts this directory into the container at `/workspaces/hve-core`.
 
 ```text
 Host File System:
@@ -66,7 +67,7 @@ This method requires a multi-phase workflow:
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│ Phase 1: Clone HVE-Core on HOST                             │
+│ Phase 1: Clone HVE Core on HOST                             │
 │          ↓                                                  │
 │ Phase 2: Add mount to devcontainer.json                     │
 │          ↓                                                  │
@@ -80,16 +81,11 @@ This method requires a multi-phase workflow:
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using mounted directory"
-4. Follow the multi-phase guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
-### Phase 1: Clone HVE-Core on Host
+### Phase 1: Clone HVE Core on Host
 
 **Important:** Clone on your **host machine**, not inside the container.
 
@@ -99,7 +95,7 @@ Open a terminal on your host (not in VS Code's container terminal):
 # Navigate to parent of your project
 cd /path/to/projects
 
-# Clone HVE-Core as a sibling
+# Clone HVE Core as a sibling
 git clone https://github.com/microsoft/hve-core.git
 ```
 
@@ -125,7 +121,7 @@ Update `.devcontainer/devcontainer.json`:
 }
 ```
 
-**Alternative object format:**
+#### Alternative object format
 
 ```jsonc
 {
@@ -147,7 +143,7 @@ Update `.devcontainer/devcontainer.json`:
 2. Type "Dev Containers: Rebuild Container"
 3. Press Enter and wait for rebuild (1-3 minutes)
 
-**What happens during rebuild:**
+#### What happens during rebuild
 
 * Current container stops
 * New container builds with mount configuration
@@ -160,9 +156,35 @@ After rebuild, update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-  "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-  "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+  "chat.agentFilesLocations": {
+    "/workspaces/hve-core/.github/agents/ado": true,
+    "/workspaces/hve-core/.github/agents/data-science": true,
+    "/workspaces/hve-core/.github/agents/design-thinking": true,
+    "/workspaces/hve-core/.github/agents/github": true,
+    "/workspaces/hve-core/.github/agents/project-planning": true,
+    "/workspaces/hve-core/.github/agents/hve-core": true,
+    "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+    "/workspaces/hve-core/.github/agents/security": true
+  },
+  "chat.promptFilesLocations": {
+    "/workspaces/hve-core/.github/prompts/ado": true,
+    "/workspaces/hve-core/.github/prompts/design-thinking": true,
+    "/workspaces/hve-core/.github/prompts/github": true,
+    "/workspaces/hve-core/.github/prompts/hve-core": true,
+    "/workspaces/hve-core/.github/prompts/security": true
+  },
+  "chat.instructionsFilesLocations": {
+    "/workspaces/hve-core/.github/instructions/ado": true,
+    "/workspaces/hve-core/.github/instructions/coding-standards": true,
+    "/workspaces/hve-core/.github/instructions/design-thinking": true,
+    "/workspaces/hve-core/.github/instructions/github": true,
+    "/workspaces/hve-core/.github/instructions/hve-core": true,
+    "/workspaces/hve-core/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    "/workspaces/hve-core/.github/skills": true,
+    "/workspaces/hve-core/.github/skills/shared": true
+  }
 }
 ```
 
@@ -173,9 +195,35 @@ After rebuild, update `.vscode/settings.json`:
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/data-science": true,
+          "/workspaces/hve-core/.github/agents/design-thinking": true,
+          "/workspaces/hve-core/.github/agents/github": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
+          "/workspaces/hve-core/.github/agents/hve-core": true,
+          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/security": true
+        },
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/design-thinking": true,
+          "/workspaces/hve-core/.github/prompts/github": true,
+          "/workspaces/hve-core/.github/prompts/hve-core": true,
+          "/workspaces/hve-core/.github/prompts/security": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions/ado": true,
+          "/workspaces/hve-core/.github/instructions/coding-standards": true,
+          "/workspaces/hve-core/.github/instructions/design-thinking": true,
+          "/workspaces/hve-core/.github/instructions/github": true,
+          "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
+        }
       }
     }
   }
@@ -186,9 +234,9 @@ After rebuild, update `.vscode/settings.json`:
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 2. Click the agent picker dropdown
-3. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
+3. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
 
-**Verify mount from container terminal:**
+#### Verify mount from container terminal
 
 ```bash
 ls /workspaces/hve-core/.github/agents
@@ -198,7 +246,7 @@ ls /workspaces/hve-core/.github/agents
 
 ```jsonc
 {
-  "name": "My Project with Mounted HVE-Core",
+  "name": "My Project with Mounted HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   "mounts": [
@@ -208,18 +256,44 @@ ls /workspaces/hve-core/.github/agents
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { "/workspaces/hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { "/workspaces/hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { "/workspaces/hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          "/workspaces/hve-core/.github/agents/ado": true,
+          "/workspaces/hve-core/.github/agents/data-science": true,
+          "/workspaces/hve-core/.github/agents/design-thinking": true,
+          "/workspaces/hve-core/.github/agents/github": true,
+          "/workspaces/hve-core/.github/agents/project-planning": true,
+          "/workspaces/hve-core/.github/agents/hve-core": true,
+          "/workspaces/hve-core/.github/agents/hve-core/subagents": true,
+          "/workspaces/hve-core/.github/agents/security": true
+        },
+        "chat.promptFilesLocations": {
+          "/workspaces/hve-core/.github/prompts/ado": true,
+          "/workspaces/hve-core/.github/prompts/design-thinking": true,
+          "/workspaces/hve-core/.github/prompts/github": true,
+          "/workspaces/hve-core/.github/prompts/hve-core": true,
+          "/workspaces/hve-core/.github/prompts/security": true
+        },
+        "chat.instructionsFilesLocations": {
+          "/workspaces/hve-core/.github/instructions/ado": true,
+          "/workspaces/hve-core/.github/instructions/coding-standards": true,
+          "/workspaces/hve-core/.github/instructions/design-thinking": true,
+          "/workspaces/hve-core/.github/instructions/github": true,
+          "/workspaces/hve-core/.github/instructions/hve-core": true,
+          "/workspaces/hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          "/workspaces/hve-core/.github/skills": true,
+          "/workspaces/hve-core/.github/skills/shared": true
+        }
       }
     }
   }
 }
 ```
 
-## Updating HVE-Core
+## Updating HVE Core
 
-Update on your **host machine**:
+Update on your host machine:
 
 ```bash
 cd /path/to/projects/hve-core
@@ -232,16 +306,16 @@ Changes are immediately available in all containers using the mount. No rebuild 
 
 ### Mount Point Empty After Rebuild
 
-**Cause:** HVE-Core wasn't cloned on the host, or was cloned in the wrong location.
+**Cause:** HVE Core wasn't cloned on the host, or was cloned in the wrong location.
 
-**Fix:**
+#### Fix
 
 1. Exit the container
-2. Clone HVE-Core on your host machine (see Phase 1)
+2. Clone HVE Core on your host machine (see Phase 1)
 3. Verify the path matches the mount source
 4. Rebuild the container
 
-**Check from host terminal:**
+#### Check from host terminal
 
 ```bash
 # On host, not in container
@@ -252,23 +326,23 @@ ls /path/to/projects/hve-core/.github
 
 **Cause:** Mount source path doesn't exist.
 
-**Fix:**
+#### Fix
 
 1. Check `devcontainer.json` mount path
-2. Ensure HVE-Core exists at `${localWorkspaceFolder}/../hve-core`
+2. Ensure HVE Core exists at `${localWorkspaceFolder}/../hve-core`
 3. Remove the mount temporarily to start the container
-4. Clone HVE-Core, then add mount back and rebuild
+4. Clone HVE Core, then add mount back and rebuild
 
 ### Agents Not Appearing
 
-**Check mount is working:**
+#### Check mount is working
 
 ```bash
 # Inside container
 ls /workspaces/hve-core/.github/agents
 ```
 
-**Check settings paths match:**
+#### Check settings paths match
 
 Settings must use absolute container paths (`/workspaces/hve-core/...`), not relative paths.
 
@@ -293,7 +367,7 @@ This is expected. Codespaces doesn't support `${localWorkspaceFolder}` or host b
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [Multi-Root Workspace](multi-root.md) - Simpler portable solution
 * [postCreateCommand](codespaces.md) - If you also need Codespaces support
 

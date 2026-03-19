@@ -1,8 +1,9 @@
 ---
 title: Security Assurance Case and Threat Model
 description: Comprehensive threat model and security assurance documentation demonstrating enterprise security practices
+sidebar_position: 2
 author: Microsoft
-ms.date: 2026-01-23
+ms.date: 2026-03-01
 ms.topic: reference
 keywords:
   - security
@@ -17,37 +18,37 @@ estimated_reading_time: 25
 
 HVE Core is an enterprise prompt engineering framework for GitHub Copilot consisting of:
 
-- Markdown-based prompt artifacts (instructions, prompts, agents, skills)
-- PowerShell automation scripts for linting and validation
-- GitHub Actions CI/CD workflows
-- VS Code extension packaging utilities
+* Markdown-based prompt artifacts (instructions, prompts, agents, skills)
+* PowerShell automation scripts for linting and validation
+* GitHub Actions CI/CD workflows
+* VS Code extension packaging utilities
 
-The repository contains no runtime services, databases, or user data storage. Primary threats target supply chain integrity and developer workflow compromise. Security relies on defense-in-depth with 18+ automated controls validated through CI/CD pipelines.
+The repository contains no runtime services, databases, or user data storage. Primary threats target supply chain integrity and developer workflow compromise. Security relies on defense-in-depth with 20+ automated controls validated through CI/CD pipelines.
 
 ### Security Posture Overview
 
 | Category                 | Status  | Control Count | Automated |
 |--------------------------|---------|---------------|-----------|
-| Supply Chain Security    | Strong  | 6 controls    | 100%      |
+| Supply Chain Security    | Strong  | 8 controls    | 100%      |
 | Code Quality             | Strong  | 5 controls    | 100%      |
 | Access Control           | Strong  | 4 controls    | 100%      |
 | Vulnerability Management | Strong  | 3 controls    | 100%      |
-| Total                    | **18+** | **18**        | **100%**  |
+| Total                    | **20+** | **20**        | **100%**  |
 
 ## Contents
 
-- [System Description](#system-description)
-- [Trust Boundaries](#trust-boundaries)
-- [Threat Model](#threat-model)
-  - [STRIDE Threats](#stride-threats)
-  - [Dev Container Threats](#dev-container-threats)
-  - [AI-Specific Threats](#ai-specific-threats)
-  - [Responsible AI Threats](#responsible-ai-threats)
-- [Security Controls](#security-controls)
-- [Assurance Argument](#assurance-argument)
-- [MCP Server Trust Analysis](#mcp-server-trust-analysis)
-- [Quantitative Security Metrics](#quantitative-security-metrics)
-- [References](#references)
+* [System Description](#system-description)
+* [Trust Boundaries](#trust-boundaries)
+* [Threat Model](#threat-model)
+  * [STRIDE Threats](#stride-threats)
+  * [Dev Container Threats](#dev-container-threats)
+  * [AI-Specific Threats](#ai-specific-threats)
+  * [Responsible AI Threats](#responsible-ai-threats)
+* [Security Controls](#security-controls)
+* [Assurance Argument](#assurance-argument)
+* [MCP Server Trust Analysis](#mcp-server-trust-analysis)
+* [Quantitative Security Metrics](#quantitative-security-metrics)
+* [References](#references)
 
 ## System Description
 
@@ -56,24 +57,24 @@ The repository contains no runtime services, databases, or user data storage. Pr
 HVE Core contains four primary component categories:
 
 1. **Prompt Engineering Artifacts** (`.github/instructions/`, `.github/prompts/`, `.github/agents/`, `.github/skills/`)
-   - Markdown files with YAML frontmatter
-   - Consumed by GitHub Copilot during development sessions
-   - No executable code execution within prompts
+   * Markdown files with YAML frontmatter
+   * Consumed by GitHub Copilot during development sessions
+   * No executable code execution within prompts
 
 2. **PowerShell Scripts** (`scripts/`)
-   - Linting and validation utilities
-   - CI/CD automation support
-   - No external network connections except documented tool downloads
+   * Linting and validation utilities
+   * CI/CD automation support
+   * No external network connections except documented tool downloads
 
 3. **GitHub Actions Workflows** (`.github/workflows/`)
-   - PR validation pipeline
-   - Security scanning (CodeQL, dependency review)
-   - Release automation
+   * PR validation pipeline
+   * Security scanning (CodeQL, dependency review)
+   * Release automation
 
 4. **VS Code Extension** (`extension/`)
-   - Packaging configuration
-   - Extension manifest
-   - No telemetry or data collection
+   * Packaging configuration
+   * Extension manifest
+   * No telemetry or data collection
 
 ### Data Flow
 
@@ -160,7 +161,7 @@ HVE Core artifacts are consumed by GitHub Copilot, which provides foundational s
 | Boundary              | Assets Protected                       | Controls Enforced                         |
 |-----------------------|----------------------------------------|-------------------------------------------|
 | Repository Contents   | Source code, prompts, scripts          | CODEOWNERS, branch protection, PR review  |
-| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, SHA pinning          |
+| CI/CD Pipeline        | Build artifacts, security scan results | Minimal permissions, dependency pinning   |
 | External Dependencies | npm packages, Actions, MCP servers     | Dependency review, staleness monitoring   |
 | Dev Container         | Development environment, tooling       | SHA256 verification, first-party features |
 
@@ -179,7 +180,7 @@ This section documents threats using [STRIDE](https://learn.microsoft.com/azure/
 | **Threat**        | Attacker compromises upstream Action repository and replaces tag with malicious code |
 | **Likelihood**    | Medium (documented supply chain attacks exist)                                       |
 | **Impact**        | High (full CI/CD compromise, secret exfiltration)                                    |
-| **Mitigations**   | SHA pinning for all Actions, staleness monitoring, CodeQL scanning                   |
+| **Mitigations**   | Dependency pinning for all Actions, staleness monitoring, CodeQL scanning            |
 | **Residual Risk** | Low (SHA immutable; requires GitHub infrastructure compromise)                       |
 | **Status**        | Mitigated                                                                            |
 
@@ -289,16 +290,43 @@ This section documents threats using [STRIDE](https://learn.microsoft.com/azure/
 
 #### E-1: Workflow Token Abuse
 
-| Field             | Value                                                             |
-|-------------------|-------------------------------------------------------------------|
-| **Category**      | Elevation of Privilege                                            |
-| **Asset**         | GitHub Actions tokens                                             |
-| **Threat**        | Compromised workflow step uses GITHUB_TOKEN beyond intended scope |
-| **Likelihood**    | Low (minimal permissions declared)                                |
-| **Impact**        | Medium (depends on token permissions)                             |
-| **Mitigations**   | Minimal permissions pattern, persist-credentials: false           |
-| **Residual Risk** | Low                                                               |
-| **Status**        | Mitigated                                                         |
+| Field             | Value                                                                                            |
+|-------------------|--------------------------------------------------------------------------------------------------|
+| **Category**      | Elevation of Privilege                                                                           |
+| **Asset**         | GitHub Actions tokens                                                                            |
+| **Threat**        | Compromised workflow step uses GITHUB_TOKEN beyond intended scope                                |
+| **Likelihood**    | Low (minimal permissions declared)                                                               |
+| **Impact**        | Medium (depends on token permissions)                                                            |
+| **Mitigations**   | Minimal permissions pattern, persist-credentials: false, inline comments on elevated permissions |
+| **Residual Risk** | Low                                                                                              |
+| **Status**        | Mitigated with Accepted Risk                                                                     |
+
+##### Accepted Risk: Token-Permissions Alerts
+
+OpenSSF Scorecard Token-Permissions flags `security-events: write` as overly broad across workflow files. This permission is required for `github/codeql-action/upload-sarif` and `github/codeql-action/analyze` to upload SARIF results to the repository Security tab. The `security-events` scope grants access only to code scanning alert data and cannot modify repository content, settings, or secrets.
+
+Scorecard's own `scorecard.yml` requires the same permission to publish results, creating a circular dependency in the token-permissions check.
+
+Affected workflow jobs:
+
+| Workflow                          | Job                          |
+|-----------------------------------|------------------------------|
+| `release-stable.yml`              | `dependency-pinning-scan`    |
+| `release-stable.yml`              | `gitleaks-scan`              |
+| `pr-validation.yml`               | `dependency-pinning-check`   |
+| `pr-validation.yml`               | `workflow-permissions-check` |
+| `pr-validation.yml`               | `gitleaks-scan`              |
+| `pr-validation.yml`               | `codeql`                     |
+| `security-scan.yml`               | `codeql`                     |
+| `weekly-security-maintenance.yml` | `validate-pinning`           |
+| `weekly-security-maintenance.yml` | `codeql-analysis`            |
+
+Defense-in-depth controls:
+
+* All workflows declare job-level permissions, not workflow-level
+* `persist-credentials: false` set on all checkout steps
+* Inline YAML comments document each `security-events: write` declaration
+* SARIF upload is the only write operation performed under this permission
 
 #### E-2: Branch Protection Bypass
 
@@ -559,6 +587,19 @@ These threats address ethical and responsible AI considerations aligned with Mic
 | **Residual Risk** | Low                                                           |
 | **Status**        | Mitigated with Documentation                                  |
 
+#### RAI-3a: Privacy - M365 Transcript Data Materialization
+
+| Field             | Value                                                                                                                                                                                                                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Category**      | Privacy & Security (Microsoft RAI Standard)                                                                                                                                                                                                                                                  |
+| **Asset**         | Meeting transcripts, customer confidential data, PII                                                                                                                                                                                                                                         |
+| **Threat**        | The meeting-analyst agent retrieves M365 transcripts containing sensitive data and writes them to local files in `.copilot-tracking/`. Data may be exposed through accidental commits (`git add -f`), gitignore misconfiguration, shared Codespaces, CI/CD logs, or unencrypted disk access. |
+| **Likelihood**    | Medium (users may not recognize transcript sensitivity; gitignore is the only barrier)                                                                                                                                                                                                       |
+| **Impact**        | High (customer confidential data, PII, trade secrets)                                                                                                                                                                                                                                        |
+| **Mitigations**   | Gitignore for `.copilot-tracking/`, agent-level data sensitivity notice and pre-flight classification prompt, anonymization guidance in agent instructions, data retention cleanup at handoff, documentation in threat model and agent catalog                                               |
+| **Residual Risk** | Medium (gitignore is not a security control; user awareness is behavioral)                                                                                                                                                                                                                   |
+| **Status**        | Partially Mitigated with Documentation                                                                                                                                                                                                                                                       |
+
 #### RAI-4: Inclusiveness - Exclusionary Language in Artifacts
 
 | Field             | Value                                                    |
@@ -693,14 +734,36 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 ### Supply Chain Security Controls
 
-| ID   | Control                    | Implementation                       | Validates Against |
-|------|----------------------------|--------------------------------------|-------------------|
-| SC-1 | SHA Pinning Validation     | Test-DependencyPinning.ps1           | S-1, S-2          |
-| SC-2 | SHA Staleness Monitoring   | Test-SHAStaleness.ps1                | S-1               |
-| SC-3 | Dependency Review          | dependency-review.yml                | S-2, AI-5         |
-| SC-4 | npm Security Audit         | npm audit in pr-validation.yml       | S-2               |
-| SC-5 | Dependabot Updates         | dependabot.yml                       | S-1, S-2          |
-| SC-6 | Tool Checksum Verification | scripts/security/tool-checksums.json | S-1               |
+| ID   | Control                         | Implementation                                  | Validates Against |
+|------|---------------------------------|-------------------------------------------------|-------------------|
+| SC-1 | Dependency Pinning Validation   | Test-DependencyPinning.ps1                      | S-1, S-2          |
+| SC-2 | SHA Staleness Monitoring        | Test-SHAStaleness.ps1                           | S-1               |
+| SC-3 | Dependency Review               | dependency-review.yml                           | S-2, AI-5         |
+| SC-4 | npm Security Audit              | npm audit in pr-validation.yml                  | S-2               |
+| SC-5 | Dependabot Updates              | dependabot.yml                                  | S-1, S-2          |
+| SC-6 | Tool Checksum Verification      | scripts/security/tool-checksums.json            | S-1               |
+| SC-7 | SBOM Generation and Attestation | anchore/sbom-action, actions/attest in main.yml | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff            | sbom-diff job in main.yml                       | S-1, S-2          |
+
+#### SC-8: SBOM Dependency Diff Implementation
+
+The `sbom-diff` job in `main.yml` runs during each release to surface supply chain changes between consecutive versions. It compares the current dependency SBOM against the previous release, generating a structured `dependency-diff.md` report that is uploaded to the GitHub Release.
+
+| Field            | Value                                                                      |
+|------------------|----------------------------------------------------------------------------|
+| **Trigger**      | Runs when `release_created == 'true'`, after SBOM generation completes     |
+| **Input**        | SPDX JSON dependency SBOMs from current build and previous GitHub Release  |
+| **Output**       | `dependency-diff.md` uploaded to the GitHub Release as an asset            |
+| **Failure Mode** | `continue-on-error: true` prevents diff failures from blocking the release |
+| **Permissions**  | `contents: write` (release asset upload only)                              |
+
+The diff script parses SPDX JSON packages, excludes root document entries, and categorizes changes into three groups:
+
+* Added packages not present in the previous release
+* Removed packages no longer included in the current build
+* Version changes where the same package appears in both releases at different versions
+
+When no previous release exists or the prior release lacks a dependency SBOM, the job exits cleanly without producing a diff. This graceful degradation ensures the first release in a repository proceeds without error.
 
 ### Code Quality Controls
 
@@ -723,11 +786,11 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 ### Vulnerability Management Controls
 
-| ID   | Control                         | Implementation             | Validates Against |
-|------|---------------------------------|----------------------------|-------------------|
-| VM-1 | Coordinated Disclosure          | SECURITY.md                | I-1               |
-| VM-2 | Secret Scanning                 | GitHub native              | I-1, I-2          |
-| VM-3 | Credential Persistence Disabled | persist-credentials: false | I-1, E-1          |
+| ID   | Control                         | Implementation                                      | Validates Against |
+|------|---------------------------------|-----------------------------------------------------|-------------------|
+| VM-1 | Coordinated Disclosure          | SECURITY.md                                         | I-1               |
+| VM-2 | Secret Scanning                 | GitHub native, gitleaks PR gate (gitleaks-scan.yml) | I-1, I-2          |
+| VM-3 | Credential Persistence Disabled | persist-credentials: false                          | I-1, E-1          |
 
 ## Assurance Argument
 
@@ -735,7 +798,7 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Top-Level Goal
 
-**G0**: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
+G0: HVE Core is acceptably secure for its intended use as an enterprise prompt engineering framework.
 
 ### Supporting Goals
 
@@ -748,12 +811,12 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 ### Evidence Mapping
 
-| Goal | Evidence                                                            |
-|------|---------------------------------------------------------------------|
-| G1   | SHA pinning logs, staleness reports, dependency review results      |
-| G2   | Branch protection configuration, CODEOWNERS file, PR review history |
-| G3   | This threat model document, MCP trust analysis                      |
-| G4   | Writing style guidelines, inclusive language checks, PR reviews     |
+| Goal | Evidence                                                                                                                           |
+|------|------------------------------------------------------------------------------------------------------------------------------------|
+| G1   | Dependency pinning logs, staleness reports, dependency review results, SBOM attestation verification, dependency SBOM diff reports |
+| G2   | Branch protection configuration, CODEOWNERS file, PR review history                                                                |
+| G3   | This threat model document, MCP trust analysis                                                                                     |
+| G4   | Writing style guidelines, inclusive language checks, PR reviews                                                                    |
 
 ### Assumptions and Justifications
 
@@ -768,10 +831,10 @@ This section presents the security assurance case using Goal Structuring Notatio
 
 HVE Core achieves acceptable security through:
 
-1. **Automated Controls**: 18+ security controls execute automatically via CI/CD
-2. **Defense-in-Depth**: Multiple overlapping controls for critical threats
-3. **Transparent Risk Acceptance**: AI-inherent risks documented with clear boundaries
-4. **Inherited Security**: Leverages GitHub and Copilot platform security
+1. Automated Controls: 20+ security controls execute automatically via CI/CD
+2. Defense-in-Depth: Multiple overlapping controls for critical threats
+3. Transparent Risk Acceptance: AI-inherent risks documented with clear boundaries
+4. Inherited Security: Uses GitHub and Copilot platform security
 
 ## MCP Server Trust Analysis
 
@@ -839,20 +902,20 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Trust Recommendations
 
-1. **First-party servers (GitHub, Azure DevOps, Microsoft Docs)**: Enable with organization policy controls; GitHub MCP is enabled by default
-2. **Third-party servers (Context7)**: Evaluate data flow, use API key rotation, review Upstash trust center
+1. First-party servers (GitHub, Azure DevOps, Microsoft Docs): Enable with organization policy controls; GitHub MCP is enabled by default
+2. Third-party servers (Context7): Evaluate data flow, use API key rotation, review Upstash trust center
 
 ## Quantitative Security Metrics
 
 ### Configured Thresholds
 
-| Metric                 | Threshold | Source                      |
-|------------------------|-----------|-----------------------------|
-| SHA Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
-| SHA Staleness          | ≤30 days  | sha-staleness-check.yml     |
-| Dependency Review Fail | moderate  | dependency-review.yml       |
-| npm Audit Fail Level   | moderate  | pr-validation.yml           |
-| Required PR Reviewers  | 1         | Branch protection           |
+| Metric                        | Threshold | Source                      |
+|-------------------------------|-----------|-----------------------------|
+| Dependency Pinning Compliance | ≥95%      | dependency-pinning-scan.yml |
+| SHA Staleness                 | ≤30 days  | sha-staleness-check.yml     |
+| Dependency Review Fail        | moderate  | dependency-review.yml       |
+| npm Audit Fail Level          | moderate  | pr-validation.yml           |
+| Required PR Reviewers         | 1         | Branch protection           |
 
 ### Security Response Commitments
 
@@ -863,30 +926,31 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Validation Workflow Coverage
 
-| Workflow                        | Trigger            | Security Checks            |
-|---------------------------------|--------------------|----------------------------|
-| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL |
-| codeql-analysis.yml             | Push, PR, weekly   | Static analysis            |
-| dependency-review.yml           | PR to main/develop | Vulnerability scanning     |
-| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL |
+| Workflow                        | Trigger            | Security Checks                                                |
+|---------------------------------|--------------------|----------------------------------------------------------------|
+| pr-validation.yml               | PR to main/develop | Pinning, npm audit, CodeQL, gitleaks                           |
+| release-stable.yml              | Push to main       | Pinning, gitleaks, SBOM attestation, dependency diff (release) |
+| codeql-analysis.yml             | Push, PR, weekly   | Static analysis                                                |
+| dependency-review.yml           | PR to main/develop | Vulnerability scanning                                         |
+| weekly-security-maintenance.yml | Sundays 2 AM UTC   | Pinning, staleness, CodeQL                                     |
 
 ## References
 
 ### Internal Documentation
 
-- [SECURITY.md](../../SECURITY.md): Vulnerability disclosure process
-- [GOVERNANCE.md](../../GOVERNANCE.md): Project governance and roles
-- [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
-- [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
+* [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
+* [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
+* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 
 ### External Standards
 
-- [OpenSSF Best Practices Silver Criteria](https://www.bestpractices.dev/en/criteria/1)
-- [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-- [MITRE ATLAS](https://atlas.mitre.org/)
-- [Microsoft Responsible AI Standard](https://www.microsoft.com/ai/responsible-ai)
-- [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
-- [GitHub Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
+* [OpenSSF Best Practices Silver Criteria](https://www.bestpractices.dev/en/criteria/1)
+* [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+* [MITRE ATLAS](https://atlas.mitre.org/)
+* [Microsoft Responsible AI Standard](https://www.microsoft.com/ai/responsible-ai)
+* [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
+* [GitHub Security Best Practices](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 
 ---
 

@@ -1,0 +1,43 @@
+[project]
+name = "powerpoint-skill-tests"
+version = "0.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "python-pptx",
+    "pyyaml",
+    "cairosvg",
+    "Pillow",
+    "pymupdf",
+    "github-copilot-sdk",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "ruff>=0.15",
+    "hypothesis>=6.100",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+markers = [
+    "integration: roundtrip integration tests",
+    "slow: tests that create full presentations",
+    "hypothesis: property-based tests using Hypothesis",
+]
+
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

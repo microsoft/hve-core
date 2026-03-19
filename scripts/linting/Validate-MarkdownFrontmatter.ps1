@@ -5,7 +5,6 @@
 #
 # Purpose: Validates frontmatter consistency and footer presence across markdown files
 # Author: HVE Core Team
-# Created: 2025-11-05
 #
 # This script validates:
 # - Required frontmatter fields (title, description, author, ms.date)
@@ -13,13 +12,14 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#requires -Version 7.0
+#Requires -Version 7.0
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
 # (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
 using module .\Modules\FrontmatterValidation.psm1
 
+[CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
     [string[]]$Paths = @('.'),
@@ -28,7 +28,16 @@ param(
     [string[]]$Files = @(),
 
     [Parameter(Mandatory = $false)]
-    [string[]]$ExcludePaths = @(),
+    [string[]]$ExcludePaths = @(
+        'scripts/tests/Fixtures/**',
+        'extension/README.md',
+        'extension/README.*.md',
+        'extension/templates/README.template.md',
+        'collections/*.collection.md',
+        'pr.md',
+        '.github/PULL_REQUEST_TEMPLATE.md',
+        'plugins/**'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$WarningsAsErrors,
@@ -43,7 +52,10 @@ param(
     [switch]$EnableSchemaValidation,
 
     [Parameter(Mandatory = $false)]
-    [string[]]$FooterExcludePaths = @(),
+    [string[]]$FooterExcludePaths = @(
+        'CHANGELOG.md',
+        'dependency-pinning-artifacts/**'
+    ),
 
     [Parameter(Mandatory = $false)]
     [switch]$SkipFooterValidation,
@@ -51,6 +63,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = "logs/frontmatter-validation-results.json"
 )
+
+$ErrorActionPreference = 'Stop'
 
 # Import helper modules
 # Note: FrontmatterValidation.psm1 is imported via 'using module' at top of script for class type availability
@@ -244,6 +258,237 @@ function Get-SchemaForFile {
     return $null
 }
 
+function ConvertTo-ObjectArray {
+    <#
+    .SYNOPSIS
+        Converts an enumerable to an object array, converting nested objects to hashtables.
+    #>
+    [CmdletBinding()]
+    [OutputType([object[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IEnumerable]$Enumerable
+    )
+
+    $list = [System.Collections.Generic.List[object]]::new()
+    foreach ($item in $Enumerable) {
+        if ($item -is [pscustomobject] -or $item -is [hashtable]) {
+            $list.Add((ConvertTo-HashTable -InputObject $item))
+        }
+        else {
+            $list.Add($item)
+        }
+    }
+
+    # Prevent PowerShell from unrolling single-element arrays when used in expressions/assignments.
+    return ,$list.ToArray()
+}
+
+function ConvertTo-HashTable {
+    <#
+    .SYNOPSIS
+        Converts a PSCustomObject or hashtable to a hashtable recursively.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateScript({ $_ -is [hashtable] -or $_ -is [pscustomobject] })]
+        [object]$InputObject
+    )
+
+    if ($InputObject -is [hashtable]) {
+        $out = @{}
+        foreach ($k in $InputObject.Keys) {
+            $v = $InputObject[$k]
+            if ($v -is [pscustomobject] -or $v -is [hashtable]) {
+                $out[$k] = ConvertTo-HashTable -InputObject $v
+            }
+            elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
+                $out[$k] = ConvertTo-ObjectArray -Enumerable $v
+            }
+            else {
+                $out[$k] = $v
+            }
+        }
+        return $out
+    }
+
+    if ($InputObject -is [pscustomobject]) {
+        $out = @{}
+        foreach ($p in $InputObject.PSObject.Properties) {
+            $v = $p.Value
+            if ($v -is [pscustomobject] -or $v -is [hashtable]) {
+                $out[$p.Name] = ConvertTo-HashTable -InputObject $v
+            }
+            elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [string]) {
+                $out[$p.Name] = ConvertTo-ObjectArray -Enumerable $v
+            }
+            else {
+                $out[$p.Name] = $v
+            }
+        }
+        return $out
+    }
+}
+
+function Test-ValueAgainstSchema {
+    <#
+    .SYNOPSIS
+        Validates a value against a (subset of) JSON schema.
+    .DESCRIPTION
+        Supports: type (string/array/boolean/object), required, properties, items, enum, pattern, minLength, oneOf.
+        Designed for "soft" schema validation; does not implement full JSON Schema.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Value,
+
+        [Parameter(Mandatory = $true)]
+        [object]$Schema,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $localErrors = [List[string]]::new()
+
+    # Handle oneOf by validating against each subschema.
+    if ($Schema.oneOf) {
+        $passCount = 0
+        $subschemaErrors = [System.Collections.Generic.List[object]]::new()
+
+        $i = 0
+        foreach ($sub in $Schema.oneOf) {
+            $subErrs = Test-ValueAgainstSchema -Value $Value -Schema $sub -Path $Path
+            if ($subErrs.Count -eq 0) {
+                $passCount++
+                if ($passCount -gt 1) { break }
+            }
+            else {
+                # Capture errors per subschema so failures are stable and actionable (not dependent on ordering).
+                $subschemaErrors.Add(@{ Index = $i; Errors = $subErrs })
+            }
+
+            $i++
+        }
+
+        if ($passCount -ne 1) {
+            # oneOf semantics: exactly one schema must match
+            if ($passCount -eq 0) {
+                $localErrors.Add("Field '$Path' must match one of the allowed schemas")
+
+                foreach ($entry in $subschemaErrors) {
+                    $idx = $entry.Index
+                    foreach ($e in $entry.Errors) {
+                        $localErrors.Add("oneOf[$idx]: $e")
+                    }
+                }
+            }
+            else {
+                $localErrors.Add("Field '$Path' must match exactly one of the allowed schemas")
+            }
+        }
+
+        return $localErrors.ToArray()
+    }
+
+    # Type validation.
+    if ($Schema.type) {
+        switch ($Schema.type) {
+            'string' {
+                if ($Value -isnot [string]) {
+                    $localErrors.Add("Field '$Path' must be a string")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.pattern -and $Value -notmatch $Schema.pattern) {
+                    $localErrors.Add("Field '$Path' does not match required pattern: $($Schema.pattern)")
+                }
+
+                if ($Schema.minLength -and $Value.Length -lt $Schema.minLength) {
+                    $localErrors.Add("Field '$Path' must have minimum length of $($Schema.minLength)")
+                }
+            }
+            'boolean' {
+                if ($Value -isnot [bool] -and $Value -notin @('true', 'false', 'True', 'False')) {
+                    $localErrors.Add("Field '$Path' must be a boolean")
+                }
+            }
+            'array' {
+                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays.
+                # Also exclude dictionaries/hashtables: they are IEnumerable, but semantically map to objects, not arrays.
+                if (
+                    $Value -is [string] -or
+                    $Value -is [System.Collections.IDictionary] -or
+                    ($Value -isnot [array] -and $Value -isnot [System.Collections.IEnumerable])
+                ) {
+                    $localErrors.Add("Field '$Path' must be an array")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.items) {
+                    $i = 0
+                    foreach ($item in $Value) {
+                        $itemErrors = Test-ValueAgainstSchema -Value $item -Schema $Schema.items -Path "$Path[$i]"
+                        foreach ($e in $itemErrors) { $localErrors.Add($e) }
+                        $i++
+                    }
+                }
+            }
+            'object' {
+                $obj = $Value
+                if ($obj -is [pscustomobject] -or $obj -is [hashtable]) {
+                    $obj = ConvertTo-HashTable -InputObject $obj
+                }
+                else {
+                    $localErrors.Add("Field '$Path' must be an object")
+                    return $localErrors.ToArray()
+                }
+
+                if ($Schema.required) {
+                    foreach ($req in $Schema.required) {
+                        if (-not $obj.ContainsKey($req)) {
+                            $localErrors.Add("Missing required field: $Path.$req")
+                        }
+                    }
+                }
+
+                if ($Schema.properties) {
+                    foreach ($p in $Schema.properties.PSObject.Properties) {
+                        $propName = $p.Name
+                        $propSchema = $p.Value
+                        if ($obj.ContainsKey($propName)) {
+                            $propErrors = Test-ValueAgainstSchema -Value $obj[$propName] -Schema $propSchema -Path "$Path.$propName"
+                            foreach ($e in $propErrors) { $localErrors.Add($e) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Enum validation.
+    if ($Schema.enum) {
+        if ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string]) {
+            foreach ($item in $Value) {
+                if ($item -notin $Schema.enum) {
+                    $localErrors.Add("Field '$Path' contains invalid value: $item. Allowed: $($Schema.enum -join ', ')")
+                }
+            }
+        }
+        else {
+            if ($Value -notin $Schema.enum) {
+                $localErrors.Add("Field '$Path' must be one of: $($Schema.enum -join ', '). Got: $Value")
+            }
+        }
+    }
+
+    return $localErrors.ToArray()
+}
+
 function Test-JsonSchemaValidation {
     <#
     .SYNOPSIS
@@ -255,16 +500,19 @@ function Test-JsonSchemaValidation {
     pattern matching, enum values, and minimum length requirements.
 
     Validation coverage:
-    - required: Field presence validation
-    - type: string, array, boolean type checking
+    - required: Field presence validation (root + nested objects)
+    - type: string, array, boolean, object type checking
+    - properties: Nested object property validation
+    - items: Array item validation
+    - oneOf: Composition keyword support (exactly one subschema must match)
     - pattern: Regex pattern matching for strings
     - enum: Allowed value constraints
     - minLength: Minimum string length validation
 
     Limitations (intentional for soft validation):
     - $ref: Schema references not resolved
-    - allOf/anyOf/oneOf: Composition keywords not supported
-    - object: Nested object validation not implemented
+    - allOf/anyOf: Composition keywords not supported
+    - additionalProperties: Not enforced
 
     .PARAMETER Frontmatter
     Hashtable containing parsed frontmatter key-value pairs.
@@ -371,54 +619,8 @@ function Test-JsonSchemaValidation {
 
                 if ($Frontmatter.ContainsKey($fieldName)) {
                     $value = $Frontmatter[$fieldName]
-
-                    if ($fieldSchema.type) {
-                        switch ($fieldSchema.type) {
-                            'string' {
-                                if ($value -isnot [string]) {
-                                    $errors.Add("Field '$fieldName' must be a string")
-                                }
-                            }
-                            'array' {
-                                # Exclude strings from IEnumerable check - strings implement IEnumerable but aren't arrays
-                                if ($value -is [string] -or ($value -isnot [array] -and $value -isnot [System.Collections.IEnumerable])) {
-                                    $errors.Add("Field '$fieldName' must be an array")
-                                }
-                            }
-                            'boolean' {
-                                if ($value -isnot [bool] -and $value -notin @('true', 'false', 'True', 'False')) {
-                                    $errors.Add("Field '$fieldName' must be a boolean")
-                                }
-                            }
-                        }
-                    }
-
-                    if ($fieldSchema.pattern -and $value -is [string]) {
-                        if ($value -notmatch $fieldSchema.pattern) {
-                            $errors.Add("Field '$fieldName' does not match required pattern: $($fieldSchema.pattern)")
-                        }
-                    }
-
-                    if ($fieldSchema.enum) {
-                        if ($value -is [array]) {
-                            foreach ($item in $value) {
-                                if ($item -notin $fieldSchema.enum) {
-                                    $errors.Add("Field '$fieldName' contains invalid value: $item. Allowed: $($fieldSchema.enum -join ', ')")
-                                }
-                            }
-                        }
-                        else {
-                            if ($value -notin $fieldSchema.enum) {
-                                $errors.Add("Field '$fieldName' must be one of: $($fieldSchema.enum -join ', '). Got: $value")
-                            }
-                        }
-                    }
-
-                    if ($fieldSchema.minLength -and $value -is [string]) {
-                        if ($value.Length -lt $fieldSchema.minLength) {
-                            $errors.Add("Field '$fieldName' must have minimum length of $($fieldSchema.minLength)")
-                        }
-                    }
+                    $validationErrors = Test-ValueAgainstSchema -Value $value -Schema $fieldSchema -Path $fieldName
+                    foreach ($e in $validationErrors) { $errors.Add($e) }
                 }
             }
         }
@@ -507,8 +709,8 @@ function Test-FrontmatterValidation {
     # Handle ChangedFilesOnly mode
     if ($ChangedFilesOnly) {
         Write-Host "🔍 Detecting changed markdown files from git diff..." -ForegroundColor Cyan
-        $Files = Get-ChangedMarkdownFileGroup -BaseBranch $BaseBranch
-        if ($Files.Count -eq 0) {
+        $Files = @(Get-ChangedFilesFromGit -BaseBranch $BaseBranch -FileExtensions @('*.md'))
+        if (@($Files).Count -eq 0) {
             Write-Host "No changed markdown files found - validation complete" -ForegroundColor Green
             # Return empty summary with TotalFiles=0 to accurately represent no files validated
             # The caller handles this as success when ChangedFilesOnly mode is used
@@ -516,7 +718,7 @@ function Test-FrontmatterValidation {
             $null = $emptySummary.Complete()
             return $emptySummary
         }
-        Write-Host "Found $($Files.Count) changed markdown files to validate" -ForegroundColor Cyan
+        Write-Host "Found $(@($Files).Count) changed markdown files to validate" -ForegroundColor Cyan
     }
 
     # Resolve files from paths if not provided directly
@@ -533,7 +735,7 @@ function Test-FrontmatterValidation {
         $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath (Join-Path $repoRoot ".gitignore")
         foreach ($path in ($Paths | Where-Object { -not [string]::IsNullOrEmpty($_) })) {
             if (Test-Path $path) {
-                $rawFiles = Get-ChildItem -Path $path -Filter '*.md' -Recurse -File -ErrorAction SilentlyContinue
+                $rawFiles = Get-ChildItem -Path $path -Filter '*.md' -Recurse -File -Force -ErrorAction SilentlyContinue
                 foreach ($f in $rawFiles) {
                     if ($null -eq $f -or [string]::IsNullOrEmpty($f.FullName)) { continue }
                     $excluded = $false
@@ -588,9 +790,9 @@ function Test-FrontmatterValidation {
     # Output to console
     Write-ValidationConsoleOutput -Summary $summary -ShowDetails
 
-    # GitHub Actions annotations
-    if ($env:GITHUB_ACTIONS) {
-        Write-GitHubAnnotations -Summary $summary
+    # CI annotations
+    if (Test-CIEnvironment) {
+        Write-CIAnnotations -Summary $summary
     }
 
     # Export results
@@ -614,8 +816,8 @@ function Test-FrontmatterValidation {
 
 See the uploaded artifact for complete details.
 "@
-        Write-GitHubStepSummary -Content $summaryContent
-        Set-GitHubEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
+        Write-CIStepSummary -Content $summaryContent
+        Set-CIEnv -Name "FRONTMATTER_VALIDATION_FAILED" -Value "true"
     }
     else {
         $summaryContent = @"
@@ -627,120 +829,16 @@ See the uploaded artifact for complete details.
 
 All frontmatter fields are valid and properly formatted. Great job! 🎉
 "@
-        Write-GitHubStepSummary -Content $summaryContent
+        Write-CIStepSummary -Content $summaryContent
         Write-Host "✅ Frontmatter validation completed successfully" -ForegroundColor Green
     }
 
     return $summary
 }
 
-function Get-ChangedMarkdownFileGroup {
-    <#
-    .SYNOPSIS
-    Retrieves changed markdown files from git diff comparison.
-
-    .DESCRIPTION
-    Uses git diff to identify markdown files that have changed between the current
-    HEAD and a base branch. Implements a fallback strategy when standard comparison
-    methods fail:
-
-    1. First attempts: git merge-base comparison with specified base branch
-    2. Fallback 1: Comparison with HEAD~1 (previous commit)
-    3. Fallback 2: Staged and unstaged files against HEAD
-
-    .PARAMETER BaseBranch
-    Git reference for the base branch to compare against. Defaults to 'origin/main'.
-    Can be any valid git ref (branch name, tag, commit SHA).
-
-    .PARAMETER FallbackStrategy
-    Controls fallback behavior when primary comparison fails.
-    - 'Auto' (default): Tries all fallback strategies automatically
-    - 'HeadOnly': Only uses HEAD~1 fallback
-    - 'None': No fallback, returns empty on failure
-
-    .INPUTS
-    None. Does not accept pipeline input.
-
-    .OUTPUTS
-    [string[]] Array of relative file paths for changed markdown files.
-    Returns empty array if no changes detected or git operations fail.
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup
-    # Returns markdown files changed compared to origin/main
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup -BaseBranch 'origin/develop'
-    # Returns markdown files changed compared to develop branch
-
-    .EXAMPLE
-    $changedFiles = Get-ChangedMarkdownFileGroup -FallbackStrategy 'None'
-    # Returns empty array if merge-base comparison fails
-
-    .NOTES
-    Requires git to be available in PATH. Files must exist on disk to be included
-    in the result (deleted files are excluded).
-    #>
-    [CmdletBinding()]
-    [OutputType([string[]])]
-    param(
-        [Parameter(Mandatory = $false, Position = 0)]
-        [ValidateNotNullOrEmpty()]
-        [string]$BaseBranch = "origin/main",
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet('Auto', 'HeadOnly', 'None')]
-        [string]$FallbackStrategy = 'Auto'
-    )
-
-    try {
-        $changedFiles = git diff --name-only $(git merge-base HEAD $BaseBranch) HEAD 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Verbose "Merge base comparison with '$BaseBranch' failed"
-
-            if ($FallbackStrategy -eq 'None') {
-                Write-Warning "Unable to determine changed files from git (no fallback enabled)"
-                return @()
-            }
-
-            Write-Verbose "Attempting fallback: HEAD~1 comparison"
-            $changedFiles = git diff --name-only HEAD~1 HEAD 2>$null
-
-            if ($LASTEXITCODE -ne 0 -and $FallbackStrategy -eq 'Auto') {
-                Write-Verbose "HEAD~1 comparison failed, attempting staged/unstaged files"
-                $changedFiles = git diff --name-only HEAD 2>$null
-
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "Unable to determine changed files from git"
-                    return @()
-                }
-            }
-            elseif ($LASTEXITCODE -ne 0) {
-                Write-Warning "Unable to determine changed files from git"
-                return @()
-            }
-        }
-
-        [string[]]$changedMarkdownFiles = $changedFiles | Where-Object {
-            -not [string]::IsNullOrEmpty($_) -and
-            $_ -match '\.md$' -and
-            (Test-Path $_ -PathType Leaf)
-        }
-
-        Write-Verbose "Found $($changedMarkdownFiles.Count) changed markdown files from git diff"
-        $changedMarkdownFiles | ForEach-Object { Write-Verbose "  Changed: $_" }
-
-        return $changedMarkdownFiles
-    }
-    catch {
-        Write-Warning "Error getting changed files from git: $($_.Exception.Message)"
-        return @()
-    }
-}
-
 #region Main Execution
-try {
-    if ($MyInvocation.InvocationName -ne '.') {
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
         if ($ChangedFilesOnly) {
             $result = Test-FrontmatterValidation -ChangedFilesOnly -BaseBranch $BaseBranch -ExcludePaths $ExcludePaths -WarningsAsErrors:$WarningsAsErrors -EnableSchemaValidation:$EnableSchemaValidation -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
         }
@@ -752,7 +850,6 @@ try {
         }
 
         # Normalize result: if pipeline output produced an array, extract the ValidationSummary object
-        # PowerShell functions can inadvertently output multiple objects; take the last (the return value)
         if ($result -is [System.Array]) {
             $result = $result | Where-Object { $null -ne $_ -and $_.GetType().GetMethod('GetExitCode') } | Select-Object -Last 1
         }
@@ -763,8 +860,7 @@ try {
             exit 0
         }
 
-        # Validate result object before calling GetExitCode to prevent method invocation errors
-        # PowerShell class methods are compiled to .NET type metadata, not stored in PSObject.Methods (ETS only)
+        # Validate result object before calling GetExitCode
         if ($null -eq $result -or $null -eq $result.GetType().GetMethod('GetExitCode')) {
             $resultTypeName = if ($null -eq $result) { '<null>' } else { $result.GetType().FullName }
             Write-Host "Validation did not produce a usable result object (type: $resultTypeName). Exiting with code 1."
@@ -780,13 +876,10 @@ try {
             exit 0
         }
     }
-}
-catch {
-    Write-Error "Validate Markdown Frontmatter failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+    catch {
+        Write-Error -ErrorAction Continue "Validate-MarkdownFrontmatter failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
     }
-    exit 1
 }
-#endregion
+#endregion Main Execution

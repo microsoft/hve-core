@@ -1,0 +1,37 @@
+name: Label Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/labels.yml'
+      - '.github/workflows/label-sync.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync-labels:
+    name: Sync Labels
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Sync labels
+        uses: EndBug/label-sync@52074158190acb45f3077f9099fea818aa43f97a # v2.3.3
+        with:
+          config-file: .github/labels.yml
+          delete-other-labels: false
+          token: ${{ secrets.GITHUB_TOKEN }}

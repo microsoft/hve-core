@@ -11,12 +11,6 @@
       "minLength": 1,
       "description": "Concise explanation of chatmode functionality (10-200 characters)"
     },
-    "maturity": {
-      "type": "string",
-      "enum": ["stable", "preview", "experimental", "deprecated"],
-      "default": "stable",
-      "description": "Maturity level affecting visibility in stable vs pre-release builds. Stable appears in all builds; preview/experimental only in pre-release."
-    },
     "tools": {
       "type": "array",
       "items": {

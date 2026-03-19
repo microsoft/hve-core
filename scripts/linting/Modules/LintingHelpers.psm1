@@ -5,7 +5,6 @@
 #
 # Purpose: Shared helper functions for linting scripts and workflows
 # Author: HVE Core Team
-# Created: 2025-11-05
 
 Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
 
@@ -117,24 +116,69 @@ function Get-FilesRecursive {
         [string]$GitIgnorePath
     )
 
-    $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -ErrorAction SilentlyContinue
+    # Determine whether $Path resides inside the current git repository
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    $repoRoot = git rev-parse --show-toplevel 2>$null
+    if ($repoRoot) { $repoRoot = $repoRoot.Replace('/', $sep) }
+    $resolved = Resolve-Path -Path $Path -ErrorAction SilentlyContinue
+    $resolvedPath = if ($resolved) { $resolved.Path.Replace('/', $sep) } else { $null }
+    $useGit = $repoRoot -and $resolvedPath -and (
+        $resolvedPath -eq $repoRoot -or
+        $resolvedPath.StartsWith("$repoRoot$sep")
+    )
 
-    # Apply gitignore filtering if provided
-    if ($GitIgnorePath -and (Test-Path $GitIgnorePath)) {
-        $gitignorePatterns = Get-GitIgnorePatterns -GitIgnorePath $GitIgnorePath
-        
-        $files = $files | Where-Object {
-            $file = $_
-            $excluded = $false
-            
-            foreach ($pattern in $gitignorePatterns) {
-                if ($file.FullName -like $pattern) {
-                    $excluded = $true
-                    break
-                }
+    if ($useGit) {
+        # git ls-files natively respects .gitignore via --exclude-standard
+        $relPath = if ($resolvedPath -eq $repoRoot) { '' }
+                   else { $resolvedPath.Substring($repoRoot.Length + 1) }
+
+        $gitArgs = @('ls-files', '--cached', '--others', '--exclude-standard')
+        if ($relPath) {
+            $gitArgs += '--'
+            $gitArgs += "$relPath/"
+        }
+        else {
+            foreach ($pattern in $Include) {
+                $gitArgs += $pattern
             }
-            
-            -not $excluded
+        }
+
+        $rawFiles = @(git @gitArgs | Where-Object { $_ })
+
+        # When scoped to a subdirectory, filter by Include patterns
+        if ($relPath) {
+            $rawFiles = @($rawFiles | Where-Object {
+                $name = [System.IO.Path]::GetFileName($_)
+                foreach ($p in $Include) {
+                    if ($name -like $p) { return $true }
+                }
+                return $false
+            })
+        }
+
+        $files = @($rawFiles | ForEach-Object {
+            $fullPath = Join-Path $repoRoot $_
+            if (Test-Path $fullPath -PathType Leaf) {
+                Get-Item -LiteralPath $fullPath
+            }
+        })
+    }
+    else {
+        # Fallback for non-git contexts or paths outside the repository
+        $files = Get-ChildItem -Path $Path -Recurse -Include $Include -File -ErrorAction SilentlyContinue |
+            Where-Object { -not $_.LinkTarget }
+
+        if ($GitIgnorePath) {
+            $patterns = Get-GitIgnorePatterns -GitIgnorePath $GitIgnorePath
+            if ($patterns) {
+                $files = @($files | Where-Object {
+                    $fullName = $_.FullName
+                    foreach ($p in $patterns) {
+                        if ($fullName -like $p) { return $false }
+                    }
+                    return $true
+                })
+            }
         }
     }
 
@@ -186,151 +230,9 @@ function Get-GitIgnorePatterns {
     return $patterns
 }
 
-function Write-GitHubAnnotation {
-    <#
-    .SYNOPSIS
-    Writes GitHub Actions annotations for errors, warnings, or notices.
-
-    .PARAMETER Type
-    Annotation type: 'error', 'warning', or 'notice'.
-
-    .PARAMETER Message
-    The annotation message.
-
-    .PARAMETER File
-    Optional file path.
-
-    .PARAMETER Line
-    Optional line number.
-
-    .PARAMETER Column
-    Optional column number.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('error', 'warning', 'notice')]
-        [string]$Type,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
-
-        [Parameter(Mandatory = $false)]
-        [string]$File,
-
-        [Parameter(Mandatory = $false)]
-        [int]$Line,
-
-        [Parameter(Mandatory = $false)]
-        [int]$Column
-    )
-
-    $escapedMessage = ConvertTo-GitHubActionsEscaped -Value $Message
-    
-    $annotation = "::${Type}"
-    
-    $properties = @()
-    if ($File) {
-        $escapedFile = ConvertTo-GitHubActionsEscaped -Value $File -ForProperty
-        $properties += "file=$escapedFile"
-    }
-    if ($Line -gt 0) { $properties += "line=$Line" }
-    if ($Column -gt 0) { $properties += "col=$Column" }
-    
-    if ($properties.Count -gt 0) {
-        $annotation += " $($properties -join ',')"
-    }
-    
-    $annotation += "::$escapedMessage"
-    
-    Write-Host $annotation
-}
-
-function Set-GitHubOutput {
-    <#
-    .SYNOPSIS
-    Sets GitHub Actions output variable.
-
-    .PARAMETER Name
-    Output variable name.
-
-    .PARAMETER Value
-    Output value.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Value
-    )
-
-    if ($env:GITHUB_OUTPUT) {
-        "$Name=$Value" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - output: $Name=$Value"
-    }
-}
-
-function Set-GitHubEnv {
-    <#
-    .SYNOPSIS
-    Sets GitHub Actions environment variable.
-
-    .PARAMETER Name
-    Environment variable name.
-
-    .PARAMETER Value
-    Environment value.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Value
-    )
-
-    if ($env:GITHUB_ENV) {
-        "$Name=$Value" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - env: $Name=$Value"
-    }
-}
-
-function Write-GitHubStepSummary {
-    <#
-    .SYNOPSIS
-    Appends content to GitHub Actions step summary.
-
-    .PARAMETER Content
-    Markdown content to append.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Content
-    )
-
-    if ($env:GITHUB_STEP_SUMMARY) {
-        $Content | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-    }
-    else {
-        Write-Verbose "Not in GitHub Actions environment - summary content: $Content"
-    }
-}
-
-# Export functions
+# Export local functions only - CIHelpers functions are used via direct import
 Export-ModuleMember -Function @(
     'Get-ChangedFilesFromGit',
     'Get-FilesRecursive',
-    'Get-GitIgnorePatterns',
-    'Write-GitHubAnnotation',
-    'Set-GitHubOutput',
-    'Set-GitHubEnv',
-    'Write-GitHubStepSummary'
+    'Get-GitIgnorePatterns'
 )

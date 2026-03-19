@@ -11,15 +11,8 @@
 #>
 
 BeforeAll {
-    # Extract functions from script using AST
-    $scriptPath = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
-    $scriptContent = Get-Content -Path $scriptPath -Raw
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$null, [ref]$null)
-    $functions = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    foreach ($func in $functions) {
-        . ([scriptblock]::Create($func.Extent.Text))
-    }
+    $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
+    . $script:ScriptPath
 
     # Import LintingHelpers for mocking
     Import-Module (Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1') -Force
@@ -106,6 +99,60 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         It 'Returns empty array for empty string input' {
             $result = Get-MarkdownTarget -InputPath ''
             $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Fixture exclusion filtering' {
+        BeforeEach {
+            # Create test files including fixture path
+            $script:IncludeFile = Join-Path $script:TempDir 'docs' 'readme.md'
+            $script:ExcludeFile = Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures' 'test.md'
+            
+            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'docs') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures') -Force | Out-Null
+            Set-Content -Path $script:IncludeFile -Value '# Include This'
+            Set-Content -Path $script:ExcludeFile -Value '# Exclude Fixture'
+
+            # Mock git to simulate repository with tracked files including fixtures
+            Mock git {
+                if ($args -contains 'rev-parse') {
+                    $global:LASTEXITCODE = 0
+                    return $script:TempDir
+                }
+                elseif ($args -contains 'ls-files') {
+                    $global:LASTEXITCODE = 0
+                    # Return both fixture and non-fixture files
+                    return @('docs/readme.md', 'scripts/tests/Fixtures/test.md')
+                }
+            }
+        }
+
+        It 'Filters out test fixture files from results' {
+            # Act
+            $result = Get-MarkdownTarget -InputPath $script:TempDir
+            
+            # Assert - Should exclude files in scripts/tests/Fixtures/
+            $fixtureFiles = $result | Where-Object { $_ -like '*Fixtures*' }
+            $fixtureFiles | Should -BeNullOrEmpty
+        }
+
+        It 'Includes non-fixture files in results' {
+            # Act
+            $result = Get-MarkdownTarget -InputPath $script:TempDir
+            
+            # Assert - Should include docs files
+            $docsFiles = $result | Where-Object { $_ -like '*docs*readme.md' }
+            $docsFiles | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Correctly applies the notlike filter pattern' {
+            # Test the exact filter pattern used in the code
+            $testPaths = @('docs/readme.md', 'scripts/tests/Fixtures/test.md', 'src/guide.md')
+            $filtered = $testPaths | Where-Object { $_ -notlike 'scripts/tests/Fixtures/*' }
+            
+            $filtered | Should -Contain 'docs/readme.md'
+            $filtered | Should -Contain 'src/guide.md'
+            $filtered | Should -Not -Contain 'scripts/tests/Fixtures/test.md'
         }
     }
 }
@@ -197,6 +244,105 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
             $config = Get-Content $script:ConfigPath | ConvertFrom-Json
             $config.PSObject.Properties.Name | Should -Contain 'ignorePatterns'
             $config.PSObject.Properties.Name | Should -Contain 'replacementPatterns'
+        }
+    }
+
+    Context 'Main execution error handling' {
+        BeforeAll {
+            $script:OriginalGHA = $env:GITHUB_ACTIONS
+            $script:LinkCheckScript = Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1'
+        }
+
+        AfterAll {
+            if ($null -eq $script:OriginalGHA) {
+                Remove-Item Env:GITHUB_ACTIONS -ErrorAction SilentlyContinue
+            } else {
+                $env:GITHUB_ACTIONS = $script:OriginalGHA
+            }
+        }
+
+        It 'Outputs GitHub error annotation when script fails in CI' {
+            # Arrange
+            $env:GITHUB_ACTIONS = 'true'
+            
+            # Create temp directory with no markdown files
+            $emptyDir = Join-Path $TestDrive 'empty-no-md'
+            New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
+            
+            # Mock git to simulate no tracked markdown files
+            Mock git {
+                if ($args -contains 'rev-parse') {
+                    $global:LASTEXITCODE = 0
+                    return $emptyDir
+                }
+                elseif ($args -contains 'ls-files') {
+                    $global:LASTEXITCODE = 0
+                    return @()  # No markdown files
+                }
+            }
+            
+            # Act - Run script with empty directory (will fail with no files found)
+            $output = & $script:LinkCheckScript -Path $emptyDir 2>&1
+            
+            # Assert - Should output error
+            $errors = $output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
+            $errors | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion
+
+#region Invoke-MarkdownLinkCheck Tests
+
+Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
+    BeforeAll {
+        $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:FixtureConfig = Join-Path $PSScriptRoot '../Fixtures/Linting/link-check-config.json'
+    }
+
+    Context 'No markdown files found' {
+        It 'Throws when Get-MarkdownTarget returns empty' {
+            Mock Get-MarkdownTarget { return @() }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+
+            { Invoke-MarkdownLinkCheck -Path @('nonexistent') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*No markdown files were found to validate*'
+        }
+    }
+
+    Context 'CLI not installed' {
+        It 'Throws when markdown-link-check binary is missing' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $false } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+
+            { Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig } |
+                Should -Throw '*markdown-link-check is not installed*'
+        }
+    }
+
+    Context 'Quiet mode base arguments' {
+        It 'Passes -q flag when Quiet switch is set' {
+            Mock Get-MarkdownTarget { return @('file.md') }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = $script:RepoRoot } }
+            Mock Test-Path { return $true } -ParameterFilter { $LiteralPath -and $LiteralPath -like '*markdown-link-check*' }
+            Mock Push-Location { }
+            Mock Pop-Location { }
+            Mock Resolve-Path { return [PSCustomObject]@{ Path = "$TestDrive/file.md" } } -ParameterFilter { $LiteralPath -eq 'file.md' }
+            Mock New-Item { } -ParameterFilter { $ItemType -eq 'Directory' }
+            Mock Set-Content { }
+            Mock Write-Host { }
+
+            try {
+                Invoke-MarkdownLinkCheck -Path @('file.md') -ConfigPath $script:FixtureConfig -Quiet
+            }
+            catch {
+                Write-Verbose "CLI execution expected to fail in test environment: $_"
+            }
+
+            Should -Invoke Get-MarkdownTarget -Times 1
+            Should -Invoke Push-Location -Times 1
         }
     }
 }

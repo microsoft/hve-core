@@ -1,6 +1,8 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
+
 <#
 .SYNOPSIS
     Monitors SHA-pinned dependencies for staleness and security vulnerabilities.
@@ -71,187 +73,18 @@ param(
     [int]$GraphQLBatchSize = 20
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Import CIHelpers for workflow command escaping
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/SecurityHelpers.psm1') -Force
 
-# Ensure logging directory exists
-$LogDir = Split-Path -Parent $LogPath
-if (!(Test-Path $LogDir)) {
-    New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
-}
+# Route Write-SecurityLog output through script-scoped format and log path
+$PSDefaultParameterValues['Write-SecurityLog:OutputFormat'] = $OutputFormat
+$PSDefaultParameterValues['Write-SecurityLog:LogPath'] = $LogPath
 
-function Write-SecurityLog {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Message,
-
-        [Parameter(Mandatory = $false)]
-        [ValidateSet("Info", "Warning", "Error", "Success")]
-        [string]$Level = "Info"
-    )
-
-    if ([string]::IsNullOrWhiteSpace($Message)) {
-        $Message = "Empty log message"
-    }
-
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logEntry = "[$timestamp] [$Level] $Message"
-
-    # Console output with colors (only in console mode)
-    if ($OutputFormat -eq "console") {
-        switch ($Level) {
-            "Info" { Write-Host $logEntry -ForegroundColor Cyan }
-            "Warning" { Write-Host $logEntry -ForegroundColor Yellow }
-            "Error" { Write-Host $logEntry -ForegroundColor Red }
-            "Success" { Write-Host $logEntry -ForegroundColor Green }
-        }
-    }
-
-    # File logging
-    try {
-        Add-Content -Path $LogPath -Value $logEntry -ErrorAction SilentlyContinue
-    }
-    catch {
-        Write-Error "Failed to write to log file: $($_.Exception.Message)" -ErrorAction SilentlyContinue
-    }
-}
-
-# Structure to hold stale dependency information
-$StaleDependencies = @()
-
-function Test-GitHubToken {
-    param(
-        [Parameter(Mandatory = $false)]
-        [string]$Token
-    )
-
-    if (-not $Token) {
-        Write-SecurityLog "No GitHub token found" -Level Warning
-        Write-SecurityLog "SOLUTION: Set GITHUB_TOKEN environment variable for higher rate limits (5,000 vs 60 points/hour)" -Level Warning
-        Write-SecurityLog "CAUSE: Unauthenticated GitHub GraphQL API requests are heavily rate limited" -Level Info
-        return @{
-            Valid         = $false
-            Authenticated = $false
-            RateLimit     = 60
-            Message       = "No token provided - using unauthenticated API with 60 points/hour rate limit"
-        }
-    }
-
-    try {
-        $headers = @{
-            "Authorization" = "Bearer $Token"
-            "Content-Type"  = "application/json"
-        }
-
-        $query = @{
-            query = "query { viewer { login } rateLimit { limit remaining resetAt } }"
-        } | ConvertTo-Json
-
-        $response = Invoke-RestMethod -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $query -ErrorAction Stop
-
-        if ($response.data.viewer) {
-            $rateLimit = $response.data.rateLimit
-            Write-SecurityLog "GitHub token validated - User: $($response.data.viewer.login), Rate limit: $($rateLimit.remaining)/$($rateLimit.limit)" -Level Success
-            
-            if ($rateLimit.remaining -lt 100) {
-                Write-SecurityLog "WARNING: GitHub API rate limit running low ($($rateLimit.remaining) remaining)" -Level Warning
-                Write-SecurityLog "Rate limit resets at: $($rateLimit.resetAt)" -Level Info
-            }
-
-            return @{
-                Valid         = $true
-                Authenticated = $true
-                RateLimit     = $rateLimit.limit
-                Remaining     = $rateLimit.remaining
-                ResetAt       = $rateLimit.resetAt
-                User          = $response.data.viewer.login
-                Message       = "Token valid - authenticated as $($response.data.viewer.login)"
-            }
-        }
-    }
-    catch {
-        Write-SecurityLog "GitHub token validation failed: $($_.Exception.Message)" -Level Error
-        Write-SecurityLog "CAUSE: Token may be expired, revoked, or have insufficient permissions" -Level Warning
-        Write-SecurityLog "SOLUTION: Generate a new GitHub token with 'repo' scope at https://github.com/settings/tokens" -Level Warning
-        return @{
-            Valid         = $false
-            Authenticated = $false
-            Message       = "Token validation failed: $($_.Exception.Message)"
-        }
-    }
-
-    return @{
-        Valid         = $false
-        Authenticated = $false
-        Message       = "Token validation returned unexpected response"
-    }
-}
-
-function Invoke-GitHubAPIWithRetry {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Uri,
-
-        [Parameter(Mandatory = $true)]
-        [string]$Method,
-
-        [Parameter(Mandatory = $true)]
-        [hashtable]$Headers,
-
-        [Parameter(Mandatory = $false)]
-        [string]$Body,
-
-        [Parameter(Mandatory = $false)]
-        [int]$MaxRetries = 3,
-
-        [Parameter(Mandatory = $false)]
-        [int]$InitialDelaySeconds = 5
-    )
-
-    $attempt = 0
-    $delay = $InitialDelaySeconds
-
-    while ($attempt -lt $MaxRetries) {
-        try {
-            if ($Body) {
-                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -Body $Body -ContentType "application/json" -ErrorAction Stop
-            }
-            else {
-                $response = Invoke-RestMethod -Uri $Uri -Method $Method -Headers $Headers -ErrorAction Stop
-            }
-            return $response
-        }
-        catch {
-            $statusCode = $null
-            if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-                $statusCode = [int]$_.Exception.Response.StatusCode
-            }
-
-            # Check if it's a rate limit error (403 or 429)
-            if ($statusCode -in 403, 429) {
-                $attempt++
-                if ($attempt -lt $MaxRetries) {
-                    Write-SecurityLog "GitHub API rate limit hit (HTTP $statusCode). Retrying in $delay seconds (attempt $attempt/$MaxRetries)..." -Level Warning
-                    Start-Sleep -Seconds $delay
-                    $delay = $delay * 2  # Exponential backoff
-                }
-                else {
-                    Write-SecurityLog "GitHub API rate limit exceeded after $MaxRetries attempts" -Level Error
-                    Write-SecurityLog "CAUSE: Too many API requests in a short time period" -Level Warning
-                    Write-SecurityLog "SOLUTION: Wait for rate limit to reset or provide a GitHub token with higher limits" -Level Warning
-                    throw
-                }
-            }
-            else {
-                # Non-rate-limit error, throw immediately
-                Write-SecurityLog "GitHub API request failed: $($_.Exception.Message)" -Level Error
-                throw
-            }
-        }
-    }
-
-    throw "Failed to complete GitHub API request after $MaxRetries retries"
-}
+# Script-scope collection of stale dependencies (used by multiple functions)
+$script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
 
 function Get-BulkGitHubActionsStaleness {
     param(
@@ -289,6 +122,8 @@ function Get-BulkGitHubActionsStaleness {
     elseif ($githubToken) {
         Write-SecurityLog "Token validation failed, proceeding without authentication" -Level Warning
     }
+
+    $apiBase = Get-GitHubApiBase
 
     # Build GraphQL query for multiple repositories (batch 1: get default branches)
     $repoQueries = @()
@@ -336,7 +171,8 @@ function Get-BulkGitHubActionsStaleness {
     } | ConvertTo-Json -Depth 10
 
     try {
-        $repoResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $graphqlQuery
+        $repoResponse = Invoke-GitHubAPIWithRetry -Uri "$apiBase/graphql" -Method POST -Headers $headers -Body $graphqlQuery
+        if ($null -eq $repoResponse) { throw "GitHub GraphQL API returned no response" }
 
         Write-SecurityLog "GraphQL Rate Limit: $($repoResponse.data.rateLimit.remaining)/$($repoResponse.data.rateLimit.limit) remaining" -Level Info
 
@@ -415,7 +251,11 @@ function Get-BulkGitHubActionsStaleness {
         } | ConvertTo-Json -Depth 10
 
         try {
-            $commitResponse = Invoke-GitHubAPIWithRetry -Uri "https://api.github.com/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery
+            $commitResponse = Invoke-GitHubAPIWithRetry -Uri "$apiBase/graphql" -Method POST -Headers $headers -Body $commitGraphqlQuery
+            if ($null -eq $commitResponse) {
+                Write-SecurityLog "GitHub GraphQL API returned no response for commit batch query" -Level Warning
+                continue
+            }
 
             # Merge results
             foreach ($property in $commitResponse.data.PSObject.Properties) {
@@ -529,12 +369,12 @@ function Test-GitHubActionsForStaleness {
         }
     }
 
-    if ($allActionRepos.Count -eq 0) {
+    if (@($allActionRepos).Count -eq 0) {
         Write-SecurityLog "No SHA-pinned GitHub Actions found" -Level Info
         return
     }
 
-    Write-SecurityLog "Found $($allActionRepos.Count) unique repositories with $($shaToActionMap.Count) SHA-pinned actions" -Level Info
+    Write-SecurityLog "Found $(@($allActionRepos).Count) unique repositories with $(@($shaToActionMap.Keys).Count) SHA-pinned actions" -Level Info
 
     # Bulk query for all actions using GraphQL optimization
     try {
@@ -542,7 +382,7 @@ function Test-GitHubActionsForStaleness {
 
         foreach ($result in $bulkResults) {
             if ($result.IsStale) {
-                $script:StaleDependencies += [PSCustomObject]@{
+                $script:StaleDependencies.Add([PSCustomObject]@{
                     Type           = "GitHubAction"
                     File           = $result.File
                     Name           = $result.ActionRepo
@@ -551,7 +391,7 @@ function Test-GitHubActionsForStaleness {
                     DaysOld        = $result.DaysOld
                     Severity       = if ($result.DaysOld -gt 90) { "High" } elseif ($result.DaysOld -gt 60) { "Medium" } else { "Low" }
                     Message        = "GitHub Action is $($result.DaysOld) days old (current: $($result.CurrentSHA.Substring(0,8)), latest: $($result.LatestSHA.Substring(0,8)))"
-                }
+                })
 
                 Write-SecurityLog "Found stale GitHub Action: $($result.ActionRepo) ($($result.DaysOld) days old)" -Level Warning
             }
@@ -563,99 +403,78 @@ function Test-GitHubActionsForStaleness {
     catch {
         Write-SecurityLog "Bulk GraphQL check failed, falling back to individual checks: $($_.Exception.Message)" -Level Warning
 
-        # Fallback to individual REST API calls if GraphQL fails
+        # Fallback to individual REST API calls via Invoke-GitHubAPIWithRetry
         $defaultBranchCache = @{}
-        $rateLimitExceeded = $false
         foreach ($key in $shaToActionMap.Keys) {
             $action = $shaToActionMap[$key]
 
             Write-SecurityLog "Checking GitHub Action (fallback): $($action.Repo)@$($action.SHA)" -Level Info
 
-            # Individual REST API call as fallback
-            try {
-                $headers = @{}
-                if ($env:GITHUB_TOKEN) {
-                    $headers['Authorization'] = "token $env:GITHUB_TOKEN"
-                }
-
-                $repoSegments = $action.Repo.Split('/')
-                if ($repoSegments.Count -lt 2) {
-                    Write-SecurityLog "Invalid GitHub Action repository format: $($action.Repo)" -Level Warning
-                    continue
-                }
-
-                $owner = $repoSegments[0]
-                $repoName = $repoSegments[1]
-                $repoLookup = "$owner/$repoName"
-
-                if (-not $defaultBranchCache.ContainsKey($repoLookup)) {
-                    try {
-                        $repoInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup" -Headers $headers -ErrorAction Stop
-                        $defaultBranch = if ($repoInfo.default_branch) { $repoInfo.default_branch } else { "main" }
-                        $defaultBranchCache[$repoLookup] = $defaultBranch
-                    }
-                    catch {
-                        Write-SecurityLog "Failed to discover default branch for $repoLookup, defaulting to 'main': $($_.Exception.Message)" -Level Warning
-                        $defaultBranchCache[$repoLookup] = "main"
-                    }
-                }
-
-                $branchName = $defaultBranchCache[$repoLookup]
-
-                $BranchInfo = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup/branches/$branchName" -Headers $headers -ErrorAction Stop
-                $LatestSHA = $BranchInfo.commit.sha
-
-                if ($action.SHA -ne $LatestSHA) {
-                    $CurrentCommit = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoLookup/commits/$($action.SHA)" -Headers $headers -ErrorAction Stop
-                    $CurrentDate = [DateTime]::Parse($CurrentCommit.commit.author.date)
-                    $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
-
-                    if ($DaysOld -gt $MaxAge) {
-                        $script:StaleDependencies += [PSCustomObject]@{
-                            Type           = "GitHubAction"
-                            File           = $action.File
-                            Name           = $action.Repo
-                            CurrentVersion = $action.SHA
-                            LatestVersion  = $LatestSHA
-                            DaysOld        = $DaysOld
-                            Severity       = if ($DaysOld -gt 90) { "High" } elseif ($DaysOld -gt 60) { "Medium" } else { "Low" }
-                            Message        = "GitHub Action is $DaysOld days old (current: $($action.SHA.Substring(0,8)), latest: $($LatestSHA.Substring(0,8)))"
-                        }
-
-                        Write-SecurityLog "Found stale GitHub Action (fallback): $($action.Repo) ($DaysOld days old)" -Level Warning
-                    }
-                }
+            $headers = @{}
+            if ($env:GITHUB_TOKEN) {
+                $headers['Authorization'] = "token $env:GITHUB_TOKEN"
             }
-            catch {
-                $statusCode = $null
-                if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
-                    $statusCode = [int]$_.Exception.Response.StatusCode
-                }
-                elseif ($_.Exception.StatusCode) {
-                    $statusCode = [int]$_.Exception.StatusCode
-                }
 
-                if ($statusCode -eq 403 -or $statusCode -eq 429) {
-                    Write-SecurityLog "GitHub API rate limit exceeded for $($action.Repo) - skipping remaining GitHub Action checks" -Level Warning
-                    $rateLimitExceeded = $true
+            $apiBase = Get-GitHubApiBase
+            $repoSegments = $action.Repo.Split('/')
+            if ($repoSegments.Count -lt 2) {
+                Write-SecurityLog "Invalid GitHub Action repository format: $($action.Repo)" -Level Warning
+                continue
+            }
+
+            $owner = $repoSegments[0]
+            $repoName = $repoSegments[1]
+            $repoLookup = "$owner/$repoName"
+
+            if (-not $defaultBranchCache.ContainsKey($repoLookup)) {
+                $repoInfo = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup" -Method GET -Headers $headers
+                if ($repoInfo) {
+                    $defaultBranchCache[$repoLookup] = if ($repoInfo.default_branch) { $repoInfo.default_branch } else { "main" }
                 }
                 else {
-                    Write-SecurityLog "Failed to check GitHub Action $($action.Repo): $($_.Exception.Message)" -Level Warning
+                    Write-SecurityLog "Failed to discover default branch for $repoLookup, defaulting to 'main'" -Level Warning
+                    $defaultBranchCache[$repoLookup] = "main"
                 }
             }
 
-            if ($rateLimitExceeded) {
-                break
-            }
-        }
+            $branchName = $defaultBranchCache[$repoLookup]
 
-        if ($rateLimitExceeded) {
-            Write-SecurityLog "GitHub Action staleness results are incomplete due to API rate limiting. Provide a token via GITHUB_TOKEN to enable full coverage." -Level Warning
+            $BranchInfo = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup/branches/$branchName" -Method GET -Headers $headers
+            if (-not $BranchInfo) {
+                Write-SecurityLog "Failed to check GitHub Action $($action.Repo): could not fetch branch info" -Level Warning
+                continue
+            }
+            $LatestSHA = $BranchInfo.commit.sha
+
+            if ($action.SHA -ne $LatestSHA) {
+                $CurrentCommit = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/$repoLookup/commits/$($action.SHA)" -Method GET -Headers $headers
+                if (-not $CurrentCommit) {
+                    Write-SecurityLog "Failed to check GitHub Action $($action.Repo): could not fetch commit info" -Level Warning
+                    continue
+                }
+                $CurrentDate = [DateTime]::Parse($CurrentCommit.commit.author.date)
+                $DaysOld = [Math]::Round((Get-Date).Subtract($CurrentDate).TotalDays)
+
+                if ($DaysOld -gt $MaxAge) {
+                    $script:StaleDependencies.Add([PSCustomObject]@{
+                        Type           = "GitHubAction"
+                        File           = $action.File
+                        Name           = $action.Repo
+                        CurrentVersion = $action.SHA
+                        LatestVersion  = $LatestSHA
+                        DaysOld        = $DaysOld
+                        Severity       = if ($DaysOld -gt 90) { "High" } elseif ($DaysOld -gt 60) { "Medium" } else { "Low" }
+                        Message        = "GitHub Action is $DaysOld days old (current: $($action.SHA.Substring(0,8)), latest: $($LatestSHA.Substring(0,8)))"
+                    })
+
+                    Write-SecurityLog "Found stale GitHub Action (fallback): $($action.Repo) ($DaysOld days old)" -Level Warning
+                }
+            }
         }
     }
 }
 
-function Write-OutputResult {
+function Write-SecurityOutput {
     param(
         [Parameter(Mandatory = $false)]
         [array]$Dependencies = @(),
@@ -673,12 +492,11 @@ function Write-OutputResult {
             $JsonOutput = @{
                 Timestamp       = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
                 MaxAgeThreshold = $MaxAge
-                TotalStaleItems = $Dependencies.Count
+                TotalStaleItems = @($Dependencies).Count
                 Dependencies    = $Dependencies
             } | ConvertTo-Json -Depth 10
 
             try {
-                # Ensure output directory exists
                 $OutputDir = Split-Path -Parent $OutputPath
                 if (!(Test-Path $OutputDir)) {
                     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
@@ -697,38 +515,64 @@ function Write-OutputResult {
 
         "github" {
             foreach ($Dep in $Dependencies) {
-                $normalizedPath = $Dep.File -replace '\\', '/'
-                $escapedPath = ConvertTo-GitHubActionsEscaped -Value $normalizedPath
-                $escapedMessage = ConvertTo-GitHubActionsEscaped -Value "[$($Dep.Severity)] $($Dep.Message)"
-                Write-Output "::warning file=$escapedPath::$escapedMessage"
+                Write-CIAnnotation -Message "[$($Dep.Severity)] $($Dep.Message)" -Level Warning -File $Dep.File
             }
 
-            if ($Dependencies.Count -eq 0) {
-                Write-Output "::notice::No stale dependencies detected"
+            if (@($Dependencies).Count -eq 0) {
+                Write-CIAnnotation -Message "No stale dependencies detected" -Level Notice
             }
             else {
-                $escapedCount = ConvertTo-GitHubActionsEscaped -Value "Found $($Dependencies.Count) stale dependencies that may pose security risks"
-                Write-Output "::error::$escapedCount"
+                Write-CIAnnotation -Message "Found $(@($Dependencies).Count) stale dependencies that may pose security risks" -Level Error
             }
+
+            # Build step summary markdown table
+            $totalCount = @($Dependencies).Count
+
+            if ($totalCount -eq 0) {
+                $summaryContent = @"
+# SHA Staleness Analysis
+
+**All Clear:** No stale dependencies detected.
+
+**Found:** 0 | **Stale:** 0
+"@
+            }
+            else {
+                $tableRows = foreach ($Dep in $Dependencies) {
+                    $status = 'Stale'
+                    "| $($Dep.Name) | $($Dep.DaysOld) | $MaxAge | $status |"
+                }
+
+                $summaryContent = @"
+# SHA Staleness Analysis
+
+**Found:** $totalCount | **Stale:** $totalCount
+
+| Dependency | SHA Age (days) | Threshold (days) | Status |
+|------------|----------------|-------------------|--------|
+$($tableRows -join "`n")
+"@
+            }
+
+            Write-CIStepSummary -Content $summaryContent
         }
 
         "azdo" {
             foreach ($Dep in $Dependencies) {
-                $Message = "##vso[task.logissue type=warning;sourcepath=$($Dep.File);][$($Dep.Severity)] $($Dep.Message)"
-                Write-Output $Message
+                Write-CIAnnotation -Message "[$($Dep.Severity)] $($Dep.Message)" -Level Warning -File $Dep.File
             }
 
-            if ($Dependencies.Count -eq 0) {
-                Write-Output "##vso[task.logissue type=info]No stale dependencies detected"
+            if (@($Dependencies).Count -eq 0) {
+                Write-CIAnnotation -Message "No stale dependencies detected" -Level Notice
             }
             else {
-                Write-Output "##vso[task.logissue type=error]Found $($Dependencies.Count) stale dependencies that may pose security risks"
-                Write-Output "##vso[task.complete result=SucceededWithIssues]"
+                Write-CIAnnotation -Message "Found $(@($Dependencies).Count) stale dependencies that may pose security risks" -Level Error
+                Set-CITaskResult -Result SucceededWithIssues
             }
         }
 
         "console" {
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-SecurityLog "No stale dependencies detected!" -Level Success
             }
             else {
@@ -739,18 +583,18 @@ function Write-OutputResult {
                     Write-SecurityLog "  Message: $($Dep.Message)" -Level Info
                     Write-Information "" -InformationAction Continue
                 }
-                Write-SecurityLog "Total stale dependencies: $($Dependencies.Count)" -Level Warning
+                Write-SecurityLog "Total stale dependencies: $(@($Dependencies).Count)" -Level Warning
             }
         }
 
         "Summary" {
-            if ($Dependencies.Count -eq 0) {
+            if (@($Dependencies).Count -eq 0) {
                 Write-Output "No stale dependencies detected!"
             }
             else {
                 Write-Output "=== SHA Staleness Summary ==="
-                Write-Output "Total stale dependencies: $($Dependencies.Count)"
-                $ByType = $Dependencies | Group-Object Type
+                Write-Output "Total stale dependencies: $(@($Dependencies).Count)"
+                $ByType = @($Dependencies | Group-Object Type)
                 foreach ($Group in $ByType) {
                     Write-Output "$($Group.Name): $($Group.Count)"
                 }
@@ -836,10 +680,13 @@ function Get-ToolStaleness {
         $headers['Authorization'] = "Bearer $GitHubToken"
     }
 
+    $apiBase = Get-GitHubApiBase
+
     foreach ($tool in $manifest.tools) {
-        try {
-            $uri = "https://api.github.com/repos/$($tool.repo)/releases/latest"
-            $latestRelease = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+        $uri = "$apiBase/repos/$($tool.repo)/releases/latest"
+        $latestRelease = Invoke-GitHubAPIWithRetry -Uri $uri -Method GET -Headers $headers
+
+        if ($latestRelease) {
             $latestVersion = $latestRelease.tag_name -replace '^v', ''
 
             $isStale = Compare-ToolVersion -Current $tool.version -Latest $latestVersion
@@ -855,8 +702,8 @@ function Get-ToolStaleness {
                 Error          = $null
             }
         }
-        catch {
-            $errorMsg = "Failed to check $($tool.name): $_"
+        else {
+            $errorMsg = "Failed to check $($tool.name): API returned no response"
             Write-Warning $errorMsg
 
             $results += [PSCustomObject]@{
@@ -864,7 +711,7 @@ function Get-ToolStaleness {
                 Repository     = $tool.repo
                 CurrentVersion = $tool.version
                 LatestVersion  = $null
-                IsStale        = $null  # Unknown due to error
+                IsStale        = $null
                 CurrentSHA256  = $tool.sha256
                 Notes          = $tool.notes
                 Error          = $errorMsg
@@ -876,11 +723,45 @@ function Get-ToolStaleness {
 }
 
 #region Main Execution
-try {
+
+function Invoke-SHAStalenessCheck {
+    [CmdletBinding()]
+    [OutputType([void])]
+    param(
+        [Parameter(Mandatory = $false)]
+        [ValidateSet("json", "azdo", "github", "console", "BuildWarning", "Summary")]
+        [string]$OutputFormat = "console",
+
+        [Parameter(Mandatory = $false)]
+        [int]$MaxAge = 30,
+
+        [Parameter(Mandatory = $false)]
+        [string]$LogPath = "./logs/sha-staleness-monitoring.log",
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "./logs/sha-staleness-results.json",
+
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnStale,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateRange(1, 50)]
+        [int]$GraphQLBatchSize = 20
+    )
+
+    # Ensure logging directory exists (relocated from script scope)
+    $LogDir = Split-Path -Parent $LogPath
+    if (!(Test-Path $LogDir)) {
+        New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
+    }
+
     Write-SecurityLog "Starting SHA staleness monitoring..." -Level Info
     Write-SecurityLog "Max age threshold: $MaxAge days" -Level Info
     Write-SecurityLog "GraphQL batch size: $GraphQLBatchSize queries per request" -Level Info
     Write-SecurityLog "Output format: $OutputFormat" -Level Info
+
+    # Reset stale dependencies for this run
+    $script:StaleDependencies = [System.Collections.Generic.List[PSCustomObject]]::new()
 
     # Run staleness check for GitHub Actions
     Test-GitHubActionsForStaleness
@@ -888,63 +769,60 @@ try {
     # Run staleness check for tools from tool-checksums.json
     Write-SecurityLog "Checking tool staleness from tool-checksums.json" -Level Info
 
-    $toolResults = Get-ToolStaleness
-    if ($toolResults) {
-        $staleTools = $toolResults | Where-Object { $_.IsStale -eq $true }
-        if ($staleTools.Count -gt 0) {
-            Write-SecurityLog "Found $($staleTools.Count) stale tool(s):" -Level Warning
+    $toolResults = @(Get-ToolStaleness)
+    if (@($toolResults).Count -gt 0) {
+        $staleTools = @($toolResults | Where-Object { $_.IsStale -eq $true })
+        if (@($staleTools).Count -gt 0) {
+            Write-SecurityLog "Found $(@($staleTools).Count) stale tool(s):" -Level Warning
             foreach ($tool in $staleTools) {
                 Write-SecurityLog "  - $($tool.Tool): $($tool.CurrentVersion) -> $($tool.LatestVersion)" -Level Warning
-                
-                # Add to global stale dependencies for output
-                $script:StaleDependencies += [PSCustomObject]@{
+
+                $script:StaleDependencies.Add([PSCustomObject]@{
                     Type           = "Tool"
                     File           = "scripts/security/tool-checksums.json"
                     Name           = $tool.Tool
                     CurrentVersion = $tool.CurrentVersion
                     LatestVersion  = $tool.LatestVersion
-                    DaysOld        = $null  # Not tracked for tools
+                    DaysOld        = $null
                     Severity       = "Medium"
                     Message        = "Tool has newer version available: $($tool.CurrentVersion) -> $($tool.LatestVersion)"
-                }
+                })
             }
         }
         else {
             Write-SecurityLog "All tools are up to date" -Level Info
         }
 
-        # Check for errors
-        $errorTools = $toolResults | Where-Object { $null -ne $_.Error }
-        if ($errorTools.Count -gt 0) {
-            Write-SecurityLog "Failed to check $($errorTools.Count) tool(s)" -Level Warning
+        $errorTools = @($toolResults | Where-Object { $null -ne $_.Error })
+        if (@($errorTools).Count -gt 0) {
+            Write-SecurityLog "Failed to check $(@($errorTools).Count) tool(s)" -Level Warning
         }
     }
 
-    # Output results
-    Write-OutputResult -Dependencies $StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
+    Write-SecurityOutput -Dependencies $script:StaleDependencies -OutputFormat $OutputFormat -OutputPath $OutputPath
 
     Write-SecurityLog "SHA staleness monitoring completed" -Level Success
-    Write-SecurityLog "Stale dependencies found: $($StaleDependencies.Count)" -Level Info
+    Write-SecurityLog "Stale dependencies found: $(@($script:StaleDependencies).Count)" -Level Info
 
-    # Exit with appropriate code based on findings and -FailOnStale parameter
-    if ($StaleDependencies.Count -gt 0) {
-        if ($FailOnStale) {
-            Write-SecurityLog "Exiting with status 1 due to stale dependencies (-FailOnStale specified)" -Level Warning
-            exit 1
-        }
-        else {
-            Write-SecurityLog "Stale dependencies found but exiting with status 0 (use -FailOnStale to fail build)" -Level Warning
-            exit 0
-        }
+    if (@($script:StaleDependencies).Count -gt 0 -and $FailOnStale) {
+        throw "Stale dependencies detected ($(@($script:StaleDependencies).Count) found)"
     }
-    exit 0  # All good
-}
-catch {
-    Write-Error "Test SHA Staleness failed: $($_.Exception.Message)"
-    if ($env:GITHUB_ACTIONS -eq 'true') {
-        $escapedMsg = ConvertTo-GitHubActionsEscaped -Value $_.Exception.Message
-        Write-Output "::error::$escapedMsg"
+
+    if (@($script:StaleDependencies).Count -gt 0) {
+        Write-SecurityLog "Stale dependencies found but not failing (use -FailOnStale to fail build)" -Level Warning
     }
-    exit 1
 }
-#endregion
+
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        Invoke-SHAStalenessCheck -OutputFormat $OutputFormat -MaxAge $MaxAge -LogPath $LogPath -OutputPath $OutputPath -FailOnStale:$FailOnStale -GraphQLBatchSize $GraphQLBatchSize
+        exit 0
+    }
+    catch {
+        Write-Error -ErrorAction Continue "Test-SHAStaleness failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
+}
+
+#endregion Main Execution

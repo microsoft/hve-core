@@ -13,7 +13,7 @@ jobs:
     name: Review Dependencies
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # Elevated for Dependency Submission API (uv.lock)
       pull-requests: write
     
     steps:
@@ -21,9 +21,22 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
-      
+
+      - name: Submit uv.lock dependencies  # Skipped on fork PRs (read-only token)
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: advanced-security/component-detection-dependency-submission-action@9c110eb34dee187cd9eca76a652b9f6a0ed22927 # v0.1.1
+        with:
+          detectorArgs: 'UvLock=EnableIfDefaultOff'
+
       - name: Dependency Review
-        uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.3.4
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
+          license-check: true
+          allow-licenses: >-
+            MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC,
+            0BSD, BlueOak-1.0.0, CC0-1.0, Unlicense,
+            CC-BY-4.0, CC-BY-3.0, PSF-2.0, Python-2.0
+          show-openssf-scorecard: true
+          warn-on-openssf-scorecard-level: 3

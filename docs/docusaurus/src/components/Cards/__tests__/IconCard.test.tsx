@@ -1,0 +1,51 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { axe, toHaveNoViolations } from 'jest-axe';
+import IconCard from '../IconCard';
+
+expect.extend(toHaveNoViolations);
+
+describe('IconCard', () => {
+  const defaultProps = {
+    icon: <span data-testid="test-icon">🚀</span>,
+    supertitle: 'Category',
+    title: 'Card Title',
+    href: '/test-link',
+  };
+
+  it('renders supertitle and title', () => {
+    render(<IconCard {...defaultProps} />);
+    expect(screen.getByText('Category')).toBeInTheDocument();
+    expect(screen.getByText('Card Title')).toBeInTheDocument();
+  });
+
+  it('links to the correct href', () => {
+    render(<IconCard {...defaultProps} />);
+    const link = screen.getByText('Card Title').closest('a');
+    expect(link).toHaveAttribute('href', '/test-link');
+  });
+
+  it('renders the icon', () => {
+    render(<IconCard {...defaultProps} />);
+    expect(screen.getByTestId('test-icon')).toBeInTheDocument();
+  });
+
+  it('renders description when provided', () => {
+    render(<IconCard {...defaultProps} description="A description" />);
+    expect(screen.getByText('A description')).toBeInTheDocument();
+  });
+
+  it('omits description when not provided', () => {
+    const { container } = render(<IconCard {...defaultProps} />);
+    expect(container.querySelector('.cardDescription')).toBeNull();
+  });
+
+  it('has no accessibility violations', async () => {
+    const { container } = render(<IconCard {...defaultProps} />);
+    const results = await axe(container, {
+      rules: { region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
+  });
+});

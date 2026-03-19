@@ -5,22 +5,15 @@
 .SYNOPSIS
     Pester tests for LintingHelpers.psm1 module
 .DESCRIPTION
-    Comprehensive tests for all 7 exported functions in the LintingHelpers module:
+    Comprehensive tests for all 3 exported functions in the LintingHelpers module:
     - Get-ChangedFilesFromGit
     - Get-FilesRecursive
     - Get-GitIgnorePatterns
-    - Write-GitHubAnnotation
-    - Set-GitHubOutput
-    - Set-GitHubEnv
-    - Write-GitHubStepSummary
 #>
 
 BeforeAll {
     $modulePath = Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1'
-    $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
-
     Import-Module $modulePath -Force
-    Import-Module $mockPath -Force
 }
 
 #region Get-ChangedFilesFromGit Tests
@@ -227,6 +220,134 @@ Describe 'Get-ChangedFilesFromGit' {
             $result | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Warning and verbose output' {
+        It 'Emits warning when git diff returns non-zero exit code' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 1
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            $output = Get-ChangedFilesFromGit 3>&1
+            $warnings = @($output | Where-Object { $_ -is [System.Management.Automation.WarningRecord] })
+            $warnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits warning when exception occurs' {
+            Mock git {
+                throw "Simulated git failure"
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            $warnings = Get-ChangedFilesFromGit 3>&1 | Where-Object { $_ -is [System.Management.Automation.WarningRecord] }
+            $warnings | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits verbose message when merge-base succeeds' {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+
+            $verbose = Get-ChangedFilesFromGit -Verbose 4>&1 | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $verbose | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Emits verbose message when falling back to HEAD~1' {
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'HEAD~1-sha'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+
+            $verbose = Get-ChangedFilesFromGit -Verbose 4>&1 | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }
+            $verbose | Should -Not -BeNullOrEmpty
+            ($verbose | Where-Object { $_.Message -match 'HEAD~1' }) | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'Custom BaseBranch parameter' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('file.md')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Passes custom BaseBranch to merge-base' {
+            Get-ChangedFilesFromGit -BaseBranch 'origin/develop' -FileExtensions @('*.md')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'merge-base' -and $args -contains 'origin/develop'
+            }
+        }
+
+        It 'Uses default BaseBranch when not specified' {
+            Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'merge-base' -and $args -contains 'origin/main'
+            }
+        }
+    }
+
+    Context 'Mixed path separators' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return 'abc123def456789'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'merge-base' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/docs/readme.md', 'src\tests\test.md', 'docs/guide.md')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'diff' }
+
+            Mock Test-Path { return $true } -ModuleName 'LintingHelpers' -ParameterFilter { $PathType -eq 'Leaf' }
+        }
+
+        It 'Handles files with forward slashes' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result | Should -Contain 'src/docs/readme.md'
+        }
+
+        It 'Handles files with backslashes' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result | Should -Contain 'src\tests\test.md'
+        }
+
+        It 'Returns correct count with mixed separators' {
+            $result = Get-ChangedFilesFromGit -FileExtensions @('*.md')
+            $result.Count | Should -Be 3
+        }
+    }
 }
 
 #endregion
@@ -305,6 +426,122 @@ Describe 'Get-FilesRecursive' {
             $result.Count | Should -Be 1
         }
     }
+
+    Context 'Git ls-files code path at repo root' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return '/mock/repo'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/app.ps1', 'src/helper.psm1', 'tests/run.ps1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+
+            Mock Resolve-Path {
+                [PSCustomObject]@{ Path = '/mock/repo' }
+            } -ModuleName 'LintingHelpers'
+
+            Mock Test-Path { $true } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $LiteralPath -or ($Path -and $PathType -eq 'Leaf')
+            }
+
+            Mock Get-Item {
+                [PSCustomObject]@{
+                    FullName      = $LiteralPath
+                    Name          = [System.IO.Path]::GetFileName($LiteralPath)
+                    PSIsContainer = $false
+                }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Calls git ls-files when path is inside the repository' {
+            Get-FilesRecursive -Path '.' -Include @('*.ps1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args[0] -eq 'ls-files'
+            }
+        }
+
+        It 'Returns FileInfo objects from git ls-files output' {
+            $result = Get-FilesRecursive -Path '.' -Include @('*.ps1')
+            $result | Should -Not -BeNullOrEmpty
+            $result | ForEach-Object { $_.PSIsContainer | Should -BeFalse }
+        }
+
+        It 'Passes Include patterns as pathspecs at repo root' {
+            Get-FilesRecursive -Path '.' -Include @('*.ps1', '*.psm1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args -contains '*.ps1' -and $args -contains '*.psm1'
+            }
+        }
+
+        It 'Accepts GitIgnorePath without error on git path' {
+            { Get-FilesRecursive -Path '.' -Include @('*.ps1') -GitIgnorePath '/nonexistent/.gitignore' } |
+                Should -Not -Throw
+        }
+    }
+
+    Context 'Git ls-files subdirectory scoping' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return '/mock/repo'
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            Mock git {
+                $global:LASTEXITCODE = 0
+                return @('src/app.ps1', 'src/helper.psm1')
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'ls-files' }
+
+            Mock Resolve-Path {
+                [PSCustomObject]@{ Path = '/mock/repo/src' }
+            } -ModuleName 'LintingHelpers'
+
+            Mock Test-Path { $true } -ModuleName 'LintingHelpers' -ParameterFilter {
+                $LiteralPath -or ($Path -and $PathType -eq 'Leaf')
+            }
+
+            Mock Get-Item {
+                [PSCustomObject]@{
+                    FullName      = $LiteralPath
+                    Name          = [System.IO.Path]::GetFileName($LiteralPath)
+                    PSIsContainer = $false
+                }
+            } -ModuleName 'LintingHelpers'
+        }
+
+        It 'Scopes git ls-files to the specified subdirectory' {
+            Get-FilesRecursive -Path './src' -Include @('*.ps1')
+            Should -Invoke git -ModuleName 'LintingHelpers' -ParameterFilter {
+                $args -contains '--' -and $args -contains 'src/'
+            }
+        }
+
+        It 'Filters subdirectory results by Include patterns' {
+            $result = Get-FilesRecursive -Path './src' -Include @('*.ps1')
+            $result.Name | Should -Contain 'app.ps1'
+            $result.Name | Should -Not -Contain 'helper.psm1'
+        }
+    }
+
+    Context 'Git unavailable' {
+        BeforeEach {
+            Mock git {
+                $global:LASTEXITCODE = 128
+                return $null
+            } -ModuleName 'LintingHelpers' -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+            New-Item -Path 'TestDrive:/nogit' -ItemType Directory -Force | Out-Null
+            New-Item -Path 'TestDrive:/nogit/script.ps1' -ItemType File -Force | Out-Null
+        }
+
+        It 'Falls back to Get-ChildItem when git is unavailable' {
+            $result = Get-FilesRecursive -Path 'TestDrive:/nogit' -Include @('*.ps1')
+            $result.Count | Should -Be 1
+            $result.Name | Should -Contain 'script.ps1'
+        }
+    }
 }
 
 #endregion
@@ -368,220 +605,6 @@ Describe 'Get-GitIgnorePatterns' {
             @('node_modules/', 'dist/', '*.tmp', 'logs/debug.log') | Set-Content 'TestDrive:/.gitignore-multi'
             $result = Get-GitIgnorePatterns -GitIgnorePath 'TestDrive:/.gitignore-multi'
             $result.Count | Should -Be 4
-        }
-    }
-}
-
-#endregion
-
-#region Write-GitHubAnnotation Tests
-
-Describe 'Write-GitHubAnnotation' {
-    Context 'Basic annotation types' {
-        It 'Writes error annotation without properties' {
-            $output = Write-GitHubAnnotation -Type 'error' -Message 'Test error' 6>&1
-            $output | Should -Be '::error::Test error'
-        }
-
-        It 'Writes warning annotation without properties' {
-            $output = Write-GitHubAnnotation -Type 'warning' -Message 'Test warning' 6>&1
-            $output | Should -Be '::warning::Test warning'
-        }
-
-        It 'Writes notice annotation without properties' {
-            $output = Write-GitHubAnnotation -Type 'notice' -Message 'Test notice' 6>&1
-            $output | Should -Be '::notice::Test notice'
-        }
-    }
-
-    Context 'Annotation with file property' {
-        It 'Includes file property when specified' {
-            $output = Write-GitHubAnnotation -Type 'warning' -Message 'File warning' -File 'test.ps1' 6>&1
-            $output | Should -Be '::warning file=test.ps1::File warning'
-        }
-    }
-
-    Context 'Annotation with line and column' {
-        It 'Includes file and line properties' {
-            $output = Write-GitHubAnnotation -Type 'notice' -Message 'Line notice' -File 'test.ps1' -Line 10 6>&1
-            $output | Should -Be '::notice file=test.ps1,line=10::Line notice'
-        }
-
-        It 'Includes all properties when specified' {
-            $output = Write-GitHubAnnotation -Type 'error' -Message 'Full error' -File 'test.ps1' -Line 10 -Column 5 6>&1
-            $output | Should -Be '::error file=test.ps1,line=10,col=5::Full error'
-        }
-
-        It 'Omits line when zero' {
-            $output = Write-GitHubAnnotation -Type 'error' -Message 'Zero line' -File 'test.ps1' -Line 0 6>&1
-            $output | Should -Be '::error file=test.ps1::Zero line'
-        }
-
-        It 'Omits column when zero' {
-            $output = Write-GitHubAnnotation -Type 'error' -Message 'Zero col' -File 'test.ps1' -Line 10 -Column 0 6>&1
-            $output | Should -Be '::error file=test.ps1,line=10::Zero col'
-        }
-    }
-}
-
-#endregion
-
-#region Set-GitHubOutput Tests
-
-Describe 'Set-GitHubOutput' {
-    BeforeAll {
-        Save-GitHubEnvironment
-    }
-
-    AfterAll {
-        Restore-GitHubEnvironment
-    }
-
-    Context 'In GitHub Actions environment' {
-        BeforeEach {
-            $script:mockFiles = Initialize-MockGitHubEnvironment
-        }
-
-        AfterEach {
-            Remove-MockGitHubFiles -MockFiles $script:mockFiles
-        }
-
-        It 'Writes output to GITHUB_OUTPUT file' {
-            Set-GitHubOutput -Name 'result' -Value 'success'
-            $content = Get-Content $script:mockFiles.Output
-            $content | Should -Contain 'result=success'
-        }
-
-        It 'Appends multiple outputs to file' {
-            Set-GitHubOutput -Name 'first' -Value 'one'
-            Set-GitHubOutput -Name 'second' -Value 'two'
-            $content = Get-Content $script:mockFiles.Output
-            $content | Should -Contain 'first=one'
-            $content | Should -Contain 'second=two'
-        }
-
-        It 'Handles values with special characters' {
-            Set-GitHubOutput -Name 'path' -Value 'C:\Users\test'
-            $content = Get-Content $script:mockFiles.Output
-            $content | Should -Contain 'path=C:\Users\test'
-        }
-    }
-
-    Context 'Outside GitHub Actions environment' {
-        BeforeEach {
-            Clear-MockGitHubEnvironment
-        }
-
-        It 'Does not throw when GITHUB_OUTPUT is not set' {
-            { Set-GitHubOutput -Name 'test' -Value 'value' } | Should -Not -Throw
-        }
-    }
-}
-
-#endregion
-
-#region Set-GitHubEnv Tests
-
-Describe 'Set-GitHubEnv' {
-    BeforeAll {
-        Save-GitHubEnvironment
-    }
-
-    AfterAll {
-        Restore-GitHubEnvironment
-    }
-
-    Context 'In GitHub Actions environment' {
-        BeforeEach {
-            $script:mockFiles = Initialize-MockGitHubEnvironment
-        }
-
-        AfterEach {
-            Remove-MockGitHubFiles -MockFiles $script:mockFiles
-        }
-
-        It 'Writes environment variable to GITHUB_ENV file' {
-            Set-GitHubEnv -Name 'MY_VAR' -Value 'my_value'
-            $content = Get-Content $script:mockFiles.Env
-            $content | Should -Contain 'MY_VAR=my_value'
-        }
-
-        It 'Appends multiple environment variables' {
-            Set-GitHubEnv -Name 'VAR1' -Value 'value1'
-            Set-GitHubEnv -Name 'VAR2' -Value 'value2'
-            $content = Get-Content $script:mockFiles.Env
-            $content | Should -Contain 'VAR1=value1'
-            $content | Should -Contain 'VAR2=value2'
-        }
-    }
-
-    Context 'Outside GitHub Actions environment' {
-        BeforeEach {
-            Clear-MockGitHubEnvironment
-        }
-
-        It 'Does not throw when GITHUB_ENV is not set' {
-            { Set-GitHubEnv -Name 'test' -Value 'value' } | Should -Not -Throw
-        }
-    }
-}
-
-#endregion
-
-#region Write-GitHubStepSummary Tests
-
-Describe 'Write-GitHubStepSummary' {
-    BeforeAll {
-        Save-GitHubEnvironment
-    }
-
-    AfterAll {
-        Restore-GitHubEnvironment
-    }
-
-    Context 'In GitHub Actions environment' {
-        BeforeEach {
-            $script:mockFiles = Initialize-MockGitHubEnvironment
-        }
-
-        AfterEach {
-            Remove-MockGitHubFiles -MockFiles $script:mockFiles
-        }
-
-        It 'Writes content to GITHUB_STEP_SUMMARY file' {
-            Write-GitHubStepSummary -Content '# Test Summary'
-            $content = Get-Content $script:mockFiles.Summary -Raw
-            $content | Should -Match '# Test Summary'
-        }
-
-        It 'Appends multiple summary entries' {
-            Write-GitHubStepSummary -Content '## Section 1'
-            Write-GitHubStepSummary -Content '## Section 2'
-            $content = Get-Content $script:mockFiles.Summary -Raw
-            $content | Should -Match '## Section 1'
-            $content | Should -Match '## Section 2'
-        }
-
-        It 'Handles markdown table content' {
-            $table = @"
-| Column 1 | Column 2 |
-|----------|----------|
-| Value 1  | Value 2  |
-"@
-            Write-GitHubStepSummary -Content $table
-            $content = Get-Content $script:mockFiles.Summary -Raw
-            $content | Should -Match 'Column 1'
-            $content | Should -Match 'Value 1'
-        }
-    }
-
-    Context 'Outside GitHub Actions environment' {
-        BeforeEach {
-            Clear-MockGitHubEnvironment
-        }
-
-        It 'Does not throw when GITHUB_STEP_SUMMARY is not set' {
-            { Write-GitHubStepSummary -Content 'Test content' } | Should -Not -Throw
         }
     }
 }

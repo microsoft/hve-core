@@ -1,0 +1,10 @@
+{
+  "label": "Templates",
+  "position": 10,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "templates/README"
+  }
+}

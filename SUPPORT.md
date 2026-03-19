@@ -2,7 +2,7 @@
 title: Support
 description: Community support commitments, response times, and escalation paths for the HVE Core project
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - support
@@ -30,15 +30,15 @@ HVE Core is an open-source project maintained by Microsoft and community contrib
 | Major (Accessibility)      | Significant accessibility issues                 | 3-5 business days              |
 | General Issues & Questions | Bug reports, feature requests, questions         | 48-hour (24x6) response window |
 
-**Note**: Response times indicate initial acknowledgment. Resolution time varies based on issue complexity and community availability.
+Note: Response times indicate initial acknowledgment. Resolution time varies based on issue complexity and community availability.
 
 ### Our Support Performance
 
 We track our response time commitments publicly. Our performance metrics demonstrate consistent delivery:
 
-* **48-hour SLO Compliance**: High compliance rate with response targets
-* **Average PR Completion**: Typically completed within 3 days
-* **Fast Resolution**: Significant portion of issues/PRs resolved in under 1 day
+* 48-hour SLO Compliance: High compliance rate with response targets
+* Average PR Completion: Typically completed within 3 days
+* Fast Resolution: Significant portion of issues/PRs resolved in under 1 day
 
 ## Filing Issues
 
@@ -46,7 +46,7 @@ We track our response time commitments publicly. Our performance metrics demonst
 
 1. **Search existing issues** in our [GitHub Issues](https://github.com/microsoft/hve-core/issues)
 2. **Create a new issue** if yours isn't already tracked: [New Issue](https://github.com/microsoft/hve-core/issues/new/choose)
-3. **Provide details**:
+3. Provide details:
    * Clear description of the problem or request
    * Steps to reproduce (for bugs)
    * Expected vs. actual behavior

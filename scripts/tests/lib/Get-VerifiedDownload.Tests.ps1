@@ -5,7 +5,6 @@
 BeforeAll {
     . $PSScriptRoot/../../lib/Get-VerifiedDownload.ps1
 }
-
 Describe 'Get-FileHashValue' {
     It 'Returns uppercase hash string for valid file' {
         $tempFile = New-TemporaryFile

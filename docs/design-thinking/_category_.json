@@ -1,0 +1,10 @@
+{
+  "label": "Design Thinking",
+  "position": 5,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "design-thinking/README"
+  }
+}

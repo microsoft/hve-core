@@ -1,0 +1,1 @@
+../../../.github/agents/data-science/gen-data-spec.agent.md

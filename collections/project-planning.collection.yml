@@ -1,0 +1,52 @@
+id: project-planning
+name: Project Planning
+description: PRDs, BRDs, ADRs, and architecture diagrams
+tags:
+  - documentation
+  - architecture
+  - adr
+  - brd
+  - prd
+  - diagrams
+  - planning
+items:
+  # Agents
+  - path: .github/agents/project-planning/agile-coach.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/product-manager-advisor.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/ux-ui-designer.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/adr-creation.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/arch-diagram-builder.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/brd-builder.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/rpi-agent.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/prd-builder.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/meeting-analyst.agent.md
+    kind: agent
+    maturity: experimental
+  # Subagents
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/plan-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/story-quality.instructions.md
+    kind: instruction
+display:
+  ordering: manual

@@ -1,0 +1,1 @@
+../../../.github/instructions/coding-standards/bash/bash.instructions.md

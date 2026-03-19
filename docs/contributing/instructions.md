@@ -1,14 +1,15 @@
 ---
 title: 'Contributing Instructions to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot instruction files to hve-core'
+sidebar_position: 3
 author: Microsoft
-ms.date: 2025-11-26
+ms.date: 2026-03-17
 ms.topic: how-to
 ---
 
 This guide defines the requirements, standards, and best practices for contributing GitHub Copilot instruction files (`.instructions.md`) to the hve-core library.
 
-**⚙️ Common Standards**: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
+⚙️ Common Standards: See [AI Artifacts Common Standards](ai-artifacts-common.md) for shared requirements (XML blocks, markdown quality, RFC 2119, validation, testing).
 
 ## What is an Instructions File?
 
@@ -29,23 +30,37 @@ Create an instructions file when you need to:
 
 ### Location
 
-All instruction files **MUST** be placed in:
+Instruction files are typically organized in a collection subdirectory by convention:
 
 ```text
 .github/instructions/
-├── language-name.instructions.md        # Language-specific
-├── framework-name.instructions.md       # Framework-specific
-├── workflow-name.instructions.md        # Workflow-specific
-└── subfolder/
-        └── specialized.instructions.md      # Organized by domain
+├── {collection-id}/
+│   └── your-instructions.instructions.md   # Collection-scoped
+├── coding-standards/
+│   ├── language.instructions.md             # Language-specific
+│   └── {language}/
+│       └── language.instructions.md         # Language with subdirectory
+├── shared/
+│   └── cross-collection.instructions.md     # Shared across collections
+└── hve-core/
+    └── markdown.instructions.md               # Collection-scoped (distributed)
 ```
 
-**Examples**:
+> [!IMPORTANT]
+> Files placed directly at the root of `.github/instructions/` (without a subdirectory) are repo-specific and never distributed through extension packages or collections. Only use root-level placement for internal repository concerns such as CI/CD workflows or conventions that do not generalize to consumers. Files in subdirectories like `hve-core/`, `ado/`, and `shared/` are collection-scoped and distributable.
 
-* `.github/instructions/python-script.instructions.md`
-* `.github/instructions/markdown.instructions.md`
-* `.github/instructions/csharp/csharp.instructions.md`
-* `.github/instructions/bash/bash.instructions.md`
+<!-- markdownlint-disable-next-line MD028 -->
+
+> [!NOTE]
+> Collections can reference artifacts from any subfolder. The `path:` field in collection YAML files
+> accepts any valid repo-relative path regardless of the artifact's parent directory.
+
+#### Examples
+
+* `.github/instructions/coding-standards/python-script.instructions.md`
+* `.github/instructions/hve-core/markdown.instructions.md`
+* `.github/instructions/coding-standards/csharp/csharp.instructions.md`
+* `.github/instructions/coding-standards/bash/bash.instructions.md`
 
 ### Naming Convention
 
@@ -56,7 +71,7 @@ All instruction files **MUST** be placed in:
 
 ### File Format
 
-Instruction files **MUST**:
+Instruction files MUST:
 
 1. Use the `.instructions.md` extension
 2. Start with valid YAML frontmatter between `---` delimiters
@@ -68,50 +83,45 @@ Instruction files **MUST**:
 
 **`description`** (string, MANDATORY)
 
-* **Purpose**: Concise explanation of instruction scope and target
-* **Format**: Single sentence, 10-200 characters
-* **Style**: Sentence case with proper punctuation
-* **Example**: `'Required instructions for Python script implementation with type hints and docstrings'`
+| Property | Value                                                                                     |
+|----------|-------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of instruction scope and target                                       |
+| Format   | Single sentence, 10-200 characters                                                        |
+| Style    | Sentence case with proper punctuation                                                     |
+| Example  | `'Required instructions for Python script implementation with type hints and docstrings'` |
 
 **`applyTo`** (string, MANDATORY for auto-applied instructions)
 
-* **Purpose**: Glob pattern(s) defining when these instructions activate
-* **Format**: Valid glob pattern or comma-separated patterns
-* **Scope**: Matches from repository root
-* **Examples**:
-  * Single pattern: `**/*.py`
-  * Multiple files: `**/*.py, **/*.ipynb`
-  * Directory scope: `**/src/**/*.sh`
-  * Specific paths: `**/.copilot-tracking/pr/new/**`
+| Property | Value                                                     |
+|----------|-----------------------------------------------------------|
+| Purpose  | Glob pattern(s) defining when these instructions activate |
+| Format   | Valid glob pattern or comma-separated patterns            |
+| Scope    | Matches from repository root                              |
 
-**`maturity`** (string enum, MANDATORY)
+Examples:
 
-* **Purpose**: Controls which extension channel includes this instruction
-* **Valid values**:
-  * `stable` - Production-ready, included in Stable and Pre-release channels
-  * `preview` - Feature-complete, included in Pre-release channel only
-  * `experimental` - Early development, included in Pre-release channel only
-  * `deprecated` - Scheduled for removal, excluded from all channels
-* **Default**: New instructions should use `stable` unless targeting early adopters
-* **Example**: `stable`
+* Single pattern: `**/*.py`
+* Multiple files: `**/*.py, **/*.ipynb`
+* Directory scope: `**/src/**/*.sh`
+* Specific paths: `**/.copilot-tracking/pr/new/**`
 
 ### Optional Fields
 
 **`version`** (string)
 
-* **Purpose**: Tracks instruction file revisions
-* **Format**: Semantic versioning (e.g., `1.0.0`)
-* **Pattern**: `^\d+\.\d+(\.\d+)?$` (major.minor or major.minor.patch)
+| Property | Value                                                   |
+|----------|---------------------------------------------------------|
+| Purpose  | Tracks instruction file revisions                       |
+| Format   | Semantic versioning (e.g., `1.0.0`)                     |
+| Pattern  | `^\d+\.\d+(\.\d+)?$` (major.minor or major.minor.patch) |
 
 **`author`** (string)
 
-* **Purpose**: Attribution for instruction creator
-* **Example**: `microsoft/hve-core`, `your-team-name`
+Attribution for the instruction creator (e.g., `microsoft/hve-core`, `your-team-name`).
 
 **`lastUpdated`** (string)
 
-* **Purpose**: Timestamp of last modification
-* **Format**: ISO 8601 date (YYYY-MM-DD)
+Timestamp of last modification in ISO 8601 format (YYYY-MM-DD).
 
 ### Frontmatter Example
 
@@ -119,12 +129,54 @@ Instruction files **MUST**:
 ---
 description: 'Required instructions for Python script implementation with type hints, docstrings, and error handling'
 applyTo: '**/*.py, **/*.ipynb'
-maturity: 'stable'
 version: '1.0.0'
 author: 'microsoft/hve-core'
 lastUpdated: '2025-11-19'
 ---
 ```
+
+## Collection Entry Requirements
+
+All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
+
+> [!NOTE]
+> Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common.md#repo-specific-artifact-exclusion) for details.
+
+### Adding Your Instructions to a Collection
+
+After creating your instructions file, add an `items[]` entry in each target collection manifest:
+
+```yaml
+items:
+    # path can reference artifacts from any subfolder
+    - path: .github/instructions/{collection-id}/my-language.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+For instructions in language subdirectories, use the full path:
+
+```yaml
+items:
+    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
+        kind: instruction
+        maturity: stable
+```
+
+### Selecting Collections for Instructions
+
+Choose collections based on who uses the technology or pattern:
+
+| Instruction Type        | Recommended Collections                           |
+|-------------------------|---------------------------------------------------|
+| Language standards      | `hve-core-all`, `coding-standards`                |
+| Infrastructure (IaC)    | `hve-core-all`, `coding-standards`                |
+| Documentation standards | `hve-core-all`, `hve-core`                        |
+| Workflow instructions   | `hve-core-all` plus relevant workflow collections |
+| Test standards          | `hve-core-all`, `coding-standards`                |
+| ADO integration         | `hve-core-all`, `ado`, `project-planning`         |
+
+For complete collection documentation, see [AI Artifacts Common Standards - Collection Manifests](ai-artifacts-common.md#collection-manifests-and-dependencies).
 
 ## Content Structure Standards
 
@@ -185,11 +237,11 @@ Scripts MUST follow this organization:
 ```markdown
 ## Naming Conventions
 
-* **Files**: `snake_case.py` (e.g., `data_processor.py`)
-* **Functions**: `snake_case()` (e.g., `process_data()`)
-* **Classes**: `PascalCase` (e.g., `DataProcessor`)
-* **Constants**: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRIES`)
-* **Private**: `_leading_underscore` (e.g., `_internal_helper()`)
+* Files: `snake_case.py` (e.g., `data_processor.py`)
+* Functions: `snake_case()` (e.g., `process_data()`)
+* Classes: `PascalCase` (e.g., `DataProcessor`)
+* Constants: `SCREAMING_SNAKE_CASE` (e.g., `MAX_RETRIES`)
+* Private: `_leading_underscore` (e.g., `_internal_helper()`)
 ```
 
 #### 5. Code Examples
@@ -232,7 +284,7 @@ def calculate_average(numbers: list[float]) -> float:
 ```markdown
 ## Anti-Patterns
 
-❌ **Bare except clauses**:
+❌ Bare except clauses:
 ```python
 try:
     risky_operation()
@@ -240,7 +292,7 @@ except:  # DON'T DO THIS
     pass
 ```
 
-✅ **Specific exception handling**:
+✅ Specific exception handling:
 
 ```python
 try:
@@ -261,15 +313,15 @@ except FileNotFoundError as e:
 
 All Python code MUST pass:
 
-* **Linting**: `ruff check .`
-* **Type checking**: `mypy --strict .`
-* **Testing**: `pytest tests/ --cov=src`
-* **Coverage**: Minimum 80% line coverage
+* Linting: `ruff check .`
+* Type checking: `mypy --strict .`
+* Testing: `pytest tests/ --cov=src`
+* Coverage: Minimum 80% line coverage
 ```
 
 #### 8. Attribution Footer
 
-* **MANDATORY**: Include at end of file
+Always include an attribution footer at the end of the file.
 
 ```markdown
 ---
@@ -385,12 +437,12 @@ Formatting and style rules:
 ```markdown
 ## Style Conventions
 
-* **Indentation**: 4 spaces (no tabs)
-* **Line length**: 88 characters (Black formatter default)
-* **Quotes**: Double quotes for strings, single for dict keys
-* **Imports**: Organized by isort with Black-compatible settings
-* **Trailing commas**: Use in multi-line collections
-* **Type hints**: Use modern syntax (`list[str]` not `List[str]`)
+* Indentation: 4 spaces (no tabs)
+* Line length: 88 characters (Black formatter default)
+* Quotes: Double quotes for strings, single for dict keys
+* Imports: Organized by isort with Black-compatible settings
+* Trailing commas: Use in multi-line collections
+* Type hints: Use modern syntax (`list[str]` not `List[str]`)
 ```
 
 ## Validation and Tooling
@@ -426,11 +478,11 @@ Define test expectations:
 ```markdown
 ## Testing Requirements
 
-* **Coverage**: Minimum 80% line coverage
-* **Test location**: `tests/` directory mirroring `src/` structure
-* **Test naming**: `test_*.py` files, `test_*` functions
-* **Fixtures**: Use pytest fixtures for shared test data
-* **Mocking**: Mock external dependencies (file I/O, network calls)
+* Coverage: Minimum 80% line coverage
+* Test location: `tests/` directory mirroring `src/` structure
+* Test naming: `test_*.py` files, `test_*` functions
+* Fixtures: Use pytest fixtures for shared test data
+* Mocking: Mock external dependencies (file I/O, network calls)
 
 <!-- <example-pytest-test> -->
 ```python
@@ -577,13 +629,11 @@ See [AI Artifacts Common Standards - Common Testing Practices](ai-artifacts-comm
 
 ### Invalid Glob Pattern
 
-* **Problem**: Glob patterns that only match root directory or contain syntax errors
-* **Solution**: Use `**/` prefix for recursive matching (e.g., `**/*.py` for all Python files recursively)
+Glob patterns that only match root directory or contain syntax errors cause matching failures. Use the `**/` prefix for recursive matching (e.g., `**/*.py` for all Python files recursively).
 
 ### Conflicting Patterns
 
-* **Problem**: Multiple instruction files with overlapping glob patterns causing ambiguity
-* **Solution**: Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets
+Multiple instruction files with overlapping glob patterns cause ambiguity. Make patterns more specific (e.g., `**/tests/**/*.py` vs `**/*.py`) or ensure they target distinct file sets.
 
 For additional common issues (XML blocks, markdown, directives), see [AI Artifacts Common Standards - Common Issues and Fixes](ai-artifacts-common.md#common-issues-and-fixes).
 
@@ -603,13 +653,13 @@ All checks **MUST** pass before merge.
 * [AI Artifacts Common Standards](ai-artifacts-common.md) - Shared standards for all contributions
 * [Contributing Custom Agents](custom-agents.md) - AI agent configuration files
 * [Contributing Prompts](prompts.md) - Workflow-specific guidance
-* [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
+* [Pull Request Template](https://github.com/microsoft/hve-core/blob/main/.github/PULL_REQUEST_TEMPLATE.md) - Submission requirements
 
 ## Getting Help
 
 See [AI Artifacts Common Standards - Getting Help](ai-artifacts-common.md#getting-help) for support resources. For instructions-specific assistance:
 
-* Review existing examples in `.github/instructions/`
+* Review existing examples in `.github/instructions/{collection-id}/` (the conventional location for instruction files)
 * Test glob patterns using file search commands
 * Use `prompt-builder.agent.md` agent for assistance
 

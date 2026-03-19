@@ -4,43 +4,13 @@
 
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '../../security/Update-ActionSHAPinning.ps1'
-    $scriptContent = Get-Content $scriptPath -Raw
-
-    # Extract function definitions and script-level variables using AST to avoid executing main block
-    $tokens = $null
-    $errors = $null
-    $ast = [System.Management.Automation.Language.Parser]::ParseInput($scriptContent, [ref]$tokens, [ref]$errors)
-
-    # Extract and execute script-level variable assignments (e.g., $ActionSHAMap)
-    # These are direct children of the script block that are assignments
-    $scriptStatements = $ast.EndBlock.Statements
-    foreach ($stmt in $scriptStatements) {
-        if ($stmt -is [System.Management.Automation.Language.AssignmentStatementAst]) {
-            $varCode = $stmt.Extent.Text
-            try {
-                $scriptBlock = [scriptblock]::Create($varCode)
-                . $scriptBlock
-            } catch {
-                # Skip assignments that fail (may depend on other variables)
-                $null = $_
-            }
-        }
-    }
-
-    # Extract and define all function definitions
-    $functionDefs = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
-
-    foreach ($func in $functionDefs) {
-        $funcCode = $func.Extent.Text
-        $scriptBlock = [scriptblock]::Create($funcCode)
-        . $scriptBlock
-    }
+    . $scriptPath
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
 
     # Save environment before tests
-    Save-GitHubEnvironment
+    Save-CIEnvironment
 
     # Fixture paths
     $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
@@ -76,7 +46,7 @@ BeforeAll {
 }
 
 AfterAll {
-    Restore-GitHubEnvironment
+    Restore-CIEnvironment
 }
 
 Describe 'Get-ActionReference' -Tag 'Unit' {
@@ -120,12 +90,12 @@ Describe 'Get-ActionReference' -Tag 'Unit' {
 
 Describe 'Get-SHAForAction' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'ActionSHAMap lookup' {
@@ -154,7 +124,7 @@ Describe 'Get-SHAForAction' -Tag 'Unit' {
 
 Describe 'Update-WorkflowFile' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
 
         # Copy fixture to TestDrive for modification testing
@@ -162,23 +132,21 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
         $script:TestWorkflow = Join-Path $TestDrive 'test-workflow.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        Mock Invoke-RestMethod {
-            return @{
-                object = @{
-                    sha = 'newsha123456789012345678901234567890abcd'
-                }
-            }
+        # Mock at function level; Update-WorkflowFile -> Get-SHAForAction -> Get-LatestCommitSHA
+        # calls module functions that bare Invoke-RestMethod mocks cannot intercept
+        Mock Get-LatestCommitSHA {
+            return 'newsha123456789012345678901234567890abcd'
         }
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Return value structure' {
-        It 'Returns hashtable with FilePath' {
+        It 'Returns PSCustomObject with FilePath' {
             $result = Update-WorkflowFile -FilePath $script:TestWorkflow
-            $result | Should -BeOfType [hashtable]
+            $result | Should -BeOfType [PSCustomObject]
             $result.FilePath | Should -Be $script:TestWorkflow
         }
 
@@ -189,7 +157,7 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
 
         It 'Returns ActionsPinned count' {
             $result = Update-WorkflowFile -FilePath $script:TestWorkflow
-            $result.ContainsKey('ActionsPinned') | Should -BeTrue
+            $result.PSObject.Properties.Name -contains 'ActionsPinned' | Should -BeTrue
         }
     }
 
@@ -220,24 +188,22 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
 
 Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
 
         $unpinnedSource = Join-Path $script:FixturesPath 'unpinned-workflow.yml'
         $script:TestWorkflow = Join-Path $TestDrive 'whatif-test.yml'
         Copy-Item $unpinnedSource $script:TestWorkflow
 
-        Mock Invoke-RestMethod {
-            return @{
-                object = @{
-                    sha = 'newsha123456789012345678901234567890abcd'
-                }
-            }
+        # Mock at function level; Update-WorkflowFile -> Get-SHAForAction -> Get-LatestCommitSHA
+        # calls module functions that bare Invoke-RestMethod mocks cannot intercept
+        Mock Get-LatestCommitSHA {
+            return 'newsha123456789012345678901234567890abcd'
         }
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'WhatIf behavior' {
@@ -254,21 +220,21 @@ Describe 'Update-WorkflowFile -WhatIf' -Tag 'Unit' {
 
 Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
         $script:AttemptCount = 0
 
         # Mock Start-Sleep to avoid actual delays
-        Mock Start-Sleep { }
+        Mock Start-Sleep -ModuleName SecurityHelpers { }
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Successful requests' {
         It 'Returns response on first attempt success' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 $script:AttemptCount++
                 return @{ data = 'success' }
             }
@@ -277,13 +243,13 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
 
             $result.data | Should -Be 'success'
             $script:AttemptCount | Should -Be 1
-            Should -Not -Invoke Start-Sleep
+            Should -Not -Invoke Start-Sleep -ModuleName SecurityHelpers
         }
     }
 
     Context 'Rate limit retry behavior' {
         It 'Retries on 403 rate limit error and succeeds' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 $script:AttemptCount++
                 if ($script:AttemptCount -lt 3) {
                     # Create exception with proper Response.StatusCode for rate limit detection
@@ -298,27 +264,26 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
 
             $result.data | Should -Be 'success after retry'
             $script:AttemptCount | Should -Be 3
-            Should -Invoke Start-Sleep -Times 2
+            Should -Invoke Start-Sleep -ModuleName SecurityHelpers -Times 2
         }
 
-        It 'Throws after exceeding MaxRetries' {
-            Mock Invoke-RestMethod {
+        It 'Returns null after exceeding MaxRetries' {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 $script:AttemptCount++
                 $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::Forbidden)
                 $exception = [Microsoft.PowerShell.Commands.HttpResponseException]::new('API rate limit exceeded', $response)
                 throw $exception
             }
 
-            { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Method 'GET' -Headers @{ Authorization = 'token test' } -MaxRetries 2 } |
-                Should -Throw
-
-            $script:AttemptCount | Should -Be 2  # MaxRetries attempts
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Method 'GET' -Headers @{ Authorization = 'token test' } -MaxRetries 2
+            $result | Should -BeNullOrEmpty
+            $script:AttemptCount | Should -Be 2
         }
 
         It 'Uses exponential backoff delay' {
             $script:delays = @()
-            Mock Start-Sleep { param($Seconds) $script:delays += $Seconds }
-            Mock Invoke-RestMethod {
+            Mock Start-Sleep -ModuleName SecurityHelpers { param($Seconds) $script:delays += $Seconds }
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 $script:AttemptCount++
                 if ($script:AttemptCount -lt 3) {
                     $response = [System.Net.Http.HttpResponseMessage]::new([System.Net.HttpStatusCode]::Forbidden)
@@ -337,23 +302,23 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     }
 
     Context 'Non-retryable errors' {
-        It 'Throws immediately on non-rate-limit error' {
-            Mock Invoke-RestMethod {
+        It 'Returns null on non-rate-limit error' {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 $script:AttemptCount++
                 throw [System.Net.WebException]::new('Not Found')
             }
 
-            { Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Method 'GET' -Headers @{ Authorization = 'token test' } } |
-                Should -Throw '*Not Found*'
+            $result = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/test' -Method 'GET' -Headers @{ Authorization = 'token test' }
 
+            $result | Should -BeNullOrEmpty
             $script:AttemptCount | Should -Be 1
-            Should -Not -Invoke Start-Sleep
+            Should -Not -Invoke Start-Sleep -ModuleName SecurityHelpers
         }
     }
 
     Context 'Request with body' {
         It 'Includes body in request' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 param($Uri, $Method, $Headers, $Body, $ContentType)
                 $null = $Uri, $Method, $Headers  # Suppress PSScriptAnalyzer unused parameter warnings
                 return @{ received = $Body; contentType = $ContentType }
@@ -367,146 +332,33 @@ Describe 'Invoke-GitHubAPIWithRetry' -Tag 'Unit' {
     }
 }
 
-Describe 'Write-OutputResult' -Tag 'Unit' {
-    BeforeAll {
-        $script:TestResults = @(
-            @{
-                FilePath = 'test.yml'
-                ActionsPinned = 2
-                ActionsSkipped = 1
-                Changes = @(
-                    @{ Action = 'actions/checkout@v4'; Status = 'Pinned'; NewRef = 'actions/checkout@abc123' }
-                )
-            }
-        )
-        $script:TestSummary = 'Processed 1 file, pinned 2 actions'
-    }
-
-    Context 'JSON output format' {
-        It 'Creates valid JSON output' {
-            $tempPath = Join-Path $TestDrive 'output.json'
-
-            Write-OutputResult -OutputFormat 'json' -Results $script:TestResults -Summary $script:TestSummary -OutputPath $tempPath
-
-            Test-Path $tempPath | Should -BeTrue
-            $content = Get-Content $tempPath -Raw
-            { $content | ConvertFrom-Json } | Should -Not -Throw
-        }
-
-        It 'Includes results in JSON structure' {
-            $tempPath = Join-Path $TestDrive 'results.json'
-
-            Write-OutputResult -OutputFormat 'json' -Results $script:TestResults -Summary $script:TestSummary -OutputPath $tempPath
-
-            $json = Get-Content $tempPath -Raw | ConvertFrom-Json
-            $json | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'AzDO output format' {
-        It 'Emits VSO logging commands' {
-            $script:TestIssueResults = @(
-                @{
-                    Severity = 'High'
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'azdo' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for VSO commands
-            $hasVsoCommand = $output | Where-Object { $_ -match '##vso\[' }
-            $hasVsoCommand | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'GitHub output format' {
-        It 'Emits GitHub Actions workflow commands' {
-            $script:TestIssueResults = @(
-                @{
-                    Severity = 'High'
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'github' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for GitHub commands
-            $hasGitHubCommand = $output | Where-Object { $_ -match '^::\w+' }
-            $hasGitHubCommand | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'Console output format' {
-        It 'Writes summary to console' {
-            # Console format reads from $script:SecurityIssues, so populate it
-            $script:SecurityIssues = @(
-                @{
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                }
-            )
-            Mock Write-Host { }
-
-            # Should not throw
-            { Write-OutputResult -OutputFormat 'console' -Results $script:TestResults -Summary $script:TestSummary } |
-                Should -Not -Throw
-        }
-    }
-
-    Context 'BuildWarning output format' {
-        It 'Emits build warning format' {
-            $script:TestIssueResults = @(
-                @{
-                    Title = 'Test Issue'
-                    Description = 'Test description'
-                    File = 'workflow.yml'
-                }
-            )
-
-            $output = Write-OutputResult -OutputFormat 'BuildWarning' -Results $script:TestIssueResults -Summary 'Test'
-
-            # Function uses Write-Output for build warnings
-            $output | Should -Not -BeNullOrEmpty
-            ($output | Where-Object { $_ -match '##\[warning\]' }) | Should -Not -BeNullOrEmpty
-        }
-    }
-
-    Context 'Empty results handling' {
-        It 'Handles empty results array' {
-            { Write-OutputResult -OutputFormat 'console' -Results @() -Summary 'No files processed' } |
-                Should -Not -Throw
-        }
-    }
-}
-
 Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
         $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Successful SHA retrieval' {
         It 'Returns SHA for valid repository and branch' {
-            Mock Invoke-RestMethod {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 return @{ sha = 'abc123def456789012345678901234567890abcdef' }
             }
 
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
 
             $result | Should -Be 'abc123def456789012345678901234567890abcdef'
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
 
         It 'Handles branch parameter with refs/heads prefix' {
-            Mock Invoke-RestMethod {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 param($Uri)
                 if ($Uri -match 'refs/heads/main') {
                     return @{ sha = 'sha123' }
@@ -517,34 +369,39 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'refs/heads/main'
 
             $result | Should -Be 'sha123'
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
     }
 
     Context 'Error handling' {
         It 'Returns null for non-existent repository' {
-            Mock Invoke-RestMethod {
-                throw [System.Net.WebException]::new('Not Found')
-            }
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry { return $null }
 
             $result = Get-LatestCommitSHA -Owner 'nonexistent' -Repo 'repo' -Branch 'main'
 
             $result | Should -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
 
         It 'Returns null on API error without throwing' {
-            Mock Invoke-RestMethod {
-                throw [System.Exception]::new('Network error')
-            }
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry { return $null }
 
             # Function should handle error gracefully and return null
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout' -Branch 'main'
             $result | Should -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 1
         }
     }
 
     Context 'Default branch detection' {
         It 'Uses default branch when Branch not specified' {
-            Mock Invoke-RestMethod {
+            Mock Test-GitHubToken { return @{ Valid = $true } }
+            Mock Invoke-GitHubAPIWithRetry {
                 param($Uri)
                 if ($Uri -match '/repos/[^/]+/[^/]+$') {
                     return @{ default_branch = 'main' }
@@ -555,22 +412,24 @@ Describe 'Get-LatestCommitSHA' -Tag 'Unit' {
             $result = Get-LatestCommitSHA -Owner 'actions' -Repo 'checkout'
 
             $result | Should -Not -BeNullOrEmpty
+            Should -Invoke Test-GitHubToken -Times 1
+            Should -Invoke Invoke-GitHubAPIWithRetry -Times 2
         }
     }
 }
 
 Describe 'Test-GitHubToken' -Tag 'Unit' {
     BeforeEach {
-        Initialize-MockGitHubEnvironment
+        Initialize-MockCIEnvironment
     }
 
     AfterEach {
-        Clear-MockGitHubEnvironment
+        Clear-MockCIEnvironment
     }
 
     Context 'Valid authenticated token' {
         It 'Returns Valid and Authenticated for good token' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 return (script:New-MockGitHubGraphQLResponse -Login 'testuser' -RateRemaining 5000)
             }
 
@@ -582,7 +441,7 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
         }
 
         It 'Returns rate limit information' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 return (script:New-MockGitHubGraphQLResponse -RateRemaining 4500 -RateLimit 5000)
             }
 
@@ -594,25 +453,18 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
     }
 
     Context 'Unauthenticated access' {
-        It 'Returns Valid but not Authenticated for empty token' {
-            Mock Invoke-RestMethod {
-                return @{
-                    data = @{
-                        rateLimit = @{ remaining = 60; limit = 60 }
-                    }
-                }
-            }
-
+        It 'Returns Valid false for empty token' {
             $result = Test-GitHubToken -Token ''
 
-            $result.Valid | Should -BeTrue
+            $result.Valid | Should -BeFalse
             $result.Authenticated | Should -BeFalse
+            $result.Message | Should -Be 'Token is empty or null'
         }
     }
 
     Context 'Low rate limit warning' {
         It 'Includes warning when remaining is low' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 return (script:New-MockGitHubGraphQLResponse -RateRemaining 50 -RateLimit 5000)
             }
 
@@ -624,7 +476,7 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
 
     Context 'Invalid token' {
         It 'Returns Valid false on API error' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 throw [System.Net.WebException]::new('Unauthorized')
             }
 
@@ -634,7 +486,7 @@ Describe 'Test-GitHubToken' -Tag 'Unit' {
         }
 
         It 'Includes error message on failure' {
-            Mock Invoke-RestMethod {
+            Mock Invoke-RestMethod -ModuleName SecurityHelpers {
                 throw [System.Exception]::new('Bad credentials')
             }
 
@@ -729,89 +581,222 @@ Describe 'Set-ContentPreservePermission' -Tag 'Unit' {
     }
 }
 
-Describe 'Add-SecurityIssue' -Tag 'Unit' {
-    BeforeEach {
-        # Reset script-level variable
-        $script:SecurityIssues = @()
+Describe 'Get-SHAForAction - Already Pinned' -Tag 'Unit' {
+    BeforeAll {
+        $script:OriginalGitHubToken = $env:GITHUB_TOKEN
+        $env:GITHUB_TOKEN = 'ghp_test123456789'
     }
 
-    Context 'Issue accumulation' {
-        It 'Adds issue to SecurityIssues array' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Test Issue' -Description 'Test description'
+    AfterAll {
+        $env:GITHUB_TOKEN = $script:OriginalGitHubToken
+    }
 
-            $script:SecurityIssues | Should -HaveCount 1
-        }
+    Context 'SHA-pinned action without UpdateStale' {
+        It 'Returns original ref when action is already SHA-pinned' {
+            $sha = 'a' * 40
+            $ref = "actions/checkout@$sha"
+            Mock Write-SecurityLog { }
 
-        It 'Accumulates multiple issues' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Issue 1' -Description 'Desc 1'
-            Add-SecurityIssue -Type 'StaleAction' -Severity 'Medium' -Title 'Issue 2' -Description 'Desc 2'
+            $result = Get-SHAForAction -ActionRef $ref
 
-            $script:SecurityIssues | Should -HaveCount 2
+            $result | Should -Be $ref
         }
     }
 
-    Context 'Issue structure' {
-        It 'Includes all required fields' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'Critical' -Title 'Critical Issue' -Description 'Critical description'
+    Context 'SHA-pinned action with UpdateStale' {
+        It 'Returns original ref when UpdateStale is not specified' {
+            $currentSHA = 'a' * 40
+            $latestSHA = 'b' * 40
+            $ref = "actions/checkout@$currentSHA"
 
-            $issue = $script:SecurityIssues[0]
-            $issue.Type | Should -Be 'UnpinnedAction'
-            $issue.Severity | Should -Be 'Critical'
-            $issue.Title | Should -Be 'Critical Issue'
-            $issue.Description | Should -Be 'Critical description'
-        }
+            Mock Write-SecurityLog { }
+            Mock Get-LatestCommitSHA { return $latestSHA }
 
-        It 'Includes optional fields when provided' {
-            Add-SecurityIssue -Type 'UnpinnedAction' -Severity 'High' -Title 'Issue' -Description 'Desc' -File 'workflow.yml' -Line '10' -Recommendation 'Pin the action'
+            $result = Get-SHAForAction -ActionRef $ref
 
-            $issue = $script:SecurityIssues[0]
-            $issue.File | Should -Be 'workflow.yml'
-            $issue.Line | Should -Be '10'
-            $issue.Recommendation | Should -Be 'Pin the action'
+            # Without UpdateStale flag in scope, returns original
+            $result | Should -Be $ref
         }
     }
 }
 
-Describe 'Write-SecurityLog' -Tag 'Unit' {
-    Context 'Log levels' {
-        It 'Writes Info level messages' {
-            Mock Write-Host { } -Verifiable
+Describe 'Update-WorkflowFile - Edge Cases' -Tag 'Unit' {
+    Context 'No actions in file' {
+        It 'Returns zero counts when file has no action references' {
+            $testFile = Join-Path $TestDrive 'empty-workflow.yml'
+            Set-Content $testFile -Value @'
+name: empty
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello
+'@
+            Mock Write-SecurityLog { }
 
-            Write-SecurityLog -Message 'Info message' -Level 'Info'
+            $result = Update-WorkflowFile -FilePath $testFile
 
-            Should -InvokeVerifiable
-        }
-
-        It 'Writes Warning level messages with Warning prefix' {
-            # Write-SecurityLog uses Write-Host for all levels with a prefix
-            $captured = $null
-            Mock Write-Host { param($Object) $script:captured = $Object }
-
-            Write-SecurityLog -Message 'Warning message' -Level 'Warning'
-
-            $script:captured | Should -Match '\[Warning\]'
-            $script:captured | Should -Match 'Warning message'
-        }
-
-        It 'Writes Error level messages with Error prefix' {
-            # Write-SecurityLog uses Write-Host for all levels with a prefix
-            $captured = $null
-            Mock Write-Host { param($Object) $script:captured = $Object }
-
-            Write-SecurityLog -Message 'Error message' -Level 'Error'
-
-            $script:captured | Should -Match '\[Error\]'
-            $script:captured | Should -Match 'Error message'
+            $result.ActionsProcessed | Should -Be 0
+            $result.ActionsPinned | Should -Be 0
+            $result.ActionsSkipped | Should -Be 0
         }
     }
 
-    Context 'Default level' {
-        It 'Uses Info as default level' {
-            Mock Write-Host { } -Verifiable
+    Context 'File with local actions' {
+        It 'Skips local action references starting with ./' {
+            $testFile = Join-Path $TestDrive 'local-action.yml'
+            Set-Content $testFile -Value @'
+name: local
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./local-action
+'@
+            Mock Write-SecurityLog { }
 
-            Write-SecurityLog -Message 'Default level message'
+            $result = Update-WorkflowFile -FilePath $testFile
 
-            Should -InvokeVerifiable
+            $result.ActionsProcessed | Should -Be 0
+        }
+    }
+}
+
+Describe 'Invoke-ActionSHAPinningUpdate' -Tag 'Unit' {
+    BeforeAll {
+        $env:GITHUB_TOKEN = 'ghp_test123456789'
+        Initialize-MockCIEnvironment
+    }
+    AfterAll {
+        Clear-MockCIEnvironment
+    }
+
+    Context 'Missing workflow path' {
+        It 'Throws when workflow path does not exist' {
+            { Invoke-ActionSHAPinningUpdate -WorkflowPath '/nonexistent/path' } |
+                Should -Throw '*Workflow path not found*'
+        }
+    }
+
+    Context 'No YAML files in directory' {
+        It 'Warns and returns when no yml files found' {
+            $emptyDir = Join-Path $TestDrive 'empty-workflows'
+            New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
+
+            Mock Write-SecurityLog { }
+
+            Invoke-ActionSHAPinningUpdate -WorkflowPath $emptyDir
+
+            Should -Invoke Write-SecurityLog -Times 1 -ParameterFilter { $Level -eq 'Warning' }
+        }
+    }
+
+    Context 'Full orchestration' {
+        It 'Processes workflow files and generates summary' {
+            $workDir = Join-Path $TestDrive 'orchestration-workflows'
+            New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+            $sha = 'a' * 40
+            $content = @"
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@$sha
+"@
+            Set-Content (Join-Path $workDir 'ci.yml') -Value $content
+
+            Mock Write-SecurityLog { }
+            Mock Write-SecurityOutput { }
+            Mock Get-SHAForAction { return "actions/checkout@$sha" }
+
+            Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console'
+
+            Should -Invoke Write-SecurityOutput -Times 1
+        }
+    }
+
+    Context 'OutputReport flag' {
+        It 'Calls Export-SecurityReport when OutputReport is set' {
+            $workDir = Join-Path $TestDrive 'report-workflows'
+            New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+            Set-Content (Join-Path $workDir 'test.yml') -Value @'
+name: test
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
+'@
+            Mock Write-SecurityLog { }
+            Mock Write-SecurityOutput { }
+            Mock Export-SecurityReport { return (Join-Path $TestDrive 'report.json') }
+
+            Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputReport -OutputFormat 'console'
+
+            Should -Invoke Export-SecurityReport -Times 1
+        }
+    }
+
+    Context 'Manual review actions' {
+        It 'Adds SecurityIssue for actions requiring manual review' {
+            $workDir = Join-Path $TestDrive 'manual-review-workflows'
+            New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+            Set-Content (Join-Path $workDir 'unmapped.yml') -Value @'
+name: unmapped
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unknown action
+        uses: some-unknown/action@v1
+'@
+            Mock Write-SecurityLog { }
+            Mock Write-SecurityOutput { }
+            Mock Get-SHAForAction { return $null }
+            Mock New-SecurityIssue { return [PSCustomObject]@{Type='';Severity='';Title='';Description=''} }
+
+            Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console'
+
+            Should -Invoke New-SecurityIssue -Times 1
+        }
+    }
+
+    Context 'WhatIf support' {
+        It 'Does not modify files when WhatIf is used' {
+            $workDir = Join-Path $TestDrive 'whatif-workflows'
+            New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+            $sha = 'a' * 40
+            $content = @"
+name: whatif
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@$sha
+"@
+            $filePath = Join-Path $workDir 'whatif.yml'
+            Set-Content $filePath -Value $content
+
+            Mock Write-SecurityLog { }
+            Mock Write-SecurityOutput { }
+            Mock Get-SHAForAction { return "actions/checkout@$sha" }
+
+            Invoke-ActionSHAPinningUpdate -WorkflowPath $workDir -OutputFormat 'console' -WhatIf
+
+            # File content should remain unchanged
+            $afterContent = Get-Content $filePath -Raw
+            $afterContent | Should -Match "actions/checkout@$sha"
         }
     }
 }

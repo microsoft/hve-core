@@ -50,6 +50,64 @@ jobs:
       soft-fail: false
       changed-files-only: true
 
+  discover-python-projects:
+    name: Discover Python Projects
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      directories: ${{ steps.find.outputs.directories }}
+      has-projects: ${{ steps.find.outputs.has-projects }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Find Python projects
+        id: find
+        shell: pwsh
+        run: |
+          $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
+            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
+            ForEach-Object { $_ -replace '^\.[\\/]', '' } |
+            Sort-Object)
+          $jsonItems = $projectList | ForEach-Object { $_ | ConvertTo-Json -Compress }
+          $dirs = '[' + (($jsonItems) -join ',') + ']'
+          "directories=$dirs" >> $env:GITHUB_OUTPUT
+          if ($projectList.Count -eq 0) {
+            "has-projects=false" >> $env:GITHUB_OUTPUT
+            Write-Output 'No Python projects found'
+          } else {
+            "has-projects=true" >> $env:GITHUB_OUTPUT
+            Write-Output "Found Python projects: $dirs"
+          }
+
+  python-lint:
+    name: "Python Lint (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+    uses: ./.github/workflows/python-lint.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      working-directory: ${{ matrix.directory }}
+
+  copyright-headers:
+    name: Copyright Headers
+    uses: ./.github/workflows/copyright-headers.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   yaml-lint:
     name: YAML Lint
     uses: ./.github/workflows/yaml-lint.yml
@@ -70,6 +128,47 @@ jobs:
       changed-files-only: false
       code-coverage: true
 
+  pytest:
+    name: "Python Tests (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    uses: ./.github/workflows/pytest-tests.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+
+  pip-audit:
+    name: "pip-audit (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+    uses: ./.github/workflows/pip-audit.yml
+    permissions:
+      contents: read
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+
+  docusaurus-tests:
+    name: Docusaurus Tests
+    uses: ./.github/workflows/docusaurus-tests.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   frontmatter-validation:
     name: Frontmatter Validation
     uses: ./.github/workflows/frontmatter-validation.yml
@@ -80,6 +179,34 @@ jobs:
       changed-files-only: true
       skip-footer-validation: false
       warnings-as-errors: true
+
+  msdate-freshness:
+    name: ms.date Freshness Check
+    uses: ./.github/workflows/msdate-freshness-check.yml
+    permissions:
+      contents: read
+    with:
+      staleness-threshold-days: 90
+      changed-files-only: true
+      soft-fail: false
+
+  plugin-validation:
+    name: Plugin Validation
+    uses: ./.github/workflows/plugin-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
+  skill-validation:
+    name: Skill Validation
+    uses: ./.github/workflows/skill-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
 
   link-lang-check:
     name: Link Language Check
@@ -102,11 +229,34 @@ jobs:
     uses: ./.github/workflows/dependency-pinning-scan.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
     with:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  workflow-permissions-check:
+    name: Workflow Permissions Check
+    uses: ./.github/workflows/workflow-permissions-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+
+  gitleaks-scan:
+    name: Gitleaks Secret Scan
+    uses: ./.github/workflows/gitleaks-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: false
+      log-opts: '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
 
   npm-audit:
     name: npm Security Audit
@@ -120,10 +270,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -136,5 +286,5 @@ jobs:
     uses: ./.github/workflows/codeql-analysis.yml
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
       actions: read

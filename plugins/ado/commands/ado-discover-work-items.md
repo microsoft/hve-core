@@ -1,0 +1,1 @@
+../../../.github/prompts/ado/ado-discover-work-items.prompt.md

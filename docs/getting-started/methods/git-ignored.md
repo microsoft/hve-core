@@ -1,8 +1,9 @@
 ---
 title: Git-Ignored Folder Installation
-description: Install HVE-Core in a git-ignored folder for devcontainer environments
+description: Install HVE Core in a git-ignored folder for devcontainer environments
+sidebar_position: 3
 author: Microsoft
-ms.date: 2025-12-03
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -12,7 +13,7 @@ keywords:
 estimated_reading_time: 6
 ---
 
-Git-Ignored Folder installation places HVE-Core inside your project in a `.hve-core/` folder that's excluded from version control. This is ideal for solo developers using devcontainers who want a self-contained setup.
+Git-Ignored Folder installation places HVE Core inside your project in a `.hve-core/` folder that's excluded from version control. This is ideal for solo developers using devcontainers who want a self-contained setup.
 
 ## When to Use This Method
 
@@ -20,25 +21,25 @@ Git-Ignored Folder installation places HVE-Core inside your project in a `.hve-c
 
 * You use local devcontainers (Docker Desktop)
 * You're working solo
-* You want HVE-Core auto-updated with container rebuilds
+* You want HVE Core auto-updated with container rebuilds
 * You want a self-contained project (no external dependencies)
 
 ❌ **Consider alternatives when:**
 
 * Your team needs version control → [Submodule](submodule.md)
 * You use Codespaces → [GitHub Codespaces](codespaces.md)
-* You want to share HVE-Core across projects → [Mounted Directory](mounted.md)
+* You want to share HVE Core across projects → [Mounted Directory](mounted.md)
 * You need paths that work everywhere → [Multi-Root Workspace](multi-root.md)
 
 ## How It Works
 
-HVE-Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository.
+HVE Core is cloned into a `.hve-core/` folder inside your project. The folder is added to `.gitignore` so it doesn't pollute your repository.
 
 ```text
 my-project/
 ├── .devcontainer/
-│   └── devcontainer.json    # postCreateCommand clones HVE-Core
-├── .hve-core/               # Git-ignored, contains HVE-Core
+│   └── devcontainer.json    # postCreateCommand clones HVE Core
+├── .hve-core/               # Git-ignored, contains HVE Core
 │   └── .github/
 │       ├── agents/
 │       ├── prompts/
@@ -51,45 +52,40 @@ my-project/
 
 ## Quick Start
 
-Use the `hve-core-installer` agent:
-
-1. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
-2. Select `hve-core-installer` from the agent picker
-3. Say: "Install HVE-Core using git-ignored folder"
-4. Follow the guided setup
+Install the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) for the fastest setup. For guided setup with installation method selection and MCP configuration, install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation". Use the manual steps below for direct configuration.
 
 ## Manual Setup
 
 ### Step 1: Update .gitignore
 
-Add the HVE-Core folder to your `.gitignore`:
+Add the HVE Core folder to your `.gitignore`:
 
 ```text
-# HVE-Core installation (local only)
+# HVE Core installation (local only)
 .hve-core/
 ```
 
-### Step 2: Clone HVE-Core
+### Step 2: Clone HVE Core
 
-**PowerShell:**
+#### PowerShell
 
 ```powershell
 # Create folder and clone
 $hveCoreFolder = ".hve-core"
 if (-not (Test-Path $hveCoreFolder)) {
     git clone https://github.com/microsoft/hve-core.git $hveCoreFolder
-    Write-Host "✅ Cloned HVE-Core to $hveCoreFolder"
+    Write-Host "✅ Cloned HVE Core to $hveCoreFolder"
 }
 ```
 
-**Bash:**
+#### Bash
 
 ```bash
 HVE_CORE_FOLDER=".hve-core"
 
 if [ ! -d "$HVE_CORE_FOLDER" ]; then
     git clone https://github.com/microsoft/hve-core.git "$HVE_CORE_FOLDER"
-    echo "✅ Cloned HVE-Core to $HVE_CORE_FOLDER"
+    echo "✅ Cloned HVE Core to $HVE_CORE_FOLDER"
 fi
 ```
 
@@ -99,15 +95,41 @@ Create or update `.vscode/settings.json`:
 
 ```json
 {
-  "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
-  "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
-  "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
+  "chat.agentFilesLocations": {
+    ".hve-core/.github/agents/ado": true,
+    ".hve-core/.github/agents/data-science": true,
+    ".hve-core/.github/agents/design-thinking": true,
+    ".hve-core/.github/agents/github": true,
+    ".hve-core/.github/agents/project-planning": true,
+    ".hve-core/.github/agents/hve-core": true,
+    ".hve-core/.github/agents/hve-core/subagents": true,
+    ".hve-core/.github/agents/security": true
+  },
+  "chat.promptFilesLocations": {
+    ".hve-core/.github/prompts/ado": true,
+    ".hve-core/.github/prompts/design-thinking": true,
+    ".hve-core/.github/prompts/github": true,
+    ".hve-core/.github/prompts/hve-core": true,
+    ".hve-core/.github/prompts/security": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".hve-core/.github/instructions/ado": true,
+    ".hve-core/.github/instructions/coding-standards": true,
+    ".hve-core/.github/instructions/design-thinking": true,
+    ".hve-core/.github/instructions/github": true,
+    ".hve-core/.github/instructions/hve-core": true,
+    ".hve-core/.github/instructions/shared": true
+  },
+  "chat.agentSkillsLocations": {
+    ".hve-core/.github/skills": true,
+    ".hve-core/.github/skills/shared": true
+  }
 }
 ```
 
 ### Step 4: Automate with Devcontainer
 
-Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container creation:
+Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container creation:
 
 ```jsonc
 {
@@ -122,13 +144,13 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
 1. Rebuild your devcontainer (`Ctrl+Shift+P` → "Dev Containers: Rebuild Container")
 2. Open GitHub Copilot Chat (`Ctrl+Alt+I`)
 3. Click the agent picker dropdown
-4. Verify HVE-Core agents appear (task-planner, task-researcher, prompt-builder)
+4. Verify HVE Core agents appear (task-planner, task-researcher, prompt-builder)
 
 ## Complete Devcontainer Example
 
 ```jsonc
 {
-  "name": "My Project with HVE-Core",
+  "name": "My Project with HVE Core",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   
   "postCreateCommand": "[ -d .hve-core ] || git clone --depth 1 https://github.com/microsoft/hve-core.git .hve-core",
@@ -136,29 +158,55 @@ Add to `.devcontainer/devcontainer.json` so HVE-Core is cloned on container crea
   "customizations": {
     "vscode": {
       "settings": {
-        "chat.modeFilesLocations": { ".hve-core/.github/agents": true },
-        "chat.promptFilesLocations": { ".hve-core/.github/prompts": true },
-        "chat.instructionsFilesLocations": { ".hve-core/.github/instructions": true }
+        "chat.agentFilesLocations": {
+          ".hve-core/.github/agents/ado": true,
+          ".hve-core/.github/agents/data-science": true,
+          ".hve-core/.github/agents/design-thinking": true,
+          ".hve-core/.github/agents/github": true,
+          ".hve-core/.github/agents/project-planning": true,
+          ".hve-core/.github/agents/hve-core": true,
+          ".hve-core/.github/agents/hve-core/subagents": true,
+          ".hve-core/.github/agents/security": true
+        },
+        "chat.promptFilesLocations": {
+          ".hve-core/.github/prompts/ado": true,
+          ".hve-core/.github/prompts/design-thinking": true,
+          ".hve-core/.github/prompts/github": true,
+          ".hve-core/.github/prompts/hve-core": true,
+          ".hve-core/.github/prompts/security": true
+        },
+        "chat.instructionsFilesLocations": {
+          ".hve-core/.github/instructions/ado": true,
+          ".hve-core/.github/instructions/coding-standards": true,
+          ".hve-core/.github/instructions/design-thinking": true,
+          ".hve-core/.github/instructions/github": true,
+          ".hve-core/.github/instructions/hve-core": true,
+          ".hve-core/.github/instructions/shared": true
+        },
+        "chat.agentSkillsLocations": {
+          ".hve-core/.github/skills": true,
+          ".hve-core/.github/skills/shared": true
+        }
       }
     }
   }
 }
 ```
 
-## Updating HVE-Core
+## Updating HVE Core
 
-**Manual update:**
+### Manual update
 
 ```bash
 cd .hve-core
 git pull
 ```
 
-**Auto-update on container rebuild:**
+### Auto-update on container rebuild
 
 The `postCreateCommand` re-clones on each container creation. To update, rebuild the container.
 
-**Auto-update with version check:**
+### Auto-update with version check
 
 ```jsonc
 {
@@ -172,13 +220,13 @@ The `postCreateCommand` re-clones on each container creation. To update, rebuild
 
 ### Agents Not Appearing
 
-**Check the folder exists:**
+#### Check the folder exists
 
 ```bash
 ls .hve-core/.github/agents
 ```
 
-**Check settings are applied:**
+#### Check settings are applied
 
 1. Open Command Palette (`Ctrl+Shift+P`)
 2. Type "Preferences: Open Workspace Settings (JSON)"
@@ -216,7 +264,7 @@ The clone only happens if the folder doesn't exist. To force update:
 }
 ```
 
-**Warning:** This deletes any local changes to HVE-Core on every rebuild.
+**Warning:** This deletes any local changes to HVE Core on every rebuild.
 
 ## Limitations
 
@@ -232,7 +280,7 @@ The clone only happens if the folder doesn't exist. To force update:
 
 ## Next Steps
 
-* [Your First Workflow](../first-workflow.md) - Try HVE-Core with a real task
+* [Your First Workflow](../first-workflow.md) - Try HVE Core with a real task
 * [Multi-Root Workspace](multi-root.md) - Share across local + Codespaces
 * [Submodule](submodule.md) - Add version control for teams
 

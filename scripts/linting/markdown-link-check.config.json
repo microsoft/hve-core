@@ -3,13 +3,15 @@
   "timeout": "20s",
   "retryOn429": true,
   "ignorePatterns": [
-    { "pattern": "\\{\\{[A-Z0-9_]+\\}\\}" },
+    { "pattern": "\\{\\{[A-Za-z0-9_-]+\\}\\}" },
+    { "pattern": "%7B%7B[A-Za-z0-9_-]+%7D%7D" },
     { "pattern": "^mailto:" },
     { "pattern": "^tel:" },
     { "pattern": "^https://aka\\.ms/install-hve-core.*" },
     {
       "pattern": "^https://github\\.com/microsoft/hve-core"
-    }
+    },
+    { "pattern": "^LICENSE$" }
   ],
   "replacementPatterns": []
 }

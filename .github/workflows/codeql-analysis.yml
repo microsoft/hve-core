@@ -15,15 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
+      security-events: write  # Required for SARIF upload to Security tab
       actions: read
     
     strategy:
       fail-fast: false
       matrix:
-        # Repository contains GitHub Actions workflows, PowerShell, and shell scripts
-        # CodeQL supports 'actions' for workflow security scanning
-        language: [ 'actions' ]
+        # Repository contains GitHub Actions workflows, PowerShell, shell scripts, and Python
+        # CodeQL supports 'actions' for workflow scanning and 'python' for script analysis
+        language: [ 'actions', 'python' ]
     
     steps:
       - name: Checkout repository

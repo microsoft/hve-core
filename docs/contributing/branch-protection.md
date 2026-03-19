@@ -1,6 +1,7 @@
 ---
 title: Branch Protection Configuration
 description: Branch protection configuration for the hve-core repository
+sidebar_position: 8
 author: Microsoft
 ms.date: 2026-01-16
 ms.topic: reference
@@ -37,7 +38,7 @@ The following CI jobs must pass before a PR can be merged:
 | npm Security Audit          | Scans for vulnerable dependencies |
 | CodeQL Security Analysis    | Security vulnerability scanning   |
 
-**Note**: `Markdown Link Check` uses soft-fail and is not a required check.
+Note: `Markdown Link Check` uses soft-fail and is not a required check.
 
 ## Review Requirements
 
@@ -60,7 +61,7 @@ The `.github/CODEOWNERS` file defines code ownership:
 
 With this configuration, the expected OpenSSF Scorecard Branch Protection score is **~8/10**.
 
-**Note**: Achieving 10/10 requires 2 reviewers. The current configuration prioritizes team velocity with 1 reviewer.
+Note: Achieving 10/10 requires 2 reviewers. The current configuration prioritizes team velocity with 1 reviewer.
 
 ## Configuration Reference
 
@@ -68,26 +69,28 @@ With this configuration, the expected OpenSSF Scorecard Branch Protection score 
 
 Navigate to: **Settings → Branches → Branch protection rules → Edit `main`**
 
-**Require a pull request before merging**:
+#### Require a Pull Request before Merging
 
 * [x] Require approvals (1)
 * [x] Dismiss stale pull request approvals when new commits are pushed
 * [x] Require approval of the most recent reviewable push
 * [x] Require review from Code Owners
 
-**Require status checks to pass before merging**:
+#### Require Status Checks to Pass before Merging
 
 * [x] Require branches to be up to date before merging
 * Add all status checks listed in table above
 
-**Other settings**:
+#### Other Settings
 
 * [x] Do not allow bypassing the above settings
 
 ## Future Considerations
 
-* **GitHub Rulesets**: Consider migrating to Rulesets for enhanced push restrictions
-* **2 reviewers**: Can be enabled as team grows for Tier 4 (9/10) score
+| Item            | Details                                                       |
+|-----------------|---------------------------------------------------------------|
+| GitHub Rulesets | Consider migrating to Rulesets for enhanced push restrictions |
+| 2 reviewers     | Can be enabled as team grows for Tier 4 (9/10) score          |
 
 ---
 

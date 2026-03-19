@@ -1,0 +1,1 @@
+../../../.github/prompts/ado/ado-triage-work-items.prompt.md

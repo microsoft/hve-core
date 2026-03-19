@@ -6,7 +6,7 @@
     "style": "consistent"
   },
   "MD004": {
-    "style": "consistent"
+    "style": "asterisk"
   },
   "MD005": true,
   "MD007": {
@@ -49,7 +49,7 @@
   },
   "MD023": true,
   "MD024": {
-    "siblings_only": false
+    "siblings_only": true
   },
   "MD025": {
     "level": 1,
@@ -146,5 +146,23 @@
   "MD058": true,
   "MD060": {
     "style": "leading_and_trailing"
+  },
+  "search-replace": {
+    "rules": [
+      {
+        "name": "no-em-dash",
+        "message": "Do not use em dashes (—); use colons, commas, or parentheses instead",
+        "searchPattern": "/—/g",
+        "searchScope": "text",
+        "information": "https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/writing-style.instructions.md"
+      },
+      {
+        "name": "no-bolded-prefix-list",
+        "message": "Do not use bolded-prefix list items (e.g., '* **Label**: desc'); use tables, headings, or plain lists",
+        "searchPattern": "/\\*\\*[^*]+\\*\\*\\s*[:—–-]/g",
+        "searchScope": "text",
+        "information": "https://github.com/microsoft/hve-core/blob/main/.github/instructions/hve-core/writing-style.instructions.md"
+      }
+    ]
   }
 }

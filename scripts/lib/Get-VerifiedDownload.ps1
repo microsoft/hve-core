@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 
 <#
 .SYNOPSIS
@@ -57,6 +58,8 @@ param(
 )
 
 #endregion
+
+$ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot "Modules/CIHelpers.psm1") -Force
 
@@ -348,16 +351,13 @@ function Invoke-VerifiedDownload {
 #endregion
 
 #region Main Execution
-try {
-    # Only execute when invoked directly (not dot-sourced)
-    if ($MyInvocation.InvocationName -ne '.') {
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
         # Require parameters for direct invocation
         if (-not $Url -or -not $ExpectedSHA256 -or -not $OutputPath) {
             Write-Error "When invoking directly, -Url, -ExpectedSHA256, and -OutputPath are required."
             exit 1
         }
-
-        $ErrorActionPreference = 'Stop'
 
         # Resolve destination directory and file name from OutputPath
         $destinationDir = Split-Path -Parent $OutputPath
@@ -385,10 +385,10 @@ try {
         $result
         exit 0
     }
+    catch {
+        Write-Error -ErrorAction Continue "Get-VerifiedDownload failed: $($_.Exception.Message)"
+        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        exit 1
+    }
 }
-catch {
-    Write-Error "Get Verified Download failed: $($_.Exception.Message)"
-    Write-CIAnnotation -Message $_.Exception.Message -Level Error
-    exit 1
-}
-#endregion
+#endregion Main Execution

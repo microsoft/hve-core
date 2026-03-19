@@ -1,8 +1,9 @@
 ---
 title: MCP Server Configuration
-description: Optional configuration for Model Context Protocol servers used by HVE-Core agents
+description: Optional configuration for Model Context Protocol servers used by HVE Core agents
+sidebar_position: 7
 author: Microsoft
-ms.date: 2026-01-21
+ms.date: 2026-03-10
 ms.topic: how-to
 keywords:
   - mcp
@@ -13,11 +14,14 @@ keywords:
 estimated_reading_time: 8
 ---
 
-Some HVE-Core agents use Model Context Protocol (MCP) servers to integrate with external services. MCP configuration is optional; agents that depend on MCP tools indicate when the required server is unavailable.
+Some HVE Core agents use Model Context Protocol (MCP) servers to integrate with external services. MCP configuration is optional; agents that depend on MCP tools indicate when the required server is unavailable.
+
+> [!TIP]
+> The HVE Core installer skill auto-generates MCP configuration with curated servers and guides you through choosing the right installation method (peer clone, submodule, git-ignored, and others). Install the [HVE Core Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) extension and ask any agent "help me customize hve-core installation" for guided setup. The sections below cover manual MCP configuration.
 
 ## Overview
 
-MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE-Core references four curated MCP servers. Configure only the servers relevant to your workflow.
+MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE Core references four curated MCP servers. Configure only the servers relevant to your workflow.
 
 ## Choosing GitHub vs Azure DevOps
 
@@ -33,48 +37,56 @@ Configuring both is unnecessary unless you work across platforms. If you use oth
 
 ## Agent MCP Dependencies
 
-| Agent                | MCP Servers Used         | Notes                           |
-|----------------------|--------------------------|---------------------------------|
-| ado-prd-to-wit       | ado, microsoft-docs      | ADO work item creation          |
-| github-issue-manager | github                   | GitHub issue management         |
-| task-researcher      | context7, microsoft-docs | Documentation lookup (optional) |
-| task-planner         | context7, microsoft-docs | Documentation lookup (optional) |
-| rpi-agent            | Varies by subagent       | Delegates to specialized agents |
+| Agent                  | MCP Servers Used         | Notes                           |
+|------------------------|--------------------------|---------------------------------|
+| ado-prd-to-wit         | ado, microsoft-docs      | ADO work item creation          |
+| github-backlog-manager | github                   | GitHub backlog management       |
+| task-researcher        | context7, microsoft-docs | Documentation lookup (optional) |
+| task-planner           | context7, microsoft-docs | Documentation lookup (optional) |
+| rpi-agent              | Varies by subagent       | Delegates to specialized agents |
 
 Agents without MCP dependencies work without any MCP configuration.
 
 ## Curated MCP Servers
 
-HVE-Core documents these four MCP servers:
+HVE Core documents these four MCP servers:
 
 ### context7
 
 Library and SDK documentation lookup.
 
-* **Type**: stdio
-* **Package**: `@upstash/context7-mcp`
+| Property | Value                   |
+|----------|-------------------------|
+| Type     | stdio                   |
+| Package  | `@upstash/context7-mcp` |
 
 ### microsoft-docs
 
 Microsoft Learn documentation access.
 
-* **Type**: http
-* **URL**: `https://learn.microsoft.com/api/mcp`
+| Property | Value                                 |
+|----------|---------------------------------------|
+| Type     | http                                  |
+| URL      | `https://learn.microsoft.com/api/mcp` |
 
 ### ado (Azure DevOps)
 
 Azure DevOps work items, pipelines, and repositories.
 
-* **Type**: stdio
-* **Package**: `@azure-devops/mcp`
-* **Requires**: Organization name, optional tenant ID
+| Property | Value                                 |
+|----------|---------------------------------------|
+| Type     | stdio                                 |
+| Package  | `@azure-devops/mcp`                   |
+| Requires | Organization name, optional tenant ID |
 
 ### github
 
 GitHub repository and issue management.
 
-* **Type**: http
-* **URL**: `https://api.githubcopilot.com/mcp/`
+| Property | Value                                |
+|----------|--------------------------------------|
+| Type     | http                                 |
+| URL      | `https://api.githubcopilot.com/mcp/` |
 
 ## Complete Configuration Template
 
@@ -147,8 +159,8 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 
 ### Authentication Errors
 
-* **GitHub**: Uses VS Code's built-in GitHub authentication
-* **ADO**: Verify organization name and tenant ID are correct
+* GitHub: Uses VS Code's built-in GitHub authentication
+* ADO: Verify organization name and tenant ID are correct
 
 ### MCP Server Not Starting
 

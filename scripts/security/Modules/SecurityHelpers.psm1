@@ -1,4 +1,5 @@
 # Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 # Licensed under the MIT license.
 
 # SecurityHelpers.psm1
@@ -7,6 +8,9 @@
 # Author: HVE Core Team
 
 #Requires -Version 7.0
+
+# Omit -Force so the standalone CIHelpers export is not shadowed by a nested re-import.
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1')
 
 function Write-SecurityLog {
     <#
@@ -32,8 +36,14 @@ function Write-SecurityLog {
     .EXAMPLE
         Write-SecurityLog -Message "Scanning workflows" -Level Info
 
+    .PARAMETER CIAnnotation
+        When set, forwards Warning and Error messages as CI annotations via Write-CIAnnotation.
+
     .EXAMPLE
         Write-SecurityLog -Message "Stale SHA detected" -Level Warning -LogPath "./logs/security.log"
+
+    .EXAMPLE
+        Write-SecurityLog -Message "Not pinned" -Level Warning -CIAnnotation
     #>
     [CmdletBinding()]
     param(
@@ -49,7 +59,10 @@ function Write-SecurityLog {
         [string]$LogPath,
 
         [Parameter()]
-        [string]$OutputFormat = 'console'
+        [string]$OutputFormat = 'console',
+
+        [Parameter()]
+        [switch]$CIAnnotation
     )
 
     # Handle blank line requests
@@ -66,7 +79,7 @@ function Write-SecurityLog {
     # Console output with colors
     if ($OutputFormat -eq 'console') {
         $color = switch ($Level) {
-            'Info' { 'White' }
+            'Info' { 'Cyan' }
             'Warning' { 'Yellow' }
             'Error' { 'Red' }
             'Success' { 'Green' }
@@ -74,6 +87,11 @@ function Write-SecurityLog {
             'Verbose' { 'Cyan' }
         }
         Write-Host $logEntry -ForegroundColor $color
+    }
+
+    # Forward warnings and errors as CI annotations
+    if ($CIAnnotation -and ($Level -eq 'Warning' -or $Level -eq 'Error')) {
+        Write-CIAnnotation -Message $Message -Level $Level
     }
 
     # File logging if path provided
@@ -304,24 +322,43 @@ function Write-SecurityReport {
     }
 }
 
+function Get-GitHubApiBase {
+    <#
+    .SYNOPSIS
+        Returns the GitHub API base URL, respecting HVE_GITHUB_API_URL.
+
+    .OUTPUTS
+        [string] The API base URL without a trailing slash.
+
+    .EXAMPLE
+        $apiBase = Get-GitHubApiBase
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    if ($env:HVE_GITHUB_API_URL) { return $env:HVE_GITHUB_API_URL }
+    return 'https://api.github.com'
+}
+
 function Test-GitHubToken {
     <#
     .SYNOPSIS
         Validates a GitHub token and retrieves rate limit information.
 
     .DESCRIPTION
-        Tests that a GitHub token is valid by making an API call to the
-        rate_limit endpoint. Returns authentication status and rate limit details.
+        Tests that a GitHub token is valid by querying the GitHub GraphQL API
+        for the authenticated viewer and rate limit details.
 
     .PARAMETER Token
         The GitHub token to validate.
 
     .OUTPUTS
-        [hashtable] with keys: IsValid, RateLimit, Remaining, ResetTime, Message
+        [hashtable] with keys: Valid, Authenticated, RateLimit, Remaining, ResetAt, User, Message
 
     .EXAMPLE
         $result = Test-GitHubToken -Token $env:GITHUB_TOKEN
-        if ($result.IsValid) { Write-Host "Token is valid, $($result.Remaining) requests remaining" }
+        if ($result.Valid) { Write-Host "Token is valid, $($result.Remaining) requests remaining" }
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -332,11 +369,13 @@ function Test-GitHubToken {
     )
 
     $result = @{
-        IsValid   = $false
-        RateLimit = 0
-        Remaining = 0
-        ResetTime = $null
-        Message   = ''
+        Valid         = $false
+        Authenticated = $false
+        RateLimit     = 0
+        Remaining     = 0
+        ResetAt       = $null
+        User          = $null
+        Message       = ''
     }
 
     if ([string]::IsNullOrEmpty($Token)) {
@@ -346,22 +385,87 @@ function Test-GitHubToken {
 
     try {
         $headers = @{
-            Authorization  = "Bearer $Token"
-            Accept         = 'application/vnd.github+json'
-            'User-Agent'   = 'SecurityHelpers-PowerShell/1.0'
+            Authorization          = "Bearer $Token"
+            Accept                 = 'application/vnd.github+json'
+            'User-Agent'           = 'SecurityHelpers-PowerShell/1.0'
             'X-GitHub-Api-Version' = '2022-11-28'
         }
 
-        $response = Invoke-RestMethod -Uri 'https://api.github.com/rate_limit' `
-            -Headers $headers `
-            -Method Get `
-            -ErrorAction Stop
+        $query = @{
+            query = 'query { viewer { login } rateLimit { limit remaining resetAt } }'
+        } | ConvertTo-Json
 
-        $result.IsValid = $true
-        $result.RateLimit = $response.rate.limit
-        $result.Remaining = $response.rate.remaining
-        $result.ResetTime = [DateTimeOffset]::FromUnixTimeSeconds($response.rate.reset).DateTime
-        $result.Message = 'Token validated successfully'
+        $apiBase = Get-GitHubApiBase
+        $response = Invoke-RestMethod -Uri "$apiBase/graphql" -Method Post -Headers $headers -Body $query -ErrorAction Stop
+
+        $data = $null
+        if ($response -is [hashtable]) {
+            $data = $response['data']
+        }
+        elseif ($response.PSObject.Properties.Name -contains 'data') {
+            $data = $response.data
+        }
+
+        $viewer = $null
+        $rateLimit = $null
+        if ($data) {
+            if ($data -is [hashtable]) {
+                $viewer = $data['viewer']
+                $rateLimit = $data['rateLimit']
+            }
+            else {
+                if ($data.PSObject.Properties.Name -contains 'viewer') {
+                    $viewer = $data.viewer
+                }
+                if ($data.PSObject.Properties.Name -contains 'rateLimit') {
+                    $rateLimit = $data.rateLimit
+                }
+            }
+        }
+
+        if ($viewer) {
+            $result.Valid = $true
+            $result.Authenticated = $true
+            if ($viewer -is [hashtable]) {
+                $result.User = $viewer['login']
+            }
+            elseif ($viewer.PSObject.Properties.Name -contains 'login') {
+                $result.User = $viewer.login
+            }
+            $result.Message = "Authenticated as $($result.User)"
+        }
+        elseif ($rateLimit) {
+            $result.Valid = $true
+            $result.Authenticated = $false
+            $result.Message = 'Unauthenticated access - limited rate limits'
+        }
+
+        if ($rateLimit) {
+            if ($rateLimit -is [hashtable]) {
+                $result.RateLimit = $rateLimit['limit']
+                $result.Remaining = $rateLimit['remaining']
+                $result.ResetAt = $rateLimit['resetAt']
+            }
+            else {
+                if ($rateLimit.PSObject.Properties.Name -contains 'limit') {
+                    $result.RateLimit = $rateLimit.limit
+                }
+                if ($rateLimit.PSObject.Properties.Name -contains 'remaining') {
+                    $result.Remaining = $rateLimit.remaining
+                }
+                if ($rateLimit.PSObject.Properties.Name -contains 'resetAt') {
+                    $result.ResetAt = $rateLimit.resetAt
+                }
+            }
+        }
+
+        if ($result.Remaining -lt 100 -and $result.Valid) {
+            $result.Message += " | WARNING: Only $($result.Remaining) API calls remaining (resets at $($result.ResetAt))"
+        }
+
+        if (-not $result.Authenticated -and $result.Valid) {
+            Write-Warning 'Unauthenticated GitHub GraphQL API requests are heavily rate limited'
+        }
     }
     catch {
         $result.Message = "Token validation failed: $($_.Exception.Message)"
@@ -412,7 +516,8 @@ function Invoke-GitHubAPIWithRetry {
 
     .EXAMPLE
         $headers = @{ Authorization = "Bearer $token"; Accept = 'application/vnd.github+json' }
-        $response = Invoke-GitHubAPIWithRetry -Uri 'https://api.github.com/repos/owner/repo/commits' -Headers $headers
+        $apiBase = Get-GitHubApiBase
+        $response = Invoke-GitHubAPIWithRetry -Uri "$apiBase/repos/owner/repo/commits" -Headers $headers
     #>
     [CmdletBinding()]
     param(
@@ -514,6 +619,7 @@ Export-ModuleMember -Function @(
     'Write-SecurityLog'
     'New-SecurityIssue'
     'Write-SecurityReport'
+    'Get-GitHubApiBase'
     'Test-GitHubToken'
     'Invoke-GitHubAPIWithRetry'
 )

@@ -1,6 +1,7 @@
 ---
 title: Why the RPI Workflow Works
 description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
+sidebar_position: 2
 author: Microsoft
 ms.date: 2026-01-24
 ms.topic: concept
@@ -52,7 +53,7 @@ The magic happens because each phase starts fresh. When you clear context betwee
 
 **Without RPI**, AI thinks: "This looks like a reasonable variable name. I'll use `prefix`."
 
-**With RPI**, Task Researcher finds: "12 existing modules in this repository use `resource_prefix`, not `prefix`. See [variables.tf#L47](../infrastructure/modules/base/variables.tf#L47) for the established pattern."
+**With RPI**, Task Researcher finds: "12 existing modules in this repository use `resource_prefix`, not `prefix`. See `variables.tf#L47` for the established pattern."
 
 When AI knows it cannot implement during research, it stops optimizing for "plausible code" and starts optimizing for "verified truth." The constraint changes the goal.
 
@@ -138,12 +139,12 @@ HVE Core provides two workflow options. The right choice depends on the task, no
 
 Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Planner](task-planner.md) → [Task Implementor](task-implementor.md) → [Task Reviewer](task-reviewer.md)) when:
 
-* 🔍 **Deep research needed**: new frameworks, external APIs, compliance requirements
-* 📁 **Multi-file changes**: pattern discovery across the codebase
-* 👥 **Team handoff**: artifacts document decisions for others
-* 🛠️ **Long-term maintenance**: work you'll maintain and evolve over time
+* 🔍 New frameworks, external APIs, or compliance requirements demand deep research
+* 📁 Pattern discovery across the codebase requires multi-file changes
+* 👥 Artifacts that document decisions support team handoff
+* 🛠️ Work you'll maintain and evolve over time benefits from long-term maintenance records
 
-**The workflow:**
+#### The workflow
 
 1. Invoke Task Researcher → produces research document with citations
 2. Clear context, invoke Task Planner → produces implementation plan
@@ -152,11 +153,11 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 ### rpi-agent: When Simplicity Fits
 
-Use the [autonomous agent](../../.github/agents/rpi-agent.agent.md) when:
+Use the [autonomous agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) when:
 
-* ✅ **Clear scope**: straightforward feature or bug fix
-* ✅ **Minimal research**: codebase-only investigation
-* ✅ **Quick iteration**: active development with fast feedback loops
+* ✅ Straightforward feature or bug fix with clear scope
+* ✅ Codebase-only investigation requiring minimal research
+* ✅ Active development with fast feedback loops for quick iteration
 
 **The workflow:** Single rpi-agent session that orchestrates all four phases using subagent dispatch. The agent uses `runSubagent` to delegate work to specialized task agents while maintaining overall control.
 
@@ -183,7 +184,7 @@ Ready to try it yourself?
 
 * [Your First RPI Workflow](../getting-started/first-workflow.md): 15-minute hands-on tutorial
 * [Using the Agents Together](using-together.md): context management and handoffs
-* [RPI Overview](README.md): the four phases explained
+* [RPI Overview](./): the four phases explained
 * [Task Reviewer Guide](task-reviewer.md): validation and iteration
 
 ---

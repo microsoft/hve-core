@@ -1,6 +1,6 @@
 name: Custom Agent Request
 description: Request a new custom agent or slash command
-title: "[Custom Agent]: "
+title: "feat(agents): "
 labels: ["custom-agent", "needs-triage"]
 body:
   - type: markdown

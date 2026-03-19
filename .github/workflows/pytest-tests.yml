@@ -1,0 +1,117 @@
+name: Pytest Tests
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: 'Directory containing the Python skill to test'
+        required: true
+        type: string
+      soft-fail:
+        description: 'Whether to continue on test failures'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only run tests if Python files changed in this directory'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # Required for Codecov OIDC
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set artifact name
+        id: artifact-name
+        shell: bash
+        run: echo "name=pytest-results-$(echo '${{ inputs.working-directory }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Check for Python files
+        id: check-python
+        if: inputs.changed-files-only
+        shell: bash
+        run: |
+          # Get base ref for comparison
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          
+          # Check if any Python files changed in the working directory
+          if git diff --name-only "$BASE_SHA" HEAD | grep -q "^${{ inputs.working-directory }}/.*\.py$"; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Python files changed in ${{ inputs.working-directory }}"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No Python files changed in ${{ inputs.working-directory }}"
+          fi
+
+      - name: Install uv
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.10.9"
+
+      - name: Set up Python
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+        run: |
+          if [ -f "pyproject.toml" ]; then
+            echo "Installing dependencies with uv sync --locked"
+            uv sync --locked --dev
+          else
+            echo "No pyproject.toml found in ${{ inputs.working-directory }}"
+            echo "Skipping dependency installation"
+          fi
+
+      - name: Run pytest with coverage
+        if: "!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true'"
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+        run: |
+          if [ -f "pyproject.toml" ]; then
+            echo "Running pytest with coverage"
+            uv run pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term-missing -v
+          else
+            echo "No pyproject.toml found - skipping tests"
+          fi
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload test results
+        if: always() && (!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true')
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: ${{ steps.artifact-name.outputs.name }}
+          path: ${{ inputs.working-directory }}/coverage.xml
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload to Codecov
+        if: success() && (!inputs.changed-files-only || steps.check-python.outputs.has_changes == 'true')
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: ${{ inputs.working-directory }}/coverage.xml
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: pytest
+          name: pytest-coverage-${{ inputs.working-directory }}
+        continue-on-error: true

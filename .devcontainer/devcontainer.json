@@ -1,9 +1,9 @@
 {
   "name": "HVE Core - Markdown Editing",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "image": "${localEnv:HVE_DEVCONTAINER_IMAGE:mcr.microsoft.com/devcontainers/base:2-jammy}",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
+      "version": "20"
     },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -22,11 +22,21 @@
         "bierner.markdown-preview-github-styles",
         "bierner.markdown-mermaid",
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
       ]
     }
   },
   "onCreateCommand": "bash .devcontainer/scripts/on-create.sh",
+  "updateContentCommand": "npm ci",
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
+  "remoteEnv": {
+    "HVE_GITHUB_RELEASES_URL": "${localEnv:HVE_GITHUB_RELEASES_URL}",
+    "HVE_GITHUB_API_URL": "${localEnv:HVE_GITHUB_API_URL}",
+    "HVE_PSGALLERY_REPOSITORY": "${localEnv:HVE_PSGALLERY_REPOSITORY}",
+    "HVE_PSGALLERY_SOURCE_URL": "${localEnv:HVE_PSGALLERY_SOURCE_URL}"
+  },
   "remoteUser": "vscode"
 }

@@ -2,7 +2,7 @@
 title: Code of Conduct
 description: Microsoft Open Source Code of Conduct and community behavior expectations
 author: Microsoft Open Source Programs Office
-ms.date: 2025-11-04
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - code of conduct
@@ -16,10 +16,10 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 
 Resources:
 
-- [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/)
-- [Microsoft Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
-- Contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with questions or concerns
-- Employees can reach out at [aka.ms/opensource/moderation-support](https://aka.ms/opensource/moderation-support)
+* [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/)
+* [Microsoft Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/)
+* Contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with questions or concerns
+* Employees can reach out at [aka.ms/opensource/moderation-support](https://aka.ms/opensource/moderation-support)
 
 ---
 
