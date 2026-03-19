@@ -171,12 +171,18 @@ Use `runSubagent` with the Researcher Subagent:
 Agent: Researcher Subagent
 Topic: {specific framework area to research}
 Context: Component "{name}" in bucket "{bucket}" using {technology stack}
-Output: .copilot-tracking/research/subagents/{date}/{component-name}-{framework}.md
+Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{component-name}-{framework}.md
 ```
 
 Response format: Return findings as a markdown document with Standards Coverage, Findings, and Recommendations sections.
 
 Execution constraints: Complete research within a single invocation. Do not delegate to additional subagents.
+
+The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+
+When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
+
+Subagents can run in parallel when researching independent components or standards.
 
 ### Query Templates
 

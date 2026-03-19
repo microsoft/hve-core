@@ -61,7 +61,7 @@ Six sequential phases structure the RAI assessment. Each phase has entry criteri
 * **Activities**: Generate RAI scorecard summarizing all findings across five dimensions: scope boundary clarity, risk identification quality, control surface adequacy, evidence sufficiency, and future work governance. Generate backlog items for identified gaps using the appropriate format (ADO, GitHub, or both) per user preference. Present findings for final review.
 * **Exit criteria**: RAI scorecard generated with scored dimensions. Backlog items created and reviewed. User confirms handoff is complete.
 * **Artifacts**: `rai-scorecard.md`, backlog items
-* **Transition**: Assessment complete. State file updated with final scores and `handoffGenerated: true`.
+* **Transition**: Assessment complete. State file updated with final scores and `handoffGenerated` updated with platform-specific flags.
 
 ## Entry Modes
 
@@ -97,11 +97,11 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
   "sensitiveUsesCategories": [],
   "restrictedUsesCleared": false,
   "standardsMapped": false,
-  "raiRiskSurfaceStarted": false,
+  "securityModelAnalysisStarted": false,
   "raiThreatCount": 0,
   "impactAssessmentGenerated": false,
   "evidenceRegisterComplete": false,
-  "handoffGenerated": false,
+  "handoffGenerated": { "ado": false, "github": false },
   "gateResults": {
     "sensitiveUses": null,
     "restrictedUses": null
@@ -117,7 +117,9 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "userPreferences": {}
+  "userPreferences": {
+    "autonomyTier": "partial"
+  }
 }
 ```
 
@@ -148,9 +150,9 @@ Phase advancement updates `currentPhase` and sets phase-specific completion flag
 * Phase 1 → 2: AI system scoping confirmed.
 * Phase 2 → 3: `sensitiveUsesComplete: true`, `restrictedUsesCleared: true` (or escalation documented).
 * Phase 3 → 4: `standardsMapped: true`.
-* Phase 4 → 5: `raiRiskSurfaceStarted: true`, `raiThreatCount` updated.
+* Phase 4 → 5: `securityModelAnalysisStarted: true`, `raiThreatCount` updated.
 * Phase 5 → 6: `impactAssessmentGenerated: true`, `evidenceRegisterComplete: true`.
-* Phase 6 complete: `handoffGenerated: true`, `scoredDimensions` populated.
+* Phase 6 complete: `handoffGenerated` updated with platform-specific flags, `scoredDimensions` populated.
 
 ## Question Cadence
 

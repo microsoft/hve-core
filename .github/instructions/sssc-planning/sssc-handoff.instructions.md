@@ -22,7 +22,7 @@ For each of the 20 Scorecard checks, project the score improvement if all relate
 
 | #   | Check        | Risk   | Current Score | Projected Score | Work Items     |
 |-----|--------------|--------|---------------|-----------------|----------------|
-| {n} | {check_name} | {risk} | {current}/10  | {projected}/10  | {WI[NNN], ...} |
+| {n} | {check_name} | {risk} | {current}/10  | {projected}/10  | {WI-SSSC-{NNN}, ...} |
 
 Include a summary row with the estimated overall Scorecard score improvement.
 
@@ -49,7 +49,7 @@ Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-
 Apply the ADO work item template from `sssc-backlog.instructions.md` with:
 
 * HTML-formatted description fields
-* `WI[NNN]` sequential IDs
+* `WI-SSSC-{NNN}` sequential IDs
 * Type hierarchy: Epic → Feature → User Story → Task
 * Tags: `supply-chain`, `ossf`, plus per-check and per-category tags
 * Priority derived from Scorecard risk level
@@ -63,7 +63,7 @@ Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{pro
 Apply the GitHub issue template from `sssc-backlog.instructions.md` with:
 
 * YAML metadata blocks
-* `{{TEMP-N}}` temporary IDs
+* `{{SSSC-TEMP-N}}` temporary IDs
 * Markdown-formatted body
 * Labels: `supply-chain`, `ossf`, plus per-check and per-category labels
 * Milestone assignment if one exists

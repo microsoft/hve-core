@@ -18,7 +18,7 @@ Generate formatted work items from security model mitigations and standards gaps
 
 ## ADO Work Item Template
 
-Assign sequential IDs within the security plan using the format `WI[NNN]` (for example, WI[001], WI[002]). Order work items by type hierarchy: Epic, Feature, User Story, Task, Bug.
+Assign sequential IDs within the security plan using the format `WI-SEC-{NNN}` (for example, WI-SEC-001, WI-SEC-002). Order work items by type hierarchy: Epic, Feature, User Story, Task, Bug.
 
 Required fields per work item:
 
@@ -60,7 +60,7 @@ Five MCP tool categories support ADO operations: work item creation, work item u
 
 ## GitHub Issue Template
 
-Assign temporary IDs using the format `{{TEMP-N}}`, replaced with real issue numbers on creation. Order operations by type: create, update, comment, label, close.
+Assign temporary IDs using the format `{{SEC-TEMP-N}}`, replaced with real issue numbers on creation. Order operations by type: create, update, comment, label, close.
 
 Required fields per issue:
 

@@ -58,7 +58,7 @@ Within the same priority level, order items by adoption type (reusable workflow 
 
 ## ADO Work Item Format
 
-Assign sequential IDs using the format `WI[NNN]` (for example, WI[001], WI[002]). Order work items by type hierarchy: Epic, Feature, User Story, Task.
+Assign sequential IDs using the format `WI-SSSC-{NNN}` (for example, WI-SSSC-001, WI-SSSC-002). This convention distinguishes SSSC work items from Security Planner items (`WI-SEC-{NNN}`). Order work items by type hierarchy: Epic, Feature, User Story, Task.
 
 Work item hierarchy for supply chain security:
 
@@ -90,7 +90,7 @@ HTML template for ADO description fields:
 
 ## GitHub Issue Format
 
-Assign temporary IDs using the format `{{TEMP-N}}`, replaced with real issue numbers on creation.
+Assign temporary IDs using the format `{{SSSC-TEMP-N}}`, replaced with real issue numbers on creation.
 
 Include a YAML metadata block at the top of the issue body:
 

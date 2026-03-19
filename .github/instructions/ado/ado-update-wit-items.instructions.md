@@ -62,7 +62,7 @@ Determine processing order:
 
 For each work item:
 
-* Map temporary WI[Reference Number] to ADO System.Id after creation
+* Map temporary planning reference IDs to ADO System.Id after creation. Expected formats: `WI[NNN]` (e.g., `WI001`), `WI-SEC-{NNN}`, `WI-RAI-{NNN}`, `WI-SSSC-{NNN}` (namespaced planner IDs)
 * Set the `format` parameter for Description, Acceptance Criteria, and Repro Steps fields using the detected content format per [Content Format Detection](./ado-wit-planning.instructions.md#content-format-detection). Read the fenced code block annotation (`markdown` or `html`) from planning artifacts to determine the format value.
 * Copy field values verbatim from planning artifacts
 * Use `mcp_ado_wit_update_work_items_batch` for Acceptance Criteria fields
@@ -138,6 +138,8 @@ Keep the user informed during processing:
 ## Work Items
 * [ ] (Create) WI[Reference Number] [Work Item Type] - [Title Summary]
   * [Relationship entries from handoff.md]
+  * Notes: [processing notes, System.Id after creation, URL, errors]
+* [ ] (Create) WI-SEC-001 Task - Implement TLS 1.3 enforcement
   * Notes: [processing notes, System.Id after creation, URL, errors]
 * [ ] (Update) WI[Reference Number] [Work Item Type] - System.Id [ID] - [Title Summary]
   * [Relationship entries from handoff.md]

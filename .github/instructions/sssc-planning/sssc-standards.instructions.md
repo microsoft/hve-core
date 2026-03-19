@@ -3,11 +3,11 @@ description: "Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, a
 applyTo: '**/.copilot-tracking/sssc-plans/**'
 ---
 
-# SSSC Phase 3 — Standards Mapping
+# SSSC Phase 3: Standards Mapping
 
 Map the assessed supply chain posture against OpenSSF standards. Use the Phase 2 assessment results as input.
 
-## OpenSSF Scorecard — 20 Checks
+## OpenSSF Scorecard: 20 Checks
 
 Map each Scorecard check to the repository's current implementation and identify the available workflow or script from hve-core or physical-ai-toolchain.
 
@@ -47,7 +47,7 @@ Assess the repository against SLSA Build track requirements:
 
 | Level    | Requirements                                      | Assessment Criteria                                         |
 |----------|---------------------------------------------------|-------------------------------------------------------------|
-| Build L0 | No requirements                                   | Baseline — all repositories start here                      |
+| Build L0 | No requirements                                   | Baseline, all repositories start here                       |
 | Build L1 | Provenance exists and is distributed to consumers | Check for `actions/attest-build-provenance` or equivalent   |
 | Build L2 | Hosted build platform, signed provenance          | Verify GitHub Actions (hosted), Sigstore provenance signing |
 | Build L3 | Build runs in isolation, signing key isolation    | Verify ephemeral runners, ephemeral Sigstore keys (OIDC)    |
@@ -88,6 +88,58 @@ Assess SBOM generation and distribution:
 
 Verify NTIA minimum element compliance for existing SBOM output.
 
+## Researcher Subagent Delegation
+
+Supply chain security standards evolve rapidly and contain framework-specific guidance best retrieved on demand. The following standards are delegated to the Researcher Subagent at runtime:
+
+| Standard | Rationale for Delegation |
+|----------|---------------------------|
+| OpenSSF Scorecard check details | Check-specific scoring criteria and remediation evolve with each release |
+| SLSA Build Track specification | Version-dependent build integrity requirements and verification procedures |
+| Sigstore signing models | Keyless signing setup varies by package manager and CI platform |
+| SBOM format specifications | SPDX and CycloneDX schemas evolve; NTIA minimum element guidance updates |
+| Best Practices Badge criteria | Tier-specific criteria and evidence requirements change across badge versions |
+| WAF / CAF | Cloud-specific supply chain security guidance, frequently updated |
+
+Do NOT delegate OpenSSF Scorecard check names, SLSA level definitions, Sigstore maturity levels, SBOM standard names, or Best Practices Badge tier names. Those are embedded above.
+
+### When to Delegate
+
+* Phase 3 identifies supply chain controls that exceed embedded standards coverage.
+* Scorecard check remediation requires platform-specific or version-specific guidance.
+* SLSA level verification requires CI-platform-specific build provenance procedures.
+* Sigstore adoption requires package-manager-specific signing configuration.
+* SBOM generation requires tool-specific or language-specific format guidance.
+* Compliance requirements demand WAF or CAF supply chain pillar mapping.
+
+### Invocation Pattern
+
+Use `runSubagent` or `task` with the Researcher Subagent:
+
+```text
+Agent: Researcher Subagent
+Topic: {specific supply chain standard area to research}
+Context: Repository "{name}" with supply chain maturity "{current-level}" targeting "{target-level}"
+Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{repo-name}-{standard}.md
+```
+
+The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
+
+When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
+
+Execution constraints: Complete research within a single invocation. Do not delegate to additional subagents.
+
+### Query Templates
+
+* OpenSSF Scorecard: "OpenSSF Scorecard {check-name} check scoring criteria and remediation steps for {CI-platform}"
+* SLSA: "SLSA Build Track Level {N} requirements and verification for {CI-platform} with {build-system}"
+* Sigstore: "Sigstore keyless signing setup for {package-manager} with {CI-platform}"
+* SBOM: "{SPDX-JSON|CycloneDX} SBOM generation with {tool} for {language} project covering NTIA minimum elements"
+* Best Practices Badge: "OpenSSF Best Practices Badge {tier} criteria for {project-type} projects"
+* WAF/CAF: "Microsoft Well-Architected Framework supply chain security pillar for {technology-stack} on {cloud-platform}"
+
+Subagents can run in parallel when researching independent standard domains.
+
 ## Output
 
 Write the mapping to `.copilot-tracking/sssc-plans/{project-slug}/standards-mapping.md`.
@@ -95,7 +147,7 @@ Write the mapping to `.copilot-tracking/sssc-plans/{project-slug}/standards-mapp
 Structure the output as:
 
 ```markdown
-# Standards Mapping — {project-slug}
+# Standards Mapping: {project-slug}
 
 ## Scorecard Summary
 - Estimated overall score: {N}/10

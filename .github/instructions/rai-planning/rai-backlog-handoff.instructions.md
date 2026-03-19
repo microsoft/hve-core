@@ -117,7 +117,7 @@ Both ADO and GitHub formats can be generated simultaneously. Ask the user which 
 
 ### ADO Work Item Template
 
-Assign sequential IDs within the RAI plan using the format `WI-RAI-{NNN}` (for example, WI-RAI-001, WI-RAI-002). This convention is distinct from the Security Planner `WI{NNN}` format to prevent ID collisions.
+Assign sequential IDs within the RAI plan using the format `WI-RAI-{NNN}` (for example, WI-RAI-001, WI-RAI-002). This convention is distinct from the Security Planner `WI-SEC-{NNN}` format to prevent ID collisions.
 
 Required fields per work item:
 
@@ -162,7 +162,7 @@ Execution follows `ado-update-wit-items.instructions.md`.
 
 ### GitHub Issue Template
 
-Assign temporary IDs using the format `{{RAI-TEMP-N}}`, replaced with real issue numbers on creation. This convention is distinct from the Security Planner `{{TEMP-N}}` format.
+Assign temporary IDs using the format `{{RAI-TEMP-N}}`, replaced with real issue numbers on creation. This convention is distinct from the Security Planner `{{SEC-TEMP-N}}` format.
 
 Required fields per issue:
 
@@ -182,7 +182,7 @@ threat_id: RAI-T-{CATEGORY}-{NNN}
 risk_level: {Critical|High|Medium|Low}
 category: {Remediation|Control Implementation|Monitoring Setup|Documentation|Enhancement}
 depth_tier: {Basic|Standard|Comprehensive}
-security_cross_ref: {WI{NNN} or empty}
+security_cross_ref: {WI-SEC-{NNN} or empty}
 ---
 ```
 
@@ -265,7 +265,7 @@ Rules:
 
 * When an RAI threat overlaps with a Security Planner threat (identified by dual `T-{BUCKET}-AI-{NNN}` IDs), the RAI work item includes a cross-reference field.
 * Security Planner work items are not duplicated. RAI items extend or complement them instead.
-* Cross-reference format: `Security-Ref: WI{NNN}` in ADO, `Security: #{NNN}` in GitHub.
+* Cross-reference format: `Security-Ref: WI-SEC-{NNN}` in ADO, `Security: #{NNN}` in GitHub.
 * The handoff summary includes a cross-reference table listing all overlapping items.
 * Before creating new work items, search for existing Security Planner items with matching threat IDs or control surfaces. Link rather than duplicate.
 
@@ -273,7 +273,7 @@ Cross-reference table template:
 
 | RAI Work Item | Security Work Item | Relationship                    | Notes         |
 |---------------|--------------------|---------------------------------|---------------|
-| WI-RAI-{NNN}  | WI{NNN}            | Extends / Complements / Depends | {description} |
+| WI-RAI-{NNN}  | WI-SEC-{NNN}      | Extends / Complements / Depends | {description} |
 
 Relationship types:
 
@@ -307,7 +307,7 @@ After generating all work items, produce a handoff summary covering totals, cros
 
 | RAI Item     | Security Item | Relationship   |
 |--------------|---------------|----------------|
-| WI-RAI-{NNN} | WI{NNN}       | {relationship} |
+| WI-RAI-{NNN} | WI-SEC-{NNN}  | {relationship} |
 
 ### Outstanding Tradeoffs
 

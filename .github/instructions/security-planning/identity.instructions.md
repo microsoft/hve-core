@@ -22,7 +22,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 ### Phase 1: Scoping
 
-* Entry: agent invoked via entry prompt (scoping or capture mode)
+* Entry: agent invoked via entry prompt (capture or from-prd mode)
 * Activities: identify project scope, technology stack, deployment model, and stakeholders; classify components into operational buckets; confirm bucket list with the user
 * Exit: all buckets identified and confirmed by the user
 * Artifacts: populated `state.json`, initial bucket list in the security plan
@@ -92,6 +92,18 @@ When `raiEnabled` is `true` and `raiPlannerDispatched` is `false`:
 * Set `raiPlannerDispatched` to `true` after presenting the recommendation.
 * When `raiEnabled` is `false`, skip this section entirely.
 
+## Entry Modes
+
+Two entry modes determine Phase 1 initialization. Both modes converge at Phase 2 once security scoping completes.
+
+### `capture`
+
+Fresh assessment. Initialize blank `state.json` with `entryMode: "capture"`. Conduct a scoping interview to discover project scope, technology stack, deployment model, stakeholders, compliance requirements, and AI/ML component usage.
+
+### `from-prd`
+
+PRD/BRD-seeded assessment. Scan `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` for planning artifacts. Secondary scan for `prd-*.md`, `*-prd.md`, `brd-*.md`, `*-brd.md`, and `product-definition*.md`. Extract project scope, technology stack, deployment targets, data classification levels, compliance requirements, and stakeholder roles. Pre-populate Phase 1 state fields. Add processed file paths to `referencesProcessed`. Set `entryMode` to `"from-prd"`. Present extracted information to the user for confirmation or refinement before advancing.
+
 ## State Management
 
 State persists across sessions in a JSON file at `.copilot-tracking/security-plans/{project-slug}/state.json`.
@@ -103,7 +115,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/security-pla
   "projectSlug": "string",
   "securityPlanFile": "string (path to plan markdown)",
   "currentPhase": "number (1-6)",
-  "entryMode": "scoping | capture",
+  "entryMode": "capture | from-prd",
   "bucketsCompleted": ["string (bucket names)"],
   "standardsMapped": ["string (bucket names that have completed standards mapping)"],
   "riskSurfaceStarted": "boolean",
@@ -136,7 +148,7 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 
 * `projectSlug` derived from the project name provided by the user
 * `currentPhase` set to `1`
-* `entryMode` set based on the invoking prompt (scoping or capture)
+* `entryMode` set based on the invoking prompt (capture or from-prd)
 * All arrays empty, booleans `false`
 * `raiScope` and `raiTier` set to `"none"`
 
