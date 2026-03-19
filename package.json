@@ -39,6 +39,7 @@
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
+    "@cspell/cspell-json-reporter": "9.7.0",
     "@vscode/vsce": "3.7.1",
     "cspell": "9.7.0",
     "markdown-link-check": "3.14.2",
