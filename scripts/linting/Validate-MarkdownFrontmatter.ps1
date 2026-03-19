@@ -46,7 +46,10 @@ param(
     [string[]]$FooterExcludePaths = @(),
 
     [Parameter(Mandatory = $false)]
-    [switch]$SkipFooterValidation
+    [switch]$SkipFooterValidation,
+
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = "logs/frontmatter-validation-results.json"
 )
 
 # Import helper modules
@@ -595,7 +598,7 @@ function Test-FrontmatterValidation {
     if (-not (Test-Path $logsDir)) {
         New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     }
-    Export-ValidationResults -Summary $summary -OutputPath (Join-Path $logsDir 'frontmatter-validation-results.json')
+    Export-ValidationResults -Summary $summary -OutputPath (Join-Path -Path $repoRoot -ChildPath $OutputPath)
 
     # GitHub step summary
     $hasIssues = $summary.GetExitCode($WarningsAsErrors) -ne 0
