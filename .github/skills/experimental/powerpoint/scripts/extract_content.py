@@ -1145,6 +1145,7 @@ def _resolve_theme_colors(prs) -> dict:
                         if theme_name in color_map:
                             color_map[alias] = color_map[theme_name]
     except (AttributeError, TypeError, IndexError):
+        # Theme elements missing or malformed; degrade gracefully
         pass
     except etree.XMLSyntaxError:
         logging.warning(
