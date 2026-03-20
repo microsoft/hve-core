@@ -52,11 +52,11 @@ jobs:
           LAST_TAG=$(git tag -l 'hve-core-v*' | awk -F'[v.]' '{if ($(NF-1) % 2 == 0) print}' | sort -V | tail -1)
 
           # Check for breaking changes since last release.
-          # Match conventional commit subject with ! (e.g. feat!:) or
-          # a BREAKING CHANGE / BREAKING-CHANGE footer token at line start.
+          # Only scan commit subjects to avoid false positives from
+          # Dependabot bodies that embed upstream changelogs.
           HAS_BREAKING=0
           if [ -n "$LAST_TAG" ]; then
-            HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s%n%b' | \
+            HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s' | \
               grep -cE '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE:' || true)
           fi
 
