@@ -4,7 +4,7 @@
 
 from collections import Counter
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from extract_content import (
@@ -351,7 +351,7 @@ class TestExtractImage:
         assert img_file.exists()
 
     def test_extract_image_delegates_to_save_image_blob(
-        self, blank_slide, sample_image_path, tmp_path
+        self, blank_slide, sample_image_path, tmp_path, mocker
     ):
         pic = blank_slide.shapes.add_picture(
             str(sample_image_path),
@@ -362,11 +362,11 @@ class TestExtractImage:
         )
         output_dir = tmp_path / "output"
         output_dir.mkdir()
-        with patch(
+        mock_save = mocker.patch(
             "extract_content._save_image_blob",
             return_value={"path": "images/image-01.png"},
-        ) as mock_save:
-            result = extract_image(pic, output_dir, 2, 5)
+        )
+        result = extract_image(pic, output_dir, 2, 5)
         mock_save.assert_called_once_with(pic, output_dir, 2, 5)
         assert result["path"] == "images/image-01.png"
 
@@ -1587,10 +1587,10 @@ class TestDetectGlobalStyleDeep:
 class TestMainExtractContent:
     """Tests for main() entry point."""
 
-    @patch("extract_content.Presentation")
-    def test_main_basic(self, mock_prs_cls, tmp_path):
+    def test_main_basic(self, tmp_path, mocker):
         from extract_content import main
 
+        mock_prs_cls = mocker.patch("extract_content.Presentation")
         mock_prs = MagicMock()
         mock_prs.slides = []
         mock_prs.slide_width = Inches(13.333)
@@ -1610,7 +1610,7 @@ class TestMainExtractContent:
         pptx_file.write_bytes(b"PK")
         out_dir = tmp_path / "output"
 
-        with patch(
+        mocker.patch(
             "sys.argv",
             [
                 "extract_content.py",
@@ -1619,6 +1619,6 @@ class TestMainExtractContent:
                 "--output-dir",
                 str(out_dir),
             ],
-        ):
-            main()
+        )
+        main()
         assert (out_dir / "global" / "style.yaml").exists()
