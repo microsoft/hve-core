@@ -1,8 +1,0 @@
-{
-  "name": "beval-deps",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "@github/copilot": "1.0.9"
-  }
-}
