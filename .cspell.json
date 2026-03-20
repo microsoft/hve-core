@@ -70,6 +70,11 @@
     "hideable",
     "learning",
     "ˈpræksɪs",
-    "πρᾶξις"
+    "πρᾶξις",
+    "agentic"
+  ],
+  "reporters": [
+    "default",
+    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
   ]
 }

@@ -11,6 +11,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 This collection includes agents, skills, and instructions for:
 
+- **Experiment Designer** — Guides users through designing Minimum Viable Experiments (MVEs) with hypothesis formation, vetting, and structured experiment plans
 - **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
 - **Video to GIF** — Convert video files to animated GIF format
 
@@ -22,17 +23,19 @@ copilot plugin install experimental@hve-core
 
 ## Agents
 
-| Agent         | Description                                                                                                            |
-|---------------|------------------------------------------------------------------------------------------------------------------------|
-| pptx          | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                        |
-| pptx-subagent | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation |
+| Agent               | Description                                                                                                                                                                                              |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| experiment-designer | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core |
+| pptx                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                          |
+| pptx-subagent       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                   |
 
 ## Instructions
 
-| Instruction       | Description                                                                                                                                                                                                                                                 |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pptx              | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
-| hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Instruction         | Description                                                                                                                                                                                                                                                 |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| experiment-designer | MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core                                                                                                                                      |
+| pptx                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
+| hve-core-location   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills
 

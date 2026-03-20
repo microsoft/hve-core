@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Validate slide images using Copilot SDK vision models.
 
 Sends each rendered slide image to a vision-capable model via the
@@ -129,12 +130,13 @@ def discover_images(
         Sorted list of (slide_number, image_path) tuples.
     """
     images = []
-    for f in sorted(image_dir.iterdir()):
+    for f in image_dir.iterdir():
         m = IMAGE_PATTERN.match(f.name)
         if m:
             num = int(m.group(1))
             if slide_filter is None or num in slide_filter:
                 images.append((num, f))
+    images.sort(key=lambda t: t[0])
     return images
 
 

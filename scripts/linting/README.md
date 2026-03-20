@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - powershell
@@ -337,7 +337,147 @@ Purpose: Ensure all PowerShell, shell, and Python scripts include the required M
 * Artifacts: `copyright-header-results` (JSON)
 * Exit Code: Non-zero if validation fails (with `-FailOnMissing`)
 
+### ms.date Freshness Check
+
+#### `Invoke-MsDateFreshnessCheck.ps1`
+
+Checks `ms.date` frontmatter freshness across markdown files.
+
+Purpose: Flag documentation files whose `ms.date` exceeds a configurable staleness threshold, helping teams identify content that may need review or updates.
+
+##### Features
+
+* Scans all markdown files or only changed files via Git
+* Configurable staleness threshold in days
+* Generates JSON report and markdown step summary
+* Creates CI annotations for each stale file
+* Excludes `CHANGELOG.md` and `.copilot-tracking/` by default
+
+##### Parameters
+
+* `-ThresholdDays` (int) - Days before ms.date is considered stale (default: `90`)
+* `-Paths` (string[]) - Directories to scan (default: repository root)
+* `-ChangedFilesOnly` (switch) - Only check files changed relative to BaseBranch
+* `-BaseBranch` (string) - Base branch for changed-file detection (default: `origin/main`)
+
+##### Artifacts Generated
+
+* `logs/msdate-freshness-results.json` - Structured results with stale file details
+* `logs/msdate-summary.md` - Markdown step summary with stale files table
+
+##### Usage
+
+```powershell
+# Check all markdown files with default 90-day threshold
+./scripts/linting/Invoke-MsDateFreshnessCheck.ps1
+
+# Use a stricter 60-day threshold
+./scripts/linting/Invoke-MsDateFreshnessCheck.ps1 -ThresholdDays 60
+
+# Check only changed files
+./scripts/linting/Invoke-MsDateFreshnessCheck.ps1 -ChangedFilesOnly
+```
+
+##### GitHub Actions Integration
+
+* Workflow: `.github/workflows/msdate-freshness-check.yml`
+* Artifacts: `msdate-freshness-results` (JSON + markdown)
+* npm script: `npm run lint:frontmatter` (frontmatter check also includes freshness)
+
+### Python Tooling
+
+#### `Invoke-PythonLint.ps1`
+
+Lints Python skills using ruff.
+
+Purpose: Enforce Python code quality standards across all Python skills in the repository by dynamically discovering and linting each skill.
+
+##### Features
+
+* Discovers Python skills via `pyproject.toml` file search
+* Verifies ruff availability before running
+* Lints each skill directory independently
+* Reports per-skill pass/fail results
+* Supports optional JSON output
+
+##### Parameters
+
+* `-RepoRoot` (string) - Repository root path (default: current directory)
+* `-OutputPath` (string) - Optional path for JSON results
+
+##### Usage
+
+```powershell
+# Lint all Python skills
+./scripts/linting/Invoke-PythonLint.ps1
+
+# Lint from a specific repository root
+./scripts/linting/Invoke-PythonLint.ps1 -RepoRoot /path/to/repo
+```
+
+##### GitHub Actions Integration
+
+* Workflow: `.github/workflows/python-lint.yml`
+* npm script: `npm run lint:py`
+
+#### `Invoke-PythonTests.ps1`
+
+Runs pytest across Python skills.
+
+Purpose: Execute Python test suites for all Python skills that include a `tests/` directory, reporting aggregate pass/fail results.
+
+##### Features
+
+* Discovers Python skills via `pyproject.toml` file search
+* Skips skills without a `tests/` directory
+* Verifies pytest availability before running
+* Reports per-skill test results with pass/fail counts
+* Configurable verbosity level
+
+##### Parameters
+
+* `-RepoRoot` (string) - Repository root path (default: current directory)
+* `-OutputPath` (string) - Optional path for JSON results
+* `-Verbosity` (string) - pytest verbosity flag (default: `-v`)
+
+##### Usage
+
+```powershell
+# Run all Python tests
+./scripts/linting/Invoke-PythonTests.ps1
+
+# Run with quiet output
+./scripts/linting/Invoke-PythonTests.ps1 -Verbosity '-q'
+```
+
+##### GitHub Actions Integration
+
+* Workflow: `.github/workflows/pytest-tests.yml`
+* npm script: `npm run test:py`
+
 ## Shared Module
+
+### `Modules/FrontmatterValidation.psm1`
+
+Frontmatter validation functions and types used by `Validate-MarkdownFrontmatter.ps1` and its test suite.
+
+Imported via `using module` syntax in test files.
+
+#### Exported Classes
+
+| Class                  | Purpose                                                                     |
+|------------------------|-----------------------------------------------------------------------------|
+| `ValidationIssue`      | Represents a single validation finding with type, field, message, and file  |
+| `FileTypeInfo`         | Classifies a markdown file by type (docs, prompt, instruction, agent, etc.) |
+| `FileValidationResult` | Aggregates all validation issues and frontmatter for a single file          |
+
+#### Usage
+
+```powershell
+using module ./scripts/linting/Modules/FrontmatterValidation.psm1
+
+$issue = [ValidationIssue]::new('Error', 'ms.date', 'Missing required field', 'README.md')
+```
 
 ### `Modules/LintingHelpers.psm1`
 
@@ -516,6 +656,11 @@ All linting scripts are integrated into GitHub Actions workflows:
 | Frontmatter Validation | `.github/workflows/frontmatter-validation.yml` |
 | Link Language Check    | `.github/workflows/link-lang-check.yml`        |
 | Markdown Link Check    | `.github/workflows/markdown-link-check.yml`    |
+| ms.date Freshness      | `.github/workflows/msdate-freshness-check.yml` |
+| Python Lint            | `.github/workflows/python-lint.yml`            |
+| Python Tests           | `.github/workflows/pytest-tests.yml`           |
+| Copyright Headers      | `.github/workflows/copyright-headers.yml`      |
+| Skill Validation       | `.github/workflows/skill-validation.yml`       |
 
 See [GitHub Workflows Documentation](../../.github/workflows/README.md) for details.
 

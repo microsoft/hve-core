@@ -19,6 +19,7 @@
     "lint:version-consistency": "pwsh -NoProfile -Command \"./scripts/security/Test-ActionVersionConsistency.ps1 -FailOnMismatch -Format Json -OutputPath logs/action-version-consistency-results.json\"",
     "lint:permissions": "pwsh -NoProfile -Command \"& './scripts/security/Test-WorkflowPermissions.ps1' -FailOnViolation\"",
     "lint:dependency-pinning": "pwsh -NoProfile -Command \"& './scripts/security/Test-DependencyPinning.ps1' -FailOnUnpinned\"",
+    "audit:pip": "pwsh -NoProfile -File scripts/security/Invoke-PipAudit.ps1",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:py && npm run validate:skills",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
@@ -33,10 +34,12 @@
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:validate": "npm run lint:collections-metadata",
+    "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
+    "@cspell/cspell-json-reporter": "9.7.0",
     "@vscode/vsce": "3.7.1",
     "cspell": "9.7.0",
     "markdown-link-check": "3.14.2",
