@@ -197,7 +197,12 @@ gitops
 helm
 Holo
 hotspots
+Fulcio
+gitsign
 Huggingface
+Rekor
+sscp
+unforgeable
 hyperconverged
 hyperparameters
 hypervisor
