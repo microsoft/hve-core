@@ -99,7 +99,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
 ```json
 {
   "projectSlug": "",
-  "sscpPlanFile": "",
+  "ssscPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
   "scopingComplete": false,
@@ -118,7 +118,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
   "referencesProcessed": [],
   "nextActions": [],
   "userPreferences": { "autonomyTier": "partial" },
-  "sscpEnabled": true,
+  "ssscEnabled": true,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
@@ -140,11 +140,11 @@ Execute this protocol on every turn:
 On first invocation, create the project directory and `state.json` with Phase 1 defaults:
 
 * `projectSlug` derived from the project name provided by the user (kebab-case)
-* `sscpPlanFile` set to the plan markdown path
+* `ssscPlanFile` set to the plan markdown path
 * `currentPhase` set to `1`
 * `entryMode` set based on the invoking prompt (capture, from-prd, from-brd, or from-security-plan)
 * All arrays empty, booleans `false`
-* `sscpEnabled` set to `true`
+* `ssscEnabled` set to `true`
 
 ### State Transitions
 

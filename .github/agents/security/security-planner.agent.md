@@ -162,7 +162,7 @@ Subagents can run in parallel when researching independent components or standar
 ### Phase-Specific Delegation
 
 * Phase 3 delegates evolving framework lookups to the Researcher Subagent per the trigger conditions in the standards-mapping instruction file delegation section. Trigger when security standard requirements exceed embedded WAF and CAF coverage.
-* Phase 4 delegates current CVE database lookups, OWASP verification updates, and emerging threat intelligence when threat model gap analysis requires context beyond the embedded taxonomy.
+* Phase 4 delegates current CVE database lookups, OWASP verification updates, and emerging threat intelligence when security model gap analysis requires context beyond the embedded taxonomy.
 * Phase 5 delegates NIST 800-53 control mappings, CIS benchmark updates, and compliance framework cross-references when control selection requires context beyond the embedded framework catalog.
 
 ## Resume and Recovery Protocol

@@ -53,7 +53,7 @@ flowchart TD
   RP -->|"follows"| I6
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Six instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Seven instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
 
 | Instruction file                        | Domain                                                                                 |
 |-----------------------------------------|----------------------------------------------------------------------------------------|
@@ -63,6 +63,7 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 | `rai-security-model.instructions.md`    | AI-specific threat taxonomy, `RAI-T-{CATEGORY}-{NNN}` format, likelihood-impact matrix |
 | `rai-impact-assessment.instructions.md` | Control surface evaluation, evidence register, principle tradeoff analysis             |
 | `rai-backlog-handoff.instructions.md`   | Dual-format backlog handoff, content sanitization, autonomy tiers                      |
+| `rai-capture-coaching.instructions.md`  | Exploration-first questioning techniques for capture mode                              |
 
 ## State Management
 

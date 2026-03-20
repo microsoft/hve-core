@@ -69,7 +69,7 @@ The state file tracks 17 fields across scoping, analysis, and handoff concerns.
 | Field                       | Type     | Description                                                |
 |-----------------------------|----------|------------------------------------------------------------|
 | `projectSlug`               | string   | Kebab-case project identifier                              |
-| `sscpPlanFile`              | string   | Path to the main SSSC plan markdown file                   |
+| `ssscPlanFile`              | string   | Path to the main SSSC plan markdown file                   |
 | `currentPhase`              | number   | Current phase (1-6)                                        |
 | `entryMode`                 | string   | `capture`, `from-prd`, `from-brd`, or `from-security-plan` |
 | `scopingComplete`           | boolean  | Whether Phase 1 scoping has been completed                 |
@@ -86,7 +86,7 @@ The state file tracks 17 fields across scoping, analysis, and handoff concerns.
 | `referencesProcessed`       | string[] | Paths to PRD/BRD/security-plan artifacts consumed          |
 | `nextActions`               | string[] | Pending actions for the current or next phase              |
 | `userPreferences`           | object   | Autonomy preference: `full`, `partial`, or `manual`        |
-| `sscpEnabled`               | boolean  | Whether SSSC planning is active                            |
+| `ssscEnabled`               | boolean  | Whether SSSC planning is active                            |
 | `securityPlannerLink`       | string   | Path to the upstream Security Planner state file           |
 | `raiPlannerLink`            | string   | Path to an associated RAI Planner state file               |
 

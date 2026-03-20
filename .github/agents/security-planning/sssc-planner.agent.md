@@ -116,7 +116,7 @@ State JSON schema for `state.json`:
 ```json
 {
   "projectSlug": "",
-  "sscpPlanFile": "",
+  "ssscPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
   "scopingComplete": false,
@@ -135,7 +135,7 @@ State JSON schema for `state.json`:
   "referencesProcessed": [],
   "nextActions": [],
   "userPreferences": { "autonomyTier": "partial" },
-  "sscpEnabled": true,
+  "ssscEnabled": true,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
