@@ -64,17 +64,17 @@ jobs:
       - name: Run evaluations
         run: |
           beval \
-            -c beval/eval.config.yaml \
+            -c beval/dt-coach/eval.config.yaml \
             run \
-            --cases beval/cases/ \
-            --agent beval/agent.yaml \
+            --cases beval/dt-coach/cases/ \
+            --agent beval/dt-coach/agent.yaml \
             -m validation \
-            -o beval/results/results.json
+            -o beval/dt-coach/results/results.json
 
       - name: Upload results
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         if: always()
         with:
           name: beval-results-${{ github.run_id }}
-          path: beval/results/
+          path: beval/dt-coach/results/
           retention-days: 30

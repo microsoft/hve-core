@@ -8,7 +8,7 @@ eval:
     definitions:
       - name: dt-coach
   output:
-    dir: beval/results
+    dir: beval/dt-coach/results
     format: json
   judge:
     protocol: acp
