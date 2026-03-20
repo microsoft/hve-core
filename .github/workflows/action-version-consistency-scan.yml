@@ -1,0 +1,158 @@
+name: Action Version Consistency Scan
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on compliance violations'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Whether to upload SARIF results to Security tab'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact:
+        description: 'Whether to upload results as artifact'
+        required: false
+        type: boolean
+        default: true
+    outputs:
+      mismatch-count:
+        description: 'Number of version mismatches found'
+        value: ${{ jobs.scan.outputs.mismatch-count }}
+      missing-comments:
+        description: 'Number of missing version comments found'
+        value: ${{ jobs.scan.outputs.missing-comments }}
+      is-compliant:
+        description: 'Whether repository meets compliance'
+        value: ${{ jobs.scan.outputs.is-compliant }}
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Validate Action Version Consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    outputs:
+      mismatch-count: ${{ steps.consistency.outputs.mismatch-count }}
+      missing-comments: ${{ steps.consistency.outputs.missing-comments }}
+      is-compliant: ${{ steps.consistency.outputs.is-compliant }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run Action Version Consistency Validation
+        id: consistency
+        shell: pwsh
+        run: |
+          Write-Host "Validating GitHub Actions version consistency..."
+          
+          # Ensure logs directory exists
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          
+          # Build parameter list for JSON output
+          $params = @{
+            Path = '.github/workflows'
+            Format = 'json'
+            OutputPath = 'logs/action-version-consistency-results.json'
+          }
+          
+          # Enable failure on violations unless soft-fail is requested
+          if ('${{ inputs.soft-fail }}' -ne 'true') {
+            $params['FailOnMismatch'] = $true
+            $params['FailOnMissingComment'] = $true
+          }
+          
+          # Run validation script (JSON format)
+          & scripts/security/Test-ActionVersionConsistency.ps1 @params
+          
+          # Generate SARIF format if requested
+          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+            Write-Host "Generating SARIF format for Security tab..."
+            $params['Format'] = 'sarif'
+            $params['OutputPath'] = 'logs/action-version-consistency-results.sarif'
+            
+            & scripts/security/Test-ActionVersionConsistency.ps1 @params
+          }
+          
+          # Extract metrics from JSON report
+          if (Test-Path logs/action-version-consistency-results.json) {
+            $report = Get-Content logs/action-version-consistency-results.json | ConvertFrom-Json
+            $mismatchCount = $report.MismatchCount
+            $missingComments = $report.MissingComments
+            
+            $isCompliant = ($mismatchCount -eq 0) -and ($missingComments -eq 0)
+            
+            "mismatch-count=$mismatchCount" >> $env:GITHUB_OUTPUT
+            "missing-comments=$missingComments" >> $env:GITHUB_OUTPUT
+            "is-compliant=$($isCompliant.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+            
+            Write-Host "Mismatch Count: $mismatchCount"
+            Write-Host "Missing Comments: $missingComments"
+            Write-Host "Is Compliant: $isCompliant"
+          }
+          else {
+            Write-Error "Failed to generate action version consistency report"
+            exit 1
+          }
+
+      - name: Upload SARIF to Security tab
+        if: inputs.upload-sarif && always()
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/action-version-consistency-results.sarif
+          category: action-version-consistency
+        continue-on-error: true
+
+      - name: Upload validation report
+        if: inputs.upload-artifact && always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: action-version-consistency-results
+          path: logs/action-version-consistency-results.json
+          retention-days: 90
+
+      - name: Add job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $mismatchCount = '${{ steps.consistency.outputs.mismatch-count }}'
+          $missingComments = '${{ steps.consistency.outputs.missing-comments }}'
+          $isCompliant = '${{ steps.consistency.outputs.is-compliant }}'
+          
+          @"
+          ## Action Version Consistency Scan Results
+          
+          | Metric | Value |
+          |--------|-------|
+          | Version Mismatches | $mismatchCount |
+          | Missing Comments | $missingComments |
+          | Status | $(if ($isCompliant -eq 'true') { '✅ Compliant' } else { '⚠️ Non-Compliant' }) |
+          
+          $(if ($isCompliant -ne 'true') {
+            @"
+          
+          ### ⚠️ Action Required
+          
+          There are version consistency violations in the GitHub Actions workflows.
+          Review the workflow log to fix version mismatches or add missing version comments to SHA-pinned actions.
+          
+          "@
+          } else {
+            @"
+          
+          ### ✅ All Actions Consistent
+          
+          All SHA-pinned actions have consistent version comments.
+          
+          "@
+          })
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding UTF8

@@ -63,9 +63,11 @@
     "general-technical"
   ],
   "words": [
+    "atheris",
     "beval",
     "behaviour",
     "brainwriting",
+    "clusterfuzzlite",
     "easyops",
     "hideable",
     "learning",
@@ -74,5 +76,9 @@
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic"
+  ],
+  "reporters": [
+    "default",
+    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
   ]
 }

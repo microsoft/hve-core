@@ -16,15 +16,29 @@ dev = [
     "pytest>=9.0",
     "pytest-cov>=7.0",
     "ruff>=0.15",
+    "hypothesis>=6.100",
+]
+# Atheris ships manylinux-only wheels; keep separate from dev so uv sync works on macOS.
+fuzz = [
+    "atheris>=3.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["scripts"]
+python_files = ["test_*.py", "fuzz_harness.py"]
 markers = [
     "integration: roundtrip integration tests",
     "slow: tests that create full presentations",
+    "hypothesis: property-based tests using Hypothesis",
 ]
+
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
 
 [tool.ruff]
 line-length = 88

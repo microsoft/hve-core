@@ -51,6 +51,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  action-version-consistency-scan:
+    name: Action Version Consistency Scan
+    uses: ./.github/workflows/action-version-consistency-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     uses: ./.github/workflows/gitleaks-scan.yml
@@ -432,6 +443,7 @@ jobs:
           config: .syft.yaml
 
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
@@ -451,10 +463,14 @@ jobs:
       - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
+          cp "$BUNDLE_PATH" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
           gh release upload "${{ needs.release-please.outputs.tag_name }}" \
             "${{ steps.vsix.outputs.file }}" \
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
             --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:

@@ -29,8 +29,8 @@
     "extension:package:prerelease": "pwsh ./scripts/extension/Package-Extension.ps1 -PreRelease",
     "validate:copyright": "pwsh -File scripts/linting/Test-CopyrightHeaders.ps1",
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
-    "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1",
-    "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1",
+    "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -OutputPath logs/python-lint-results.json",
+    "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1 -OutputPath logs/python-test-results.json",
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:validate": "npm run lint:collections-metadata",
@@ -39,6 +39,7 @@
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
+    "@cspell/cspell-json-reporter": "9.7.0",
     "@vscode/vsce": "3.7.1",
     "cspell": "9.7.0",
     "markdown-link-check": "3.14.2",

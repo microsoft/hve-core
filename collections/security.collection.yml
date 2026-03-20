@@ -52,6 +52,15 @@ items:
     kind: prompt
   - path: .github/prompts/security/risk-register.prompt.md
     kind: prompt
+  - path: .github/prompts/security/security-review.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review-llm.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review-web.prompt.md
+    kind: prompt
+    maturity: experimental
   # Instructions
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction

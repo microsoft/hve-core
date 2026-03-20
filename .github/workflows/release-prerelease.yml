@@ -150,23 +150,30 @@ jobs:
           path: ./dist
 
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: "dist/*.vsix"
 
-      - name: Upload VSIX to GitHub Release
+      - name: Upload VSIX and attestation to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ needs.prerelease-tag.outputs.tag_name }}
           REPO: ${{ github.repository }}
           COLLECTION_ID: ${{ matrix.id }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
           VSIX_FILE=$(find dist -name '*.vsix' | head -1)
           if [ -z "$VSIX_FILE" ]; then
             echo "::error::No VSIX file found for collection $COLLECTION_ID"
             exit 1
           fi
-          gh release upload "$TAG_NAME" "$VSIX_FILE" --clobber -R "$REPO"
+          VSIX_NAME=$(basename "$VSIX_FILE")
+          cp "$BUNDLE_PATH" "dist/${VSIX_NAME}.sigstore.json"
+          gh release upload "$TAG_NAME" \
+            "$VSIX_FILE" \
+            "dist/${VSIX_NAME}.sigstore.json" \
+            --clobber -R "$REPO"
 
   publish-release:
     name: Publish Pre-Release
