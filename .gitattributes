@@ -15,3 +15,5 @@
 # that appear in that API, so without this override the Atheris harness is
 # invisible and Fuzzing scores 0/10.
 .github/skills/**/*.py linguist-vendored=false
+
+.github/workflows/*.lock.yml linguist-generated=true merge=ours

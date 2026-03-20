@@ -2,12 +2,16 @@
 on:
   issues:
     types: [labeled]
+    names: [agent-ready]
   # Also support manual trigger via slash command in issue comments
   # command:
   #   name: implement
+  roles: [admin, maintainer, write]
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
+  reaction: eyes
 
 engine: copilot
+timeout-minutes: 30
 
 imports:
   - ../agents/hve-core/task-implementor.agent.md
@@ -24,6 +28,8 @@ safe-outputs:
   add-comment:
     max: 5
     target: "triggering"
+  noop:
+    max: 1
 ---
 
 # Issue Implementation Agent

@@ -3,8 +3,10 @@ on:
   pull_request:
     types: [opened, ready_for_review]
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
+  reaction: eyes
 
 engine: copilot
+timeout-minutes: 15
 
 imports:
   - ../agents/hve-core/pr-review.agent.md
@@ -24,11 +26,12 @@ safe-outputs:
     max: 3
     target: "triggering"
   update-pull-request:
-    title: false
-    body: false
+    max: 1
   add-labels:
     allowed: [needs-revision, review-passed]
     max: 2
+  noop:
+    max: 1
 ---
 
 # PR First-Pass Review
@@ -161,10 +164,10 @@ confirmation that the PR meets initial quality standards, and add the label
 
 If the PR has five or more critical findings (security vulnerabilities,
 empty PR description, no linked issue, and fundamental misalignment with
-the linked issue), convert the PR to draft using `convert-to-draft` in
-addition to submitting REQUEST_CHANGES and adding `needs-revision`. Add
-a comment explaining that the PR was converted to draft due to
-insufficient quality for review.
+the linked issue), convert the PR to draft by calling `update-pull-request`
+with `draft: true` in addition to submitting REQUEST_CHANGES and adding
+`needs-revision`. Add a comment explaining that the PR was converted to
+draft due to insufficient quality for review.
 
 ## Constraints
 

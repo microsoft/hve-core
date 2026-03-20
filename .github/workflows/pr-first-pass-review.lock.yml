@@ -26,7 +26,7 @@
 #   Imports:
 #     - ../agents/hve-core/pr-review.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"81dda58830fe3dc7c1b73c07cb8ab552c99801653d1f6d240190e1b7dc0e9c90","compiler_version":"v0.57.1","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"2d3349fa8d8756477d6ed5ca324c4a2a7facebd5684896d72198fee5f5a71e20","compiler_version":"v0.57.1","strict":true}
 
 name: "PR First-Pass Review"
 "on":
@@ -54,6 +54,9 @@ jobs:
     runs-on: ubuntu-slim
     permissions:
       contents: read
+      discussions: write
+      issues: write
+      pull-requests: write
     outputs:
       body: ${{ steps.sanitized.outputs.body }}
       comment_id: ""
@@ -105,6 +108,19 @@ jobs:
             .agents
           sparse-checkout-cone-mode: true
           fetch-depth: 1
+      - name: Add eyes reaction for immediate feedback
+        id: react
+        if: github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment' || github.event_name == 'discussion' || github.event_name == 'discussion_comment' || (github.event_name == 'pull_request') && (github.event.pull_request.head.repo.id == github.repository_id)
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GH_AW_REACTION: "eyes"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/add_reaction.cjs');
+            await main();
       - name: Check workflow file timestamps
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
@@ -932,7 +948,7 @@ jobs:
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         # Copilot CLI tool arguments (sorted):
-        timeout-minutes: 20
+        timeout-minutes: 15
         run: |
           set -o pipefail
           touch /tmp/gh-aw/agent-step-summary.md
@@ -1304,7 +1320,7 @@ jobs:
           GH_AW_INFERENCE_ACCESS_ERROR: ${{ needs.agent.outputs.inference_access_error }}
           GH_AW_GROUP_REPORTS: "false"
           GH_AW_FAILURE_REPORT_AS_ISSUE: "true"
-          GH_AW_TIMEOUT_MINUTES: "20"
+          GH_AW_TIMEOUT_MINUTES: "15"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1416,7 +1432,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":3,\"target\":\"triggering\"},\"add_labels\":{\"allowed\":[\"needs-revision\",\"review-passed\"],\"max\":2},\"create_pull_request_review_comment\":{\"max\":20,\"side\":\"RIGHT\"},\"missing_data\":{},\"missing_tool\":{},\"submit_pull_request_review\":{\"max\":1},\"update_pull_request\":{\"allow_body\":false,\"allow_title\":false,\"max\":1}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":3,\"target\":\"triggering\"},\"add_labels\":{\"allowed\":[\"needs-revision\",\"review-passed\"],\"max\":2},\"create_pull_request_review_comment\":{\"max\":20,\"side\":\"RIGHT\"},\"missing_data\":{},\"missing_tool\":{},\"submit_pull_request_review\":{\"max\":1},\"update_pull_request\":{\"allow_body\":true,\"allow_title\":true,\"max\":1}}"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |

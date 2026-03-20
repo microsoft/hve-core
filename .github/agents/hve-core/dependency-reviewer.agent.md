@@ -48,6 +48,8 @@ Submit a single review with findings organized by dimension. Use COMMENT verdict
 * A new dependency duplicates existing functionality.
 * Environment synchronization is violated.
 
+Place findings using the comment type that best matches their scope. Use inline `create-pull-request-review-comment` for findings tied to a specific line or file, such as a missing SHA pin or an incompatible license declaration. Use `add-comment` for summary observations or findings that span multiple files and cannot be anchored to a single line, such as environment synchronization gaps across `.devcontainer/` and `copilot-setup-steps.yml`.
+
 ## Constraints
 
 * Focus on semantic review; do not duplicate vulnerability scanning done by Dependabot or CodeQL.

@@ -26,13 +26,19 @@
 #   Imports:
 #     - ../agents/hve-core/task-implementor.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"2fd2a724de0f48648272a3cbacbc49e7f5324a93e9351fbd50b37a0ff5df95ae","compiler_version":"v0.57.1","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"bf75cc699649f177245838316e935478d4093a6355344b0d3ae289c9faefa17a","compiler_version":"v0.57.1","strict":true}
 
 name: "Issue Implementation Agent"
 "on":
   issues:
+    # names: # Label filtering applied via job conditions
+    # - agent-ready # Label filtering applied via job conditions
     types:
     - labeled
+  # roles: # Roles processed as role check in pre-activation job
+  # - admin # Roles processed as role check in pre-activation job
+  # - maintainer # Roles processed as role check in pre-activation job
+  # - write # Roles processed as role check in pre-activation job
   # skip-bots: # Skip-bots processed as bot check in pre-activation job
   # - dependabot[bot] # Skip-bots processed as bot check in pre-activation job
   # - github-actions[bot] # Skip-bots processed as bot check in pre-activation job
@@ -47,10 +53,15 @@ run-name: "Issue Implementation Agent"
 jobs:
   activation:
     needs: pre_activation
-    if: needs.pre_activation.outputs.activated == 'true'
+    if: >
+      (needs.pre_activation.outputs.activated == 'true') && ((github.event_name != 'issues') || ((github.event.action != 'labeled') ||
+      (github.event.label.name == 'agent-ready')))
     runs-on: ubuntu-slim
     permissions:
       contents: read
+      discussions: write
+      issues: write
+      pull-requests: write
     outputs:
       body: ${{ steps.sanitized.outputs.body }}
       comment_id: ""
@@ -102,6 +113,19 @@ jobs:
             .agents
           sparse-checkout-cone-mode: true
           fetch-depth: 1
+      - name: Add eyes reaction for immediate feedback
+        id: react
+        if: github.event_name == 'issues' || github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment' || github.event_name == 'discussion' || github.event_name == 'discussion_comment' || (github.event_name == 'pull_request') && (github.event.pull_request.head.repo.id == github.repository_id)
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          GH_AW_REACTION: "eyes"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/add_reaction.cjs');
+            await main();
       - name: Check workflow file timestamps
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
@@ -757,7 +781,7 @@ jobs:
       - name: Execute GitHub Copilot CLI
         id: agentic_execution
         # Copilot CLI tool arguments (sorted):
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           set -o pipefail
           touch /tmp/gh-aw/agent-step-summary.md
@@ -1132,7 +1156,7 @@ jobs:
           GH_AW_CODE_PUSH_FAILURE_COUNT: ${{ needs.safe_outputs.outputs.code_push_failure_count }}
           GH_AW_GROUP_REPORTS: "false"
           GH_AW_FAILURE_REPORT_AS_ISSUE: "true"
-          GH_AW_TIMEOUT_MINUTES: "20"
+          GH_AW_TIMEOUT_MINUTES: "30"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1173,6 +1197,7 @@ jobs:
             await main();
 
   pre_activation:
+    if: (github.event_name != 'issues') || ((github.event.action != 'labeled') || (github.event.label.name == 'agent-ready'))
     runs-on: ubuntu-slim
     outputs:
       activated: ${{ (steps.check_membership.outputs.is_team_member == 'true') && (steps.check_skip_bots.outputs.skip_bots_ok == 'true') }}

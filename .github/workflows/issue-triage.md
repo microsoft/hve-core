@@ -78,7 +78,7 @@ Follow the triage workflow defined in your imported agent instructions:
 2. Classify the issue type using conventional commit patterns from the triage instructions.
 3. Classify the component from bug report dropdowns or body content analysis.
 4. Search for duplicate or related issues among open issues.
-5. Assess issue quality: check for missing required fields and vague descriptions.
+5. Assess issue quality: check for missing required fields, vague descriptions, semantic coherence, and scope relevance.
 6. Remove `needs-triage` and apply determined type and component labels.
 7. Evaluate whether the issue qualifies for `agent-ready` using conservative criteria.
 

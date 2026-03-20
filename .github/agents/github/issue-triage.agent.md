@@ -11,6 +11,10 @@ Follow triage workflow conventions from [github-backlog-triage.instructions.md](
 
 Follow community interaction guidelines from [community-interaction.instructions.md](../../instructions/github/community-interaction.instructions.md) when posting comments visible to external contributors.
 
+## Project Scope
+
+hve-core is a prompt engineering, documentation, scripts, and VS Code extension tooling project. It produces AI artifacts (agents, prompts, instructions, skills), build and validation scripts, and a VS Code extension that packages these artifacts. Flag issues requesting capabilities outside this scope with a polite comment per community interaction guidelines.
+
 ## Triage Workflow
 
 Perform each step in order for the triggering issue.
@@ -36,6 +40,8 @@ Match the issue title against conventional commit patterns to determine the issu
 | `breaking:` or contains "BREAKING CHANGE" | `breaking-change` |
 
 If the title does not match a conventional commit pattern, infer the type from the issue body content and template structure.
+
+After classification, verify that the title-pattern classification aligns with the body content. When the title pattern suggests one type but the body describes another (for example, a `bug:` title with a feature request body), prefer the body content for classification and note the discrepancy in any comment.
 
 ### 3. Classify by Component
 
@@ -68,16 +74,22 @@ Evaluate whether the issue contains sufficient information for implementation.
 
 Well-formed issues have:
 
-* Clear description of what needs to change
+* Description of what needs to change that is specific enough to act on
 * Specific files, components, or areas referenced
-* Acceptance criteria or expected behavior described
-* For bugs: reproduction steps and expected vs. actual behavior
+* Achievable acceptance criteria or expected behavior that does not contradict the description
+* Title classification aligns with the body content (a bug title describes a bug, a feature title describes a feature)
+* Described behavior or request is technically plausible given the referenced technologies
+* No internal contradictions between title, description, and acceptance criteria
+* For bugs: reproduction steps that logically lead to the described behavior
 
 Issues needing more information:
 
 * Vague descriptions without specific scope
 * Bug reports missing reproduction steps
 * Feature requests without acceptance criteria
+* Title-body classification mismatch (title says bug but body describes a feature)
+* Technically implausible claims or contradictory information
+* Requests outside the project's documented scope (see Project Scope)
 
 For issues needing more information, add a polite comment requesting the missing details. Follow the tone and templates from the community interaction instructions.
 
@@ -96,6 +108,7 @@ Only mark an issue as `agent-ready` if ALL of these criteria are met:
 * Not flagged as a potential duplicate
 * Not a security issue (security issues require human triage)
 * Issue quality assessment passed (no missing information)
+* Issue content is semantically coherent and the described change is technically plausible
 
 If all criteria are met, add the `agent-ready` label. This triggers the issue implementation workflow.
 

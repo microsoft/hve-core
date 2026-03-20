@@ -29,8 +29,8 @@ safe-outputs:
     max: 3
     labels: [documentation, needs-triage]
     title-prefix: "docs: "
-  add-comment:
-    max: 3
+  noop:
+    max: 1
 ---
 
 # Documentation Update Check
