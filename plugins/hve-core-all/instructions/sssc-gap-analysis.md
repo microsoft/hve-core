@@ -1,1 +1,1 @@
-../../../.github/instructions/sssc-planning/sssc-gap-analysis.instructions.md
+../../../.github/instructions/security/sssc-gap-analysis.instructions.md

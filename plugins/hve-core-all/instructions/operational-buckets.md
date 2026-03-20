@@ -1,1 +1,1 @@
-../../../.github/instructions/security-planning/operational-buckets.instructions.md
+../../../.github/instructions/security/operational-buckets.instructions.md

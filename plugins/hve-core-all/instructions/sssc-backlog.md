@@ -1,1 +1,1 @@
-../../../.github/instructions/sssc-planning/sssc-backlog.instructions.md
+../../../.github/instructions/security/sssc-backlog.instructions.md

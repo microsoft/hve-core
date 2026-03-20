@@ -89,13 +89,13 @@ items:
 - path: .github/agents/rai-planning/rai-planner.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/security/sssc-planner.agent.md
-  kind: agent
-  maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/security-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/sssc-planner.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
@@ -220,18 +220,6 @@ items:
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/security/sssc-capture.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/security/sssc-from-brd.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/security/sssc-from-prd.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/security/sssc-from-security-plan.prompt.md
-  kind: prompt
-  maturity: experimental
 - path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
   maturity: experimental
@@ -251,6 +239,18 @@ items:
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/security-review.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-capture.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-brd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-prd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
@@ -476,13 +476,6 @@ items:
 - path: .github/instructions/security/security-model.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security/standards-mapping.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/shared/hve-core-location.instructions.md
-  kind: instruction
-- path: .github/instructions/shared/story-quality.instructions.md
-  kind: instruction
 - path: .github/instructions/security/sssc-assessment.instructions.md
   kind: instruction
   maturity: experimental
@@ -501,6 +494,13 @@ items:
 - path: .github/instructions/security/sssc-standards.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/standards-mapping.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/shared/hve-core-location.instructions.md
+  kind: instruction
+- path: .github/instructions/shared/story-quality.instructions.md
+  kind: instruction
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/video-to-gif

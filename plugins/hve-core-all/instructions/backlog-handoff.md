@@ -1,1 +1,1 @@
-../../../.github/instructions/security-planning/backlog-handoff.instructions.md
+../../../.github/instructions/security/backlog-handoff.instructions.md

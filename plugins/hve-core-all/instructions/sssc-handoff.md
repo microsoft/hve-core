@@ -1,1 +1,1 @@
-../../../.github/instructions/sssc-planning/sssc-handoff.instructions.md
+../../../.github/instructions/security/sssc-handoff.instructions.md

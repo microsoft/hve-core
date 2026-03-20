@@ -1,1 +1,1 @@
-../../../.github/prompts/security-planning/sssc-from-brd.prompt.md
+../../../.github/prompts/security/sssc-from-brd.prompt.md
