@@ -136,6 +136,7 @@ jobs:
     needs: [prerelease-tag]
     runs-on: ubuntu-latest
     permissions:
+      # write required for gh release upload to attach SBOM to the release
       contents: write
     steps:
       - name: Checkout dependency manifests

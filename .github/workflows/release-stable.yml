@@ -290,6 +290,7 @@ jobs:
           persist-credentials: false
 
       - name: Reset pre-release branch
+        id: reset-branch
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
@@ -299,6 +300,7 @@ jobs:
           MAJOR=$(echo "$RELEASED" | cut -d. -f1)
           MINOR=$(echo "$RELEASED" | cut -d. -f2)
           PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          echo "pre-version=${PRE_VERSION}" >> "$GITHUB_OUTPUT"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -329,9 +331,7 @@ jobs:
         run: |
           BRANCH="prerelease/next"
           RELEASED="${{ needs.release-please.outputs.version }}"
-          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
-          MINOR=$(echo "$RELEASED" | cut -d. -f2)
-          PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          PRE_VERSION="${{ steps.reset-branch.outputs.pre-version }}"
           TITLE="chore(main): pre-release ${PRE_VERSION}"
           BODY="## Pre-Release ${PRE_VERSION}
 
@@ -387,6 +387,7 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:
+      # write required for gh release upload to attach SBOM to the release
       contents: write
     steps:
       - name: Checkout dependency manifests
