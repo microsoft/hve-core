@@ -39,14 +39,8 @@ jobs:
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@4f363b706ae94a1726e44e380e63fbb4beffa567#subdirectory=python"
 
       - name: Start agent (TCP)
-        # --allow-all is required: beval communicates with the Copilot CLI over
-        # ACP and does not implement the permission-callback methods that
-        # --deny-tool triggers. Restricting permissions via --deny-tool causes
-        # the ACP server to issue callbacks that beval cannot handle, resulting
-        # in "Method not found" errors. Security is addressed through pinned
-        # dependencies, explicit secret forwarding, and persist-credentials: false.
         run: |
-          copilot --acp --port 3000 --allow-all &
+          copilot --acp --port 3000 &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3000 && break
             echo "Waiting for agent to start ($i)..."
@@ -56,7 +50,7 @@ jobs:
 
       - name: Start judge (TCP)
         run: |
-          copilot --acp --port 3001 --allow-all &
+          copilot --acp --port 3001 &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3001 && break
             echo "Waiting for judge to start ($i)..."
