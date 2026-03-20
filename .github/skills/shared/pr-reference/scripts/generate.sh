@@ -147,7 +147,9 @@ build_pathspec_args() {
       fi
     done
   fi
-  printf '%s\n' "${specs[@]}"
+  if [[ ${#specs[@]} -gt 0 ]]; then
+    printf '%s\n' "${specs[@]}"
+  fi
 }
 
 mapfile -t PATHSPEC_ARGS < <(build_pathspec_args)
