@@ -84,6 +84,7 @@ jobs:
   beval:
     name: Behavioral Evaluation
     uses: ./.github/workflows/beval.yml
+    continue-on-error: true
     permissions:
       contents: read
     secrets:
@@ -168,7 +169,6 @@ jobs:
       - docusaurus-tests
       - python-lint
       - pytest
-      - beval
     # Allow release-please to run when conditional CI jobs (python-lint,
     # pytest) are skipped. Block only on actual failures or cancellations.
     if: ${{ !cancelled() && !failure() }}

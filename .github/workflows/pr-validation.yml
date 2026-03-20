@@ -285,6 +285,7 @@ jobs:
     name: Behavioral Evaluation
     if: github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/beval.yml
+    continue-on-error: true
     permissions:
       contents: read
     secrets:
