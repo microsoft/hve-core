@@ -3,7 +3,7 @@ title: Security Documentation
 description: Index of security documentation including security model and assurance case for HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-01
+ms.date: 2026-03-16
 ms.topic: overview
 keywords:
   - security
@@ -23,6 +23,7 @@ This directory contains security documentation for HVE Core, demonstrating defen
 | [Security Model](security-model.md)                                        | Comprehensive security model and security assurance case       |
 | [Dependency Pinning](dependency-pinning.md)                                | Pinning strategies and CI enforcement for all dependency types |
 | [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide            |
+| [Fuzzing](fuzzing.md)                                                      | OSSF Scorecard fuzz harness convention and compliance          |
 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) | Vulnerability disclosure and reporting process                 |
 
 ## Security Posture
