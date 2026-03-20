@@ -79,7 +79,7 @@ $ActionSHAMap = @{
 
     # Security and code analysis
     "actions/dependency-review-action@v4"  = "actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48" # v4.9.0
-    "advanced-security/component-detection-dependency-submission-action@v0" = "advanced-security/component-detection-dependency-submission-action@9c110eb34dee187cd9eca76a652b9f6a0ed22927" # v0.1.1
+    "advanced-security/component-detection-dependency-submission-action@v0" = "advanced-security/component-detection-dependency-submission-action@b876b8cc341a53970394b33ea0ca4e86c25542de" # v0.1.3
     "github/codeql-action/init@v3"         = "github/codeql-action/init@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
     "github/codeql-action/autobuild@v3"    = "github/codeql-action/autobuild@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
     "github/codeql-action/analyze@v3"      = "github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a" # v3.27.0
