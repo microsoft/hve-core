@@ -12,6 +12,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.2.0](https://github.com/microsoft/hve-core/compare/hve-core-v3.1.46...hve-core-v3.2.0) (2026-03-20)
+
+
+### ✨ Features
+
+* add -OutputPath parameter to Validate-MarkdownFrontmatter.ps1 ([#1134](https://github.com/microsoft/hve-core/issues/1134)) ([fdf1bcf](https://github.com/microsoft/hve-core/commit/fdf1bcf55bf4d77a5a82442cd52b5d48cda8a7a3)), closes [#1006](https://github.com/microsoft/hve-core/issues/1006)
+* add action version consistency scan workflow ([#1127](https://github.com/microsoft/hve-core/issues/1127)) ([4229df1](https://github.com/microsoft/hve-core/commit/4229df17eafa171dedba415a8cb493f88768ceec))
+* **agent:** MVE Experiment Designer ([#976](https://github.com/microsoft/hve-core/issues/976)) ([70f86ca](https://github.com/microsoft/hve-core/commit/70f86cab541cc3ab531e270fc7683c96abe7788e))
+* **agents:** add ADO Backlog Manager orchestrator agent ([#800](https://github.com/microsoft/hve-core/issues/800)) ([fae3987](https://github.com/microsoft/hve-core/commit/fae3987dc301ea0dcf25feb6426be9d8b627a4d4))
+* **agents:** add meeting analyst agent for transcript analysis using work-iq ([#502](https://github.com/microsoft/hve-core/issues/502)) ([5345b5b](https://github.com/microsoft/hve-core/commit/5345b5b0e880eb1b57e8bdb331a67192739d8301))
+* **agents:** add quick-reference line to RPI Phase 5 suggestions ([#897](https://github.com/microsoft/hve-core/issues/897)) ([9a90f39](https://github.com/microsoft/hve-core/commit/9a90f396494098103417e2b7acb95441393e3849))
+* **agents:** add RAI Planner, enhance SSSC Planner, and redesign Security Planner ([#979](https://github.com/microsoft/hve-core/issues/979)) ([06f826c](https://github.com/microsoft/hve-core/commit/06f826cac8b872215a376eb7fc90541ae7ef157b))
+* **agents:** add symmetric cross-system handoff to GitHub Backlog Manager ([#952](https://github.com/microsoft/hve-core/issues/952)) ([ba34a35](https://github.com/microsoft/hve-core/commit/ba34a35c3b0d716989d4e9691ff8f2b68aaa83a7))
+* **agents:** Functional Code Review Agent: pre-PR functional correctness reviewer ([#733](https://github.com/microsoft/hve-core/issues/733)) ([9cf63b7](https://github.com/microsoft/hve-core/commit/9cf63b787392b2ac94ca9add40c3164d5e1610df))
+* **build:** add Python extensions and uv 0.10.8 to devcontainer ([#920](https://github.com/microsoft/hve-core/issues/920)) ([9ca0579](https://github.com/microsoft/hve-core/commit/9ca05790f03cf788747c0b2a41c0e2908429990e))
+* **build:** add uv ecosystem to Dependabot configuration ([#913](https://github.com/microsoft/hve-core/issues/913)) ([2a4bd39](https://github.com/microsoft/hve-core/commit/2a4bd39224c40f6f85582bb993e9bc1a98a8347a))
+* **build:** enable npm pinning enforcement in dependency scan ([#838](https://github.com/microsoft/hve-core/issues/838)) ([4e9e31f](https://github.com/microsoft/hve-core/commit/4e9e31fb767ac858581321aebe7ef825e9abdd95))
+* **build:** migrate attestation actions to v4.1.0 and add SBOM verification docs ([#841](https://github.com/microsoft/hve-core/issues/841)) ([ca1e65b](https://github.com/microsoft/hve-core/commit/ca1e65b36f4f300492f4faf2907c9be31343c282))
+* **collections:** add four new validator checks (orphan, duplicate, companion, coverage) ([#869](https://github.com/microsoft/hve-core/issues/869)) ([1a96b73](https://github.com/microsoft/hve-core/commit/1a96b7384cd85a53b6036e7275d391fcb75cd11d))
+* **devcontainer,security:** add enterprise artifact hub configuration ([#1032](https://github.com/microsoft/hve-core/issues/1032)) ([1d56d25](https://github.com/microsoft/hve-core/commit/1d56d25494d03b3ff5b9bf68c8ec3e7e38d351d5))
+* **docs:** add Rust coding standards and guidelines ([#809](https://github.com/microsoft/hve-core/issues/809)) ([d4c4899](https://github.com/microsoft/hve-core/commit/d4c489917464fd9f120ae8165de2a15a3bf01671))
+* **extension:** add Microsoft logo icon to VS Code Marketplace listings ([#906](https://github.com/microsoft/hve-core/issues/906)) ([82aca41](https://github.com/microsoft/hve-core/commit/82aca413ac5ed72d497f8cdc8cb12daad9135c76))
+* **github:** add declarative label management ([#953](https://github.com/microsoft/hve-core/issues/953)) ([a1a6845](https://github.com/microsoft/hve-core/commit/a1a6845007f7061a5c02ddc018c78c8513b9f527))
+* **instructions:** add ADO backlog shared infrastructure ([#786](https://github.com/microsoft/hve-core/issues/786)) ([1914078](https://github.com/microsoft/hve-core/commit/191407868f766a2c6f96c7881e5dffc1dd65232c))
+* **instructions:** add ADO backlog sprint planning and capacity tracking ([#788](https://github.com/microsoft/hve-core/issues/788)) ([d6fb77d](https://github.com/microsoft/hve-core/commit/d6fb77d2cd62506c41a8833a917d88925fa5a1da))
+* **instructions:** add ADO triage workflow and prompt ([#787](https://github.com/microsoft/hve-core/issues/787)) ([cde0190](https://github.com/microsoft/hve-core/commit/cde0190258d8fdec015c40d6f3e5a27c3c988315))
+* **instructions:** add shared story quality conventions and sprint planning ([#803](https://github.com/microsoft/hve-core/issues/803)) ([a2f18e3](https://github.com/microsoft/hve-core/commit/a2f18e37630f0779ddb59c11d530c13f03bdbd45))
+* **prompts:** add ADO discovery and work item prompts with agent routing ([#790](https://github.com/microsoft/hve-core/issues/790)) ([7e74523](https://github.com/microsoft/hve-core/commit/7e745237cdf02c3d5a0cf41ab875ebbace8b7c0b))
+* **prompts:** add security review prompts ([#1118](https://github.com/microsoft/hve-core/issues/1118)) ([ad30967](https://github.com/microsoft/hve-core/commit/ad30967427ba4f656ee652eddd5b1328f7ba407c))
+* **scripts:** add dynamic Python skill discovery for lint/test ([#957](https://github.com/microsoft/hve-core/issues/957)) ([0a90f57](https://github.com/microsoft/hve-core/commit/0a90f5732f199eea08b39902fb1d5f186aee1486))
+* **scripts:** add Get-StandardTimestamp utility to CIHelpers module ([#1126](https://github.com/microsoft/hve-core/issues/1126)) ([b273a4b](https://github.com/microsoft/hve-core/commit/b273a4ba1a2a5dd1a435e2879fe456206af5006e))
+* **scripts:** add Python copyright header validation ([#905](https://github.com/microsoft/hve-core/issues/905)) ([67df902](https://github.com/microsoft/hve-core/commit/67df902f90c7652251565eb4b67375c4e080e7a8))
+* **scripts:** add Python skill support to Validate-SkillStructure ([#903](https://github.com/microsoft/hve-core/issues/903)) ([68479d9](https://github.com/microsoft/hve-core/commit/68479d91cba17f1bf76df90889e34fb0e0b3214d))
+* **scripts:** add workflow npm command scanning to dependency pinning ([#837](https://github.com/microsoft/hve-core/issues/837)) ([6b5ae06](https://github.com/microsoft/hve-core/commit/6b5ae0678c3a450006e30add31f0a795c1459ea3))
+* **security:** add basic security reviewer agent with owasp skills ([#1008](https://github.com/microsoft/hve-core/issues/1008)) ([cb1fd05](https://github.com/microsoft/hve-core/commit/cb1fd0503cdfef2cc53e0d72d31bd19a4d21b9bc))
+* **security:** add sigstore attestation bundles and fix component-detection action ([#1148](https://github.com/microsoft/hve-core/issues/1148)) ([f79c272](https://github.com/microsoft/hve-core/commit/f79c272d7c0083b82420c1e6afdff8f042246aae))
+* **skills:** add Atheris fuzz harness with CI workflow integration ([#1102](https://github.com/microsoft/hve-core/issues/1102)) ([d337e1d](https://github.com/microsoft/hve-core/commit/d337e1d2ed2e3da686af63ed4c72f323ad7abab9))
+* **skills:** add PowerPoint automation skill with YAML-driven deck generation ([#868](https://github.com/microsoft/hve-core/issues/868)) ([00465cd](https://github.com/microsoft/hve-core/commit/00465cd990fe351d36d8f2ff8c8f6ecd77cbbb3b))
+* **skills:** convert hve-core-installer agent to self-contained skill ([#846](https://github.com/microsoft/hve-core/issues/846)) ([1d821fb](https://github.com/microsoft/hve-core/commit/1d821fbddf6a71bee08ae750f7dbc0e5f9f18a95))
+* **skills:** enhance pr-reference skill with flexible filtering and base branch detection ([#1095](https://github.com/microsoft/hve-core/issues/1095)) ([26a32ea](https://github.com/microsoft/hve-core/commit/26a32ea1a09d5f74489f723a3a1d8280fbc6afd9))
+* **workflows:** add devcontainer infrastructure change log workflow ([#899](https://github.com/microsoft/hve-core/issues/899)) ([8aca446](https://github.com/microsoft/hve-core/commit/8aca44624e6d8c8a54051ca7d7fbdd1b27b9073f))
+* **workflows:** add milestone auto-close on stable and pre-release publishes ([#834](https://github.com/microsoft/hve-core/issues/834)) ([79362b1](https://github.com/microsoft/hve-core/commit/79362b127ae731607344a66ceb96956c3dcf779f))
+* **workflows:** add ms.date documentation freshness checking ([#969](https://github.com/microsoft/hve-core/issues/969)) ([3ed441c](https://github.com/microsoft/hve-core/commit/3ed441c3d4a92f1fa944a2121273ba46fdab8a8d))
+* **workflows:** add Python linting CI workflow with Ruff ([#951](https://github.com/microsoft/hve-core/issues/951)) ([f89f0eb](https://github.com/microsoft/hve-core/commit/f89f0eb63e0606c1291b6e400dcd8e79ee9d3e96))
+* **workflows:** add Python testing CI workflow with pytest and Codecov ([#934](https://github.com/microsoft/hve-core/issues/934)) ([5e8306f](https://github.com/microsoft/hve-core/commit/5e8306fb4d6912b55b0106a60c9b632af77500a1))
+* **workflows:** add uv and Python package sync to copilot-setup-steps ([#921](https://github.com/microsoft/hve-core/issues/921)) ([45d517d](https://github.com/microsoft/hve-core/commit/45d517d3e618389df9204f00be3f7180a3cd339a))
+
+
+### 🐛 Bug Fixes
+
+* **build:** override Linguist vendored flag for Python skill files ([#1155](https://github.com/microsoft/hve-core/issues/1155)) ([0eee5b6](https://github.com/microsoft/hve-core/commit/0eee5b613c21460bc5dd0d17df4dd9be1c006b03))
+* **build:** override serialize-javascript to &gt;=7.0.3 for RCE fix ([#876](https://github.com/microsoft/hve-core/issues/876)) ([e49039a](https://github.com/microsoft/hve-core/commit/e49039ae37bde741b14fbb1ffe4a338f625c8b7f))
+* **build:** resolve Pinned-Dependencies alerts for vsce npm commands in extension workflows ([#782](https://github.com/microsoft/hve-core/issues/782)) ([89dad9d](https://github.com/microsoft/hve-core/commit/89dad9dfc714f7ed5bdfb747e777d88771fcd71e))
+* **build:** update undici and yauzl overrides for security audit ([#1030](https://github.com/microsoft/hve-core/issues/1030)) ([2c2f92f](https://github.com/microsoft/hve-core/commit/2c2f92f6b96b1c5e332a34a8a0a2c20e55491754))
+* **docs:** add CLI Plugins to install.md navigation surfaces ([#902](https://github.com/microsoft/hve-core/issues/902)) ([79d6595](https://github.com/microsoft/hve-core/commit/79d6595037cfa598c8325551992cccbc9e3e66b4))
+* **docs:** add sidebar ordering for Design Thinking documentation ([#832](https://github.com/microsoft/hve-core/issues/832)) ([551fddc](https://github.com/microsoft/hve-core/commit/551fddca21cf34b50421b8f4274aaeef8e42d5f8)), closes [#830](https://github.com/microsoft/hve-core/issues/830)
+* **docs:** graduate design-thinking to preview and correct stale collection references ([#831](https://github.com/microsoft/hve-core/issues/831)) ([5110e35](https://github.com/microsoft/hve-core/commit/5110e358561634806dabaf7b8f9c6943cef1f7c6))
+* **docs:** include project-planning in UX Designer install guidance ([#908](https://github.com/microsoft/hve-core/issues/908)) ([e7aa9bc](https://github.com/microsoft/hve-core/commit/e7aa9bc1a4d925fe81bbd7fa407ccc9e3b475190))
+* **docs:** remediate writing-style convention violations ([#865](https://github.com/microsoft/hve-core/issues/865)) ([68b04bc](https://github.com/microsoft/hve-core/commit/68b04bc3b47266718f1570cf7f2cb7908467f8d4))
+* **docs:** remove draft content announcement banner ([#825](https://github.com/microsoft/hve-core/issues/825)) ([b45de80](https://github.com/microsoft/hve-core/commit/b45de8055fefe9ee67ada5e51e88bfc07898ce5c))
+* **docs:** remove unbounded path-to-regexp override breaking SSG ([#1153](https://github.com/microsoft/hve-core/issues/1153)) ([d810018](https://github.com/microsoft/hve-core/commit/d8100189509c6a092dc5f02b6e7b948e56e19b14))
+* **docs:** use actual clone paths instead of folder display names in multi-root workspace settings ([#984](https://github.com/microsoft/hve-core/issues/984)) ([5dbab82](https://github.com/microsoft/hve-core/commit/5dbab823af4aaa7d124dacc6c43b6dcee7b791a2))
+* **instructions:** replace black with ruff in uv-projects ([#898](https://github.com/microsoft/hve-core/issues/898)) ([b0c06d9](https://github.com/microsoft/hve-core/commit/b0c06d9f56b7609ea51e99e8544f92eb9e8b4284))
+* **scripts:** cover .github/ skill files in copyright header validation ([#1055](https://github.com/microsoft/hve-core/issues/1055)) ([#1098](https://github.com/microsoft/hve-core/issues/1098)) ([27fbd33](https://github.com/microsoft/hve-core/commit/27fbd33df1a8da340acb3c6cf4e433bc51269c69))
+* **scripts:** eliminate phantom git changes from plugin generation ([#1035](https://github.com/microsoft/hve-core/issues/1035)) ([e49a1b5](https://github.com/microsoft/hve-core/commit/e49a1b55d19044ea0b2ebc5e79d117498f5f55e7))
+* **scripts:** enable JSON log output for lint:version-consistency ([#1033](https://github.com/microsoft/hve-core/issues/1033)) ([52b0885](https://github.com/microsoft/hve-core/commit/52b08852ed15fe0d48d82a0b4fc106f69d66b2f0))
+* **security:** calculate compliance score from total scanned dependencies ([#930](https://github.com/microsoft/hve-core/issues/930)) ([c112c3d](https://github.com/microsoft/hve-core/commit/c112c3db9fb56ae2cb7bfcf966c7222cbfb4eeab))
+* **skills:** add AST validation and namespace restriction for content-extra.py ([#1027](https://github.com/microsoft/hve-core/issues/1027)) ([c50c7a3](https://github.com/microsoft/hve-core/commit/c50c7a369c96cdcbd1be2ff5c83a6d0e3465e74a))
+* **skills:** add depth limits to recursive PowerPoint processing functions ([#1028](https://github.com/microsoft/hve-core/issues/1028)) ([bf08994](https://github.com/microsoft/hve-core/commit/bf08994dbecf3ddd928a8e56e72a7d94a8cb1ae6))
+* **skills:** harden XML parsing and blob writes in powerpoint extract ([#1053](https://github.com/microsoft/hve-core/issues/1053)) ([89d24b1](https://github.com/microsoft/hve-core/commit/89d24b1930fb9dd631538d54baa7a86a0bad8698))
+* **skills:** resolve ruff lint and format violations in powerpoint skill ([#1048](https://github.com/microsoft/hve-core/issues/1048)) ([17bbe7a](https://github.com/microsoft/hve-core/commit/17bbe7a389cc167f94d32ac3b677ec81c7569525))
+* **workflows:** add uv.lock dependencies submission have fork-skip condition ([#1109](https://github.com/microsoft/hve-core/issues/1109)) ([dec56ac](https://github.com/microsoft/hve-core/commit/dec56acdf13d1a88b09b490b1f890785ab99087c))
+* **workflows:** automate weekly SHA staleness check with issue creation ([#975](https://github.com/microsoft/hve-core/issues/975)) ([1ea4caa](https://github.com/microsoft/hve-core/commit/1ea4caa304669986d1173c0b26e42ffb1be8dcb4))
+* **workflows:** close Codecov integration gaps for Pester and pytest flags ([#1106](https://github.com/microsoft/hve-core/issues/1106)) ([cca29b7](https://github.com/microsoft/hve-core/commit/cca29b79b3d3c12009fc46167e482a7fd17ae58a))
+* **workflows:** propagate uv sync errors in copilot-setup-steps ([#961](https://github.com/microsoft/hve-core/issues/961)) ([df88d7c](https://github.com/microsoft/hve-core/commit/df88d7c3c9930a591d639e903117e01b5744e6df))
+* **workflows:** resolve release-please skip cascade and Python project discovery ([#1043](https://github.com/microsoft/hve-core/issues/1043)) ([79993e2](https://github.com/microsoft/hve-core/commit/79993e2cb47e891e0518817f2acdf86a32c96478))
+* **workflows:** scan only commit subjects for breaking change detection ([#1157](https://github.com/microsoft/hve-core/issues/1157)) ([a38a657](https://github.com/microsoft/hve-core/commit/a38a6574f9cf1b4c3fcf8e3cc4be2579ef650cec))
+
+
+### 📚 Documentation
+
+* clarify HVE Core Extension vs Installer messaging across documentation ([#965](https://github.com/microsoft/hve-core/issues/965)) ([0fceb8f](https://github.com/microsoft/hve-core/commit/0fceb8f831c67b50ea3f50dc2eb4865a355052f3))
+* **docs:** add ADO integration user documentation ([#935](https://github.com/microsoft/hve-core/issues/935)) ([ec89302](https://github.com/microsoft/hve-core/commit/ec893029498d9922ee2b8f4697dbba9ee4750faa))
+* **docs:** add Project Planning agent documentation ([#936](https://github.com/microsoft/hve-core/issues/936)) ([3a3a0fd](https://github.com/microsoft/hve-core/commit/3a3a0fdf923d96a9e8a9ac734c73f24433b525e8))
+* **onboarding:** overhaul marketplace onboarding and documentation site ([#982](https://github.com/microsoft/hve-core/issues/982)) ([4309e10](https://github.com/microsoft/hve-core/commit/4309e10a9ef768dca817220f1e597a4f03929069))
+
+
+### ♻️ Refactoring
+
+* **build:** merge code-review collection into coding-standards ([#863](https://github.com/microsoft/hve-core/issues/863)) ([8027e7b](https://github.com/microsoft/hve-core/commit/8027e7b1574871528b3bfa538fa92cc708f4ee3f))
+* **workflows:** rename release pipeline workflows and add marketplace automation triggers ([#829](https://github.com/microsoft/hve-core/issues/829)) ([b6397f4](https://github.com/microsoft/hve-core/commit/b6397f4388c0a71843c7b82e4e41a87f97806618))
+
+
+### 🔧 Maintenance
+
+* **build:** add clean:logs npm script ([#1122](https://github.com/microsoft/hve-core/issues/1122)) ([f85fe02](https://github.com/microsoft/hve-core/commit/f85fe02fd0a2ff2db3ab9427e0941bc9bba88c6f)), closes [#988](https://github.com/microsoft/hve-core/issues/988)
+* **build:** add JSON reporter for cspell ([#1123](https://github.com/microsoft/hve-core/issues/1123)) ([6d59f67](https://github.com/microsoft/hve-core/commit/6d59f6749acb148c2b0105e42e00cd50cc957165))
+* **ci:** add multi-arch support to copilot-setup-steps binary downloads ([#955](https://github.com/microsoft/hve-core/issues/955)) ([8d0c706](https://github.com/microsoft/hve-core/commit/8d0c7061895dc31b55280547c1f2f1615ace90fd))
+* **deps-dev:** bump cspell from 9.6.4 to 9.7.0 in the npm-dependencies group ([#839](https://github.com/microsoft/hve-core/issues/839)) ([3fa16ff](https://github.com/microsoft/hve-core/commit/3fa16ffd65c1f04a1be713f522b3245bc4312d14))
+* **deps:** bump actions/dependency-review-action from 4.8.3 to 4.9.0 in the github-actions group across 1 directory ([#942](https://github.com/microsoft/hve-core/issues/942)) ([1a9b858](https://github.com/microsoft/hve-core/commit/1a9b8583a45d1d2e6534043791c1e47050b6ef60))
+* **deps:** bump cairosvg from 2.8.2 to 2.9.0 in /.github/skills/experimental/powerpoint ([#1025](https://github.com/microsoft/hve-core/issues/1025)) ([f4deda7](https://github.com/microsoft/hve-core/commit/f4deda7ae863ce1a26dff6b648f083dc9915a91c))
+* **deps:** bump dompurify from 3.3.1 to 3.3.2 in /docs/docusaurus ([#924](https://github.com/microsoft/hve-core/issues/924)) ([d2060d6](https://github.com/microsoft/hve-core/commit/d2060d644d83e213bfd2fa5e7373f8103727592b))
+* **deps:** bump svgo from 3.3.2 to 3.3.3 in /docs/docusaurus ([#880](https://github.com/microsoft/hve-core/issues/880)) ([6dc2406](https://github.com/microsoft/hve-core/commit/6dc2406bdf6baf972e8610dfd722663f28610d3b))
+* **deps:** bump the github-actions group across 1 directory with 4 updates ([#1100](https://github.com/microsoft/hve-core/issues/1100)) ([2290dc0](https://github.com/microsoft/hve-core/commit/2290dc07ef2feb78e1ef53cec80d9ee86803248d))
+* **deps:** bump the github-actions group with 6 updates ([#840](https://github.com/microsoft/hve-core/issues/840)) ([f57bc01](https://github.com/microsoft/hve-core/commit/f57bc01fd2a0939b05598cdc0143f0f42f4f6b67))
+* **docs:** correct New-MsDateReport table rendering and refresh stale docs ([#1114](https://github.com/microsoft/hve-core/issues/1114)) ([c2b806f](https://github.com/microsoft/hve-core/commit/c2b806fc4b6cf2a667e9ba1ede50ccef259b360d))
+* **settings:** remove orphaned Checkov config and stale gitignore entries ([#870](https://github.com/microsoft/hve-core/issues/870)) ([98fcd74](https://github.com/microsoft/hve-core/commit/98fcd7405550b32b14496ad4edfcb51eb5ef3977))
+
 ## [3.0.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.0.1...hve-core-v3.0.2) (2026-02-21)
 
 
