@@ -174,6 +174,15 @@ function Test-PythonSkillConfig {
         if (-not (Test-Path $fuzzHarnessPath -PathType Leaf)) {
             $errors.Add("$RelativePath - missing tests/fuzz_harness.py (fuzz harness convention for Scorecard compliance)")
         }
+        else {
+            # Fuzz harness exists — require companion pyproject.toml config
+            if ($content -notmatch 'fuzz\s*=') {
+                $errors.Add("$RelativePath pyproject.toml missing 'fuzz' dependency group (required for OSSF Scorecard Fuzzing)")
+            }
+            if ($content -notmatch 'fuzz_harness\.py') {
+                $errors.Add("$RelativePath pyproject.toml python_files must include 'fuzz_harness.py' for pytest discovery")
+            }
+        }
     }
 
     return @{ Errors = $errors; Warnings = $warnings }

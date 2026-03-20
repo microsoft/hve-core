@@ -27,7 +27,7 @@ OSSF Scorecard evaluates fuzzing through a three-phase detection pipeline:
 | 2 | ClusterFuzzLite YAML | Not applicable (no `.clusterfuzzlite/` config) |
 | 3 | Source file regex: `import atheris` | Active: `fuzz_harness.py` in each Python skill |
 
-Phase 3 scans all `.py` files in the repository for `import atheris`. A single match gives the repository a 10/10 Fuzzing score.
+Phase 3 scans all `.py` files in the repository for `import atheris`. A single match satisfies the OSSF Scorecard Fuzzing check, which contributes as one weighted sub-check to the aggregate Scorecard score.
 
 ## Convention
 

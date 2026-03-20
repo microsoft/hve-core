@@ -80,8 +80,15 @@ def fuzz_max_severity(data):
         {"severity": severities[fdp.ConsumeIntInRange(0, len(severities) - 1)]}
         for _ in range(num_deck_issues)
     ]
-    results = {"slides": slides, "deck_issues": deck_issues}
-    max_severity(results)
+    results = {}
+    if fdp.ConsumeBool():
+        results["slides"] = slides
+    if fdp.ConsumeBool():
+        results["deck_issues"] = deck_issues
+    try:
+        max_severity(results)
+    except KeyError:
+        pass
 
 
 def fuzz_has_formatting_variation(data):
@@ -193,6 +200,13 @@ class TestFuzzMaxSeverity:
         }
         assert max_severity(results) == "warning"
 
+    def test_missing_slides_key(self):
+        with pytest.raises(KeyError):
+            max_severity({"deck_issues": []})
+
+    def test_missing_deck_issues_key(self):
+        assert max_severity({"slides": []}) == "none"
+
 
 class TestFuzzHasFormattingVariation:
     """Property tests for _has_formatting_variation."""
@@ -217,6 +231,6 @@ class TestFuzzHasFormattingVariation:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__" and FUZZING:
-    atheris.instrument_imports()
+    atheris.instrument_all()
     atheris.Setup(sys.argv, fuzz_dispatch)
     atheris.Fuzz()
