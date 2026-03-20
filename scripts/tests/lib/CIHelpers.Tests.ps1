@@ -29,9 +29,15 @@ Describe 'Get-StandardTimestamp' -Tag 'Unit' {
     }
 
     It 'Returns monotonically increasing timestamps on consecutive calls' {
+        $earlier = [datetime]::new(2025, 1, 15, 18, 30, 0, [System.DateTimeKind]::Utc)
+        $later = $earlier.AddSeconds(1)
+
+        Mock Get-Date { $earlier } -ModuleName CIHelpers
         $first = [datetime]::Parse((Get-StandardTimestamp))
-        Start-Sleep -Milliseconds 10
+
+        Mock Get-Date { $later } -ModuleName CIHelpers
         $second = [datetime]::Parse((Get-StandardTimestamp))
+
         $second | Should -BeGreaterThan $first
     }
 }
