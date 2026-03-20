@@ -16,7 +16,6 @@ jobs:
     timeout-minutes: 30
 
     env:
-      COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
       AGENT_REPO_ROOT: ${{ github.workspace }}
 
     steps:
@@ -39,6 +38,8 @@ jobs:
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@4f363b706ae94a1726e44e380e63fbb4beffa567#subdirectory=python"
 
       - name: Start agent (TCP)
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
         run: |
           copilot --acp --port 3000 &
           for i in $(seq 1 30); do
@@ -49,6 +50,8 @@ jobs:
           nc -z 127.0.0.1 3000 || { echo "Agent failed to start"; exit 1; }
 
       - name: Start judge (TCP)
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
         run: |
           copilot --acp --port 3001 &
           for i in $(seq 1 30); do
