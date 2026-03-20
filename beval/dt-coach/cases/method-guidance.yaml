@@ -197,9 +197,12 @@ cases:
     tags: [method-8, implementation-space]
     given:
       query: >
-        We have a working prototype of the floor status dashboard pulling
-        live PLC data.  We want to test it with operators at Plant B.
-        How should we set up the user testing?
+        I'm a UX lead on a manufacturing ops team.  We've been working
+        through the design thinking methods on our floor-status dashboard
+        project.  We now have a working prototype pulling live PLC data
+        and we're moving into Method 8 — user testing.  We want to test
+        the prototype with operators at Plant B.  How should we set up
+        the user testing?
     stages:
       - when: the agent processes the request
         then:
