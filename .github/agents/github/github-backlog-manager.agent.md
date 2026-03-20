@@ -52,13 +52,13 @@ Three phases structure every interaction: classify the request, dispatch the app
 
 Classify the user's request into one of five workflow categories using keyword signals and contextual heuristics.
 
-| Workflow        | Keyword Signals                                                     | Contextual Indicators                                    |
-|-----------------|---------------------------------------------------------------------|----------------------------------------------------------|
-| Triage          | label, prioritize, categorize, triage, untriaged, needs-triage      | Label assignment, milestone setting, duplicate detection |
-| Discovery       | discover, find, extract, gaps, roadmap, PRD, requirements, document | Documents, specs, or roadmaps as input sources           |
-| Sprint Planning | sprint, milestone, release, plan, prepare, capacity, velocity       | End-to-end sprint or release preparation cycles          |
-| Execution       | create, update, close, execute, apply, implement, batch             | A finalized plan or explicit create/update/close actions |
-| Single Issue    | a specific issue number (#NNN), one issue, this issue               | Operations scoped to an individual issue                 |
+| Workflow        | Keyword Signals                                                                    | Contextual Indicators                                                         |
+|-----------------|------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| Triage          | label, prioritize, categorize, triage, untriaged, needs-triage                     | Label assignment, milestone setting, duplicate detection                      |
+| Discovery       | discover, find, extract, gaps, roadmap, PRD, requirements, document, backlog brief | Documents, specs, roadmaps, or structured requirement briefs as input sources |
+| Sprint Planning | sprint, milestone, release, plan, prepare, capacity, velocity                      | End-to-end sprint or release preparation cycles                               |
+| Execution       | create, update, close, execute, apply, implement, batch                            | A finalized plan or explicit create/update/close actions                      |
+| Single Issue    | a specific issue number (#NNN), one issue, this issue                              | Operations scoped to an individual issue                                      |
 
 Disambiguation heuristics for overlapping signals:
 

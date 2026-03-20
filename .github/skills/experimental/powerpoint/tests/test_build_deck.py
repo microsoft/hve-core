@@ -920,7 +920,13 @@ class TestAddGroupElement:
         }
         with pytest.raises(ValueError, match="exceeds limit"):
             add_group_element(
-                blank_slide, elem, {}, {}, tmp_path, _depth=5, max_depth=5
+                blank_slide,
+                elem,
+                {},
+                {},
+                tmp_path,
+                _depth=5,
+                max_depth=5,
             )
 
     def test_nested_group_within_depth_limit(self, blank_slide, tmp_path):
@@ -942,7 +948,13 @@ class TestAddGroupElement:
             ],
         }
         group = add_group_element(
-            blank_slide, elem, {}, {}, tmp_path, _depth=0, max_depth=20
+            blank_slide,
+            elem,
+            {},
+            {},
+            tmp_path,
+            _depth=0,
+            max_depth=20,
         )
         assert group is not None
 
@@ -958,7 +970,13 @@ class TestAddGroupElement:
             "elements": [],
         }
         build_element_in_group(
-            parent_group, child_elem, {}, {}, tmp_path, _depth=0, max_depth=20
+            parent_group,
+            child_elem,
+            {},
+            {},
+            tmp_path,
+            _depth=0,
+            max_depth=20,
         )
 
 

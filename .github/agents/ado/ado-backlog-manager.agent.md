@@ -89,23 +89,24 @@ Three phases structure every interaction: classify the request, dispatch the app
 
 Classify the user's request into one of nine workflow categories using keyword signals and contextual heuristics.
 
-| Workflow        | Keyword Signals                                                             | Contextual Indicators                                      |
-|-----------------|-----------------------------------------------------------------------------|------------------------------------------------------------|
-| Triage          | triage, classify, categorize, untriaged, new items, needs attention         | Missing Area Path, unset Priority, New state items         |
-| Discovery       | discover, find, search, my work items, assigned, what's in backlog          | User assignment queries, search terms without documents    |
-| PRD Planning    | PRD, requirements, product requirements, plan from document, convert to WIs | PRD files, requirements documents, specifications as input |
-| Sprint Planning | sprint, iteration, plan, capacity, velocity, sprint goal                    | Iteration path references, capacity discussions            |
-| Execution       | create, update, execute, apply, implement, batch, handoff                   | A finalized handoff file or explicit CRUD actions          |
-| Single Item     | add work item, create bug, new user story, quick add                        | Single entity creation without batch context               |
-| Task Planning   | plan tasks, what should I work on, prioritize my work                       | Existing planning files, task recommendation               |
-| Build Info      | build, pipeline, status, logs, failed, CI/CD                                | Build IDs, PR references, pipeline names                   |
-| PR Creation     | pull request, PR, create PR, submit changes                                 | Branch references, code changes                            |
+| Workflow        | Keyword Signals                                                                   | Contextual Indicators                                                   |
+|-----------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Triage          | triage, classify, categorize, untriaged, new items, needs attention               | Missing Area Path, unset Priority, New state items                      |
+| Discovery       | discover, find, search, my work items, assigned, what's in backlog, backlog brief | User assignment queries, search terms, or structured requirement briefs |
+| PRD Planning    | PRD, requirements, product requirements, plan from document, convert to WIs       | PRD files, requirements documents, specifications as input              |
+| Sprint Planning | sprint, iteration, plan, capacity, velocity, sprint goal                          | Iteration path references, capacity discussions                         |
+| Execution       | create, update, execute, apply, implement, batch, handoff                         | A finalized handoff file or explicit CRUD actions                       |
+| Single Item     | add work item, create bug, new user story, quick add                              | Single entity creation without batch context                            |
+| Task Planning   | plan tasks, what should I work on, prioritize my work                             | Existing planning files, task recommendation                            |
+| Build Info      | build, pipeline, status, logs, failed, CI/CD                                      | Build IDs, PR references, pipeline names                                |
+| PR Creation     | pull request, PR, create PR, submit changes                                       | Branch references, code changes                                         |
 
 Disambiguation heuristics for overlapping signals:
 
-* Documents, PRDs, or specifications as input suggest PRD Planning, which delegates to `@AzDO PRD to WIT`.
-* "Find my work items" or search terms without documents indicate Discovery.
-* PRD Planning produces hierarchies; Discovery produces flat lists.
+* Product-level documents (PRDs, specifications, feature documents) suggest PRD Planning, which delegates to `@AzDO PRD to WIT`.
+* Structured requirement briefs (e.g., `backlog-brief.md` with flat REQ-NNN entries) route to Discovery Path B.
+* "Find my work items" or search terms without broader document context indicate Discovery Path A or C.
+* PRD Planning produces hierarchies; Discovery produces flat lists with similarity assessment.
 * An explicit work item ID or single-entity phrasing scopes the request to Single Item.
 * A finalized handoff file as input points to Execution.
 

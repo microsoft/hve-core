@@ -7,6 +7,8 @@ tags:
   - preview
 items:
   # Agents
+  - path: .github/agents/experimental/experiment-designer.agent.md
+    kind: agent
   - path: .github/agents/experimental/pptx.agent.md
     kind: agent
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
@@ -17,6 +19,8 @@ items:
   - path: .github/skills/experimental/video-to-gif
     kind: skill
   # Instructions
+  - path: .github/instructions/experimental/experiment-designer.instructions.md
+    kind: instruction
   - path: .github/instructions/experimental/pptx.instructions.md
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md

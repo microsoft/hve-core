@@ -34,10 +34,12 @@
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:validate": "npm run lint:collections-metadata",
+    "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
+    "@cspell/cspell-json-reporter": "9.7.0",
     "@vscode/vsce": "3.7.1",
     "cspell": "9.7.0",
     "markdown-link-check": "3.14.2",

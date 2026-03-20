@@ -28,6 +28,36 @@ items:
     maturity: experimental
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
+  - path: .github/agents/security/security-reviewer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/codebase-profiler.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/report-generator.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/skill-assessor.agent.md
+    kind: agent
+    maturity: experimental
+  # Skills
+  - path: .github/skills/security/owasp-top-10
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-llm
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-agentic
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/security-reviewer-formats
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/pr-reference
+    kind: skill
   # Security Planner Prompts
   - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
@@ -39,6 +69,15 @@ items:
     kind: prompt
     maturity: experimental
   - path: .github/prompts/security/risk-register.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review-llm.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review-web.prompt.md
     kind: prompt
     maturity: experimental
   # SSSC Planner Prompts

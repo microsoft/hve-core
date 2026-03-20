@@ -51,6 +51,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  action-version-consistency-scan:
+    name: Action Version Consistency Scan
+    uses: ./.github/workflows/action-version-consistency-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     uses: ./.github/workflows/gitleaks-scan.yml

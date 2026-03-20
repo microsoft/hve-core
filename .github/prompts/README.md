@@ -60,14 +60,17 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 * **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create GitHub issues with proper formatting and labels
 
-### Azure Operations
+### Security
 
+* **[Security Review](./security/security-review.prompt.md)** - OWASP vulnerability assessment against the current codebase with configurable mode, scope, and skill selection
+* **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling (target-skill fast-path)
+* **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling for context
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
+* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ### Documentation & Process
 
 * **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
-* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Custom Agents
 
@@ -89,6 +92,7 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
 11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
+13. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
 
 ## Related Resources
 

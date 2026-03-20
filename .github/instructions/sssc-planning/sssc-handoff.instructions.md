@@ -20,8 +20,8 @@ Validate the complete SSSC plan, generate improvement projections, and produce p
 
 For each of the 20 Scorecard checks, project the score improvement if all related work items are completed:
 
-| #   | Check        | Risk   | Current Score | Projected Score | Work Items     |
-|-----|--------------|--------|---------------|-----------------|----------------|
+| #   | Check        | Risk   | Current Score | Projected Score | Work Items           |
+|-----|--------------|--------|---------------|-----------------|----------------------|
 | {n} | {check_name} | {risk} | {current}/10  | {projected}/10  | {WI-SSSC-{NNN}, ...} |
 
 Include a summary row with the estimated overall Scorecard score improvement.

@@ -273,7 +273,7 @@ Cross-reference table template:
 
 | RAI Work Item | Security Work Item | Relationship                    | Notes         |
 |---------------|--------------------|---------------------------------|---------------|
-| WI-RAI-{NNN}  | WI-SEC-{NNN}      | Extends / Complements / Depends | {description} |
+| WI-RAI-{NNN}  | WI-SEC-{NNN}       | Extends / Complements / Depends | {description} |
 
 Relationship types:
 
@@ -373,9 +373,9 @@ When accepted, auto-populate from "Monitoring Setup" category work items generat
 ```markdown
 ## Monitoring Summary
 
-| Work Item   | Metric            | Threshold/Criteria | Alert Mechanism    | Review Cadence |
-|-------------|-------------------|--------------------|--------------------|----------------|
-| WI-RAI-{NNN} | {metric_name}     | {threshold}        | {alert_mechanism}  | {cadence}      |
+| Work Item    | Metric        | Threshold/Criteria | Alert Mechanism   | Review Cadence |
+|--------------|---------------|--------------------|-------------------|----------------|
+| WI-RAI-{NNN} | {metric_name} | {threshold}        | {alert_mechanism} | {cadence}      |
 ```
 
 Generate a "Documentation" category work item: `[RAI] Validate and operationalize monitoring summary`. Assign priority Medium and tag `rai:accountability`.

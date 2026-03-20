@@ -92,14 +92,14 @@ Verify NTIA minimum element compliance for existing SBOM output.
 
 Supply chain security standards evolve rapidly and contain framework-specific guidance best retrieved on demand. The following standards are delegated to the Researcher Subagent at runtime:
 
-| Standard | Rationale for Delegation |
-|----------|---------------------------|
-| OpenSSF Scorecard check details | Check-specific scoring criteria and remediation evolve with each release |
-| SLSA Build Track specification | Version-dependent build integrity requirements and verification procedures |
-| Sigstore signing models | Keyless signing setup varies by package manager and CI platform |
-| SBOM format specifications | SPDX and CycloneDX schemas evolve; NTIA minimum element guidance updates |
-| Best Practices Badge criteria | Tier-specific criteria and evidence requirements change across badge versions |
-| WAF / CAF | Cloud-specific supply chain security guidance, frequently updated |
+| Standard                        | Rationale for Delegation                                                      |
+|---------------------------------|-------------------------------------------------------------------------------|
+| OpenSSF Scorecard check details | Check-specific scoring criteria and remediation evolve with each release      |
+| SLSA Build Track specification  | Version-dependent build integrity requirements and verification procedures    |
+| Sigstore signing models         | Keyless signing setup varies by package manager and CI platform               |
+| SBOM format specifications      | SPDX and CycloneDX schemas evolve; NTIA minimum element guidance updates      |
+| Best Practices Badge criteria   | Tier-specific criteria and evidence requirements change across badge versions |
+| WAF / CAF                       | Cloud-specific supply chain security guidance, frequently updated             |
 
 Do NOT delegate OpenSSF Scorecard check names, SLSA level definitions, Sigstore maturity levels, SBOM standard names, or Best Practices Badge tier names. Those are embedded above.
 

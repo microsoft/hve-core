@@ -26,6 +26,8 @@ items:
 - path: .github/agents/design-thinking/dt-learning-tutor.agent.md
   kind: agent
   maturity: preview
+- path: .github/agents/experimental/experiment-designer.agent.md
+  kind: agent
 - path: .github/agents/experimental/pptx.agent.md
   kind: agent
 - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
@@ -91,6 +93,21 @@ items:
   kind: agent
   maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/security-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/codebase-profiler.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/report-generator.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/skill-assessor.agent.md
   kind: agent
   maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
@@ -225,6 +242,15 @@ items:
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/security-plan-from-prd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review-llm.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review-web.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
@@ -391,6 +417,8 @@ items:
 - path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
   kind: instruction
   maturity: preview
+- path: .github/instructions/experimental/experiment-designer.instructions.md
+  kind: instruction
 - path: .github/instructions/experimental/pptx.instructions.md
   kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
@@ -481,6 +509,18 @@ items:
   kind: skill
 - path: .github/skills/installer/hve-core-installer
   kind: skill
+- path: .github/skills/security/owasp-agentic
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/owasp-llm
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/owasp-top-10
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/security-reviewer-formats
+  kind: skill
+  maturity: experimental
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:

@@ -346,7 +346,9 @@ paket-files/
 **/__pycache__/
 **/.hypothesis/
 **/.pytest_cache/
+**/.hypothesis/
 **/.ruff_cache/
+**/.hypothesis/
 *.pyc
 venv/
 .venv/
