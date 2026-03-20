@@ -145,6 +145,22 @@ jobs:
       matrix:
         directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
 
+  fuzz-tests:
+    name: "Fuzz Tests (${{ matrix.directory }})"
+    needs: discover-python-projects
+    if: needs.discover-python-projects.outputs.has-projects == 'true'
+    uses: ./.github/workflows/fuzz-tests.yml
+    permissions:
+      contents: read
+    with:
+      working-directory: ${{ matrix.directory }}
+      soft-fail: false
+      changed-files-only: true
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.discover-python-projects.outputs.directories) }}
+
   pip-audit:
     name: "pip-audit (${{ matrix.directory }})"
     needs: discover-python-projects
