@@ -24,13 +24,13 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                             | Sub-Category | Workflow          | Persistence    | Key Output                     |
-|---------------------------------------------------|--------------|-------------------|----------------|--------------------------------|
-| [BRD Builder](brd-prd-builders.md)                | Requirements | 7-phase Q&A       | JSON state     | Business requirements document |
-| [PRD Builder](brd-prd-builders.md)                | Requirements | 7-phase Q&A       | JSON state     | Product requirements document  |
-| [ADR Creation Coach](adr-creation.md)             | Architecture | 4-phase Socratic  | Markdown draft | Architecture decision record   |
-| [Arch Diagram Builder](arch-diagram-builder.md)   | Architecture | 4-stage analysis  | None           | ASCII architecture diagram     |
-| [Security Planner](../security-planning/README.md) | Security     | 6-phase STRIDE    | JSON state     | Security model and backlog     |
+| Agent                                              | Sub-Category | Workflow         | Persistence    | Key Output                     |
+|----------------------------------------------------|--------------|------------------|----------------|--------------------------------|
+| [BRD Builder](brd-prd-builders.md)                 | Requirements | 7-phase Q&A      | JSON state     | Business requirements document |
+| [PRD Builder](brd-prd-builders.md)                 | Requirements | 7-phase Q&A      | JSON state     | Product requirements document  |
+| [ADR Creation Coach](adr-creation.md)              | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record   |
+| [Arch Diagram Builder](arch-diagram-builder.md)    | Architecture | 4-stage analysis | None           | ASCII architecture diagram     |
+| [Security Planner](../security-planning/README.md) | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog     |
 
 ## Requirements
 
