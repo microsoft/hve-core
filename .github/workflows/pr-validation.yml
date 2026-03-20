@@ -287,7 +287,8 @@ jobs:
     uses: ./.github/workflows/beval.yml
     permissions:
       contents: read
-    secrets: inherit
+    secrets:
+      COPILOT_TOKEN: ${{ secrets.COPILOT_TOKEN }}
 
   codeql:
     name: CodeQL Security Analysis

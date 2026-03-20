@@ -2,6 +2,9 @@ name: Behavioral Evaluation (beval)
 
 on:
   workflow_call:
+    secrets:
+      COPILOT_TOKEN:
+        required: true
   workflow_dispatch:
 
 permissions:
