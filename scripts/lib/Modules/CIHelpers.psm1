@@ -550,7 +550,29 @@ function Publish-CIArtifact {
     }
 }
 
+function Get-StandardTimestamp {
+    <#
+    .SYNOPSIS
+    Returns the current UTC time as an ISO 8601 string.
+
+    .DESCRIPTION
+    Returns the current UTC time formatted with the round-trip specifier ("o"),
+    producing a string such as "2025-01-15T18:30:00.0000000Z". Use this
+    function wherever a timestamp is needed to ensure consistent, timezone-
+    unambiguous log output across all scripts.
+
+    .OUTPUTS
+    System.String - UTC timestamp in ISO 8601 round-trip format ending in Z.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    return (Get-Date).ToUniversalTime().ToString('o')
+}
+
 Export-ModuleMember -Function @(
+    'Get-StandardTimestamp',
     'ConvertTo-GitHubActionsEscaped',
     'ConvertTo-AzureDevOpsEscaped',
     'Get-CIPlatform',
