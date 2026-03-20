@@ -24,13 +24,13 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                             | Sub-Category | Workflow          | Persistence    | Key Output                     |
-|---------------------------------------------------|--------------|-------------------|----------------|--------------------------------|
-| [BRD Builder](brd-prd-builders.md)                | Requirements | 7-phase Q&A       | JSON state     | Business requirements document |
-| [PRD Builder](brd-prd-builders.md)                | Requirements | 7-phase Q&A       | JSON state     | Product requirements document  |
-| [ADR Creation Coach](adr-creation.md)             | Architecture | 4-phase Socratic  | Markdown draft | Architecture decision record   |
-| [Arch Diagram Builder](arch-diagram-builder.md)   | Architecture | 4-stage analysis  | None           | ASCII architecture diagram     |
-| [Security Plan Creator](security-plan-creator.md) | Security     | 5-phase blueprint | Markdown plan  | Security assessment plan       |
+| Agent                                              | Sub-Category | Workflow         | Persistence    | Key Output                     |
+|----------------------------------------------------|--------------|------------------|----------------|--------------------------------|
+| [BRD Builder](brd-prd-builders.md)                 | Requirements | 7-phase Q&A      | JSON state     | Business requirements document |
+| [PRD Builder](brd-prd-builders.md)                 | Requirements | 7-phase Q&A      | JSON state     | Product requirements document  |
+| [ADR Creation Coach](adr-creation.md)              | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record   |
+| [Arch Diagram Builder](arch-diagram-builder.md)    | Architecture | 4-stage analysis | None           | ASCII architecture diagram     |
+| [Security Planner](../security-planning/README.md) | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog     |
 
 ## Requirements
 
@@ -53,18 +53,18 @@ Two agents address architecture documentation from different angles. The ADR Cre
 
 ## Security
 
-The Security Plan Creator applies an 8-category threat analysis framework to generate security assessment plans. It walks through scope definition, threat analysis, risk assessment, mitigation planning, and plan generation. The agent uses a template-guided approach with structured persistence for tracking plan progress.
+The Security Planner applies STRIDE-based security model analysis across seven operational buckets to produce standards mappings and dual-format backlog handoff. It detects AI/ML components and recommends RAI Planner dispatch when AI elements are present. The agent uses a six-phase conversational workflow with JSON state persistence for tracking plan progress.
 
 > [!IMPORTANT]
-> Run security planning after architecture decisions stabilize. Changes to infrastructure or service boundaries may invalidate earlier threat assessments.
+> Run security planning after architecture decisions stabilize. Changes to infrastructure or service boundaries may invalidate earlier security models.
 
-See the [Security Plan Creator](security-plan-creator.md) guide for the workflow, threat categories, and invocation details.
+See the [Security Planning](../security-planning/README.md) guide for the workflow, operational buckets, and invocation details.
 
 ## Prerequisites
 
 * VS Code with the GitHub Copilot Chat extension installed
 * Agent definition files from the `project-planning` collection deployed to `.github/agents/`
-* For Security Plan Creator: agent definition files from the `security` collection (see the [Collection Membership](security-plan-creator.md#collection-membership) note)
+* For Security Planner: agent definition files from the `security` or `security-planning` collection
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
 * For Arch Diagram Builder: infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 
@@ -77,7 +77,7 @@ Select any agent using the agent picker in the Copilot Chat pane. Each agent sta
 | New project kickoff    | BRD Builder or PRD Builder | Capture requirements before making architecture decisions                  |
 | Architecture decisions | ADR Creation Coach         | Evaluate technology choices, design patterns, or infrastructure approaches |
 | Visual documentation   | Arch Diagram Builder       | Generate architecture diagrams for onboarding or reviews                   |
-| Security review        | Security Plan Creator      | Assess threats and plan mitigations after architecture decisions stabilize |
+| Security review        | Security Planner           | Assess threats and plan mitigations after architecture decisions stabilize |
 
 ### Recommended Sequencing
 
@@ -85,7 +85,7 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 
 1. Start with the BRD Builder to capture business context, then the PRD Builder for product-level details.
 2. Use the ADR Creation Coach to document key design decisions, then the Arch Diagram Builder to visualize the resulting architecture.
-3. Run the Security Plan Creator once the architecture is stable to identify threats and plan mitigations.
+3. Run the Security Planner once the architecture is stable to identify threats and plan mitigations.
 
 ## Related Documentation
 

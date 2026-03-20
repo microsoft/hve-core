@@ -81,4 +81,8 @@ JTBD
 brds
 IATF
 LLMAPI
+NTIA
+ntia
+DSPM
+dspm
 prds

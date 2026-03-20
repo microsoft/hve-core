@@ -172,6 +172,7 @@ davidanson
 dataset
 datasets
 dcgm
+debiasing
 Deepset
 devel
 devsecops
@@ -196,7 +197,12 @@ gitops
 helm
 Holo
 hotspots
+Fulcio
+gitsign
 Huggingface
+Rekor
+sscp
+unforgeable
 hyperconverged
 hyperparameters
 hypervisor
@@ -857,6 +863,7 @@ reimplement
 reimplementation
 reimplemented
 reimplementing
+remediations
 reintegrate
 reintegrating
 relabelling

@@ -9,6 +9,9 @@ tags:
   - prd
   - diagrams
   - planning
+  - rai
+  - responsible-ai
+  - security
 items:
   # Agents
   - path: .github/agents/project-planning/agile-coach.agent.md
@@ -31,6 +34,11 @@ items:
     kind: agent
   - path: .github/agents/project-planning/meeting-analyst.agent.md
     kind: agent
+  - path: .github/agents/rai-planning/rai-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/security-planner.agent.md
+    kind: agent
     maturity: experimental
   # Subagents
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
@@ -43,7 +51,65 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
     kind: agent
+  # Prompts
+  - path: .github/prompts/security/security-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/incident-response.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/risk-register.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
   # Instructions
+  - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-security-model.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/operational-buckets.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/standards-mapping.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/security-model.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security-planning/backlog-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md

@@ -31,7 +31,9 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 |------------------------|--------|-----------------------------------------|--------------------------------------------------------------------------------------------|
 | task-researcher        | Agent  | Select **task-researcher** agent        | Research best practices and technical topics                                               |
 | brd-builder            | Agent  | Select **brd-builder** agent            | Create business requirements documents                                                     |
-| security-plan-creator  | Agent  | Select **security-plan-creator** agent  | Generate security plans and threat models                                                  |
+| security-planner       | Agent  | Select **security-planner** agent       | Generate security plans and security models                                                |
+| sssc-planner           | Agent  | Select **sssc-planner** agent           | Assess supply chain security posture against OpenSSF standards                             |
+| rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
 | gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                                   |
 | adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
 | arch-diagram-builder   | Agent  | Select **arch-diagram-builder** agent   | Generate architecture diagrams                                                             |
@@ -55,7 +57,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 
 ## Role-Specific Guidance
 
-TPMs lead Discovery, producing BRDs and coordinating research across disciplines. Engineers contribute technical feasibility research. Tech Leads evaluate architecture options. Security Architects drive threat modeling. Data Scientists define data requirements.
+TPMs lead Discovery, producing BRDs and coordinating research across disciplines. Engineers contribute technical feasibility research. Tech Leads evaluate architecture options. Security Architects drive security model analysis. Data Scientists define data requirements.
 
 * [TPM Guide](../roles/tpm.md)
 * [Engineer Guide](../roles/engineer.md)
@@ -86,19 +88,31 @@ onboarding time from 2 weeks to 3 days. Include integration requirements
 for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 ```
 
-Select **security-plan-creator** agent:
+Select **security-planner** agent:
 
 ```text
 Generate a security plan for the /api/payments endpoint in our
 customer-facing REST API. Scope the plan to authentication via
 OAuth 2.0 with Azure AD B2C, PCI DSS compliance for payment
-tokenization, and a threat model covering injection and broken
+tokenization, and a security model covering injection and broken
 access control. Exclude infrastructure and network-level controls.
+```
+
+Select **sssc-planner** agent:
+
+```text
+Assess this repository's supply chain security posture against the OpenSSF Scorecard
+```
+
+Select **rai-planner** agent:
+
+```text
+Assess the responsible AI risks for this project based on the security plan
 ```
 
 ## Stage Outputs and Next Stage
 
-Discovery produces BRDs, research summaries, security plans, data specifications, and architecture decision records. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
+Discovery produces BRDs, research summaries, security plans, data specifications, architecture decision records, supply chain security assessments, and RAI assessments. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

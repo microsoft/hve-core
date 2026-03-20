@@ -8,3 +8,10 @@
 *.docx binary
 *.jpg binary
 *.png binary
+
+# Override Linguist vendored classification for Python skill files.
+# GitHub Linguist excludes .github/ via its vendor.yml regex, hiding Python
+# from the Languages API. OSSF Scorecard only checks fuzz specs for languages
+# that appear in that API, so without this override the Atheris harness is
+# invisible and Fuzzing scores 0/10.
+.github/skills/**/*.py linguist-vendored=false
