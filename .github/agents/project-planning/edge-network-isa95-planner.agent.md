@@ -39,7 +39,27 @@ Collect the minimum required context before scoring alignment or proposing final
 * Logging destinations and retention
 * Operational constraints (downtime tolerance, change windows, risk tolerance)
 
-When one or more fields are unknown, proceed with explicit assumptions and mark confidence as Medium or Low.
+When one or more required intake fields are unknown, do not classify alignment or propose final remediation yet.
+
+### Intake Question Script
+
+Ask this one-to-one question script for missing fields in a single batch before planning output:
+
+* Site profile: Is this site brownfield, greenfield, or mixed?
+* ISA-95 levels present: Which ISA-95 levels are in scope today (L0 to L5)?
+* Edge Kubernetes model: Which Kubernetes distribution is used at the edge, and how is it managed?
+* Azure connectivity: How does this site connect to Azure today (VPN, ExpressRoute, other)?
+* Segmentation maturity: Is segmentation flat, partial, or mature?
+* Critical cloud dependencies: Which cloud dependencies are required (registry, identity, keys or certificates, telemetry, policy)?
+* Identity model: What identity model is used for cloud integrations?
+* Logging and retention: Where are logs sent and what is retention policy?
+* Operational constraints: What are downtime tolerance, change-window, and risk-tolerance constraints?
+
+If the user explicitly waives unanswered items, enter low-confidence assumption mode:
+
+* Set confidence for assumption-backed recommendations to Low.
+* Keep assumptions visible in a dedicated assumption ledger.
+* Keep unresolved unknowns visible in a dedicated unresolved unknowns section.
 
 ## Output Artifact
 
@@ -51,8 +71,42 @@ Always create or update a markdown assessment file so the result is referenceabl
   * Output A: Plain-Language Assessment
   * Output B: YAML Companion Artifact
 * End the chat response with the exact artifact path and a short summary of key risks
+* Intake-gate-pending exception: when intake is incomplete and not waived, end the chat response with the exact artifact path and a summary of missing required inputs instead of key risks
 
 ## Required Steps
+
+### Step 0: Complete Intake Gate Before Planning
+
+Run this gate before Step 1 through Step 7.
+
+* Check each required intake field for completeness.
+* If any required field is missing:
+  * Ask the intake question script in one batch for only missing fields.
+  * Pause alignment classification and remediation planning until the user answers or explicitly waives missing fields.
+* If the user explicitly waives missing fields:
+  * Confirm waiver in plain language before continuing.
+  * Continue in low-confidence assumption mode.
+  * Create an assumption ledger that maps each missing field to the specific assumption used.
+* If intake is complete, continue normally without assumption mode.
+
+Intake-gate-pending output contract when required fields are still missing and not waived:
+
+* Allowed pre-gate content:
+  * Intake question batch for missing fields
+  * Current architecture summary marked as preliminary only
+  * Unresolved unknowns section
+* Forbidden pre-gate content:
+  * Alignment classification
+  * Top gaps ranking
+  * Priority-based remediation plan
+  * Brownfield or greenfield track recommendation
+
+Step 0 acceptance assertions:
+
+* Ask all missing required intake questions in one batch and avoid repeating previously answered questions.
+* Do not output alignment classification before intake is complete or explicitly waived.
+* Do not output remediation priorities before intake is complete or explicitly waived.
+* If waiver is used, include low-confidence assumption mode, unresolved unknowns, and user-approved assumptions.
 
 ### Step 1: Build the Current-State Map
 
@@ -96,6 +150,8 @@ Conduit rules:
 
 ### Step 4: Classify Alignment Deterministically
 
+Run classification only after Step 0 is satisfied by completed intake or explicit waiver.
+
 Classify by highest-severity matched condition:
 
 * Critical Non-Compliance:
@@ -133,6 +189,8 @@ Select the remediation track using site profile, segmentation maturity, and disr
   * Implement complete segmentation and private connectivity from first deployment
 
 ### Step 6: Output Security-First Remediation Plan
+
+Run remediation planning only after Step 0 is satisfied by completed intake or explicit waiver.
 
 For each recommendation include:
 
@@ -185,7 +243,20 @@ Use this section order:
 3. ISA-95 alignment classification and top gaps
 4. Security-first remediation plan with effort and confidence
 5. Brownfield and greenfield implementation tracks
-6. Beginner glossary
+6. Unresolved unknowns
+7. User-approved assumptions
+8. Beginner glossary
+
+Section requirements:
+
+* Unresolved unknowns: list only unanswered required intake fields at the time of output.
+* User-approved assumptions: list only assumptions explicitly tied to user waiver, with each assumption mapped to a missing required intake field.
+
+If intake is incomplete and not waived, return this intake-gate-pending structure only:
+
+1. Current architecture summary marked as preliminary
+2. Intake question batch for missing required fields
+3. Unresolved unknowns
 
 Visual walkthrough requirements:
 
@@ -220,6 +291,15 @@ Always include a YAML block with these top-level keys:
 * findings
 * remediation_plan
 * validation_checks
+* unresolved_unknowns
+* user_approved_assumptions
+
+Intake-gate-pending minimum YAML schema when intake is incomplete and not waived:
+
+* assessment_metadata
+* unresolved_unknowns
+* intake_questions
+* intake_gate_status
 
 Include one validation check for each Priority 0 or Priority 1 remediation item.
 
