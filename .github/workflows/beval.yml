@@ -36,8 +36,12 @@ jobs:
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@a9ab930ade3db13855b26b34b268327da9c881bc#subdirectory=python"
 
       - name: Start agent (TCP)
+        # Permissions: read (load agent instruction files); shell and web denied
+        # as the dt-coach agent only needs to read instructions and respond to
+        # text prompts during evaluation — no terminal execution or network
+        # access required.
         run: |
-          copilot --acp --port 3000 --allow-all &
+          copilot --acp --port 3000 --deny-tool "shell(*)" --deny-tool "web(*)" &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3000 && break
             echo "Waiting for agent to start ($i)..."
@@ -46,8 +50,11 @@ jobs:
           nc -z 127.0.0.1 3000 || { echo "Agent failed to start"; exit 1; }
 
       - name: Start judge (TCP)
+        # Permissions: none beyond LLM inference; shell and web denied as the
+        # judge only receives text responses and returns evaluation scores —
+        # no tool access required.
         run: |
-          copilot --acp --port 3001 --allow-all &
+          copilot --acp --port 3001 --deny-tool "shell(*)" --deny-tool "web(*)" &
           for i in $(seq 1 30); do
             nc -z 127.0.0.1 3001 && break
             echo "Waiting for judge to start ($i)..."
