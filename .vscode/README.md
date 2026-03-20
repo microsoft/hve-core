@@ -12,13 +12,15 @@ keywords:
 estimated_reading_time: 3
 ---
 
+> **Note:** MCP servers are not enabled by default. The available server configurations are stored in `mcp.json.sample`. To enable them, either rename `mcp.json.sample` to `mcp.json`, or create a new `mcp.json` and copy across only the servers you need.
+
 ## Overview
 
 This workspace uses the GitHub MCP server for enhanced Copilot capabilities.
 
 ## Configuration
 
-The MCP server is configured in `.vscode/mcp.json` to use a custom endpoint (`https://github.com/mcp`).
+The MCP server configuration is provided in `.vscode/mcp.json.sample`.
 
 > **Note:** If you want to use the recommended GitHub MCP server setup, run `npx @modelcontextprotocol/server-github` and update your `.vscode/mcp.json` accordingly. See the [GitHub MCP Server Documentation](https://github.com/github/github-mcp-server) for details.
 
