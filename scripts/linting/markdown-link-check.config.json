@@ -10,7 +10,8 @@
     { "pattern": "^https://aka\\.ms/install-hve-core.*" },
     {
       "pattern": "^https://github\\.com/microsoft/hve-core"
-    }
+    },
+    { "pattern": "^LICENSE$" }
   ],
   "replacementPatterns": []
 }

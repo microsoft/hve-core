@@ -1,165 +1,118 @@
 ---
 title: HVE Core Documentation
-description: Documentation index for HVE Core Copilot customizations
+description: Documentation hub for HVE Core, a prompt engineering framework that brings AI-powered agents, prompts, instructions, and skills to your GitHub Copilot workflow
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-03-11
 ms.topic: overview
 keywords:
   - hve core
   - documentation
   - copilot customizations
+  - agents
+  - prompt engineering
 estimated_reading_time: 3
 ---
 
-HVE Core is a prompt engineering framework for GitHub Copilot designed for team-scale adoption. It provides specialized agents, reusable prompts, instruction sets, and a validation pipeline with JSON schema enforcement. The framework separates AI concerns into distinct artifact types with clear boundaries, preventing runaway behavior through constraint-based design.
+HVE Core gives your team production-ready agents, reusable prompts, coding instructions, and executable skills for GitHub Copilot. You get structured workflows (Research → Plan → Implement), schema-enforced quality gates, and role-specific tooling across 10 engineering disciplines. Install from the VS Code Marketplace and start shipping with AI-assisted engineering in minutes.
 
-> [!TIP]
-> For the fastest setup, install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace for the flagship RPI workflow and core artifacts with zero configuration. For the complete library across all collections, use the [HVE Core - All extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all).
+## Choose Your Extension
 
-## Audience
+|              | HVE Core All                                                                                                | HVE Installer                                                                                                 |
+|--------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| What you get | Every agent, prompt, instruction, and skill in the framework                                                | Pick only the collections you need                                                                            |
+| Best for     | Teams that want the full toolkit out of the box                                                             | Teams that prefer a curated, lightweight setup                                                                |
+| Install      | [Install HVE Core All](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all) | [Install HVE Installer](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer) |
 
-| Role                     | Description                                                    | Start Here                                                        |
-|--------------------------|----------------------------------------------------------------|-------------------------------------------------------------------|
-| Engineer                 | Write code, implement features, fix bugs                       | [Engineer Guide](hve-guide/roles/engineer.md)                     |
-| TPM                      | Plan projects, manage requirements, track work                 | [TPM Guide](hve-guide/roles/tpm.md)                               |
-| Tech Lead / Architect    | Design architecture, review code, set standards                | [Tech Lead Guide](hve-guide/roles/tech-lead.md)                   |
-| Security Architect       | Assess security, create threat models                          | [Security Architect Guide](hve-guide/roles/security-architect.md) |
-| Data Scientist           | Analyze data, build notebooks, create dashboards               | [Data Scientist Guide](hve-guide/roles/data-scientist.md)         |
-| SRE / Operations         | Manage infrastructure, handle incidents, deploy                | [SRE Guide](hve-guide/roles/sre-operations.md)                    |
-| Business Program Manager | Define business outcomes, manage stakeholders                  | [BPM Guide](hve-guide/roles/business-program-manager.md)          |
-| New Contributor          | Get started contributing to the project                        | [New Contributor Guide](hve-guide/roles/new-contributor.md)       |
-| UX Designer              | Design Thinking coaching, user research, prototyping workflows | [UX Designer Guide](hve-guide/roles/ux-designer.md)               |
-| All Roles                | Cross-cutting utility tools                                    | [Utility Guide](hve-guide/roles/utility.md)                       |
+> Not sure which to choose? See the [installation methods comparison](getting-started/methods/comparison.md) for a detailed breakdown.
 
-**[Browse All Role Guides →](hve-guide/roles/)**
+## Find Your Path
+
+### New to HVE Core?
+
+Get up and running with installation, configuration, and your first AI-assisted workflow.
+
+* [Install HVE Core](getting-started/install.md) covers three setup paths from marketplace extension to developer clone
+* [Run your first workflow](getting-started/first-workflow.md) walks through an end-to-end RPI example
+* [Browse available collections](getting-started/collections.md) to see what each bundle includes
+
+### Leading a Team?
+
+Set up HVE Core for your team with governance, collections, and customization options.
+
+* [Team adoption guide](customization/team-adoption.md) covers governance, naming conventions, and onboarding
+* [Collections overview](getting-started/collections.md) explains how to bundle and distribute artifacts
+* [Customization guide](customization/README.md) covers the full spectrum from lightweight instructions to fork-and-extend
+
+### Contributing to HVE Core?
+
+Create and maintain agents, prompts, instructions, and skills for the framework.
+
+* [Contributing guide](contributing/) explains artifact authoring standards
+* [Templates](templates/) provide starting points for ADRs, BRDs, and security plans
+* [Architecture overview](architecture/) documents system design, components, and build pipelines
+
+### Going Deeper?
+
+Explore advanced capabilities including Design Thinking coaching, security planning, and methodology reference.
+
+* [Design Thinking](design-thinking/README.md) guides teams through nine methods across three spaces
+* [Project Planning](agents/project-planning/) covers ADR creation, BRD/PRD building, architecture diagrams, and security plan generation
+* [Security documentation](security/README.md) covers threat modeling and security planning
+* [RPI methodology](rpi/) explains the Research, Plan, Implement agent coordination pattern
+
+## Roles
+
+HVE Core provides dedicated tooling for 10 engineering roles, each with curated agents, prompts, and starter workflows. Find your role guide on the [Role Guides](hve-guide/roles/) page.
 
 ## AI-Assisted Project Lifecycle
 
-HVE Core supports a 9-stage project lifecycle from initial setup through ongoing operations, with AI-assisted tooling at each stage. The project lifecycle guides walk through each stage, covering available tools, role-specific guidance, and starter prompts.
+HVE Core supports a 9-stage lifecycle from initial setup through ongoing operations. Each stage maps to specific agents, prompts, and role-specific guidance.
 
-* [Stage Overview](hve-guide/lifecycle/) - Full lifecycle map with Mermaid flowchart
-* [Stage 6: Implementation](hve-guide/lifecycle/implementation.md) - Highest-density stage with 30 assets
-* [Stage 2: Discovery](hve-guide/lifecycle/discovery.md) - Research, requirements, and BRD creation
+* [Stage overview](hve-guide/lifecycle/) provides a full lifecycle map
+* [Implementation (Stage 6)](hve-guide/lifecycle/implementation.md) is the highest-density stage with 30+ assets
+* [Discovery (Stage 2)](hve-guide/lifecycle/discovery.md) covers research, requirements, and BRD creation
 
-**[AI-Assisted Project Lifecycle Overview →](hve-guide/lifecycle/)**
-
-## Role Guides
-
-Find your role-specific guide for AI-assisted engineering. Each guide maps the agents, prompts, and collections relevant to your responsibilities.
-
-* [Engineer](hve-guide/roles/engineer.md) - RPI workflow, coding standards, implementation
-* [TPM](hve-guide/roles/tpm.md) - Requirements, backlog management, sprint planning
-* [New Contributor](hve-guide/roles/new-contributor.md) - Guided onboarding with progression milestones
-
-**[Browse All Role Guides →](hve-guide/roles/)**
-
-## Getting Started
-
-The Getting Started guide walks through installation, configuration, and running your first Copilot workflow.
-
-* [Installation Methods](getting-started/install.md) - Seven setup options from VSCode extension to submodule
-* [MCP Configuration](getting-started/mcp-configuration.md) - Model Context Protocol server setup
-* [First Workflow](getting-started/first-workflow.md) - End-to-end example with RPI agents
-
-**[Getting Started Guide →](getting-started/)**
+**[Explore the full lifecycle →](hve-guide/lifecycle/)**
 
 ## Agent Systems
 
-hve-core provides specialized agents organized into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
+Specialized agents are organized into functional groups that combine agents, prompts, and instruction files into cohesive workflows.
 
 * [RPI Orchestration](rpi/) separates complex tasks into research, planning, implementation, and review phases
-* [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution across GitHub repositories
-* Additional systems documented in the [Agent Catalog](agents/)
+* [Project Planning](agents/project-planning/) creates ADRs, BRDs, PRDs, architecture diagrams, and security plans through guided AI workflows
+* [GitHub Backlog Manager](agents/github-backlog/) automates issue discovery, triage, sprint planning, and execution
+* Additional systems are documented in the [Agent Catalog](agents/)
 
 **[Browse the Agent Catalog →](agents/)**
 
-## Design Thinking
-
-AI-assisted Design Thinking uses the dt-coach agent to guide teams through nine methods across three spaces.
-
-* [Design Thinking Guide](design-thinking/README.md): Overview and method catalog
-* [Why Design Thinking?](design-thinking/why-design-thinking.md): When to use DT
-* [Using the DT Coach](design-thinking/dt-coach.md): Agent usage guide
-* [Browse all Design Thinking docs →](design-thinking/)
-
 ## RPI Methodology
 
-Research, Plan, Implement (RPI) is a structured methodology for complex AI-assisted engineering tasks. It separates concerns into three specialized agents that work together.
+Research, Plan, Implement (RPI) decomposes complex engineering tasks into three specialized agents that collaborate through structured handoffs.
 
-* [Why RPI?](rpi/why-rpi.md) - Problem statement and design rationale
-* [Task Researcher](rpi/task-researcher.md) - Discovery and context gathering
-* [Task Planner](rpi/task-planner.md) - Structured task planning
-* [Task Implementor](rpi/task-implementor.md) - Execution with tracking
-* [Using Together](rpi/using-together.md) - Agent coordination patterns
+* [Why RPI?](rpi/why-rpi.md) explains the problem statement and design rationale
+* [Task Researcher](rpi/task-researcher.md), [Task Planner](rpi/task-planner.md), and [Task Implementor](rpi/task-implementor.md) cover each agent
+* [Using Together](rpi/using-together.md) describes agent coordination patterns
 
 **[RPI Documentation →](rpi/)**
 
+## Design Thinking
+
+The dt-coach agent guides teams through nine Design Thinking methods across problem space, solution space, and validation.
+
+* [Design Thinking Guide](design-thinking/README.md) provides the overview and method catalog
+* [Why Design Thinking?](design-thinking/why-design-thinking.md) explains when to reach for DT
+* [Using the DT Coach](design-thinking/dt-coach.md) covers agent usage
+
+**[Browse all Design Thinking docs →](design-thinking/)**
+
 ## Prompt Engineering
 
-HVE Core provides a structured approach to building AI artifacts with protocol patterns, input variables, and maturity lifecycle management.
+HVE Core structures AI artifacts with protocol patterns, input variables, and a four-stage maturity lifecycle.
 
-* [Prompt Builder Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) - Interactive artifact creation with sandbox testing
-* [AI Artifacts Overview](contributing/ai-artifacts-common.md) - Common patterns across artifact types
-* [Activation Context](architecture/ai-artifacts.md#activation-context) - When artifacts activate within workflows
-
-### Key Differentiators
-
-| Capability              | Description                                               |
-|-------------------------|-----------------------------------------------------------|
-| Constraint-based design | Agents know their boundaries, preventing runaway behavior |
-| Subagent delegation     | First-class pattern for decomposing complex tasks         |
-| Maturity lifecycle      | Four-stage model from experimental to deprecated          |
-| Schema validation       | JSON schema enforcement for all artifact types            |
-
-## Customization
-
-Adapt HVE Core to your team's workflow with these guides, from lightweight instruction files to full fork-and-extend workflows.
-
-* [Customization Overview](customization/README.md) - Spectrum of customization options and role-based entry points
-* [Instructions](customization/instructions.md) - Repository-level and file-pattern-scoped coding guidance
-* [Agents](customization/custom-agents.md) - Custom agent architecture, subagent patterns, and tool restrictions
-* [Prompts](customization/prompts.md) - Task-specific prompt files with variables and agent delegation
-* [Skills](customization/skills.md) - Self-contained skill packages with scripts and references
-* [Collections](customization/collections.md) - Bundle and distribute sets of agents, prompts, instructions, and skills
-* [Build System](customization/build-system.md) - Plugin generation, schema validation, and CI pipeline integration
-* [Forking](customization/forking.md) - Fork setup, customization areas, and upstream synchronization
-* [Environment](customization/environment.md) - DevContainer, VS Code settings, and MCP server configuration
-* [Team Adoption](customization/team-adoption.md) - Governance, naming conventions, onboarding, and change management
-
-**[Customization Guide →](customization/README.md)**
-
-## Contributing
-
-Learn how to create and maintain AI artifacts including agents, prompts, instructions, and skills.
-
-* [Instructions](contributing/instructions.md) - Passive reference guidance
-* [Prompts](contributing/prompts.md) - Task-specific procedures
-* [Agents](contributing/custom-agents.md) - Custom personas and modes
-* [Skills](contributing/skills.md) - Executable utilities with documentation
-
-**[Contributing Guide →](contributing/)**
-
-## Architecture
-
-Technical documentation for system design, component relationships, and build pipelines.
-
-* [Component Overview](architecture/) - System components and interactions
-* [AI Artifacts](architecture/ai-artifacts.md) - Four-tier artifact delegation model
-* [Build Workflows](architecture/workflows.md) - GitHub Actions CI/CD architecture
-* [Testing](architecture/testing.md) - PowerShell Pester test infrastructure
-
-**[Architecture Overview →](architecture/)**
-
-## Templates
-
-Pre-built templates for common engineering documents:
-
-* [ADR Template](templates/adr-template-solutions.md) - Architecture Decision Records
-* [BRD Template](templates/brd-template.md) - Business Requirements Documents
-* [Security Plan Template](templates/security-plan-template.md) - Security planning
-
-**[Browse Templates →](/docs/category/templates)**
+* [Prompt Builder Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/prompt-builder.agent.md) provides interactive artifact creation with sandbox testing
+* [AI Artifacts Overview](contributing/ai-artifacts-common.md) covers common patterns across artifact types
+* [Activation Context](architecture/ai-artifacts.md#activation-context) explains when artifacts activate within workflows
 
 ## Quick Links
 

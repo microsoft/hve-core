@@ -1,7 +1,7 @@
 ---
 title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
-sidebar_position: 5
+sidebar_position: 6
 author: Microsoft
 ms.date: 2026-02-18
 ms.topic: tutorial

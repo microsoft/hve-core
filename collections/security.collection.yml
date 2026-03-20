@@ -1,0 +1,59 @@
+id: security
+name: Security
+description: Security review, planning, incident response, risk assessment, and vulnerability analysis
+maturity: experimental
+notice: |
+  > [!CAUTION]
+  > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+tags:
+  - security
+  - incident-response
+  - risk
+  - planning
+  - review
+  - vulnerability
+  - threat-modeling
+items:
+  # Agents
+  - path: .github/agents/security/security-plan-creator.agent.md
+    kind: agent
+  - path: .github/agents/security/security-reviewer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/codebase-profiler.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/report-generator.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/skill-assessor.agent.md
+    kind: agent
+    maturity: experimental
+  # Skills
+  - path: .github/skills/security/owasp-top-10
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-llm
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-agentic
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/security-reviewer-formats
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/pr-reference
+    kind: skill
+  # Prompts
+  - path: .github/prompts/security/incident-response.prompt.md
+    kind: prompt
+  - path: .github/prompts/security/risk-register.prompt.md
+    kind: prompt
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

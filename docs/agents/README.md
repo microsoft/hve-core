@@ -14,18 +14,18 @@ estimated_reading_time: 5
 
 hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
-| Group                               | Agents   | Complexity  | Documentation                               |
-|-------------------------------------|----------|-------------|---------------------------------------------|
-| RPI Orchestration                   | 5        | High        | [RPI Documentation](../rpi/README.md)       |
-| GitHub Backlog Management           | 1 active | Very High   | [Backlog Manager](github-backlog/README.md) |
-| ADO Backlog Management              | 1 active | Very High   | [Backlog Manager](ado-backlog/README.md)    |
-| Document Builders                   | 4        | Medium-High | Planned                                     |
-| Data Pipeline                       | 4        | Medium      | Planned                                     |
-| DevOps Quality                      | 2        | High        | Planned                                     |
-| Meta/Engineering                    | 1        | High        | Planned                                     |
-| Infrastructure                      | 1        | Very High   | Planned                                     |
-| Utility                             | 1        | Low-Medium  | Planned                                     |
-| [Design Thinking](#design-thinking) | 2        | High        | Active                                      |
+| Group                               | Agents   | Complexity  | Documentation                                                        |
+|-------------------------------------|----------|-------------|----------------------------------------------------------------------|
+| RPI Orchestration                   | 5        | High        | [RPI Documentation](../rpi/README.md)                                |
+| GitHub Backlog Management           | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                          |
+| ADO Backlog Management              | 1 active | Very High   | [Backlog Manager](ado-backlog/README.md)                             |
+| Project Planning                    | 5        | Medium-High | [Project Planning](project-planning/README.md)                       |
+| Data Pipeline                       | 4        | Medium      | Planned                                                              |
+| DevOps Quality                      | 2        | High        | Planned                                                              |
+| Meta/Engineering                    | 1        | High        | Planned                                                              |
+| Infrastructure                      | 1        | Very High   | Planned                                                              |
+| Utility                             | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence) |
+| [Design Thinking](#design-thinking) | 2        | High        | Active                                                               |
 
 ## RPI Orchestration
 
@@ -39,9 +39,9 @@ Automates issue discovery, triage, sprint planning, and execution across GitHub 
 
 Automates work item discovery, triage, sprint planning, execution, PR creation, build monitoring, and task planning across Azure DevOps projects. The ADO Backlog Manager agent orchestrates nine distinct workflows with three-tier autonomy control. See the [Backlog Manager Documentation](ado-backlog/README.md) for workflow guides.
 
-## Document Builders
+## Project Planning
 
-Four specialized agents for creating structured documents. Includes builders for Architecture Decision Records, Business Requirements Documents, Product Requirements Documents, and security plans.
+Five specialized agents for project planning activities. Includes builders for Business Requirements Documents, Product Requirements Documents, Architecture Decision Records, architecture diagrams, and security plans. See the [Project Planning Agents](project-planning/README.md) for detailed documentation.
 
 ## Data Pipeline
 
@@ -61,7 +61,7 @@ Manages cloud infrastructure provisioning and configuration. Handles Bicep and T
 
 ## Utility
 
-General-purpose agents for common development tasks such as file organization, content transformation, and small automation helpers.
+General-purpose agents for cross-cutting concerns such as session persistence and context management across workflows.
 
 ## Design Thinking
 

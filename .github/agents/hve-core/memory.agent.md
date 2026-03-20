@@ -10,6 +10,10 @@ handoffs:
     agent: RPI Agent
     prompt: "/rpi suggest"
     send: true
+  - label: "🚀 Continue with Backlog"
+    agent: GitHub Backlog Manager
+    prompt: "/github-suggest"
+    send: true
 ---
 
 # Memory Agent

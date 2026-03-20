@@ -2,7 +2,7 @@
 title: Extension Scripts
 description: PowerShell scripts for VS Code extension preparation, packaging, and collection discovery
 author: HVE Core Team
-ms.date: 2025-11-05
+ms.date: 2026-03-17
 ms.topic: reference
 keywords:
   - powershell

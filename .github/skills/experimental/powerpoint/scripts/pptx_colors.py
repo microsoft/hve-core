@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Color resolution and conversion utilities for PowerPoint skill scripts.
 
 Supports #RRGGBB hex values and @theme_name references for theme colors.
@@ -27,9 +29,19 @@ THEME_COLOR_MAP = {
 
 _THEME_COLOR_REVERSE = {v: k for k, v in THEME_COLOR_MAP.items()}
 
+MAX_COLOR_DEPTH = 10
 
-def resolve_color(value: str | dict, colors: dict | None = None) -> dict:
+
+def resolve_color(
+    value: str | dict,
+    colors: dict | None = None,
+    *,
+    _depth: int = 0,
+    max_depth: int = MAX_COLOR_DEPTH,
+) -> dict:
     """Resolve a color value to an RGB or theme color specification.
+
+    Raises ValueError when nesting exceeds *max_depth*.
 
     Supports:
       #RRGGBB — direct hex value
@@ -41,6 +53,11 @@ def resolve_color(value: str | dict, colors: dict | None = None) -> dict:
       {"theme": MSO_THEME_COLOR.X} for @theme_name values
       {"theme": MSO_THEME_COLOR.X, "brightness": float} for dict with brightness
     """
+    if _depth >= max_depth:
+        raise ValueError(
+            f"Color resolution depth {_depth} exceeds limit of {max_depth}"
+        )
+
     if isinstance(value, dict):
         theme_name = value.get("theme", "")
         theme_color = THEME_COLOR_MAP.get(theme_name)
@@ -49,7 +66,11 @@ def resolve_color(value: str | dict, colors: dict | None = None) -> dict:
             if "brightness" in value:
                 result["brightness"] = value["brightness"]
             return result
-        return resolve_color(value.get("color", "#000000"))
+        return resolve_color(
+            value.get("color", "#000000"),
+            _depth=_depth + 1,
+            max_depth=max_depth,
+        )
 
     if not isinstance(value, str):
         return {"rgb": RGBColor(0, 0, 0)}

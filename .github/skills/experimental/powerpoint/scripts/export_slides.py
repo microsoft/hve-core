@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Export PowerPoint slides to PDF with optional slide filtering.
 
 Converts a PPTX file to PDF using LibreOffice headless mode. When specific

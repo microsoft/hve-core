@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for validate_deck module."""
 
 import json
@@ -353,7 +355,5 @@ class TestCreateParserPerSlideDir:
 
     def test_per_slide_dir_arg(self):
         parser = create_parser()
-        args = parser.parse_args(
-            ["--input", "test.pptx", "--per-slide-dir", "output/"]
-        )
+        args = parser.parse_args(["--input", "test.pptx", "--per-slide-dir", "output/"])
         assert str(args.per_slide_dir) == "output"

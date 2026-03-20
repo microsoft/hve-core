@@ -44,6 +44,29 @@ This is the single most important practice for reliable pipeline execution. The 
 
 All GitHub-facing comments (issue replies, label rationale, duplicate explanations) follow the voice and tone rules defined in `community-interaction.instructions.md`. This instruction file loads automatically when the backlog manager agents operate, so you do not need to configure it separately.
 
+## Session Persistence
+
+The GitHub Backlog Manager includes a **Save** button that captures workflow context to a memory file, enabling you to resume after a context reset or across sessions.
+
+### Save a Session
+
+Click **Save** in the GitHub Backlog Manager chat interface at any point during a backlog workflow. The memory agent creates a file at `.copilot-tracking/memory/YYYY-MM-DD/<description>-memory.md` containing:
+
+* Workflow state and current pipeline stage
+* Completed operations and key decisions
+* Next steps and pending handoff files
+* Repository scope and filter criteria
+
+### Resume a Session
+
+1. Start a new chat and type `/clear` to ensure a clean context.
+2. Type `/checkpoint continue <description>` to restore the saved session.
+3. The memory agent displays restored workflow state and next steps.
+4. Click **🚀 Continue with Backlog** to return to the GitHub Backlog Manager and continue where you left off.
+
+> [!TIP]
+> Save before each `/clear` between pipeline stages to preserve discovery or triage notes that are not captured in the planning artifacts.
+
 ## End-to-End Walkthrough
 
 This walkthrough covers a realistic pipeline run for a repository with accumulated issues that have not been reviewed.

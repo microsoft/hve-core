@@ -3,6 +3,31 @@
 
 Full bundle of all stable HVE Core agents, prompts, instructions, and skills
 
+## Overview
+
+HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, data science, design thinking, security, and more.
+
+Use this edition when you want access to everything without choosing a focused collection.
+
+Code review agents included (via coding-standards collection):
+
+- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+
+Supporting subagents included:
+
+- **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
+- **External Researcher** — Retrieves external documentation, SDK references, and code samples
+- **Phase Implementor** — Executes single implementation phases with change tracking
+- **Artifact Validator** — Validates implementation work against plans and conventions
+- **Prompt Tester** — Tests prompt files by following them literally in a sandbox
+- **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+
+Skills included:
+
+- **HVE Core Installer** — Decision-driven installer skill for deploying HVE Core across workspace configurations
+- **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
+- **Video to GIF** — Converts video files to optimized GIF animations using FFmpeg two-pass palette optimization
+
 ## Install
 
 ```bash
@@ -22,6 +47,7 @@ copilot plugin install hve-core-all@hve-core
 | test-streamlit-dashboard     | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                              |
 | dt-coach                     | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core                                                          |
 | dt-learning-tutor            | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing - Brought to you by microsoft/hve-core                                                           |
+| experiment-designer          | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core   |
 | pptx                         | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                            |
 | pptx-subagent                | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                     |
 | github-backlog-manager       | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core                                              |
@@ -46,11 +72,17 @@ copilot plugin install hve-core-all@hve-core
 | agile-coach                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                    |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                      |
 | brd-builder                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                           |
+| meeting-analyst              | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core                                                                     |
 | prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                            |
 | product-manager-advisor      | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                      |
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                    |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                  |
 | security-plan-creator        | Expert security architect for creating comprehensive cloud security plans - Brought to you by microsoft/hve-core                                                                                           |
+| security-reviewer            | OWASP assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core                                                                                    |
+| codebase-profiler            | Scans the repository to build a technology profile and identify which OWASP skills apply to the codebase - Brought to you by microsoft/hve-core                                                            |
+| finding-deep-verifier        | Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill - Brought to you by microsoft/hve-core                                                                                 |
+| report-generator             | Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core                         |
+| skill-assessor               | Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings - Brought to you by microsoft/hve-core                                              |
 
 ## Commands
 
@@ -83,6 +115,7 @@ copilot plugin install hve-core-all@hve-core
 | github-discover-issues                      | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
 | github-execute-backlog                      | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
 | github-sprint-plan                          | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| github-suggest                              | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
 | github-triage-issues                        | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 | checkpoint                                  | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                                   |
 | doc-ops-update                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
@@ -167,6 +200,7 @@ copilot plugin install hve-core-all@hve-core
 | dt-rpi-research-context              | DT-aware Task Researcher context: frames research around DT methods, stakeholder needs, and empathy-driven inquiry                                                                                                                                          |
 | dt-rpi-review-context                | DT-aware Task Reviewer context: quality criteria for Design Thinking artifacts                                                                                                                                                                              |
 | dt-subagent-handoff                  | DT subagent handoff workflow: readiness assessment, artifact compilation, and handoff validation via subagent dispatch                                                                                                                                      |
+| experiment-designer                  | MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core                                                                                                                                      |
 | pptx                                 | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
 | community-interaction                | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
 | github-backlog-discovery             | Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery                                                                                                                                          |
@@ -184,13 +218,17 @@ copilot plugin install hve-core-all@hve-core
 
 ## Skills
 
-| Skill              | Description        |
-|--------------------|--------------------|
-| powerpoint         | powerpoint         |
-| video-to-gif       | video-to-gif       |
-| vscode-playwright  | vscode-playwright  |
-| hve-core-installer | hve-core-installer |
-| pr-reference       | pr-reference       |
+| Skill                     | Description                                                                                                                                                                                                                                                                                                                                                                                                         |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| powerpoint                | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                       |
+| video-to-gif              | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                                                              |
+| vscode-playwright         | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core                                                                                                                                                                                                                                                                             |
+| hve-core-installer        | Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core                                                                                                                                                                                                            |
+| owasp-agentic             | OWASP Agentic Security Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in AI agent systems - Brought to you by microsoft/hve-core.                                                                                                                                                                                                                                   |
+| owasp-llm                 | OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in large language model systems - Brought to you by microsoft/hve-core.                                                                                                                                                                                                            |
+| owasp-top-10              | OWASP Top 10 for Web Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in web application environments - Brought to you by microsoft/hve-core.                                                                                                                                                                                                            |
+| security-reviewer-formats | Format specifications and data contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core.                                                                                                                                                                                                                                                                           |
+| pr-reference              | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core |
 
 ---
 

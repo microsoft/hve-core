@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Render PDF pages to JPG images using PyMuPDF.
 
 Converts each page of a PDF file to a JPG image at the specified DPI.
@@ -6,8 +8,10 @@ When --slide-numbers is provided, uses those numbers instead of sequential
 numbering so output filenames match the original slide positions.
 
 Usage:
-    python render_pdf_images.py --input slides.pdf --output-dir validation/ --dpi 150
-    python render_pdf_images.py --input slides.pdf --output-dir validation/ --slide-numbers 23,24,25
+    python render_pdf_images.py --input slides.pdf \
+        --output-dir validation/ --dpi 150
+    python render_pdf_images.py --input slides.pdf \
+        --output-dir validation/ --slide-numbers 23,24,25
 """
 
 import argparse

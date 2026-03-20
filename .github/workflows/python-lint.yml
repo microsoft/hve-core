@@ -1,0 +1,118 @@
+name: Python Lint
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'When true, linting warnings do not fail the build'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'When true, lint only changed Python files'
+        required: false
+        type: boolean
+        default: true
+      working-directory:
+        description: 'Directory containing pyproject.toml with ruff config'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  python-lint:
+    name: Ruff Lint and Format Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Derive artifact name
+        id: meta
+        run: |
+          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          "artifact-name=python-lint-$name" >> $env:GITHUB_OUTPUT
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.10.9"
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --locked
+        working-directory: ${{ inputs.working-directory }}
+
+      - name: Detect changed Python files
+        if: inputs.changed-files-only
+        run: |
+          $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+          $workingDir = '${{ inputs.working-directory }}'
+          $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir | Where-Object { $_ -match '\.pyi?$' }
+          if ($changed) {
+            "HAS_CHANGES=true" >> $env:GITHUB_ENV
+            $fileCount = @($changed).Count
+            Write-Output "Detected $fileCount changed Python file(s)"
+          } else {
+            Write-Output "No Python file changes detected under $workingDir"
+          }
+
+      - name: Run ruff check
+        id: ruff-check
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        run: |
+          New-Item -ItemType Directory -Path "$env:GITHUB_WORKSPACE/logs" -Force | Out-Null
+          # JSON output -> file only; stderr flows to CI log to preserve valid JSON
+          uv run ruff check . --output-format json > "$env:GITHUB_WORKSPACE/logs/python-lint-results.json"
+          if ($LASTEXITCODE -ne 0) { "RUFF_CHECK_FAILED=true" >> $env:GITHUB_ENV }
+          uv run ruff check .
+          if ($LASTEXITCODE -ne 0) { "RUFF_CHECK_FAILED=true" >> $env:GITHUB_ENV }
+          $global:LASTEXITCODE = 0
+        working-directory: ${{ inputs.working-directory }}
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Run ruff format check
+        id: ruff-format
+        if: "!inputs.changed-files-only || env.HAS_CHANGES == 'true'"
+        run: |
+          # Stderr flows to CI log; no file redirect so output stays readable
+          uv run ruff format --check .
+          if ($LASTEXITCODE -ne 0) { "RUFF_FORMAT_FAILED=true" >> $env:GITHUB_ENV }
+          $global:LASTEXITCODE = 0
+        working-directory: ${{ inputs.working-directory }}
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload lint results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        if: always() && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')
+        with:
+          name: ${{ steps.meta.outputs.artifact-name }}
+          path: logs/python-lint-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Check results
+        if: "!inputs.soft-fail && (!inputs.changed-files-only || env.HAS_CHANGES == 'true')"
+        run: |
+          if ($env:RUFF_CHECK_FAILED -eq 'true' -or $env:RUFF_FORMAT_FAILED -eq 'true') {
+            Write-Output '::error::Python linting failed'
+            if ($env:RUFF_CHECK_FAILED -eq 'true') { Write-Output '  - ruff check failed' }
+            if ($env:RUFF_FORMAT_FAILED -eq 'true') { Write-Output '  - ruff format check failed' }
+            exit 1
+          }
+          Write-Output 'All Python lint checks passed'

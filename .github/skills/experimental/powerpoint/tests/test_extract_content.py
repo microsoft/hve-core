@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 """Tests for extract_content module."""
 
 from collections import Counter
@@ -9,12 +11,16 @@ from extract_content import (
     _build_color_map,
     _classify_slide_brightness,
     _cluster_themes,
+    _convert_svg_to_png,
     _has_formatting_variation,
+    _ImageSecurityError,
     _is_background_image,
     _is_freeform,
     _resolve_theme_colors,
     _resolve_theme_refs_in_content,
+    _sanitize_svg,
     _save_image_blob,
+    _validate_emf_magic_bytes,
     detect_global_style,
     extract_child_shape,
     extract_connector,
@@ -25,6 +31,7 @@ from extract_content import (
     extract_slide,
     extract_textbox,
 )
+from lxml import etree
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches, Pt
@@ -343,6 +350,26 @@ class TestExtractImage:
         img_file = output_dir / result["path"]
         assert img_file.exists()
 
+    def test_extract_image_delegates_to_save_image_blob(
+        self, blank_slide, sample_image_path, tmp_path
+    ):
+        pic = blank_slide.shapes.add_picture(
+            str(sample_image_path),
+            Inches(1),
+            Inches(1),
+            Inches(3),
+            Inches(2),
+        )
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+        with patch(
+            "extract_content._save_image_blob",
+            return_value={"path": "images/image-01.png"},
+        ) as mock_save:
+            result = extract_image(pic, output_dir, 2, 5)
+        mock_save.assert_called_once_with(pic, output_dir, 2, 5)
+        assert result["path"] == "images/image-01.png"
+
 
 class TestExtractSlide:
     """Tests for extract_slide."""
@@ -445,6 +472,20 @@ class TestResolveThemeRefsInContent:
         result = _resolve_theme_refs_in_content(content, theme)
         assert result == ["#0078D4", "#FF0000"]
 
+    def test_depth_limit_raises(self):
+        """Deeply nested dicts exceed the depth limit."""
+        nested = "leaf"
+        for _ in range(10):
+            nested = {"wrap": nested}
+        with pytest.raises(ValueError, match="exceeds limit"):
+            _resolve_theme_refs_in_content(nested, {}, max_depth=5)
+
+    def test_depth_limit_allows_normal_nesting(self):
+        content = {"a": {"b": {"c": "@x"}}}
+        theme = {"x": "#AABBCC"}
+        result = _resolve_theme_refs_in_content(content, theme, max_depth=50)
+        assert result["a"]["b"]["c"] == "#AABBCC"
+
 
 class TestDetectGlobalStyle:
     """Tests for detect_global_style."""
@@ -476,6 +517,25 @@ class TestExtractGroup:
         assert result["type"] == "group"
         assert "elements" in result
         assert len(result["elements"]) >= 1
+
+    def test_depth_limit_raises(self, blank_slide, tmp_path):
+        """Exceeding max_depth raises ValueError."""
+        group = blank_slide.shapes.add_group_shape()
+        with pytest.raises(ValueError, match="exceeds limit"):
+            extract_group(group, 1, tmp_path, 0, _depth=5, max_depth=5)
+
+    def test_depth_limit_allows_normal_nesting(self, blank_slide, tmp_path):
+        """Groups within the depth limit extract successfully."""
+        group = blank_slide.shapes.add_group_shape()
+        group.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(0),
+            Inches(0),
+            Inches(2),
+            Inches(1),
+        )
+        result = extract_group(group, 1, tmp_path, 0, _depth=0, max_depth=20)
+        assert result["type"] == "group"
 
 
 class TestExtractFreeform:
@@ -654,6 +714,293 @@ class TestSaveImageBlob:
         )
         result = _save_image_blob(pic, tmp_path, 1, 1)
         assert result["path"].endswith(".png")
+
+    @pytest.mark.parametrize(
+        "content_type,expected_ext",
+        [
+            ("image/bmp", "bmp"),
+            ("image/gif", "gif"),
+            ("image/jpeg", "jpg"),
+            ("image/png", "png"),
+            ("image/tiff", "tiff"),
+        ],
+    )
+    def test_allowed_content_type_produces_correct_extension(
+        self, content_type, expected_ext, tmp_path
+    ):
+        """Each allowed content type maps to its correct file extension."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = content_type
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(f".{expected_ext}")
+
+    @pytest.mark.parametrize(
+        "content_type",
+        [
+            "image/vnd.ms-photo",
+            "application/octet-stream",
+            "text/html",
+        ],
+    )
+    def test_unsupported_content_type_rejected(self, content_type, tmp_path):
+        """Unsupported content types raise ValueError."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = content_type
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="Unsupported image content type"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_oversized_blob_rejected(self, tmp_path, monkeypatch):
+        """Blobs exceeding MAX_IMAGE_BLOB_BYTES are rejected."""
+        monkeypatch.setattr("extract_content.MAX_IMAGE_BLOB_BYTES", 1024)
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 1025
+        mock_shape.image = mock_img
+
+        with pytest.raises(ValueError, match="exceeds"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_blob_at_size_limit_accepted(self, tmp_path, monkeypatch):
+        """Blobs at exactly MAX_IMAGE_BLOB_BYTES are accepted."""
+        monkeypatch.setattr("extract_content.MAX_IMAGE_BLOB_BYTES", 1024)
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 1024
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert "images/" in result["path"]
+
+    def test_path_within_output_directory(self, tmp_path):
+        """Saved image resolves to within the output directory."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        img_path = tmp_path / result["path"]
+        assert img_path.resolve().is_relative_to(tmp_path.resolve())
+
+    def test_path_traversal_blocked(self, tmp_path, monkeypatch):
+        """Blob write rejects paths that escape the output directory."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        original_resolve = Path.resolve
+
+        def patched_resolve(self, strict=False):
+            resolved = original_resolve(self, strict=strict)
+            if "images" in str(self):
+                return Path("/outside") / self.name
+            return resolved
+
+        monkeypatch.setattr(Path, "resolve", patched_resolve)
+
+        with pytest.raises(_ImageSecurityError, match="escapes output directory"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_wmf_aldus_magic_accepted(self, tmp_path):
+        """WMF blob with Aldus Placeable signature is accepted."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\xd7\xcd\xc6\x9a" + b"\x00" * 96
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".wmf")
+
+    def test_wmf_standard_magic_accepted(self, tmp_path):
+        """WMF blob with standard header signature is accepted."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\x01\x00\x09\x00" + b"\x00" * 96
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".wmf")
+
+    def test_wmf_invalid_magic_rejected(self, tmp_path):
+        """WMF blob without a recognized signature is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        with pytest.raises(_ImageSecurityError, match="recognized file signature"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_wmf_blob_too_short_rejected(self, tmp_path):
+        """WMF blob shorter than 4 bytes is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\xd7\xcd"
+        mock_shape.image = mock_img
+
+        with pytest.raises(_ImageSecurityError, match="too short"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_emf_valid_blob_accepted(self, tmp_path):
+        """EMF blob with correct EMR_HEADER record type and signature is accepted."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/emf"
+        blob = b"\x01\x00\x00\x00" + b"\x00" * 36 + b" EMF" + b"\x00" * 56
+        mock_img.blob = blob
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".emf")
+
+    def test_emf_invalid_magic_rejected(self, tmp_path):
+        """EMF blob without the expected signature is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/emf"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+
+        with pytest.raises(_ImageSecurityError, match="expected file signature"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_emf_blob_too_short_rejected(self, tmp_path):
+        """EMF blob shorter than 44 bytes is rejected."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/emf"
+        mock_img.blob = b"\x01\x00\x00\x00" + b"\x00" * 10
+        mock_shape.image = mock_img
+
+        with pytest.raises(_ImageSecurityError, match="too short"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+    def test_emf_x_emf_content_type_accepted(self, tmp_path):
+        """image/x-emf content type is accepted and validated like image/emf."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-emf"
+        blob = b"\x01\x00\x00\x00" + b"\x00" * 36 + b" EMF" + b"\x00" * 56
+        mock_img.blob = blob
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".emf")
+
+    def test_svg_blob_saved_as_png(self, tmp_path):
+        """SVG content is converted to PNG and saved with .png extension."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/svg+xml"
+        mock_img.blob = (
+            b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+            b'<rect width="10" height="10" fill="red"/>'
+            b"</svg>"
+        )
+        mock_shape.image = mock_img
+
+        result = _save_image_blob(mock_shape, tmp_path, 1, 1)
+        assert result["path"].endswith(".png")
+        saved = (tmp_path / result["path"]).read_bytes()
+        assert saved[:4] == b"\x89PNG"
+
+    def test_svg_xxe_rejected(self, tmp_path):
+        """SVG blob containing XXE entity raises _ImageSecurityError."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/svg+xml"
+        mock_img.blob = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+            b'<svg xmlns="http://www.w3.org/2000/svg">&xxe;</svg>'
+        )
+        mock_shape.image = mock_img
+
+        with pytest.raises(_ImageSecurityError, match="DTD declaration"):
+            _save_image_blob(mock_shape, tmp_path, 1, 1)
+
+
+class TestValidateEmfMagicBytes:
+    """Tests for _validate_emf_magic_bytes."""
+
+    def test_valid_emf_passes(self):
+        blob = b"\x01\x00\x00\x00" + b"\x00" * 36 + b" EMF" + b"\x00" * 56
+        _validate_emf_magic_bytes(blob)
+
+    def test_wrong_record_type_rejected(self):
+        blob = b"\x02\x00\x00\x00" + b"\x00" * 36 + b" EMF" + b"\x00" * 56
+        with pytest.raises(_ImageSecurityError, match="expected file signature"):
+            _validate_emf_magic_bytes(blob)
+
+    def test_missing_emf_signature_rejected(self):
+        blob = b"\x01\x00\x00\x00" + b"\x00" * 36 + b"XXXX" + b"\x00" * 56
+        with pytest.raises(_ImageSecurityError, match="expected file signature"):
+            _validate_emf_magic_bytes(blob)
+
+    def test_too_short_rejected(self):
+        with pytest.raises(_ImageSecurityError, match="too short"):
+            _validate_emf_magic_bytes(b"\x01\x00\x00\x00" + b"\x00" * 10)
+
+
+class TestSanitizeSvg:
+    """Tests for _sanitize_svg."""
+
+    def test_valid_svg_passes(self):
+        svg = b'<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>'
+        result = _sanitize_svg(svg)
+        assert b"<svg" in result
+
+    def test_xxe_entity_rejected(self):
+        svg = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+            b'<svg xmlns="http://www.w3.org/2000/svg">&xxe;</svg>'
+        )
+        with pytest.raises(_ImageSecurityError, match="DTD declaration"):
+            _sanitize_svg(svg)
+
+    def test_non_xml_blob_rejected(self):
+        with pytest.raises(_ImageSecurityError, match="not well-formed XML"):
+            _sanitize_svg(b"\x89PNG\r\n\x1a\n not xml")
+
+
+class TestConvertSvgToPng:
+    """Tests for _convert_svg_to_png."""
+
+    def test_valid_svg_produces_png(self):
+        svg = (
+            b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+            b'<rect width="10" height="10" fill="red"/>'
+            b"</svg>"
+        )
+        result = _convert_svg_to_png(svg)
+        assert result[:4] == b"\x89PNG"
+
+    def test_xxe_rejected_before_conversion(self):
+        svg = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+            b'<svg xmlns="http://www.w3.org/2000/svg">&xxe;</svg>'
+        )
+        with pytest.raises(_ImageSecurityError, match="DTD declaration"):
+            _convert_svg_to_png(svg)
 
 
 class TestExtractChildShape:
@@ -874,6 +1221,43 @@ class TestResolveThemeColors:
         if colors:
             assert any(k.startswith("dark") or k.startswith("light") for k in colors)
 
+    @pytest.mark.parametrize(
+        "entity_uri",
+        [
+            "file:///dev/null",
+            "file:///etc/passwd",
+        ],
+    )
+    def test_xxe_system_entity_blocked(self, entity_uri):
+        """SYSTEM entities in theme XML are blocked by the hardened parser."""
+        xxe_xml = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "' + entity_uri.encode() + b'">]>'
+            b'<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            b"<a:themeElements><a:clrScheme name='Test'>"
+            b'<a:dk1><a:srgbClr val="&xxe;"/></a:dk1>'
+            b"</a:clrScheme></a:themeElements></a:theme>"
+        )
+        rel = MagicMock()
+        rel.reltype = (
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme"
+        )
+        rel.target_part.blob = xxe_xml
+        prs = MagicMock()
+        prs.slide_masters = [MagicMock()]
+        prs.slide_masters[0].part.rels.values.return_value = [rel]
+        colors = _resolve_theme_colors(prs)
+        assert isinstance(colors, dict)
+        assert "dark_1" not in colors
+        for val in colors.values():
+            assert entity_uri not in val
+
+    def test_predefined_entities_preserved(self):
+        """Predefined XML entities still resolve with the hardened parser."""
+        parser = etree.XMLParser(resolve_entities=False, no_network=True)
+        root = etree.fromstring(b'<root attr="&lt;value&gt;"/>', parser=parser)
+        assert root.get("attr") == "<value>"
+
 
 class TestExtractShapeFormatting:
     """Tests for extract_shape deeper formatting branches."""
@@ -1041,6 +1425,77 @@ class TestExtractImageExtended:
         result = extract_image(shape, tmp_path, 1, 1)
         assert result["path"] == "LINKED_IMAGE_NOT_EMBEDDED"
         assert result["type"] == "image"
+
+    def test_unsupported_content_type_skipped(self, tmp_path):
+        """Benign ValueError from unsupported content type is caught and skipped."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/vnd.ms-photo"
+        mock_img.blob = b"\x00" * 100
+        mock_shape.image = mock_img
+        mock_shape.left = Inches(1)
+        mock_shape.top = Inches(1)
+        mock_shape.width = Inches(3)
+        mock_shape.height = Inches(2)
+        mock_shape.name = "SkippedPic"
+
+        result = extract_image(mock_shape, tmp_path, 1, 1)
+        assert result["path"] == "SKIPPED"
+        assert "Unsupported image content type" in result["_skipped_reason"]
+
+    def test_security_error_propagates(self, tmp_path):
+        """_ImageSecurityError from path traversal is not caught by extract_image."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/x-wmf"
+        mock_img.blob = b"\x00" * 100  # invalid magic bytes
+        mock_shape.image = mock_img
+        mock_shape.left = Inches(1)
+        mock_shape.top = Inches(1)
+        mock_shape.width = Inches(3)
+        mock_shape.height = Inches(2)
+        mock_shape.name = "SecurityPic"
+
+        with pytest.raises(_ImageSecurityError):
+            extract_image(mock_shape, tmp_path, 1, 1)
+
+    def test_svg_xxe_propagates(self, tmp_path):
+        """_ImageSecurityError from SVG XXE is not caught by extract_image."""
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/svg+xml"
+        mock_img.blob = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE svg [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>'
+            b'<svg xmlns="http://www.w3.org/2000/svg">&xxe;</svg>'
+        )
+        mock_shape.image = mock_img
+        mock_shape.left = Inches(1)
+        mock_shape.top = Inches(1)
+        mock_shape.width = Inches(3)
+        mock_shape.height = Inches(2)
+        mock_shape.name = "SvgXxePic"
+
+        with pytest.raises(_ImageSecurityError, match="DTD declaration"):
+            extract_image(mock_shape, tmp_path, 1, 1)
+
+    def test_oversized_blob_skipped(self, tmp_path, monkeypatch):
+        """Benign ValueError from oversized blob is caught and skipped."""
+        monkeypatch.setattr("extract_content.MAX_IMAGE_BLOB_BYTES", 1024)
+        mock_shape = MagicMock()
+        mock_img = MagicMock()
+        mock_img.content_type = "image/png"
+        mock_img.blob = b"\x00" * 1025
+        mock_shape.image = mock_img
+        mock_shape.left = Inches(1)
+        mock_shape.top = Inches(1)
+        mock_shape.width = Inches(3)
+        mock_shape.height = Inches(2)
+        mock_shape.name = "OversizedPic"
+
+        result = extract_image(mock_shape, tmp_path, 1, 1)
+        assert result["path"] == "SKIPPED"
+        assert "exceeds" in result["_skipped_reason"]
 
 
 class TestExtractSlideDeep:
