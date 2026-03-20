@@ -363,3 +363,236 @@ Describe 'Repair-PluginSymlinkIndex' {
         }
     }
 }
+
+Describe 'New-PluginSourceMap' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'srcmap-repo'
+        $script:pluginRoot = Join-Path $TestDrive 'srcmap-plugins' 'test-col'
+        New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:pluginRoot -Force | Out-Null
+    }
+
+    It 'Maps agent items to agents subdirectory' {
+        $collection = @{
+            id    = 'col'
+            items = @(
+                @{ path = '.github/agents/hve/task-planner.agent.md'; kind = 'agent' }
+            )
+        }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $expectedSource = [System.IO.Path]::GetFullPath(
+            (Join-Path $script:repoRoot '.github/agents/hve/task-planner.agent.md'))
+        $result.ContainsKey($expectedSource) | Should -BeTrue
+        $result[$expectedSource] | Should -BeLike '*agents*task-planner.md'
+    }
+
+    It 'Maps prompt items to commands subdirectory' {
+        $collection = @{
+            id    = 'col'
+            items = @(
+                @{ path = '.github/prompts/hve/gen-plan.prompt.md'; kind = 'prompt' }
+            )
+        }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $expectedSource = [System.IO.Path]::GetFullPath(
+            (Join-Path $script:repoRoot '.github/prompts/hve/gen-plan.prompt.md'))
+        $result[$expectedSource] | Should -BeLike '*commands*gen-plan.md'
+    }
+
+    It 'Maps instruction items to instructions subdirectory' {
+        $collection = @{
+            id    = 'col'
+            items = @(
+                @{ path = '.github/instructions/hve/csharp.instructions.md'; kind = 'instruction' }
+            )
+        }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $expectedSource = [System.IO.Path]::GetFullPath(
+            (Join-Path $script:repoRoot '.github/instructions/hve/csharp.instructions.md'))
+        $result[$expectedSource] | Should -BeLike '*instructions*csharp.md'
+    }
+
+    It 'Skips skill items' {
+        $collection = @{
+            id    = 'col'
+            items = @(
+                @{ path = '.github/skills/hve/video-to-gif'; kind = 'skill' }
+                @{ path = '.github/agents/hve/planner.agent.md'; kind = 'agent' }
+            )
+        }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $result.Count | Should -Be 1
+    }
+
+    It 'Returns empty hashtable for empty items' {
+        $collection = @{ id = 'col'; items = @() }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $result.Count | Should -Be 0
+    }
+
+    It 'Maps multiple items of different kinds' {
+        $collection = @{
+            id    = 'col'
+            items = @(
+                @{ path = '.github/agents/hve/a.agent.md'; kind = 'agent' }
+                @{ path = '.github/prompts/hve/b.prompt.md'; kind = 'prompt' }
+                @{ path = '.github/instructions/hve/c.instructions.md'; kind = 'instruction' }
+                @{ path = '.github/skills/hve/my-skill'; kind = 'skill' }
+            )
+        }
+
+        $result = New-PluginSourceMap -Collection $collection `
+            -PluginRoot $script:pluginRoot -RepoRoot $script:repoRoot
+
+        $result.Count | Should -Be 3
+    }
+}
+
+Describe 'Resolve-PluginFileReferences' {
+    BeforeAll {
+        # Set up directory structure for source map resolution
+        $script:repoRoot = Join-Path $TestDrive 'resolve-repo'
+        $script:pluginRoot = Join-Path $TestDrive 'resolve-plugins' 'col'
+        New-Item -ItemType Directory -Path $script:repoRoot -Force | Out-Null
+        New-Item -ItemType Directory -Path $script:pluginRoot -Force | Out-Null
+
+        # Source paths
+        $script:agentSource = Join-Path $script:repoRoot '.github/agents/hve/my-agent.agent.md'
+        $script:instrSource = Join-Path $script:repoRoot '.github/instructions/hve/commit-msg.instructions.md'
+
+        # Plugin destination paths
+        $script:agentDest = Join-Path $script:pluginRoot 'agents/my-agent.md'
+        $script:instrDest = Join-Path $script:pluginRoot 'instructions/commit-msg.md'
+
+        # Build source map
+        $script:sourceMap = @{}
+        $script:sourceMap[[System.IO.Path]::GetFullPath($script:agentSource)] = $script:agentDest
+        $script:sourceMap[[System.IO.Path]::GetFullPath($script:instrSource)] = $script:instrDest
+    }
+
+    It 'Rewrites a resolvable #file: reference' {
+        $content = 'Follow the rules in #file:../../instructions/hve/commit-msg.instructions.md for commits.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:\.\./instructions/commit-msg\.md'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Leaves unresolvable references unchanged and emits warning' {
+        $content = 'See #file:../unknown/missing.md for details.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:\.\./unknown/missing\.md'
+        $result.Warnings.Count | Should -Be 1
+        $result.Warnings[0] | Should -Match 'Unresolved'
+    }
+
+    It 'Does not rewrite references inside fenced code blocks' {
+        $content = "Before`n`````n#file:../instructions/hve/commit-msg.instructions.md`n`````nAfter"
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:\.\./instructions/hve/commit-msg\.instructions\.md'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Does not rewrite references inside inline backtick spans' {
+        $content = 'Use `#file:../instructions/hve/commit-msg.instructions.md` in your config.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '`#file:\.\./instructions/hve/commit-msg\.instructions\.md`'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Strips trailing comma and preserves it after the rewritten reference' {
+        $content = 'See #file:../../instructions/hve/commit-msg.instructions.md, and also this.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:\.\./instructions/commit-msg\.md,'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Strips trailing semicolon from references' {
+        $content = 'Ref #file:../../instructions/hve/commit-msg.instructions.md; next.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:\.\./instructions/commit-msg\.md;'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Handles multiple references in the same content' {
+        $content = 'See #file:commit-msg.instructions.md and #file:../../agents/hve/my-agent.agent.md for details.'
+
+        # Use instruction source as the origin so both refs resolve
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:instrSource `
+            -DestinationFilePath $script:instrDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Match '#file:commit-msg\.md'
+        $result.Content | Should -Match '#file:\.\./agents/my-agent\.md'
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Returns content unchanged when no #file: references are present' {
+        $content = 'This is plain markdown with no file references.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap $script:sourceMap
+
+        $result.Content | Should -Be $content
+        $result.Warnings.Count | Should -Be 0
+    }
+
+    It 'Returns content unchanged with empty source map' {
+        $content = 'See #file:some-file.md for info.'
+
+        $result = Resolve-PluginFileReferences -Content $content `
+            -SourceFilePath $script:agentSource `
+            -DestinationFilePath $script:agentDest `
+            -SourceMap @{}
+
+        $result.Content | Should -Be $content
+        $result.Warnings.Count | Should -Be 1
+    }
+}

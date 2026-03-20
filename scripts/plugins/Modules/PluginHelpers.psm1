@@ -445,6 +445,170 @@ function New-GenerateResult {
     }
 }
 
+function New-PluginSourceMap {
+    <#
+    .SYNOPSIS
+    Builds a lookup mapping source file paths to plugin destination paths.
+
+    .DESCRIPTION
+    Iterates collection items and maps each source file's normalized
+    absolute path to the corresponding plugin destination path. Skills
+    are excluded because they are directory symlinks. The map enables
+    Resolve-PluginFileReferences to translate source-relative #file:
+    references into plugin-relative paths.
+
+    .PARAMETER Collection
+    Parsed collection manifest hashtable with items array.
+
+    .PARAMETER PluginRoot
+    Absolute path to the plugin output directory for this collection.
+
+    .PARAMETER RepoRoot
+    Absolute path to the repository root.
+
+    .OUTPUTS
+    [hashtable] Map of normalized source paths to plugin destination paths.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$Collection,
+
+        [Parameter(Mandatory)]
+        [string]$PluginRoot,
+
+        [Parameter(Mandatory)]
+        [string]$RepoRoot
+    )
+
+    $map = @{}
+    foreach ($item in $Collection.items) {
+        if ($item.kind -eq 'skill') { continue }
+
+        $sourcePath = Join-Path -Path $RepoRoot -ChildPath $item.path
+        $normalizedSource = [System.IO.Path]::GetFullPath($sourcePath)
+
+        $fileName = Split-Path -Leaf $item.path
+        $itemName = Get-PluginItemName -FileName $fileName -Kind $item.kind
+        $subdir = Get-PluginSubdirectory -Kind $item.kind
+        $destPath = Join-Path -Path $PluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+
+        $map[$normalizedSource] = $destPath
+    }
+    return $map
+}
+
+function Resolve-PluginFileReferences {
+    <#
+    .SYNOPSIS
+    Rewrites #file: path references from source-relative to plugin-relative.
+
+    .DESCRIPTION
+    Scans content for #file: references outside of code spans and fenced
+    code blocks. Each reference path is resolved relative to the source
+    file location, looked up in the source map, and rewritten as a
+    relative path from the plugin destination file. Unresolvable
+    references are left unchanged and recorded as warnings.
+
+    .PARAMETER Content
+    Source file content string containing #file: references.
+
+    .PARAMETER SourceFilePath
+    Absolute path to the source file (for resolving relative references).
+
+    .PARAMETER DestinationFilePath
+    Absolute path to the plugin destination file (for computing relative output paths).
+
+    .PARAMETER SourceMap
+    Hashtable from New-PluginSourceMap mapping source paths to plugin paths.
+
+    .OUTPUTS
+    [hashtable] Result with Content (rewritten string) and Warnings (list of strings).
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content,
+
+        [Parameter(Mandatory)]
+        [string]$SourceFilePath,
+
+        [Parameter(Mandatory)]
+        [string]$DestinationFilePath,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [hashtable]$SourceMap
+    )
+
+    $warnings = [System.Collections.Generic.List[string]]::new()
+    $sourceDir = Split-Path -Parent $SourceFilePath
+    $destDir = Split-Path -Parent $DestinationFilePath
+
+    # Split content into code and non-code segments to avoid rewriting
+    # references inside fenced code blocks or inline backtick spans.
+    # Fenced blocks: ``` or ~~~ delimited. Inline spans: `...` delimited.
+    $fencedBlockPattern = '(?ms)(^```[^\n]*\n.*?^```\s*$|^~~~[^\n]*\n.*?^~~~\s*$)'
+    $inlineCodePattern = '(`[^`]+`)'
+    $codePattern = "(?:$fencedBlockPattern|$inlineCodePattern)"
+
+    $segments = [regex]::Split($Content, $codePattern)
+
+    # Greedy match for #file: references; trailing punctuation is stripped
+    # inside the replacement callback to avoid the lazy-quantifier + dot-in-
+    # lookahead bug where paths like ../../foo.md matched only the first dot.
+    $fileRefPattern = '#file:([^\s\)`]+)'
+
+    $result = [System.Text.StringBuilder]::new()
+
+    foreach ($segment in $segments) {
+        if ([string]::IsNullOrEmpty($segment)) { continue }
+
+        # Code segments (fenced blocks or inline backtick spans) pass through unchanged
+        if ($segment -match '^```' -or $segment -match '^~~~' -or
+            ($segment.StartsWith('`') -and $segment.EndsWith('`'))) {
+            [void]$result.Append($segment)
+            continue
+        }
+
+        # Rewrite #file: references in non-code segments
+        $rewritten = [regex]::Replace($segment, $fileRefPattern, {
+            param($match)
+            $refPath = $match.Groups[1].Value
+
+            # Strip trailing punctuation that is not part of the file path
+            $trailingPunct = ''
+            while ($refPath.Length -gt 0 -and $refPath[-1] -match '[,;:!?]') {
+                $trailingPunct = $refPath[-1] + $trailingPunct
+                $refPath = $refPath.Substring(0, $refPath.Length - 1)
+            }
+
+            # Resolve the reference relative to the source file location
+            $combinedPath = [System.IO.Path]::Combine($sourceDir, $refPath)
+            $resolvedPath = [System.IO.Path]::GetFullPath($combinedPath)
+
+            if ($SourceMap.ContainsKey($resolvedPath)) {
+                $targetPluginPath = $SourceMap[$resolvedPath]
+                $relativePath = [System.IO.Path]::GetRelativePath($destDir, $targetPluginPath) -replace '\\', '/'
+                return "#file:$relativePath$trailingPunct"
+            }
+
+            # Unresolvable reference - leave unchanged and record warning
+            $warnings.Add("Unresolved #file: reference '$refPath' in $(Split-Path -Leaf $SourceFilePath)")
+            return $match.Value
+        })
+
+        [void]$result.Append($rewritten)
+    }
+
+    return @{
+        Content  = $result.ToString()
+        Warnings = $warnings
+    }
+}
+
 # ---------------------------------------------------------------------------
 # I/O Functions (file system operations)
 # ---------------------------------------------------------------------------
@@ -609,6 +773,9 @@ function Write-PluginDirectory {
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
+    # Build source-to-plugin path map for #file: reference rewriting
+    $sourceMap = New-PluginSourceMap -Collection $Collection -PluginRoot $pluginRoot -RepoRoot $RepoRoot
+
     foreach ($item in $Collection.items) {
         $kind = $item.kind
         $sourcePath = Join-Path -Path $RepoRoot -ChildPath $item.path
@@ -666,6 +833,35 @@ function Write-PluginDirectory {
         if ($DryRun) {
             Write-Verbose "DryRun: Would create link $destPath -> $sourcePath"
             continue
+        }
+
+        # For non-skill items, check for #file: references to rewrite
+        if ($kind -ne 'skill' -and (Test-Path -Path $sourcePath)) {
+            $sourceContent = Get-Content -Path $sourcePath -Raw
+            if ($sourceContent -match '#file:') {
+                $result = Resolve-PluginFileReferences `
+                    -Content $sourceContent `
+                    -SourceFilePath $sourcePath `
+                    -DestinationFilePath $destPath `
+                    -SourceMap $sourceMap
+
+                foreach ($warning in $result.Warnings) {
+                    Write-Warning $warning
+                }
+
+                if ($result.Content -ne $sourceContent) {
+                    # Content was rewritten - write as regular file instead of symlink
+                    $destDir = Split-Path -Parent $destPath
+                    if (-not (Test-Path -Path $destDir)) {
+                        New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+                    }
+                    if (Test-Path -Path $destPath) {
+                        Remove-Item -Path $destPath -Force
+                    }
+                    Set-ContentIfChanged -Path $destPath -Value $result.Content | Out-Null
+                    continue
+                }
+            }
         }
 
         New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
@@ -873,7 +1069,9 @@ Export-ModuleMember -Function @(
     'New-PluginLink',
     'New-PluginManifestContent',
     'New-PluginReadmeContent',
+    'New-PluginSourceMap',
     'Repair-PluginSymlinkIndex',
+    'Resolve-PluginFileReferences',
     'Test-SymlinkCapability',
     'Write-MarketplaceManifest',
     'Write-PluginDirectory'
