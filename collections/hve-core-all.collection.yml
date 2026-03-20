@@ -209,6 +209,15 @@ items:
   kind: prompt
 - path: .github/prompts/security/risk-register.prompt.md
   kind: prompt
+- path: .github/prompts/security/security-review-llm.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review-web.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md

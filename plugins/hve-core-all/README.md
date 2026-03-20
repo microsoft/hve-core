@@ -134,6 +134,9 @@ copilot plugin install hve-core-all@hve-core
 | task-review                                 | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core                     |
 | incident-response                           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                 |
 | risk-register                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
+| security-review-llm                         | Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context - Brought to you by microsoft/hve-core                  |
+| security-review-web                         | Runs an OWASP Top 10 web vulnerability assessment without codebase profiling - Brought to you by microsoft/hve-core                              |
+| security-review                             | Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core                                       |
 
 ## Instructions
 
