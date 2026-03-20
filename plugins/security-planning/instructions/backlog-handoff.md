@@ -1,1 +1,0 @@
-../../../.github/instructions/security-planning/backlog-handoff.instructions.md

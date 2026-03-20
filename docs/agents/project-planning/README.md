@@ -64,7 +64,7 @@ See the [Security Planning](../security-planning/README.md) guide for the workfl
 
 * VS Code with the GitHub Copilot Chat extension installed
 * Agent definition files from the `project-planning` collection deployed to `.github/agents/`
-* For Security Planner: agent definition files from the `security` or `security-planning` collection
+* For Security Planner: agent definition files from the `security` collection
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
 * For Arch Diagram Builder: infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 

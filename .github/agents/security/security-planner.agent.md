@@ -69,7 +69,7 @@ Generate work items for each identified threat and control gap. Use ADO format (
 
 Present a summary of all findings, validate completeness, generate the final security plan artifact, and hand off to the ADO or GitHub backlog. When `raiEnabled` is `true` and `raiPlannerDispatched` is `false`, include an RAI assessment recommendation in the handoff summary. Provide the RAI Planner agent path (`.github/agents/rai-planning/rai-planner.agent.md`) and suggest `from-security-plan` entry mode. Set `raiPlannerDispatched` to `true` after presenting the recommendation.
 
-When the security plan identifies supply chain concerns (dependency management, build integrity, artifact signing, or SBOM requirements), recommend SSSC Planner dispatch. Provide the SSSC Planner agent path (`.github/agents/security-planning/sssc-planner.agent.md`) and suggest `from-security-plan` entry mode.
+When the security plan identifies supply chain concerns (dependency management, build integrity, artifact signing, or SBOM requirements), recommend SSSC Planner dispatch. Provide the SSSC Planner agent path (`.github/agents/security/sssc-planner.agent.md`) and suggest `from-security-plan` entry mode.
 
 ## Entry Modes
 
@@ -135,11 +135,11 @@ Seven rules govern conversational flow across all phases:
 
 Five instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/security-plans/`.
 
-* `.github/instructions/security-planning/identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and AI component detection.
-* `.github/instructions/security-planning/operational-buckets.instructions.md`: Seven operational bucket definitions and component classification.
-* `.github/instructions/security-planning/standards-mapping.instructions.md`: Embedded OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards with Researcher Subagent delegation for Microsoft WAF/CAF runtime lookups.
-* `.github/instructions/security-planning/security-model.instructions.md`: STRIDE-based security model analysis per bucket with threat tables.
-* `.github/instructions/security-planning/backlog-handoff.instructions.md`: Dual-format backlog handoff with sanitization and autonomy tiers.
+* `.github/instructions/security/identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and AI component detection.
+* `.github/instructions/security/operational-buckets.instructions.md`: Seven operational bucket definitions and component classification.
+* `.github/instructions/security/standards-mapping.instructions.md`: Embedded OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards with Researcher Subagent delegation for Microsoft WAF/CAF runtime lookups.
+* `.github/instructions/security/security-model.instructions.md`: STRIDE-based security model analysis per bucket with threat tables.
+* `.github/instructions/security/backlog-handoff.instructions.md`: Dual-format backlog handoff with sanitization and autonomy tiers.
 
 Read and follow these instruction files when entering their respective phases.
 
@@ -188,7 +188,7 @@ Five-step recovery when conversation context is compacted:
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/security-planning/backlog-handoff.instructions.md` for full handoff templates and formatting rules.
+Reference `.github/instructions/security/backlog-handoff.instructions.md` for full handoff templates and formatting rules.
 
 * ADO work items use `WI-SEC-{NNN}` temporary IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{SEC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.

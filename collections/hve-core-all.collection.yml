@@ -89,7 +89,7 @@ items:
 - path: .github/agents/rai-planning/rai-planner.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/security-planning/sssc-planner.agent.md
+- path: .github/agents/security/sssc-planner.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
@@ -220,16 +220,16 @@ items:
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/security-planning/sssc-capture.prompt.md
+- path: .github/prompts/security/sssc-capture.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/security-planning/sssc-from-brd.prompt.md
+- path: .github/prompts/security/sssc-from-brd.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/security-planning/sssc-from-prd.prompt.md
+- path: .github/prompts/security/sssc-from-prd.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/prompts/security-planning/sssc-from-security-plan.prompt.md
+- path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/incident-response.prompt.md
@@ -464,41 +464,41 @@ items:
 - path: .github/instructions/rai-planning/rai-standards.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/backlog-handoff.instructions.md
+- path: .github/instructions/security/backlog-handoff.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/identity.instructions.md
+- path: .github/instructions/security/identity.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/operational-buckets.instructions.md
+- path: .github/instructions/security/operational-buckets.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/security-model.instructions.md
+- path: .github/instructions/security/security-model.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security-planning/standards-mapping.instructions.md
+- path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
-- path: .github/instructions/sssc-planning/sssc-assessment.instructions.md
+- path: .github/instructions/security/sssc-assessment.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/sssc-planning/sssc-backlog.instructions.md
+- path: .github/instructions/security/sssc-backlog.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/sssc-planning/sssc-gap-analysis.instructions.md
+- path: .github/instructions/security/sssc-gap-analysis.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/sssc-planning/sssc-handoff.instructions.md
+- path: .github/instructions/security/sssc-handoff.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/sssc-planning/sssc-identity.instructions.md
+- path: .github/instructions/security/sssc-identity.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/sssc-planning/sssc-standards.instructions.md
+- path: .github/instructions/security/sssc-standards.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/skills/experimental/powerpoint
