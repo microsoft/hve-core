@@ -70,5 +70,9 @@
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic"
+  ],
+  "reporters": [
+    "default",
+    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
   ]
 }

@@ -13,9 +13,11 @@ Usage::
 """
 
 import argparse
+import logging
 from collections import Counter
 from pathlib import Path
 
+import cairosvg
 import yaml
 from lxml import etree
 from pptx import Presentation
@@ -38,6 +40,84 @@ from pptx_text import (
     extract_text_frame_properties,
 )
 from pptx_utils import emu_to_inches
+
+MAX_IMAGE_BLOB_BYTES = 100 * 1024 * 1024  # 100 MB
+
+
+class _ImageSecurityError(ValueError):
+    """Security-critical image validation failure that must not be suppressed."""
+
+
+_CONTENT_TYPE_TO_EXT: dict[str, str] = {
+    "image/bmp": "bmp",
+    "image/gif": "gif",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/tiff": "tiff",
+    # WMF retained for legitimate PPTX files; validated by magic-byte check.
+    # See CVE-2005-4560 for historical WMF risk context.
+    "image/x-wmf": "wmf",
+    # EMF retained for charts, SmartArt, and diagrams; validated by magic-byte check.
+    "image/emf": "emf",
+    "image/x-emf": "emf",
+    # SVG sanitized via hardened XMLParser and converted to PNG by cairosvg.
+    "image/svg+xml": "svg",
+}
+
+# WMF file signatures used for magic-byte validation.
+_WMF_ALDUS_MAGIC = b"\xd7\xcd\xc6\x9a"
+_WMF_STANDARD_PREFIXES = (b"\x01\x00\x09\x00", b"\x02\x00\x09\x00")
+
+# EMF file signatures: EMR_HEADER record type at offset 0, " EMF" at offset 40.
+_EMF_RECORD_TYPE = b"\x01\x00\x00\x00"
+_EMF_SIGNATURE = b" EMF"
+
+
+def _validate_wmf_magic_bytes(blob: bytes) -> None:
+    """Reject WMF blobs that lack a recognized file signature."""
+    if len(blob) < 4:
+        raise _ImageSecurityError("WMF blob too short for magic-byte validation")
+    head = blob[:4]
+    if head == _WMF_ALDUS_MAGIC or head in _WMF_STANDARD_PREFIXES:
+        return
+    raise _ImageSecurityError(
+        "WMF blob does not start with a recognized file signature"
+    )
+
+
+def _validate_emf_magic_bytes(blob: bytes) -> None:
+    """Reject EMF blobs that lack the expected EMR_HEADER and signature."""
+    if len(blob) < 44:
+        raise _ImageSecurityError("EMF blob too short for magic-byte validation")
+    if blob[:4] != _EMF_RECORD_TYPE or blob[40:44] != _EMF_SIGNATURE:
+        raise _ImageSecurityError("EMF blob does not match expected file signature")
+
+
+def _sanitize_svg(blob: bytes) -> bytes:
+    """Parse SVG through a hardened XMLParser to block XXE and DTD attacks.
+
+    Returns re-serialized XML bytes.  Raises *_ImageSecurityError* when
+    the blob is not well-formed XML or contains prohibited constructs.
+    """
+    parser = etree.XMLParser(
+        resolve_entities=False,
+        no_network=True,
+        dtd_validation=False,
+        load_dtd=False,
+    )
+    try:
+        root = etree.fromstring(blob, parser=parser)
+    except etree.XMLSyntaxError as exc:
+        raise _ImageSecurityError(f"SVG blob is not well-formed XML: {exc}") from exc
+    if root.getroottree().docinfo.internalDTD is not None:
+        raise _ImageSecurityError("SVG blob contains a DTD declaration")
+    return etree.tostring(root, xml_declaration=True, encoding="UTF-8")
+
+
+def _convert_svg_to_png(blob: bytes) -> bytes:
+    """Sanitize an SVG blob and convert it to PNG via cairosvg."""
+    clean_svg = _sanitize_svg(blob)
+    return cairosvg.svg2png(bytestring=clean_svg)
 
 
 def extract_connector(shape) -> dict:
@@ -73,22 +153,45 @@ def _is_background_image(shape, slide_w: float, slide_h: float) -> bool:
 
 
 def _save_image_blob(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
-    """Save an image shape's blob to disk and return a path dict."""
+    """Save an embedded image blob to disk with security validation.
+
+    Validates content type against an allowlist, enforces a size limit,
+    and checks that the resolved output path stays within *output_dir*.
+    """
     try:
         img = shape.image
     except ValueError:
         return {"path": "LINKED_IMAGE_NOT_EMBEDDED"}
 
-    ext = img.content_type.split("/")[-1]
-    if ext == "jpeg":
-        ext = "jpg"
+    ext = _CONTENT_TYPE_TO_EXT.get(img.content_type)
+    if ext is None:
+        raise ValueError(f"Unsupported image content type: {img.content_type}")
+
+    blob = img.blob
+    if len(blob) > MAX_IMAGE_BLOB_BYTES:
+        raise ValueError(
+            f"Image blob size {len(blob)} exceeds limit of {MAX_IMAGE_BLOB_BYTES} bytes"
+        )
+
+    if ext == "wmf":
+        _validate_wmf_magic_bytes(blob)
+    elif ext == "emf":
+        _validate_emf_magic_bytes(blob)
+    elif ext == "svg":
+        blob = _convert_svg_to_png(blob)
+        ext = "png"
+
     img_name = f"image-{img_count:02d}.{ext}"
     img_path = output_dir / "images" / img_name
+
+    if not img_path.resolve().is_relative_to(output_dir.resolve()):
+        raise _ImageSecurityError(
+            f"Image path {img_path} escapes output directory {output_dir}"
+        )
+
     img_path.parent.mkdir(parents=True, exist_ok=True)
-
     with open(img_path, "wb") as f:
-        f.write(img.blob)
-
+        f.write(blob)
     return {"path": f"images/{img_name}"}
 
 
@@ -519,9 +622,23 @@ def extract_textbox(shape) -> dict:
 def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> dict:
     """Extract an image element and save the image file."""
     try:
-        img = shape.image
-    except ValueError:
-        # Linked images have no embedded blob
+        blob_result = _save_image_blob(shape, output_dir, slide_num, img_count)
+    except _ImageSecurityError:
+        raise
+    except ValueError as exc:
+        logging.warning("Skipping image on slide %d: %s", slide_num, exc)
+        return {
+            "type": "image",
+            "path": "SKIPPED",
+            "left": emu_to_inches(shape.left),
+            "top": emu_to_inches(shape.top),
+            "width": emu_to_inches(shape.width),
+            "height": emu_to_inches(shape.height),
+            "name": shape.name,
+            "_skipped_reason": str(exc),
+        }
+
+    if blob_result["path"] == "LINKED_IMAGE_NOT_EMBEDDED":
         elem = {
             "type": "image",
             "path": "LINKED_IMAGE_NOT_EMBEDDED",
@@ -537,20 +654,9 @@ def extract_image(shape, output_dir: Path, slide_num: int, img_count: int) -> di
             elem["rotation"] = rot
         return elem
 
-    ext = img.content_type.split("/")[-1]
-    if ext == "jpeg":
-        ext = "jpg"
-
-    img_name = f"image-{img_count:02d}.{ext}"
-    img_path = output_dir / "images" / img_name
-    img_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(img_path, "wb") as f:
-        f.write(img.blob)
-
     elem = {
         "type": "image",
-        "path": f"images/{img_name}",
+        "path": blob_result["path"],
         "left": emu_to_inches(shape.left),
         "top": emu_to_inches(shape.top),
         "width": emu_to_inches(shape.width),
@@ -1012,7 +1118,8 @@ def _resolve_theme_colors(prs) -> dict:
         # so parse its blob directly with lxml.
         for rel in master.part.rels.values():
             if "theme" in rel.reltype:
-                theme_el = etree.fromstring(rel.target_part.blob)
+                parser = etree.XMLParser(resolve_entities=False, no_network=True)
+                theme_el = etree.fromstring(rel.target_part.blob, parser=parser)
                 break
 
         if theme_el is not None:
@@ -1039,7 +1146,12 @@ def _resolve_theme_colors(prs) -> dict:
                         if theme_name in color_map:
                             color_map[alias] = color_map[theme_name]
     except (AttributeError, TypeError, IndexError):
+        # Theme elements missing or malformed; degrade gracefully
         pass
+    except etree.XMLSyntaxError:
+        logging.warning(
+            "Malformed theme XML in slide master; skipping theme color resolution"
+        )
     return color_map
 
 

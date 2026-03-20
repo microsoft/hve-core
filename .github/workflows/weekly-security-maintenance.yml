@@ -57,6 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
     steps:
       - name: Generate summary
         shell: pwsh
@@ -195,4 +196,102 @@ jobs:
           
           if ($unpinnedCount -eq '0' -and $staleCount -eq '0') {
             Write-Output "::notice::All dependencies are properly pinned and up-to-date!"
+          }
+      - name: Download staleness report
+        if: ${{ !cancelled() && needs.check-staleness.result == 'success' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sha-staleness-results
+          path: logs
+        continue-on-error: true
+
+      - name: Create or Update Staleness Issue
+        if: ${{ !cancelled() && needs.check-staleness.result == 'success' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STALE_COUNT: ${{ needs.check-staleness.outputs.stale-count }}
+          THRESHOLD_DAYS: ${{ inputs.max-age-days || 30 }}
+          REPO: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          $staleCount = [int]$env:STALE_COUNT
+          $thresholdDays = $env:THRESHOLD_DAYS
+          $automationMarker = '<!-- automation:sha-staleness -->'
+
+          $searchQuery = "repo:$env:REPO is:issue is:open in:body `"automation:sha-staleness`""
+          $existingIssue = gh issue list `
+            --repo $env:REPO `
+            --search $searchQuery `
+            --limit 1 `
+            --json number `
+            --jq '.[0].number // empty'
+
+          $existingIssue = if ($existingIssue) { $existingIssue.Trim() } else { $null }
+
+          # Build stale dependency details from the report artifact
+          $staleDetails = ''
+          $resultsPath = 'logs/sha-staleness-results.json'
+          if (Test-Path $resultsPath) {
+            $report = Get-Content $resultsPath | ConvertFrom-Json
+            foreach ($dep in $report.Dependencies) {
+              if ($dep.DaysOld -gt [int]$thresholdDays) {
+                $staleDetails += "- **$($dep.File):** ``$($dep.Action)@$($dep.CurrentVersion)`` — $($dep.DaysOld) days old (latest: ``$($dep.LatestVersion)``)`n"
+              }
+            }
+          }
+
+          $issueTitle = 'Security: Stale dependency SHAs detected'
+          $issueBody = @"
+          ## Stale GitHub Action SHAs Detected
+
+          **$staleCount** dependencies have SHA pins older than **$thresholdDays** days.
+
+          ### Stale Dependencies
+
+          $staleDetails
+
+          ---
+
+          **Workflow Run:** $env:SERVER_URL/$env:REPO/actions/runs/$env:RUN_ID
+          **Detection Date:** $(Get-Date -Format 'yyyy-MM-dd' -AsUTC)
+
+          ### Action Required
+
+          - [ ] Run ``npm run sha-staleness`` to review current state
+          - [ ] Update outdated SHAs: ``scripts/security/Update-ActionSHAPinning.ps1 -Path .github/workflows -UpdateStale``
+          - [ ] Close this issue manually after fixes are merged
+
+          $automationMarker
+          "@
+
+          if ($staleCount -gt 0) {
+            if ($existingIssue) {
+              Write-Host "Updating existing issue #$existingIssue"
+              gh issue edit $existingIssue `
+                --repo $env:REPO `
+                --body $issueBody
+
+              $updateDate = Get-Date -Format 'yyyy-MM-dd' -AsUTC
+              gh issue comment $existingIssue `
+                --repo $env:REPO `
+                --body "🔄 **Weekly staleness update:** $staleCount stale SHAs detected as of $updateDate"
+            } else {
+              Write-Host "Creating new staleness issue"
+              gh issue create `
+                --repo $env:REPO `
+                --title $issueTitle `
+                --body $issueBody `
+                --label "security,staleness,automated,needs-triage"
+            }
+          } elseif ($existingIssue) {
+            gh issue comment $existingIssue `
+              --repo $env:REPO `
+              --body "✅ All action SHAs are now within the $thresholdDays-day freshness threshold. Closing automatically."
+
+            gh issue close $existingIssue `
+              --repo $env:REPO
+          } else {
+            Write-Host "No stale SHAs and no existing issue — nothing to do"
           }
