@@ -35,7 +35,7 @@ jobs:
           echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install beval
-        run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@4f363b706ae94a1726e44e380e63fbb4beffa567#subdirectory=python"
+        run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@b92c200f53b2ed33f3e979c7c8a88ff17e27a6e8#subdirectory=python"
 
       - name: Start agent (TCP)
         env:
