@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -26,7 +28,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@1
+        run: |
+          npm ci --prefix beval
+          echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install beval
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git#subdirectory=python"
