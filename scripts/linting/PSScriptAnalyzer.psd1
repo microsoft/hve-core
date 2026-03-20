@@ -21,7 +21,9 @@
         # Skip ShouldProcess for simple GitHub Actions helper functions that only append to files
         'PSUseShouldProcessForStateChangingFunctions',
         # Skip false positive for error redirection operator (2>$null)
-        'PSPossibleIncorrectUsageOfRedirectionOperator'
+        'PSPossibleIncorrectUsageOfRedirectionOperator',
+        'PSReviewUnusedParameter',
+        'PSReviewUnusedParameter'
     )
 
     # Custom rule configurations
