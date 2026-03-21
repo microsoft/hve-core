@@ -13,3 +13,18 @@ This collection includes agents and prompts for:
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
 - **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards
 - **RAI Planning** — Responsible AI impact assessment, sensitive-use analysis, and RAI backlog generation
+
+Supporting subagents included:
+
+- **Researcher Subagent** — Research subagent using search tools, read tools, fetch web page, github repo, and MCP tools
+- **Codebase Profiler** — Scans the repository to build a technology profile and identify which OWASP skills apply
+- **Finding Deep Verifier** — Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill
+- **Report Generator** — Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report
+- **Skill Assessor** — Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings
+
+Skills included:
+
+- **OWASP Top 10** — OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
+- **OWASP LLM Top 10** — OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
+- **OWASP Agentic Top 10** — OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
+- **Security Reviewer Formats** — Format specifications and data contracts for the security reviewer orchestrator and its subagents
