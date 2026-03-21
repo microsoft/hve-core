@@ -336,14 +336,14 @@ For each of the 20 checks, project the score improvement if all related work ite
 
 | #   | Check        | Risk   | Current Score | Projected Score | Work Items           |
 |-----|--------------|--------|---------------|-----------------|----------------------|
-| *n* | *check_name* | *risk* | *current*/10  | *projected*/10  | *WI-SSSC-{NNN}, ...* |
+| *n* | *check_name* | *risk* | *current*/10  | *projected*/10  | *WI-SSSC-\{NNN\}, ...* |
 
 ### SLSA Level Assessment
 
 | Field           | Value                                     |
 |-----------------|-------------------------------------------|
-| Current level   | Build L{N}                                |
-| Projected level | Build L{N}                                |
+| Current level   | Build L\{N\}                                |
+| Projected level | Build L\{N\}                                |
 | Remaining steps | Items needed beyond the generated backlog |
 
 ### Badge Readiness

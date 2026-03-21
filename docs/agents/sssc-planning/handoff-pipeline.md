@@ -74,7 +74,7 @@ For each of the 20 checks, the agent projects the score improvement:
 
 | #   | Check        | Risk   | Current Score | Projected Score | Related Work Items   |
 |-----|--------------|--------|---------------|-----------------|----------------------|
-| *n* | *check_name* | *risk* | *current*/10  | *projected*/10  | *WI-SSSC-{NNN}, ...* |
+| *n* | *check_name* | *risk* | *current*/10  | *projected*/10  | *WI-SSSC-\{NNN\}, ...* |
 
 A summary row provides the estimated overall Scorecard score improvement.
 
@@ -84,8 +84,8 @@ The agent projects which SLSA Build level the repository would achieve:
 
 | Field           | Value                                         |
 |-----------------|-----------------------------------------------|
-| Current level   | Build L{N}                                    |
-| Projected level | Build L{N}                                    |
+| Current level   | Build L\{N\}                                    |
+| Projected level | Build L\{N\}                                    |
 | Remaining steps | What would still be needed beyond the backlog |
 
 ### Badge Readiness
