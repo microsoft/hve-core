@@ -47,12 +47,8 @@ function Invoke-PythonLint {
         Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
         $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 
-        # Check if ruff is available (once, before loop)
-        $ruffAvailable = Get-Command ruff -ErrorAction SilentlyContinue
-        if (-not $ruffAvailable) {
-            Write-Host '❌ ruff is not installed. Run "uv sync" in a skill directory or install with "uv pip install ruff".' -ForegroundColor Red
-            return @{ success = $false; skillsChecked = 0; errors = @('ruff not installed') }
-        }
+        # Check if ruff is globally available (used as fallback when skill has no venv)
+        $globalRuff = Get-Command ruff -ErrorAction SilentlyContinue
 
         $results = @{
             success = $true
@@ -66,7 +62,28 @@ function Invoke-PythonLint {
             
             Push-Location $skillPath
             try {
-                $output = ruff check . 2>&1
+                # Resolve ruff: prefer skill venv, fall back to global
+                $ruffCmd = $null
+                $venvRuff = Join-Path $skillPath '.venv/bin/ruff'
+                $venvRuffWin = Join-Path $skillPath '.venv/Scripts/ruff.exe'
+                if (Test-Path $venvRuff) {
+                    $ruffCmd = $venvRuff
+                    Write-Host '  Using venv ruff' -ForegroundColor Gray
+                } elseif (Test-Path $venvRuffWin) {
+                    $ruffCmd = $venvRuffWin
+                    Write-Host '  Using venv ruff' -ForegroundColor Gray
+                } elseif ($globalRuff) {
+                    $ruffCmd = 'ruff'
+                }
+
+                if (-not $ruffCmd) {
+                    Write-Host '❌ ruff not available (no .venv and not installed globally)' -ForegroundColor Red
+                    $results.success = $false
+                    $results.errors += $skillPath
+                    continue
+                }
+
+                $output = & $ruffCmd check . 2>&1
                 $exitCode = $LASTEXITCODE
                 
                 $result = @{
