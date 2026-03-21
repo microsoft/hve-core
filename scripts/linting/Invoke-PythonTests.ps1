@@ -114,10 +114,16 @@ function Invoke-PythonTests {
             }
         }
 
-        # Write results to file if OutputPath specified
-        if ($OutputPath) {
-            $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        # Default to logs directory when no OutputPath specified
+        if (-not $OutputPath) {
+            $logsDir = Join-Path -Path $RepoRoot -ChildPath 'logs'
+            if (-not (Test-Path $logsDir)) {
+                New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+            }
+            $OutputPath = Join-Path -Path $logsDir -ChildPath 'python-test-results.json'
         }
+        $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        Write-Host "📊 Results written to: $OutputPath" -ForegroundColor Cyan
 
         return $results
     } finally {

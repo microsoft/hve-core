@@ -1,0 +1,234 @@
+name: Fuzz Tests
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: 'Directory containing the Python skill to fuzz'
+        required: true
+        type: string
+      fuzz-runs:
+        description: 'Number of Atheris fuzzing iterations'
+        required: false
+        type: number
+        default: 10000
+      soft-fail:
+        description: 'Whether to continue on fuzz failures'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only run fuzz tests if Python files changed in this directory'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Fuzz Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Derive artifact name
+        id: meta
+        run: |
+          $name = '${{ inputs.working-directory }}' -replace '/', '-' -replace '^\.', '' -replace '^-', ''
+          "artifact-name=fuzz-results-$name" >> $env:GITHUB_OUTPUT
+
+      - name: Detect changed Python files
+        if: inputs.changed-files-only
+        run: |
+          $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+          $workingDir = '${{ inputs.working-directory }}'
+          $changed = git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- $workingDir |
+            Where-Object { $_ -match '\.py$' }
+          if ($changed) {
+            "HAS_CHANGES=true" >> $env:GITHUB_ENV
+            $fileCount = @($changed).Count
+            Write-Output "Detected $fileCount changed Python file(s)"
+          } else {
+            Write-Output "No Python file changes detected under $workingDir"
+          }
+
+      - name: Check for fuzz harness
+        run: |
+          if (-not (Test-Path "${{ inputs.working-directory }}/tests/fuzz_harness.py")) {
+            Write-Host "No fuzz harness in ${{ inputs.working-directory }}, skipping"
+            return
+          }
+          Write-Host "Fuzz harness found in ${{ inputs.working-directory }}"
+          if ('${{ inputs.changed-files-only }}' -eq 'true' -and $env:HAS_CHANGES -ne 'true') {
+            Write-Host "No Python file changes detected, skipping fuzz tests"
+            return
+          }
+          "SHOULD_FUZZ=true" >> $env:GITHUB_ENV
+
+      - name: Install uv
+        if: env.SHOULD_FUZZ == 'true'
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.10.9"
+
+      - name: Set up Python
+        if: env.SHOULD_FUZZ == 'true'
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: env.SHOULD_FUZZ == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          Write-Host "Installing dependencies with fuzz group"
+          uv sync --locked --dev --group fuzz
+
+      - name: Run fuzz tests
+        id: fuzz
+        if: env.SHOULD_FUZZ == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          $fuzzRuns = '${{ inputs.fuzz-runs }}'
+          $fuzzOutput = New-TemporaryFile
+
+          Write-Host "Running Atheris fuzz tests with $fuzzRuns iterations"
+          $env:PYTHONPATH = 'scripts'
+          uv run python tests/fuzz_harness.py tests/corpus/ "-atheris_runs=$fuzzRuns" 2>&1 |
+            Tee-Object -FilePath $fuzzOutput.FullName
+          $fuzzExit = $LASTEXITCODE
+
+          # Parse the DONE line for libFuzzer statistics
+          $content = Get-Content $fuzzOutput.FullName -Raw
+          $doneLine = if ($content -match '(?m)(#\d+\s+DONE.*)') { $Matches[1] } else { '' }
+
+          if ($doneLine) {
+            $iterations   = if ($doneLine -match '#(\d+)') { $Matches[1] } else { '0' }
+            $covEdges     = if ($doneLine -match 'cov:\s*(\d+)') { $Matches[1] } else { '0' }
+            $features     = if ($doneLine -match 'ft:\s*(\d+)') { $Matches[1] } else { '0' }
+            $corpus       = if ($doneLine -match 'corp:\s*(\d+)') { $Matches[1] } else { '0' }
+            $execPerSec   = if ($doneLine -match 'exec/s:\s*(\d+)') { $Matches[1] } else { '0' }
+            $rss          = if ($doneLine -match 'rss:\s*(\d+Mb)') { $Matches[1] } else { 'unknown' }
+          } else {
+            $iterations = '0'; $covEdges = '0'; $features = '0'
+            $corpus = '0'; $execPerSec = '0'; $rss = 'unknown'
+          }
+
+          # Check for crash artifacts
+          $crashCount = (Get-ChildItem -Path . -Filter 'crash-*' -ErrorAction SilentlyContinue |
+            Measure-Object).Count
+
+          # Export outputs
+          "exit_code=$fuzzExit" >> $env:GITHUB_OUTPUT
+          "iterations=$iterations" >> $env:GITHUB_OUTPUT
+          "cov_edges=$covEdges" >> $env:GITHUB_OUTPUT
+          "features=$features" >> $env:GITHUB_OUTPUT
+          "corpus=$corpus" >> $env:GITHUB_OUTPUT
+          "exec_per_sec=$execPerSec" >> $env:GITHUB_OUTPUT
+          "rss=$rss" >> $env:GITHUB_OUTPUT
+          "crash_count=$crashCount" >> $env:GITHUB_OUTPUT
+
+          Remove-Item $fuzzOutput.FullName -ErrorAction SilentlyContinue
+          exit $fuzzExit
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload crash artifacts
+        if: always() && steps.fuzz.outputs.crash_count != '0'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: ${{ steps.meta.outputs.artifact-name }}
+          path: ${{ inputs.working-directory }}/crash-*
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Write results JSON
+        if: always() && env.SHOULD_FUZZ == 'true'
+        run: |
+          New-Item -ItemType Directory -Path logs -Force | Out-Null
+          $exitCode = [int]'${{ steps.fuzz.outputs.exit_code || 1 }}'
+          $crashCount = [int]'${{ steps.fuzz.outputs.crash_count || 0 }}'
+          $success = ($exitCode -eq 0) -and ($crashCount -eq 0)
+          $result = [ordered]@{
+            success        = $success
+            directory      = '${{ inputs.working-directory }}'
+            iterations     = [int]'${{ steps.fuzz.outputs.iterations || 0 }}'
+            coverageEdges  = [int]'${{ steps.fuzz.outputs.cov_edges || 0 }}'
+            features       = [int]'${{ steps.fuzz.outputs.features || 0 }}'
+            corpusEntries  = [int]'${{ steps.fuzz.outputs.corpus || 0 }}'
+            execPerSec     = [int]'${{ steps.fuzz.outputs.exec_per_sec || 0 }}'
+            peakRss        = '${{ steps.fuzz.outputs.rss }}'
+            crashes        = $crashCount
+            exitCode       = $exitCode
+          }
+          $result | ConvertTo-Json | Set-Content logs/fuzz-results.json
+
+      - name: Upload results
+        if: always() && env.SHOULD_FUZZ == 'true'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: ${{ steps.meta.outputs.artifact-name }}-logs
+          path: logs/fuzz-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Add job summary
+        if: always() && env.SHOULD_FUZZ == 'true'
+        run: |
+          $exitCode   = '${{ steps.fuzz.outputs.exit_code }}'
+          $iterations = '${{ steps.fuzz.outputs.iterations }}'
+          $covEdges   = '${{ steps.fuzz.outputs.cov_edges }}'
+          $features   = '${{ steps.fuzz.outputs.features }}'
+          $corpus     = '${{ steps.fuzz.outputs.corpus }}'
+          $execPerSec = '${{ steps.fuzz.outputs.exec_per_sec }}'
+          $rss        = '${{ steps.fuzz.outputs.rss }}'
+          $crashCount = '${{ steps.fuzz.outputs.crash_count }}'
+
+          $status = if ($exitCode -eq '0' -and $crashCount -eq '0') {
+            '✅ **Passed**'
+          } else {
+            '❌ **Failed**'
+          }
+
+          $summary = @"
+          ## Fuzz Test Results
+
+          **Status**: $status
+          **Directory**: ``${{ inputs.working-directory }}``
+
+          | Metric | Value |
+          |--------|-------|
+          | Iterations | $iterations |
+          | Coverage Edges | $covEdges |
+          | Features | $features |
+          | Corpus Entries | $corpus |
+          | Exec/sec | $execPerSec |
+          | Peak RSS | $rss |
+          | Crashes | $crashCount |
+
+          "@
+
+          if ($crashCount -ne '0') {
+            $summary += "> ⚠️ Crash inputs saved as workflow artifacts for reproduction.`n`n"
+          }
+          $summary += '*Atheris coverage-guided fuzzing with libFuzzer backend*'
+
+          # Remove leading whitespace from here-string indentation
+          $summary = ($summary -split "`n" | ForEach-Object { $_.TrimStart() }) -join "`n"
+          $summary >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Fail job if crashes found
+        if: "steps.fuzz.outputs.crash_count != '0' && !inputs.soft-fail"
+        run: |
+          Write-Host "Fuzz testing found ${{ steps.fuzz.outputs.crash_count }} crash(es)"
+          exit 1

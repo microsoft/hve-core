@@ -39,7 +39,7 @@ The Execution workflow consumes handoff files from triage, sprint planning, and 
 Before any ADO API call, the execution workflow strips internal tracking references:
 
 * `.copilot-tracking/` file paths are removed from outbound content
-* Planning reference IDs (such as `WI[NNN]`) are stripped from descriptions and comments
+* Planning reference IDs (such as `WI[NNN]` or `WI-SEC-{NNN}`) and template ID placeholders (such as `{{TEMP-N}}`) are stripped from descriptions and comments
 * Internal planning metadata never reaches Azure DevOps work item fields
 
 This sanitization ensures clean, professional work item content regardless of the planning artifacts used during earlier phases.

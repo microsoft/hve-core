@@ -1,0 +1,55 @@
+id: rai-planning
+name: RAI Planning
+description: Responsible AI assessment, sensitive uses screening, and standards-aligned impact analysis
+maturity: experimental
+notice: |
+  > [!CAUTION]
+  > The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss sensitive use categories, or produce recommendations that are incomplete or inappropriate for your context.
+tags:
+  - rai
+  - responsible-ai
+  - planning
+  - assessment
+items:
+  # Agents
+  - path: .github/agents/rai-planning/rai-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    kind: agent
+  # Prompts
+  - path: .github/prompts/rai-planning/rai-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
+  # Instructions
+  - path: .github/instructions/rai-planning/rai-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-security-model.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: manual

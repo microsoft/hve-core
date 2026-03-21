@@ -1,6 +1,6 @@
 ---
-title: Security Plan Creator
-description: Agent that generates security assessment plans using an 8-category threat analysis framework
+title: Security Planner (Moved)
+description: This page has moved to the Security Planning documentation
 sidebar_position: 5
 author: Microsoft
 ms.date: 2026-03-07

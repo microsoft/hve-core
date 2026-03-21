@@ -18,7 +18,7 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 > [!CAUTION]
 > The security agents and prompts referenced in this guide are **assistive tools only**.
 > They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
-> All AI-generated security plans, threat models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
+> All AI-generated security plans, security models, risk registers, and incident response runbooks **must** be reviewed and validated by qualified security professionals before use.
 > AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 > Never treat AI-generated security artifacts as authoritative without independent verification.
 
@@ -52,10 +52,11 @@ This guide is for you if you manage infrastructure, handle incidents, deploy sys
 ## Stage Walkthrough
 
 1. Stage 1: Setup. Configure your development environment and install HVE Core tooling using the [Getting Started guide](../../getting-started/install.md). Set up IaC project structure for your infrastructure repository.
-2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-plan-creator** agent for infrastructure security planning.
-3. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
-4. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
-5. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
+2. Stage 3: Product Definition. Define infrastructure requirements, SLOs, and operational contracts. Use the **security-planner** agent for infrastructure security planning.
+3. Stage 3: Product Definition. Run the **sssc-planner** agent to assess supply chain security of CI/CD pipelines and deployment infrastructure.
+4. Stage 6: Implementation. Write infrastructure code with auto-activated standards for Terraform (`*.tf`), Bicep (`bicep/**`), Bash (`*.sh`), and GitHub Actions (`*.yml`). Use the **task-implementor** agent for complex multi-file changes.
+5. Stage 8: Delivery. Deploy infrastructure changes through CI/CD pipelines. Use `/git-commit` for conventional commits and `/pull-request` for infrastructure PRs with proper review.
+6. Stage 9: Operations. Handle incidents with `/incident-response` runbooks. Investigate production issues with the **task-researcher** agent for structured root cause analysis.
 
 ## Starter Prompts
 
@@ -75,13 +76,19 @@ increased from 0.1% to 12% starting at 14:30 UTC. The service runs on
 deployments, and upstream dependency health.
 ```
 
-Select **security-plan-creator** agent:
+Select **security-planner** agent:
 
 ```text
 Create a security plan for the Kubernetes ingress controller cluster.
 Cover TLS termination and certificate rotation automation, network policy
 rules for namespace isolation, WAF configuration for OWASP Top 10
 protection, and audit logging for ingress configuration changes.
+```
+
+Select **sssc-planner** agent:
+
+```text
+Assess the supply chain security posture for our CI/CD pipeline and container infrastructure
 ```
 
 ```text
@@ -99,14 +106,15 @@ encryption at rest. Output the connection string to the Vault KV store.
 
 ## Key Agents and Workflows
 
-| Agent                     | Purpose                                        | Docs                                              |
-|---------------------------|------------------------------------------------|---------------------------------------------------|
-| **task-researcher**       | Structured production issue investigation      | [Task Researcher](../../rpi/task-researcher.md)   |
-| **task-implementor**      | Infrastructure code implementation             | [Task Implementor](../../rpi/task-implementor.md) |
-| **task-reviewer**         | Infrastructure code review                     | [Task Reviewer](../../rpi/task-reviewer.md)       |
-| **security-plan-creator** | Infrastructure security planning               | Agent file                                        |
-| **pr-review**             | Pull request review for infrastructure changes | Agent file                                        |
-| **memory**                | Session context and preference persistence     | Agent file                                        |
+| Agent                | Purpose                                             | Docs                                              |
+|----------------------|-----------------------------------------------------|---------------------------------------------------|
+| **task-researcher**  | Structured production issue investigation           | [Task Researcher](../../rpi/task-researcher.md)   |
+| **task-implementor** | Infrastructure code implementation                  | [Task Implementor](../../rpi/task-implementor.md) |
+| **task-reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
+| **security-planner** | Infrastructure security planning                    | Agent file                                        |
+| **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
+| **pr-review**        | Pull request review for infrastructure changes      | Agent file                                        |
+| **memory**           | Session context and preference persistence          | Agent file                                        |
 
 Prompts complement the agents for operational workflows:
 
@@ -131,7 +139,7 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 
 ## Related Roles
 
-* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Threat models inform operational controls. See the [Security Architect Guide](security-architect.md).
+* SRE + Security Architect: Operational security, incident response, and monitoring connect security planning with production operations. Security models inform operational controls. See the [Security Architect Guide](security-architect.md).
 * SRE + Engineer: Production reliability requires collaboration between infrastructure operations and feature development. Deployment pipelines serve both roles. See the [Engineer Guide](engineer.md).
 * SRE + Tech Lead: Infrastructure architecture decisions shape operational practices. IaC standards maintain consistency across environments. See the [Tech Lead Guide](tech-lead.md).
 

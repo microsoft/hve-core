@@ -56,7 +56,9 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                    | Iterative questioning; state-tracked sessions         |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
-| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints                   | Blueprint-driven threat modeling                      |
+| **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff | Six-phase conversational workflow; experimental       |
+| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM | Six-phase conversational workflow; experimental       |
+| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against MS RAI Standard v2 and NIST AI RMF | Six-phase conversational workflow; experimental       |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
 
@@ -243,7 +245,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 
@@ -285,16 +287,51 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
 
-### security-plan-creator
+### security-planner
 
-**Creates:** Security plans and implementation artifacts:
+**Creates:** Security plans and backlog handoff artifacts under `.copilot-tracking/security-plans/{project-slug}/`:
 
-* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and threat analysis)
-* `security-plan-outputs/security-plan-{blueprint-name}.md` (final security plan document)
+* `state.json` (session state for resume capability)
+* `security-plan-{project-slug}.md` (security plan with STRIDE analysis, standards mapping, and operational bucket classification)
+* Backlog items in ADO (`WI-SEC-{NNN}`) or GitHub (`{{SEC-TEMP-N}}`) format
 
-**Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
+**Workflow:** Six sequential phases: Scoping → Bucket Analysis → Standards Mapping → Security Model Analysis → Backlog Generation → Review and Handoff
 
-**Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+**Entry Modes:** Two modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from existing PRD/BRD artifacts.
+
+**Critical:** Uses STRIDE methodology per operational bucket. Maps controls to OWASP Top 10, NIST 800-53, and CIS v8 frameworks. Detects AI/ML components during scoping and recommends RAI Planner dispatch when AI elements are present. Works iteratively with 3-5 questions per turn using emoji checklists to track progress. No blueprint infrastructure requirement. Maturity: experimental.
+
+### rai-planner
+
+**Creates:** Ten artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
+
+* `state.json` (session state for resume capability)
+* `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
+* `sensitive-uses-screening.md`, `use-misuse-inventory.md` (Phase 2: Sensitive Uses Assessment)
+* `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
+* `rai-security-model-addendum.md` (Phase 4: RAI Security Model Analysis)
+* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
+* `rai-scorecard.md` and backlog items (Phase 6: Review and Handoff)
+
+**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Sensitive Uses Assessment (Map) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
+
+**Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
+
+**Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Screens for sensitive uses and restricted uses requiring escalation. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
+
+### sssc-planner
+
+**Creates:** Assessment artifacts under `.copilot-tracking/sssc-plans/{project-slug}/`:
+
+* `state.json` (session state for resume capability)
+* `sssc-plan-{project-slug}.md` (supply chain security assessment with standards mapping and gap analysis)
+* Backlog items in ADO or GitHub format for remediation tracking
+
+**Workflow:** Six sequential phases: Scoping → Supply Chain Assessment → Standards Mapping → Gap Analysis → Backlog Generation → Review and Handoff
+
+**Entry Modes:** Four modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from PRD artifacts. From-BRD mode seeds from BRD artifacts. From-security-plan mode continues from a completed Security Planner session.
+
+**Critical:** Assesses against OpenSSF Scorecard (20 checks), SLSA Build levels (L0-L3), Best Practices Badge tiers, Sigstore keyless signing maturity, and SBOM compliance. Works iteratively with 3-5 questions per turn with confirmation before phase advancement. Maturity: experimental.
 
 ### security-reviewer
 

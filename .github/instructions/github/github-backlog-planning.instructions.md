@@ -717,11 +717,27 @@ Under Full Autonomy, log the replacement and proceed automatically. Under Partia
 
 ### Planning Reference ID Guard
 
-* **Detect**: Identifiers matching `IS` followed by digits and optional letter suffixes (for example, `IS001`, `IS002a`, `IS014`).
+* **Detect**: Identifiers matching any of these patterns:
+  * `IS` followed by digits and optional letter suffixes (for example, `IS001`, `IS002a`, `IS014`) — GitHub planning IDs
+  * `WI-` followed by a prefix and digits (for example, `WI-SEC-001`, `WI-RAI-001`, `WI-SSSC-001`) — namespaced planner IDs from domain planners
 * **Resolve**:
-  * When the actual GitHub issue number is known (from the `issue_number` field in *issues-plan.md* or *handoff.md*, or from the `{{TEMP-N}}` to `#N` mappings in *handoff-logs.md*), replace the planning reference ID with `#<issue_number>`.
+  * When the actual GitHub issue number is known (from the `issue_number` field in *issues-plan.md* or *handoff.md*, or from the temporary ID to `#N` mappings in *handoff-logs.md*), replace the planning reference ID with `#<issue_number>`.
   * When the actual issue number is not yet known, replace the planning reference ID with a descriptive phrase summarizing the referenced work.
   * When the reference is a self-reference, remove it or replace it with "this issue".
+
+### Template ID Guard
+
+Detect template ID placeholders in outbound content. Patterns to match:
+
+* `{{TEMP-N}}` — un-namespaced template IDs
+* `{{SEC-TEMP-N}}`, `{{RAI-TEMP-N}}`, `{{SSSC-TEMP-N}}` — namespaced template IDs from domain planners
+
+When found:
+
+1. If the template ID maps to a known GitHub issue number, replace with `#<issue_number>`.
+2. If the template ID has no known mapping, replace with a descriptive phrase.
+
+Never send planning reference IDs or template ID placeholders to GitHub APIs.
 
 ## Three-Tier Autonomy Model
 
@@ -759,24 +775,39 @@ Gate on all operations. Agents must present each for confirmation.
 
 ## Temporary ID Mapping
 
-Handoff files use `{{TEMP-N}}` placeholders for planned issues that do not yet exist. The execution stage maintains a mapping table as issues are created, resolving references in subsequent operations.
+Handoff files use temporary ID placeholders for planned issues that do not yet exist. The execution stage maintains a mapping table as issues are created, resolving references in subsequent operations.
 
-Placeholder format: `{{TEMP-1}}`, `{{TEMP-2}}`, `{{TEMP-3}}`, incrementing sequentially.
+### Placeholder Formats
+
+The GitHub Backlog Manager's own planning uses un-namespaced placeholders:
+
+* `{{TEMP-1}}`, `{{TEMP-2}}`, `{{TEMP-3}}`, incrementing sequentially.
+
+Domain planners use namespaced placeholders that follow the same lifecycle:
+
+* `{{SEC-TEMP-N}}` — Security Planner (e.g., `{{SEC-TEMP-1}}`, `{{SEC-TEMP-2}}`)
+* `{{RAI-TEMP-N}}` — RAI Planner (e.g., `{{RAI-TEMP-1}}`, `{{RAI-TEMP-2}}`)
+* `{{SSSC-TEMP-N}}` — SSSC Planner (e.g., `{{SSSC-TEMP-1}}`, `{{SSSC-TEMP-2}}`)
+
+All placeholder formats share the same resolution lifecycle.
+
+### Resolution
 
 During execution, resolve each placeholder to the actual issue number returned by `mcp_github_issue_write`:
 
 ```text
 {{TEMP-1}} → #42 (created)
-{{TEMP-2}} → #43 (created)
-{{TEMP-3}} → #44 (created)
+{{SEC-TEMP-1}} → #43 (created)
+{{RAI-TEMP-1}} → #44 (created)
+{{SSSC-TEMP-1}} → #45 (created)
 ```
 
 Resolution rules:
 
 * Agents must create parent issues before child issues so that parent issue numbers are available for sub-issue linking.
-* When a `{{TEMP-N}}` reference appears in a sub-issue link operation, agents must resolve it from the mapping table before calling `mcp_github_sub_issue_write`.
+* When a temporary ID reference appears in a sub-issue link operation, agents must resolve it from the mapping table before calling `mcp_github_sub_issue_write`.
 * Agents must record the mapping in handoff-logs.md as each issue is created.
-* If a `{{TEMP-N}}` reference cannot be resolved (creation failed), agents must skip dependent operations and log the failure.
+* If a temporary ID reference cannot be resolved (creation failed), agents must skip dependent operations and log the failure.
 
 ## State Persistence Protocol
 
