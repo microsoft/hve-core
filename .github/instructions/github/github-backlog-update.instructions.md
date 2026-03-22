@@ -42,7 +42,7 @@ When handoff-logs.md exists next to `handoff`:
 
 * Read handoff-logs.md and `handoff`.
 * Identify operations with unchecked `[ ]` status.
-* Rebuild the temporary ID mapping from previously completed Create entries (the Issue Number field in each completed log entry records the `{{TEMP-N}}` to `#actual` mapping).
+* Rebuild the temporary ID mapping from previously completed Create entries (the Issue Number field in each completed log entry records the temporary ID to `#actual` mapping, including `{{TEMP-N}}` and namespaced variants like `{{SEC-TEMP-N}}`).
 * Resume processing in priority order: Create → Update → Link → Close → Comment, starting from the first unchecked operation in that sequence.
 
 When handoff-logs.md does not exist:
@@ -54,11 +54,11 @@ When handoff-logs.md does not exist:
 Validate the handoff before processing:
 
 * Confirm `owner` and `repo` are set (from inputs or parsed from the handoff file header).
-* Verify all numeric issue references exist by calling `mcp_github_issue_read` with method `get` for each number. Skip `{{TEMP-N}}` placeholders during this validation since those issues do not exist yet.
+* Verify all numeric issue references exist by calling `mcp_github_issue_read` with method `get` for each number. Skip temporary ID placeholders (`{{TEMP-N}}`, `{{SEC-TEMP-N}}`, `{{RAI-TEMP-N}}`, `{{SSSC-TEMP-N}}`) during this validation since those issues do not exist yet.
 * Verify label names are valid by calling `mcp_github_get_label` for each unique label in the plan.
 * Call `mcp_github_list_issue_types` to confirm whether the organization supports issue types before using the `type` field.
-* Map `{{TEMP-N}}` placeholders to execution order so parent issues are created before children that reference them.
-* Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md to all GitHub-bound fields (issue titles, bodies, comments, and other text fields) to resolve `.copilot-tracking/` paths and planning reference IDs (`IS[NNN]`) before execution.
+* Map temporary ID placeholders (`{{TEMP-N}}` and namespaced variants) to execution order so parent issues are created before children that reference them.
+* Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md to all GitHub-bound fields (issue titles, bodies, comments, and other text fields) to resolve `.copilot-tracking/` paths, planning reference IDs (`IS[NNN]`, `WI-SEC-{NNN}`, `WI-RAI-{NNN}`, `WI-SSSC-{NNN}`), and template ID placeholders before execution.
 * When validation fails for a non-critical field (invalid label, unknown milestone), log a warning and continue. When validation fails for a critical field (missing repository, authentication error), abort with a message.
 
 ### Step 2: Process Operations
@@ -75,9 +75,9 @@ Checkpoint after each operation completes:
 
 * Check the autonomy tier to determine whether a confirmation gate is required. Refer to the Three-Tier Autonomy Model in #file:./github-backlog-planning.instructions.md for gate definitions. When the user declines a gated operation, mark it as `Skipped` in handoff-logs.md and continue.
 * When `dryRun` is `true`, simulate the operation and log it as `dry-run` without executing (see the Dry Run Mode section).
-* After each Create, resolve the `{{TEMP-N}}` placeholder to the actual issue number returned by `mcp_github_issue_write`. Record the mapping in handoff-logs.md.
-* When a `{{TEMP-N}}` reference appears in a Link or Update operation, resolve it from the mapping table before calling the MCP tool.
-* Before each API call, re-apply the Planning Reference ID Guard from #file:./github-backlog-planning.instructions.md to catch planning reference IDs (such as `IS002`) that became resolvable after new `{{TEMP-N}}` mappings were established.
+* After each Create, resolve the temporary ID placeholder (whether `{{TEMP-N}}` or a namespaced variant) to the actual issue number returned by `mcp_github_issue_write`. Record the mapping in handoff-logs.md.
+* When a temporary ID reference appears in a Link or Update operation, resolve it from the mapping table before calling the MCP tool.
+* Before each API call, re-apply the Planning Reference ID Guard from #file:./github-backlog-planning.instructions.md to catch planning reference IDs (such as `IS002`, `WI-SEC-001`, `WI-RAI-001`) that became resolvable after new temporary ID mappings were established.
 * Update the checkbox to `[x]` in handoff.md after each operation completes.
 * Append an entry to handoff-logs.md recording the issue number, action taken, and any notes.
 * On failure, log the error and continue processing remaining operations. Do not abort the batch for a single failure.
@@ -92,7 +92,7 @@ When an operation has no pending changes:
 
 * Re-read handoff-logs.md and compare against `handoff`.
 * Process any missed operations that were skipped due to dependency failures and have since been unblocked. Limit this retry pass to one additional iteration; log any operations still blocked after the retry as `Failed`.
-* Cross-check created issues against the plan to confirm all `{{TEMP-N}}` placeholders resolved.
+* Cross-check created issues against the plan to confirm all temporary ID placeholders (`{{TEMP-N}}` and namespaced variants) resolved.
 * Generate a handoff summary with counts: issues created, updated, closed, linked, failed, and skipped.
 * Provide a completion report listing all processed items with issue numbers.
 
@@ -209,7 +209,7 @@ Create handoff-logs.md next to the handoff file. Append an entry after each oper
 Execution is complete when:
 
 * All planned operations from handoff.md are either executed or logged with a final status.
-* All `{{TEMP-N}}` placeholders are resolved to actual issue numbers (or logged as failed).
+* All temporary ID placeholders (`{{TEMP-N}}` and namespaced variants) are resolved to actual issue numbers (or logged as failed).
 * handoff-logs.md contains an entry for every operation in the plan.
 * The Execution Summary in handoff-logs.md reflects accurate counts for succeeded, failed, and skipped operations.
 * A completion report has been presented to the user with issue numbers.

@@ -1,0 +1,1 @@
+../../../.github/instructions/security/sssc-assessment.instructions.md

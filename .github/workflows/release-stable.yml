@@ -51,6 +51,17 @@ jobs:
       upload-sarif: true
       upload-artifact: true
 
+  action-version-consistency-scan:
+    name: Action Version Consistency Scan
+    uses: ./.github/workflows/action-version-consistency-scan.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      upload-sarif: true
+      upload-artifact: true
+
   gitleaks-scan:
     name: Gitleaks Secret Scan
     uses: ./.github/workflows/gitleaks-scan.yml
@@ -271,44 +282,83 @@ jobs:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
       - name: Reset pre-release branch
+        id: reset-branch
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
         run: |
           BRANCH="prerelease/next"
-          REPO="${{ github.repository }}"
-          if gh api "/repos/$REPO/git/refs/heads/$BRANCH" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs/heads/$BRANCH" \
-              -X PATCH \
-              -f sha="${{ github.sha }}" \
-              -F force=true
-            echo "Reset $BRANCH to ${{ github.sha }}"
-          fi
+          RELEASED="${{ needs.release-please.outputs.version }}"
+          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
+          MINOR=$(echo "$RELEASED" | cut -d. -f2)
+          PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          echo "pre-version=${PRE_VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Update pre-release PR version
-        # Placeholder version computation — release-prerelease-pr.yml is the authoritative source.
-        # This provides an interim PR title until the next push to main triggers release-prerelease-pr.yml.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+
+          # Build the placeholder version-bump commit before pushing.
+          # A single force-push of the final state prevents the remote from
+          # ever seeing prerelease/next identical to main, which would cause
+          # GitHub to auto-close the open PR.
+          git checkout -B "$BRANCH"
+
+          # Placeholder version bump so the branch differs from main.
+          # release-prerelease-pr.yml is authoritative; the next developer
+          # push to main will overwrite this with the full version bump.
+          jq --arg v "$PRE_VERSION" '.version = $v' package.json > package.json.tmp \
+            && mv package.json.tmp package.json
+          jq --arg v "$PRE_VERSION" '.["."] = $v' .release-please-manifest.json > tmp.json \
+            && mv tmp.json .release-please-manifest.json
+
+          git add -A
+          git commit -m "chore: reset pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
+          git push --force origin "$BRANCH"
+
+      - name: Create or update pre-release PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
         run: |
           BRANCH="prerelease/next"
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
-            --json number --jq '.[0].number // empty' \
-            -R "${{ github.repository }}")
-          if [ -n "$PR_NUMBER" ]; then
-            RELEASED="${{ needs.release-please.outputs.version }}"
-            MAJOR=$(echo "$RELEASED" | cut -d. -f1)
-            MINOR=$(echo "$RELEASED" | cut -d. -f2)
-            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
-            gh pr edit "$PR_NUMBER" \
-              --title "chore(main): pre-release $PRE_VERSION" \
-              --body "## Pre-Release $PRE_VERSION
+          RELEASED="${{ needs.release-please.outputs.version }}"
+          PRE_VERSION="${{ steps.reset-branch.outputs.pre-version }}"
+          TITLE="chore(main): pre-release ${PRE_VERSION}"
+          BODY="## Pre-Release ${PRE_VERSION}
 
-          Reset after release $RELEASED. Next push to main will update this PR.
+          Reset after release ${RELEASED}. Next push to main will update this PR.
 
           ---
           *Managed automatically by pre-release workflow.*"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "$REPO")
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              -R "$REPO"
             echo "Updated PR #$PR_NUMBER to $PRE_VERSION"
+          else
+            gh pr create \
+              --head "$BRANCH" \
+              --base main \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --label "autorelease: prerelease" \
+              -R "$REPO"
+            echo "Created new pre-release PR"
           fi
 
   extension-package-release:
@@ -337,6 +387,7 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:
+      # write required for gh release upload to attach SBOM to the release
       contents: write
     steps:
       - name: Checkout dependency manifests
@@ -394,7 +445,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sbom-dependencies
-          path: ./dist
+          path: ./sbom
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -431,7 +482,15 @@ jobs:
           upload-artifact: true
           config: .syft.yaml
 
+      - name: Verify SBOM files exist
+        run: |
+          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
+          test -f "sbom/dependencies.spdx.json" \
+            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
@@ -446,15 +505,19 @@ jobs:
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: dist/dependencies.spdx.json
+          sbom-path: sbom/dependencies.spdx.json
 
       - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
+          cp "$BUNDLE_PATH" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
           gh release upload "${{ needs.release-please.outputs.tag_name }}" \
             "${{ steps.vsix.outputs.file }}" \
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
             --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:
@@ -499,6 +562,11 @@ jobs:
         with:
           name: sbom-dependencies
           path: ./current
+
+      - name: Verify current dependency SBOM
+        run: |
+          test -f "current/dependencies.spdx.json" \
+            || { echo "::error::Current dependency SBOM not found in artifact"; exit 1; }
 
       - name: Download previous release dependency SBOM
         id: previous

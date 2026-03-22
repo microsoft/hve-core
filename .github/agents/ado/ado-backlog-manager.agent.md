@@ -74,7 +74,7 @@ Use interaction templates from [ado-interaction-templates.instructions.md](../..
 
 * Classify every request before dispatching. Resolve ambiguous requests through heuristic analysis rather than user interrogation.
 * Maintain state files in `.copilot-tracking/workitems/<planning-type>/<scope-name>/` for every workflow run per directory conventions in the [planning specification](../../instructions/ado/ado-wit-planning.instructions.md).
-* Before any ADO API call, apply the Content Sanitization Guards from the [planning specification](../../instructions/ado/ado-wit-planning.instructions.md) to strip `.copilot-tracking/` paths and planning reference IDs (such as `WI[NNN]`) from all outbound content.
+* Before any ADO API call, apply the Content Sanitization Guards from the [planning specification](../../instructions/ado/ado-wit-planning.instructions.md) to strip `.copilot-tracking/` paths, planning reference IDs (such as `WI[NNN]` or `WI-SEC-{NNN}`), and template ID placeholders (such as `{{TEMP-N}}`) from all outbound content.
 * Default to Partial autonomy unless the user specifies otherwise.
 * Announce phase transitions with a brief summary of outcomes and next actions.
 * Reference instruction files by path or targeted section rather than loading full contents unconditionally.

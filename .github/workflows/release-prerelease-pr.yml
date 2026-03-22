@@ -52,11 +52,11 @@ jobs:
           LAST_TAG=$(git tag -l 'hve-core-v*' | awk -F'[v.]' '{if ($(NF-1) % 2 == 0) print}' | sort -V | tail -1)
 
           # Check for breaking changes since last release.
-          # Match conventional commit subject with ! (e.g. feat!:) or
-          # a BREAKING CHANGE / BREAKING-CHANGE footer token at line start.
+          # Only scan commit subjects to avoid false positives from
+          # Dependabot bodies that embed upstream changelogs.
           HAS_BREAKING=0
           if [ -n "$LAST_TAG" ]; then
-            HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s%n%b' | \
+            HAS_BREAKING=$(git log "$LAST_TAG"..HEAD --format='%s' | \
               grep -cE '^[a-z]+(\(.+\))?!:|^BREAKING[ -]CHANGE:' || true)
           fi
 
@@ -174,30 +174,18 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PRE_VERSION: ${{ steps.version.outputs.version }}
           REPO: ${{ github.repository }}
-          SHA: ${{ github.sha }}
         run: |
           BRANCH="prerelease/next"
 
-          # Force-update or create prerelease/next branch to current HEAD
-          if gh api "/repos/$REPO/git/refs/heads/$BRANCH" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs/heads/$BRANCH" \
-              -X PATCH \
-              -f sha="$SHA" \
-              -F force=true
-            echo "Force-updated $BRANCH to $SHA"
-          else
-            gh api "/repos/$REPO/git/refs" \
-              -f "ref=refs/heads/$BRANCH" \
-              -f "sha=$SHA"
-            echo "Created $BRANCH at $SHA"
-          fi
-
-          # Configure git for commits on prerelease/next
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
-          git fetch origin "$BRANCH"
-          git checkout "$BRANCH"
+
+          # Build the version-bump commit locally before touching the remote.
+          # A single force-push of the final state prevents the server from
+          # ever seeing prerelease/next identical to main, which would cause
+          # GitHub to auto-close the open PR.
+          git checkout -B "$BRANCH"
 
           # Update package.json
           jq --arg v "$PRE_VERSION" '.version = $v' package.json > package.json.tmp \
@@ -232,7 +220,7 @@ jobs:
 
           git add -A
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
-          git push origin "$BRANCH"
+          git push --force origin "$BRANCH"
 
       - name: Ensure pre-release label exists
         env:

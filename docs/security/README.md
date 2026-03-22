@@ -1,9 +1,9 @@
 ---
 title: Security Documentation
-description: Index of security documentation including threat model and assurance case for HVE Core
+description: Index of security documentation including security model and assurance case for HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-01
+ms.date: 2026-03-16
 ms.topic: overview
 keywords:
   - security
@@ -20,9 +20,10 @@ This directory contains security documentation for HVE Core, demonstrating defen
 
 | Document                                                                   | Description                                                    |
 |----------------------------------------------------------------------------|----------------------------------------------------------------|
-| [Threat Model](threat-model.md)                                            | Comprehensive threat model and security assurance case         |
+| [Security Model](security-model.md)                                        | Comprehensive security model and security assurance case       |
 | [Dependency Pinning](dependency-pinning.md)                                | Pinning strategies and CI enforcement for all dependency types |
 | [SBOM Verification](sbom-verification.md)                                  | SBOM attestation verification and consumption guide            |
+| [Fuzzing](fuzzing.md)                                                      | OSSF Scorecard fuzz harness convention and compliance          |
 | [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) | Vulnerability disclosure and reporting process                 |
 
 ## Security Posture
@@ -33,7 +34,7 @@ HVE Core is an enterprise prompt engineering framework that:
 * Operates as development-time tooling consumed by GitHub Copilot
 * Relies on defense-in-depth with 20+ automated security controls
 
-The [threat model](threat-model.md) documents:
+The [security model](security-model.md) documents:
 
 * 36 threats across STRIDE, AI-specific, and Responsible AI categories
 * Security controls mapped to each threat

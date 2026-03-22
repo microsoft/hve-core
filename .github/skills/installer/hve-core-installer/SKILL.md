@@ -916,7 +916,7 @@ Copying agents enables local customization and offline use.
 
 📋 Planning & Documentation
   • adr-creation, agile-coach, brd-builder, doc-ops, prd-builder
-  • product-manager-advisor, security-plan-creator, ux-ui-designer
+  • product-manager-advisor, security-planner, ux-ui-designer
 
 ⚙️ Generators
   • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
