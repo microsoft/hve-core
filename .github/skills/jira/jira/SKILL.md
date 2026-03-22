@@ -90,6 +90,8 @@ EOF
 ### Search for Issues
 
 Use bounded JQL for Jira Cloud queries. Include a project, assignee, sprint, or another filter instead of a bare `ORDER BY` query.
+See [JQL Reference](./references/jql-reference.md) for the query patterns this
+skill expects.
 
 ```bash
 python scripts/jira.py search 'project = PROJ AND status = "In Progress"' --fields key,fields.summary,fields.status.name

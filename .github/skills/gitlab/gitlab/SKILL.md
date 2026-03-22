@@ -11,6 +11,9 @@ compatibility: 'Requires Python 3.11+. GitLab credentials via GITLAB_URL and GIT
 Use this skill to inspect and update GitLab merge requests, notes, pipelines,
 and job logs against GitLab.com or self-managed GitLab instances.
 
+This skill is the repository-local Python workflow for GitLab tasks. It is not
+the official GitLab MCP server integration surface.
+
 This first hve-core implementation is Python-only. Run the CLI through
 `python scripts/gitlab.py` and prefer `--fields` for read operations to keep
 output concise.

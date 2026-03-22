@@ -3,7 +3,7 @@ title: Collections Overview
 description: Explore the HVE collection system, compare available collections, and choose the right extension for your workflow
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-12
+ms.date: 2026-03-22
 ms.topic: overview
 ---
 
@@ -15,7 +15,7 @@ Two VS Code Marketplace extensions deliver these collections:
 
 ### HVE Core All (`ise-hve-essentials.hve-core-all`)
 
-The complete bundle containing 163 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
+The complete bundle containing 221 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
 
 ### HVE Installer (`ise-hve-essentials.hve-installer`)
 
@@ -35,15 +35,18 @@ The installer enables targeted deployment of specific collections into workspace
 |------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------|
 | ado              | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 21        | Stable       |
 | coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 14        | Stable       |
-| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 7         | Stable       |
+| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 19        | Stable       |
 | design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
-| experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 6         | Experimental |
-| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 12        | Stable       |
+| experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 8         | Experimental |
+| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 13        | Stable       |
+| gitlab           | Run GitLab merge request and pipeline workflows through a focused skill package                                                                 | 2         | Stable       |
 | hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 40        | Stable       |
-| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 163       | Stable       |
+| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 221       | Stable       |
 | installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |
-| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 16        | Stable       |
-| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 4         | Experimental |
+| jira             | Manage Jira backlogs, plan PRD-driven issue hierarchies, and execute issue operations                                                          | 13        | Stable       |
+| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 49        | Stable       |
+| rai-planning     | Assess AI systems against Responsible AI standards and capture standards-aligned backlog work                                                  | 13        | Experimental |
+| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 47        | Experimental |
 
 ## How Collections Fit Together
 
@@ -51,7 +54,7 @@ The following diagram shows how the domain collections relate to the two marketp
 
 ```mermaid
 graph TD
-    HCA["hve-core-all<br/>(163 artifacts)"]
+    HCA["hve-core-all<br/>(221 artifacts)"]
     INS["installer<br/>(2 artifacts)"]
 
     ADO["ado"]
@@ -60,8 +63,11 @@ graph TD
     DT["design-thinking"]
     EXP["experimental"]
     GH["github"]
+    GL["gitlab"]
     HC["hve-core"]
+    JR["jira"]
     PP["project-planning"]
+    RP["rai-planning"]
     SP["security"]
 
     HCA --> ADO
@@ -70,8 +76,11 @@ graph TD
     HCA --> DT
     HCA --> EXP
     HCA --> GH
+    HCA --> GL
     HCA --> HC
+    HCA --> JR
     HCA --> PP
+    HCA --> RP
     HCA --> SP
 ```
 
