@@ -39,7 +39,7 @@ The installer enables targeted deployment of specific collections into workspace
 | design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
 | experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 8         | Experimental |
 | github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 13        | Stable       |
-| gitlab           | Run GitLab merge request and pipeline workflows through a focused skill package                                                                 | 2         | Stable       |
+| gitlab           | Run GitLab merge request and pipeline workflows through a focused skill package                                                                | 2         | Stable       |
 | hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 40        | Stable       |
 | hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 221       | Stable       |
 | installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |

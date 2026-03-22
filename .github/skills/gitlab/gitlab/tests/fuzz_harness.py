@@ -8,8 +8,9 @@ Runs as an Atheris coverage-guided fuzz target when executed directly.
 
 from __future__ import annotations
 
+import io
 import sys
-from contextlib import suppress
+from contextlib import redirect_stderr, suppress
 
 import gitlab
 import pytest
@@ -34,7 +35,7 @@ def fuzz_validate_numeric_id(data: bytes) -> None:
     """Fuzz numeric identifier validation."""
     provider = atheris.FuzzedDataProvider(data)
     value = provider.ConsumeUnicodeNoSurrogates(40)
-    with suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
         gitlab.validate_numeric_id(value)
 
 
@@ -64,7 +65,7 @@ def fuzz_load_json_payload(data: bytes) -> None:
     """Fuzz JSON payload parsing."""
     provider = atheris.FuzzedDataProvider(data)
     raw_payload = provider.ConsumeUnicodeNoSurrogates(100)
-    with suppress(SystemExit):
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
         gitlab.load_json_payload(raw_payload, "usage: gitlab")
 
 
