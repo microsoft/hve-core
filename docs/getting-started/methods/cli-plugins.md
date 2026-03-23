@@ -53,22 +53,42 @@ copilot plugin install hve-core-all@hve-core
 
 Each plugin includes:
 
-| Component    | Description                                       |
-|--------------|---------------------------------------------------|
-| Agents       | Custom chat agents for specialized workflows      |
-| Commands     | Task prompts accessible via the CLI               |
-| Instructions | Coding standards and conventions                  |
-| Skills       | Self-contained skill packages (hve-core-all only) |
+| Component    | CLI Discovery | Description                                          |
+|--------------|---------------|------------------------------------------------------|
+| Agents       | Yes           | Custom chat agents for specialized workflows         |
+| Commands     | Yes           | Task prompts accessible via the CLI                  |
+| Skills       | Yes           | Self-contained skill packages (hve-core-all only)    |
+| Instructions | No            | Included for `#file:` references, not auto-applied   |
 
 Artifacts are symlinked from the plugin directory to the source repository,
 enabling zero-copy installation.
 
 ## Limitations
 
-* Instructions are included but may not be natively consumed by the CLI
-  plugin system
-* The `copilot plugin` commands are not yet in official GitHub Copilot
-  documentation
+### Instructions are not auto-applied from plugins
+
+The Copilot CLI [plugin spec](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
+recognizes `agents`, `skills`, `commands`, `hooks`, `mcpServers`, and
+`lspServers` as component types. There is no `instructions` component type.
+
+The CLI loads path-specific instructions exclusively from
+`.github/instructions/**/*.instructions.md` in the
+[project repo](https://docs.github.com/en/copilot/reference/custom-instructions-support#copilot-cli).
+Instruction files in plugin directories are **not** auto-applied via `applyTo`
+pattern matching.
+
+Instruction files are still included in plugin output because agents and
+prompts reference them via `#file:` directives. Those cross-file references
+resolve correctly within the plugin directory tree. The difference is between
+explicit inclusion (an agent pulls in instruction content at execution time)
+and automatic application (the CLI matches `applyTo` patterns against the
+files you are editing).
+
+For full path-specific instruction behavior, copy instruction files into your
+project's `.github/instructions/` directory.
+
+### Other limitations
+
 * Skills require skill-compatible agent environments
 
 ---
