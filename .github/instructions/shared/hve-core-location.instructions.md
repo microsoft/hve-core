@@ -9,11 +9,11 @@ This file's directory tree is the root of hve-core artifacts. When a referenced 
 
 ## Distribution Contexts
 
-| Context | Indicator | Artifact Root |
-|---|---|---|
-| Repository | `.github/instructions/` exists | `.github/` |
-| Extension | File under extension install dir | Extension `.github/` |
-| Plugin | `plugin.json` at root | Plugin root |
+| Context    | Indicator                        | Artifact Root        |
+|------------|----------------------------------|----------------------|
+| Repository | `.github/instructions/` exists   | `.github/`           |
+| Extension  | File under extension install dir | Extension `.github/` |
+| Plugin     | `plugin.json` at root            | Plugin root          |
 
 ## File Resolution
 

@@ -467,6 +467,50 @@ function Get-PackagingDirectorySpec {
 
 #region I/O Functions
 
+function Copy-DirectoryFiltered {
+    <#
+    .SYNOPSIS
+        Copies a directory tree while excluding dev artifact directories.
+    .DESCRIPTION
+        Recursive copy that skips directories matching ExcludePatterns.
+        Prevents copying large non-distributable artifacts (.venv, __pycache__, etc.)
+        that slow down packaging and crash vsce's secret scanner.
+    .PARAMETER Source
+        Source directory path.
+    .PARAMETER Destination
+        Destination directory path.
+    .PARAMETER ExcludePatterns
+        Directory names to exclude from the copy.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Source,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination,
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$ExcludePatterns = @('.venv', '.ruff_cache', '.pytest_cache', '__pycache__', 'node_modules')
+    )
+
+    if (-not (Test-Path $Destination)) {
+        New-Item -Path $Destination -ItemType Directory -Force | Out-Null
+    }
+
+    # Copy files at current level
+    Get-ChildItem -Path $Source -File -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination (Join-Path $Destination $_.Name) -Force
+    }
+
+    # Recurse into subdirectories, skipping excluded patterns
+    Get-ChildItem -Path $Source -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.Name -notin $ExcludePatterns) {
+            Copy-DirectoryFiltered -Source $_.FullName -Destination (Join-Path $Destination $_.Name) -ExcludePatterns $ExcludePatterns
+        }
+    }
+}
+
 function Copy-CollectionArtifacts {
     <#
     .SYNOPSIS
@@ -554,9 +598,7 @@ function Copy-CollectionArtifacts {
             $srcDir = Split-Path $srcPath -Parent
             $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
-            $destParent = Split-Path $destDir -Parent
-            New-Item -Path $destParent -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcDir -Destination $destParent -Recurse -Force
+            Copy-DirectoryFiltered -Source $srcDir -Destination $destDir
 
             # Remove co-located test directories from packaged skills
             Get-ChildItem -Path $destDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
@@ -924,7 +966,7 @@ function Invoke-PackageExtension {
             # Copy collection-specific artifacts
             Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -PrepareResult @{}
         } else {
-            # Full mode: copy everything as before
+            # Full mode: copy everything, filtering out dev artifacts during copy
             foreach ($spec in $copySpecs) {
                 $specName = Split-Path $spec.Source -Leaf
                 Write-Host "   Copying $specName..." -ForegroundColor Gray
@@ -934,13 +976,16 @@ function Invoke-PackageExtension {
                     New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
                     Copy-Item -Path $spec.Source -Destination $spec.Destination -Force
                 } else {
-                    $parentDir = Split-Path $spec.Destination -Parent
-                    if (-not (Test-Path $parentDir)) {
-                        New-Item -Path $parentDir -ItemType Directory -Force | Out-Null
-                    }
-                    Copy-Item -Path $spec.Source -Destination $spec.Destination -Recurse -Force
+                    Copy-DirectoryFiltered -Source $spec.Source -Destination $spec.Destination
                 }
             }
+        }
+
+        # Remove test directories from copied skills (not excluded by Copy-DirectoryFiltered)
+        $skillsDir = Join-Path $ExtensionDirectory ".github" "skills"
+        if (Test-Path $skillsDir) {
+            Get-ChildItem -Path $skillsDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
+                Remove-Item -Recurse -Force
         }
 
         Write-Host "   ✅ Extension directory prepared" -ForegroundColor Green
