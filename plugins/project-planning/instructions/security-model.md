@@ -1,1 +1,1 @@
-../../../.github/instructions/security-planning/security-model.instructions.md
+../../../.github/instructions/security/security-model.instructions.md

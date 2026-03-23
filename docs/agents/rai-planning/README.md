@@ -99,14 +99,14 @@ See [entry modes](entry-modes) for detailed guidance on when to choose each mode
 
 ## Related Pages
 
-| Page                                                | Description                                                            |
-|-----------------------------------------------------|------------------------------------------------------------------------|
-| [Why RAI planning?](why-rai-planning)               | The case for structured RAI assessment over ad-hoc reviews             |
-| [Agent overview](agent-overview)                    | Architecture, state management, and interaction model                  |
-| [Entry modes](entry-modes)                          | Choosing between capture, from-prd, and from-security-plan             |
-| [Phase reference](phase-reference)                  | Detailed inputs, outputs, and state transitions for all six phases     |
-| [Handoff pipeline](handoff-pipeline)                | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
-| [Security planning overview](../security-planning/) | The Security Planner agent that feeds into RAI assessment              |
+| Page                                       | Description                                                            |
+|--------------------------------------------|------------------------------------------------------------------------|
+| [Why RAI planning?](why-rai-planning)      | The case for structured RAI assessment over ad-hoc reviews             |
+| [Agent overview](agent-overview)           | Architecture, state management, and interaction model                  |
+| [Entry modes](entry-modes)                 | Choosing between capture, from-prd, and from-security-plan             |
+| [Phase reference](phase-reference)         | Detailed inputs, outputs, and state transitions for all six phases     |
+| [Handoff pipeline](handoff-pipeline)       | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
+| [Security planning overview](../security/) | The Security Planner agent that feeds into RAI assessment              |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

@@ -166,12 +166,12 @@ Seven rules govern conversational flow across all phases:
 
 Six instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/sssc-plans/`.
 
-* `.github/instructions/sssc-planning/sssc-identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and question cadence.
-* `.github/instructions/sssc-planning/sssc-assessment.instructions.md`: Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory.
-* `.github/instructions/sssc-planning/sssc-standards.instructions.md`: Phase 3 OpenSSF Scorecard checks, SLSA Build levels, Best Practices Badge, Sigstore, and SBOM standards.
-* `.github/instructions/sssc-planning/sssc-gap-analysis.instructions.md`: Phase 4 gap comparison, adoption categories, and effort sizing.
-* `.github/instructions/sssc-planning/sssc-backlog.instructions.md`: Phase 5 dual-format work item generation with templates.
-* `.github/instructions/sssc-planning/sssc-handoff.instructions.md`: Phase 6 backlog handoff protocol with projections.
+* `.github/instructions/security/sssc-identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and question cadence.
+* `.github/instructions/security/sssc-assessment.instructions.md`: Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory.
+* `.github/instructions/security/sssc-standards.instructions.md`: Phase 3 OpenSSF Scorecard checks, SLSA Build levels, Best Practices Badge, Sigstore, and SBOM standards.
+* `.github/instructions/security/sssc-gap-analysis.instructions.md`: Phase 4 gap comparison, adoption categories, and effort sizing.
+* `.github/instructions/security/sssc-backlog.instructions.md`: Phase 5 dual-format work item generation with templates.
+* `.github/instructions/security/sssc-handoff.instructions.md`: Phase 6 backlog handoff protocol with projections.
 
 Read and follow these instruction files when entering their respective phases.
 
@@ -232,7 +232,7 @@ When a Security Planner assessment exists, incorporate its findings to avoid red
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/sssc-planning/sssc-handoff.instructions.md` for full handoff templates and formatting rules.
+Reference `.github/instructions/security/sssc-handoff.instructions.md` for full handoff templates and formatting rules.
 
 * ADO work items use `WI-SSSC-{NNN}` sequential IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{SSSC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.

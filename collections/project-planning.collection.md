@@ -13,6 +13,7 @@ This collection includes agents for:
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
 - **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
 - **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
+- **SSSC Planner** — Software supply-chain security assessment with gap analysis, standards mapping, and automated backlog generation
 
 Supporting subagents included:
 

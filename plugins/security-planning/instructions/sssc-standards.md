@@ -1,1 +1,0 @@
-../../../.github/instructions/sssc-planning/sssc-standards.instructions.md

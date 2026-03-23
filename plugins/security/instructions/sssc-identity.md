@@ -1,1 +1,1 @@
-../../../.github/instructions/sssc-planning/sssc-identity.instructions.md
+../../../.github/instructions/security/sssc-identity.instructions.md

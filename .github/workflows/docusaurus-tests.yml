@@ -40,6 +40,10 @@ jobs:
         run: npm test
         continue-on-error: ${{ inputs.soft-fail }}
 
+      - name: Build site
+        working-directory: docs/docusaurus
+        run: npm run build
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3

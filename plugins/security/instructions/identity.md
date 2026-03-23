@@ -1,1 +1,1 @@
-../../../.github/instructions/security-planning/identity.instructions.md
+../../../.github/instructions/security/identity.instructions.md

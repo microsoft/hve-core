@@ -9,6 +9,12 @@ Code review agents included (via coding-standards collection):
 
 - **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
 
+Security and planning agents included (via security collection):
+
+- **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
+- **SSSC Planner** — Supply chain security assessment against OpenSSF Scorecard, SLSA, and SBOM standards
+- **RAI Planner** — Responsible AI assessment with sensitive uses screening, impact assessment, and dual-format backlog handoff
+
 Supporting subagents included:
 
 - **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
@@ -17,7 +23,6 @@ Supporting subagents included:
 - **Artifact Validator** — Validates implementation work against plans and conventions
 - **Prompt Tester** — Tests prompt files by following them literally in a sandbox
 - **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
-- **SSSC Planner** — Supply chain security assessment against OpenSSF Scorecard, SLSA, and SBOM standards
 
 Skills included:
 

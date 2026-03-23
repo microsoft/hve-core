@@ -1,1 +1,0 @@
-../../../.github/instructions/sssc-planning/sssc-assessment.instructions.md

@@ -20,6 +20,7 @@ This collection includes agents for:
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
 - **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
 - **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
+- **SSSC Planner** — Software supply-chain security assessment with gap analysis, standards mapping, and automated backlog generation
 
 Supporting subagents included:
 
@@ -51,6 +52,7 @@ copilot plugin install project-planning@hve-core
 | meeting-analyst              | Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core                                                                                                                                                                                       |
 | rai-planner                  | Responsible AI assessment agent with 6-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces sensitive uses screening, RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
 | security-planner             | Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration                                                                                                                                                     |
+| sssc-planner                 | Guides users through a six-phase assessment of their repository's supply chain security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog referencing reusable workflows from hve-core and microsoft/physical-ai-toolchain.                                             |
 | researcher-subagent          | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                                                                                 |
 | plan-validator               | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                                                                                                                                            |
 | phase-implementor            | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                                                                                                                                                      |
@@ -68,6 +70,10 @@ copilot plugin install project-planning@hve-core
 | rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
 | rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| sssc-capture                | Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode                                         |
+| sssc-from-prd               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                        |
+| sssc-from-brd               | Start an SSSC assessment from existing BRD artifacts using the SSSC Planner agent                                                        |
+| sssc-from-security-plan     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                             |
 
 ## Instructions
 
@@ -85,6 +91,12 @@ copilot plugin install project-planning@hve-core
 | standards-mapping     | Embedded OWASP, NIST, and CIS security standards with researcher subagent delegation for WAF/CAF runtime lookups - Brought to you by microsoft/hve-core                                                                                                     |
 | security-model        | STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core                                                                                                          |
 | backlog-handoff       | Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates - Brought to you by microsoft/hve-core                                                                                                    |
+| sssc-identity         | Identity and orchestration instructions for the SSSC Planner agent. Contains six-phase workflow, state.json schema, session recovery, and question cadence.                                                                                                 |
+| sssc-assessment       | Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory for SSSC Planner.                                                                                                                                                      |
+| sssc-standards        | Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner.                                                                                                                                               |
+| sssc-gap-analysis     | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner.                                                                                                                                                                        |
+| sssc-backlog          | Phase 5 dual-format work item generation with templates and priority derivation for SSSC Planner.                                                                                                                                                           |
+| sssc-handoff          | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | hve-core-location     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality         | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 

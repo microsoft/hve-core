@@ -131,9 +131,46 @@ jobs:
     permissions:
       contents: read
 
+  generate-dependency-sbom:
+    name: Generate Dependency SBOM
+    needs: [prerelease-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      # write required for gh release upload to attach SBOM to the release
+      contents: write
+    steps:
+      - name: Checkout dependency manifests
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          sparse-checkout: |
+            package.json
+            package-lock.json
+            .syft.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Generate dependency SBOM
+        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        with:
+          path: .
+          format: spdx-json
+          output-file: dependencies.spdx.json
+          artifact-name: sbom-dependencies
+          upload-release-assets: false
+          upload-artifact: true
+          config: .syft.yaml
+
+      - name: Upload dependency SBOM to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
+            "dependencies.spdx.json" \
+            --clobber -R "${{ github.repository }}"
+
   attest-and-upload:
     name: Attest and Upload (${{ matrix.id }})
-    needs: [prerelease-tag, extension-package-prerelease]
+    needs: [prerelease-tag, extension-package-prerelease, generate-dependency-sbom]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -142,38 +179,93 @@ jobs:
       contents: write
       id-token: write
       attestations: write
+      artifact-metadata: write
     steps:
+      - name: Checkout Syft config
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          sparse-checkout: .syft.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Download dependency SBOM
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sbom-dependencies
+          path: ./sbom
+
       - name: Download VSIX artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: extension-vsix-${{ matrix.id }}
           path: ./dist
 
+      - name: Resolve VSIX filename
+        id: vsix
+        run: |
+          shopt -s nullglob
+          files=(dist/*.vsix)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "::error::No VSIX file found in dist/"
+            exit 1
+          fi
+          if [[ ${#files[@]} -gt 1 ]]; then
+            echo "::error::Expected exactly one VSIX file but found ${#files[@]}: ${files[*]}"
+            exit 1
+          fi
+          VSIX_FILE="${files[0]}"
+          VSIX_NAME=$(basename "$VSIX_FILE")
+          echo "file=$VSIX_FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        with:
+          file: ${{ steps.vsix.outputs.file }}
+          format: spdx-json
+          output-file: dist/${{ steps.vsix.outputs.name }}.spdx.json
+          artifact-name: sbom-${{ matrix.id }}
+          upload-release-assets: false
+          upload-artifact: true
+          config: .syft.yaml
+
+      - name: Verify SBOM files exist
+        run: |
+          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
+          test -f "sbom/dependencies.spdx.json" \
+            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+
       - name: Attest build provenance
         id: attest
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
-          subject-path: "dist/*.vsix"
+          subject-path: ${{ steps.vsix.outputs.file }}
 
-      - name: Upload VSIX and attestation to GitHub Release
+      - name: Attest SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: ${{ steps.vsix.outputs.file }}
+          sbom-path: dist/${{ steps.vsix.outputs.name }}.spdx.json
+
+      - name: Attest dependency SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: ${{ steps.vsix.outputs.file }}
+          sbom-path: sbom/dependencies.spdx.json
+
+      - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ needs.prerelease-tag.outputs.tag_name }}
-          REPO: ${{ github.repository }}
-          COLLECTION_ID: ${{ matrix.id }}
           BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          VSIX_FILE=$(find dist -name '*.vsix' | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX file found for collection $COLLECTION_ID"
-            exit 1
-          fi
-          VSIX_NAME=$(basename "$VSIX_FILE")
-          cp "$BUNDLE_PATH" "dist/${VSIX_NAME}.sigstore.json"
-          gh release upload "$TAG_NAME" \
-            "$VSIX_FILE" \
-            "dist/${VSIX_NAME}.sigstore.json" \
-            --clobber -R "$REPO"
+          cp "$BUNDLE_PATH" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
+          gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
+            "${{ steps.vsix.outputs.file }}" \
+            "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
+            --clobber -R "${{ github.repository }}"
 
   publish-release:
     name: Publish Pre-Release

@@ -1,1 +1,1 @@
-../../../.github/agents/security-planning/sssc-planner.agent.md
+../../../.github/agents/security/sssc-planner.agent.md

@@ -1,1 +1,1 @@
-../../../.github/instructions/sssc-planning/sssc-assessment.instructions.md
+../../../.github/instructions/security/sssc-assessment.instructions.md

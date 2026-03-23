@@ -1,1 +1,0 @@
-../../../.github/prompts/security-planning/sssc-capture.prompt.md

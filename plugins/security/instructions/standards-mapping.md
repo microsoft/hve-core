@@ -1,1 +1,1 @@
-../../../.github/instructions/security-planning/standards-mapping.instructions.md
+../../../.github/instructions/security/standards-mapping.instructions.md
