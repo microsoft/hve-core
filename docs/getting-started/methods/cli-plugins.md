@@ -3,7 +3,7 @@ title: Copilot CLI Plugins
 description: Install HVE Core agents, prompts, and skills as Copilot CLI plugins
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-03-23
 ms.topic: how-to
 ---
 
@@ -53,12 +53,12 @@ copilot plugin install hve-core-all@hve-core
 
 Each plugin includes:
 
-| Component    | CLI Discovery | Description                                          |
-|--------------|---------------|------------------------------------------------------|
-| Agents       | Yes           | Custom chat agents for specialized workflows         |
-| Commands     | Yes           | Task prompts accessible via the CLI                  |
-| Skills       | Yes           | Self-contained skill packages (hve-core-all only)    |
-| Instructions | No            | Included for `#file:` references, not auto-applied   |
+| Component    | CLI Discovery | Description                                        |
+|--------------|---------------|----------------------------------------------------|
+| Agents       | Yes           | Custom chat agents for specialized workflows       |
+| Commands     | Yes           | Task prompts accessible via the CLI                |
+| Skills       | Yes           | Self-contained skill packages (hve-core-all only)  |
+| Instructions | No            | Included for `#file:` references, not auto-applied |
 
 Artifacts are symlinked from the plugin directory to the source repository,
 enabling zero-copy installation.
