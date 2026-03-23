@@ -117,12 +117,29 @@ Describe 'Get-PluginItemSubpath' {
 }
 
 Describe 'New-PluginManifestContent' {
-    It 'Returns hashtable with name, description, version, and commands' {
+    It 'Returns hashtable with name, description, and version' {
         $result = New-PluginManifestContent -CollectionId 'test-plugin' -Description 'A test plugin' -Version '2.0.0'
         $result.name | Should -Be 'test-plugin'
         $result.description | Should -Be 'A test plugin'
         $result.version | Should -Be '2.0.0'
-        $result.commands | Should -Be 'commands/'
+    }
+
+    It 'Includes explicit path arrays when provided' {
+        $result = New-PluginManifestContent `
+            -CollectionId 'with-paths' -Description 'desc' -Version '1.0.0' `
+            -AgentPaths @('agents/core/') `
+            -CommandPaths @('commands/core/', 'commands/ado/') `
+            -SkillPaths @('skills/shared/')
+        $result.agents | Should -Be @('agents/core/')
+        $result.commands | Should -Be @('commands/ado/', 'commands/core/')
+        $result.skills | Should -Be @('skills/shared/')
+    }
+
+    It 'Omits component keys when no paths provided' {
+        $result = New-PluginManifestContent -CollectionId 'minimal' -Description 'desc' -Version '1.0.0'
+        $result.Contains('agents') | Should -BeFalse
+        $result.Contains('commands') | Should -BeFalse
+        $result.Contains('skills') | Should -BeFalse
     }
 
     It 'Returns ordered hashtable' {

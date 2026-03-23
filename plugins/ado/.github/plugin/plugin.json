@@ -2,5 +2,13 @@
   "name": "ado",
   "description": "Azure DevOps work item management, build monitoring, and pull request creation",
   "version": "3.2.0",
-  "commands": "commands/"
+  "agents": [
+    "agents/ado/"
+  ],
+  "commands": [
+    "commands/ado/"
+  ],
+  "skills": [
+    "skills/shared/"
+  ]
 }

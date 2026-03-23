@@ -2,5 +2,10 @@
   "name": "coding-standards",
   "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
   "version": "3.2.0",
-  "commands": "commands/"
+  "agents": [
+    "agents/code-review/"
+  ],
+  "commands": [
+    "commands/code-review/"
+  ]
 }

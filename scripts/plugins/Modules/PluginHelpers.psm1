@@ -143,7 +143,10 @@ function New-PluginManifestContent {
 
     .DESCRIPTION
     Creates a hashtable representing the plugin manifest with name,
-    description, and version sourced from the repository package.json.
+    description, version, and component path declarations. When explicit
+    path arrays are provided, uses them so the CLI discovers artifacts
+    in nested subdirectories. When omitted, falls back to convention
+    defaults for lightweight marketplace entries.
 
     .PARAMETER CollectionId
     The collection identifier used as the plugin name.
@@ -154,8 +157,18 @@ function New-PluginManifestContent {
     .PARAMETER Version
     Semantic version string from the repository package.json.
 
+    .PARAMETER AgentPaths
+    Optional. Array of relative directory paths containing .agent.md files.
+
+    .PARAMETER CommandPaths
+    Optional. Array of relative directory paths containing .prompt.md files.
+
+    .PARAMETER SkillPaths
+    Optional. Array of relative directory paths containing skill subdirs.
+
     .OUTPUTS
-    [hashtable] Plugin manifest with name, description, and version keys.
+    [hashtable] Plugin manifest with name, description, version, and
+    component path keys.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -167,15 +180,42 @@ function New-PluginManifestContent {
         [string]$Description,
 
         [Parameter(Mandatory = $true)]
-        [string]$Version
+        [string]$Version,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$AgentPaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$CommandPaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$SkillPaths
     )
 
-    return [ordered]@{
+    $manifest = [ordered]@{
         name        = $CollectionId
         description = $Description
         version     = $Version
-        commands    = 'commands/'
     }
+
+    # Emit explicit path arrays when provided; the CLI does not recurse
+    # into subdirectories, so each leaf directory must be declared.
+    if ($AgentPaths -and $AgentPaths.Count -gt 0) {
+        $manifest['agents'] = @($AgentPaths | Sort-Object)
+    }
+
+    if ($CommandPaths -and $CommandPaths.Count -gt 0) {
+        $manifest['commands'] = @($CommandPaths | Sort-Object)
+    }
+
+    if ($SkillPaths -and $SkillPaths.Count -gt 0) {
+        $manifest['skills'] = @($SkillPaths | Sort-Object)
+    }
+
+    return $manifest
 }
 
 function New-PluginReadmeContent {
@@ -651,6 +691,17 @@ function Write-PluginDirectory {
         SkillCount       = 0
     }
 
+    # Track unique directories per kind for plugin.json path arrays
+    $agentDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $commandDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $skillDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+
     $readmeItems = @()
     $generatedFiles = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
@@ -710,12 +761,28 @@ function Write-PluginDirectory {
             Kind        = $kind
         }
 
-        # Update counts
+        # Update counts and collect parent directories for manifest paths
         switch ($kind) {
-            'agent'       { $counts.AgentCount++ }
-            'prompt'      { $counts.CommandCount++ }
+            'agent' {
+                $counts.AgentCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$agentDirs.Add("$relDir/")
+            }
+            'prompt' {
+                $counts.CommandCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$commandDirs.Add("$relDir/")
+            }
             'instruction' { $counts.InstructionCount++ }
-            'skill'       { $counts.SkillCount++ }
+            'skill' {
+                $counts.SkillCount++
+                # Skills: the CLI scans for <name>/SKILL.md; point at the grandparent
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$skillDirs.Add("$relDir/")
+            }
         }
 
         [void]$generatedFiles.Add($destPath)
@@ -753,10 +820,16 @@ function Write-PluginDirectory {
         New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
     }
 
-    # Generate plugin.json
+    # Generate plugin.json with explicit path arrays for CLI discovery
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
-    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description -Version $Version
+    $manifest = New-PluginManifestContent `
+        -CollectionId $collectionId `
+        -Description $Collection.description `
+        -Version $Version `
+        -AgentPaths @($agentDirs) `
+        -CommandPaths @($commandDirs) `
+        -SkillPaths @($skillDirs)
     [void]$generatedFiles.Add($manifestPath)
 
     if ($DryRun) {

@@ -2,5 +2,15 @@
   "name": "project-planning",
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
   "version": "3.2.0",
-  "commands": "commands/"
+  "agents": [
+    "agents/hve-core/",
+    "agents/hve-core/subagents/",
+    "agents/project-planning/",
+    "agents/rai-planning/",
+    "agents/security/"
+  ],
+  "commands": [
+    "commands/rai-planning/",
+    "commands/security/"
+  ]
 }
