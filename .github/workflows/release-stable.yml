@@ -406,11 +406,16 @@ jobs:
           path: .
           format: spdx-json
           output-file: dependencies.spdx.json
-          artifact-name: sbom-dependencies
           upload-release-assets: false
-          upload-artifact: true
+          upload-artifact: false
           config: .syft.yaml
           dependency-snapshot: true
+
+      - name: Upload dependency SBOM artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: sbom-dependencies
+          path: dependencies.spdx.json
 
       - name: Upload dependency SBOM to release
         env:

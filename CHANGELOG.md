@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.2.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.1...hve-core-v3.2.2) (2026-03-23)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** decouple SBOM artifact name from internal filename ([#1178](https://github.com/microsoft/hve-core/issues/1178)) ([c3f1ef4](https://github.com/microsoft/hve-core/commit/c3f1ef45ca126a469b38e4403eb703abc4373b4f))
+
 ## [3.2.1](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.0...hve-core-v3.2.1) (2026-03-23)
 
 
