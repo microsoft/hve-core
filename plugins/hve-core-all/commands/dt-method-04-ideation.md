@@ -1,1 +1,0 @@
-../../../.github/prompts/design-thinking/dt-method-04-ideation.prompt.md

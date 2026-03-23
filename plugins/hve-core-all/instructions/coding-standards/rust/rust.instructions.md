@@ -1,0 +1,1 @@
+../../../../../.github/instructions/coding-standards/rust/rust.instructions.md

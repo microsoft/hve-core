@@ -1,1 +1,0 @@
-../../../.github/agents/security/security-reviewer.agent.md

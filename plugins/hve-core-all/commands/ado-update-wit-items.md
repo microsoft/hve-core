@@ -1,1 +1,0 @@
-../../../.github/prompts/ado/ado-update-wit-items.prompt.md

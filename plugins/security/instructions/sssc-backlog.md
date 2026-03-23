@@ -1,1 +1,0 @@
-../../../.github/instructions/security/sssc-backlog.instructions.md

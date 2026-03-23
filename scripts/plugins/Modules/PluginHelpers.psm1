@@ -17,11 +17,11 @@ Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelp
 function Get-PluginItemName {
     <#
     .SYNOPSIS
-    Strips artifact-type suffix from a filename.
+    Returns an artifact filename unchanged.
 
     .DESCRIPTION
-    Removes the kind-specific suffix from a filename and returns the
-    simplified name with a .md extension (or the directory name for skills).
+    Identity function retained as a validated entry point for filename
+    handling in the plugin pipeline. Returns the input filename as-is.
 
     .PARAMETER FileName
     The original filename (e.g. task-researcher.agent.md).
@@ -30,7 +30,7 @@ function Get-PluginItemName {
     The artifact kind: agent, prompt, instruction, or skill.
 
     .OUTPUTS
-    [string] The simplified item name.
+    [string] The unchanged filename.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -44,19 +44,65 @@ function Get-PluginItemName {
     )
 
     switch ($Kind) {
-        'agent' {
-            return ($FileName -replace '\.agent\.md$', '') + '.md'
-        }
-        'prompt' {
-            return ($FileName -replace '\.prompt\.md$', '') + '.md'
-        }
-        'instruction' {
-            return ($FileName -replace '\.instructions\.md$', '') + '.md'
-        }
-        'skill' {
-            return $FileName
-        }
+        'agent'       { return $FileName }
+        'prompt'      { return $FileName }
+        'instruction' { return $FileName }
+        'skill'       { return $FileName }
     }
+}
+
+function Get-PluginItemSubpath {
+    <#
+    .SYNOPSIS
+    Extracts the subdirectory path between the kind root prefix and the leaf.
+
+    .DESCRIPTION
+    Given a repo-relative item path and its kind, strips the known prefix
+    (e.g. .github/agents/) and returns the intermediate directory segments.
+    Returns empty string when the item is directly under the kind root.
+
+    .PARAMETER Path
+    Repo-relative item path (e.g. .github/agents/hve-core/rpi-agent.agent.md).
+
+    .PARAMETER Kind
+    The artifact kind: agent, prompt, instruction, or skill.
+
+    .OUTPUTS
+    [string] Intermediate subdirectory path, or empty string.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [string]$Kind
+    )
+
+    $prefixMap = @{
+        'agent'       = '.github/agents/'
+        'prompt'      = '.github/prompts/'
+        'instruction' = '.github/instructions/'
+        'skill'       = '.github/skills/'
+    }
+
+    $prefix = $prefixMap[$Kind]
+    $normalized = $Path -replace '\\', '/'
+
+    if (-not $normalized.StartsWith($prefix)) {
+        return ''
+    }
+
+    $relative = $normalized.Substring($prefix.Length)
+    $parts = $relative -split '/'
+
+    if ($parts.Count -gt 1) {
+        return ($parts[0..($parts.Count - 2)] -join '/')
+    }
+
+    return ''
 }
 
 function Get-PluginSubdirectory {
@@ -128,6 +174,7 @@ function New-PluginManifestContent {
         name        = $CollectionId
         description = $Description
         version     = $Version
+        commands    = 'commands/'
     }
 }
 
@@ -618,7 +665,12 @@ function Write-PluginDirectory {
             # Skills are directory symlinks; use the directory name as FileName
             $fileName = Split-Path -Leaf $item.path
             $itemName = Get-PluginItemName -FileName $fileName -Kind $kind
-            $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            $itemSubpath = Get-PluginItemSubpath -Path $item.path -Kind $kind
+            if ($itemSubpath) {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemSubpath, $itemName
+            } else {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            }
 
             # Read frontmatter from SKILL.md for description; fall back to directory name
             $skillMdPath = Join-Path -Path $sourcePath -ChildPath 'SKILL.md'
@@ -633,7 +685,12 @@ function Write-PluginDirectory {
         else {
             $fileName = Split-Path -Leaf $item.path
             $itemName = Get-PluginItemName -FileName $fileName -Kind $kind
-            $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            $itemSubpath = Get-PluginItemSubpath -Path $item.path -Kind $kind
+            if ($itemSubpath) {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemSubpath, $itemName
+            } else {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            }
 
             # Read frontmatter from the source file for description
             $fallback = $itemName -replace '\.md$', ''
@@ -867,6 +924,7 @@ function Repair-PluginSymlinkIndex {
 
 Export-ModuleMember -Function @(
     'Get-PluginItemName',
+    'Get-PluginItemSubpath',
     'Get-PluginSubdirectory',
     'New-GenerateResult',
     'New-MarketplaceManifestContent',

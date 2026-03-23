@@ -1,1 +1,0 @@
-../../../.github/prompts/rai-planning/rai-capture.prompt.md

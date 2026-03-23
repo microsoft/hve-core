@@ -1,5 +1,6 @@
 {
   "name": "project-planning",
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-  "version": "3.2.0"
+  "version": "3.2.0",
+  "commands": "commands/"
 }

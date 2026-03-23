@@ -1,1 +1,0 @@
-../../../.github/agents/ado/ado-prd-to-wit.agent.md

@@ -1,1 +1,0 @@
-../../../.github/agents/hve-core/subagents/prompt-tester.agent.md

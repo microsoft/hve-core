@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/prompt-refactor.prompt.md

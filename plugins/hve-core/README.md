@@ -44,57 +44,57 @@ copilot plugin install hve-core@hve-core
 
 ## Agents
 
-| Agent                    | Description                                                                                                                                                                                       |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| rpi-agent                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core |
-| task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                        |
-| memory                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                     |
-| doc-ops                  | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                 |
-| prompt-builder           | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                 |
-| task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                |
-| task-implementor         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core                                                    |
-| task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                |
-| pr-review                | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                     |
-| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core                                    |
-| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                   |
-| plan-validator           | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                 |
-| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                           |
-| prompt-evaluator         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance                                                             |
-| prompt-tester            | Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value   |
-| prompt-updater           | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research                                 |
-| researcher-subagent      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                      |
+| Agent                          | Description                                                                                                                                                                                       |
+|--------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-agent.agent                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core |
+| task-planner.agent             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                        |
+| memory.agent                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                     |
+| doc-ops.agent                  | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                 |
+| prompt-builder.agent           | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                 |
+| task-researcher.agent          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                |
+| task-implementor.agent         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core                                                    |
+| task-reviewer.agent            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                |
+| pr-review.agent                | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                     |
+| rpi-validator.agent            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core                                    |
+| implementation-validator.agent | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                   |
+| plan-validator.agent           | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                 |
+| phase-implementor.agent        | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                           |
+| prompt-evaluator.agent         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance                                                             |
+| prompt-tester.agent            | Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value   |
+| prompt-updater.agent           | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research                                 |
+| researcher-subagent.agent      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                      |
 
 ## Commands
 
-| Command            | Description                                                                                                                  |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------|
-| rpi                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core      |
-| task-research      | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core             |
-| task-plan          | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core         |
-| task-implement     | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                      |
-| task-review        | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core |
-| checkpoint         | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                               |
-| doc-ops-update     | Invoke doc-ops agent for documentation quality assurance and updates                                                         |
-| git-commit-message | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch             |
-| git-commit         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit     |
-| git-merge          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                 |
-| git-setup          | Interactive, verification-first Git configuration assistant (non-destructive)                                                |
-| pull-request       | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                 |
-| prompt-analyze     | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core  |
-| prompt-build       | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core              |
-| prompt-refactor    | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core    |
+| Command                   | Description                                                                                                                  |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------|
+| rpi.prompt                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core      |
+| task-research.prompt      | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core             |
+| task-plan.prompt          | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core         |
+| task-implement.prompt     | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                      |
+| task-review.prompt        | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core |
+| checkpoint.prompt         | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                               |
+| doc-ops-update.prompt     | Invoke doc-ops agent for documentation quality assurance and updates                                                         |
+| git-commit-message.prompt | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch             |
+| git-commit.prompt         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit     |
+| git-merge.prompt          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                 |
+| git-setup.prompt          | Interactive, verification-first Git configuration assistant (non-destructive)                                                |
+| pull-request.prompt       | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                 |
+| prompt-analyze.prompt     | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core  |
+| prompt-build.prompt       | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core              |
+| prompt-refactor.prompt    | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core    |
 
 ## Instructions
 
-| Instruction       | Description                                                                                                                                                                                                                                                 |
-|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| writing-style     | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
-| markdown          | Required instructions for creating or editing any Markdown (.md) files                                                                                                                                                                                      |
-| commit-message    | Required instructions for creating all commit messages - Brought to you by microsoft/hve-core                                                                                                                                                               |
-| prompt-builder    | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
-| git-merge         | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls.                                                                                                                                              |
-| pull-request      | Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core                                                                           |
-| hve-core-location | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Instruction                    | Description                                                                                                                                                                                                                                                 |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| writing-style.instructions     | Required writing style conventions for voice, tone, and language in all markdown content                                                                                                                                                                    |
+| markdown.instructions          | Required instructions for creating or editing any Markdown (.md) files                                                                                                                                                                                      |
+| commit-message.instructions    | Required instructions for creating all commit messages - Brought to you by microsoft/hve-core                                                                                                                                                               |
+| prompt-builder.instructions    | Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills                                                                                                                                                    |
+| git-merge.instructions         | Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls.                                                                                                                                              |
+| pull-request.instructions      | Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core                                                                           |
+| hve-core-location.instructions | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills
 

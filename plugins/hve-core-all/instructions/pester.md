@@ -1,1 +1,0 @@
-../../../.github/instructions/coding-standards/powershell/pester.instructions.md

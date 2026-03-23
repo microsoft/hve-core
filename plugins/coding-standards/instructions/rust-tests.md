@@ -1,1 +1,0 @@
-../../../.github/instructions/coding-standards/rust/rust-tests.instructions.md
