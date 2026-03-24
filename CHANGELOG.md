@@ -12,6 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.2.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.1...hve-core-v3.2.2) (2026-03-23)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** decouple SBOM artifact name from internal filename ([#1178](https://github.com/microsoft/hve-core/issues/1178)) ([c3f1ef4](https://github.com/microsoft/hve-core/commit/c3f1ef45ca126a469b38e4403eb703abc4373b4f))
+
+## [3.2.1](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.0...hve-core-v3.2.1) (2026-03-23)
+
+
+### 🐛 Bug Fixes
+
+* **workflows:** expand dependency-review license allow-list and add docusaurus build step ([#1168](https://github.com/microsoft/hve-core/issues/1168)) ([5458cab](https://github.com/microsoft/hve-core/commit/5458cab68f514c2919dafeda018ef2de2c82e763))
+* **workflows:** prevent zero-diff force-push, fix SBOM attestation, and consolidate security collection ([#1159](https://github.com/microsoft/hve-core/issues/1159)) ([0fbd111](https://github.com/microsoft/hve-core/commit/0fbd1110e345d0abdd01c7be61fc08c4948cefc6))
+
 ## [3.2.0](https://github.com/microsoft/hve-core/compare/hve-core-v3.1.46...hve-core-v3.2.0) (2026-03-20)
 
 

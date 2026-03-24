@@ -1,0 +1,1 @@
+../../../.github/instructions/jira/jira-wit-planning.instructions.md

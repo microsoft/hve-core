@@ -91,7 +91,7 @@ You do not need RAI expertise to start. The agent guides the assessment conversa
 | Time to Phase 2        | Longest: full scoping interview                 | Medium: confirm and refine extracted scope   | Shortest: verify pre-populated data              |
 | Best for               | Exploratory assessments, standalone AI projects | Projects with existing product documentation | The recommended workflow after security planning |
 
-See [Entry Modes](entry-modes) for step-by-step instructions on starting each mode.
+See [Entry Modes](entry-modes.md) for step-by-step instructions on starting each mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

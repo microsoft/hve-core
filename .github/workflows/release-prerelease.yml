@@ -150,15 +150,21 @@ jobs:
           persist-credentials: false
 
       - name: Generate dependency SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           path: .
           format: spdx-json
           output-file: dependencies.spdx.json
-          artifact-name: sbom-dependencies
           upload-release-assets: false
-          upload-artifact: true
+          upload-artifact: false
           config: .syft.yaml
+          dependency-snapshot: true
+
+      - name: Upload dependency SBOM artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: sbom-dependencies
+          path: dependencies.spdx.json
 
       - name: Upload dependency SBOM to release
         env:
@@ -219,7 +225,7 @@ jobs:
           echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           file: ${{ steps.vsix.outputs.file }}
           format: spdx-json
@@ -261,10 +267,13 @@ jobs:
         run: |
           cp "$BUNDLE_PATH" \
             "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
           gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
             "${{ steps.vsix.outputs.file }}" \
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
             "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
   publish-release:
