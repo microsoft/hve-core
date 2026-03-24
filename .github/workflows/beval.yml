@@ -30,7 +30,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install GitHub Copilot CLI
-        run: npm install -g @github/copilot@1.0.9
+        run: |
+          npm ci --prefix beval
+          echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install beval
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@a2effa10cec1b06c394811587fede0070174d589#subdirectory=python"
