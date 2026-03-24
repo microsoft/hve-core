@@ -3,6 +3,13 @@ name: Dependency Review
 on:
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '**/pyproject.toml'
+      - '**/uv.lock'
+      - '**/requirements*.txt'
+      - '.github/workflows/dependency-review.yml'
   workflow_call:
 
 permissions:
