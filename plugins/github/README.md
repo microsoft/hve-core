@@ -22,20 +22,20 @@ copilot plugin install github@hve-core
 
 ## Agents
 
-| Agent                        | Description                                                                                                                                                   |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| github-backlog-manager.agent | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core |
+| Agent                  | Description                                                                                                                                                   |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| github-backlog-manager | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core |
 
 ## Commands
 
-| Command                       | Description                                                                                                                                      |
-|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| github-add-issue.prompt       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
-| github-discover-issues.prompt | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
-| github-triage-issues.prompt   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
-| github-execute-backlog.prompt | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
-| github-sprint-plan.prompt     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
-| github-suggest.prompt         | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
+| Command                | Description                                                                                                                                      |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| github-add-issue       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
+| github-discover-issues | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
+| github-triage-issues   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
+| github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
+| github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| github-suggest         | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
 
 ## Instructions
 

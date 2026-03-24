@@ -53,14 +53,14 @@ Describe 'New-PluginReadmeContent - maturity notice' {
 }
 
 Describe 'Get-PluginItemName' {
-    It 'Preserves .agent.md suffix' {
+    It 'Strips .agent.md to .md for agents' {
         $result = Get-PluginItemName -FileName 'task-researcher.agent.md' -Kind 'agent'
-        $result | Should -Be 'task-researcher.agent.md'
+        $result | Should -Be 'task-researcher.md'
     }
 
-    It 'Preserves .prompt.md suffix' {
+    It 'Strips .prompt.md to .md for prompts' {
         $result = Get-PluginItemName -FileName 'gen-plan.prompt.md' -Kind 'prompt'
-        $result | Should -Be 'gen-plan.prompt.md'
+        $result | Should -Be 'gen-plan.md'
     }
 
     It 'Preserves .instructions.md suffix' {
@@ -236,7 +236,7 @@ Describe 'Write-PluginDirectory - DryRun mode' {
         # GeneratedFiles should contain a path with the 'test' subdirectory preserved
         $agentPaths = @($result.GeneratedFiles | Where-Object { $_ -match 'agents' -and $_ -match 'example' })
         $agentPaths | Should -Not -BeNullOrEmpty
-        $agentPaths[0] | Should -Match 'agents[/\\]test[/\\]example\.agent\.md$'
+        $agentPaths[0] | Should -Match 'agents[/\\]test[/\\]example\.md$'
     }
 
     It 'Completes DryRun with skill items' {

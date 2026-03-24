@@ -23,24 +23,24 @@ copilot plugin install ado@hve-core
 
 ## Agents
 
-| Agent                     | Description                                                                                                                                                                                      |
-|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ado-prd-to-wit.agent      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                                                        |
-| ado-backlog-manager.agent | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution - Brought to you by microsoft/hve-core |
+| Agent               | Description                                                                                                                                                                                      |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ado-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                                                        |
+| ado-backlog-manager | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution - Brought to you by microsoft/hve-core |
 
 ## Commands
 
-| Command                                            | Description                                                                                                                                 |
-|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| ado-create-pull-request.prompt                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages. |
-| ado-get-build-info.prompt                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                        |
-| ado-get-my-work-items.prompt                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
-| ado-process-my-work-items-for-task-planning.prompt | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
-| ado-update-wit-items.prompt                        | Prompt to update work items based on planning files                                                                                         |
-| ado-add-work-item.prompt                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
-| ado-discover-work-items.prompt                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
-| ado-sprint-plan.prompt                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                       |
-| ado-triage-work-items.prompt                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
+| Command                                     | Description                                                                                                                                 |
+|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| ado-create-pull-request                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages. |
+| ado-get-build-info                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                        |
+| ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
+| ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
+| ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                         |
+| ado-add-work-item                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
+| ado-discover-work-items                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
+| ado-sprint-plan                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                       |
+| ado-triage-work-items                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
 
 ## Instructions
 

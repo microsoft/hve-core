@@ -23,11 +23,11 @@ copilot plugin install experimental@hve-core
 
 ## Agents
 
-| Agent                     | Description                                                                                                                                                                                              |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| experiment-designer.agent | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core |
-| pptx.agent                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                          |
-| pptx-subagent.agent       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                   |
+| Agent               | Description                                                                                                                                                                                              |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| experiment-designer | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core |
+| pptx                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                          |
+| pptx-subagent       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                   |
 
 ## Instructions
 

@@ -29,15 +29,15 @@ copilot plugin install coding-standards@hve-core
 
 ## Agents
 
-| Agent                        | Description                                                                                                                                 |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| functional-code-review.agent | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
+| Agent                  | Description                                                                                                                                 |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| functional-code-review | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
 
 ## Commands
 
-| Command                       | Description                                                                                                                               |
-|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| functional-code-review.prompt | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
+| Command                | Description                                                                                                                               |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| functional-code-review | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core |
 
 ## Instructions
 

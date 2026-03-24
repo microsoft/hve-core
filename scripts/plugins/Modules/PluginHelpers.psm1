@@ -17,11 +17,13 @@ Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelp
 function Get-PluginItemName {
     <#
     .SYNOPSIS
-    Returns an artifact filename unchanged.
+    Returns an artifact filename, stripping kind suffixes for CLI display.
 
     .DESCRIPTION
-    Identity function retained as a validated entry point for filename
-    handling in the plugin pipeline. Returns the input filename as-is.
+    Validated entry point for filename handling in the plugin pipeline.
+    Agent and prompt files have their kind suffix (.agent.md, .prompt.md)
+    replaced with .md so the CLI title is clean. Instruction files keep
+    their suffix because VS Code discovery filters on *.instructions.md.
 
     .PARAMETER FileName
     The original filename (e.g. task-researcher.agent.md).
@@ -30,7 +32,7 @@ function Get-PluginItemName {
     The artifact kind: agent, prompt, instruction, or skill.
 
     .OUTPUTS
-    [string] The unchanged filename.
+    [string] The processed filename.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -44,8 +46,8 @@ function Get-PluginItemName {
     )
 
     switch ($Kind) {
-        'agent'       { return $FileName }
-        'prompt'      { return $FileName }
+        'agent'       { return $FileName -replace '\.agent\.md$', '.md' }
+        'prompt'      { return $FileName -replace '\.prompt\.md$', '.md' }
         'instruction' { return $FileName }
         'skill'       { return $FileName }
     }
