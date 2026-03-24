@@ -24,6 +24,9 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+# Keep source scripts under scripts/release/ and their tests tracked
+!scripts/release/
+!scripts/tests/release/
 [Rr]eleases/
 x64/
 x86/

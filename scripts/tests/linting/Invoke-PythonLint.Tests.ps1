@@ -77,10 +77,14 @@ Describe 'ruff Tool Availability' -Tag 'Unit' {
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'ruff' }
         }
 
-        It 'Returns failure when ruff not installed' {
+        It 'Returns failure when ruff not available' {
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.success | Should -BeFalse
-            $result.errors | Should -Contain 'ruff not installed'
+        }
+
+        It 'Reports skill path in errors' {
+            $result = Invoke-PythonLint -RepoRoot $TestDrive
+            $result.errors | Should -Contain (Join-Path $TestDrive 'skill1')
         }
 
         It 'Reports zero skills checked when ruff missing' {

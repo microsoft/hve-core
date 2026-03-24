@@ -1,5 +1,5 @@
 {
   "name": "installer",
   "description": "Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations",
-  "version": "3.2.2"
+  "version": "3.3.1"
 }

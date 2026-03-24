@@ -32,7 +32,7 @@ The Security Planner agent walks your team through a structured six-phase securi
 | ⚡ Actionable output                 | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
 
 > [!TIP]
-> New to the agent? Read [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
+> New to the agent? Read [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
 
 ## The Security Planning Flow
 
@@ -130,11 +130,11 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 ## Next Steps
 
-* [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
-* [Agent Overview](agent-overview) for the architecture and state management details.
-* [Entry Modes](entry-modes) for a deep dive into From-PRD vs. capture workflows.
-* [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
-* [Handoff Pipeline](handoff-pipeline) for backlog generation and RAI dispatch.
+* [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
+* [Agent Overview](agent-overview.md) for the architecture and state management details.
+* [Entry Modes](entry-modes.md) for a deep dive into From-PRD vs. capture workflows.
+* [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
+* [Handoff Pipeline](handoff-pipeline.md) for backlog generation and RAI dispatch.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

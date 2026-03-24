@@ -11,7 +11,7 @@ import asyncio
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from validate_slides import (
@@ -270,8 +270,8 @@ class TestLoadPrompt:
 class TestValidateSlide:
     """Tests for validate_slide async function."""
 
-    def test_success(self, tmp_path):
-        session = AsyncMock()
+    def test_success(self, tmp_path, mocker):
+        session = mocker.AsyncMock()
         session.send_and_wait.return_value = _make_session_response("No issues")
         image = tmp_path / "slide-001.jpg"
         image.write_bytes(b"img")
@@ -282,8 +282,8 @@ class TestValidateSlide:
         assert "error" not in result
         session.send_and_wait.assert_called_once()
 
-    def test_retry_then_success(self, tmp_path):
-        session = AsyncMock()
+    def test_retry_then_success(self, tmp_path, mocker):
+        session = mocker.AsyncMock()
         session.send_and_wait.side_effect = [
             RuntimeError("transient"),
             _make_session_response("OK"),
@@ -295,8 +295,8 @@ class TestValidateSlide:
         assert result["response"] == "OK"
         assert session.send_and_wait.call_count == 2
 
-    def test_all_retries_exhausted(self, tmp_path):
-        session = AsyncMock()
+    def test_all_retries_exhausted(self, tmp_path, mocker):
+        session = mocker.AsyncMock()
         session.send_and_wait.side_effect = RuntimeError("permanent")
         image = tmp_path / "slide-003.jpg"
         image.write_bytes(b"img")
@@ -325,14 +325,14 @@ class TestRun:
         result = asyncio.run(run(args))
         assert result == 1  # EXIT_FAILURE
 
-    @patch("validate_slides.CopilotClient")
-    def test_successful_run_stdout(self, mock_client_cls, tmp_path, capsys):
+    def test_successful_run_stdout(self, tmp_path, capsys, mocker):
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         args = _make_args(image_dir=tmp_path)
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.return_value = _make_session_response("No issues")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
@@ -344,15 +344,15 @@ class TestRun:
         assert output["slide_count"] == 1
         assert output["slides"][0]["response"] == "No issues"
 
-    @patch("validate_slides.CopilotClient")
-    def test_successful_run_output_file(self, mock_client_cls, tmp_path):
+    def test_successful_run_output_file(self, tmp_path, mocker):
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         out_file = tmp_path / "out" / "results.json"
         args = _make_args(image_dir=tmp_path, output=out_file)
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.return_value = _make_session_response("All good")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
@@ -362,14 +362,14 @@ class TestRun:
         data = json.loads(out_file.read_text())
         assert data["slides"][0]["response"] == "All good"
 
-    @patch("validate_slides.CopilotClient")
-    def test_writes_per_slide_txt(self, mock_client_cls, tmp_path):
+    def test_writes_per_slide_txt(self, tmp_path, mocker):
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         args = _make_args(image_dir=tmp_path)
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.return_value = _make_session_response("Finding text")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
@@ -378,14 +378,14 @@ class TestRun:
         assert txt.exists()
         assert "Finding text" in txt.read_text()
 
-    @patch("validate_slides.CopilotClient")
-    def test_per_slide_txt_on_error(self, mock_client_cls, tmp_path):
+    def test_per_slide_txt_on_error(self, tmp_path, mocker):
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         args = _make_args(image_dir=tmp_path)
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.side_effect = RuntimeError("boom")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
@@ -394,31 +394,31 @@ class TestRun:
         assert txt.exists()
         assert "Validation error" in txt.read_text()
 
-    @patch("validate_slides.CopilotClient")
-    def test_slide_filter_applied(self, mock_client_cls, tmp_path):
+    def test_slide_filter_applied(self, tmp_path, mocker):
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         (tmp_path / "slide-002.jpg").write_bytes(b"img")
         (tmp_path / "slide-003.jpg").write_bytes(b"img")
         args = _make_args(image_dir=tmp_path, slides="1,3")
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.return_value = _make_session_response("OK")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
         asyncio.run(run(args))
         assert mock_session.send_and_wait.call_count == 2
 
-    @patch("validate_slides.CopilotClient")
-    def test_uses_system_message(self, mock_client_cls, tmp_path):
+    def test_uses_system_message(self, tmp_path, mocker):
         """Verify the orchestrator passes DEFAULT_SYSTEM_MESSAGE to the session."""
         (tmp_path / "slide-001.jpg").write_bytes(b"img")
         args = _make_args(image_dir=tmp_path)
 
-        mock_session = AsyncMock()
+        mock_client_cls = mocker.patch("validate_slides.CopilotClient")
+        mock_session = mocker.AsyncMock()
         mock_session.send_and_wait.return_value = _make_session_response("OK")
-        mock_client = AsyncMock()
+        mock_client = mocker.AsyncMock()
         mock_client.create_session.return_value = mock_session
         mock_client_cls.return_value = mock_client
 
@@ -435,9 +435,9 @@ class TestRun:
 class TestMain:
     """Tests for main entry point."""
 
-    @patch("validate_slides.asyncio.run", return_value=0)
-    @patch("validate_slides.create_parser")
-    def test_success(self, mock_parser_fn, mock_arun):
+    def test_success(self, mocker):
+        mock_parser_fn = mocker.patch("validate_slides.create_parser")
+        mock_arun = mocker.patch("validate_slides.asyncio.run", return_value=0)
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = _make_args(verbose=False)
         mock_parser_fn.return_value = mock_parser
@@ -445,19 +445,19 @@ class TestMain:
         assert main() == 0
         mock_arun.assert_called_once()
 
-    @patch("validate_slides.asyncio.run", side_effect=KeyboardInterrupt)
-    @patch("validate_slides.create_parser")
-    def test_keyboard_interrupt(self, mock_parser_fn, mock_arun):
+    def test_keyboard_interrupt(self, mocker):
+        mock_parser_fn = mocker.patch("validate_slides.create_parser")
+        mocker.patch("validate_slides.asyncio.run", side_effect=KeyboardInterrupt)
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = _make_args(verbose=False)
         mock_parser_fn.return_value = mock_parser
 
         assert main() == 130
 
-    @patch("validate_slides.sys")
-    @patch("validate_slides.asyncio.run", side_effect=BrokenPipeError)
-    @patch("validate_slides.create_parser")
-    def test_broken_pipe(self, mock_parser_fn, mock_arun, mock_sys):
+    def test_broken_pipe(self, mocker):
+        mock_parser_fn = mocker.patch("validate_slides.create_parser")
+        mocker.patch("validate_slides.asyncio.run", side_effect=BrokenPipeError)
+        mock_sys = mocker.patch("validate_slides.sys")
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = _make_args(verbose=False)
         mock_parser_fn.return_value = mock_parser
@@ -465,9 +465,9 @@ class TestMain:
         assert main() == 1  # EXIT_FAILURE
         mock_sys.stderr.close.assert_called_once()
 
-    @patch("validate_slides.asyncio.run", side_effect=RuntimeError("fail"))
-    @patch("validate_slides.create_parser")
-    def test_generic_exception(self, mock_parser_fn, mock_arun):
+    def test_generic_exception(self, mocker):
+        mock_parser_fn = mocker.patch("validate_slides.create_parser")
+        mocker.patch("validate_slides.asyncio.run", side_effect=RuntimeError("fail"))
         mock_parser = MagicMock()
         mock_parser.parse_args.return_value = _make_args(verbose=False)
         mock_parser_fn.return_value = mock_parser

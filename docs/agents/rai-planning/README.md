@@ -95,17 +95,17 @@ Three entry modes determine how Phase 1 begins. All converge at Phase 2 once AI 
 | `from-prd`           | PRD/BRD documents   | Projects with product definition artifacts                    |
 | `from-security-plan` | Security plan state | Projects that completed security planning first (recommended) |
 
-See [entry modes](entry-modes) for detailed guidance on when to choose each mode and what each mode pre-populates.
+See [entry modes](entry-modes.md) for detailed guidance on when to choose each mode and what each mode pre-populates.
 
 ## Related Pages
 
 | Page                                       | Description                                                            |
 |--------------------------------------------|------------------------------------------------------------------------|
-| [Why RAI planning?](why-rai-planning)      | The case for structured RAI assessment over ad-hoc reviews             |
-| [Agent overview](agent-overview)           | Architecture, state management, and interaction model                  |
-| [Entry modes](entry-modes)                 | Choosing between capture, from-prd, and from-security-plan             |
-| [Phase reference](phase-reference)         | Detailed inputs, outputs, and state transitions for all six phases     |
-| [Handoff pipeline](handoff-pipeline)       | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
+| [Why RAI planning?](why-rai-planning.md)   | The case for structured RAI assessment over ad-hoc reviews             |
+| [Agent overview](agent-overview.md)        | Architecture, state management, and interaction model                  |
+| [Entry modes](entry-modes.md)              | Choosing between capture, from-prd, and from-security-plan             |
+| [Phase reference](phase-reference.md)      | Detailed inputs, outputs, and state transitions for all six phases     |
+| [Handoff pipeline](handoff-pipeline.md)    | Scorecard generation, backlog output, and the Security-to-RAI pipeline |
 | [Security planning overview](../security/) | The Security Planner agent that feeds into RAI assessment              |
 
 <!-- markdownlint-disable MD036 -->

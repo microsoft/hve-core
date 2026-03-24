@@ -1,0 +1,17 @@
+id: gitlab
+name: GitLab Integration
+description: GitLab merge request and pipeline workflows through a Python skill
+tags:
+  - gitlab
+  - merge-requests
+  - pipelines
+  - ci
+items:
+  # Skills
+  - path: .github/skills/gitlab/gitlab
+    kind: skill
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: alpha
