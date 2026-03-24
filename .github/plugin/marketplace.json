@@ -49,7 +49,7 @@
       "name": "gitlab",
       "source": "gitlab",
       "description": "GitLab merge request and pipeline workflows through a Python skill",
-      "version": "3.2.0"
+      "version": "3.3.1"
     },
     {
       "name": "hve-core",
@@ -73,7 +73,7 @@
       "name": "jira",
       "source": "jira",
       "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
-      "version": "3.2.0"
+      "version": "3.3.1"
     },
     {
       "name": "project-planning",
