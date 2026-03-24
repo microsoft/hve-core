@@ -1,0 +1,1 @@
+../../../.github/prompts/jira/jira-prd-to-wit.prompt.md
