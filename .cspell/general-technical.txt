@@ -1588,3 +1588,5 @@ unreviewed
 WIQL
 LASTEXITCODE
 scriptblock
+DSSE
+intoto

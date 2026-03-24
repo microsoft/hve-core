@@ -155,10 +155,16 @@ jobs:
           path: .
           format: spdx-json
           output-file: dependencies.spdx.json
-          artifact-name: sbom-dependencies
           upload-release-assets: false
-          upload-artifact: true
+          upload-artifact: false
           config: .syft.yaml
+          dependency-snapshot: true
+
+      - name: Upload dependency SBOM artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: sbom-dependencies
+          path: dependencies.spdx.json
 
       - name: Upload dependency SBOM to release
         env:
@@ -261,10 +267,13 @@ jobs:
         run: |
           cp "$BUNDLE_PATH" \
             "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
           gh release upload "${{ needs.prerelease-tag.outputs.tag_name }}" \
             "${{ steps.vsix.outputs.file }}" \
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
             "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
   publish-release:
