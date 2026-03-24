@@ -101,7 +101,7 @@ Prompt file: `.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
 
 Once Phase 1 completes, all three modes converge into the same workflow for Phases 2 through 6. The entry mode is recorded in `state.json` and cannot change after assessment begins.
 
-See [Phase Reference](phase-reference) for the complete specification of each phase.
+See [Phase Reference](phase-reference.md) for the complete specification of each phase.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

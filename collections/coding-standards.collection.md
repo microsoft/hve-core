@@ -10,6 +10,6 @@ Instructions for:
 - **Bicep** — Infrastructure as code implementation standards
 - **C#** — Code and test conventions including nullable reference types, async patterns, and xUnit testing
 - **PowerShell** — Script and module conventions including comment-based help, CmdletBinding, PSScriptAnalyzer compliance, and copyright headers
-- **Python** — Scripting implementation with type hints, docstrings, and uv project management
+- **Python** — Scripting implementation with type hints, docstrings, uv project management, and pytest testing
 - **Rust** — Rust development conventions targeting the 2021 edition
 - **Terraform** — Infrastructure as code with provider configuration and module structure
