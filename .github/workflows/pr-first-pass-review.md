@@ -11,6 +11,18 @@ timeout-minutes: 15
 imports:
   - ../agents/hve-core/pr-review.agent.md
 
+checkout:
+  sparse-checkout: |
+    .github/copilot-instructions.md
+    .github/PULL_REQUEST_TEMPLATE.md
+    .github/instructions/coding-standards/
+    .github/instructions/hve-core/
+    .github/instructions/shared/
+    scripts/
+    collections/
+    docs/
+    package.json
+
 permissions:
   contents: read
   issues: read

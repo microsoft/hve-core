@@ -25,7 +25,7 @@
 #   Imports:
 #     - ../agents/hve-core/doc-update-checker.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"623ca464924bf0d76692aef42d9556a5a11414e38847b30cd0af154a4bbf1a51","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"1887a8b5340381546a83acb78f336d8953c0a54d69b4bffcb4032c4843be5fd4","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Documentation Update Check"
 "on":
@@ -174,6 +174,9 @@ jobs:
           {{#if __GH_AW_GITHUB_RUN_ID__ }}
           - **workflow-run-id**: __GH_AW_GITHUB_RUN_ID__
           {{/if}}
+          - **checkouts**: The following repositories have been checked out and are available in the workspace:
+            - `$GITHUB_WORKSPACE` → `__GH_AW_GITHUB_REPOSITORY__` (cwd) [shallow clone, fetch-depth=1 (default)]
+            - **Note**: If a branch you need is not in the list above and is not listed as an additional fetched ref, it has NOT been checked out. For private repositories you cannot fetch it without proper authentication. If the branch is required and not available, exit with an error and ask the user to add it to the `fetch:` option of the `checkout:` configuration (e.g., `fetch: ["refs/pulls/open/*"]` for all open PR refs, or `fetch: ["main", "feature/my-branch"]` for specific branches).
           </github-context>
           
           GH_AW_PROMPT_EOF
@@ -290,6 +293,17 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+          sparse-checkout: |
+            .github/copilot-instructions.md
+            .github/instructions/coding-standards/
+            .github/instructions/hve-core/
+            .github/instructions/shared/
+            .github/workflows/
+            docs/
+            scripts/
+            collections/
+            extension/
+            .devcontainer/
       - name: Merge remote .github folder
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:

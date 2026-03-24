@@ -18,6 +18,19 @@ timeout-minutes: 15
 imports:
   - ../agents/hve-core/dependency-reviewer.agent.md
 
+checkout:
+  sparse-checkout: |
+    .github/copilot-instructions.md
+    .github/instructions/coding-standards/
+    .github/instructions/hve-core/
+    .github/instructions/shared/
+    .devcontainer/
+    .github/workflows/copilot-setup-steps.yml
+    package.json
+    package-lock.json
+    **/requirements.txt
+    **/pyproject.toml
+
 permissions:
   contents: read
   pull-requests: read

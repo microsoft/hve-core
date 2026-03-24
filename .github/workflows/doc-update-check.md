@@ -20,6 +20,19 @@ timeout-minutes: 15
 imports:
   - ../agents/hve-core/doc-update-checker.agent.md
 
+checkout:
+  sparse-checkout: |
+    .github/copilot-instructions.md
+    .github/instructions/coding-standards/
+    .github/instructions/hve-core/
+    .github/instructions/shared/
+    .github/workflows/
+    docs/
+    scripts/
+    collections/
+    extension/
+    .devcontainer/
+
 permissions:
   contents: read
   issues: read

@@ -13,6 +13,8 @@ timeout-minutes: 10
 imports:
   - ../agents/github/issue-triage.agent.md
 
+checkout: false
+
 permissions:
   contents: read
   issues: read

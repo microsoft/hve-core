@@ -25,7 +25,7 @@
 #   Imports:
 #     - ../agents/hve-core/pr-review.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"2d3349fa8d8756477d6ed5ca324c4a2a7facebd5684896d72198fee5f5a71e20","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"b09cc46f3bc320853e4631bf851bc572d81518aa02dd6a572ef0fb5c0bf20529","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "PR First-Pass Review"
 "on":
@@ -195,6 +195,9 @@ jobs:
           {{#if __GH_AW_GITHUB_RUN_ID__ }}
           - **workflow-run-id**: __GH_AW_GITHUB_RUN_ID__
           {{/if}}
+          - **checkouts**: The following repositories have been checked out and are available in the workspace:
+            - `$GITHUB_WORKSPACE` → `__GH_AW_GITHUB_REPOSITORY__` (cwd) [shallow clone, fetch-depth=1 (default)]
+            - **Note**: If a branch you need is not in the list above and is not listed as an additional fetched ref, it has NOT been checked out. For private repositories you cannot fetch it without proper authentication. If the branch is required and not available, exit with an error and ask the user to add it to the `fetch:` option of the `checkout:` configuration (e.g., `fetch: ["refs/pulls/open/*"]` for all open PR refs, or `fetch: ["main", "feature/my-branch"]` for specific branches).
           </github-context>
           
           GH_AW_PROMPT_EOF
@@ -313,6 +316,16 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+          sparse-checkout: |
+            .github/copilot-instructions.md
+            .github/PULL_REQUEST_TEMPLATE.md
+            .github/instructions/coding-standards/
+            .github/instructions/hve-core/
+            .github/instructions/shared/
+            scripts/
+            collections/
+            docs/
+            package.json
       - name: Merge remote .github folder
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
