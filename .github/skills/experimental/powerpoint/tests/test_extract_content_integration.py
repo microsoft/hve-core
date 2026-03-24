@@ -6,9 +6,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-
 from extract_content import main
-
 
 EXPECTED_FIXTURE = {
     "metadata": {
