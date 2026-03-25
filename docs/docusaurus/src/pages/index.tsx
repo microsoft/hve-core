@@ -5,14 +5,16 @@ import HeroSection from '../components/HeroSection';
 import { IconCard, BoxCard, CardGrid } from '../components/Cards';
 import CollectionCard from '../components/CollectionCards';
 import { iconCards, boxCards } from '../data/hubCards';
-import { collectionCards, type CollectionCardData } from '../data/collectionCards';
+import { collectionCards, metaCollections, type CollectionCardData } from '../data/collectionCards';
 import styles from './styles.module.css';
 
-function buildCollectionDiagram(cards: CollectionCardData[]): string {
-  const total = cards.reduce((sum, c) => sum + c.artifacts, 0);
+export function buildCollectionDiagram(
+  cards: CollectionCardData[],
+  meta: Record<string, number>,
+): string {
   const lines = ['graph TD'];
-  lines.push(`    HCA["hve-core-all<br/>(${total} artifacts)"]`);
-  lines.push('    INS["installer<br/>(2 artifacts)"]');
+  lines.push(`    HCA["hve-core-all<br/>(${meta['hve-core-all']} artifacts)"]`);
+  lines.push(`    INS["installer<br/>(${meta.installer} artifacts)"]`);
   for (const card of cards) {
     const id = card.name.replace(/-/g, '_');
     lines.push(`    ${id}["${card.name}"]`);
@@ -24,7 +26,7 @@ function buildCollectionDiagram(cards: CollectionCardData[]): string {
   return lines.join('\n');
 }
 
-const collectionDiagram = buildCollectionDiagram(collectionCards);
+const collectionDiagram = buildCollectionDiagram(collectionCards, metaCollections);
 
 export default function Home(): React.ReactElement {
   return (
