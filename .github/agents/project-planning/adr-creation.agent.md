@@ -16,7 +16,8 @@ Guide users to uncover the real architectural challenge through thoughtful quest
 Gather context and research during conversations:
 
 * Use `fetch` to explore documentation users mention.
-* Use `githubRepo` to search for implementation patterns and examples.
+* Use `githubRepo` to search for implementation patterns and examples when GitHub-hosted references are relevant.
+* Use Jira or GitLab skills when the decision depends on Jira work tracking context or GitLab delivery workflows.
 * Use `search` and `usages` to find relevant project context and existing patterns.
 * Use `createFile` to establish working drafts in `.copilot-tracking/adrs/{{topic-name}}-draft.md`.
 * Use `insertEditIntoFile` to build content as insights emerge from conversation.

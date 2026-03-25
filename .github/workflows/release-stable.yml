@@ -412,7 +412,7 @@ jobs:
           persist-credentials: false
 
       - name: Generate dependency SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           path: .
           format: spdx-json
@@ -488,7 +488,7 @@ jobs:
           echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           file: ${{ steps.vsix.outputs.file }}
           format: spdx-json
@@ -581,7 +581,7 @@ jobs:
           fi
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           file: dist/plugins/${{ matrix.id }}.zip
           format: spdx-json

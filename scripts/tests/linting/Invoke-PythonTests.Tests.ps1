@@ -94,12 +94,17 @@ Describe 'pytest Tool Availability' -Tag 'Unit' {
                 })
             }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
         }
 
-        It 'Returns failure when pytest not installed' {
+        It 'Returns failure when pytest not available' {
             $result = Invoke-PythonTests -RepoRoot $TestDrive
             $result.success | Should -BeFalse
-            $result.errors | Should -Contain 'pytest not installed'
+        }
+
+        It 'Reports skill path in errors' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.errors | Should -Contain (Join-Path $TestDrive 'skill1')
         }
 
         It 'Reports zero skills tested when pytest missing' {
@@ -107,10 +112,9 @@ Describe 'pytest Tool Availability' -Tag 'Unit' {
             $result.skillsTested | Should -Be 0
         }
 
-        It 'Reports zero passed and failed' {
+        It 'Reports zero passed' {
             $result = Invoke-PythonTests -RepoRoot $TestDrive
             $result.passed | Should -Be 0
-            $result.failed | Should -Be 0
         }
     }
 

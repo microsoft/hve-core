@@ -3,7 +3,6 @@
 """Tests for validate_deck module."""
 
 import json
-from unittest.mock import patch
 
 import pytest
 from pptx import Presentation
@@ -242,22 +241,22 @@ class TestGenerateReportExtended:
 class TestMain:
     """Tests for main() entry point."""
 
-    def test_file_not_found(self, tmp_path):
-        with patch(
+    def test_file_not_found(self, tmp_path, mocker):
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
                 "--input",
                 str(tmp_path / "nonexistent.pptx"),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result != 0
 
-    def test_basic_run(self, simple_deck, tmp_path):
+    def test_basic_run(self, simple_deck, tmp_path, mocker):
         out_json = tmp_path / "results.json"
         report_md = tmp_path / "report.md"
-        with patch(
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
@@ -268,8 +267,8 @@ class TestMain:
                 "--report",
                 str(report_md),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         # Slides have missing notes (warning severity) → EXIT_FAILURE
         assert result in (0, 1)
         assert out_json.exists()
@@ -277,8 +276,8 @@ class TestMain:
         data = json.loads(out_json.read_text())
         assert data["slide_count"] == 2
 
-    def test_with_slide_filter(self, simple_deck):
-        with patch(
+    def test_with_slide_filter(self, simple_deck, mocker):
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
@@ -287,28 +286,28 @@ class TestMain:
                 "--slides",
                 "1",
             ],
-        ):
-            result = main()
+        )
+        result = main()
         # Missing notes → warning → EXIT_FAILURE
         assert result in (0, 1)
 
-    def test_warnings_exit_failure(self, deck_with_notes, tmp_path):
-        with patch(
+    def test_warnings_exit_failure(self, deck_with_notes, tmp_path, mocker):
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
                 "--input",
                 str(deck_with_notes),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         # Slide 2 has empty notes (info severity) → exit success
         # unless it has warnings
         assert result in (0, 1)
 
-    def test_per_slide_dir_output(self, simple_deck, tmp_path):
+    def test_per_slide_dir_output(self, simple_deck, tmp_path, mocker):
         per_slide_dir = tmp_path / "per-slide"
-        with patch(
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
@@ -317,8 +316,8 @@ class TestMain:
                 "--per-slide-dir",
                 str(per_slide_dir),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result in (0, 1)
         assert per_slide_dir.exists()
         slide_1 = per_slide_dir / "slide-001-deck-validation.json"
@@ -330,9 +329,9 @@ class TestMain:
         assert "issues" in data
         assert "overall_quality" in data
 
-    def test_per_slide_dir_with_filter(self, simple_deck, tmp_path):
+    def test_per_slide_dir_with_filter(self, simple_deck, tmp_path, mocker):
         per_slide_dir = tmp_path / "per-slide-filtered"
-        with patch(
+        mocker.patch(
             "sys.argv",
             [
                 "validate_deck.py",
@@ -343,8 +342,8 @@ class TestMain:
                 "--per-slide-dir",
                 str(per_slide_dir),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result in (0, 1)
         assert (per_slide_dir / "slide-001-deck-validation.json").exists()
         assert not (per_slide_dir / "slide-002-deck-validation.json").exists()

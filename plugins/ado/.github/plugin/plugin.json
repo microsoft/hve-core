@@ -1,7 +1,7 @@
 {
   "name": "ado",
   "description": "Azure DevOps work item management, build monitoring, and pull request creation",
-  "version": "3.3.1",
+  "version": "3.3.10",
   "agents": [
     "agents/ado/"
   ],

@@ -5,7 +5,7 @@ tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, e
 handoffs:
 
   - label: "🎯 Method Next"
-    agent: dt-coach
+    agent: DT Coach
     prompt: /dt-method-next
     send: false
   - label: "🔬 Hand off to RPI"

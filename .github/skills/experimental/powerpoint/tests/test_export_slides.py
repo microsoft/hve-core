@@ -6,7 +6,7 @@ Tests mock subprocess and shutil for LibreOffice interaction and fitz for
 PyMuPDF operations since these external tools may not be available.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from export_slides import (
@@ -41,21 +41,22 @@ class TestParseSlideNumbers:
 class TestFindLibreoffice:
     """Tests for find_libreoffice."""
 
-    @patch("shutil.which", return_value="/usr/bin/libreoffice")
-    def test_found_on_path(self, mock_which):
+    def test_found_on_path(self, mocker):
+        mocker.patch("shutil.which", return_value="/usr/bin/libreoffice")
         result = find_libreoffice()
         assert result == "/usr/bin/libreoffice"
 
-    @patch("shutil.which", return_value=None)
-    @patch("os.path.isfile", return_value=False)
-    def test_not_found(self, mock_isfile, mock_which):
+    def test_not_found(self, mocker):
+        mocker.patch("shutil.which", return_value=None)
+        mocker.patch("os.path.isfile", return_value=False)
         result = find_libreoffice()
         assert result is None
 
-    @patch("shutil.which", return_value=None)
-    @patch("platform.system", return_value="Darwin")
-    @patch("os.path.isfile")
-    def test_macos_fallback(self, mock_isfile, mock_system, mock_which):
+    def test_macos_fallback(self, mocker):
+        mocker.patch("shutil.which", return_value=None)
+        mocker.patch("platform.system", return_value="Darwin")
+        mock_isfile = mocker.patch("os.path.isfile")
+
         def check_path(path):
             return path == "/Applications/LibreOffice.app/Contents/MacOS/soffice"
 
@@ -132,8 +133,8 @@ class TestRun:
         result = run(args)
         assert result != 0
 
-    @patch("export_slides.convert_pptx_to_pdf")
-    def test_full_export_no_filter(self, mock_convert, tmp_path):
+    def test_full_export_no_filter(self, mocker, tmp_path):
+        mock_convert = mocker.patch("export_slides.convert_pptx_to_pdf")
         pptx_file = tmp_path / "deck.pptx"
         pptx_file.write_bytes(b"PK\x03\x04")  # Minimal zip header
         mock_pdf = tmp_path / "deck.pdf"
@@ -154,9 +155,9 @@ class TestRun:
         assert result == 0
         assert out_path.exists()
 
-    @patch("export_slides.filter_pdf_pages")
-    @patch("export_slides.convert_pptx_to_pdf")
-    def test_export_with_slide_filter(self, mock_convert, mock_filter, tmp_path):
+    def test_export_with_slide_filter(self, mocker, tmp_path):
+        mock_convert = mocker.patch("export_slides.convert_pptx_to_pdf")
+        mock_filter = mocker.patch("export_slides.filter_pdf_pages")
         pptx_file = tmp_path / "deck.pptx"
         pptx_file.write_bytes(b"PK\x03\x04")
         mock_pdf = tmp_path / "deck.pdf"
@@ -184,14 +185,14 @@ class TestRun:
 class TestConvertPptxToPdf:
     """Tests for convert_pptx_to_pdf via mocked subprocess."""
 
-    @patch("export_slides.find_libreoffice", return_value=None)
-    def test_missing_libreoffice_exits(self, mock_find, tmp_path):
+    def test_missing_libreoffice_exits(self, mocker, tmp_path):
+        mocker.patch("export_slides.find_libreoffice", return_value=None)
         with pytest.raises(SystemExit):
             convert_pptx_to_pdf(tmp_path / "deck.pptx", tmp_path)
 
-    @patch("subprocess.run")
-    @patch("export_slides.find_libreoffice", return_value="/usr/bin/soffice")
-    def test_successful_conversion(self, mock_find, mock_run, tmp_path):
+    def test_successful_conversion(self, mocker, tmp_path):
+        mocker.patch("export_slides.find_libreoffice", return_value="/usr/bin/soffice")
+        mock_run = mocker.patch("subprocess.run")
         pptx = tmp_path / "deck.pptx"
         pptx.write_bytes(b"PK")
         # Simulate LibreOffice producing the PDF
@@ -202,9 +203,9 @@ class TestConvertPptxToPdf:
         result = convert_pptx_to_pdf(pptx, tmp_path)
         assert result == expected_pdf
 
-    @patch("subprocess.run", side_effect=FileNotFoundError("not found"))
-    @patch("export_slides.find_libreoffice", return_value="/usr/bin/soffice")
-    def test_libreoffice_not_found_exits(self, mock_find, mock_run, tmp_path):
+    def test_libreoffice_not_found_exits(self, mocker, tmp_path):
+        mocker.patch("export_slides.find_libreoffice", return_value="/usr/bin/soffice")
+        mocker.patch("subprocess.run", side_effect=FileNotFoundError("not found"))
         with pytest.raises(SystemExit):
             convert_pptx_to_pdf(tmp_path / "deck.pptx", tmp_path)
 
@@ -212,8 +213,8 @@ class TestConvertPptxToPdf:
 class TestFilterPdfPages:
     """Tests for filter_pdf_pages via mocked fitz."""
 
-    @patch.dict("sys.modules", {"fitz": MagicMock()})
-    def test_filters_pages(self, tmp_path):
+    def test_filters_pages(self, mocker, tmp_path):
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
         import sys
 
         mock_fitz = sys.modules["fitz"]

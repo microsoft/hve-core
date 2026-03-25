@@ -17,7 +17,7 @@ Instructions for:
 - **Bicep** — Infrastructure as code implementation standards
 - **C#** — Code and test conventions including nullable reference types, async patterns, and xUnit testing
 - **PowerShell** — Script and module conventions including comment-based help, CmdletBinding, PSScriptAnalyzer compliance, and copyright headers
-- **Python** — Scripting implementation with type hints, docstrings, and uv project management
+- **Python** — Scripting implementation with type hints, docstrings, uv project management, and pytest testing
 - **Rust** — Rust development conventions targeting the 2021 edition
 - **Terraform** — Infrastructure as code with provider configuration and module structure
 
@@ -52,6 +52,7 @@ copilot plugin install coding-standards@hve-core
 | rust.instructions              | Required instructions for Rust research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                                              |
 | rust-tests.instructions        | Required instructions for Rust test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                                    |
 | python-script.instructions     | Instructions for Python scripting implementation - Brought to you by microsoft/hve-core                                                                                                                                                                     |
+| python-tests.instructions      | Required instructions for Python test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core                                                                                                                  |
 | terraform.instructions         | Instructions for Terraform infrastructure as code implementation - Brought to you by microsoft/hve-core                                                                                                                                                     |
 | uv-projects.instructions       | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | hve-core-location.instructions | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
