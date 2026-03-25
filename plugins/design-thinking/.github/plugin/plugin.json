@@ -1,5 +1,11 @@
 {
   "name": "design-thinking",
   "description": "Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods",
-  "version": "3.3.10"
+  "version": "3.3.10",
+  "agents": [
+    "agents/design-thinking/"
+  ],
+  "commands": [
+    "commands/design-thinking/"
+  ]
 }

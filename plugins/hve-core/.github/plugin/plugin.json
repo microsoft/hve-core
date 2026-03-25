@@ -1,5 +1,15 @@
 {
   "name": "hve-core",
   "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
-  "version": "3.3.10"
+  "version": "3.3.10",
+  "agents": [
+    "agents/hve-core/",
+    "agents/hve-core/subagents/"
+  ],
+  "commands": [
+    "commands/hve-core/"
+  ],
+  "skills": [
+    "skills/shared/"
+  ]
 }

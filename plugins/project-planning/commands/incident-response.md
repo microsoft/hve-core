@@ -1,1 +1,0 @@
-../../../.github/prompts/security/incident-response.prompt.md

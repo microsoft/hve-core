@@ -1,1 +1,0 @@
-../../../.github/agents/project-planning/product-manager-advisor.agent.md

@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md

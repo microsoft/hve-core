@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/task-review.prompt.md

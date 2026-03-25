@@ -31,11 +31,11 @@ copilot plugin install experimental@hve-core
 
 ## Instructions
 
-| Instruction         | Description                                                                                                                                                                                                                                                 |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| experiment-designer | MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core                                                                                                                                      |
-| pptx                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
-| hve-core-location   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Instruction                      | Description                                                                                                                                                                                                                                                 |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| experiment-designer.instructions | MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core                                                                                                                                      |
+| pptx.instructions                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
+| hve-core-location.instructions   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ## Skills
 

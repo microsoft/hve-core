@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/git-setup.prompt.md

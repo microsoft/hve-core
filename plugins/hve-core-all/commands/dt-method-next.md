@@ -1,1 +1,0 @@
-../../../.github/prompts/design-thinking/dt-method-next.prompt.md

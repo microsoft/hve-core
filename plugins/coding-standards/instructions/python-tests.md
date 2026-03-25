@@ -1,1 +1,0 @@
-../../../.github/instructions/coding-standards/python-tests.instructions.md

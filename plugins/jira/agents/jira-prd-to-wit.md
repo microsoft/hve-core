@@ -1,1 +1,0 @@
-../../../.github/agents/jira/jira-prd-to-wit.agent.md

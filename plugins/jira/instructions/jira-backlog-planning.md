@@ -1,1 +1,0 @@
-../../../.github/instructions/jira/jira-backlog-planning.instructions.md

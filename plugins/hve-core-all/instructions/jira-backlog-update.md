@@ -1,1 +1,0 @@
-../../../.github/instructions/jira/jira-backlog-update.instructions.md

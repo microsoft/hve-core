@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-industry-healthcare.instructions.md

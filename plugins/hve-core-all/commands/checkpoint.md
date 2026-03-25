@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/checkpoint.prompt.md

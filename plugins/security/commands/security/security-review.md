@@ -1,0 +1,1 @@
+../../../../.github/prompts/security/security-review.prompt.md

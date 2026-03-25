@@ -1,1 +1,0 @@
-../../../.github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md

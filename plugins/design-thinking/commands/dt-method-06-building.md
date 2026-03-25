@@ -1,1 +1,0 @@
-../../../.github/prompts/design-thinking/dt-method-06-building.prompt.md

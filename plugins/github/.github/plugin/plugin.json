@@ -1,5 +1,11 @@
 {
   "name": "github",
   "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
-  "version": "3.3.10"
+  "version": "3.3.10",
+  "agents": [
+    "agents/github/"
+  ],
+  "commands": [
+    "commands/github/"
+  ]
 }

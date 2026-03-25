@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
