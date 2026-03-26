@@ -17,8 +17,13 @@ method="$1"
 base_path="$2"
 
 valid=true
-for path in "$base_path/.github/agents" "$base_path/.github/prompts" "$base_path/.github/instructions"; do
+for path in "$base_path/.github/agents" "$base_path/.github/prompts" "$base_path/.github/instructions" "$base_path/.github/skills"; do
     if [ -d "$path" ]; then echo "✅ Found: $path"; else echo "❌ Missing: $path"; valid=false; fi
+done
+
+# Optional: informational check for experimental subdirectories (absence is not a failure)
+for path in "$base_path/.github/skills/experimental" "$base_path/.github/agents/experimental"; do
+    if [ -d "$path" ]; then echo "ℹ️  Found optional: $path"; fi
 done
 
 # Method 5: workspace file check (requires jq)
