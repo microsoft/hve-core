@@ -19,6 +19,7 @@ This directory contains PowerShell scripts for automating linting, validation, a
 
 ```text
 scripts/
+├── mcp/             Optional workspace MCP integration helpers
 ├── collections/     Collection validation and shared helpers
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
@@ -92,6 +93,15 @@ Collection validation and shared helpers.
 | Script                     | Purpose                                    |
 |----------------------------|--------------------------------------------|
 | `Validate-Collections.ps1` | Validate collection metadata and structure |
+
+## MCP Scripts
+
+Optional workspace-level MCP integration helpers.
+
+| Script                   | Purpose                                              |
+|--------------------------|------------------------------------------------------|
+| `mcp/Setup-MuralMcp.ps1` | Clone, build, and authenticate the local Mural MCP server |
+| `mcp/Start-MuralMcp.ps1` | Launch the local Mural MCP server for VS Code MCP        |
 
 ## Tests
 
@@ -187,6 +197,7 @@ Key rules:
 ## Related Documentation
 
 * [Collection Scripts Documentation](collections/README.md)
+* [MCP Scripts Documentation](mcp/README.md)
 * [Extension Packaging Documentation](extension/README.md)
 * [Library Utilities Documentation](lib/README.md)
 * [Linting Scripts Documentation](linting/README.md)

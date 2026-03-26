@@ -22,6 +22,7 @@ Some HVE Core agents use Model Context Protocol (MCP) servers to integrate with 
 ## Overview
 
 MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE Core references four curated MCP servers. Configure only the servers relevant to your workflow.
+You can also add non-curated team-specific servers when a workflow depends on tools outside the default bundles.
 
 ## Choosing GitHub vs Azure DevOps
 
@@ -87,6 +88,42 @@ GitHub repository and issue management.
 |----------|--------------------------------------|
 | Type     | http                                 |
 | URL      | `https://api.githubcopilot.com/mcp/` |
+
+## Optional Team-Specific MCP Servers
+
+Some workflows rely on servers that are intentionally not curated by HVE Core because they require local installation, private infrastructure, or user-managed OAuth credentials.
+
+### mural
+
+Mural board export for Design Thinking is one example of an optional server.
+
+| Property | Value |
+|----------|-------|
+| Type     | stdio |
+| Command  | `pwsh -File ./scripts/mcp/Start-MuralMcp.ps1` |
+| Requires | Local setup, Mural app credentials, interactive OAuth |
+
+Repository-clone users can prepare this server with:
+
+```bash
+npm run mcp:setup:mural
+```
+
+Then add the server entry to your workspace configuration:
+
+```json
+{
+  "servers": {
+    "mural": {
+      "type": "stdio",
+      "command": "pwsh",
+      "args": ["-File", "./scripts/mcp/Start-MuralMcp.ps1"]
+    }
+  }
+}
+```
+
+If you use the Marketplace extension without cloning `hve-core`, follow the same Mural MCP setup manually in your project workspace and point the `mural` server entry at your local launcher script.
 
 ## Complete Configuration Template
 
@@ -161,6 +198,7 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 
 * GitHub: Uses VS Code's built-in GitHub authentication
 * ADO: Verify organization name and tenant ID are correct
+* Mural: Re-run `npm run mcp:setup:mural` or refresh your local OAuth setup if tokens are missing or expired
 
 ### MCP Server Not Starting
 
@@ -174,6 +212,7 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 * [GitHub MCP Server](https://github.com/github/github-mcp-server)
 * [Azure DevOps MCP Server](https://learn.microsoft.com/azure/devops/mcp-server/mcp-server-overview?view=azure-devops)
 * [Microsoft Learn MCP Server](https://github.com/microsoftdocs/mcp)
+* [Export DT Artifacts to Mural](../design-thinking/mural-export.md)
 
 ---
 

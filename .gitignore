@@ -455,6 +455,10 @@ dependency-pinning-artifacts/
 pr.md
 pr-reference.xml
 
+# Local Mural MCP integration assets
+.mural-credentials
+.mcp/mural-mcp/
+
 # Dependency pinning scan artifacts
 dependency-pinning-artifacts/
 

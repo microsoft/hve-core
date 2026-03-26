@@ -124,6 +124,7 @@ copilot plugin install hve-core-all@hve-core
 | dt-method-06-planning                       | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                              |
 | dt-method-06-testing                        | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                         |
 | dt-method-next                              | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                              |
+| dt-mural-export                             | Export Design Thinking artifacts to a collaborative Mural board using an optional MCP server - Brought to you by microsoft/hve-core              |
 | dt-resume-coaching                          | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core               |
 | dt-start-project                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core     |
 | github-add-issue                            | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |

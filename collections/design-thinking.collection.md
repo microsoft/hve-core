@@ -7,6 +7,7 @@ This collection includes agents, prompts, and instructions for:
 - **DT Start Project** — Initializes a new Design Thinking coaching project with state file creation, frozen/fluid classification, and first Method 1 coaching interaction
 - **DT Resume Coaching** — Resumes an existing coaching session from saved state, restoring context from the project's coaching state file
 - **DT Method Next** — Assesses current coaching state and recommends the next method with sequencing validation, handling edge cases for no project, all methods complete, and iteration loops
+- **DT Mural Export** — Exports Design Thinking artifacts to a collaborative Mural board through an optional workspace MCP integration, preserving method structure in areas, labels, and sticky notes
 - **DT Handoff Implementation Space** — Implementation Space exit handoff that compiles DT Methods 7-9 outputs into an RPI-ready artifact with tiered routing to task-planner or task-implementor, handoff lineage from all nine methods, content sanitization, and a completion ceremony
 - **DT Handoff Problem Space** — Problem Space exit handoff that compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting task-researcher, with readiness assessment and quality markers
 - **DT Method 4: Ideation** — Divergent idea generation with constraint-informed creativity for Method 4b brainstorming

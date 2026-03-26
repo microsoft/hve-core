@@ -34,6 +34,8 @@
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
     "plugin:validate": "npm run lint:collections-metadata",
+    "mcp:setup:mural": "pwsh -File scripts/mcp/Setup-MuralMcp.ps1",
+    "mcp:start:mural": "pwsh -File scripts/mcp/Start-MuralMcp.ps1",
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:serve": "npm --prefix docs/docusaurus run serve"

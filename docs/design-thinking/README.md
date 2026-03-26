@@ -103,6 +103,8 @@ Build functional prototypes, test with users, and scale. Outputs are functionall
 
 Use the [DT Coach](dt-coach.md) agent to start a guided Design Thinking session. The coach walks you through each method, manages session state, and enforces quality standards appropriate to each space.
 
+If your team uses Mural for collaborative synthesis or workshop playback, see [Export DT Artifacts to Mural](mural-export.md) for the optional board export workflow.
+
 ## Integration with RPI
 
 Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, Review) pipeline. When your DT session reaches a natural exit point, the coach prepares a structured handoff artifact that Task Researcher receives and processes before passing findings through the standard RPI pipeline to Planner and Implementor.

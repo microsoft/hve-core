@@ -62,6 +62,7 @@ This directory contains:
 ### Option 2: Start from a DT Prompt
 
 Use `/dt-method-next` to have the coach assess where you are and guide you to the next appropriate method.
+Use `/dt-mural-export` when you want to turn existing `.copilot-tracking/dt/` artifacts into a collaborative Mural board after a method produces review-ready output.
 
 ### Starting a Session
 
@@ -123,6 +124,7 @@ Session state persists in `.copilot-tracking/dt/{project-slug}/coaching-state.md
 
 * [Design Thinking Guide](README.md): Overview of all nine methods and three spaces
 * [DT to RPI Integration](dt-rpi-integration.md): How DT outputs feed into the RPI workflow
+* [Export DT Artifacts to Mural](mural-export.md): Optional board export workflow for workshop collaboration
 * [DT Learning Tutor](dt-learning-tutor.md): Curriculum-based training across all methods
 
 > Brought to you by microsoft/hve-core

@@ -12,6 +12,14 @@
         "@microsoft/workiq",
         "mcp"
       ]
+    },
+    "mural": {
+      "type": "stdio",
+      "command": "pwsh",
+      "args": [
+        "-File",
+        "./scripts/mcp/Start-MuralMcp.ps1"
+      ]
     }
   }
 }
