@@ -42,7 +42,7 @@ Describe 'validate-installation' -Tag 'Unit' {
     Context 'Directory validation' {
         It 'Passes when all required directories exist' {
             $installDir = Join-Path $script:testRoot 'install'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -64,17 +64,58 @@ Describe 'validate-installation' -Tag 'Unit' {
             $installDir = Join-Path $script:testRoot 'partial'
             New-Item -ItemType Directory -Path (Join-Path $installDir '.github/prompts') -Force | Out-Null
             New-Item -ItemType Directory -Path (Join-Path $installDir '.github/instructions') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $installDir '.github/skills') -Force | Out-Null
 
             $output = & $script:scriptPath -BasePath $installDir -Method 1 6>&1 | Out-String
 
-            $output | Should -Match 'Missing.*agents'
+            $output | Should -Match '(?s)Missing.*agents'
+        }
+
+        It 'Checks skills directory' {
+            $installDir = Join-Path $script:testRoot 'no-skills'
+            New-Item -ItemType Directory -Path (Join-Path $installDir '.github/agents') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $installDir '.github/prompts') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $installDir '.github/instructions') -Force | Out-Null
+
+            $output = & $script:scriptPath -BasePath $installDir -Method 1 6>&1 | Out-String
+
+            $output | Should -Match '(?s)Missing.*skills'
+        }
+    }
+
+    Context 'Experimental subdirectories' {
+        It 'Passes validation when experimental directories are absent' {
+            $installDir = Join-Path $script:testRoot 'no-experimental'
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
+                New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
+            }
+
+            $output = & $script:scriptPath -BasePath $installDir -Method 1 6>&1 | Out-String
+
+            $LASTEXITCODE | Should -Not -Be 1
+            $output | Should -Match 'Installation validated successfully'
+            $output | Should -Not -Match 'Missing.*experimental'
+        }
+
+        It 'Reports optional experimental directories when present' {
+            $installDir = Join-Path $script:testRoot 'with-experimental'
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills',
+                               '.github/skills/experimental', '.github/agents/experimental')) {
+                New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
+            }
+
+            $output = & $script:scriptPath -BasePath $installDir -Method 1 6>&1 | Out-String
+
+            $output | Should -Match '(?s)Found optional.*skills/experimental'
+            $output | Should -Match '(?s)Found optional.*agents/experimental'
+            $output | Should -Match 'Installation validated successfully'
         }
     }
 
     Context 'Method 5: Multi-root workspace validation' {
         It 'Validates multi-root workspace configuration' {
             $installDir = Join-Path $script:testRoot 'method5'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -93,7 +134,7 @@ Describe 'validate-installation' -Tag 'Unit' {
 
         It 'Fails multi-root check when workspace has fewer than 2 folders' {
             $installDir = Join-Path $script:testRoot 'method5-bad'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -113,7 +154,7 @@ Describe 'validate-installation' -Tag 'Unit' {
     Context 'Method 6: Submodule validation' {
         It 'Validates submodule entry in .gitmodules' {
             $installDir = Join-Path $script:testRoot 'method6'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -130,7 +171,7 @@ Describe 'validate-installation' -Tag 'Unit' {
 
         It 'Fails when .gitmodules missing submodule entry' {
             $installDir = Join-Path $script:testRoot 'method6-bad'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -143,7 +184,7 @@ Describe 'validate-installation' -Tag 'Unit' {
 
         It 'Fails when .gitmodules does not exist' {
             $installDir = Join-Path $script:testRoot 'method6-nomod'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
@@ -159,7 +200,7 @@ Describe 'validate-installation' -Tag 'Unit' {
     Context 'Standard methods (1-4)' {
         It 'Passes validation for method 1 with all directories' {
             $installDir = Join-Path $script:testRoot 'method1'
-            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions')) {
+            foreach ($dir in @('.github/agents', '.github/prompts', '.github/instructions', '.github/skills')) {
                 New-Item -ItemType Directory -Path (Join-Path $installDir $dir) -Force | Out-Null
             }
 
