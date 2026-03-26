@@ -105,9 +105,18 @@ Once story details are received (see Step 1):
 * If a story ID was mentioned but the definition was not provided, note: "Story definition not provided. AC coverage assessment skipped."
 * Omit the AC Coverage section entirely for non-story reviews.
 
+### Verdict Determination
+
+Select the verdict based on the highest severity among all findings:
+
+* Any **Critical** findings → ❌ Request changes.
+* Any **High** findings (no Critical) → ❌ Request changes.
+* Only **Medium** or **Low** findings → 💬 Approve with comments.
+* No findings → ✅ Approve.
+
 ### No Issues Found
 
-* Still provide structured output using the standard Findings section, with no `## Issue {number}` entries and a brief note such as "No issues identified." in that section.
+* Still provide structured output using the standard Findings section, with no `#### Issue {number}:` entries and a brief note such as "No issues identified." in that section.
 * Acknowledge strengths observed.
 * Use verdict: ✅ Approve with note "No issues identified."
 

@@ -56,16 +56,16 @@ Normalize issue headings from both subagents into a consistent `#### Issue {numb
 #### Transformation Rules
 
 1. Assign new issue numbers starting from 1 across both subagents' findings, ordered by severity (Critical, High, Medium, Low).
-2. Append `[Functional]` or `[Standards]` to the end of each issue title to indicate the originating subagent (for example, `#### Issue 1: Missing null check [Functional]`).
-3. If both subagents flag overlapping line ranges in the same file for concerns that address the same underlying code pattern, keep one finding and note that both agents identified it. Prefer the fix that addresses more edge cases or provides more implementation detail. When deduplicated findings have different severities, use the higher severity.
-4. Security-adjacent findings (eval, pickle, hardcoded secrets, injection) that both agents surface under different categories are merged into a single finding that notes both agents' categories, using the more detailed fix and the higher severity.
-5. Union both changed files tables. Where a file appears in both, use the higher risk level and sum the issue counts. All counts reflect post-deduplication totals.
+2. Append `[Functional]` or `[Standards]` to the end of each issue title to indicate the originating subagent (for example, `#### Issue 1: Missing null check [Functional]`). For findings originating from the standards subagent, preserve the **Skill** name and **Category** fields (for example, `Skill: python-foundational`, `Category: Anti-Patterns to Avoid`). For findings originating from the functional subagent, include its **Category** field (for example, `Category: Contract`). Omit skill/category fields only when the subagent did not provide them.
+3. If both subagents flag overlapping line ranges in the same file for concerns that address the same underlying code pattern, keep one finding and note that both agents identified it. Before annotating a finding as deduplicated, confirm the finding appears in both subagent outputs by matching file path and line range. Prefer the fix that addresses more edge cases or provides more implementation detail. When deduplicated findings have different severities, use the higher severity.
+4. Security-adjacent findings (eval, pickle, hardcoded secrets, injection) that both agents surface under different categories are merged into a single finding that notes both agents' categories, using the more detailed fix and the higher severity. Apply the same verification as Rule 3 — confirm both subagent outputs contain the finding before merging.
+5. Union both changed files tables. Where a file appears in both, use the higher risk level and sum the issue counts. After merging, verify each file's issue count by counting the renumbered findings that reference that file. All counts reflect post-deduplication totals.
 6. Merge Positive Changes and Strengths into one list. Merge Testing Recommendations into one list.
 7. Include the standards subagent's Recommended Actions as a standalone section.
 8. Union observations from both subagents. Deduplicate entries that reference the same file and concern.
 9. Use the standards subagent's Risk Assessment as the merged report's Risk Assessment.
 10. When a story was provided and the standards subagent produced a coverage table, pass it through to the merged report.
-11. Use the stricter of the two verdicts: ❌ Request changes is stricter than 💬 Approve with comments, which is stricter than ✅ Approve.
+11. Use the stricter of the two verdicts: ❌ Request changes is stricter than 💬 Approve with comments, which is stricter than ✅ Approve. When only one subagent ran, use that subagent's verdict. After selecting the verdict, apply a severity floor: if any Critical-severity findings exist, the verdict must be ❌ Request changes regardless of what the subagents chose.
 12. Save artifacts using the shared protocol in #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md with `reviewer` set to `code-review-full`.
 
 #### Report Skeleton

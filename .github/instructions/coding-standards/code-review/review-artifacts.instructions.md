@@ -60,7 +60,7 @@ Sanitize the branch name by replacing every `/` with `-`
   * In PowerShell, use `Get-Date -AsUtc -Format "yyyy-MM-ddTHH:mm:ssZ"`.
 * `files_changed` must list only source files present in the diff (additions, modifications, or deletions). Filter by relevance - e.g. `.py`, `.sh`, `.ts`, `.tf` - excluding lock files, binaries, and build output.
 * Do not write artifacts if the diff was empty and the review was aborted.
-* The `reviewer` field must match the agent's or prompt's `name` from its frontmatter.
+* The `reviewer` field must use the kebab-case form of the agent's or prompt's `name` from its frontmatter (e.g. `Code Review Full` → `code-review-full`).
 
 ---
 

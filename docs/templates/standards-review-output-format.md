@@ -99,7 +99,11 @@ excluded from verdict)*
 
 ## Overall Verdict
 
-✅ Approve | 💬 Approve with comments | ❌ Request changes
+Select based on the highest severity finding:
+
+* Any **Critical** or **High** findings → ❌ Request changes
+* Only **Medium** or **Low** findings → 💬 Approve with comments
+* No findings → ✅ Approve
 
 ---
 *Skills Loaded: \<comma-separated list of loaded skill names\>*
