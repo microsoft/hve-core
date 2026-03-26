@@ -31,9 +31,14 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $valid = $true
-foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions")) {
+foreach ($dir in @("$basePath/.github/agents", "$basePath/.github/prompts", "$basePath/.github/instructions", "$basePath/.github/skills")) {
     if (-not (Test-Path $dir)) { $valid = $false; Write-Host "❌ Missing: $dir" }
     else { Write-Host "✅ Found: $dir" }
+}
+
+# Optional: informational check for experimental subdirectories (absence is not a failure)
+foreach ($dir in @("$basePath/.github/skills/experimental", "$basePath/.github/agents/experimental")) {
+    if (Test-Path $dir) { Write-Host "ℹ️  Found optional: $dir" }
 }
 
 # Method 5 additional check: workspace file
