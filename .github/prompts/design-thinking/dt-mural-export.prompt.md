@@ -2,6 +2,7 @@
 description: 'Export Design Thinking artifacts to a collaborative Mural board using an optional MCP server - Brought to you by microsoft/hve-core'
 agent: 'agent'
 argument-hint: "project-slug=... [board-title=...] [method=latest]"
+tools: ['read_file', 'mural/*']
 ---
 
 # DT Mural Export
