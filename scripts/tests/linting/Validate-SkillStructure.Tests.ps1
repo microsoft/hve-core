@@ -1550,3 +1550,182 @@ select = ["E", "F"]
 }
 
 #endregion
+
+#region OutputPath Parameter Tests
+
+Describe 'Write-SkillValidationResults OutputPath' -Tag 'Unit' {
+    It 'Creates JSON file at custom OutputPath' {
+        $repoRoot = Join-Path $script:ResultsTestDir 'custom-output-repo'
+        New-Item -ItemType Directory -Path $repoRoot -Force | Out-Null
+        $customPath = 'custom-dir/my-results.json'
+
+        $results = @(
+            [PSCustomObject]@{
+                SkillName = 'custom-output-skill'
+                SkillPath = '.github/skills/custom-output-skill'
+                IsValid   = $true
+                Errors    = [string[]]@()
+                Warnings  = [string[]]@()
+            }
+        )
+
+        Write-SkillValidationResults -Results $results -RepoRoot $repoRoot -OutputPath $customPath
+
+        $jsonPath = Join-Path $repoRoot $customPath
+        Test-Path $jsonPath | Should -BeTrue
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $json.totalSkills | Should -Be 1
+        $json.results[0].skillName | Should -BeExactly 'custom-output-skill'
+    }
+}
+
+Describe 'Invoke-SkillStructureValidation OutputPath' -Tag 'Unit' {
+    It 'Creates JSON file at custom OutputPath' {
+        $skillsDir = Join-Path $script:ValidationDir 'custom-output-skills'
+        $skillDir = Join-Path $skillsDir 'custom-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        $content = @"
+---
+name: custom-skill
+description: 'Skill for custom output path test'
+---
+
+# Custom Skill
+"@
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value $content
+
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return $script:ValidationDir
+        } -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+        $customPath = 'custom-dir/validation-results.json'
+        $exitCode = Invoke-SkillStructureValidation -SkillsPath 'custom-output-skills' -OutputPath $customPath
+        $exitCode | Should -Be 0
+
+        $jsonPath = Join-Path $script:ValidationDir $customPath
+        Test-Path $jsonPath | Should -BeTrue
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $json.totalSkills | Should -Be 1
+        $json.results[0].skillName | Should -BeExactly 'custom-skill'
+    }
+}
+#endregion OutputPath Parameter Tests
+
+#region Default OutputPath Parameter Test
+
+Describe 'Invoke-SkillStructureValidation Default OutputPath' -Tag 'Unit' {
+    It 'Creates logs/skill-validation-results.json by default' {
+        # Arrange: Create a temp skills directory with a valid skill
+        $testRoot = Join-Path $script:TempTestDir "default-outputpath-test"
+        $null = New-Item -ItemType Directory -Path $testRoot -Force
+        $skillDir = Join-Path $testRoot 'default-skill'
+        $null = New-Item -ItemType Directory -Path $skillDir -Force
+        $content = @"
+---
+name: default-skill
+description: 'Skill for default output path test'
+---
+
+# Default Skill
+"@
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value $content
+
+        # Act: Run Invoke-SkillStructureValidation with no OutputPath param
+        Push-Location $testRoot
+        try {
+            $null = Invoke-SkillStructureValidation -SkillsPath 'default-skill'
+        } finally {
+            Pop-Location
+        }
+
+        # Assert: logs/skill-validation-results.json exists and contains valid JSON
+        $outputFile = Join-Path $testRoot 'logs/skill-validation-results.json'
+        Test-Path $outputFile | Should -BeTrue
+        $json = Get-Content $outputFile -Raw | ConvertFrom-Json
+        $json | Should -Not -BeNullOrEmpty
+        $json.results | Should -Not -BeNullOrEmpty
+        $json.results[0].skillName | Should -BeExactly 'default-skill'
+        $json.results[0].isValid | Should -BeTrue
+    }
+}
+#endregion Default OutputPath Parameter Test
+
+#region OutputPath Parameter Tests (Diagnostics Enabled)
+
+Describe 'Write-SkillValidationResults OutputPath' -Tag 'Unit' {
+    It 'Creates JSON file at custom OutputPath (diagnostic)' {
+        $repoRoot = Join-Path $script:ResultsTestDir 'custom-output-repo'
+        New-Item -ItemType Directory -Path $repoRoot -Force | Out-Null
+        $customPath = 'custom-dir/my-results.json'
+
+        $results = @(
+            [PSCustomObject]@{
+                SkillName = 'custom-output-skill'
+                SkillPath = '.github/skills/custom-output-skill'
+                IsValid   = $true
+                Errors    = [string[]]@()
+                Warnings  = [string[]]@()
+            }
+        )
+
+        Write-SkillValidationResults -Results $results -RepoRoot $repoRoot -OutputPath $customPath
+
+        $jsonPath = Join-Path $repoRoot $customPath
+        Write-Host "[DIAG] Checking for output file: $jsonPath"
+        if (-not (Test-Path $jsonPath)) {
+            Write-Host "[DIAG] Output file not found! Directory contents:"
+            Get-ChildItem -Path (Split-Path -Parent $jsonPath) -Recurse | ForEach-Object { Write-Host $_.FullName }
+        } else {
+            $size = (Get-Item $jsonPath).Length
+            Write-Host "[DIAG] Output file exists. Size: $size bytes"
+        }
+        Test-Path $jsonPath | Should -BeTrue
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $json.totalSkills | Should -Be 1
+        $json.results[0].skillName | Should -BeExactly 'custom-output-skill'
+    }
+}
+
+Describe 'Invoke-SkillStructureValidation OutputPath' -Tag 'Unit' {
+    It 'Creates JSON file at custom OutputPath (diagnostic)' {
+        $skillsDir = Join-Path $script:ValidationDir 'custom-output-skills'
+        $skillDir = Join-Path $skillsDir 'custom-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        $content = @"
+---
+name: custom-skill
+description: 'Skill for custom output path test'
+---
+
+# Custom Skill
+"@
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value $content
+
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return $script:ValidationDir
+        } -ParameterFilter { $args[0] -eq 'rev-parse' }
+
+        $customPath = 'custom-dir/validation-results.json'
+        $exitCode = Invoke-SkillStructureValidation -SkillsPath 'custom-output-skills' -OutputPath $customPath
+        $exitCode | Should -Be 0
+
+        $jsonPath = Join-Path $script:ValidationDir $customPath
+        Write-Host "[DIAG] Checking for output file: $jsonPath"
+        if (-not (Test-Path $jsonPath)) {
+            Write-Host "[DIAG] Output file not found! Directory contents:"
+            Get-ChildItem -Path (Split-Path -Parent $jsonPath) -Recurse | ForEach-Object { Write-Host $_.FullName }
+        } else {
+            $size = (Get-Item $jsonPath).Length
+            Write-Host "[DIAG] Output file exists. Size: $size bytes"
+        }
+        Test-Path $jsonPath | Should -BeTrue
+        $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
+        $json.totalSkills | Should -Be 1
+        $json.results[0].skillName | Should -BeExactly 'custom-skill'
+    }
+}
+#endregion OutputPath Parameter Tests
+
+# Cleanup is intentionally disabled for diagnostics
