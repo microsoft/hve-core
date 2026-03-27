@@ -52,6 +52,8 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    Use `use_figma` to create sections, sticky notes, text, shapes, and connectors on the FigJam board.
    Translate artifact content into a left-to-right section layout with grouping areas and labeled sticky notes.
 
+   **FIRST: Build the Project Details card** at position (0, 0) using the Universal: Project Details Card template below. All exercise sections must be offset below it.
+
    **Section structure:**
    * Header section: Project name, method name, date, and current status.
    * Theme/category sections: One section per theme or category, arranged left to right.
@@ -104,6 +106,141 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
 The following structured templates define precise FigJam layouts for specific DT exercises.
 When artifacts match a template type, use the template layout instead of the generic section/sticky approach.
 Each template specifies sections, rows, sticky colors, and spatial arrangement.
+
+Universal components appear first and apply to every board. Exercise-specific templates follow.
+
+### Universal: Project Details Card
+
+Place this component at the top-left of EVERY FigJam board before any exercise-specific content.
+It provides engagement context so all board viewers know the project scope at a glance.
+Create it ONCE per board. All exercise sections are positioned below or to the right of it.
+
+**Reference layout:**
+
+```text
++============================================================+
+| PROJECT DETAILS                        (section, blue fill) |
++============================================================+
+|  +------------------------------------------------------+  |
+|  | Customer: {customer name}                             |  |
+|  +------------------------------------------------------+  |
+|  +------------------------------------------------------+  |
+|  | Project: {project name}                               |  |
+|  +------------------------------------------------------+  |
+|  +------------------------------------------------------+  |
+|  | Sprint: {milestone / sprint info}                     |  |
+|  +------------------------------------------------------+  |
+|  +------------------------------------------------------+  |
+|  | Workstream: {workstream description}                  |  |
+|  +------------------------------------------------------+  |
+|  +------------------------------------------------------+  |
+|  | Prototype: {link to prototype or video}               |  |
+|  +------------------------------------------------------+  |
++============================================================+
+```
+
+**Reference implementation (Figma Plugin API):**
+
+The following code is the EXACT construction pattern to follow. Substitute actual project data for the placeholder values.
+Do NOT deviate from the layout constants, color values, or positioning logic.
+
+All elements use `createShapeWithText` (FigJam shapes) inside a `createSection` with a blue fill.
+Each field row uses mixed font ranges: bold label, regular value.
+
+```javascript
+// ── LOAD FONTS (required before any text operations) ──
+await figma.loadFontAsync({family: "Inter", style: "Regular"});
+await figma.loadFontAsync({family: "Inter", style: "Bold"});
+
+// ── PROJECT DETAILS CONSTANTS (do not change) ──
+const DET_PAD   = 40;    // internal padding
+const ROW_W     = 1000;  // field row width
+const ROW_H     = 52;    // field row height
+const ROW_GAP   = 16;    // gap between rows
+const DET_W     = ROW_W + 2 * DET_PAD; // 1080
+const CORNER_R  = 16;    // outer corner radius
+
+// ── COLORS (do not change) ──
+const BG_BLUE  = {r: 0x00/255, g: 0x78/255, b: 0xD4/255}; // #0078D4
+const ROW_BLUE = {r: 0x21/255, g: 0x96/255, b: 0xF3/255}; // #2196F3
+const WHITE    = {r: 1, g: 1, b: 1};
+
+// ── BUILDER FUNCTION ──
+// fields = [{label: "Customer", value: "Contoso Ltd"}, ...]
+function buildProjectDetails(fields, x, y) {
+  const DET_H = 2 * DET_PAD + fields.length * ROW_H
+              + (fields.length - 1) * ROW_GAP;
+
+  const section = figma.createSection();
+  section.name = "PROJECT DETAILS";
+  section.fills = [{type: 'SOLID', color: BG_BLUE}];
+
+  let rowY = DET_PAD;
+  for (const field of fields) {
+    const row = figma.createShapeWithText();
+    row.shapeType = "ROUNDED_RECTANGLE";
+    row.resize(ROW_W, ROW_H);
+    row.x = DET_PAD;
+    row.y = rowY;
+    row.cornerRadius = 6;
+    row.fills = [{type: 'SOLID', color: ROW_BLUE}];
+    row.strokes = [];
+
+    const lbl = field.label + ": ";
+    row.text.characters = lbl + field.value;
+    row.text.fontName = {family: "Inter", style: "Regular"};
+    row.text.fontSize = 18;
+    row.text.fills = [{type: 'SOLID', color: WHITE}];
+    row.text.textAlignHorizontal = "LEFT";
+    row.text.setRangeFontName(0, lbl.length,
+      {family: "Inter", style: "Bold"});
+
+    section.appendChild(row);
+    rowY += ROW_H + ROW_GAP;
+  }
+
+  section.resizeWithoutConstraints(DET_W, DET_H);
+  section.x = x;
+  section.y = y;
+  figma.currentPage.appendChild(section);
+  return section;
+}
+
+// ── USAGE ──
+// Place at (0, 0). Exercise templates go below at y = details.height + 80.
+// const details = buildProjectDetails([
+//   {label: "Customer",    value: "Contoso Ltd"},
+//   {label: "Project",     value: "Digital Innovation Factory"},
+//   {label: "Sprint",      value: "Milestone 3, Sprint 4"},
+//   {label: "Workstream",  value: "Simulation Testing"},
+//   {label: "Prototype",   value: "Link to prototype or video"},
+// ], 0, 0);
+```
+
+**Strict rules:**
+
+1. **Always first.** Build the Project Details card before any exercise template on the board. Position it at (0, 0).
+2. **One per board.** Only one Project Details card per FigJam file, regardless of how many exercise templates follow.
+3. **Section with blue fill.** Use `createSection` with `#0078D4` fill, not a standalone shape. This keeps all field rows grouped and movable.
+4. **Fixed field order:** Customer, Project, Sprint, Workstream, Prototype. Do not reorder.
+5. **Colors are fixed.** Section fill `#0078D4`, row fill `#2196F3`, text white. Do not substitute.
+6. **Mixed font ranges.** Each row uses bold for the label portion and regular for the value. Use `setRangeFontName` for the label substring.
+7. **Offset templates below.** All exercise sections must start at `y = detailsSection.height + 80` (or greater) to avoid overlap.
+8. **Omit empty fields.** If a project detail field has no data, skip that row. Do not create placeholder rows.
+
+**Data mapping:**
+
+Pull project details from `.copilot-tracking/dt/{project-slug}/coaching-state.md` and any associated metadata. Map fields:
+
+| Source | Field Label | Notes |
+|---|---|---|
+| `customer`, `client`, `organization` | Customer | Customer or client organization name |
+| `project`, `engagement`, `title` | Project | Project or engagement name |
+| `sprint`, `milestone`, `iteration` | Sprint | Current sprint or milestone label |
+| `workstream`, `stream`, `track` | Workstream | Active workstream or focus area |
+| `prototype_url`, `demo_url`, `video` | Prototype | URL or descriptive label for prototype or video |
+
+If the coaching state does not contain a field, check the project README or ask the user. Never invent placeholder values.
 
 ### Persona Card (Method 2)
 
@@ -166,6 +303,10 @@ Headings sit ABOVE their card rows, not in a left column.
 The intro text block combines name, role, and description in a single shape with mixed font ranges.
 
 ```javascript
+// ── LOAD FONTS (required before any text operations) ──
+await figma.loadFontAsync({family: "Inter", style: "Regular"});
+await figma.loadFontAsync({family: "Inter", style: "Bold"});
+
 // ── LAYOUT CONSTANTS (do not change) ──
 const CELL_W      = 233;   // card width
 const CELL_H      = 135;   // card height
