@@ -12,9 +12,10 @@ from email.message import Message
 from types import ModuleType
 from typing import Literal
 
-import gitlab
 import pytest
 from test_constants import TEST_API_URL, TEST_GITLAB_TOKEN, TEST_GITLAB_URL
+
+import gitlab
 
 
 class FakeHttpResponse:

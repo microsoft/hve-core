@@ -4,9 +4,10 @@
 
 from __future__ import annotations
 
-import gitlab
 import pytest
 from test_constants import FIELDS_MR, USAGE_MAIN
+
+import gitlab
 
 ARGV_MAIN_LIST = ["gitlab", "mr-list", "opened", "5"]
 ARGV_MAIN_FIELDS = ["gitlab", "mr-get", "42", "--fields", "iid,title,author.name"]
@@ -87,3 +88,29 @@ class TestMain:
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert gitlab.selected_fields == FIELDS_MR
         assert USAGE_MAIN in capsys.readouterr().err
+
+    def test_main_handles_keyboard_interrupt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main returns 130 when KeyboardInterrupt is raised."""
+        monkeypatch.setattr(
+            gitlab,
+            "parse_fields",
+            lambda _: (_ for _ in ()).throw(KeyboardInterrupt),
+        )
+        assert gitlab.main() == 130
+
+    def test_main_handles_broken_pipe(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main returns 141 and redirects stdout on BrokenPipeError."""
+        monkeypatch.setattr(
+            gitlab,
+            "parse_fields",
+            lambda _: (_ for _ in ()).throw(BrokenPipeError),
+        )
+        dup2_calls: list[tuple[int, int]] = []
+        monkeypatch.setattr("os.dup2", lambda fd, fd2: dup2_calls.append((fd, fd2)))
+        monkeypatch.setattr("os.open", lambda *a, **kw: 99)
+        assert gitlab.main() == 141
+        assert len(dup2_calls) == 1

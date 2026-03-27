@@ -411,26 +411,27 @@ COMMANDS: dict[str, Callable[[list[str]], None]] = {
 
 def main() -> int:
     """Run the GitLab CLI."""
-    arguments = parse_fields(sys.argv[1:])
-    require_environment()
+    try:
+        arguments = parse_fields(sys.argv[1:])
+        require_environment()
 
-    if not arguments or arguments[0] not in COMMANDS:
-        die(
-            "usage: gitlab {mr-list|mr-get|mr-create|mr-update|mr-comment|"
-            "mr-notes|pipeline-get|pipeline-run|pipeline-jobs|job-log} "
-            "[args...]",
-            EXIT_USAGE,
-        )
+        if not arguments or arguments[0] not in COMMANDS:
+            die(
+                "usage: gitlab {mr-list|mr-get|mr-create|mr-update|mr-comment|"
+                "mr-notes|pipeline-get|pipeline-run|pipeline-jobs|job-log} "
+                "[args...]",
+                EXIT_USAGE,
+            )
 
-    COMMANDS[arguments[0]](arguments[1:])
-    return EXIT_SUCCESS
+        COMMANDS[arguments[0]](arguments[1:])
+        return EXIT_SUCCESS
+    except KeyboardInterrupt:
+        print("Interrupted by user", file=sys.stderr)
+        return 130
+    except BrokenPipeError:
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        return 141
 
 
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except KeyboardInterrupt:
-        print("Interrupted by user", file=sys.stderr)
-        raise SystemExit(130)
-    except BrokenPipeError:
-        raise SystemExit(EXIT_FAILURE)
+    sys.exit(main())

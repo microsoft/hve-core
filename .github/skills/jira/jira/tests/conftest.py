@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from email.message import Message
 from typing import Literal, cast
 
-import jira
 import pytest
 from test_constants import (
     TEST_API_TOKEN,
@@ -19,6 +18,8 @@ from test_constants import (
     TEST_PAT,
     TEST_USER_EMAIL,
 )
+
+import jira
 
 
 class FakeHttpResponse:

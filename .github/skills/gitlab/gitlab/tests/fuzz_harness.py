@@ -12,8 +12,9 @@ import io
 import sys
 from contextlib import redirect_stderr, suppress
 
-import gitlab
 import pytest
+
+import gitlab
 
 try:
     import atheris
@@ -69,11 +70,33 @@ def fuzz_load_json_payload(data: bytes) -> None:
         gitlab.load_json_payload(raw_payload, "usage: gitlab")
 
 
+def fuzz_validate_positive_int(data: bytes) -> None:
+    """Fuzz validate_positive_int with arbitrary byte strings."""
+    fdp = atheris.FuzzedDataProvider(data)
+    text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+        gitlab.validate_positive_int(text, "test-field")
+
+
+def fuzz_parse_fields(data: bytes) -> None:
+    """Fuzz parse_fields with arbitrary byte strings."""
+    fdp = atheris.FuzzedDataProvider(data)
+    count = fdp.ConsumeIntInRange(1, 6)
+    args = [
+        fdp.ConsumeUnicodeNoSurrogates(fdp.ConsumeIntInRange(0, 64))
+        for _ in range(count)
+    ]
+    with redirect_stderr(io.StringIO()), suppress(SystemExit):
+        gitlab.parse_fields(args)
+
+
 FUZZ_TARGETS = [
     fuzz_strip_git_suffix,
     fuzz_validate_numeric_id,
     fuzz_extract_field,
     fuzz_load_json_payload,
+    fuzz_validate_positive_int,
+    fuzz_parse_fields,
 ]
 
 

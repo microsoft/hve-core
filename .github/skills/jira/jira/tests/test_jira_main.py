@@ -7,9 +7,10 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass, field
 
-import jira
 import pytest
 from test_constants import FIELDS_ISSUE, TEST_ISSUE_KEY, TEST_JQL
+
+import jira
 
 
 @dataclass

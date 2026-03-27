@@ -11,8 +11,9 @@ from __future__ import annotations
 import sys
 from contextlib import suppress
 
-import jira
 import pytest
+
+import jira
 
 try:
     import atheris
@@ -70,11 +71,20 @@ def fuzz_split_fields(data: bytes) -> None:
         jira._split_fields(raw_fields)
 
 
+def fuzz_read_json_argument(data: bytes) -> None:
+    """Fuzz the _read_json_argument helper with arbitrary byte strings."""
+    fdp = atheris.FuzzedDataProvider(data)
+    text = fdp.ConsumeUnicodeNoSurrogates(fdp.remaining_bytes())
+    with suppress(jira.ScriptError):
+        jira._read_json_argument(text, "usage: test")
+
+
 FUZZ_TARGETS = [
     fuzz_extract_error_message,
     fuzz_validate_issue_key,
     fuzz_extract_field,
     fuzz_split_fields,
+    fuzz_read_json_argument,
 ]
 
 

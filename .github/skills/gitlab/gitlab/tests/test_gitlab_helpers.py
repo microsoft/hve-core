@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
-import gitlab
 import pytest
+
+import gitlab
 
 
 class TestDie:

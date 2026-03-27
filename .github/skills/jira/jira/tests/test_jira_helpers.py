@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import json
 
-import jira
 import pytest
 from conftest import StdinFactory
 from test_constants import (
@@ -16,6 +15,8 @@ from test_constants import (
     TEST_ISSUE_KEY,
     USAGE_CREATE,
 )
+
+import jira
 
 
 @pytest.mark.parametrize(
