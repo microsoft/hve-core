@@ -14,7 +14,7 @@ keywords:
   - process flow
 ---
 
-hve-core uses GitHub Agentic Workflows to automate the journey from issue creation through implementation and code review. Three event-driven workflows connect specialized agents into a pipeline where each stage triggers the next through labels, pull requests, and GitHub events.
+hve-core uses GitHub Agentic Workflows to automate the journey from issue creation through implementation, code review, and dependency management. Five event-driven workflows connect specialized agents into a pipeline where each stage triggers the next through labels, pull requests, and GitHub events.
 
 ## End-to-End Process Flow
 
@@ -134,6 +134,24 @@ The review workflow activates when a pull request is opened or marked ready for 
 
 The review produces inline comments on specific lines and a summary review. PRs that pass receive the `review-passed` label; those needing changes receive `needs-revision` with actionable feedback.
 
+### Dependabot PR Review
+
+The Dependabot PR review workflow activates when a pull request is opened or synchronized on dependency files. It only processes PRs authored by `dependabot[bot]` and calls `noop` for all other authors. It imports the [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/dependency-reviewer.agent.md) and evaluates version bumps:
+
+1. Classify each change as a patch, minor, or major version bump.
+2. Verify license compatibility with the project's MIT license.
+3. Check SHA pinning compliance for GitHub Actions references.
+4. Confirm devcontainer and `copilot-setup-steps.yml` synchronization when both are affected.
+5. Approve patch and minor bumps that pass all safety checks.
+6. Leave a comment without approving for major bumps or changes that need human review.
+
+> [!NOTE]
+> The workflow approves but does not merge. Major version bumps always require human review.
+
+### Documentation Update Check
+
+The documentation update check workflow activates on pushes to main or develop. It imports the [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/doc-update-checker.agent.md) and verifies that documentation accurately reflects recent code changes.
+
 ## Workflow Configuration
 
 All three workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
@@ -143,6 +161,8 @@ All three workflows are defined as GitHub Agentic Workflow markdown files under 
 | `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
 | `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
 | `pr-first-pass-review.md` | `pr-first-pass-review.lock.yml` | PR opened or marked ready for review   | PR Review Agent        |
+| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer    |
+| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main or develop                | Documentation Checker  |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
@@ -228,6 +248,8 @@ flowchart LR
         TRIAGE["Issue Triage<br/><i>event-driven</i>"]
         IMPL["Issue Implementation<br/><i>event-driven</i>"]
         REVIEW["PR First-Pass Review<br/><i>event-driven</i>"]
+        DEPBOT["Dependabot PR Review<br/><i>event-driven</i>"]
+        DOCCHK["Doc Update Check<br/><i>event-driven</i>"]
         TRIAGE -- "agent-ready label" --> IMPL
         IMPL -- "opens PR" --> REVIEW
     end

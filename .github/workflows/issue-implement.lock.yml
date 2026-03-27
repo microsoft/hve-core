@@ -20,12 +20,13 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
+# Analyzes agent-ready issues and opens pull requests with the implementation
 #
 # Resolved workflow manifest:
 #   Imports:
 #     - ../agents/hve-core/task-implementor.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"86b95fe9700fb12bbb417585d27c659951f370f04dc97f155b5a40a0f97fb811","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"df36a6e65b6c32ec1e55555756ed1bc76c7a32e7d0b62e52c9221b4902fd3d78","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Issue Implementation Agent"
 "on":
@@ -869,7 +870,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           WORKFLOW_NAME: "Issue Implementation Agent"
-          WORKFLOW_DESCRIPTION: "No description provided"
+          WORKFLOW_DESCRIPTION: "Analyzes agent-ready issues and opens pull requests with the implementation"
           HAS_PATCH: ${{ steps.collect_output.outputs.has_patch }}
         with:
           script: |

@@ -42,9 +42,6 @@ safe-outputs:
     max: 1
   add-labels:
     allowed: [needs-revision, review-passed]
-    blocked-with:
-      needs-revision: [review-passed]
-      review-passed: [needs-revision]
     max: 1
   noop:
     max: 1
