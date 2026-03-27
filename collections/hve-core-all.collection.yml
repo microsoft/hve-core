@@ -567,6 +567,9 @@ items:
 - path: .github/skills/security/owasp-top-10
   kind: skill
   maturity: experimental
+- path: .github/skills/security/secure-by-design
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/security-reviewer-formats
   kind: skill
   maturity: experimental
