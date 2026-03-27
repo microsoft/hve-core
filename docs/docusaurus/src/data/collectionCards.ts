@@ -72,7 +72,10 @@ export const collectionCards: CollectionCardData[] = [
   },
 ];
 
-export const metaCollections: Record<string, number> = {
+export interface MetaCollections {
+  'hve-core-all': number;
+}
+
+export const metaCollections: MetaCollections = {
   'hve-core-all': 222,
-  installer: 2,
 };

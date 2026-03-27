@@ -60,10 +60,6 @@ describe('metaCollections', () => {
     expect(metaCollections).toHaveProperty('hve-core-all');
   });
 
-  it('contains installer entry', () => {
-    expect(metaCollections).toHaveProperty('installer');
-  });
-
   it('has positive integer values', () => {
     for (const [key, value] of Object.entries(metaCollections)) {
       expect(Number.isInteger(value)).toBe(true);
@@ -94,10 +90,5 @@ describe('artifact count cross-validation', () => {
   it('hve-core-all count matches YAML manifest', () => {
     const yamlCount = countYamlPaths('hve-core-all');
     expect(metaCollections['hve-core-all']).toBe(yamlCount);
-  });
-
-  it('installer count matches YAML manifest', () => {
-    const yamlCount = countYamlPaths('installer');
-    expect(metaCollections['installer']).toBe(yamlCount);
   });
 });

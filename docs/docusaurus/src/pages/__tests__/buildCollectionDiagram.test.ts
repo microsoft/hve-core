@@ -1,5 +1,5 @@
 import { buildCollectionDiagram } from '../index';
-import type { CollectionCardData } from '../../data/collectionCards';
+import type { CollectionCardData, MetaCollections } from '../../data/collectionCards';
 
 describe('buildCollectionDiagram', () => {
   const sampleCards: CollectionCardData[] = [
@@ -19,9 +19,8 @@ describe('buildCollectionDiagram', () => {
     },
   ];
 
-  const sampleMeta: Record<string, number> = {
+  const sampleMeta: MetaCollections = {
     'hve-core-all': 100,
-    installer: 2,
   };
 
   it('starts with graph TD', () => {
@@ -32,11 +31,6 @@ describe('buildCollectionDiagram', () => {
   it('includes HCA node with meta count', () => {
     const result = buildCollectionDiagram(sampleCards, sampleMeta);
     expect(result).toContain('HCA["hve-core-all<br/>(100 artifacts)"]');
-  });
-
-  it('includes INS node with meta count', () => {
-    const result = buildCollectionDiagram(sampleCards, sampleMeta);
-    expect(result).toContain('INS["installer<br/>(2 artifacts)"]');
   });
 
   it('creates a node for each card', () => {
@@ -70,15 +64,13 @@ describe('buildCollectionDiagram', () => {
     const result = buildCollectionDiagram([], sampleMeta);
     expect(result).toMatch(/^graph TD/);
     expect(result).toContain('HCA["hve-core-all<br/>(100 artifacts)"]');
-    expect(result).toContain('INS["installer<br/>(2 artifacts)"]');
     expect(result).not.toContain('HCA -->');
   });
 
   it('reflects different meta values', () => {
-    const meta = { 'hve-core-all': 999, installer: 5 };
+    const meta: MetaCollections = { 'hve-core-all': 999 };
     const result = buildCollectionDiagram([], meta);
     expect(result).toContain('(999 artifacts)');
-    expect(result).toContain('(5 artifacts)');
   });
 
   it('produces one node line and one edge line per card', () => {
@@ -86,8 +78,8 @@ describe('buildCollectionDiagram', () => {
     const lines = result.split('\n');
     const nodeLines = lines.filter((l) => /^\s+\w+\["/.test(l));
     const edgeLines = lines.filter((l) => /HCA -->/.test(l));
-    // 2 cards + HCA + INS = 4 node lines
-    expect(nodeLines).toHaveLength(4);
+    // 2 cards + HCA = 3 node lines
+    expect(nodeLines).toHaveLength(3);
     expect(edgeLines).toHaveLength(2);
   });
 
