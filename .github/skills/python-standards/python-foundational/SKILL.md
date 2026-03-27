@@ -69,8 +69,8 @@ This content is a skill rather than an instructions file for three reasons: skil
 
 #### 8. Architectural Fit
 
-* Confirm the code aligns with existing patterns in the codebase. Red flags: a custom implementation of something already in `shared/`, a new abstraction inconsistent with neighbouring code, or logic that bypasses established service/data layers.
-* Confirm the code lives in the right module or package. Red flag: business logic in `utils.py`, or domain logic leaking into transport/presentation layers.
+* Confirm the code aligns with existing patterns in the codebase. Red flags: reimplementing functionality already available in shared or common modules, introducing abstractions inconsistent with neighbouring code, or bypassing established service and data layers.
+* Confirm the code lives in the right module or package. Red flags: business logic placed in generic utility modules, or domain logic leaking into transport or presentation layers.
 
 ## Severity Rubric
 
