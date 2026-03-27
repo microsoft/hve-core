@@ -17,66 +17,79 @@ This skill defines the foundational layer of Python excellence that every piece 
 
 This content is a skill rather than an instructions file for three reasons: skills are distributed through the CLI plugin and VS Code extension without requiring consumers to copy files into their repo; new language skills can be added without modifying the review agent itself; and skills are loaded on demand, keeping the context window small when the diff contains no Python.
 
-### Core Checklist
+## Core Checklist
 
 #### 1. Readability & Style
 
-* Clear, descriptive names for variables, functions, and classes.
-* Proper spacing, no trailing whitespace, logical grouping of imports.
+* Use Python naming: `PascalCase` classes, `snake_case` functions/variables, `UPPER_SNAKE_CASE` constants, `_` private members.
+* Group imports: stdlib → third-party → local (blank line between groups, no trailing whitespace).
 
 #### 2. Pythonic Idioms
 
-* Prefer comprehensions and generators over manual loops when clearer.
-* Use `with` context managers for files, locks, and DB connections.
-* Use `dataclasses` or `NamedTuple` for simple data containers.
-* Use `Enum` for fixed sets of values.
-* Prefer `pathlib` over `os.path`.
-* Use `datetime` with timezone awareness where relevant.
+* Prefer comprehensions for simple transforms; use explicit loops for complex logic/side-effects.
+* Always use `with` for files, locks, DB connections.
+* Prefer `dataclass` / `NamedTuple` / `Enum` for data holders.
+* Use `pathlib` over `os.path`; timezone-aware `datetime` when relevant.
+* Use `*` keyword-only arguments for multi-optional functions.
+* Never use mutable defaults or `global`/`nonlocal` unless strictly required.
 
 #### 3. Function & Class Design
 
-* Write small, pure functions where possible.
-* Apply single responsibility: one function, one job.
-* Define clear input/output contracts.
-* Document side effects explicitly when they are unavoidable.
+* Keep functions small and single-responsibility.
+* Add docstrings to all public APIs (follow repo style).
+* Document unavoidable side-effects.
+* Follow codebase’s class-member ordering (if defined).
 
 #### 4. Type Safety Foundations
 
-* Add type hints on all public functions, methods, module-level variables, and class attributes.
-* Use PEP 695 syntax (type statements, generics) on Python 3.12+; use `TypeVar`-based generics for older targets.
-* Avoid `Any` except in rare wrapper cases.
+* Add type hints to all public APIs, module vars, and class attributes.
+* Use PEP 695 (3.12+) or `TypeVar` for generics.
+* Avoid `Any` except in thin wrappers.
 
 #### 5. Error Handling
 
-* Raise specific exceptions; never use bare `except:`. Broad `except Exception:` is acceptable only at application boundaries with logging and re-raise.
-* No silent failures.
-* Raise meaningful custom exceptions when appropriate.
-* Check for uncovered error paths: missing edge cases and unhandled exceptions from callees.
+* Raise specific exceptions; never bare `except:` (broad `except Exception:` only at app boundaries with logging).
+* No silent failures or generic error messages.
+* Provide context, expected state, and guidance in every exception.
 
 #### 6. Anti-Patterns to Avoid
 
-* No `global` or `nonlocal` unless truly necessary.
-* No `eval`, `exec`, or `pickle` on untrusted input.
-* No `print` in library or production code; use structured logging.
-* No hardcoded secrets or sensitive data.
-* No mutable default arguments (`def foo(bar=[])`); use `bar=None` with an internal guard instead.
+* Never use `eval`, `exec`, or `pickle` on untrusted data.
+* Never hard-code secrets.
 
 #### 7. Maintainability
 
-* Write self-documenting code; reserve comments for "why", not "what".
-* Follow consistent module-level organization (`__init__.py`, private helpers prefixed `_`).
-* Flag technical debt hotspots: functions over 40 LOC, cyclomatic complexity over 10, or logic duplicated across multiple call sites.
+* Prefer self-documenting code; comments only for "why".
+* Use structured logging instead of `print`.
+* Flag overly long/complex functions that resist testing.
 
 #### 8. Architectural Fit
 
-* Confirm the code aligns with existing patterns in the codebase. Red flags: reimplementing functionality already available in shared or common modules, introducing abstractions inconsistent with neighbouring code, or bypassing established service and data layers.
-* Confirm the code lives in the right module or package. Red flags: business logic placed in generic utility modules, or domain logic leaking into transport or presentation layers.
+* Align with existing patterns; do not re-implement shared functionality or bypass established layers.
+* Place code in the correct module/package.
+
+#### 9. Design Principles
+
+* Eliminate duplication: extract repeated logic into a shared helper so fixes propagate automatically.
+* Prefer the simplest implementation that satisfies current requirements. Introduce abstractions only when a second concrete use case appears.
+* Limit change breadth: every modified line should trace to the stated purpose of the change.
+* Before flagging seemingly unused code, verify it is not a protocol implementation, framework hook, public API, or entry point invoked externally.
+* Match solution complexity to problem complexity. A duplicated function warrants a shared helper, not an event-driven architecture.
+
+## References
+
+| File | Covers | Purpose |
+|------|--------|---------|
+| [design-principles.md](references/design-principles.md) | Section 9 | Rationale and examples for the design principles |
+| [code-style-patterns.md](references/code-style-patterns.md) | Sections 1–5 | Concrete code examples for style, idioms, type safety, class design, and error handling |
 
 ## Severity Rubric
 
-* **High:** Causes incorrect behavior, data loss, or security exposure at runtime.
-* **Medium:** Degrades maintainability, readability, or violates a project convention with no immediate runtime impact.
-* **Low:** Cosmetic, stylistic, or minor improvement opportunity.
+| Severity | Definition |
+|----------|------------|
+| High | Causes incorrect behavior, data loss, or security exposure at runtime |
+| Medium | Degrades maintainability, readability, or violates a project convention with no immediate runtime impact |
+| Low | Cosmetic, stylistic, or minor improvement opportunity |
 
 ## Troubleshooting
 
@@ -85,6 +98,16 @@ This content is a skill rather than an instructions file for three reasons: skil
 | Skill not loaded             | Confirm the diff contains `.py` files. The agent selects skills by matching file types in the changed files against skill descriptions.                           |
 | No findings generated        | Verify the `Skills Loaded` footer in the review output lists `python-foundational`. If listed but no findings appear, the diff may already satisfy the checklist. |
 | Severity seems miscalibrated | Compare against the Severity Rubric above. High requires runtime impact; medium is maintainability-only.                                                          |
+
+## Contributing
+
+Follow these conventions when extending this skill:
+
+* Checklist items belong in SKILL.md. Each bullet is a single, actionable check an agent or reviewer can apply to a diff. Keep bullets concise: one sentence, no code.
+* Reference files live in `references/` and provide examples or rationale for the covered checklist items. Each reference file covers a contiguous range of sections. Update the References table when adding a new file.
+* Before adding a new checklist item, confirm it does not duplicate an existing bullet in any section. Place it in the section that matches its primary concern. If it spans concerns, prefer the more specific section.
+* Name new reference files after the topic they cover (e.g., `async-patterns.md`). Include a frontmatter `description` that states which sections the file supports. Add a row to the References table in SKILL.md.
+* Checklist items and examples must be portable across codebases. Use generic module names and describe anti-patterns by their behavior, not by specific directory or file names.
 
 ---
 

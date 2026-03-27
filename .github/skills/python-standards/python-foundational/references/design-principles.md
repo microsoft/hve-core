@@ -1,6 +1,6 @@
 ---
 title: Design Principles
-description: Design principle rationale and before/after code examples for Section 9 of the python-foundational skill
+description: Design principle rationale and examples for Section 9 of the python-foundational skill
 author: microsoft/hve-core
 ms.date: 2026-03-27
 ms.topic: reference
@@ -13,11 +13,11 @@ estimated_reading_time: 3
 
 # Design Principles
 
-Extended guidance for Section 9 (Design Principles) of the `python-foundational` skill. The SKILL.md checklist defines what to check; this file explains why and provides concrete examples.
+Rationale and examples for Section 9 (Design Principles) of the python-foundational skill.
 
 ## DRY
 
-Duplication is the root cause of many maintenance failures. When the same logic appears in two places, a fix applied to one location often misses the other, creating subtle inconsistencies that surface as bugs weeks later.
+Duplication causes maintenance failures and subtle bugs. Extract repeated logic to a single source of truth.
 
 ### Before
 
@@ -63,7 +63,7 @@ The validation rules now live in one place. A future change to email validation 
 
 ## Simplicity First
 
-Over-engineering manifests as abstractions, configurability, or generalization that the current requirements do not call for. The cost is immediate (more code to review, test, and maintain) and compounds over time as future contributors must understand the abstraction before modifying behavior.
+Introduce abstractions only when multiple implementations actually exist. Avoid premature complexity.
 
 ### Before
 
@@ -98,19 +98,19 @@ When only one notification channel exists, the strategy pattern adds indirection
 
 ## Surgical Changes
 
-Some code appears unused but exists for valid reasons. Protocol implementations, framework hooks, public APIs, and CLI entry points may have no visible in-repo callers because they are invoked externally (by a framework, a consumer package, or the runtime).
+Some "dead" code is intentionally unused (e.g. framework hooks, public APIs, protocols). Verify before removal.
 
 Before removing seemingly dead code, check whether it falls into one of these categories. If uncertain, flag it in a review comment rather than deleting it.
 
 ### When NOT to Clean Up Adjacent Code
 
-A reviewer encounters a function with a minor style inconsistency adjacent to the lines they are modifying. The inconsistency predates the current change. Cleaning it up would expand the diff, obscure the actual intent of the change, and risk introducing a subtle regression in untested code.
+Do not clean up unrelated style issues in the same change — it bloats the diff and risks regression. Flag separately.
 
 The correct action: leave it alone. If the inconsistency is worth fixing, mention it as a separate finding. Every changed line in a review should trace directly to the stated purpose of the change.
 
 ## Approach Proportionality
 
-A proportionate change solves the stated problem at the narrowest reasonable scope. Disproportionate changes introduce coordination overhead or architectural shifts that the problem does not require.
+Solve the problem at the narrowest reasonable scope. Avoid architectural changes that the task does not require.
 
 ### Example of a Disproportionate Change
 

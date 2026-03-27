@@ -13,11 +13,11 @@ estimated_reading_time: 4
 
 # Code Style Patterns
 
-Concrete examples for Sections 1–5 of the `python-foundational` skill checklist. The SKILL.md defines what to check; this file illustrates each rule with before/after code.
+Concrete before/after examples for Sections 1–5 of the python-foundational skill checklist.
 
 ## Naming Conventions
 
-Python naming conventions eliminate ambiguity about what an identifier represents.
+Python naming conventions remove ambiguity.
 
 ```python
 # Classes: PascalCase
