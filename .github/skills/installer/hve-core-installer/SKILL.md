@@ -701,11 +701,12 @@ After the gitignore checkpoint (for **any** installation method), present MCP co
 
 Some HVE-Core agents integrate with external services via MCP (Model Context Protocol):
 
-| Agent                  | MCP Server               | Purpose                   |
-|------------------------|--------------------------|---------------------------|
-| ado-prd-to-wit         | ado                      | Azure DevOps work items   |
-| github-backlog-manager | github                   | GitHub backlog management |
-| task-researcher        | context7, microsoft-docs | Documentation lookup      |
+| Agent                  | MCP Server               | Purpose                              |
+|------------------------|--------------------------|--------------------------------------|
+| ado-prd-to-wit         | ado                      | Azure DevOps work items              |
+| github-backlog-manager | github                   | GitHub backlog management            |
+| task-researcher        | context7, microsoft-docs | Documentation lookup                 |
+| dt-coach               | figma                    | FigJam board export for DT artifacts |
 
 Would you like to configure MCP servers? (yes/no)
 ```
@@ -726,12 +727,13 @@ If user chooses to configure MCP, present:
 ```text
 Which MCP servers would you like to configure?
 
-| Server         | Purpose                   | Recommended For            |
-|----------------|---------------------------|----------------------------|
-| github         | GitHub issues and repos   | GitHub-hosted repositories |
-| ado            | Azure DevOps work items   | Azure DevOps repositories  |
-| context7       | SDK/library documentation | All users (optional)       |
-| microsoft-docs | Microsoft Learn docs      | All users (optional)       |
+| Server         | Purpose                   | Recommended For                  |
+|----------------|---------------------------|----------------------------------|
+| github         | GitHub issues and repos   | GitHub-hosted repositories       |
+| ado            | Azure DevOps work items   | Azure DevOps repositories        |
+| context7       | SDK/library documentation | All users (optional)             |
+| microsoft-docs | Microsoft Learn docs      | All users (optional)             |
+| figma          | FigJam & Figma design     | Design Thinking collection users |
 
 ⚠️ Suggest EITHER github OR ado based on where your repo is hosted, not both.
 
@@ -806,6 +808,17 @@ Create `.vscode/mcp.json` using ONLY the templates below. Use HTTP type with man
   "microsoft-docs": {
     "type": "http",
     "url": "https://learn.microsoft.com/api/mcp"
+  }
+}
+```
+
+#### figma server (HTTP with managed auth)
+
+```json
+{
+  "figma": {
+    "type": "http",
+    "url": "https://mcp.figma.com/mcp"
   }
 }
 ```

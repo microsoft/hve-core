@@ -1,0 +1,1 @@
+../../../../.github/prompts/design-thinking/dt-figma-export.prompt.md
