@@ -543,6 +543,9 @@ items:
 - path: .github/skills/security/owasp-llm
   kind: skill
   maturity: experimental
+- path: .github/skills/security/owasp-ml
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-top-10
   kind: skill
   maturity: experimental
