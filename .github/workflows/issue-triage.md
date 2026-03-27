@@ -101,3 +101,7 @@ For each step, follow the detailed guidance in the Issue Triage Agent instructio
 * Do not add labels not in the `allowed` list.
 * Limit to at most 3 comments per triage run.
 * Be constructive and welcoming in all comments.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

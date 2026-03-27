@@ -1,1 +1,0 @@
-../../../.github/agents/hve-core/dependency-reviewer.agent.md

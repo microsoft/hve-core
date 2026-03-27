@@ -77,3 +77,7 @@ pinning compliance for GitHub Actions references.
 * Only use REQUEST_CHANGES for license incompatibility, missing SHA pinning, or env sync violations.
 * Do not duplicate vulnerability scanning already done by Dependabot or CodeQL.
 * Maximum 10 inline review comments.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

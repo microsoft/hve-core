@@ -9,6 +9,9 @@ HVE Core provides the complete collection of AI chat agents, prompts, instructio
 
 Use this edition when you want access to everything without choosing a focused collection.
 
+> [!CAUTION]
+> This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+
 GitHub automation agents included (via github collection):
 
 - **Issue Triage Agent** — Automated single-issue classification, labeling, duplicate detection, and agent-ready evaluation
@@ -17,8 +20,6 @@ HVE Core automation agents included:
 
 - **Dependency Reviewer** — Reviews dependency changes for necessity, licensing, SHA pinning, and environment sync
 - **Doc Update Checker** — Detects documentation drift after code changes and creates tracking issues
-> [!CAUTION]
-> This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 
 Code review agents included (via coding-standards collection):
 

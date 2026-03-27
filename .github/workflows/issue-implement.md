@@ -96,3 +96,7 @@ from imported files.
 * If the issue is ambiguous or too large, post a comment asking for
   clarification instead of guessing.
 * Keep the PR small and focused.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

@@ -10,7 +10,18 @@ self-hosted-runner:
 # HVE_DEVCONTAINER_IMAGE and HVE_GITHUB_API_URL are environment variables
 # consumed at runtime, not GitHub configuration variables.
 config-variables:
+  - GH_AW_MODEL_AGENT_COPILOT
+  - GH_AW_MODEL_DETECTION_COPILOT
   - HVE_GITHUB_RELEASES_URL
   - HVE_PSGALLERY_REPOSITORY
   - HVE_PSGALLERY_SOURCE_URL
   - RELEASE_APP_ID
+
+# Path-specific configurations for generated lock files.
+# Lock files are produced by `gh aw compile` and contain shell scripts
+# that trigger shellcheck info/style diagnostics outside our control.
+paths:
+  .github/workflows/*.lock.yml:
+    ignore:
+      - 'shellcheck reported issue in this script: SC2086:.+'
+      - 'shellcheck reported issue in this script: SC2129:.+'

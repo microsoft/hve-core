@@ -1,6 +1,9 @@
 ---
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
+author: HVE Core Team
+ms.date: 2026-03-27
+ms.topic: concept
 sidebar_position: 4
 keywords:
   - agentic workflows
@@ -135,11 +138,11 @@ The review produces inline comments on specific lines and a summary review. PRs 
 
 All three workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
-| Workflow File          | Lock File                    | Trigger                                        | Agent                    |
-|------------------------|------------------------------|-------------------------------------------------|--------------------------|
-| `issue-triage.md`      | `issue-triage.lock.yml`      | Issue opened or labeled `needs-triage`          | Issue Triage Agent       |
-| `issue-implement.md`   | `issue-implement.lock.yml`   | Issue labeled `agent-ready`                     | Task Implementor Agent   |
-| `pr-first-pass-review.md` | `pr-first-pass-review.lock.yml` | PR opened or marked ready for review        | PR Review Agent          |
+| Workflow File             | Lock File                       | Trigger                                | Agent                  |
+|---------------------------|---------------------------------|----------------------------------------|------------------------|
+| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
+| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
+| `pr-first-pass-review.md` | `pr-first-pass-review.lock.yml` | PR opened or marked ready for review   | PR Review Agent        |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
@@ -169,12 +172,12 @@ Beyond the automated GitHub event-driven pipeline, hve-core provides interactive
 
 The [RPI Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/rpi-agent.agent.md) runs a five-phase iterative cycle: Research, Plan, Implement, Review, and Discover. It delegates to four specialized subagents:
 
-| Agent             | Role                                                                 |
-|-------------------|----------------------------------------------------------------------|
-| Task Researcher   | Deep codebase and domain analysis, produces research documents       |
-| Task Planner      | Creates phased implementation plans with validation steps            |
-| Task Implementor  | Executes plans through subagent delegation and tracks changes        |
-| Task Reviewer     | Validates completed work against plans and conventions               |
+| Agent            | Role                                                           |
+|------------------|----------------------------------------------------------------|
+| Task Researcher  | Deep codebase and domain analysis, produces research documents |
+| Task Planner     | Creates phased implementation plans with validation steps      |
+| Task Implementor | Executes plans through subagent delegation and tracks changes  |
+| Task Reviewer    | Validates completed work against plans and conventions         |
 
 Each agent hands off to the next through structured artifacts stored in `.copilot-tracking/`.
 
@@ -208,13 +211,13 @@ The [GitHub Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.gi
 
 Five agents support upstream planning activities:
 
-| Agent                        | Purpose                                              |
-|------------------------------|------------------------------------------------------|
-| BRD Builder                  | Business Requirements Documents                      |
-| PRD Builder                  | Product Requirements Documents                       |
-| ADR Creation                 | Architecture Decision Records                        |
-| Architecture Diagram Builder | Visual system architecture diagrams                  |
-| Security Plan Creator        | Security assessment and mitigation plans              |
+| Agent                        | Purpose                                  |
+|------------------------------|------------------------------------------|
+| BRD Builder                  | Business Requirements Documents          |
+| PRD Builder                  | Product Requirements Documents           |
+| ADR Creation                 | Architecture Decision Records            |
+| Architecture Diagram Builder | Visual system architecture diagrams      |
+| Security Plan Creator        | Security assessment and mitigation plans |
 
 ## How It All Connects
 
@@ -255,3 +258,7 @@ flowchart LR
 ```
 
 The automated pipeline and interactive agents share instruction files for consistent coding standards. Interactive agents produce tracking artifacts that inform implementation. The automated pipeline uses GitHub labels as its coordination mechanism, while interactive agents coordinate through `.copilot-tracking/` files.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

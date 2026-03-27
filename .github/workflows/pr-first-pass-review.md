@@ -203,3 +203,7 @@ draft due to insufficient quality for review.
   `REQUEST_CHANGES`, and stop.
 * If no action is needed (maintainer PR or draft), you MUST call the `noop`
   tool with a message explaining why.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

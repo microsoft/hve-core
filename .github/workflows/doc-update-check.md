@@ -97,3 +97,7 @@ When creating issues, use the **bug-report** template structure from `.github/IS
 * Do not modify files.
 * Skip changes that are purely cosmetic (formatting, whitespace, comments).
 * Do not create issues when documentation was updated in the same push.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
