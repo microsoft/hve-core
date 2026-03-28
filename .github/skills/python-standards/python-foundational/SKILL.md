@@ -78,18 +78,18 @@ This content is a skill rather than an instructions file for three reasons: skil
 
 ## References
 
-| File | Covers | Purpose |
-|------|--------|---------|
-| [design-principles.md](references/design-principles.md) | Section 9 | Rationale and examples for the design principles |
+| File                                                        | Covers       | Purpose                                                                                 |
+|-------------------------------------------------------------|--------------|-----------------------------------------------------------------------------------------|
+| [design-principles.md](references/design-principles.md)     | Section 9    | Rationale and examples for the design principles                                        |
 | [code-style-patterns.md](references/code-style-patterns.md) | Sections 1–5 | Concrete code examples for style, idioms, type safety, class design, and error handling |
 
 ## Severity Rubric
 
-| Severity | Definition |
-|----------|------------|
-| High | Causes incorrect behavior, data loss, or security exposure at runtime |
-| Medium | Degrades maintainability, readability, or violates a project convention with no immediate runtime impact |
-| Low | Cosmetic, stylistic, or minor improvement opportunity |
+| Severity | Definition                                                                                               |
+|----------|----------------------------------------------------------------------------------------------------------|
+| High     | Causes incorrect behavior, data loss, or security exposure at runtime                                    |
+| Medium   | Degrades maintainability, readability, or violates a project convention with no immediate runtime impact |
+| Low      | Cosmetic, stylistic, or minor improvement opportunity                                                    |
 
 ## Troubleshooting
 
