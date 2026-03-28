@@ -19,23 +19,23 @@ personal information, medical records, or biometric data.
 
 ## Risk
 
-- Confidential information about the input data can be compromised through model output analysis.
-- The attack has moderate exploitability and is difficult to detect.
-- Attackers who have access to the model and input data can submit queries and analyze responses.
-- The model's output can be used to infer sensitive information about individuals in the training
+* Confidential information about the input data can be compromised through model output analysis.
+* The attack has moderate exploitability and is difficult to detect.
+* Attackers who have access to the model and input data can submit queries and analyze responses.
+* The model's output can be used to infer sensitive information about individuals in the training
   data.
-- Privacy violations and regulatory non-compliance may result from successful extraction of
+* Privacy violations and regulatory non-compliance may result from successful extraction of
   personal data.
 
 ## Vulnerability checklist
 
-- The model is accessible without authentication or access control restrictions.
-- Model predictions are returned with full precision without rounding or noise addition.
-- No input validation is performed to detect systematic probing queries.
-- The model lacks transparency mechanisms to log and audit all inputs and outputs.
-- No monitoring is in place to detect anomalous query patterns.
-- The model is not regularly retrained to limit the relevance of leaked information.
-- Differential privacy techniques are not applied during training.
+* The model is accessible without authentication or access control restrictions.
+* Model predictions are returned with full precision without rounding or noise addition.
+* No input validation is performed to detect systematic probing queries.
+* The model lacks transparency mechanisms to log and audit all inputs and outputs.
+* No monitoring is in place to detect anomalous query patterns.
+* The model is not regularly retrained to limit the relevance of leaked information.
+* Differential privacy techniques are not applied during training.
 
 ## Prevention controls
 
@@ -55,6 +55,7 @@ personal information, medical records, or biometric data.
 ## Example attack scenarios
 
 ### Scenario A — Stealing personal information from a face recognition model
+
 An attacker trains a deep learning model to perform face recognition and uses it to perform a
 model inversion attack on a different face recognition model used by a company. The attacker
 inputs images of individuals into the target model and recovers personal information from the
@@ -62,6 +63,7 @@ model's predictions, such as name, address, or social security number. The attac
 vulnerability in the model's implementation or accesses the model through an API.
 
 ### Scenario B — Bypassing a bot detection model in online advertising
+
 An advertiser trains a deep learning bot detection model and uses it to invert the predictions of
 a bot detection model used by an online advertising platform. The advertiser inputs bots into the
 model and makes them appear as human users, allowing the bots to bypass detection and
@@ -70,21 +72,21 @@ through a vulnerability or API.
 
 ## Detection guidance
 
-- Monitor API query patterns for systematic probing such as repeated similar queries with small
+* Monitor API query patterns for systematic probing such as repeated similar queries with small
   variations.
-- Track the volume and frequency of model queries per user or API key.
-- Log all inputs and outputs to detect reconstruction attempts.
-- Compare query distributions against expected usage patterns to identify anomalous behavior.
-- Implement rate limiting and query budget controls on model prediction endpoints.
+* Track the volume and frequency of model queries per user or API key.
+* Log all inputs and outputs to detect reconstruction attempts.
+* Compare query distributions against expected usage patterns to identify anomalous behavior.
+* Implement rate limiting and query budget controls on model prediction endpoints.
 
 ## Remediation
 
-- Restrict model API access to authenticated and authorized users only.
-- Add noise or rounding to model outputs to reduce the precision of leaked information.
-- Implement query rate limiting and anomaly detection on prediction endpoints.
-- Apply differential privacy techniques during model training.
-- Retrain the model periodically to reduce the relevance of previously leaked information.
-- Audit access logs for evidence of systematic model probing.
+* Restrict model API access to authenticated and authorized users only.
+* Add noise or rounding to model outputs to reduce the precision of leaked information.
+* Implement query rate limiting and anomaly detection on prediction endpoints.
+* Apply differential privacy techniques during model training.
+* Retrain the model periodically to reduce the relevance of previously leaked information.
+* Audit access logs for evidence of systematic model probing.
 
 ---
 

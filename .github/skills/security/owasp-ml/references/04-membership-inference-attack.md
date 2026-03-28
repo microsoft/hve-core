@@ -20,23 +20,23 @@ medical histories, or personal information.
 
 ## Risk
 
-- Loss of confidentiality and privacy of sensitive data used for training.
-- Unreliable or incorrect model predictions when the model overfits to training data.
-- Legal and regulatory compliance violations from exposure of membership information.
-- Reputational damage to the organization operating the model.
-- Attackers with access to the data and the model can exploit unsecured data transmission
+* Loss of confidentiality and privacy of sensitive data used for training.
+* Unreliable or incorrect model predictions when the model overfits to training data.
+* Legal and regulatory compliance violations from exposure of membership information.
+* Reputational damage to the organization operating the model.
+* Attackers with access to the data and the model can exploit unsecured data transmission
   channels.
 
 ## Vulnerability checklist
 
-- The model overfits to the training data, behaving differently on training versus unseen data.
-- Training data is accessible through unsecured data transmission channels.
-- Proper data access controls are not in place.
-- Data validation and sanitization techniques are insufficient.
-- Training data is not encrypted in transit or at rest.
-- No differential privacy techniques are applied during training.
-- The model's predictions are returned with full confidence scores without noise or rounding.
-- Regular testing for overfitting and membership inference susceptibility is not performed.
+* The model overfits to the training data, behaving differently on training versus unseen data.
+* Training data is accessible through unsecured data transmission channels.
+* Proper data access controls are not in place.
+* Data validation and sanitization techniques are insufficient.
+* Training data is not encrypted in transit or at rest.
+* No differential privacy techniques are applied during training.
+* The model's predictions are returned with full confidence scores without noise or rounding.
+* Regular testing for overfitting and membership inference susceptibility is not performed.
 
 ## Prevention controls
 
@@ -55,6 +55,7 @@ medical histories, or personal information.
 ## Example attack scenarios
 
 ### Scenario A — Inferring financial data from a machine learning model
+
 A malicious attacker wants to gain access to sensitive financial information of individuals. They
 train a machine learning model on a dataset of financial records obtained from a financial
 organization. They then use this model to query whether a particular individual's record was
@@ -63,22 +64,22 @@ financial history, account balances, or credit status.
 
 ## Detection guidance
 
-- Monitor prediction confidence score distributions across queries for patterns that distinguish
+* Monitor prediction confidence score distributions across queries for patterns that distinguish
   training data from unseen data.
-- Track query patterns for repeated probing of the model with variations of similar records.
-- Measure overfitting metrics during training to assess susceptibility to membership inference.
-- Audit model API access logs for anomalous query volumes or systematic probing behavior.
-- Compare model behavior on known training samples versus known holdout samples to assess leakage.
+* Track query patterns for repeated probing of the model with variations of similar records.
+* Measure overfitting metrics during training to assess susceptibility to membership inference.
+* Audit model API access logs for anomalous query volumes or systematic probing behavior.
+* Compare model behavior on known training samples versus known holdout samples to assess leakage.
 
 ## Remediation
 
-- Apply differential privacy during training to limit per-record information leakage.
-- Add noise to prediction confidence scores before returning them to users.
-- Implement regularization to reduce overfitting and minimize training-versus-unseen behavior
+* Apply differential privacy during training to limit per-record information leakage.
+* Add noise to prediction confidence scores before returning them to users.
+* Implement regularization to reduce overfitting and minimize training-versus-unseen behavior
   differences.
-- Restrict API access and enforce query rate limits to prevent systematic probing.
-- Encrypt training data in transit and at rest and enforce strict access controls.
-- Periodically test the model for membership inference susceptibility using known attack methods.
+* Restrict API access and enforce query rate limits to prevent systematic probing.
+* Encrypt training data in transit and at rest and enforce strict access controls.
+* Periodically test the model for membership inference susceptibility using known attack methods.
 
 ---
 

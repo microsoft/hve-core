@@ -19,23 +19,23 @@ organization that developed the model.
 
 ## Risk
 
-- Loss of confidentiality of the data used to train the model.
-- Financial loss and damage to competitive advantage from unauthorized replication of the model.
-- Reputational harm to the organization that developed the model.
-- Unsecured model deployment makes it easier for the attacker to access and steal the model.
-- Stolen models may be used to discover vulnerabilities or craft adversarial attacks against the
+* Loss of confidentiality of the data used to train the model.
+* Financial loss and damage to competitive advantage from unauthorized replication of the model.
+* Reputational harm to the organization that developed the model.
+* Unsecured model deployment makes it easier for the attacker to access and steal the model.
+* Stolen models may be used to discover vulnerabilities or craft adversarial attacks against the
   original system.
 
 ## Vulnerability checklist
 
-- The model's code, parameters, and training data are not encrypted.
-- Strict access control measures such as two-factor authentication are not implemented.
-- Regular backups of the model's code and training data are not maintained.
-- The model's code is not obfuscated and is easy to reverse engineer.
-- No watermarking is applied to the model to enable theft tracing.
-- No legal protections such as patents or trade secrets are in place.
-- Monitoring and auditing of model access and usage is insufficient.
-- Model API endpoints do not enforce rate limiting or query budgets.
+* The model's code, parameters, and training data are not encrypted.
+* Strict access control measures such as two-factor authentication are not implemented.
+* Regular backups of the model's code and training data are not maintained.
+* The model's code is not obfuscated and is easy to reverse engineer.
+* No watermarking is applied to the model to enable theft tracing.
+* No legal protections such as patents or trade secrets are in place.
+* Monitoring and auditing of model access and usage is insufficient.
+* Model API endpoints do not enforce rate limiting or query budgets.
 
 ## Prevention controls
 
@@ -58,6 +58,7 @@ organization that developed the model.
 ## Example attack scenarios
 
 ### Scenario A — Stealing a machine learning model from a competitor
+
 A malicious attacker working for a competitor of a company that has developed a valuable machine
 learning model wants to steal the model for competitive advantage. The attacker reverse-engineers
 the company's model by disassembling the binary code or accessing the model's training data and
@@ -67,22 +68,22 @@ original company.
 
 ## Detection guidance
 
-- Monitor API query patterns for model extraction attempts characterized by high-volume
+* Monitor API query patterns for model extraction attempts characterized by high-volume
   systematic queries across the input space.
-- Track model download and access events for unauthorized access.
-- Implement canary records or watermarks that can be detected when a stolen model is deployed.
-- Audit access logs for unusual access patterns to model artifacts, code, or training data.
-- Monitor for the appearance of functionally equivalent models from competitors or public sources.
+* Track model download and access events for unauthorized access.
+* Implement canary records or watermarks that can be detected when a stolen model is deployed.
+* Audit access logs for unusual access patterns to model artifacts, code, or training data.
+* Monitor for the appearance of functionally equivalent models from competitors or public sources.
 
 ## Remediation
 
-- Encrypt all model artifacts, parameters, and training data at rest and in transit.
-- Enforce multi-factor authentication for access to model code and deployment infrastructure.
-- Deploy watermarking in the model to enable detection and attribution of stolen copies.
-- Apply rate limiting on prediction APIs to prevent extraction through extensive querying.
-- Obfuscate model code and deployment artifacts.
-- Secure legal protections for the model and pursue legal action if theft is detected.
-- Review and tighten access controls on model storage, versioning, and deployment systems.
+* Encrypt all model artifacts, parameters, and training data at rest and in transit.
+* Enforce multi-factor authentication for access to model code and deployment infrastructure.
+* Deploy watermarking in the model to enable detection and attribution of stolen copies.
+* Apply rate limiting on prediction APIs to prevent extraction through extensive querying.
+* Obfuscate model code and deployment artifacts.
+* Secure legal protections for the model and pursue legal action if theft is detected.
+* Review and tighten access controls on model storage, versioning, and deployment systems.
 
 ---
 

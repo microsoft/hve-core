@@ -19,25 +19,25 @@ natural language processing models.
 
 ## Risk
 
-- Misclassification of inputs leading to security bypass or harm to the system.
-- The manipulated input may not be noticeable to the naked eye, making the attack difficult to
+* Misclassification of inputs leading to security bypass or harm to the system.
+* The manipulated input may not be noticeable to the naked eye, making the attack difficult to
   detect.
-- Exploitation requires technical knowledge of deep learning and input processing techniques.
-- Attackers with knowledge of the model's architecture can craft targeted perturbations.
-- Cascading failures when misclassified inputs trigger downstream actions in automated pipelines.
+* Exploitation requires technical knowledge of deep learning and input processing techniques.
+* Attackers with knowledge of the model's architecture can craft targeted perturbations.
+* Cascading failures when misclassified inputs trigger downstream actions in automated pipelines.
 
 ## Vulnerability checklist
 
-- The model lacks adversarial training and has not been exposed to adversarial examples during
+* The model lacks adversarial training and has not been exposed to adversarial examples during
   training.
-- No input validation is performed to detect anomalies, unexpected values, or patterns.
-- The model is not designed with robust architectures or defense mechanisms against manipulative
+* No input validation is performed to detect anomalies, unexpected values, or patterns.
+* The model is not designed with robust architectures or defense mechanisms against manipulative
   inputs.
-- Model predictions are consumed directly without downstream verification or confidence
+* Model predictions are consumed directly without downstream verification or confidence
   thresholding.
-- No monitoring is in place to detect distribution shifts or anomalous input patterns at inference
+* No monitoring is in place to detect distribution shifts or anomalous input patterns at inference
   time.
-- The model's architecture and parameters are accessible to potential attackers.
+* The model's architecture and parameters are accessible to potential attackers.
 
 ## Prevention controls
 
@@ -54,6 +54,7 @@ natural language processing models.
 ## Example attack scenarios
 
 ### Scenario A — Image classification bypass
+
 A deep learning model is trained to classify images into categories such as dogs and cats. An
 attacker manipulates an image that is visually similar to a legitimate image of a cat but contains
 small, carefully crafted perturbations that cause the model to misclassify it as a dog. When the
@@ -61,6 +62,7 @@ model is deployed in a real-world setting, the attacker uses the manipulated ima
 security measures or cause harm to the system.
 
 ### Scenario B — Network intrusion detection evasion
+
 A deep learning model is trained to detect intrusions in a network. An attacker manipulates
 network traffic by carefully crafting packets that evade the model's intrusion detection system.
 The attacker alters features of the network traffic such as the source IP address, destination IP
@@ -70,22 +72,22 @@ other forms of damage.
 
 ## Detection guidance
 
-- Monitor input distributions at inference time for statistical anomalies or distribution shifts
+* Monitor input distributions at inference time for statistical anomalies or distribution shifts
   compared to training data.
-- Log all inputs and outputs to detect patterns of adversarial probing.
-- Implement anomaly detection on incoming data to flag inputs that deviate significantly from
+* Log all inputs and outputs to detect patterns of adversarial probing.
+* Implement anomaly detection on incoming data to flag inputs that deviate significantly from
   expected distributions.
-- Compare model confidence scores over time to detect sudden drops or unusual prediction patterns.
-- Use gradient-based detection methods to identify inputs that produce unusually large gradients.
+* Compare model confidence scores over time to detect sudden drops or unusual prediction patterns.
+* Use gradient-based detection methods to identify inputs that produce unusually large gradients.
 
 ## Remediation
 
-- Retrain the model with adversarial examples incorporated into the training dataset.
-- Deploy input validation filters to reject or quarantine suspicious inputs before inference.
-- Implement robust model architectures that are inherently resistant to small perturbations.
-- Add confidence-based gating to suppress low-confidence predictions.
-- Restrict public access to model APIs and internals to limit attacker reconnaissance.
-- Continuously monitor model performance in production for accuracy degradation that may indicate
+* Retrain the model with adversarial examples incorporated into the training dataset.
+* Deploy input validation filters to reject or quarantine suspicious inputs before inference.
+* Implement robust model architectures that are inherently resistant to small perturbations.
+* Add confidence-based gating to suppress low-confidence predictions.
+* Restrict public access to model APIs and internals to limit attacker reconnaissance.
+* Continuously monitor model performance in production for accuracy degradation that may indicate
   ongoing adversarial attacks.
 
 ---

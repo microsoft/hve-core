@@ -20,26 +20,26 @@ retraining cycles.
 
 ## Risk
 
-- The model will make incorrect predictions based on the poisoned data, leading to false decisions
+* The model will make incorrect predictions based on the poisoned data, leading to false decisions
   and potentially serious consequences.
-- The attack has moderate exploitability and is difficult to detect.
-- Attackers who have access to the training data or the data collection pipeline can execute the
+* The attack has moderate exploitability and is difficult to detect.
+* Attackers who have access to the training data or the data collection pipeline can execute the
   attack.
-- Lack of data validation and insufficient monitoring of the training data increase exposure.
-- Poisoned data may persist across retraining cycles if not identified and removed.
+* Lack of data validation and insufficient monitoring of the training data increase exposure.
+* Poisoned data may persist across retraining cycles if not identified and removed.
 
 ## Vulnerability checklist
 
-- Training data is not thoroughly validated or verified before use.
-- No data integrity checks such as checksums or digital signatures are applied to training
+* Training data is not thoroughly validated or verified before use.
+* No data integrity checks such as checksums or digital signatures are applied to training
   datasets.
-- Training data is stored without encryption or secure transfer protocols.
-- Training data is not separated from production data.
-- Access controls do not restrict who can access or modify the training data.
-- No anomaly detection is applied to training data to detect sudden distribution changes or
+* Training data is stored without encryption or secure transfer protocols.
+* Training data is not separated from production data.
+* Access controls do not restrict who can access or modify the training data.
+* No anomaly detection is applied to training data to detect sudden distribution changes or
   labeling inconsistencies.
-- Multiple independent data labelers are not used to cross-validate labeling accuracy.
-- No separate validation set is used to verify model behavior after training.
+* Multiple independent data labelers are not used to cross-validate labeling accuracy.
+* No separate validation set is used to verify model behavior after training.
 
 ## Prevention controls
 
@@ -59,6 +59,7 @@ retraining cycles.
 ## Example attack scenarios
 
 ### Scenario A — Poisoning a spam classifier
+
 An attacker poisons the training data for a deep learning model that classifies emails as spam or
 not spam. The attacker injects maliciously labeled spam emails into the training dataset by
 compromising the data storage system, hacking into the network, or exploiting a vulnerability in
@@ -66,6 +67,7 @@ the data storage software. The attacker also manipulates the data labeling proce
 labels or bribing data labelers to provide incorrect labels.
 
 ### Scenario B — Poisoning a network traffic classifier
+
 An attacker poisons the training data for a deep learning model used to classify network traffic
 into categories such as email, web browsing, and video streaming. The attacker introduces a large
 number of examples of network traffic incorrectly labeled as a different type of traffic, causing
@@ -74,21 +76,21 @@ network resources or degradation of network performance.
 
 ## Detection guidance
 
-- Apply statistical analysis to training datasets to detect sudden distribution shifts or
+* Apply statistical analysis to training datasets to detect sudden distribution shifts or
   anomalous labeling patterns.
-- Use holdout validation sets to compare model behavior against known-clean baselines.
-- Monitor model accuracy over retraining cycles for unexpected degradation.
-- Cross-validate data labels using multiple independent labelers or automated consistency checks.
-- Audit data pipeline access logs for unauthorized modifications to training datasets.
+* Use holdout validation sets to compare model behavior against known-clean baselines.
+* Monitor model accuracy over retraining cycles for unexpected degradation.
+* Cross-validate data labels using multiple independent labelers or automated consistency checks.
+* Audit data pipeline access logs for unauthorized modifications to training datasets.
 
 ## Remediation
 
-- Remove identified poisoned data from the training dataset and retrain the model.
-- Implement data provenance tracking to trace the origin of all training data.
-- Enforce strict access controls and audit logging on data storage and labeling systems.
-- Deploy anomaly detection on data ingestion pipelines to catch future poisoning attempts.
-- Use ensemble models trained on different data subsets to reduce single-point-of-failure risk.
-- Conduct periodic audits of data labeling quality and consistency.
+* Remove identified poisoned data from the training dataset and retrain the model.
+* Implement data provenance tracking to trace the origin of all training data.
+* Enforce strict access controls and audit logging on data storage and labeling systems.
+* Deploy anomaly detection on data ingestion pipelines to catch future poisoning attempts.
+* Use ensemble models trained on different data subsets to reduce single-point-of-failure risk.
+* Conduct periodic audits of data labeling quality and consistency.
 
 ---
 

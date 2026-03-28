@@ -20,25 +20,25 @@ through public model hubs.
 
 ## Risk
 
-- Compromise of the machine learning infrastructure and potential harm to the organization.
-- Malicious code introduced through compromised packages can go undetected for extended periods.
-- Attackers can steal sensitive information, modify results, or lead the model to return erroneous
+* Compromise of the machine learning infrastructure and potential harm to the organization.
+* Malicious code introduced through compromised packages can go undetected for extended periods.
+* Attackers can steal sensitive information, modify results, or lead the model to return erroneous
   predictions.
-- Publicly exposed MLOps web interfaces allow unauthorized access to models and data.
-- Impersonation of organization accounts on model hubs enables distribution of malicious models.
+* Publicly exposed MLOps web interfaces allow unauthorized access to models and data.
+* Impersonation of organization accounts on model hubs enables distribution of malicious models.
 
 ## Vulnerability checklist
 
-- Package integrity is not verified through digital signatures before installation.
-- Package versions are outdated and not monitored for updates or known vulnerabilities.
-- Packages are installed from untrusted or unvetted third-party sources.
-- MLOps infrastructure is not deployed following vendor security recommendations.
-- Web UIs for MLOps platforms are exposed to the Internet without authentication.
-- Cloud provider security features such as VPCs, security groups, and IAM roles are not
+* Package integrity is not verified through digital signatures before installation.
+* Package versions are outdated and not monitored for updates or known vulnerabilities.
+* Packages are installed from untrusted or unvetted third-party sources.
+* MLOps infrastructure is not deployed following vendor security recommendations.
+* Web UIs for MLOps platforms are exposed to the Internet without authentication.
+* Cloud provider security features such as VPCs, security groups, and IAM roles are not
   leveraged.
-- Access to MLOps platforms is not restricted to authorized personnel.
-- Network traffic in the infrastructure is not monitored for anomalies.
-- Models from public model hubs are not verified for authenticity before deployment.
+* Access to MLOps platforms is not restricted to authorized personnel.
+* Network traffic in the infrastructure is not monitored for anomalies.
+* Models from public model hubs are not verified for authenticity before deployment.
 
 ## Prevention controls
 
@@ -58,6 +58,7 @@ through public model hubs.
 ## Example attack scenarios
 
 ### Scenario A — Attack on a machine learning project dependency
+
 An attacker who wants to compromise a machine learning project knows that the project relies on
 several open-source packages and libraries. The attacker modifies the code of one of the packages
 that the project depends on, such as NumPy or Scikit-learn. The modified version is uploaded to a
@@ -67,12 +68,14 @@ the project. The attack can go unnoticed for a long time since the victim may no
 package has been compromised.
 
 ### Scenario B — Attack on a MLOps software platform
+
 An organization builds a MLOps pipeline using multiple instances of supporting software. One of
 the applications, an inference platform, is exposed publicly to the Internet. An attacker finds
 the web interface available without authentication and gains access to models that were not meant
 to be exposed publicly.
 
 ### Scenario C — Attack on a ML model hub
+
 An organization decides to use a model from a public model hub. An attacker finds a way to
 impersonate the organization's account in the model hub and deploys a malicious model. Organization
 employees then download the malicious model and the malicious code runs in the organization's
@@ -80,24 +83,24 @@ environment.
 
 ## Detection guidance
 
-- Run dependency scanning tools regularly to detect known vulnerabilities in packages.
-- Monitor package repositories for unexpected version changes or newly published packages under
+* Run dependency scanning tools regularly to detect known vulnerabilities in packages.
+* Monitor package repositories for unexpected version changes or newly published packages under
   known names.
-- Audit MLOps platform access logs for unauthorized access or configuration changes.
-- Scan network traffic for anomalous connections to or from MLOps infrastructure.
-- Verify the provenance and digital signatures of models downloaded from public hubs.
-- Monitor organizational accounts on model hubs for unauthorized modifications.
+* Audit MLOps platform access logs for unauthorized access or configuration changes.
+* Scan network traffic for anomalous connections to or from MLOps infrastructure.
+* Verify the provenance and digital signatures of models downloaded from public hubs.
+* Monitor organizational accounts on model hubs for unauthorized modifications.
 
 ## Remediation
 
-- Update all dependencies to patched versions and remove compromised packages.
-- Verify digital signatures of all packages and models before installation or deployment.
-- Restrict MLOps platform web interfaces to authenticated access behind VPN or private networks.
-- Enable and enforce IAM roles, VPCs, and security groups for all cloud-deployed ML
+* Update all dependencies to patched versions and remove compromised packages.
+* Verify digital signatures of all packages and models before installation or deployment.
+* Restrict MLOps platform web interfaces to authenticated access behind VPN or private networks.
+* Enable and enforce IAM roles, VPCs, and security groups for all cloud-deployed ML
   infrastructure.
-- Audit and rotate credentials for organizational accounts on model hubs.
-- Implement continuous dependency monitoring and automated alerts for vulnerable packages.
-- Isolate ML infrastructure from public networks and enforce network segmentation.
+* Audit and rotate credentials for organizational accounts on model hubs.
+* Implement continuous dependency monitoring and automated alerts for vulnerable packages.
+* Isolate ML infrastructure from public networks and enforce network segmentation.
 
 ---
 

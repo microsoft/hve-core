@@ -34,10 +34,10 @@ that an agent can query to identify, assess, and remediate machine learning secu
 
 ## Skill layout
 
-- `SKILL.md` — this file (skill entrypoint).
-- `references/` — the ML Top 10 normative documents.
-  - `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
-  - `01` through `10` — one document per vulnerability aligned with OWASP ML Security Top 10 numbering.
+* `SKILL.md` — this file (skill entrypoint).
+* `references/` — the ML Top 10 normative documents.
+  * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
+  * `01` through `10` — one document per vulnerability aligned with OWASP ML Security Top 10 numbering.
 
 ---
 

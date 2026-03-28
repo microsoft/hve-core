@@ -20,25 +20,25 @@ process.
 
 ## Risk
 
-- Incorrect decisions being made based on the output of the skewed model.
-- Financial loss, damage to reputation, and potential harm to individuals if the model is used for
+* Incorrect decisions being made based on the output of the skewed model.
+* Financial loss, damage to reputation, and potential harm to individuals if the model is used for
   critical applications such as medical diagnosis or criminal justice.
-- The model's inability to accurately reflect the underlying distribution of the training data.
-- Data bias, incorrect sampling, or deliberate manipulation of the data or training process by an
+* The model's inability to accurately reflect the underlying distribution of the training data.
+* Data bias, incorrect sampling, or deliberate manipulation of the data or training process by an
   attacker.
-- Malicious actors or third parties with a vested interest in manipulating model outcomes can
+* Malicious actors or third parties with a vested interest in manipulating model outcomes can
   execute this attack.
 
 ## Vulnerability checklist
 
-- Feedback loops in the MLOps system are not protected by access controls.
-- Feedback data received by the system is not verified for authenticity using digital signatures
+* Feedback loops in the MLOps system are not protected by access controls.
+* Feedback data received by the system is not verified for authenticity using digital signatures
   or checksums.
-- Feedback data is not validated or cleaned before being used to update training data.
-- No anomaly detection is applied to feedback data to detect potential manipulation.
-- The model's performance is not continuously monitored and compared against actual outcomes.
-- The model is not regularly retrained using updated and verified training data.
-- Activities in the MLOps system and feedback loops are not logged and audited.
+* Feedback data is not validated or cleaned before being used to update training data.
+* No anomaly detection is applied to feedback data to detect potential manipulation.
+* The model's performance is not continuously monitored and compared against actual outcomes.
+* The model is not regularly retrained using updated and verified training data.
+* Activities in the MLOps system and feedback loops are not logged and audited.
 
 ## Prevention controls
 
@@ -58,6 +58,7 @@ process.
 ## Example attack scenarios
 
 ### Scenario A — Financial gain through model skewing
+
 A financial institution uses a machine learning model to predict the creditworthiness of loan
 applicants, with the model's predictions integrated into the loan approval process. An attacker
 wants to increase their chances of getting a loan approved and manipulates the feedback loop in
@@ -70,21 +71,21 @@ institution and its customers.
 
 ## Detection guidance
 
-- Monitor feedback data ingestion pipelines for sudden distribution shifts or anomalous patterns.
-- Compare model predictions against actual outcomes over time to detect drift or systematic bias.
-- Track changes in training data distributions across retraining cycles.
-- Audit access logs for the MLOps system and feedback loops for unauthorized activity.
-- Implement statistical drift detection to flag when model outputs deviate from historical
+* Monitor feedback data ingestion pipelines for sudden distribution shifts or anomalous patterns.
+* Compare model predictions against actual outcomes over time to detect drift or systematic bias.
+* Track changes in training data distributions across retraining cycles.
+* Audit access logs for the MLOps system and feedback loops for unauthorized activity.
+* Implement statistical drift detection to flag when model outputs deviate from historical
   baselines.
 
 ## Remediation
 
-- Remove identified malicious feedback data from the training dataset and retrain the model.
-- Implement authentication and authorization on all feedback data submission channels.
-- Deploy anomaly detection on feedback data pipelines to catch future manipulation attempts.
-- Enforce digital signature verification on all feedback data before it enters the training loop.
-- Continuously monitor model performance and compare against ground truth to detect skewing.
-- Audit and tighten access controls on the MLOps system and feedback infrastructure.
+* Remove identified malicious feedback data from the training dataset and retrain the model.
+* Implement authentication and authorization on all feedback data submission channels.
+* Deploy anomaly detection on feedback data pipelines to catch future manipulation attempts.
+* Enforce digital signature verification on all feedback data before it enters the training loop.
+* Continuously monitor model performance and compare against ground truth to detect skewing.
+* Audit and tighten access controls on the MLOps system and feedback infrastructure.
 
 ---
 
