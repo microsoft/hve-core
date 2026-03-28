@@ -166,7 +166,7 @@ const ROW_BLUE = {r: 0x21/255, g: 0x96/255, b: 0xF3/255}; // #2196F3
 const WHITE    = {r: 1, g: 1, b: 1};
 
 // ── BUILDER FUNCTION ──
-// fields = [{label: "Customer", value: "Contoso Ltd"}, ...]
+// fields = [{label: "Customer", value: "{Customer name}"}, ...]
 function buildProjectDetails(fields, x, y) {
   const DET_H = 2 * DET_PAD + fields.length * ROW_H
               + (fields.length - 1) * ROW_GAP;
@@ -209,11 +209,11 @@ function buildProjectDetails(fields, x, y) {
 // ── USAGE ──
 // Place at (0, 0). Exercise templates go below at y = details.height + 80.
 // const details = buildProjectDetails([
-//   {label: "Customer",    value: "Contoso Ltd"},
-//   {label: "Project",     value: "Digital Innovation Factory"},
-//   {label: "Sprint",      value: "Milestone 3, Sprint 4"},
-//   {label: "Workstream",  value: "Simulation Testing"},
-//   {label: "Prototype",   value: "Link to prototype or video"},
+//   {label: "Customer",    value: "{Customer name}"},
+//   {label: "Project",     value: "{Project name}"},
+//   {label: "Sprint",      value: "{Milestone / Sprint}"},
+//   {label: "Workstream",  value: "{Workstream description}"},
+//   {label: "Prototype",   value: "{Link to prototype or video}"},
 // ], 0, 0);
 ```
 
