@@ -26,7 +26,7 @@ Run the diff a single time so both review phases operate on the same input witho
 
 Follow the complete protocol in #file:../../instructions/coding-standards/code-review/diff-computation.instructions.md to detect the diff type, run the appropriate git commands, filter non-source artifacts, and handle large diffs.
 
-Store the resulting **diff content** and **changed file list** for use in Steps 2 and 3.
+Store the resulting **diff content** and **changed file list** for use in Steps 2 and 3. Do not embed full file contents in subagent prompts; pass only the diff output and the changed file list. Subagents read source files from disk when they need additional context beyond the diff.
 
 ### Step 2: Functional Code Review
 
