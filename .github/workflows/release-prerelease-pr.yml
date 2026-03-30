@@ -190,6 +190,9 @@ jobs:
           # Update all version-tracked files and regenerate plugin outputs
           pwsh -File scripts/release/Update-VersionFiles.ps1 -Version "$PRE_VERSION"
 
+          # Sync package-lock.json with the bumped package.json version
+          npm install --package-lock-only
+
           git add -A
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
           git push --force origin "$BRANCH"
