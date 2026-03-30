@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
+import gitlab
 import pytest
 from test_constants import FIELDS_MR, USAGE_MAIN
-
-import gitlab
 
 ARGV_MAIN_LIST = ["gitlab", "mr-list", "opened", "5"]
 ARGV_MAIN_FIELDS = ["gitlab", "mr-get", "42", "--fields", "iid,title,author.name"]

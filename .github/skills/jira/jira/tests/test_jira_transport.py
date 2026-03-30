@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 from typing import cast
 
+import jira
 import pytest
 from conftest import HttpErrorFactory, ResponseFactory
 from pytest_mock import MockerFixture
@@ -22,8 +23,6 @@ from test_constants import (
     TEST_PAT,
     TEST_USER_EMAIL,
 )
-
-import jira
 
 REQUEST_PATH = "/issue/PROJ-123"
 REQUEST_URL = f"{TEST_API_URL}{REQUEST_PATH}"

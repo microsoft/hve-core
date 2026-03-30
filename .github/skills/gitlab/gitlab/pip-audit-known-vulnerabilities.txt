@@ -1,6 +1,0 @@
-# Known vulnerabilities to ignore during pip-audit.
-# One vulnerability ID per line (CVE or GHSA). Blank lines and comments are ignored.
-# Remove entries when upstream fixes become available.
-
-# pygments <=2.19.2: inefficient regex in AdlLexer (no fix available as of 2025-07)
-GHSA-5239-wwwm-4pmq

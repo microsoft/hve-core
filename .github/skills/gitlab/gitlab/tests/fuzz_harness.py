@@ -12,9 +12,8 @@ import io
 import sys
 from contextlib import redirect_stderr, suppress
 
-import pytest
-
 import gitlab
+import pytest
 
 try:
     import atheris

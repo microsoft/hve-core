@@ -8,6 +8,7 @@ import json
 import urllib.request
 from typing import cast
 
+import gitlab
 import pytest
 from conftest import ConfiguredGitLab, HttpErrorFactory, ResponseFactory
 from pytest_mock import MockerFixture
@@ -17,8 +18,6 @@ from test_constants import (
     TEST_GITLAB_URL,
     USAGE_JOB_LOG,
 )
-
-import gitlab
 
 REQUEST_ENDPOINT = f"{TEST_API_URL}/test"
 REQUEST_JSON = {"iid": 7, "title": "MR"}

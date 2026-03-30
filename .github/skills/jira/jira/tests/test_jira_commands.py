@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import urllib.parse
 
+import jira
 import pytest
 from conftest import ClientRecorder, StdinFactory
 from test_constants import (
@@ -20,8 +21,6 @@ from test_constants import (
     TEST_PROJECT_KEY,
     USAGE_COMMENT,
 )
-
-import jira
 
 
 def test_handle_search_requires_positive_max_results(

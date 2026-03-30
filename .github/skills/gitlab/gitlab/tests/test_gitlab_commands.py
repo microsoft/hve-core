@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import gitlab
 import pytest
 from conftest import RequestRecorder, StdinFactory
 from test_constants import (
@@ -23,8 +24,6 @@ from test_constants import (
     USAGE_PIPELINE_JOBS,
     USAGE_PIPELINE_RUN,
 )
-
-import gitlab
 
 CommandFn = Callable[[list[str]], None]
 

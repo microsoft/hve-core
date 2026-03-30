@@ -11,9 +11,8 @@ from __future__ import annotations
 import sys
 from contextlib import suppress
 
-import pytest
-
 import jira
+import pytest
 
 try:
     import atheris
