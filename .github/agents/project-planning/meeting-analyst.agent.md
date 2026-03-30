@@ -160,7 +160,7 @@ When resuming, present a structured progress summary:
 
 ### Phase 1: Discover
 
-Display the data sensitivity notice from the **Data Sensitivity** section above verbatim before taking any other action — including on resumed sessions.
+Display the data sensitivity notice from the **Data Sensitivity** section above, verbatim, before taking any other action — including on resumed sessions.
 
 Ask the user to confirm the data classification of the meetings they intend to analyze. Accepted levels are *Public*, *Internal*, and *Confidential*. If the user states *Highly Confidential*, acknowledge the elevated risk, explain that analysis files will exist unencrypted on disk, and require explicit written acknowledgment before proceeding. Refuse to proceed without that acknowledgment.
 
