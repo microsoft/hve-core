@@ -4,7 +4,7 @@
   "version": "3.3.10",
   "agents": [
     "agents/ado/",
-    "agents/code-review/",
+    "agents/coding-standards/",
     "agents/data-science/",
     "agents/design-thinking/",
     "agents/experimental/",
@@ -20,7 +20,7 @@
   ],
   "commands": [
     "commands/ado/",
-    "commands/code-review/",
+    "commands/coding-standards/",
     "commands/design-thinking/",
     "commands/github/",
     "commands/hve-core/",
