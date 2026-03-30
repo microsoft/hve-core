@@ -58,6 +58,7 @@ jobs:
           # @github/copilot uses a non-SPDX proprietary license
           # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
           # CLI toolchain, deliberately used in beval.yml.
+          # pkg:npm/hve-core is the private root package (never published to npm).
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -70,5 +71,6 @@ jobs:
             pkg:npm/%40github/copilot-linux-x64,
             pkg:npm/%40github/copilot-win32-arm64,
             pkg:npm/%40github/copilot-win32-x64
+            pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
