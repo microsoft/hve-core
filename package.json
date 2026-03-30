@@ -36,6 +36,7 @@
     "plugin:validate": "npm run lint:collections-metadata",
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
+    "docs:test": "npm --prefix docs/docusaurus test",
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {

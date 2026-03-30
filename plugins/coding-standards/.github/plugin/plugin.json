@@ -3,9 +3,9 @@
   "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
   "version": "3.3.10",
   "agents": [
-    "agents/code-review/"
+    "agents/coding-standards/"
   ],
   "commands": [
-    "commands/code-review/"
+    "commands/coding-standards/"
   ]
 }

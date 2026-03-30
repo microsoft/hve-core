@@ -87,3 +87,30 @@ class TestMain:
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert gitlab.selected_fields == FIELDS_MR
         assert USAGE_MAIN in capsys.readouterr().err
+
+    def test_main_handles_keyboard_interrupt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main returns 130 when KeyboardInterrupt is raised."""
+        monkeypatch.setattr(
+            gitlab,
+            "parse_fields",
+            lambda _: (_ for _ in ()).throw(KeyboardInterrupt),
+        )
+        assert gitlab.main() == 130
+
+    def test_main_handles_broken_pipe(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """main returns 141 and redirects stdout on BrokenPipeError."""
+        monkeypatch.setattr(
+            gitlab,
+            "parse_fields",
+            lambda _: (_ for _ in ()).throw(BrokenPipeError),
+        )
+        dup2_calls: list[tuple[int, int]] = []
+        close_calls: list[int] = []
+        monkeypatch.setattr("os.dup2", lambda fd, fd2: dup2_calls.append((fd, fd2)))
+        monkeypatch.setattr("os.open", lambda *a, **kw: 99)
+        monkeypatch.setattr("os.close", lambda fd: close_calls.append(fd))
+        assert gitlab.main() == 141
+        assert len(dup2_calls) == 1
+        assert close_calls == [99]
