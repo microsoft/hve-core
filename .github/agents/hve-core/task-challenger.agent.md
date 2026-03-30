@@ -9,15 +9,15 @@ handoffs:
     prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, including the challenge tracking document at .copilot-tracking/challenges/. Include the complete list of questions asked and the user's answers, including any items marked unresolved. The default next step is Task Researcher — the challenge tracking document contains Q&A and unresolved items that require research verification. Only proceed directly to Task Planner or Task Implementor if the user's answers are confidence-verified and the action is clear without further research. The user will switch to the appropriate agent when done with Task Challenger."
   - label: "🔬 Research Questions"
     agent: Task Researcher
-    prompt: /task-research
+    prompt: /task-research Read the challenge tracking document at .copilot-tracking/challenges/ for the Q&A log and unresolved items — these are the primary research scope.
     send: true
   - label: "📋 Revise Plan"
     agent: Task Planner
-    prompt: /task-plan
+    prompt: /task-plan Read the challenge tracking document at .copilot-tracking/challenges/ for challenge findings and unresolved items before planning.
     send: true
   - label: "⚡ Implement Changes"
     agent: Task Implementor
-    prompt: /task-implement
+    prompt: /task-implement Address the immediate changes identified through the challenge session. Read the challenge tracking document at .copilot-tracking/challenges/ for findings.
     send: true
 ---
 
