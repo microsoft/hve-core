@@ -1,1 +1,0 @@
-../../../../.github/instructions/coding-standards/code-review/review-artifacts.instructions.md
