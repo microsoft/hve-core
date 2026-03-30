@@ -16,10 +16,10 @@ tags:
   - uv
 items:
   # Agents
-  - path: .github/agents/code-review/functional-code-review.agent.md
+  - path: .github/agents/coding-standards/functional-code-review.agent.md
     kind: agent
   # Prompts
-  - path: .github/prompts/code-review/functional-code-review.prompt.md
+  - path: .github/prompts/coding-standards/functional-code-review.prompt.md
     kind: prompt
   # Instructions
   - path: .github/instructions/coding-standards/bash/bash.instructions.md

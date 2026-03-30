@@ -1,5 +1,5 @@
 ---
-name: functional-code-review
+name: Functional Code Review
 description: 'Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core'
 ---
 
