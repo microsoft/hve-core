@@ -55,10 +55,12 @@ jobs:
             WTFPL, LicenseRef-scancode-unicode
           # Packages with compound SPDX expressions containing GPL or MPL
           # from bundled code; distributed licenses are permissive.
+          # pkg:npm/hve-core is the private root package (never published to npm).
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:npm/dompurify,
-            pkg:npm/lunr-languages
+            pkg:npm/lunr-languages,
+            pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
