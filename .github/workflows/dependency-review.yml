@@ -1,6 +1,8 @@
 name: Dependency Review
 
 on:
+  push:
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -29,15 +31,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Submit uv.lock dependencies  # Skipped on fork PRs (read-only token)
-        if: github.event.pull_request.head.repo.full_name == github.repository
+      - name: Submit uv.lock dependencies  # Runs on push (base snapshots) and non-fork PRs
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         uses: advanced-security/component-detection-dependency-submission-action@b876b8cc341a53970394b33ea0ca4e86c25542de # v0.1.3
         with:
           detectorArgs: 'UvLock=EnableIfDefaultOff'
 
       - name: Dependency Review
+        if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
           comment-summary-in-pr: always
           license-check: true
@@ -50,10 +55,12 @@ jobs:
             WTFPL, LicenseRef-scancode-unicode
           # Packages with compound SPDX expressions containing GPL or MPL
           # from bundled code; distributed licenses are permissive.
+          # pkg:npm/hve-core is the private root package (never published to npm).
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:npm/dompurify,
-            pkg:npm/lunr-languages
+            pkg:npm/lunr-languages,
+            pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
