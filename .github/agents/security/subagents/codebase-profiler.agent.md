@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`).
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-cicd`).
 
 ### Technology Signals
 
@@ -51,6 +51,14 @@ owasp-top-10:
   - "REST API endpoints"
   - "Server-side templates"
   - "Web framework config (Express, Django, Flask, Rails, Spring)"
+owasp-cicd:
+  - "CI/CD pipeline definitions"
+  - "Build scripts"
+  - "Deployment configurations"
+  - ".github/workflows/"
+  - "Jenkinsfile"
+  - ".gitlab-ci.yml"
+  - "azure-pipelines.yml"
 ```
 
 ## Codebase Profile Format
