@@ -31,7 +31,7 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`). Follow the skill's normative reference links to access vulnerability references.
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-docker`). Follow the skill's normative reference links to access vulnerability references.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
