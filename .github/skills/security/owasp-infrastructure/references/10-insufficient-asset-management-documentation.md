@@ -20,23 +20,23 @@ response.
 
 ## Risk
 
-- Unauthorized or unmanaged devices and software within the network make it difficult to enforce
+* Unauthorized or unmanaged devices and software within the network make it difficult to enforce
   security policies and monitor for vulnerabilities effectively.
-- Incident response capabilities are hampered because the organization may struggle to identify
+* Incident response capabilities are hampered because the organization may struggle to identify
   the scope and impact of a security incident or breach.
-- Compliance with industry regulations and internal policies becomes challenging, exposing the
+* Compliance with industry regulations and internal policies becomes challenging, exposing the
   organization to legal and financial liabilities.
-- Inefficient resource allocation results in overspending on redundant assets or underinvesting
+* Inefficient resource allocation results in overspending on redundant assets or underinvesting
   in critical IT infrastructure.
 
 ## Vulnerability checklist
 
-- No complete inventory of hardware and software assets exists.
-- Asset inventory is not continuously updated to reflect changes in the environment.
-- Assets are not classified by criticality and function.
-- No lifecycle management process exists for procurement, deployment, maintenance, and disposal.
-- Regular audits and vulnerability scanning cycles are not conducted.
-- Process, responsibility, and implementation documentation is incomplete or absent.
+* No complete inventory of hardware and software assets exists.
+* Asset inventory is not continuously updated to reflect changes in the environment.
+* Assets are not classified by criticality and function.
+* No lifecycle management process exists for procurement, deployment, maintenance, and disposal.
+* Regular audits and vulnerability scanning cycles are not conducted.
+* Process, responsibility, and implementation documentation is incomplete or absent.
 
 ## Prevention controls
 
@@ -56,6 +56,7 @@ response.
 ## Example attack scenarios
 
 ### Scenario A — Undetected vulnerabilities
+
 An organization has a vast and complex IT infrastructure.
 Due to a lack of systematic vulnerability scanning and asset management, the IT team is unaware
 of accumulating security weaknesses.
@@ -64,6 +65,7 @@ exfiltrate sensitive data.
 As the organization expands, the risk associated with these undetected vulnerabilities grows.
 
 ### Scenario B — Incident response with good asset management
+
 An incident response team confronts a critical security breach where attackers exploited a
 software vulnerability in the corporate platform, compromising webservers and creating an entry
 point to the internal network.
@@ -73,19 +75,19 @@ Damaged systems are rebuilt without extended disruption.
 
 ## Detection guidance
 
-- Compare deployed assets against the maintained inventory for discrepancies.
-- Scan for unknown or unauthorized devices and software on the network.
-- Review asset lifecycle records for items past end-of-life or end-of-support.
-- Audit documentation completeness for IT processes, responsibilities, and technical details.
+* Compare deployed assets against the maintained inventory for discrepancies.
+* Scan for unknown or unauthorized devices and software on the network.
+* Review asset lifecycle records for items past end-of-life or end-of-support.
+* Audit documentation completeness for IT processes, responsibilities, and technical details.
 
 ## Remediation
 
-- Conduct a full asset discovery and build a comprehensive hardware and software inventory.
-- Classify all assets by criticality and function.
-- Establish lifecycle management processes covering procurement through secure disposal.
-- Schedule recurring inventory audits and automated vulnerability scanning.
-- Create and maintain documentation for all IT processes, responsibilities, and configurations.
-- Assign ownership for inventory accuracy and documentation currency.
+* Conduct a full asset discovery and build a comprehensive hardware and software inventory.
+* Classify all assets by criticality and function.
+* Establish lifecycle management processes covering procurement through secure disposal.
+* Schedule recurring inventory audits and automated vulnerability scanning.
+* Create and maintain documentation for all IT processes, responsibilities, and configurations.
+* Assign ownership for inventory accuracy and documentation currency.
 
 ---
 

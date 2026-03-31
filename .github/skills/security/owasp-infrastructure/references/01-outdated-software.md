@@ -20,20 +20,20 @@ become vulnerable over time, with increasing criticality as time passes.
 
 ## Risk
 
-- Vulnerabilities ranging from low criticality to full system compromise.
-- Severity and count of vulnerabilities in outdated software increase over time as more flaws are
+* Vulnerabilities ranging from low criticality to full system compromise.
+* Severity and count of vulnerabilities in outdated software increase over time as more flaws are
   discovered and published.
-- Publicly known vulnerabilities are easily exploitable using available scanning tools and exploit
+* Publicly known vulnerabilities are easily exploitable using available scanning tools and exploit
   databases.
-- Vendors may cease support for older versions, leaving no remediation path.
+* Vendors may cease support for older versions, leaving no remediation path.
 
 ## Vulnerability checklist
 
-- Software components are not on the latest stable and supported version.
-- No update management process exists to track and apply patches regularly.
-- Vendor sites and security advisories are not monitored for zero-day exploits.
-- Retired or end-of-life software remains deployed in the environment.
-- Libraries and dependencies are not inventoried or checked for updates.
+* Software components are not on the latest stable and supported version.
+* No update management process exists to track and apply patches regularly.
+* Vendor sites and security advisories are not monitored for zero-day exploits.
+* Retired or end-of-life software remains deployed in the environment.
+* Libraries and dependencies are not inventoried or checked for updates.
 
 ## Prevention controls
 
@@ -47,6 +47,7 @@ become vulnerable over time, with increasing criticality as time passes.
 ## Example attack scenarios
 
 ### Scenario A — Outdated web server
+
 A company hosts an internal website for employees.
 The company lacks an update management process and does not regularly check or update its software.
 The web server runs on an outdated version with known vulnerabilities, including a Remote Code
@@ -56,6 +57,7 @@ and finds a related CVE.
 The attacker uses a publicly available exploit to gain access to the underlying server.
 
 ### Scenario B — Deprecated old server
+
 A company has an update management process for its software components.
 The process fails to inventory an old internal server containing confidential construction plans.
 An attacker who gained access to the internal network discovers this server and enumerates its OS
@@ -66,18 +68,18 @@ plans, selling them to competitors.
 
 ## Detection guidance
 
-- Automated vulnerability scanning to identify outdated software versions.
-- Inventory reconciliation against vendor-supported version lists.
-- CVE database monitoring for components in the environment.
-- Alerting on end-of-life or end-of-support software still in production.
+* Automated vulnerability scanning to identify outdated software versions.
+* Inventory reconciliation against vendor-supported version lists.
+* CVE database monitoring for components in the environment.
+* Alerting on end-of-life or end-of-support software still in production.
 
 ## Remediation
 
-- Update all identified outdated software to the latest stable, supported version.
-- Decommission or isolate systems running software that can no longer be patched.
-- Establish a recurring update management cycle with defined ownership.
-- Subscribe to vendor security advisory feeds for all deployed software.
-- Conduct post-update validation to confirm patches are applied and effective.
+* Update all identified outdated software to the latest stable, supported version.
+* Decommission or isolate systems running software that can no longer be patched.
+* Establish a recurring update management cycle with defined ownership.
+* Subscribe to vendor security advisory feeds for all deployed software.
+* Conduct post-update validation to confirm patches are applied and effective.
 
 ---
 

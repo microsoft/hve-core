@@ -21,22 +21,22 @@ enforced.
 
 ## Risk
 
-- Excessive permissions increase the blast radius when a user account is compromised, giving
+* Excessive permissions increase the blast radius when a user account is compromised, giving
   threat actors more access and leading to devastating cyberattacks.
-- Rights and permissions may not be revoked when employees leave the organization.
-- Lack of enforced password policies puts account security at risk.
-- Resources and users accumulate over time, making it difficult to maintain oversight, and risks
+* Rights and permissions may not be revoked when employees leave the organization.
+* Lack of enforced password policies puts account security at risk.
+* Resources and users accumulate over time, making it difficult to maintain oversight, and risks
   arise from unmanaged growth.
 
 ## Vulnerability checklist
 
-- Users or technical accounts hold more permissions than needed for their role.
-- No need-to-know principle is applied to permission assignments.
-- Departed employees' accounts remain active in the directory.
-- Password policies are documented but not technically enforced.
-- No Privileged Access Management (PAM) solution is implemented.
-- Domain administrator accounts are used for routine administration tasks.
-- Local administration rights are granted to all employees by default.
+* Users or technical accounts hold more permissions than needed for their role.
+* No need-to-know principle is applied to permission assignments.
+* Departed employees' accounts remain active in the directory.
+* Password policies are documented but not technically enforced.
+* No Privileged Access Management (PAM) solution is implemented.
+* Domain administrator accounts are used for routine administration tasks.
+* Local administration rights are granted to all employees by default.
 
 ## Prevention controls
 
@@ -54,6 +54,7 @@ enforced.
 ## Example attack scenarios
 
 ### Scenario A — Insecure privilege management
+
 A company uses Active Directory for resource and user management.
 All employees have local administration rights, and every IT administrator has domain-admin
 rights used for routine tasks.
@@ -67,6 +68,7 @@ a single system, due to the absence of privileged user management following the 
 principle.
 
 ### Scenario B — Deprecated and insecure user accounts
+
 A company has an internal infrastructure with a central customer data management system.
 The company does not technically enforce its password policy.
 An employee leaves their locked laptop in a café and steps away.
@@ -78,19 +80,19 @@ The weak password and lack of resource management enabled unauthorized access an
 
 ## Detection guidance
 
-- Audit user accounts for excessive or stale permissions on a recurring schedule.
-- Monitor for active accounts belonging to departed employees.
-- Check for local administrator rights granted broadly across endpoints.
-- Review domain-admin account usage for routine non-administrative tasks.
+* Audit user accounts for excessive or stale permissions on a recurring schedule.
+* Monitor for active accounts belonging to departed employees.
+* Check for local administrator rights granted broadly across endpoints.
+* Review domain-admin account usage for routine non-administrative tasks.
 
 ## Remediation
 
-- Remove excessive permissions and enforce the need-to-know principle across all accounts.
-- Disable or delete accounts for departed employees immediately.
-- Technically enforce password policies through the centralized management platform.
-- Remove default local administration rights from standard employee accounts.
-- Deploy PAM for all privileged accounts and restrict domain-admin usage to designated tasks.
-- Establish an ongoing access review cycle with defined ownership.
+* Remove excessive permissions and enforce the need-to-know principle across all accounts.
+* Disable or delete accounts for departed employees immediately.
+* Technically enforce password policies through the centralized management platform.
+* Remove default local administration rights from standard employee accounts.
+* Deploy PAM for all privileged accounts and restrict domain-admin usage to designated tasks.
+* Establish an ongoing access review cycle with defined ownership.
 
 ---
 

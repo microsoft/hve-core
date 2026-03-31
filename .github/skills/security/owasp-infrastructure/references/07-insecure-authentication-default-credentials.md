@@ -19,20 +19,20 @@ or vendors are often left unchanged by users or administrators, creating a secur
 
 ## Risk
 
-- Credentials are crucial to restrict access to internal resources to authenticated and
+* Credentials are crucial to restrict access to internal resources to authenticated and
   authorized users only.
-- Weak passwords can be exploited through brute-force and dictionary attacks.
-- Default credentials can be found in product documentation and exploited by attackers.
-- Exploitation of unchanged default settings or stolen passwords can lead to unauthorized access,
+* Weak passwords can be exploited through brute-force and dictionary attacks.
+* Default credentials can be found in product documentation and exploited by attackers.
+* Exploitation of unchanged default settings or stolen passwords can lead to unauthorized access,
   data breaches, and compromise of critical systems.
 
 ## Vulnerability checklist
 
-- Default credentials on hardware devices or software applications remain unchanged.
-- Password complexity requirements are not enforced.
-- Multi-factor authentication (MFA) is not implemented.
-- Account lockout policies are absent after multiple failed login attempts.
-- Password management tools are not available to employees.
+* Default credentials on hardware devices or software applications remain unchanged.
+* Password complexity requirements are not enforced.
+* Multi-factor authentication (MFA) is not implemented.
+* Account lockout policies are absent after multiple failed login attempts.
+* Password management tools are not available to employees.
 
 ## Prevention controls
 
@@ -47,6 +47,7 @@ or vendors are often left unchanged by users or administrators, creating a secur
 ## Example attack scenarios
 
 ### Scenario A — Default printer credentials
+
 Many networked printers are shipped with default usernames and passwords that are widely known.
 An attacker exploits this by accessing the printer and viewing printing jobs containing sensitive
 information.
@@ -54,6 +55,7 @@ Organizations must change default printer credentials upon installation and rest
 authorized personnel.
 
 ### Scenario B — Weak user passwords
+
 Weak or easily guessable passwords for user accounts are a primary target for attackers.
 A malicious employee gains unauthorized access to sensitive information or systems by exploiting
 weak user passwords.
@@ -62,18 +64,18 @@ login attempts, and promote password best practices among users.
 
 ## Detection guidance
 
-- Scan for devices and applications still using manufacturer default credentials.
-- Audit password policy enforcement across all IAM systems.
-- Monitor for brute-force and dictionary attack patterns in authentication logs.
-- Check MFA enrollment rates and identify accounts without MFA enabled.
+* Scan for devices and applications still using manufacturer default credentials.
+* Audit password policy enforcement across all IAM systems.
+* Monitor for brute-force and dictionary attack patterns in authentication logs.
+* Check MFA enrollment rates and identify accounts without MFA enabled.
 
 ## Remediation
 
-- Change all default credentials immediately on every hardware device and software application.
-- Enforce password complexity and length requirements through technical controls.
-- Deploy MFA across all user and administrative accounts.
-- Implement account lockout and alerting for repeated failed authentication attempts.
-- Provide organization-wide password management tooling and security awareness training.
+* Change all default credentials immediately on every hardware device and software application.
+* Enforce password complexity and length requirements through technical controls.
+* Deploy MFA across all user and administrative accounts.
+* Implement account lockout and alerting for repeated failed authentication attempts.
+* Provide organization-wide password management tooling and security awareness training.
 
 ---
 

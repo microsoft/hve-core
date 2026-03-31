@@ -22,21 +22,21 @@ Internal infrastructure security must be as strong as, or stronger than, externa
 
 ## Risk
 
-- Information leakage and compromise of privileged accounts when insecure cryptographic methods
+* Information leakage and compromise of privileged accounts when insecure cryptographic methods
   or configurations are used.
-- Significantly increased chance of devastating cyberattacks and greater impact.
-- Unencrypted remote access protocols allow adjacent threat actors to read credentials from
+* Significantly increased chance of devastating cyberattacks and greater impact.
+* Unencrypted remote access protocols allow adjacent threat actors to read credentials from
   network traffic.
-- Protocols without cryptographic integrity checks enable man-in-the-middle attacks where data
+* Protocols without cryptographic integrity checks enable man-in-the-middle attacks where data
   is modified in transit.
 
 ## Vulnerability checklist
 
-- Remote access tools (e.g., Telnet, unencrypted RDP) transmit credentials in clear text.
-- Protocols in use do not perform cryptographic identity or integrity checks.
-- Insecure or deprecated cryptographic algorithms are configured on internal systems.
-- Internally developed cryptographic implementations are used instead of established libraries.
-- Communication paths between internal systems lack encryption.
+* Remote access tools (e.g., Telnet, unencrypted RDP) transmit credentials in clear text.
+* Protocols in use do not perform cryptographic identity or integrity checks.
+* Insecure or deprecated cryptographic algorithms are configured on internal systems.
+* Internally developed cryptographic implementations are used instead of established libraries.
+* Communication paths between internal systems lack encryption.
 
 ## Prevention controls
 
@@ -52,6 +52,7 @@ Internal infrastructure security must be as strong as, or stronger than, externa
 ## Example attack scenarios
 
 ### Scenario A — Unencrypted remote access tools
+
 A company has an internal infrastructure with servers providing applications to employees,
 including a CRM system holding sensitive customer data.
 A threat actor gains access to the internal network through a misconfigured internet-exposed
@@ -64,6 +65,7 @@ The threat actor captures the credentials and uses them to log on to the CRM ser
 all customer data.
 
 ### Scenario B — Insufficient use of cryptography
+
 A company has an internal infrastructure with an invoice management application.
 A threat actor gains access to the internal network and can inspect and inject packets into
 traffic.
@@ -76,20 +78,20 @@ Customers unknowingly transfer money to the attacker.
 
 ## Detection guidance
 
-- Scan internal network traffic for unencrypted protocols (Telnet, FTP, unencrypted RDP).
-- Audit cryptographic configurations on servers, remote access tools, and data transfer services.
-- Identify use of deprecated algorithms or cipher suites in internal communications.
-- Monitor for man-in-the-middle indicators such as certificate warnings or unexpected traffic
+* Scan internal network traffic for unencrypted protocols (Telnet, FTP, unencrypted RDP).
+* Audit cryptographic configurations on servers, remote access tools, and data transfer services.
+* Identify use of deprecated algorithms or cipher suites in internal communications.
+* Monitor for man-in-the-middle indicators such as certificate warnings or unexpected traffic
   patterns.
 
 ## Remediation
 
-- Replace all unencrypted protocols with secure alternatives (SSH, SFTP, encrypted RDP).
-- Update cryptographic configurations to use current, recommended algorithms and cipher suites.
-- Remove internally developed cryptographic implementations and adopt established libraries.
-- Enable cryptographic identity and integrity verification on all internal communication
+* Replace all unencrypted protocols with secure alternatives (SSH, SFTP, encrypted RDP).
+* Update cryptographic configurations to use current, recommended algorithms and cipher suites.
+* Remove internally developed cryptographic implementations and adopt established libraries.
+* Enable cryptographic identity and integrity verification on all internal communication
   protocols.
-- Conduct a full audit of internal communication paths and remediate any unencrypted channels.
+* Conduct a full audit of internal communication paths and remediate any unencrypted channels.
 
 ---
 

@@ -23,23 +23,23 @@ communication paths that must be allowed.
 
 ## Risk
 
-- Absence of network separation severely increases the risk of cyberattacks spreading through the
+* Absence of network separation severely increases the risk of cyberattacks spreading through the
   internal infrastructure and compromising the entire environment from a single compromised
   component.
-- Without Network Access Control (NAC), an attacker who gains physical access to network
+* Without Network Access Control (NAC), an attacker who gains physical access to network
   components, convinces employees to plug in malicious devices, or reaches nearby Wi-Fi can access
   internal networks.
-- Insufficient access regulation at the application layer allows threat actors to abuse commonly
+* Insufficient access regulation at the application layer allows threat actors to abuse commonly
   allowed communication paths.
 
 ## Vulnerability checklist
 
-- No network separation exists between distinct infrastructure segments.
-- No Network Access Control (NAC) mechanisms (e.g., certificate-based NAC) are implemented.
-- Communication paths between network segments are not dynamically regulated at the application
+* No network separation exists between distinct infrastructure segments.
+* No Network Access Control (NAC) mechanisms (e.g., certificate-based NAC) are implemented.
+* Communication paths between network segments are not dynamically regulated at the application
   layer.
-- Remote access is not secured with technologies like VPNs.
-- No access matrix exists to plan and enforce network access management.
+* Remote access is not secured with technologies like VPNs.
+* No access matrix exists to plan and enforce network access management.
 
 ## Prevention controls
 
@@ -56,6 +56,7 @@ communication paths that must be allowed.
 ## Example attack scenarios
 
 ### Scenario A — Insufficient network separation
+
 A company hosts different customer-facing applications accessible online.
 Multiple database servers hold data for those applications, alongside servers for internal
 applications and data.
@@ -66,6 +67,7 @@ servers as well as internal application and data servers from a single entry poi
 The exfiltrated data is later sold to other cybercriminals.
 
 ### Scenario B — Missing NAC allowing rogue device
+
 A company uses a common internal infrastructure with application servers and employee file shares.
 New network printers are ordered to replace old ones.
 A threat actor injects malicious hardware into a new printer before it arrives at the company.
@@ -76,19 +78,19 @@ pivot point into the internal network for additional attacks.
 
 ## Detection guidance
 
-- Audit network topology for missing segmentation between operational zones.
-- Check for NAC enforcement on all physical and wireless network ports.
-- Monitor for unauthorized or unknown devices appearing on the network.
-- Review application-layer traffic controls at segment boundaries.
+* Audit network topology for missing segmentation between operational zones.
+* Check for NAC enforcement on all physical and wireless network ports.
+* Monitor for unauthorized or unknown devices appearing on the network.
+* Review application-layer traffic controls at segment boundaries.
 
 ## Remediation
 
-- Implement network segmentation with VLANs and firewall rules between operational zones.
-- Deploy certificate-based NAC on all network ports and wireless access points.
-- Create and enforce an access matrix governing inter-segment communication.
-- Implement dynamic application-layer filtering at network boundaries.
-- Secure all remote access channels with VPN or equivalent encrypted tunneling.
-- Conduct regular network topology reviews and penetration tests.
+* Implement network segmentation with VLANs and firewall rules between operational zones.
+* Deploy certificate-based NAC on all network ports and wireless access points.
+* Create and enforce an access matrix governing inter-segment communication.
+* Implement dynamic application-layer filtering at network boundaries.
+* Secure all remote access channels with VPN or equivalent encrypted tunneling.
+* Conduct regular network topology reviews and penetration tests.
 
 ---
 

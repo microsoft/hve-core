@@ -35,10 +35,10 @@ infrastructure security risks.
 
 ## Skill layout
 
-- `SKILL.md` — this file (skill entrypoint).
-- `references/` — the Infrastructure Top 10 normative documents.
-  - `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
-  - `01` through `10` — one document per vulnerability aligned with OWASP Infrastructure Security numbering.
+* `SKILL.md` — this file (skill entrypoint).
+* `references/` — the Infrastructure Top 10 normative documents.
+  * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
+  * `01` through `10` — one document per vulnerability aligned with OWASP Infrastructure Security numbering.
 
 ---
 

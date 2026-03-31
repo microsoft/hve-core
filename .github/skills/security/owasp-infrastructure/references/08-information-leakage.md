@@ -22,21 +22,21 @@ regular audits, and a culture of security awareness among employees.
 
 ## Risk
 
-- The severity depends on what information is leaked; internal IP addresses expose new network
+* The severity depends on what information is leaked; internal IP addresses expose new network
   targets, while personally identifiable information or protected data can lead to fraud, identity
   theft, or competitive disadvantage.
-- Information leakage can expose an organization to extortion threats from malicious actors.
-- Cumulative risk emphasizes the need for stringent cybersecurity measures, continuous monitoring,
+* Information leakage can expose an organization to extortion threats from malicious actors.
+* Cumulative risk emphasizes the need for stringent cybersecurity measures, continuous monitoring,
   and a well-informed workforce.
 
 ## Vulnerability checklist
 
-- Access permissions on network shares or databases are misconfigured or overly permissive.
-- Sensitive data is transmitted over unsecured communication channels.
-- Documents containing sensitive information are improperly disposed of.
-- No data handling policies exist or adherence to regulatory compliance is not enforced.
-- Employees lack security awareness training on data leakage prevention.
-- Incident reporting processes are absent or slow.
+* Access permissions on network shares or databases are misconfigured or overly permissive.
+* Sensitive data is transmitted over unsecured communication channels.
+* Documents containing sensitive information are improperly disposed of.
+* No data handling policies exist or adherence to regulatory compliance is not enforced.
+* Employees lack security awareness training on data leakage prevention.
+* Incident reporting processes are absent or slow.
 
 ## Prevention controls
 
@@ -55,6 +55,7 @@ regular audits, and a culture of security awareness among employees.
 ## Example attack scenarios
 
 ### Scenario A — Customer data access for all employees
+
 Due to a system misconfiguration, all employees gain unrestricted access to a database containing
 sensitive customer information.
 A curious employee browses the database and inadvertently shares customer data externally while
@@ -65,19 +66,19 @@ financial, legal, and reputational damage.
 
 ## Detection guidance
 
-- Monitor access logs for unusual or broad access patterns to sensitive data stores.
-- Scan network shares and databases for overly permissive access configurations.
-- Detect sensitive data patterns in outbound network traffic.
-- Review document disposal and data handling practices during audits.
+* Monitor access logs for unusual or broad access patterns to sensitive data stores.
+* Scan network shares and databases for overly permissive access configurations.
+* Detect sensitive data patterns in outbound network traffic.
+* Review document disposal and data handling practices during audits.
 
 ## Remediation
 
-- Restrict access permissions to sensitive data stores following the principle of least privilege.
-- Encrypt all sensitive data at rest and in transit.
-- Remediate misconfigured network shares and database permissions immediately.
-- Establish and enforce data classification and handling policies.
-- Implement data loss prevention (DLP) monitoring on egress points.
-- Conduct organization-wide security awareness training focused on data handling.
+* Restrict access permissions to sensitive data stores following the principle of least privilege.
+* Encrypt all sensitive data at rest and in transit.
+* Remediate misconfigured network shares and database permissions immediately.
+* Establish and enforce data classification and handling policies.
+* Implement data loss prevention (DLP) monitoring on egress points.
+* Conduct organization-wide security awareness training focused on data handling.
 
 ---
 

@@ -19,19 +19,19 @@ configuration management, and adherence to security best practices throughout an
 
 ## Risk
 
-- Insecure configurations create openings for exploits, potential data breaches, and lateral
+* Insecure configurations create openings for exploits, potential data breaches, and lateral
   movement.
-- They represent an easily exploitable path into the organization's network.
-- Misconfigured systems can enable client-side attacks, cross-site scripting, and data exfiltration.
-- Lack of network separation allows attackers to traverse from one operational area to another.
+* They represent an easily exploitable path into the organization's network.
+* Misconfigured systems can enable client-side attacks, cross-site scripting, and data exfiltration.
+* Lack of network separation allows attackers to traverse from one operational area to another.
 
 ## Vulnerability checklist
 
-- Security headers (CSP, X-Content-Type-Options) are missing from internal web applications.
-- Network separation between operational areas is absent or insufficient.
-- Default or vendor-shipped configurations are deployed without hardening.
-- No regular security audits or vulnerability assessments are performed.
-- Vendor hardening guides and security advisories are not followed.
+* Security headers (CSP, X-Content-Type-Options) are missing from internal web applications.
+* Network separation between operational areas is absent or insufficient.
+* Default or vendor-shipped configurations are deployed without hardening.
+* No regular security audits or vulnerability assessments are performed.
+* Vendor hardening guides and security advisories are not followed.
 
 ## Prevention controls
 
@@ -46,6 +46,7 @@ configuration management, and adherence to security best practices throughout an
 ## Example attack scenarios
 
 ### Scenario A — Missing security headers
+
 A company uses an internal web application hosting sensitive client data.
 The application lacks essential security headers such as Content Security Policy and
 X-Content-Type-Options.
@@ -54,6 +55,7 @@ cross-site scripting attack, exploiting the missing headers to inject malicious 
 The script exfiltrates sensitive client data to an external server controlled by the insider.
 
 ### Scenario B — No network separation
+
 A healthcare provider relies on a single network for administrative operations and patient data
 management with no segmentation between the two areas.
 A system administrator upset over workplace issues exploits this lack of separation.
@@ -63,18 +65,18 @@ potentially endangering patient care.
 
 ## Detection guidance
 
-- Scan for missing or misconfigured security headers on internal web applications.
-- Audit network topology for absent or insufficient segmentation.
-- Compare deployed configurations against vendor hardening baselines.
-- Review change management logs for unauthorized configuration changes.
+* Scan for missing or misconfigured security headers on internal web applications.
+* Audit network topology for absent or insufficient segmentation.
+* Compare deployed configurations against vendor hardening baselines.
+* Review change management logs for unauthorized configuration changes.
 
 ## Remediation
 
-- Apply vendor-recommended hardening guides to all hardware, software, and network components.
-- Implement missing security headers on all internal web applications.
-- Establish network segmentation between distinct operational areas.
-- Create and enforce a configuration management baseline with automated drift detection.
-- Schedule recurring security audits and remediate findings promptly.
+* Apply vendor-recommended hardening guides to all hardware, software, and network components.
+* Implement missing security headers on all internal web applications.
+* Establish network segmentation between distinct operational areas.
+* Create and enforce a configuration management baseline with automated drift detection.
+* Schedule recurring security audits and remediate findings promptly.
 
 ---
 
