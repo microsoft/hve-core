@@ -9,11 +9,11 @@ import json
 import urllib.error
 import urllib.request
 from typing import cast
-from unittest.mock import patch
 
 import jira
 import pytest
 from conftest import HttpErrorFactory, ResponseFactory
+from pytest_mock import MockerFixture
 from test_constants import (
     ERROR_AUTH_MISSING,
     ERROR_BASE_URL_INVALID,
@@ -86,6 +86,7 @@ def test_from_environment_requires_auth_credentials() -> None:
 def test_request_returns_parsed_json(
     configured_client: jira.JiraClient,
     response_factory: ResponseFactory,
+    mocker: MockerFixture,
 ) -> None:
     captured_request: dict[str, urllib.request.Request] = {}
 
@@ -93,12 +94,12 @@ def test_request_returns_parsed_json(
         captured_request["request"] = request
         return response_factory('{"key": "PROJ-123"}')
 
-    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
-        result = configured_client.request(
-            "POST",
-            REQUEST_PATH,
-            {"fields": {"summary": "x"}},
-        )
+    mocker.patch("urllib.request.urlopen", side_effect=fake_urlopen)
+    result = configured_client.request(
+        "POST",
+        REQUEST_PATH,
+        {"fields": {"summary": "x"}},
+    )
 
     request = cast(urllib.request.Request, captured_request["request"])
     assert result == {"key": "PROJ-123"}
@@ -113,17 +114,19 @@ def test_request_returns_parsed_json(
 def test_request_returns_none_for_empty_body(
     configured_client: jira.JiraClient,
     response_factory: ResponseFactory,
+    mocker: MockerFixture,
 ) -> None:
-    with patch("urllib.request.urlopen", return_value=response_factory("   ")):
-        assert configured_client.request("GET", REQUEST_PATH) is None
+    mocker.patch("urllib.request.urlopen", return_value=response_factory("   "))
+    assert configured_client.request("GET", REQUEST_PATH) is None
 
 
 def test_request_returns_plain_text_for_non_json_response(
     configured_client: jira.JiraClient,
     response_factory: ResponseFactory,
+    mocker: MockerFixture,
 ) -> None:
-    with patch("urllib.request.urlopen", return_value=response_factory("plain text")):
-        assert configured_client.request("GET", REQUEST_PATH) == "plain text"
+    mocker.patch("urllib.request.urlopen", return_value=response_factory("plain text"))
+    assert configured_client.request("GET", REQUEST_PATH) == "plain text"
 
 
 @pytest.mark.parametrize(
@@ -137,25 +140,29 @@ def test_request_returns_plain_text_for_non_json_response(
 def test_request_translates_http_error_details(
     configured_client: jira.JiraClient,
     http_error_factory: HttpErrorFactory,
+    mocker: MockerFixture,
     body: str,
     expected_detail: str,
 ) -> None:
     error = http_error_factory(body, code=403, url=REQUEST_URL)
 
-    with patch("urllib.request.urlopen", side_effect=error):
-        with pytest.raises(jira.ScriptError) as exc_info:
-            configured_client.request("GET", REQUEST_PATH)
+    mocker.patch("urllib.request.urlopen", side_effect=error)
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
 
     assert str(exc_info.value) == f"HTTP 403 from GET {REQUEST_URL}: {expected_detail}"
 
 
-def test_request_translates_url_error(configured_client: jira.JiraClient) -> None:
-    with patch(
+def test_request_translates_url_error(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
         "urllib.request.urlopen",
         side_effect=urllib.error.URLError("network down"),
-    ):
-        with pytest.raises(jira.ScriptError) as exc_info:
-            configured_client.request("GET", REQUEST_PATH)
+    )
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
 
     assert str(exc_info.value) == (
         f"Could not reach Jira API at {REQUEST_URL}: network down"
