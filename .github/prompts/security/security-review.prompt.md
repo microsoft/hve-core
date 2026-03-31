@@ -2,7 +2,7 @@
 name: security-review
 agent: Security Reviewer
 description: "Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core"
-argument-hint: "[scope=path/to/dir] [mode={audit|diff|plan}] [targetSkill={owasp-top-10|owasp-llm|owasp-agentic}]"
+argument-hint: "[scope=path/to/dir] [mode={audit|diff|plan}] [targetSkill={owasp-top-10|owasp-llm|owasp-agentic|owasp-infrastructure}]"
 ---
 
 # Vulnerability Scan
@@ -13,7 +13,7 @@ argument-hint: "[scope=path/to/dir] [mode={audit|diff|plan}] [targetSkill={owasp
 ## Inputs
 
 * ${input:mode:audit}: (Optional, defaults to audit) Scanning mode: `audit`, `diff`, or `plan`.
-* ${input:targetSkill}: (Optional) Single OWASP skill to assess. Bypasses codebase profiling when provided. Available skills: `owasp-agentic`, `owasp-llm`, `owasp-top-10`.
+* ${input:targetSkill}: (Optional) Single OWASP skill to assess. Bypasses codebase profiling when provided. Available skills: `owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-infrastructure`.
 * ${input:scope}: (Optional) Specific directories or paths to focus on. When omitted, assesses the full codebase.
 * ${input:plan}: (Optional) Implementation plan document path. Inferred from attached files or conversation context when not provided.
 
