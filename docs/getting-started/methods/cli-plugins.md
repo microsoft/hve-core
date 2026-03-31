@@ -28,10 +28,26 @@ Type `/plugin` in a Copilot CLI chat session to browse available plugins.
 
 ## Install a Plugin
 
+Choose **one** of the following plugins to install. Each command installs a
+different collection from the hve-core marketplace.
+
+For the core Research, Plan, Implement, Review lifecycle:
+
 ```bash
 copilot plugin install hve-core@hve-core
+```
+
+For the full bundle (includes everything in `hve-core` plus all additional
+collections):
+
+```bash
 copilot plugin install hve-core-all@hve-core
 ```
+
+> [!TIP]
+> `hve-core-all` is a superset of `hve-core`. Install one or the other, not
+> both. If you are unsure which to pick, start with `hve-core-all` for the
+> complete experience.
 
 ## Available Plugins
 
