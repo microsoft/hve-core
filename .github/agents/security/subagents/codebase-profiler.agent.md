@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`).
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-infrastructure`).
 
 ### Technology Signals
 
@@ -51,6 +51,16 @@ owasp-top-10:
   - "REST API endpoints"
   - "Server-side templates"
   - "Web framework config (Express, Django, Flask, Rails, Spring)"
+owasp-infrastructure:
+  - "Dockerfile"
+  - "docker-compose.yml"
+  - ".github/workflows/**"
+  - "Jenkinsfile"
+  - "terraform/**"
+  - "Terraform files (.tf)"
+  - "Bicep files (.bicep)"
+  - "CloudFormation templates"
+  - "Ansible playbooks"
 ```
 
 ## Codebase Profile Format
