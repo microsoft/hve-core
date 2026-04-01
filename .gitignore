@@ -24,6 +24,9 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+# Keep source scripts under scripts/release/ and their tests tracked
+!scripts/release/
+!scripts/tests/release/
 [Rr]eleases/
 x64/
 x86/
@@ -344,10 +347,9 @@ paket-files/
 
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
+**/.hypothesis/
 **/.pytest_cache/
-**/.hypothesis/
 **/.ruff_cache/
-**/.hypothesis/
 *.pyc
 venv/
 .venv/

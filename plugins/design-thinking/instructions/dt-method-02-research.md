@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-method-02-research.instructions.md

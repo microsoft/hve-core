@@ -1,5 +1,16 @@
 {
   "name": "project-planning",
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-  "version": "3.1.46"
+  "version": "3.3.27",
+  "agents": [
+    "agents/hve-core/",
+    "agents/hve-core/subagents/",
+    "agents/project-planning/",
+    "agents/rai-planning/",
+    "agents/security/"
+  ],
+  "commands": [
+    "commands/rai-planning/",
+    "commands/security/"
+  ]
 }

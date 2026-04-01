@@ -1,1 +1,0 @@
-../../../.github/agents/hve-core/prompt-builder.agent.md

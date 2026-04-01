@@ -6,8 +6,9 @@ tools:
   - semantic_search
   - create_file
 handoffs:
-  - agent: dt-coach
+  - agent: DT Coach
     label: Start a DT project
+    prompt: /dt-start-project
 ---
 
 # Design Thinking Learning Tutor

@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md

@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-curriculum-02-research.instructions.md

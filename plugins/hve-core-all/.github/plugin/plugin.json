@@ -1,5 +1,40 @@
 {
   "name": "hve-core-all",
   "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
-  "version": "3.1.46"
+  "version": "3.3.27",
+  "agents": [
+    "agents/ado/",
+    "agents/coding-standards/",
+    "agents/data-science/",
+    "agents/design-thinking/",
+    "agents/experimental/",
+    "agents/experimental/subagents/",
+    "agents/github/",
+    "agents/hve-core/",
+    "agents/hve-core/subagents/",
+    "agents/jira/",
+    "agents/project-planning/",
+    "agents/rai-planning/",
+    "agents/security/",
+    "agents/security/subagents/"
+  ],
+  "commands": [
+    "commands/ado/",
+    "commands/coding-standards/",
+    "commands/design-thinking/",
+    "commands/github/",
+    "commands/hve-core/",
+    "commands/jira/",
+    "commands/rai-planning/",
+    "commands/security/"
+  ],
+  "skills": [
+    "skills/coding-standards/",
+    "skills/experimental/",
+    "skills/gitlab/",
+    "skills/installer/",
+    "skills/jira/",
+    "skills/security/",
+    "skills/shared/"
+  ]
 }

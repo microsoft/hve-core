@@ -2,7 +2,7 @@
 title: GitHub Copilot Prompts
 description: Coaching and guidance prompts for specific development tasks that provide step-by-step assistance and context-aware support
 author: Edge AI Team
-ms.date: 08/22/2025
+ms.date: 2026-03-11
 ms.topic: hub-page
 estimated_reading_time: 3
 keywords:
@@ -60,14 +60,27 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 
 * **[GitHub Add Issue](./github/github-add-issue.prompt.md)** - Create GitHub issues with proper formatting and labels
 
-### Azure Operations
+### Jira and GitLab Support
 
+Jira workflow support is available through dedicated prompts in this directory. GitLab support is currently exposed through the local GitLab skill for merge request and pipeline workflows.
+
+* **[Jira Discover Issues](./jira/jira-discover-issues.prompt.md)** - Discover Jira issues from documents, assigned work, or JQL searches and create planning files when needed
+* **[Jira Triage Issues](./jira/jira-triage-issues.prompt.md)** - Triage Jira issues with bounded JQL, duplicate checks, and controlled execution
+* **[Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)** - Execute a reviewed Jira handoff by creating, updating, transitioning, and commenting on issues
+* **[Jira Skill](../skills/jira/jira/SKILL.md)** - Configure local Jira access and use the underlying CLI commands directly when prompt orchestration is not needed
+* **[GitLab Skill](../skills/gitlab/gitlab/SKILL.md)** - Inspect merge requests, comments, pipelines, jobs, and logs for GitLab-hosted delivery workflows
+
+### Security
+
+* **[Security Review](./security/security-review.prompt.md)** - OWASP vulnerability assessment against the current codebase with configurable mode, scope, and skill selection
+* **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling (target-skill fast-path)
+* **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling for context
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
+* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ### Documentation & Process
 
 * **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance
-* **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
 ## Prompts vs Instructions vs Custom Agents
 
@@ -89,6 +102,9 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
 11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
 12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
+13. **Managing Jira work?** Use [Jira Discover Issues](./jira/jira-discover-issues.prompt.md), [Jira Triage Issues](./jira/jira-triage-issues.prompt.md), or [Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)
+14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/gitlab/gitlab/SKILL.md) for setup and command guidance
+15. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
 
 ## Related Resources
 

@@ -282,44 +282,104 @@ jobs:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
+            Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          }
+
       - name: Reset pre-release branch
+        id: reset-branch
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
         run: |
           BRANCH="prerelease/next"
-          REPO="${{ github.repository }}"
-          if gh api "/repos/$REPO/git/refs/heads/$BRANCH" --silent 2>/dev/null; then
-            gh api "/repos/$REPO/git/refs/heads/$BRANCH" \
-              -X PATCH \
-              -f sha="${{ github.sha }}" \
-              -F force=true
-            echo "Reset $BRANCH to ${{ github.sha }}"
-          fi
+          RELEASED="${{ needs.release-please.outputs.version }}"
+          MAJOR=$(echo "$RELEASED" | cut -d. -f1)
+          MINOR=$(echo "$RELEASED" | cut -d. -f2)
+          PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
+          echo "pre-version=${PRE_VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Update pre-release PR version
-        # Placeholder version computation — release-prerelease-pr.yml is the authoritative source.
-        # This provides an interim PR title until the next push to main triggers release-prerelease-pr.yml.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+
+          # Build the version-bump commit before pushing.
+          # A single force-push of the final state prevents the remote from
+          # ever seeing prerelease/next identical to main, which would cause
+          # GitHub to auto-close the open PR.
+          git checkout -B "$BRANCH"
+
+          # Update all version-tracked files and regenerate plugin outputs
+          pwsh -File scripts/release/Update-VersionFiles.ps1 -Version "$PRE_VERSION"
+
+          # Sync package-lock.json version with the bumped package.json version
+          node -e "
+            const fs = require('fs');
+            const v = require('./package.json').version;
+            const lock = JSON.parse(fs.readFileSync('./package-lock.json', 'utf8'));
+            lock.version = v;
+            if (lock.packages?.['']) lock.packages[''].version = v;
+            fs.writeFileSync('./package-lock.json', JSON.stringify(lock, null, 2) + '\n');
+          "
+
+          git add -A
+          git commit -m "chore: reset pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
+          git push --force origin "$BRANCH"
+
+      - name: Create or update pre-release PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
         run: |
           BRANCH="prerelease/next"
-          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
-            --json number --jq '.[0].number // empty' \
-            -R "${{ github.repository }}")
-          if [ -n "$PR_NUMBER" ]; then
-            RELEASED="${{ needs.release-please.outputs.version }}"
-            MAJOR=$(echo "$RELEASED" | cut -d. -f1)
-            MINOR=$(echo "$RELEASED" | cut -d. -f2)
-            PRE_VERSION="${MAJOR}.$((MINOR + 1)).0"
-            gh pr edit "$PR_NUMBER" \
-              --title "chore(main): pre-release $PRE_VERSION" \
-              --body "## Pre-Release $PRE_VERSION
+          RELEASED="${{ needs.release-please.outputs.version }}"
+          PRE_VERSION="${{ steps.reset-branch.outputs.pre-version }}"
+          TITLE="chore(main): pre-release ${PRE_VERSION}"
+          BODY="## Pre-Release ${PRE_VERSION}
 
-          Reset after release $RELEASED. Next push to main will update this PR.
+          Reset after release ${RELEASED}. Next push to main will update this PR.
 
           ---
           *Managed automatically by pre-release workflow.*"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --state open \
+            --json number --jq '.[0].number // empty' \
+            -R "$REPO")
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --title "$TITLE" \
+              --body "$BODY" \
+              -R "$REPO"
             echo "Updated PR #$PR_NUMBER to $PRE_VERSION"
+          else
+            gh pr create \
+              --head "$BRANCH" \
+              --base main \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --label "autorelease: prerelease" \
+              -R "$REPO"
+            echo "Created new pre-release PR"
           fi
 
   extension-package-release:
@@ -348,6 +408,7 @@ jobs:
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:
+      # write required for gh release upload to attach SBOM to the release
       contents: write
     steps:
       - name: Checkout dependency manifests
@@ -361,16 +422,21 @@ jobs:
           persist-credentials: false
 
       - name: Generate dependency SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           path: .
           format: spdx-json
           output-file: dependencies.spdx.json
-          artifact-name: sbom-dependencies
           upload-release-assets: false
-          upload-artifact: true
+          upload-artifact: false
           config: .syft.yaml
           dependency-snapshot: true
+
+      - name: Upload dependency SBOM artifact
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: sbom-dependencies
+          path: dependencies.spdx.json
 
       - name: Upload dependency SBOM to release
         env:
@@ -405,7 +471,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sbom-dependencies
-          path: ./dist
+          path: ./sbom
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -432,7 +498,7 @@ jobs:
           echo "name=$VSIX_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           file: ${{ steps.vsix.outputs.file }}
           format: spdx-json
@@ -442,7 +508,15 @@ jobs:
           upload-artifact: true
           config: .syft.yaml
 
+      - name: Verify SBOM files exist
+        run: |
+          test -f "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            || { echo "::error::Per-VSIX SBOM not found: dist/${{ steps.vsix.outputs.name }}.spdx.json"; exit 1; }
+          test -f "sbom/dependencies.spdx.json" \
+            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+
       - name: Attest build provenance
+        id: attest
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
@@ -457,20 +531,27 @@ jobs:
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: ${{ steps.vsix.outputs.file }}
-          sbom-path: dist/dependencies.spdx.json
+          sbom-path: sbom/dependencies.spdx.json
 
       - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: |
+          cp "$BUNDLE_PATH" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json"
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl"
           gh release upload "${{ needs.release-please.outputs.tag_name }}" \
             "${{ steps.vsix.outputs.file }}" \
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
+            "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
+            "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:
-    name: Upload Plugin Package (${{ matrix.id }})
-    needs: [release-please, plugin-package-release]
+    name: Attest and Upload Plugin (${{ matrix.id }})
+    needs: [release-please, plugin-package-release, generate-dependency-sbom]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     strategy:
@@ -478,23 +559,88 @@ jobs:
       matrix: ${{ fromJson(needs.plugin-package-release.outputs.collections-matrix) }}
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
+      - name: Checkout Syft config
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          sparse-checkout: .syft.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Download dependency SBOM
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: sbom-dependencies
+          path: ./sbom
+
       - name: Download plugin artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: plugin-package-${{ matrix.id }}
           path: ./dist/plugins
 
-      - name: Upload plugin package to GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Verify plugin archive exists
         run: |
           PLUGIN_ARCHIVE="dist/plugins/${{ matrix.id }}.zip"
           if [ ! -f "$PLUGIN_ARCHIVE" ]; then
             echo "::error::Plugin archive not found for collection ${{ matrix.id }}"
             exit 1
           fi
-          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$PLUGIN_ARCHIVE" --clobber -R "${{ github.repository }}"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          file: dist/plugins/${{ matrix.id }}.zip
+          format: spdx-json
+          output-file: dist/plugins/${{ matrix.id }}.zip.spdx.json
+          artifact-name: sbom-plugin-${{ matrix.id }}
+          upload-release-assets: false
+          upload-artifact: true
+          config: .syft.yaml
+
+      - name: Verify SBOM files exist
+        run: |
+          test -f "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+            || { echo "::error::Per-plugin SBOM not found: dist/plugins/${{ matrix.id }}.zip.spdx.json"; exit 1; }
+          test -f "sbom/dependencies.spdx.json" \
+            || { echo "::error::Dependency SBOM not found: sbom/dependencies.spdx.json"; exit 1; }
+
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: dist/plugins/${{ matrix.id }}.zip
+
+      - name: Attest SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: dist/plugins/${{ matrix.id }}.zip
+          sbom-path: dist/plugins/${{ matrix.id }}.zip.spdx.json
+
+      - name: Attest dependency SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: dist/plugins/${{ matrix.id }}.zip
+          sbom-path: sbom/dependencies.spdx.json
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          cp "$BUNDLE_PATH" \
+            "dist/plugins/${{ matrix.id }}.zip.sigstore.json"
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > \
+            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl"
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
+            "dist/plugins/${{ matrix.id }}.zip" \
+            "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
+            "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
+            "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
+            --clobber -R "${{ github.repository }}"
 
   sbom-diff:
     name: SBOM Dependency Diff
@@ -510,6 +656,11 @@ jobs:
         with:
           name: sbom-dependencies
           path: ./current
+
+      - name: Verify current dependency SBOM
+        run: |
+          test -f "current/dependencies.spdx.json" \
+            || { echo "::error::Current dependency SBOM not found in artifact"; exit 1; }
 
       - name: Download previous release dependency SBOM
         id: previous
@@ -604,9 +755,45 @@ jobs:
             "dependency-diff.md" \
             --clobber -R "${{ github.repository }}"
 
+  append-verification-notes:
+    name: Append Verification Instructions
+    needs: [release-please, attest-and-upload, upload-plugin-packages]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Append verification section to release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.release-please.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          gh release view "$TAG" --json body --jq '.body' -R "$REPO" > notes.md
+          cat >> notes.md <<'EOF'
+
+          ## Verifying Downloads
+
+          All release assets include [Sigstore](https://www.sigstore.dev/) build-provenance
+          attestations generated by GitHub Actions. Verify any downloaded asset with the
+          GitHub CLI:
+
+          ```bash
+          # Verify a VSIX extension package
+          gh attestation verify <file>.vsix --repo microsoft/hve-core
+
+          # Verify a plugin ZIP package
+          gh attestation verify <file>.zip --repo microsoft/hve-core
+          ```
+
+          See [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md)
+          for full supply-chain verification details including SBOM validation.
+          EOF
+          gh release edit "$TAG" --notes-file notes.md -R "$REPO"
+
   publish-release:
     name: Publish GitHub Release
-    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff]
+    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff, append-verification-notes]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:

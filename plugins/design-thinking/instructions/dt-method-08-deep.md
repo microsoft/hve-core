@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-method-08-deep.instructions.md

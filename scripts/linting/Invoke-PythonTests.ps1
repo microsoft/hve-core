@@ -53,12 +53,8 @@ function Invoke-PythonTests {
         Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
         $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 
-        # Check if pytest is available (once, before loop - mirrors ruff check in lint script)
-        $pytestAvailable = Get-Command pytest -ErrorAction SilentlyContinue
-        if (-not $pytestAvailable) {
-            Write-Host '❌ pytest is not installed. Run "uv sync" in a skill directory or install with "uv pip install pytest pytest-cov".' -ForegroundColor Red
-            return @{ success = $false; skillsTested = 0; passed = 0; failed = 0; errors = @('pytest not installed') }
-        }
+        # Check if pytest is globally available (used as fallback when skill has no venv)
+        $globalPytest = Get-Command pytest -ErrorAction SilentlyContinue
 
         $results = @{
             success = $true
@@ -81,7 +77,29 @@ function Invoke-PythonTests {
                     continue
                 }
                 
-                $output = pytest tests/ $Verbosity --tb=short 2>&1
+                # Resolve pytest: prefer skill venv, fall back to global
+                $pytestCmd = $null
+                $venvPytest = Join-Path $skillPath '.venv/bin/pytest'
+                $venvPytestWin = Join-Path $skillPath '.venv/Scripts/pytest.exe'
+                if (Test-Path $venvPytest) {
+                    $pytestCmd = $venvPytest
+                    Write-Host '  Using venv pytest' -ForegroundColor Gray
+                } elseif (Test-Path $venvPytestWin) {
+                    $pytestCmd = $venvPytestWin
+                    Write-Host '  Using venv pytest' -ForegroundColor Gray
+                } elseif ($globalPytest) {
+                    $pytestCmd = 'pytest'
+                }
+
+                if (-not $pytestCmd) {
+                    Write-Host '❌ pytest not available (no .venv and not installed globally)' -ForegroundColor Red
+                    $results.success = $false
+                    $results.failed++
+                    $results.errors += $skillPath
+                    continue
+                }
+
+                $output = & $pytestCmd tests/ $Verbosity --tb=short 2>&1
                 $exitCode = $LASTEXITCODE
                 
                 $result = @{
@@ -114,10 +132,16 @@ function Invoke-PythonTests {
             }
         }
 
-        # Write results to file if OutputPath specified
-        if ($OutputPath) {
-            $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        # Default to logs directory when no OutputPath specified
+        if (-not $OutputPath) {
+            $logsDir = Join-Path -Path $RepoRoot -ChildPath 'logs'
+            if (-not (Test-Path $logsDir)) {
+                New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+            }
+            $OutputPath = Join-Path -Path $logsDir -ChildPath 'python-test-results.json'
         }
+        $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
+        Write-Host "📊 Results written to: $OutputPath" -ForegroundColor Cyan
 
         return $results
     } finally {

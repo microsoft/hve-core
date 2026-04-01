@@ -1,1 +1,0 @@
-../../../.github/instructions/shared/hve-core-location.instructions.md

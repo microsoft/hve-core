@@ -1,1 +1,0 @@
-../../../.github/instructions/design-thinking/dt-rpi-research-context.instructions.md

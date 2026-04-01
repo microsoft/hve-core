@@ -468,6 +468,31 @@ applyTo: '**'
 ---
 ```
 
+## Path Portability
+
+Artifacts distribute in three contexts: repository (`.github/`), VS Code extension, and CLI plugin. Cross-file `#file:` references must resolve in all contexts.
+
+### Resolution Rule
+
+`#file:` resolves relative to the containing file, not the workspace root. Plugin packaging preserves the relative depth between kind directories (`agents/{collection}/`, `commands/{collection}/`, `instructions/{collection}/`), matching the repo layout minus the `.github/` prefix.
+
+### Cross-Kind References
+
+Cross-directory `#file:` traversal from prompts to instructions works because plugin packaging mirrors the repo directory structure:
+
+```text
+Repo:   .github/prompts/{collection}/  →  ../../instructions/{collection}/file.instructions.md
+Plugin: commands/{collection}/          →  ../../instructions/{collection}/file.instructions.md
+```
+
+### Guidelines
+
+* Use original suffixes in `#file:` references: `.instructions.md`, `.agent.md`, `.prompt.md`.
+* Never use absolute paths or `.github/` prefix in `#file:` references.
+* Same-directory references use `#file:./sibling.instructions.md`.
+* Cross-kind references use `#file:../../instructions/{collection}/name.instructions.md`.
+* When a `#file:` target belongs to a different collection, ensure the target appears in the same collection manifest as the referencing file.
+
 ## Protocol Patterns
 
 Protocol patterns apply to prompt and agent files. Skill files follow their own content structure defined in the Skill Content Structure section rather than step-based or phase-based protocols.

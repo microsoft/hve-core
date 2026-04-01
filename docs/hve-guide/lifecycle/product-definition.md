@@ -33,7 +33,9 @@ You enter Product Definition after completing [Stage 2: Discovery](discovery.md)
 | product-manager-advisor | Agent | Select **product-manager-advisor** agent | Get product management guidance and feedback    |
 | adr-creation            | Agent | Select **adr-creation** agent            | Document architecture decisions formally        |
 | arch-diagram-builder    | Agent | Select **arch-diagram-builder** agent    | Generate architecture diagrams for PRDs         |
-| security-plan-creator   | Agent | Select **security-plan-creator** agent   | Validate security requirements in product specs |
+| security-planner        | Agent | Select **security-planner** agent        | Validate security requirements in product specs |
+| sssc-planner            | Agent | Select **sssc-planner** agent            | Validate supply chain security in product specs |
+| rai-planner             | Agent | Select **rai-planner** agent             | Validate RAI requirements in product specs      |
 
 ## Design Thinking for Product Concepts
 

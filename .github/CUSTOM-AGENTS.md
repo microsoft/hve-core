@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-01-18
+ms.date: 2026-03-22
 ms.topic: guide
 keywords:
   - copilot
@@ -56,7 +56,9 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                    | Iterative questioning; state-tracked sessions         |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
-| **security-plan-creator**        | Creates comprehensive cloud security plans from blueprints                   | Blueprint-driven threat modeling                      |
+| **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff | Six-phase conversational workflow; experimental       |
+| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM | Six-phase conversational workflow; experimental       |
+| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against MS RAI Standard v2 and NIST AI RMF | Six-phase conversational workflow; experimental       |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
 
@@ -68,11 +70,14 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent                 | Purpose                                                          | Key Constraint                          |
-|-----------------------|------------------------------------------------------------------|-----------------------------------------|
-| **pr-review**         | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code        |
-| **prompt-builder**    | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing   |
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents |
+| Agent                          | Purpose                                                          | Key Constraint                                        |
+|--------------------------------|------------------------------------------------------------------|-------------------------------------------------------|
+| **pr-review**                  | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code                      |
+| **prompt-builder**             | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing                 |
+| **security-reviewer**          | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents          |
+| **code-review-functional**     | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save |
+| **code-review-full**           | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
+| **code-review-standards**      | Skills-based standards reviewer for local changes and PRs        | Findings must trace to a loaded skill; experimental   |
 
 ### Generator Agents
 
@@ -85,10 +90,12 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Platform Integration Agents
 
-| Agent                    | Purpose                                                    | Key Constraint                            |
-|--------------------------|------------------------------------------------------------|-------------------------------------------|
-| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction | Uses MCP GitHub tools                     |
-| **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items |
+| Agent                    | Purpose                                                    | Key Constraint                                  |
+|--------------------------|------------------------------------------------------------|-------------------------------------------------|
+| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction | Uses MCP GitHub tools                           |
+| **jira-backlog-manager** | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows              |
+| **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items       |
+| **jira-prd-to-wit**      | Analyzes PRDs and plans Jira issue hierarchies             | Planning-only; does not mutate Jira             |
 
 ### Testing Agents
 
@@ -243,7 +250,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Workflow:** Context Discovery → Review Scoping → Well-Architected Evaluation → Trade-Off Analysis → ADR Documentation → Escalation Review
 
-**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-plan-creator` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
+**Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
 ### doc-ops
 
@@ -285,16 +292,51 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Stores only durable, reusable facts. Does not store transient discussion, personal preferences, or speculative information.
 
-### security-plan-creator
+### security-planner
 
-**Creates:** Security plans and implementation artifacts:
+**Creates:** Security plans and backlog handoff artifacts under `.copilot-tracking/security-plans/{project-slug}/`:
 
-* `.copilot-tracking/plans/security-plan-{blueprint-name}.plan.md` (planning artifacts and threat analysis)
-* `security-plan-outputs/security-plan-{blueprint-name}.md` (final security plan document)
+* `state.json` (session state for resume capability)
+* `security-plan-{project-slug}.md` (security plan with STRIDE analysis, standards mapping, and operational bucket classification)
+* Backlog items in ADO (`WI-SEC-{NNN}`) or GitHub (`{{SEC-TEMP-N}}`) format
 
-**Workflow:** Blueprint Selection → Architecture Analysis → Threat Assessment → Plan Generation → Validation
+**Workflow:** Six sequential phases: Scoping → Bucket Analysis → Standards Mapping → Security Model Analysis → Backlog Generation → Review and Handoff
 
-**Critical:** Requires blueprint infrastructure (Terraform or Bicep). Maps threats to specific system components. Generates iteratively with user feedback per section.
+**Entry Modes:** Two modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from existing PRD/BRD artifacts.
+
+**Critical:** Uses STRIDE methodology per operational bucket. Maps controls to OWASP Top 10, NIST 800-53, and CIS v8 frameworks. Detects AI/ML components during scoping and recommends RAI Planner dispatch when AI elements are present. Works iteratively with 3-5 questions per turn using emoji checklists to track progress. No blueprint infrastructure requirement. Maturity: experimental.
+
+### rai-planner
+
+**Creates:** Ten artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
+
+* `state.json` (session state for resume capability)
+* `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
+* `sensitive-uses-screening.md`, `use-misuse-inventory.md` (Phase 2: Sensitive Uses Assessment)
+* `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
+* `rai-security-model-addendum.md` (Phase 4: RAI Security Model Analysis)
+* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
+* `rai-scorecard.md` and backlog items (Phase 6: Review and Handoff)
+
+**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Sensitive Uses Assessment (Map) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
+
+**Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
+
+**Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Screens for sensitive uses and restricted uses requiring escalation. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
+
+### sssc-planner
+
+**Creates:** Assessment artifacts under `.copilot-tracking/sssc-plans/{project-slug}/`:
+
+* `state.json` (session state for resume capability)
+* `sssc-plan-{project-slug}.md` (supply chain security assessment with standards mapping and gap analysis)
+* Backlog items in ADO or GitHub format for remediation tracking
+
+**Workflow:** Six sequential phases: Scoping → Supply Chain Assessment → Standards Mapping → Gap Analysis → Backlog Generation → Review and Handoff
+
+**Entry Modes:** Four modes converge at Phase 2. Capture mode starts from scratch with an interview. From-PRD mode pre-populates from PRD artifacts. From-BRD mode seeds from BRD artifacts. From-security-plan mode continues from a completed Security Planner session.
+
+**Critical:** Assesses against OpenSSF Scorecard (20 checks), SLSA Build levels (L0-L3), Best Practices Badge tiers, Sigstore keyless signing maturity, and SBOM compliance. Works iteratively with 3-5 questions per turn with confirmation before phase advancement. Maturity: experimental.
 
 ### security-reviewer
 
@@ -315,6 +357,36 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
 
 **Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`) for vulnerability references. Supports incremental comparison with prior scan reports.
+
+### code-review-functional
+
+**Creates:** Optional review artifact (user-prompted after report delivery):
+
+* `.copilot-tracking/reviews/<YYYY-MM-DD>-<branch-name>.md` (full report with YAML frontmatter)
+
+**Workflow:** Branch Analysis → Functional Review → Report Generation → Save Review
+
+**Critical:** Review-only. Focuses on five areas: Logic, Edge Cases, Error Handling, Concurrency, and Contract. Accepts a configurable `baseBranch` input (default `origin/main`). Artifact save is optional and user-confirmed after the report is presented. Applies false-positive filters before recording any finding.
+
+### code-review-full
+
+**Creates:** Merged review artifacts in a normalized branch folder:
+
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+
+**Workflow:** Compute Diff → Delegate to Functional + Standards subagents → Merge Reports → Persist Artifacts
+
+**Critical:** Orchestrator-only. Delegates functional review to `code-review-functional` and standards review to `code-review-standards`, then merges both reports into a single output. Shares the computed diff with subagents to avoid duplicate git operations. Maturity: experimental.
+
+### code-review-standards
+
+**Creates:** Review artifacts in a normalized branch folder:
+
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+
+**Workflow:** Understand Intent → Lock Scope → Apply Skills → Persist Artifacts
+
+**Critical:** Every finding must trace to a loaded skill; no invented categories. Loads at most 8 skills per review, preferring those whose domain appears most frequently in the diff. Accepts pre-computed diffs from orchestrators such as the `code-review-full` prompt. Skips artifact persistence for selected code and `#file` reviews that lack branch context. Maturity: experimental.
 
 ### gen-jupyter-notebook
 
@@ -371,6 +443,14 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Uses MCP GitHub tools. Follows community interaction guidelines from `community-interaction.instructions.md` for all contributor-facing comments.
 
+### jira-backlog-manager
+
+**Creates:** Backlog management artifacts under `.copilot-tracking/jira-issues/`
+
+**Workflow:** Intent Classification → Workflow Dispatch → Summary and Handoff
+
+**Critical:** Uses the Jira skill command surface. Supports discovery, triage, execution, and single-issue workflows while preserving planning files and autonomy gates.
+
 ### ado-prd-to-wit
 
 **Creates:** Work item planning files:
@@ -383,6 +463,19 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Workflow:** Analyze PRD → Discover Codebase → Discover Related Work Items → Refine → Finalize Handoff
 
 **Critical:** Planning-only. Uses ADO MCP tools for work item discovery. Supports Epics, Features, and User Stories.
+
+### jira-prd-to-wit
+
+**Creates:** Work item planning files:
+
+* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/planning-log.md` (session activity and decisions)
+* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/artifact-analysis.md` (PRD parsing and extraction)
+* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/issues-plan.md` (planned Jira issue hierarchy and field mappings)
+* `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/handoff.md` (final handoff for Jira execution)
+
+**Workflow:** Analyze PRD → Discover Codebase → Discover Related Jira Issues → Refine → Finalize Handoff
+
+**Critical:** Planning-only. Validates Jira issue types and required fields before finalizing plans. Does not call Jira mutation commands.
 
 ### test-streamlit-dashboard
 

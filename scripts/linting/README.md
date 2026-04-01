@@ -261,6 +261,7 @@ Purpose: Ensure all skill packages comply with the agentskills.io specification 
 * Checks frontmatter for required `name` and `description` fields
 * Verifies `name` matches directory name
 * When `scripts/` subdirectory exists, requires both `.ps1` and `.sh` files for cross-platform support
+* Validates Python skills with `tests/` include `tests/fuzz_harness.py` for Scorecard compliance
 * Warns on unrecognized directories
 * Supports changed-files-only mode via Git
 * Creates CI annotations for violations

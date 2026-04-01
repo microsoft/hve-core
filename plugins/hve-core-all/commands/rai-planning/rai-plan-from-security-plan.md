@@ -1,0 +1,1 @@
+../../../../.github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md

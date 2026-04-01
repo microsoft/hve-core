@@ -631,6 +631,74 @@ Describe 'Invoke-PackageExtension' {
         $result.ErrorMessage | Should -Match 'Simulated unexpected failure'
     }
 
+    It 'Excludes dev artifacts when copying .github in full mode' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        # Create skills with .venv and __pycache__ in the repo
+        $skillDir = Join-Path $script:repoRoot '.github/skills/my-skill'
+        New-Item -Path $skillDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value '# Skill'
+        New-Item -Path (Join-Path $skillDir '.venv/lib') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir '.venv/lib/pkg.py') -Value 'pass'
+        New-Item -Path (Join-Path $skillDir '__pycache__') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir '__pycache__/mod.pyc') -Value 'bytecode'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $copiedSkillDir = Join-Path $script:extDir '.github/skills/my-skill'
+        # .venv and __pycache__ should not be present after full-mode copy
+        if (Test-Path $copiedSkillDir) {
+            Test-Path (Join-Path $copiedSkillDir '.venv') | Should -BeFalse
+            Test-Path (Join-Path $copiedSkillDir '__pycache__') | Should -BeFalse
+            Test-Path (Join-Path $copiedSkillDir 'SKILL.md') | Should -BeTrue
+        }
+        $result | Should -BeOfType [hashtable]
+    }
+
+    It 'Removes test directories from skills in full mode' {
+        Mock Test-VsceAvailable { return @{ IsAvailable = $true; CommandType = 'vsce'; Command = 'vsce' } }
+        Mock Get-VscePackageCommand { return @{ Executable = 'echo'; Arguments = @('mocked') } }
+
+        $manifest = @{
+            name      = 'test-ext'
+            version   = '1.0.0'
+            publisher = 'test'
+            engines   = @{ vscode = '^1.80.0' }
+        }
+        $manifest | ConvertTo-Json | Set-Content (Join-Path $script:extDir 'package.json')
+
+        # Create skill with tests/ directory
+        $skillDir = Join-Path $script:repoRoot '.github/skills/my-skill'
+        New-Item -Path $skillDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value '# Skill'
+        New-Item -Path (Join-Path $skillDir 'tests') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'tests/test_main.py') -Value 'def test(): pass'
+
+        $vsixPath = Join-Path $script:extDir 'test-ext-1.0.0.vsix'
+        Set-Content -Path $vsixPath -Value 'fake-vsix'
+
+        $result = Invoke-PackageExtension -ExtensionDirectory $script:extDir -RepoRoot $script:repoRoot
+
+        $copiedSkillDir = Join-Path $script:extDir '.github/skills/my-skill'
+        if (Test-Path $copiedSkillDir) {
+            Test-Path (Join-Path $copiedSkillDir 'tests') | Should -BeFalse
+            Test-Path (Join-Path $copiedSkillDir 'SKILL.md') | Should -BeTrue
+        }
+        $result | Should -BeOfType [hashtable]
+    }
+
     It 'Returns success without VSIX creation when DryRun is specified' {
         $manifest = @{
             name      = 'test-ext'
@@ -1054,6 +1122,146 @@ Describe 'Set-CollectionReadme' {
     }
 }
 
+Describe 'Copy-DirectoryFiltered' -Tag 'Unit' {
+    BeforeAll {
+        $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "copy-dir-filtered-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+    }
+
+    AfterEach {
+        if (Test-Path $script:testDir) {
+            Remove-Item -Path $script:testDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Copies files at root level' {
+        $src = Join-Path $script:testDir 'src'
+        $dest = Join-Path $script:testDir 'dest'
+        New-Item -Path $src -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'file.txt') -Value 'content'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'file.txt') | Should -BeTrue
+        Get-Content (Join-Path $dest 'file.txt') | Should -Be 'content'
+    }
+
+    It 'Copies nested subdirectories recursively' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src 'sub/deep') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'sub/deep/nested.md') -Value '# Nested'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'sub/deep/nested.md') | Should -BeTrue
+    }
+
+    It 'Excludes .venv directories' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src '.venv/lib') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src '.venv/lib/site.py') -Value 'import os'
+        Set-Content -Path (Join-Path $src 'SKILL.md') -Value '# Skill'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'SKILL.md') | Should -BeTrue
+        Test-Path (Join-Path $dest '.venv') | Should -BeFalse
+    }
+
+    It 'Excludes __pycache__ directories' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src 'scripts/__pycache__') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'scripts/__pycache__/mod.cpython-311.pyc') -Value 'bytecode'
+        Set-Content -Path (Join-Path $src 'scripts/run.py') -Value 'print("hello")'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'scripts/run.py') | Should -BeTrue
+        Test-Path (Join-Path $dest 'scripts/__pycache__') | Should -BeFalse
+    }
+
+    It 'Excludes .ruff_cache and .pytest_cache directories' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src '.ruff_cache') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $src '.pytest_cache') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src '.ruff_cache/data') -Value 'cache'
+        Set-Content -Path (Join-Path $src '.pytest_cache/v') -Value 'cache'
+        Set-Content -Path (Join-Path $src 'main.py') -Value 'pass'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'main.py') | Should -BeTrue
+        Test-Path (Join-Path $dest '.ruff_cache') | Should -BeFalse
+        Test-Path (Join-Path $dest '.pytest_cache') | Should -BeFalse
+    }
+
+    It 'Excludes node_modules directories' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src 'node_modules/pkg') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'node_modules/pkg/index.js') -Value 'module.exports = {}'
+        Set-Content -Path (Join-Path $src 'index.js') -Value 'require("pkg")'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'index.js') | Should -BeTrue
+        Test-Path (Join-Path $dest 'node_modules') | Should -BeFalse
+    }
+
+    It 'Excludes deeply nested dev artifact directories' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src 'skills/powerpoint/.venv/lib') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'skills/powerpoint/.venv/lib/pkg.py') -Value 'pass'
+        Set-Content -Path (Join-Path $src 'skills/powerpoint/SKILL.md') -Value '# Skill'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'skills/powerpoint/SKILL.md') | Should -BeTrue
+        Test-Path (Join-Path $dest 'skills/powerpoint/.venv') | Should -BeFalse
+    }
+
+    It 'Accepts custom ExcludePatterns' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path (Join-Path $src 'build') -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $src 'dist') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'build/out.js') -Value 'compiled'
+        Set-Content -Path (Join-Path $src 'dist/bundle.js') -Value 'bundled'
+        Set-Content -Path (Join-Path $src 'src.js') -Value 'source'
+        $dest = Join-Path $script:testDir 'dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest -ExcludePatterns @('build', 'dist')
+
+        Test-Path (Join-Path $dest 'src.js') | Should -BeTrue
+        Test-Path (Join-Path $dest 'build') | Should -BeFalse
+        Test-Path (Join-Path $dest 'dist') | Should -BeFalse
+    }
+
+    It 'Creates destination directory if it does not exist' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path $src -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $src 'file.txt') -Value 'content'
+        $dest = Join-Path $script:testDir 'nonexistent/nested/dest'
+
+        Copy-DirectoryFiltered -Source $src -Destination $dest
+
+        Test-Path (Join-Path $dest 'file.txt') | Should -BeTrue
+    }
+
+    It 'Handles empty source directory without error' {
+        $src = Join-Path $script:testDir 'src'
+        New-Item -Path $src -ItemType Directory -Force | Out-Null
+        $dest = Join-Path $script:testDir 'dest'
+
+        { Copy-DirectoryFiltered -Source $src -Destination $dest } | Should -Not -Throw
+
+        Test-Path $dest | Should -BeTrue
+    }
+}
+
 Describe 'Copy-CollectionArtifacts' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "copy-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
@@ -1151,6 +1359,75 @@ Describe 'Copy-CollectionArtifacts' {
         Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
 
         Test-Path (Join-Path $script:extDir '.github/skills/video-to-gif') | Should -BeTrue
+    }
+
+    It 'Excludes .venv from copied skills' {
+        $skillSrc = Join-Path $script:repoRoot '.github/skills/powerpoint'
+        New-Item -Path $skillSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'SKILL.md') -Value '# PPT Skill'
+        New-Item -Path (Join-Path $skillSrc '.venv/lib') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc '.venv/lib/site.py') -Value 'import os'
+
+        $pkgJson = @{
+            contributes = @{
+                chatSkills = @(
+                    @{ path = './.github/skills/powerpoint' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/skills/powerpoint/SKILL.md') | Should -BeTrue
+        Test-Path (Join-Path $script:extDir '.github/skills/powerpoint/.venv') | Should -BeFalse
+    }
+
+    It 'Excludes __pycache__ and .ruff_cache from copied skills' {
+        $skillSrc = Join-Path $script:repoRoot '.github/skills/my-skill'
+        New-Item -Path $skillSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'SKILL.md') -Value '# My Skill'
+        New-Item -Path (Join-Path $skillSrc '__pycache__') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc '__pycache__/mod.pyc') -Value 'bytecode'
+        New-Item -Path (Join-Path $skillSrc '.ruff_cache') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc '.ruff_cache/data') -Value 'cache'
+
+        $pkgJson = @{
+            contributes = @{
+                chatSkills = @(
+                    @{ path = './.github/skills/my-skill' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/skills/my-skill/SKILL.md') | Should -BeTrue
+        Test-Path (Join-Path $script:extDir '.github/skills/my-skill/__pycache__') | Should -BeFalse
+        Test-Path (Join-Path $script:extDir '.github/skills/my-skill/.ruff_cache') | Should -BeFalse
+    }
+
+    It 'Removes test directories from copied skills' {
+        $skillSrc = Join-Path $script:repoRoot '.github/skills/my-skill'
+        New-Item -Path $skillSrc -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'SKILL.md') -Value '# My Skill'
+        New-Item -Path (Join-Path $skillSrc 'tests') -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $skillSrc 'tests/test_main.py') -Value 'def test(): pass'
+
+        $pkgJson = @{
+            contributes = @{
+                chatSkills = @(
+                    @{ path = './.github/skills/my-skill' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
+
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+
+        Test-Path (Join-Path $script:extDir '.github/skills/my-skill/SKILL.md') | Should -BeTrue
+        Test-Path (Join-Path $script:extDir '.github/skills/my-skill/tests') | Should -BeFalse
     }
 
     It 'Skips missing source files without error' {

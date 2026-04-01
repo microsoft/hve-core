@@ -54,6 +54,7 @@ FERC
 ferc
 FIPS
 fips
+finserv
 ITAR
 itar
 MPLS
@@ -81,4 +82,8 @@ JTBD
 brds
 IATF
 LLMAPI
+NTIA
+ntia
+DSPM
+dspm
 prds

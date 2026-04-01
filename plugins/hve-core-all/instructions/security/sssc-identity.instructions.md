@@ -1,0 +1,1 @@
+../../../../.github/instructions/security/sssc-identity.instructions.md

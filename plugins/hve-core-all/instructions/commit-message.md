@@ -1,1 +1,0 @@
-../../../.github/instructions/hve-core/commit-message.instructions.md

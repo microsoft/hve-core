@@ -1,1 +1,0 @@
-../../../.github/instructions/experimental/pptx.instructions.md

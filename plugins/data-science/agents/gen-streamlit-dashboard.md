@@ -1,1 +1,0 @@
-../../../.github/agents/data-science/gen-streamlit-dashboard.agent.md

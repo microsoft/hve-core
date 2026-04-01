@@ -23,8 +23,10 @@ Standardized templates for common documentation tasks. Each template provides a 
 |----------------------------------------------|------------------------------------------------------------------|
 | [ADR Template](adr-template-solutions.md)    | Record architecture decisions with context, options, and outcome |
 | [Business Requirements](brd-template.md)     | Capture business requirements with scope and success criteria    |
+| [RAI Assessment](rai-plan-template.md)       | RAI assessment output structure                                  |
 | [Root Cause Analysis](rca-template.md)       | Investigate incidents with timeline, analysis, and action items  |
 | [Security Plan](security-plan-template.md)   | Define security controls, threat models, and compliance measures |
+| [SSSC Assessment](sssc-plan-template.md)     | Supply chain security assessment output structure                |
 | [User Journey Map](user-journey-template.md) | Map user interactions across touchpoints with pain points        |
 
 ## Usage

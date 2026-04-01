@@ -500,13 +500,69 @@ Detect `.copilot-tracking/` paths in outbound content. When found:
 
 ### Planning Reference ID Guard
 
-Detect `WI` followed by digits (WI001, WI002, etc.) in outbound content. When found:
+Detect planning reference IDs in outbound content. Patterns to match:
 
-1. If the WI reference maps to a known ADO work item ID, replace with the ADO ID (e.g., `#12345`).
-2. If the WI reference has no known mapping, replace with a descriptive phrase.
-3. If the WI reference is self-referential, remove it entirely.
+* `WI` followed by digits (e.g., `WI001`, `WI002`) — ADO planning IDs
+* `WI-` followed by a prefix and digits (e.g., `WI-SEC-001`, `WI-RAI-001`, `WI-SSSC-001`) — namespaced planner IDs
 
-Never send planning reference IDs (`WI[NNN]`) to ADO APIs.
+When found:
+
+1. If the reference maps to a known ADO work item ID, replace with the ADO ID (e.g., `#12345`).
+2. If the reference has no known mapping, replace with a descriptive phrase.
+3. If the reference is self-referential, remove it entirely.
+
+### Template ID Guard
+
+Detect template ID placeholders in outbound content. Patterns to match:
+
+* `{{TEMP-N}}` — un-namespaced template IDs
+* `{{SEC-TEMP-N}}`, `{{RAI-TEMP-N}}`, `{{SSSC-TEMP-N}}` — namespaced template IDs
+
+When found:
+
+1. If the template ID maps to a known ADO work item ID, replace with the ADO ID (e.g., `#12345`).
+2. If the template ID has no known mapping, replace with a descriptive phrase.
+
+Never send planning reference IDs or template ID placeholders to ADO APIs.
+
+## Temporary ID Mapping
+
+Handoff files use temporary ID placeholders for planned work items that do not yet exist. The execution stage maintains a mapping table as items are created, resolving references in subsequent operations.
+
+### Placeholder Formats
+
+The ADO Backlog Manager's own planning uses un-namespaced placeholders:
+
+* `WI001`, `WI002`, `WI003`, incrementing sequentially.
+
+Domain planners use namespaced planning reference IDs that follow the same lifecycle:
+
+* `WI-SEC-{NNN}` — Security Planner (e.g., `WI-SEC-001`, `WI-SEC-002`)
+* `WI-RAI-{NNN}` — RAI Planner (e.g., `WI-RAI-001`, `WI-RAI-002`)
+* `WI-SSSC-{NNN}` — SSSC Planner (e.g., `WI-SSSC-001`, `WI-SSSC-002`)
+
+Template ID placeholders use a corresponding format:
+
+* `{{TEMP-N}}` — un-namespaced template IDs
+* `{{SEC-TEMP-N}}`, `{{RAI-TEMP-N}}`, `{{SSSC-TEMP-N}}` — namespaced template IDs
+
+### Resolution
+
+During execution, resolve each placeholder to the actual ADO System.Id after creation:
+
+```text
+WI001 → ADO #12345 (created)
+WI-SEC-001 → ADO #12346 (created)
+WI-RAI-001 → ADO #12347 (created)
+WI-SSSC-001 → ADO #12348 (created)
+```
+
+Resolution rules:
+
+* Create parent work items before children so that parent IDs are available for linking.
+* When a planning reference ID or template ID appears in a link or update operation, resolve it from the mapping table before calling MCP ADO tools.
+* Record the mapping in handoff-logs.md as each work item is created.
+* If a reference cannot be resolved (creation failed), skip dependent operations and log the failure.
 
 ## Content Format Detection
 

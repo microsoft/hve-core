@@ -13,6 +13,10 @@ keywords:
   - SBOM
   - software bill of materials
   - SPDX
+  - attestation
+  - provenance
+  - sigstore
+  - in-toto
 estimated_reading_time: 5
 ---
 
@@ -58,7 +62,7 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 ## Security Documentation
 
-For comprehensive security documentation including threat models and security controls, see [Security Documentation](docs/security/README.md).
+For comprehensive security documentation including security models and security controls, see [Security Documentation](docs/security/README.md).
 
 ## Verifying Release Integrity
 
@@ -85,7 +89,11 @@ HVE Core releases are cryptographically signed using GitHub Artifact Attestation
 3. Verify the attestation:
 
    ```bash
+   # VSIX extension package
    gh attestation verify hve-core-<version>.vsix -R microsoft/hve-core
+
+   # Plugin ZIP package (replace <plugin-id> with the collection id)
+   gh attestation verify <plugin-id>.zip -R microsoft/hve-core
    ```
 
 A successful verification confirms:
@@ -98,12 +106,26 @@ A successful verification confirms:
 
 Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format, cryptographically attested using Sigstore. For verification steps, download instructions, inspection commands, and SPDX field reference, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
 
+### Release Artifact Formats
+
+Each attested artifact produces a set of companion files uploaded alongside the primary asset:
+
+| Suffix           | Format                 | Purpose                                        |
+|------------------|------------------------|------------------------------------------------|
+| `.spdx.json`     | SPDX 2.3 JSON          | Software Bill of Materials                     |
+| `.sigstore.json` | Sigstore bundle (JSON) | Cryptographic attestation envelope             |
+| `.intoto.jsonl`  | in-toto DSSE envelope  | Provenance statement extracted from the bundle |
+
+The `.sigstore.json` bundle contains the full Sigstore verification material. The `.intoto.jsonl` file is the DSSE envelope extracted from the bundle for tools that consume in-toto provenance directly.
+
 ### What Gets Signed
 
 | Artifact               | Channel         | Signed                |
 |------------------------|-----------------|-----------------------|
 | VSIX extension package | GitHub Releases | Yes                   |
+| Plugin ZIP package     | GitHub Releases | Yes                   |
 | Per-extension SBOM     | GitHub Releases | Yes                   |
+| Per-plugin SBOM        | GitHub Releases | Yes                   |
 | Dependency SBOM        | GitHub Releases | Yes                   |
 | Dependency diff        | GitHub Releases | No                    |
 | VS Code Marketplace    | Stable          | Marketplace signature |

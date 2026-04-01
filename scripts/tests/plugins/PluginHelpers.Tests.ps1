@@ -53,24 +53,98 @@ Describe 'New-PluginReadmeContent - maturity notice' {
 }
 
 Describe 'Get-PluginItemName' {
-    It 'Strips .agent.md suffix' {
+    It 'Strips .agent.md to .md for agents' {
         $result = Get-PluginItemName -FileName 'task-researcher.agent.md' -Kind 'agent'
         $result | Should -Be 'task-researcher.md'
     }
 
-    It 'Strips .prompt.md suffix' {
+    It 'Strips .prompt.md to .md for prompts' {
         $result = Get-PluginItemName -FileName 'gen-plan.prompt.md' -Kind 'prompt'
         $result | Should -Be 'gen-plan.md'
     }
 
-    It 'Strips .instructions.md suffix' {
+    It 'Preserves .instructions.md suffix' {
         $result = Get-PluginItemName -FileName 'csharp.instructions.md' -Kind 'instruction'
-        $result | Should -Be 'csharp.md'
+        $result | Should -Be 'csharp.instructions.md'
     }
 
     It 'Returns skill directory name unchanged' {
         $result = Get-PluginItemName -FileName 'video-to-gif' -Kind 'skill'
         $result | Should -Be 'video-to-gif'
+    }
+}
+
+Describe 'Get-PluginItemSubpath' {
+    It 'Extracts single-level collection subdirectory for agents' {
+        $result = Get-PluginItemSubpath -Path '.github/agents/hve-core/rpi-agent.agent.md' -Kind 'agent'
+        $result | Should -Be 'hve-core'
+    }
+
+    It 'Extracts nested subdirectory path for agent subagents' {
+        $result = Get-PluginItemSubpath -Path '.github/agents/hve-core/subagents/researcher-subagent.agent.md' -Kind 'agent'
+        $result | Should -Be 'hve-core/subagents'
+    }
+
+    It 'Returns empty string when item is at kind root' {
+        $result = Get-PluginItemSubpath -Path '.github/agents/root-agent.agent.md' -Kind 'agent'
+        $result | Should -Be ''
+    }
+
+    It 'Extracts subdirectory for instructions' {
+        $result = Get-PluginItemSubpath -Path '.github/instructions/shared/hve-core-location.instructions.md' -Kind 'instruction'
+        $result | Should -Be 'shared'
+    }
+
+    It 'Extracts subdirectory for skills' {
+        $result = Get-PluginItemSubpath -Path '.github/skills/shared/pr-reference' -Kind 'skill'
+        $result | Should -Be 'shared'
+    }
+
+    It 'Handles backslash-separated paths' {
+        $result = Get-PluginItemSubpath -Path '.github\agents\hve-core\rpi-agent.agent.md' -Kind 'agent'
+        $result | Should -Be 'hve-core'
+    }
+
+    It 'Extracts subdirectory for prompts' {
+        $result = Get-PluginItemSubpath -Path '.github/prompts/hve-core/git-commit-message.prompt.md' -Kind 'prompt'
+        $result | Should -Be 'hve-core'
+    }
+
+    It 'Returns empty string when path does not match kind prefix' {
+        $result = Get-PluginItemSubpath -Path 'some/other/path/file.md' -Kind 'agent'
+        $result | Should -Be ''
+    }
+}
+
+Describe 'New-PluginManifestContent' {
+    It 'Returns hashtable with name, description, and version' {
+        $result = New-PluginManifestContent -CollectionId 'test-plugin' -Description 'A test plugin' -Version '2.0.0'
+        $result.name | Should -Be 'test-plugin'
+        $result.description | Should -Be 'A test plugin'
+        $result.version | Should -Be '2.0.0'
+    }
+
+    It 'Includes explicit path arrays when provided' {
+        $result = New-PluginManifestContent `
+            -CollectionId 'with-paths' -Description 'desc' -Version '1.0.0' `
+            -AgentPaths @('agents/core/') `
+            -CommandPaths @('commands/core/', 'commands/ado/') `
+            -SkillPaths @('skills/shared/')
+        $result.agents | Should -Be @('agents/core/')
+        $result.commands | Should -Be @('commands/ado/', 'commands/core/')
+        $result.skills | Should -Be @('skills/shared/')
+    }
+
+    It 'Omits component keys when no paths provided' {
+        $result = New-PluginManifestContent -CollectionId 'minimal' -Description 'desc' -Version '1.0.0'
+        $result.Contains('agents') | Should -BeFalse
+        $result.Contains('commands') | Should -BeFalse
+        $result.Contains('skills') | Should -BeFalse
+    }
+
+    It 'Returns ordered hashtable' {
+        $result = New-PluginManifestContent -CollectionId 'ordered-test' -Description 'desc' -Version '1.0.0'
+        $result | Should -BeOfType [System.Collections.Specialized.OrderedDictionary]
     }
 }
 
@@ -140,6 +214,29 @@ Describe 'Write-PluginDirectory - DryRun mode' {
         # Verify no actual files were created
         $pluginDir = Join-Path $script:pluginsDir 'dryrun-test'
         Test-Path -Path $pluginDir | Should -BeFalse
+    }
+
+    It 'Includes collection subdirectory in GeneratedFiles path' {
+        $collection = @{
+            id          = 'subpath-test'
+            name        = 'Subpath Test'
+            description = 'Testing subpath in destination'
+            items       = @(
+                @{
+                    path = '.github/agents/test/example.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+
+        $result = Write-PluginDirectory -Collection $collection -PluginsDir $script:pluginsDir `
+            -RepoRoot $script:repoRoot -Version '1.0.0' -DryRun
+
+        $result.Success | Should -BeTrue
+        # GeneratedFiles should contain a path with the 'test' subdirectory preserved
+        $agentPaths = @($result.GeneratedFiles | Where-Object { $_ -match 'agents' -and $_ -match 'example' })
+        $agentPaths | Should -Not -BeNullOrEmpty
+        $agentPaths[0] | Should -Match 'agents[/\\]test[/\\]example\.md$'
     }
 
     It 'Completes DryRun with skill items' {

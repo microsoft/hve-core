@@ -2,7 +2,7 @@
 title: GitHub Copilot Instructions
 description: Repository-specific coding guidelines and conventions for GitHub Copilot
 author: HVE Core Team
-ms.date: 2026-01-17
+ms.date: 2026-03-11
 ms.topic: reference
 keywords:
   - copilot
@@ -71,6 +71,32 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 | [ado/ado-wit-discovery.instructions.md](ado/ado-wit-discovery.instructions.md)            | `**/.copilot-tracking/workitems/discovery/**`           | Work item discovery protocol       |
 | [ado/ado-wit-planning.instructions.md](ado/ado-wit-planning.instructions.md)              | `**/.copilot-tracking/workitems/**`                     | Work item planning specifications  |
 
+### GitHub Integration
+
+| File                                                                                      | Applies To                                            | Purpose                           |
+|-------------------------------------------------------------------------------------------|-------------------------------------------------------|-----------------------------------|
+| [github/community-interaction.instructions.md](github/community-interaction.instructions.md) | `**/.github/instructions/github-backlog-*.instructions.md` | GitHub-facing communication patterns |
+| [github/github-backlog-discovery.instructions.md](github/github-backlog-discovery.instructions.md) | `**/.copilot-tracking/github-issues/discovery/**` | Issue discovery protocol          |
+| [github/github-backlog-planning.instructions.md](github/github-backlog-planning.instructions.md) | `**/.copilot-tracking/github-issues/**`            | Backlog planning specifications   |
+| [github/github-backlog-triage.instructions.md](github/github-backlog-triage.instructions.md) | `**/.copilot-tracking/github-issues/triage/**`    | Issue triage workflow             |
+| [github/github-backlog-update.instructions.md](github/github-backlog-update.instructions.md) | `**/.copilot-tracking/github-issues/**/handoff-logs.md` | Issue execution workflow       |
+
+### Jira Integration
+
+| File                                                                                      | Applies To                                         | Purpose                                  |
+|-------------------------------------------------------------------------------------------|----------------------------------------------------|------------------------------------------|
+| [jira/jira-backlog-discovery.instructions.md](jira/jira-backlog-discovery.instructions.md) | `**/.copilot-tracking/jira-issues/discovery/**`    | Jira issue discovery protocol            |
+| [jira/jira-backlog-planning.instructions.md](jira/jira-backlog-planning.instructions.md) | `**/.copilot-tracking/jira-issues/**`              | Jira backlog planning specifications     |
+| [jira/jira-backlog-triage.instructions.md](jira/jira-backlog-triage.instructions.md)     | `**/.copilot-tracking/jira-issues/triage/**`       | Jira issue triage workflow               |
+| [jira/jira-backlog-update.instructions.md](jira/jira-backlog-update.instructions.md)     | `**/.copilot-tracking/jira-issues/**/handoff-logs.md` | Jira issue execution workflow         |
+
+### GitLab Workflow Entry Points
+
+This README indexes instruction files. GitLab delivery support is currently discoverable through the local skill and provider-aware project-planning agents.
+
+* Use [../skills/gitlab/gitlab/SKILL.md](../skills/gitlab/gitlab/SKILL.md) when delivery context lives in GitLab and you need merge request, pipeline, or job operations.
+* Keep GitLab delivery workflows distinct from backlog planning unless GitLab is also the system of record for work tracking.
+
 ## XML-Style Blocks
 
 Instructions use XML-style comment blocks for structured content:
@@ -135,6 +161,11 @@ For manual creation, see [Contributing Instructions](../../docs/contributing/ins
 │   ├── github-backlog-planning.instructions.md
 │   ├── github-backlog-triage.instructions.md
 │   └── github-backlog-update.instructions.md
+├── jira/                             # Jira backlog workflows
+│   ├── jira-backlog-discovery.instructions.md
+│   ├── jira-backlog-planning.instructions.md
+│   ├── jira-backlog-triage.instructions.md
+│   └── jira-backlog-update.instructions.md
 ├── hve-core/                              # HVE Core workflow
 │   ├── commit-message.instructions.md
 │   ├── git-merge.instructions.md

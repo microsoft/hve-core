@@ -2,7 +2,9 @@ Enforce language-specific coding conventions and best practices across your proj
 
 This collection includes:
 
-- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Functional** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Standards** — Skills-based code reviewer that enforces project-defined coding standards via dynamic skill loading
+- **Code Review Full** — Orchestrates both functional and standards reviews in a single pass
 
 Instructions for:
 
@@ -10,6 +12,6 @@ Instructions for:
 - **Bicep** — Infrastructure as code implementation standards
 - **C#** — Code and test conventions including nullable reference types, async patterns, and xUnit testing
 - **PowerShell** — Script and module conventions including comment-based help, CmdletBinding, PSScriptAnalyzer compliance, and copyright headers
-- **Python** — Scripting implementation with type hints, docstrings, and uv project management
+- **Python** — Scripting implementation with type hints, docstrings, uv project management, and pytest testing
 - **Rust** — Rust development conventions targeting the 2021 edition
 - **Terraform** — Infrastructure as code with provider configuration and module structure

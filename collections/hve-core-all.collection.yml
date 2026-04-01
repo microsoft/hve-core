@@ -10,8 +10,14 @@ items:
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/code-review/functional-code-review.agent.md
+- path: .github/agents/coding-standards/code-review-full.agent.md
   kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/code-review-functional.agent.md
+  kind: agent
+- path: .github/agents/coding-standards/code-review-standards.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-jupyter-notebook.agent.md
@@ -68,6 +74,10 @@ items:
   kind: agent
 - path: .github/agents/hve-core/task-reviewer.agent.md
   kind: agent
+- path: .github/agents/jira/jira-backlog-manager.agent.md
+  kind: agent
+- path: .github/agents/jira/jira-prd-to-wit.agent.md
+  kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -78,7 +88,6 @@ items:
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
   kind: agent
-  maturity: experimental
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
@@ -87,9 +96,16 @@ items:
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
-- path: .github/agents/security/security-plan-creator.agent.md
+- path: .github/agents/rai-planning/rai-planner.agent.md
   kind: agent
+  maturity: experimental
+- path: .github/agents/security/security-planner.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security/security-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/sssc-planner.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
@@ -122,7 +138,10 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
-- path: .github/prompts/code-review/functional-code-review.prompt.md
+- path: .github/prompts/coding-standards/code-review-full.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
 - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
   kind: prompt
@@ -205,10 +224,56 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/jira/jira-discover-issues.prompt.md
+  kind: prompt
+- path: .github/prompts/jira/jira-execute-backlog.prompt.md
+  kind: prompt
+- path: .github/prompts/jira/jira-prd-to-wit.prompt.md
+  kind: prompt
+- path: .github/prompts/jira/jira-triage-issues.prompt.md
+  kind: prompt
+- path: .github/prompts/rai-planning/rai-capture.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/risk-register.prompt.md
   kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-capture.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-plan-from-prd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review-llm.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review-web.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-review.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-capture.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-brd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-prd.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/sssc-from-security-plan.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md
@@ -229,6 +294,12 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/bicep/bicep.instructions.md
   kind: instruction
+- path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
@@ -238,6 +309,8 @@ items:
 - path: .github/instructions/coding-standards/powershell/powershell.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/python-script.instructions.md
+  kind: instruction
+- path: .github/instructions/coding-standards/python-tests.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/rust/rust-tests.instructions.md
   kind: instruction
@@ -399,17 +472,88 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
+- path: .github/instructions/jira/jira-backlog-discovery.instructions.md
+  kind: instruction
+- path: .github/instructions/jira/jira-backlog-planning.instructions.md
+  kind: instruction
+- path: .github/instructions/jira/jira-backlog-triage.instructions.md
+  kind: instruction
+- path: .github/instructions/jira/jira-backlog-update.instructions.md
+  kind: instruction
+- path: .github/instructions/jira/jira-wit-planning.instructions.md
+  kind: instruction
+- path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-security-model.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/rai-planning/rai-standards.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/backlog-handoff.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/operational-buckets.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/security-model.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-assessment.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-backlog.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-gap-analysis.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-handoff.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/sssc-standards.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/standards-mapping.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/skills/coding-standards/python-foundational
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/video-to-gif
   kind: skill
 - path: .github/skills/experimental/vscode-playwright
   kind: skill
+- path: .github/skills/gitlab/gitlab
+  kind: skill
 - path: .github/skills/installer/hve-core-installer
+  kind: skill
+- path: .github/skills/jira/jira
   kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill

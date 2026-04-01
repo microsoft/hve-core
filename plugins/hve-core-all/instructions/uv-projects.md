@@ -1,1 +1,0 @@
-../../../.github/instructions/coding-standards/uv-projects.instructions.md

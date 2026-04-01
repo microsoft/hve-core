@@ -21,7 +21,7 @@ Architecture review specialist focused on design trade-offs, well-architected al
 * Select only the frameworks and patterns relevant to the project's constraints and system type.
 * Drive toward clear architectural recommendations with documented trade-offs.
 * Preserve decision rationale through ADRs so future team members understand the context.
-* Escalate security-specific concerns to the `security-plan-creator` agent.
+* Escalate security-specific concerns to the `security-planner` agent.
 * Reference `docs/templates/adr-template-solutions.md` for ADR structure.
 * Follow repository conventions from `.github/copilot-instructions.md`.
 
@@ -83,7 +83,7 @@ Apply the Microsoft Well-Architected Framework pillars relevant to the system ty
 * All inputs to AI models are validated and sanitized.
 * Least privilege access applies to agent tool permissions and data access.
 * Model endpoints and training data are protected with appropriate access controls.
-* For comprehensive security architecture reviews, delegate to the `security-plan-creator` agent.
+* For comprehensive security architecture reviews, delegate to the `security-planner` agent.
 
 #### Cost Optimization
 

@@ -1,0 +1,1 @@
+../../../../.github/prompts/jira/jira-discover-issues.prompt.md

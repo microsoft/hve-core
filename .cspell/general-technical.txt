@@ -168,10 +168,12 @@ Cybercrime
 cybersecurity
 datacenter
 datacenters
+dataclasses
 davidanson
 dataset
 datasets
 dcgm
+debiasing
 Deepset
 devel
 devsecops
@@ -196,7 +198,12 @@ gitops
 helm
 Holo
 hotspots
+Fulcio
+gitsign
 Huggingface
+Rekor
+sscp
+unforgeable
 hyperconverged
 hyperparameters
 hypervisor
@@ -470,6 +477,7 @@ hotfix
 hotfixes
 hotpatching
 https
+httpx
 hubspoke
 hyperscale
 hyperspecialized
@@ -804,8 +812,10 @@ pulumi
 purescale
 pyodbc
 pypackages
+pydantic
 pypi
 pytest
+Pythonic
 qgis
 qldrw
 qlik
@@ -857,6 +867,7 @@ reimplement
 reimplementation
 reimplemented
 reimplementing
+remediations
 reintegrate
 reintegrating
 relabelling
@@ -1581,3 +1592,5 @@ unreviewed
 WIQL
 LASTEXITCODE
 scriptblock
+DSSE
+intoto

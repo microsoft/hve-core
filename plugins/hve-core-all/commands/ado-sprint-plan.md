@@ -1,1 +1,0 @@
-../../../.github/prompts/ado/ado-sprint-plan.prompt.md

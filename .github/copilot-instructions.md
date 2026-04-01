@@ -189,6 +189,9 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `[tool.ruff]` - Required. Enables `lint:py` compatibility across all Python skills.
 * `[tool.ruff.lint]` - Recommended. Configures rule selection (e.g., `select = ["E", "F", "I", "W"]`).
 * `[tool.pytest.ini_options]` - Required when the skill contains a `tests/` directory.
+* `tests/fuzz_harness.py` - Required when the skill contains a `tests/` directory. Polyglot Atheris fuzz harness for OSSF Scorecard compliance.
+* `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
+* `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
 
 ### Environment Synchronization

@@ -1,5 +1,19 @@
 {
   "name": "security",
   "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
-  "version": "3.1.46"
+  "version": "3.3.27",
+  "agents": [
+    "agents/hve-core/subagents/",
+    "agents/rai-planning/",
+    "agents/security/",
+    "agents/security/subagents/"
+  ],
+  "commands": [
+    "commands/rai-planning/",
+    "commands/security/"
+  ],
+  "skills": [
+    "skills/security/",
+    "skills/shared/"
+  ]
 }

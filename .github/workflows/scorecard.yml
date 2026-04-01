@@ -6,6 +6,17 @@ on:
   push:
     branches:
       - main
+  workflow_run:
+    workflows:
+      - 'Stable Release Pipeline'
+      - 'Pre-Release Pipeline'
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -14,6 +25,10 @@ jobs:
   scorecard:
     name: Scorecard Analysis
     runs-on: ubuntu-latest
+    # Skip runs triggered by failed release pipelines
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.conclusion == 'success'
     permissions:
       security-events: write  # Required for SARIF upload to Security tab
       id-token: write
