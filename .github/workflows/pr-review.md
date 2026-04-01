@@ -1,8 +1,9 @@
 ---
-description: "Automated first-pass quality review on pull requests from non-maintainers"
+description: "Automated quality review on pull requests"
 on:
   pull_request:
     types: [opened, ready_for_review]
+    forks: ["*"]
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
 
@@ -47,24 +48,35 @@ safe-outputs:
     max: 1
 ---
 
-# PR First-Pass Review
+# PR Review
 
-Perform an automated first-pass quality review on pull requests from
-non-maintainers before any maintainer needs to look at them.
+Perform an automated quality review on pull requests before human review.
 
 ## Activation Guard
 
-Check the PR author's association from the event context.
+Check the PR state from the event context.
 
 **You MUST call `noop` and stop immediately if any of these conditions are true:**
 
-* The author is a `MEMBER`, `OWNER`, or `COLLABORATOR`: call `noop` with message "Skipping: PR author is a maintainer."
 * The PR is a draft: call `noop` with message "Skipping: PR is a draft."
 
-Only proceed with review for PRs from `CONTRIBUTOR`, `FIRST_TIMER`,
-`FIRST_TIME_CONTRIBUTOR`, or `NONE` associations that are not drafts.
-
 **Failure to call `noop` when no review action is taken will cause workflow failure.**
+
+## Maintainer Advisory Mode
+
+Check the PR author's association from the event context. If the author is
+a `MEMBER`, `OWNER`, or `COLLABORATOR`, set the review mode to **advisory**.
+In advisory mode:
+
+* Never use `REQUEST_CHANGES`. Use `COMMENT` for all findings.
+* Do not add the `needs-revision` label.
+* Do not convert PRs to draft.
+* Prefix the review summary with "**Advisory review** — this PR is from a
+  maintainer. Findings are informational only."
+
+For all other associations (`CONTRIBUTOR`, `FIRST_TIMER`,
+`FIRST_TIME_CONTRIBUTOR`, `NONE`), use the standard review mode with full
+enforcement.
 
 ## Instruction Priority
 
@@ -139,9 +151,10 @@ Review the actual diff for:
 
 ### 5. Consolidate and Submit Review
 
-Based on all findings, determine the review verdict:
+Based on all findings, determine the review verdict. If the review mode is
+**advisory** (maintainer PR), always use `COMMENT` regardless of findings.
 
-**REQUEST_CHANGES** when any of these are true:
+**REQUEST_CHANGES** (non-maintainer PRs only) when any of these are true:
 
 * No issue is linked.
 * PR description is empty or uses only placeholder text.
@@ -174,7 +187,7 @@ Then call `submit-pull-request-review` with:
   * Specific action items the author must address.
 
 If the verdict is `REQUEST_CHANGES`, also add the label `needs-revision`
-to the PR.
+to the PR. Skip this in advisory mode.
 
 If all checks pass with no issues, submit a `COMMENT` review with a brief
 confirmation that the PR meets initial quality standards, and add the label
@@ -182,10 +195,11 @@ confirmation that the PR meets initial quality standards, and add the label
 
 If the PR has five or more critical findings (security vulnerabilities,
 empty PR description, no linked issue, and fundamental misalignment with
-the linked issue), convert the PR to draft by calling `update-pull-request`
-with `draft: true` in addition to submitting REQUEST_CHANGES and adding
-`needs-revision`. Add a comment explaining that the PR was converted to
-draft due to insufficient quality for review.
+the linked issue) and the review mode is **not** advisory, convert the PR
+to draft by calling `update-pull-request` with `draft: true` in addition
+to submitting REQUEST_CHANGES and adding `needs-revision`. Add a comment
+explaining that the PR was converted to draft due to insufficient quality
+for review.
 
 ## Constraints
 

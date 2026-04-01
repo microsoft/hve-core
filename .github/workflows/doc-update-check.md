@@ -13,6 +13,7 @@ on:
       - 'collections/**'
       - '.devcontainer/**'
       - '.github/workflows/**'
+      - '!.github/workflows/*.lock.yml'
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
 
 engine: copilot

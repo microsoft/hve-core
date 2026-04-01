@@ -45,6 +45,9 @@ safe-outputs:
   remove-labels:
     allowed: [needs-triage]
     max: 1
+  create-issue:
+    max: 5
+    labels: [needs-triage]
   noop:
     max: 1
 ---

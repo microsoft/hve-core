@@ -46,7 +46,7 @@ flowchart TD
         Q["Open pull request<br/>referencing the issue"]
     end
 
-    subgraph REVIEW["PR First-Pass Review Workflow"]
+    subgraph REVIEW["PR Review Workflow"]
         R["Detect PR opened<br/>or ready for review"]
         S["Analyze diff against<br/>coding standards"]
         T["Check conventions,<br/>security, quality"]
@@ -121,9 +121,9 @@ If the issue is ambiguous or too large, the agent posts a comment requesting cla
 > [!NOTE]
 > The implementation agent keeps PRs small and focused. It does not add tests, documentation, or refactoring beyond what the issue explicitly requests.
 
-### PR First-Pass Review
+### PR Review
 
-The review workflow activates when a pull request is opened or marked ready for review. It imports the [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) and evaluates the diff across several dimensions:
+The review workflow activates when a pull request is opened or marked ready for review. It reviews all PRs — maintainer PRs receive advisory-only feedback while external contributor PRs get full enforcement. It imports the [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) and evaluates the diff across several dimensions:
 
 1. Functional correctness against requirements and acceptance criteria.
 2. Design and architecture alignment with established patterns.
@@ -160,7 +160,7 @@ All three workflows are defined as GitHub Agentic Workflow markdown files under 
 |---------------------------|---------------------------------|----------------------------------------|------------------------|
 | `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
 | `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
-| `pr-first-pass-review.md` | `pr-first-pass-review.lock.yml` | PR opened or marked ready for review   | PR Review Agent        |
+| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent        |
 | `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer    |
 | `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main or develop                | Documentation Checker  |
 
@@ -247,7 +247,7 @@ flowchart LR
         direction TB
         TRIAGE["Issue Triage<br/><i>event-driven</i>"]
         IMPL["Issue Implementation<br/><i>event-driven</i>"]
-        REVIEW["PR First-Pass Review<br/><i>event-driven</i>"]
+        REVIEW["PR Review<br/><i>event-driven</i>"]
         DEPEND["Dependabot PR Review<br/><i>event-driven</i>"]
         DOCS["Doc Update Check<br/><i>event-driven</i>"]
         TRIAGE -- "agent-ready label" --> IMPL
