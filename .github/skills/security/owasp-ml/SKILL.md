@@ -1,6 +1,6 @@
 ---
 name: owasp-ml
-description: OWASP Machine Learning Top 10 (2023) vulnerability knowledge base for identifying, assessing, and remediating security risks in machine learning systems.
+description: OWASP Machine Learning Top 10 (2023) vulnerability knowledge base for identifying, assessing, and remediating security risks in machine learning systems - Brought to you by microsoft/hve-core.
 license: MIT
 user-invocable: false
 metadata:
