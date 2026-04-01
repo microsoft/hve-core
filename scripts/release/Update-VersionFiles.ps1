@@ -12,6 +12,7 @@
     release-stable.yml workflows. Updates:
 
     - package.json
+    - package-lock.json (version and packages[""].version)
     - extension/templates/package.template.json
     - .github/plugin/marketplace.json (metadata.version and plugins[*].version)
     - plugins/*/.github/plugin/plugin.json (glob)
@@ -85,7 +86,8 @@ function Update-JsonVersion {
     param(
         [string]$FilePath,
         [string]$Description,
-        [scriptblock]$Transform
+        [scriptblock]$Transform,
+        [switch]$AsHashtable
     )
 
     if (-not (Test-Path $FilePath)) {
@@ -93,7 +95,13 @@ function Update-JsonVersion {
         return
     }
 
-    $json = Get-Content -Raw $FilePath | ConvertFrom-Json -Depth 20
+    $convertParams = @{ Depth = 20 }
+    if ($AsHashtable) { $convertParams['AsHashtable'] = $true }
+    $raw = Get-Content -Raw $FilePath
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        throw "File is empty or whitespace-only: $FilePath"
+    }
+    $json = $raw | ConvertFrom-Json @convertParams
     $json = & $Transform $json
     $json | ConvertTo-Json -Depth 20 | Set-Content -Path $FilePath -Encoding UTF8 -NoNewline
     Write-Host "  ✅ Updated $Description" -ForegroundColor Green
@@ -115,13 +123,27 @@ if ($MyInvocation.InvocationName -ne '.') {
             -Description "package.json" `
             -Transform { param($j) $j.version = $Version; $j }
 
-        # 2. extension/templates/package.template.json
+        # 2. package-lock.json (version + packages[""].version)
+        Update-JsonVersion `
+            -FilePath (Join-Path $root "package-lock.json") `
+            -Description "package-lock.json" `
+            -AsHashtable `
+            -Transform {
+                param($j)
+                $j['version'] = $Version
+                if ($j.ContainsKey('packages') -and $j['packages'].ContainsKey('')) {
+                    $j['packages']['']['version'] = $Version
+                }
+                $j
+            }
+
+        # 3. extension/templates/package.template.json
         Update-JsonVersion `
             -FilePath (Join-Path $root "extension/templates/package.template.json") `
             -Description "extension/templates/package.template.json" `
             -Transform { param($j) $j.version = $Version; $j }
 
-        # 3. .github/plugin/marketplace.json
+        # 4. .github/plugin/marketplace.json
         Update-JsonVersion `
             -FilePath (Join-Path $root ".github/plugin/marketplace.json") `
             -Description ".github/plugin/marketplace.json" `
@@ -134,7 +156,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 $j
             }
 
-        # 4. plugins/*/.github/plugin/plugin.json (glob)
+        # 5. plugins/*/.github/plugin/plugin.json (glob)
         $pluginJsonFiles = Get-ChildItem -Path (Join-Path $root "plugins") `
             -Filter "plugin.json" -Recurse -Force `
             | Where-Object { $_.FullName -match 'plugins[/\\][^/\\]+[/\\]\.github[/\\]plugin[/\\]plugin\.json$' }
@@ -147,13 +169,13 @@ if ($MyInvocation.InvocationName -ne '.') {
                 -Transform { param($j) $j.version = $Version; $j }
         }
 
-        # 5. .release-please-manifest.json
+        # 6. .release-please-manifest.json
         Update-JsonVersion `
             -FilePath (Join-Path $root ".release-please-manifest.json") `
             -Description ".release-please-manifest.json" `
             -Transform { param($j) $j.'.' = $Version; $j }
 
-        # 6. Regenerate plugin outputs
+        # 7. Regenerate plugin outputs
         if (-not $SkipPluginGenerate) {
             Write-Host "  🔧 Running npm run plugin:generate ..." -ForegroundColor Cyan
             Push-Location $root
