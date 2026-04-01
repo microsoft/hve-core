@@ -190,16 +190,6 @@ jobs:
           # Update all version-tracked files and regenerate plugin outputs
           pwsh -File scripts/release/Update-VersionFiles.ps1 -Version "$PRE_VERSION"
 
-          # Sync package-lock.json version with the bumped package.json version
-          node -e "
-            const fs = require('fs');
-            const v = require('./package.json').version;
-            const lock = JSON.parse(fs.readFileSync('./package-lock.json', 'utf8'));
-            lock.version = v;
-            if (lock.packages?.['']) lock.packages[''].version = v;
-            fs.writeFileSync('./package-lock.json', JSON.stringify(lock, null, 2) + '\n');
-          "
-
           git add -A
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"
           git push --force origin "$BRANCH"
