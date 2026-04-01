@@ -32,7 +32,7 @@ The installer enables targeted deployment of specific collections into workspace
 ## Available Collections
 
 | Collection       | Description                                                                                                                                    | Artifacts | Maturity     |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------||
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------|
 | ado              | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 21        | Stable       |
 | coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 14        | Stable       |
 | data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 19        | Stable       |
