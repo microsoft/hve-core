@@ -2,6 +2,7 @@
 name: owasp-docker
 description: OWASP Docker Top 6 vulnerability knowledge base for identifying, assessing, and remediating security risks in containerized Docker environments.
 license: MIT
+user-invocable: false
 metadata:
   authors: "OWASP Docker Security Project"
   spec_version: "1.0"
