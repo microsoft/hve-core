@@ -31,6 +31,9 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelper
 # Recognized subdirectories within a skill directory
 $script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests')
 
+# Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
+$script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
+
 function Get-SkillFrontmatter {
     <#
     .SYNOPSIS
@@ -316,6 +319,10 @@ function Test-SkillDirectory {
             # Python package directories (containing __init__.py) are valid in Python skills
             $initPyPath = Join-Path -Path $subdir.FullName -ChildPath '__init__.py'
             if ($isPythonSkill -and (Test-Path $initPyPath -PathType Leaf)) {
+                continue
+            }
+            # Standard Python environment directories are expected in Python skills
+            if ($isPythonSkill -and $subdir.Name -in $script:PythonEnvironmentDirs) {
                 continue
             }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")
