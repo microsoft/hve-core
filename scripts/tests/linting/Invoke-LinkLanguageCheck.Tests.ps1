@@ -121,11 +121,16 @@ Write-Output $json
             $script:WriteHostMessages | Should -Contain '📄 docs/b.md'
         }
 
-        It 'Writes timestamp using Get-StandardTimestamp in result JSON' {
+        It 'Calls Get-StandardTimestamp for result JSON timestamp' {
+            Mock Get-StandardTimestamp { return 'MOCK-TIMESTAMP' }
+
             Invoke-LinkLanguageCheckCore -ExcludePaths @('scripts/tests/**') | Out-Null
+
+            Should -Invoke Get-StandardTimestamp -Times 1
+
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp.ToString('o') | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
         }
     }
 
@@ -170,11 +175,16 @@ Write-Output $json
             Should -Invoke Write-Host -Times 0 -ParameterFilter { $Object -like '*⚠️*' }
         }
 
-        It 'Writes timestamp using Get-StandardTimestamp in empty result JSON' {
+        It 'Calls Get-StandardTimestamp for empty result JSON timestamp' {
+            Mock Get-StandardTimestamp { return 'MOCK-TIMESTAMP' }
+
             Invoke-LinkLanguageCheckCore -ExcludePaths @() | Out-Null
+
+            Should -Invoke Get-StandardTimestamp -Times 1
+
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp.ToString('o') | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
         }
     }
 }
