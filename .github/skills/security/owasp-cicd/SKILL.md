@@ -2,6 +2,7 @@
 name: owasp-cicd
 description: OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments.
 license: MIT
+user-invocable: false
 metadata:
   authors: "OWASP CI/CD Security Project"
   spec_version: "1.0"
