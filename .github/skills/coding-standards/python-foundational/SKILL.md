@@ -13,7 +13,7 @@ metadata:
 
 ## Overview
 
-This skill defines the foundational layer of Python excellence that every piece of code must meet. The calling agent delegates to this skill first during detailed inspection. All specialized skills (security, testing, pydantic, etc.) build on top of these core rules.
+Foundational Python excellence that every diff must satisfy. This skill is loaded first for any .py change. All higher-order skills build on it.
 
 This content is a skill rather than an instructions file for three reasons: skills are distributed through the CLI plugin and VS Code extension without requiring consumers to copy files into their repo; new language skills can be added without modifying the review agent itself; and skills are loaded on demand, keeping the context window small when the diff contains no Python.
 

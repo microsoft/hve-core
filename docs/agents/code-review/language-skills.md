@@ -25,27 +25,27 @@ The Code Review Standards agent enforces coding conventions through skills, not 
 
 ## How Skill Loading Works
 
-When the standards agent reaches its review step, it follows this sequence:
+The agent uses a two-layer approach: a built-in catalog for known skills and a scoped search for consumer-authored skills.
 
 ```mermaid
 flowchart LR
-  A["Compute diff"] --> B["Scan workspace<br/>for **/SKILL.md"]
-  B --> C["Match skill name +<br/>description against<br/>languages in diff"]
-  C --> D["Select up to<br/>8 best-matching<br/>skills"]
-  D --> E["Load each skill's<br/>checklist"]
-  E --> F["Apply checklist<br/>to diff"]
-  F --> G["Produce findings<br/>citing skill by name"]
+  A["Compute diff"] --> B["Extract file\nextensions"]
+  B --> C["Look up built-in\nskills from catalog"]
+  C --> D["Search .github/skills/\nfor consumer skills"]
+  D --> E["Load up to 8\nmatched skills"]
+  E --> F["Apply checklist\nto diff"]
+  F --> G["Produce findings\nciting skill by name"]
 ```
 
-1. The agent scans the workspace for all `**/SKILL.md` files.
-2. It reads the `name` and `description` from each skill's YAML frontmatter.
-3. It matches skills against the file extensions and frameworks present in the diff.
-4. It selects at most 8 skills, preferring those whose domain appears most frequently in the changed files.
-5. It loads the full SKILL.md body for each selected skill and applies its checklist to the diff.
+1. The agent extracts unique file extensions from the diff's changed-file list.
+2. It looks up extensions in a built-in catalog that maps extensions to known skill paths and reads each match directly.
+3. It searches `.github/skills/` (not the entire workspace) for additional `SKILL.md` files, reads the `name` and `description` frontmatter from each, and loads those whose description mentions a language or framework present in the diff.
+4. It selects up to 8 skills total (built-in + consumer), preferring those whose domain appears most frequently in the changed files.
+5. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
 6. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
 
 > [!NOTE]
-> Skills that do not match any file type in the diff are not loaded. This keeps context usage proportional to the actual review scope.
+> Built-in skills are loaded deterministically by extension match — no search or frontmatter parsing required. Consumer skills rely on a scoped search under `.github/skills/` and accurate `description` frontmatter for activation.
 
 ## Built-in Skills
 
@@ -55,7 +55,7 @@ The `coding-standards` collection ships with one language skill. Additional lang
 
 | Field        | Value                                                  |
 |--------------|--------------------------------------------------------|
-| Skill path   | `.github/skills/python-standards/python-foundational/` |
+| Skill path   | `.github/skills/coding-standards/python-foundational/` |
 | Activates on | `.py` files in the diff                                |
 | Sections     | 9 checklist sections, 30+ individual checks            |
 | Maturity     | Experimental                                           |
@@ -97,7 +97,7 @@ Instructions and skills serve different activation contexts. Instructions guide 
 
 ## Authoring a Custom Skill
 
-You extend the standards agent by creating a `SKILL.md` file in your repository. The agent discovers it automatically at review time with no configuration changes required.
+You extend the standards agent by creating a `SKILL.md` file under `.github/skills/` in your repository. The agent discovers it through a scoped search of that directory at review time.
 
 ### Skill Stacking
 
@@ -144,7 +144,7 @@ description: >-
 ---
 ```
 
-The `name` and `description` are required. The description drives the agent's activation decision, so write it to match the vocabulary your team uses when requesting reviews.
+The `name` and `description` are required. The description drives the agent's activation decision during consumer skill discovery, so include the language names, framework names, or file extensions your skill targets.
 
 ### Checklist Structure
 
@@ -182,7 +182,7 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 2. Make a change to a file that matches the skill's target language.
 3. Run `/code-review-full` or invoke the Code Review Standards agent directly.
 4. Verify that findings cite your skill's `name` in their Skill field.
-5. If the skill does not activate, check that the `description` mentions the language or framework present in the diff.
+5. If the skill does not activate, verify that the `description` mentions the language, framework, or file extension present in the diff and that the `SKILL.md` is under `.github/skills/`.
 
 ## Enterprise Scenarios
 
@@ -202,7 +202,7 @@ A frontend team authors `.github/skills/northwind/react-standards/SKILL.md` with
 
 | Resource                    | Path                                                           |
 |-----------------------------|----------------------------------------------------------------|
-| python-foundational skill   | `.github/skills/python-standards/python-foundational/SKILL.md` |
+| python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md` |
 | Standards output format     | `docs/templates/standards-review-output-format.md`             |
 | Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
 | Skill authoring guide       | [Authoring Custom Skills](../../customization/skills)          |

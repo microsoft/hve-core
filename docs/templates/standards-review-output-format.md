@@ -13,7 +13,7 @@ One-sentence purpose and scope of changes or selected code.
 
 ## Risk Assessment
 
-Low / Medium / High / Critical, with a one-sentence justification.
+Low / Medium / High, with a one-sentence justification.
 
 ## Strengths
 
@@ -32,14 +32,14 @@ configuration, and cosmetic changes.
 
 ## Findings
 
-Only include findings for lines present in the diff. Number findings sequentially and order by severity; Critical → High → Medium + Low.
+Only include findings for lines present in the diff. Number findings sequentially and order by severity; Critical → High → Medium → Low.
 
 Use the following format for each finding:
 
 ````markdown
 #### Issue {number}: [Brief descriptive title]
 
-**Severity**: Critical / High / Medium / Low
+**Severity**: High / Medium / Low
 **Category**: \<skill-defined category, e.g. Error Handling, Input Validation\>
 **Skill**: \<exact skill `name` from frontmatter that surfaced this finding\>
 **File**: `path/to/file.ext`
@@ -64,7 +64,7 @@ Use the following format for each finding:
 
 ## Findings Format Rules
 
-* Group findings by severity: Critical -> High -> Medium -> Low.
+* Group findings by severity: High -> Medium -> Low.
 * When a skill defines its own findings format (e.g. a different table Layout), the agent's Output Format takes precedence.
 * Omit the `### Current Code` and `### Suggested Fix` sections when no code
   change is needed (e.g. documentation-only findings).

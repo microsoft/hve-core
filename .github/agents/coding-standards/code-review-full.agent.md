@@ -30,20 +30,17 @@ Store the resulting **diff content** and **changed file list** for use in Steps 
 
 ### Step 2: Functional Code Review
 
-Invoke the `Code Review Functional` subagent via `runSubagent`. Pass the diff content and changed file list from Step 1 in the prompt. Include an explicit override instruction telling the subagent to use the provided diff content and changed file list instead of running its own diff computation (Step 1 / Branch Analysis). Instruct the subagent to skip its artifact persistence step; persistence is handled centrally in Step 4.
+Invoke `Code Review Functional` subagent via `runSubagent`. Pass pre-computed diff + file list and instruct it to skip its own diff computation and persistence.
 
-> [!NOTE]
-> The functional subagent may not yet have a pre-computed diff input mechanism. Until a matching update is applied to the subagent, it may redundantly recompute the diff.
-
-The subagent returns findings in its native report format, including severity-tagged issues, an executive summary, a changed files overview, and positive changes. If the subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke the subagent with the answers included. If the subagent returns questions a second time, skip the step.
+The subagent returns findings in its native format. If the subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke the subagent with the answers included. If the subagent returns questions a second time, skip the step.
 
 If the subagent is not available, skip this step and note: "Code Review Functional agent not available, skipping Step 2."
 
 ### Step 3: Standards Code Review
 
-Invoke the `Code Review Standards` subagent via `runSubagent`. Pass the diff content and changed file list from Step 1 in the prompt so the subagent skips its own scope detection. When a story input is provided, instruct the subagent to run its story-prompting flow. Instruct the subagent to skip its artifact persistence step; persistence is handled centrally in Step 4.
+Invoke `Code Review Standards` subagent via `runSubagent`. Pass pre-computed diff + file list (so it skips scope detection) and forward story if present. Instruct it to skip persistence.
 
-The subagent returns findings in its native report format, including severity-tagged issues, a Code/PR Summary, a changed files overview, recommended actions, risk assessment, and positive changes. If the subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke the subagent with the answers included. If the subagent returns questions a second time, skip the step.
+The subagent returns findings in its native format. Handle clarifying questions the same way as Step 2.
 
 If the subagent is not available, skip this step and note: "Code Review Standards agent not available, skipping Step 3."
 

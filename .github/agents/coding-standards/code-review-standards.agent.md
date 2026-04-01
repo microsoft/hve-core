@@ -65,16 +65,29 @@ When no pre-computed diff is available, follow the complete protocol in #file:..
 
 ### Step 3: Load Skills and Produce Findings
 
-Discover skills semantically based on the task context rather than hardcoded paths. Describe the coding standards review intent and let Copilot's skill loading sequence match available skills by their frontmatter `name` and `description` fields, whether they live in the workspace skills directory, in a plugin install directory, or via the VS Code extension's skill catalog.
+#### 3a: Extract file extensions from the diff
 
-Follow this loading protocol for every review:
+Collect the unique set of file extensions (e.g. `.py`, `.cs`, `.sh`) from the changed-file list produced in Step 2.
 
-1. Describe the review task intent (e.g., "Apply coding standards skills for {language detected in diff} code review") to discover available skills. Let Copilot's skill loading sequence surface matching skills by `name` and `description` frontmatter. As a fallback, scan for `**/SKILL.md` files and read their frontmatter `name` and `description` fields.
-2. Match skill descriptions and names against the diff content to select relevant skills: file types, language patterns, imports, and frameworks present in the changed files. Load skills whose domain aligns with what the diff touches. Do not hardcode skill names or paths; determine relevance at runtime from frontmatter metadata.
-3. Load at most 8 skills per review. If more than 8 are relevant, prefer skills whose domain appears most frequently in the diff.
-4. Reference skills only by their exact `name` from frontmatter.
+#### 3b: Load built-in skills
 
-Apply each loaded skill's checklist to the diff or selected code. When suggesting hand-off to a code generation agent for auto-fix implementations, search `agents/` for generation-capable agents and reference them by name if found.
+Use the catalog below to map extensions to skill paths. Read each matching `SKILL.md` directly — do not search for it.
+
+| Extensions | Skill path                                                     |
+|------------|----------------------------------------------------------------|
+| `.py`      | `.github/skills/coding-standards/python-foundational/SKILL.md` |
+
+If no extensions match the catalog, skip to 3c.
+
+#### 3c: Discover consumer skills
+
+Search for additional `SKILL.md` files under `.github/skills/` only (not the entire workspace). For each file found that is not already loaded from the catalog, read its `name` and `description` frontmatter and check whether the description mentions a language, framework, or file type present in the diff. Load matches up to a combined maximum of 8 skills (built-in + consumer).
+
+#### 3d: Apply loaded skills
+
+1. For each loaded skill, apply its checklist to the diff or selected code.
+2. Reference skills by their exact `name` from frontmatter.
+3. When suggesting fixes that require code generation, search `.github/agents/` for agents capable of generating code and reference them by name.
 
 ### Step 4: Persist Review Artifacts
 
@@ -113,6 +126,11 @@ When no relevant skills are found in the workspace, do not emit any standards-ba
 * Omit the Findings section entirely and replace it with this disclaimer: "⚠️ Review conducted without full skill catalog - results may be incomplete."
 * Restrict the review body to high-level observations, risk caveats, and clarifying questions only.
 * Restrict verdicts per the Verdict Determination override above.
+
+### Partial Skill Coverage
+
+When loaded skills cover some but not all file types in the diff, append a note after the findings:
+"ℹ️ No matching skills for: `<comma-separated uncovered extensions>`. Findings for those files are limited to severe issues (crashes, security, data loss) reported under Additional Observations."
 
 ### No Issues Found
 

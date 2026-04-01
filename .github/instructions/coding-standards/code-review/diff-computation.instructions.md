@@ -90,6 +90,17 @@ Skip these artifacts when computing and analyzing diffs:
 * Binaries
 * Build output directories: `/bin/`, `/obj/`, `/node_modules/`, `/dist/`, `/out/`, `/coverage/`
 
+### Fallback (pr-reference skill unavailable)
+
+If the pr-reference skill scripts are not found or fail, compute the diff manually:
+
+1. Resolve the merge-base: `git merge-base origin/<default-branch> HEAD`
+2. Generate the diff: `git diff <merge-base>...HEAD`
+3. List changed files: `git diff <merge-base>...HEAD --name-only`
+4. For uncommitted changes, supplement with `git diff HEAD`, `git diff --cached`, and `git ls-files --others --exclude-standard`
+
+Apply the Non-Source Artifact Skip List and Large Diff Handling rules to the manual output.
+
 ---
 
 Brought to you by microsoft/hve-core

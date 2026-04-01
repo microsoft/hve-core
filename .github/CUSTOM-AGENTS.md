@@ -76,6 +76,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **prompt-builder**             | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing                 |
 | **security-reviewer**          | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents          |
 | **code-review-functional**     | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save |
+| **code-review-full**           | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
 | **code-review-standards**      | Skills-based standards reviewer for local changes and PRs        | Findings must trace to a loaded skill; experimental   |
 
 ### Generator Agents
@@ -366,6 +367,16 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Workflow:** Branch Analysis → Functional Review → Report Generation → Save Review
 
 **Critical:** Review-only. Focuses on five areas: Logic, Edge Cases, Error Handling, Concurrency, and Contract. Accepts a configurable `baseBranch` input (default `origin/main`). Artifact save is optional and user-confirmed after the report is presented. Applies false-positive filters before recording any finding.
+
+### code-review-full
+
+**Creates:** Merged review artifacts in a normalized branch folder:
+
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+
+**Workflow:** Compute Diff → Delegate to Functional + Standards subagents → Merge Reports → Persist Artifacts
+
+**Critical:** Orchestrator-only. Delegates functional review to `code-review-functional` and standards review to `code-review-standards`, then merges both reports into a single output. Shares the computed diff with subagents to avoid duplicate git operations. Maturity: experimental.
 
 ### code-review-standards
 
