@@ -1,6 +1,6 @@
 ---
 name: owasp-docker
-description: OWASP Docker Top 6 vulnerability knowledge base for identifying, assessing, and remediating security risks in containerized Docker environments.
+description: OWASP Docker Top 6 vulnerability knowledge base for identifying, assessing, and remediating security risks in containerized Docker environments - Brought to you by microsoft/hve-core.
 license: MIT
 user-invocable: false
 metadata:
