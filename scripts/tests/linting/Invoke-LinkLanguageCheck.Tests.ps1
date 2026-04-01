@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -125,7 +125,7 @@ Write-Output $json
             Invoke-LinkLanguageCheckCore -ExcludePaths @('scripts/tests/**') | Out-Null
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+            $json.timestamp.ToString('o') | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
         }
     }
 
@@ -174,7 +174,7 @@ Write-Output $json
             Invoke-LinkLanguageCheckCore -ExcludePaths @() | Out-Null
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+            $json.timestamp.ToString('o') | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
         }
     }
 }
