@@ -20,7 +20,7 @@ engine: copilot
 timeout-minutes: 15
 
 imports:
-  - ../agents/hve-core/doc-update-checker.agent.md
+  - ../agents/doc-update-checker.agent.md
 
 checkout:
   sparse-checkout: |
@@ -43,7 +43,7 @@ permissions:
 safe-outputs:
   create-issue:
     max: 3
-    labels: [documentation, needs-triage, agent-ready]
+    labels: [documentation, needs-triage]
     title-prefix: "docs: "
   noop:
     max: 1

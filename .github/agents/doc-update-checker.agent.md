@@ -41,7 +41,7 @@ When documentation no longer accurately describes the implementation:
 * Reference the specific documentation file and section that needs updating.
 * Describe what changed in the code and what the documentation currently says.
 * Include the specific files from the push that triggered the check.
-* Apply `documentation`, `needs-triage`, and `agent-ready` labels.
+* Apply `documentation` and `needs-triage` labels.
 
 Do not create issues when:
 

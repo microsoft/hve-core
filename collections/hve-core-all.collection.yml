@@ -42,11 +42,7 @@ items:
   kind: agent
 - path: .github/agents/github/issue-triage.agent.md
   kind: agent
-- path: .github/agents/hve-core/dependency-reviewer.agent.md
-  kind: agent
 - path: .github/agents/hve-core/doc-ops.agent.md
-  kind: agent
-- path: .github/agents/hve-core/doc-update-checker.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
   kind: agent

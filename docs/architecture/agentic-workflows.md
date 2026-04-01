@@ -16,6 +16,9 @@ keywords:
 
 hve-core uses GitHub Agentic Workflows to automate the journey from issue creation through implementation, code review, and dependency management. Five event-driven workflows connect specialized agents into a pipeline where each stage triggers the next through labels, pull requests, and GitHub events.
 
+> [!NOTE]
+> GitHub Agentic Workflows is an experimental/beta feature. The workflows described here represent hve-core's early experiments with the technology and may evolve as the platform matures.
+
 ## End-to-End Process Flow
 
 ```mermaid
@@ -89,80 +92,33 @@ flowchart TD
 
 ## Workflow Details
 
-### Issue Triage
-
-The triage workflow activates when an issue is opened or receives the `needs-triage` label. It runs the [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/github/issue-triage.agent.md), which performs these steps in sequence:
-
-1. Read the issue title, body, labels, and template metadata.
-2. Classify by type using conventional commit title patterns (`feat:`, `fix:`, `docs:`, etc.) and map to labels like `feature`, `bug`, `documentation`, or `maintenance`.
-3. Classify by component based on template dropdowns or body content, applying scope labels such as `agents`, `prompts`, `instructions`, or `skills`.
-4. Search for duplicate issues using extracted keywords and flag potential matches with confidence qualifiers.
-5. Assess quality by checking for specific scope, actionable acceptance criteria, and internal consistency. Request missing information when needed.
-6. Decompose oversized issues into sub-issues when the scope spans multiple components or contains independent acceptance criteria. Each sub-issue is created via the GitHub API and linked to the parent.
-7. Apply determined labels and remove `needs-triage`.
-8. Evaluate `agent-ready` eligibility. Issues that are scoped to a single well-defined change, reference specific files, pass quality checks, and are not duplicates or security issues receive the `agent-ready` label.
+| Workflow                 | Trigger                                    | Agent                                                                                                                               | Key Actions                                                                       |
+|--------------------------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| Issue Triage             | Issue opened or labeled `needs-triage`     | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/github/issue-triage.agent.md)                   | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness  |
+| Issue Implementation     | Issue labeled `agent-ready`                | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)         | Research codebase, plan changes, implement, open PR                                |
+| PR Review                | PR opened or marked ready for review       | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                       | Review correctness, conventions, security; label `review-passed` or `needs-revision` |
+| Dependabot PR Review     | Dependabot PR opened or updated            | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)            | Validate licensing, SHA pinning, environment sync; approve safe bumps              |
+| Documentation Update     | Push to main                               | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md)    | Map code changes to docs, create issues for stale documentation                    |
 
 > [!TIP]
-> The triage agent does not close issues, assign users, or modify issue titles. It only classifies, labels, and optionally decomposes.
+> The triage agent only classifies, labels, and optionally decomposes issues. It does not close issues, assign users, or modify issue titles.
 
-### Issue Implementation
-
-The implementation workflow activates when an issue receives the `agent-ready` label. It imports the [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md) and follows a streamlined procedure:
-
-1. Read the issue title, description, and acceptance criteria.
-2. Search the codebase for relevant files, existing patterns, and applicable instruction files under `.github/instructions/`.
-3. Outline the minimal change set needed to satisfy the issue.
-4. Implement the changes, mirroring existing architecture, naming, and data flow patterns.
-5. Verify changes compile, follow conventions, and satisfy acceptance criteria.
-6. Open a pull request referencing the issue with a clear description.
-
-If the issue is ambiguous or too large, the agent posts a comment requesting clarification instead of guessing.
+<!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> The implementation agent keeps PRs small and focused. It does not add tests, documentation, or refactoring beyond what the issue explicitly requests.
-
-### PR Review
-
-The review workflow activates when a pull request is opened or marked ready for review. It reviews all PRs: maintainer PRs receive advisory-only feedback while external contributor PRs get full enforcement. It imports the [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) and evaluates the diff across several dimensions:
-
-1. Functional correctness against requirements and acceptance criteria.
-2. Design and architecture alignment with established patterns.
-3. Convention compliance with instruction files and coding standards.
-4. Security considerations including input validation, authentication, and dependency safety.
-5. Performance and scalability impact.
-6. Reliability, observability, and error handling.
-
-The review produces inline comments on specific lines and a summary review. PRs that pass receive the `review-passed` label; those needing changes receive `needs-revision` with actionable feedback.
-
-### Dependabot PR Review
-
-The Dependabot PR review workflow activates when a pull request is opened or synchronized on dependency files. It only processes PRs authored by `dependabot[bot]` and calls `noop` for all other authors. It imports the [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/dependency-reviewer.agent.md) and evaluates version bumps:
-
-1. Classify each change as a patch, minor, or major version bump.
-2. Verify license compatibility with the project's MIT license.
-3. Check SHA pinning compliance for GitHub Actions references.
-4. Confirm devcontainer and `copilot-setup-steps.yml` synchronization when both are affected.
-5. Approve patch and minor bumps that pass all safety checks.
-6. Leave a comment without approving for major bumps or changes that need human review.
-
-> [!NOTE]
-> The workflow approves but does not merge. Major version bumps always require human review.
-
-### Documentation Update Check
-
-The documentation update check workflow activates on pushes to main or develop. It imports the [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/doc-update-checker.agent.md) and verifies that documentation accurately reflects recent code changes.
+> The implementation agent keeps PRs small and focused. If the issue is ambiguous or too large, it posts a comment requesting clarification instead of guessing.
 
 ## Workflow Configuration
 
-All three workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
+All five workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
-| Workflow File             | Lock File                       | Trigger                                | Agent                  |
-|---------------------------|---------------------------------|----------------------------------------|------------------------|
-| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
-| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
-| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent        |
-| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer    |
-| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main or develop                | Documentation Checker  |
+| Workflow File             | Lock File                       | Trigger                                | Agent                    |
+|---------------------------|---------------------------------|----------------------------------------|--------------------------|
+| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent       |
+| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent   |
+| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent          |
+| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer      |
+| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                           | Documentation Checker    |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 

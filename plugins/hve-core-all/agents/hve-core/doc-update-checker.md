@@ -1,1 +1,0 @@
-../../../../.github/agents/hve-core/doc-update-checker.agent.md

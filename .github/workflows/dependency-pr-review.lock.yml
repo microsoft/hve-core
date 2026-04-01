@@ -24,9 +24,9 @@
 #
 # Resolved workflow manifest:
 #   Imports:
-#     - ../agents/hve-core/dependency-reviewer.agent.md
+#     - ../agents/dependency-reviewer.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"376b28b52e3260092b304433e20d4f1b70add86fa1da87d53b0d945995c387aa","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"6b38135395c9a7ad2115492be6ed04f69ce6d4bf84d4a9598b4b701041d753a9","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Dependabot PR Review"
 "on":
@@ -211,7 +211,7 @@ jobs:
           </system>
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/agents/hve-core/dependency-reviewer.agent.md}}
+          {{#runtime-import .github/agents/dependency-reviewer.agent.md}}
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
           {{#runtime-import .github/workflows/dependency-pr-review.md}}
@@ -333,8 +333,8 @@ jobs:
       - name: Merge remote .github folder
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GH_AW_AGENT_FILE: ".github/agents/hve-core/dependency-reviewer.agent.md"
-          GH_AW_AGENT_IMPORT_SPEC: "../agents/hve-core/dependency-reviewer.agent.md"
+          GH_AW_AGENT_FILE: ".github/agents/dependency-reviewer.agent.md"
+          GH_AW_AGENT_IMPORT_SPEC: "../agents/dependency-reviewer.agent.md"
         with:
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');

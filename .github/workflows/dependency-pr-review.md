@@ -16,7 +16,7 @@ engine: copilot
 timeout-minutes: 15
 
 imports:
-  - ../agents/hve-core/dependency-reviewer.agent.md
+  - ../agents/dependency-reviewer.agent.md
 
 checkout:
   sparse-checkout: |
