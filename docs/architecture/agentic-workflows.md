@@ -92,13 +92,13 @@ flowchart TD
 
 ## Workflow Details
 
-| Workflow                 | Trigger                                    | Agent                                                                                                                               | Key Actions                                                                       |
-|--------------------------|--------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| Issue Triage             | Issue opened or labeled `needs-triage`     | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/github/issue-triage.agent.md)                   | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness  |
-| Issue Implementation     | Issue labeled `agent-ready`                | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)         | Research codebase, plan changes, implement, open PR                                |
-| PR Review                | PR opened or marked ready for review       | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                       | Review correctness, conventions, security; label `review-passed` or `needs-revision` |
-| Dependabot PR Review     | Dependabot PR opened or updated            | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)            | Validate licensing, SHA pinning, environment sync; approve safe bumps              |
-| Documentation Update     | Push to main                               | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md)    | Map code changes to docs, create issues for stale documentation                    |
+| Workflow             | Trigger                                | Agent                                                                                                                            | Key Actions                                                                          |
+|----------------------|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/github/issue-triage.agent.md)                | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness    |
+| Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)      | Research codebase, plan changes, implement, open PR                                  |
+| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                    | Review correctness, conventions, security; label `review-passed` or `needs-revision` |
+| Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)         | Validate licensing, SHA pinning, environment sync; approve safe bumps                |
+| Documentation Update | Push to main                           | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md) | Map code changes to docs, create issues for stale documentation                      |
 
 > [!TIP]
 > The triage agent only classifies, labels, and optionally decomposes issues. It does not close issues, assign users, or modify issue titles.
@@ -112,13 +112,13 @@ flowchart TD
 
 All five workflows are defined as GitHub Agentic Workflow markdown files under `.github/workflows/` and compiled to lock files using `gh aw compile`:
 
-| Workflow File             | Lock File                       | Trigger                                | Agent                    |
-|---------------------------|---------------------------------|----------------------------------------|--------------------------|
-| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent       |
-| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent   |
-| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent          |
-| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer      |
-| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                           | Documentation Checker    |
+| Workflow File             | Lock File                       | Trigger                                | Agent                  |
+|---------------------------|---------------------------------|----------------------------------------|------------------------|
+| `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
+| `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
+| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent        |
+| `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer    |
+| `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                           | Documentation Checker  |
 
 Each workflow file declares permissions, safe output limits, and activation guards that prevent unintended execution.
 
