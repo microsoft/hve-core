@@ -205,8 +205,8 @@ A frontend team authors `.github/skills/northwind/react-standards/SKILL.md` with
 | python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md` |
 | Standards output format     | `docs/templates/standards-review-output-format.md`             |
 | Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
-| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills)          |
-| Contributing skills         | [Contributing: Skills](../../contributing/skills)              |
+| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)       |
+| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)           |
 | coding-standards collection | `collections/coding-standards.collection.yml`                  |
 
 <!-- markdownlint-disable MD036 -->
