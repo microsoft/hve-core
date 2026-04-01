@@ -40,8 +40,6 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/github/issue-triage.agent.md
-  kind: agent
 - path: .github/agents/hve-core/doc-ops.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md

@@ -11,8 +11,6 @@ items:
   # Agents
   - path: .github/agents/github/github-backlog-manager.agent.md
     kind: agent
-  - path: .github/agents/github/issue-triage.agent.md
-    kind: agent
   # Prompts
   - path: .github/prompts/github/github-add-issue.prompt.md
     kind: prompt

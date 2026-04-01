@@ -45,7 +45,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'github',
     description: 'GitHub issue backlogs and triage workflows',
-    artifacts: 14,
+    artifacts: 13,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
@@ -77,5 +77,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 229,
+  'hve-core-all': 228,
 };

@@ -24,9 +24,9 @@
 #
 # Resolved workflow manifest:
 #   Imports:
-#     - ../agents/github/issue-triage.agent.md
+#     - ../agents/issue-triage.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"36fc2e90b32fe8fffdcae6429107e6757c514685f9c68056be43f51377825717","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"1e7b60f19ecc1d5bf98420c59a1ce2b13a5195cb90a325aebd5f5f609bd97490","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Issue Triage"
 "on":
@@ -211,7 +211,7 @@ jobs:
           </system>
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/agents/github/issue-triage.agent.md}}
+          {{#runtime-import .github/agents/issue-triage.agent.md}}
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
           {{#runtime-import .github/workflows/issue-triage.md}}
@@ -318,8 +318,8 @@ jobs:
       - name: Merge remote .github folder
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GH_AW_AGENT_FILE: ".github/agents/github/issue-triage.agent.md"
-          GH_AW_AGENT_IMPORT_SPEC: "../agents/github/issue-triage.agent.md"
+          GH_AW_AGENT_FILE: ".github/agents/issue-triage.agent.md"
+          GH_AW_AGENT_IMPORT_SPEC: "../agents/issue-triage.agent.md"
         with:
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');

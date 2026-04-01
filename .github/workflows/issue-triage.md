@@ -12,7 +12,7 @@ engine: copilot
 timeout-minutes: 10
 
 imports:
-  - ../agents/github/issue-triage.agent.md
+  - ../agents/issue-triage.agent.md
 
 checkout: false
 
