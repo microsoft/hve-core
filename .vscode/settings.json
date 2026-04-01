@@ -62,6 +62,7 @@
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/shared": true,
+    ".github/skills/coding-standards": true,
     ".github/skills/experimental": true,
     ".github/skills/security": true,
     ".github/skills/jira": true,

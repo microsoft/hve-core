@@ -168,6 +168,7 @@ Cybercrime
 cybersecurity
 datacenter
 datacenters
+dataclasses
 davidanson
 dataset
 datasets
@@ -476,6 +477,7 @@ hotfix
 hotfixes
 hotpatching
 https
+httpx
 hubspoke
 hyperscale
 hyperspecialized
@@ -810,8 +812,10 @@ pulumi
 purescale
 pyodbc
 pypackages
+pydantic
 pypi
 pytest
+Pythonic
 qgis
 qldrw
 qlik
