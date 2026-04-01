@@ -414,7 +414,8 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/shared": true
+    "<PREFIX>/.github/skills/shared": true,
+    "<PREFIX>/.github/skills/coding-standards": true
   }
 }
 ```
@@ -502,7 +503,8 @@ Add to devcontainer.json:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true
+          "/workspaces/hve-core/.github/skills/shared": true,
+          "/workspaces/hve-core/.github/skills/coding-standards": true
         }
       }
     }
