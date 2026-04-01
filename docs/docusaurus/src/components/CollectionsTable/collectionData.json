@@ -1,0 +1,58 @@
+[
+  {
+    "name": "ado",
+    "summary": "Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies — all from within VS Code."
+  },
+  {
+    "name": "coding-standards",
+    "summary": "Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests."
+  },
+  {
+    "name": "data-science",
+    "summary": "Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment."
+  },
+  {
+    "name": "design-thinking",
+    "summary": "Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces."
+  },
+  {
+    "name": "experimental",
+    "summary": "Experimental and preview artifacts not yet promoted to stable collections. Items in this collection may change or be removed without notice."
+  },
+  {
+    "name": "github",
+    "summary": "Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code."
+  },
+  {
+    "name": "gitlab",
+    "summary": "Use GitLab merge request and pipeline workflows from VS Code through a focused Python skill for inspecting merge requests, posting notes, triggering pipelines, and reading job logs."
+  },
+  {
+    "name": "hve-core-all",
+    "summary": "HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, GitHub and Jira backlog workflows, data science, design thinking, security, and more."
+  },
+  {
+    "name": "hve-core",
+    "summary": "HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management."
+  },
+  {
+    "name": "installer",
+    "summary": "Deploy HVE Core artifacts across workspace configurations with the hve-core-installer skill. This collection provides decision-driven setup for selecting and installing collections, agents, prompts, and instructions via the VS Code extension or clone-based methods."
+  },
+  {
+    "name": "jira",
+    "summary": "Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This collection adds dedicated Jira agents, prompts, and instructions on top of the Jira skill so discovery, triage, execution, and planning workflows use the same tracking and handoff patterns as the rest of HVE Core."
+  },
+  {
+    "name": "project-planning",
+    "summary": "Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation."
+  },
+  {
+    "name": "rai-planning",
+    "summary": "Assess AI systems for responsible AI risks using structured standards-aligned analysis, sensitive uses screening, and impact assessment."
+  },
+  {
+    "name": "security",
+    "summary": "Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments."
+  }
+]
