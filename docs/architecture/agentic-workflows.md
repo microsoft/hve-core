@@ -123,7 +123,7 @@ If the issue is ambiguous or too large, the agent posts a comment requesting cla
 
 ### PR Review
 
-The review workflow activates when a pull request is opened or marked ready for review. It reviews all PRs — maintainer PRs receive advisory-only feedback while external contributor PRs get full enforcement. It imports the [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) and evaluates the diff across several dimensions:
+The review workflow activates when a pull request is opened or marked ready for review. It reviews all PRs: maintainer PRs receive advisory-only feedback while external contributor PRs get full enforcement. It imports the [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) and evaluates the diff across several dimensions:
 
 1. Functional correctness against requirements and acceptance criteria.
 2. Design and architecture alignment with established patterns.

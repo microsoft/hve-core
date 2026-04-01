@@ -71,7 +71,7 @@ In advisory mode:
 * Never use `REQUEST_CHANGES`. Use `COMMENT` for all findings.
 * Do not add the `needs-revision` label.
 * Do not convert PRs to draft.
-* Prefix the review summary with "**Advisory review** — this PR is from a
+* Prefix the review summary with "Advisory review, this PR is from a
   maintainer. Findings are informational only."
 
 For all other associations (`CONTRIBUTOR`, `FIRST_TIMER`,
