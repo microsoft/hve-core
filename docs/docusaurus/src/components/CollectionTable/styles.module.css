@@ -1,0 +1,120 @@
+.tableWrapper {
+  margin: 1rem 0;
+}
+
+.collectionTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+}
+
+.collectionTable th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  background: var(--ifm-color-primary-contrast-background);
+  border-bottom: 2px solid var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+.collectionTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.tableRow {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.tableRow.expanded {
+  background: var(--ifm-color-emphasis-100);
+}
+
+.collectionName {
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+}
+
+.expandIcon {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.artifacts {
+  text-align: center;
+  font-weight: 500;
+}
+
+.maturityBadge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.maturityStable {
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-dark);
+}
+
+.maturityPreview {
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-dark);
+}
+
+.maturityExperimental {
+  background: var(--ifm-color-info-contrast-background);
+  color: var(--ifm-color-info-dark);
+}
+
+.detailRow {
+  background: var(--ifm-color-emphasis-50);
+}
+
+.detailContent {
+  padding: 1rem;
+}
+
+.detailContent h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: var(--ifm-color-primary);
+}
+
+.detailContent p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.includesSection h5 {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.includesSection ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.includesSection li {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+  text-align: center;
+  margin-top: 0.5rem;
+}

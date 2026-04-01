@@ -7,6 +7,9 @@ ms.date: 2026-03-22
 ms.topic: overview
 ---
 
+import CollectionTableWithDescriptions from '@site/src/components/CollectionTable';
+import { collectionDetails } from '@site/src/data/collectionDetails';
+
 ## How HVE Artifacts Are Organized
 
 HVE distributes agents, prompts, instructions, and skills through collections, which are curated bundles of related artifacts. Each collection targets a specific domain or workflow, so you can install exactly what you need.
@@ -31,22 +34,7 @@ The installer enables targeted deployment of specific collections into workspace
 
 ## Available Collections
 
-| Collection       | Description                                                                                                                                    | Artifacts | Maturity     |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|-----------|--------------|
-| ado              | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 21        | Stable       |
-| coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 14        | Stable       |
-| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 19        | Stable       |
-| design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 58        | Preview      |
-| experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 8         | Experimental |
-| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 13        | Stable       |
-| gitlab           | Run GitLab merge request and pipeline workflows through a focused skill package                                                                | 2         | Stable       |
-| hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 40        | Stable       |
-| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 221       | Stable       |
-| installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 2         | Stable       |
-| jira             | Manage Jira backlogs, plan PRD-driven issue hierarchies, and execute issue operations                                                          | 13        | Stable       |
-| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 49        | Stable       |
-| rai-planning     | Assess AI systems against Responsible AI standards and capture standards-aligned backlog work                                                  | 13        | Experimental |
-| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 47        | Experimental |
+<CollectionTableWithDescriptions collections={collectionDetails} />
 
 ## How Collections Fit Together
 
