@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -120,6 +120,13 @@ Write-Output $json
             $script:WriteHostMessages | Should -Contain '📄 docs/a.md'
             $script:WriteHostMessages | Should -Contain '📄 docs/b.md'
         }
+
+        It 'Writes timestamp using Get-StandardTimestamp in result JSON' {
+            Invoke-LinkLanguageCheckCore -ExcludePaths @('scripts/tests/**') | Out-Null
+            $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
+            $json = Get-Content $resultFile -Raw | ConvertFrom-Json
+            $json.timestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+        }
     }
 
     Context 'No issues found' {
@@ -161,6 +168,13 @@ Write-Output $json
             Should -Invoke Write-Host -Times 1 -ParameterFilter { $Object -like '*✅ No URLs with language paths found*' }
             Should -Invoke Write-Host -Times 0 -ParameterFilter { $Object -like '*📄*' }
             Should -Invoke Write-Host -Times 0 -ParameterFilter { $Object -like '*⚠️*' }
+        }
+
+        It 'Writes timestamp using Get-StandardTimestamp in empty result JSON' {
+            Invoke-LinkLanguageCheckCore -ExcludePaths @() | Out-Null
+            $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
+            $json = Get-Content $resultFile -Raw | ConvertFrom-Json
+            $json.timestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
         }
     }
 }

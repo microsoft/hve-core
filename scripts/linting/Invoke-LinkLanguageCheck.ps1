@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #
@@ -70,7 +70,7 @@ function Invoke-LinkLanguageCheckCore {
             }
 
             $outputData = @{
-                timestamp = (Get-Date).ToUniversalTime().ToString("o")
+                timestamp = Get-StandardTimestamp
                 script = "link-lang-check"
                 summary = @{
                     total_issues = $results.Count
@@ -116,7 +116,7 @@ $(($uniqueFiles | ForEach-Object {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
 
         $emptyResults = @{
-            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            timestamp = Get-StandardTimestamp
             script = "link-lang-check"
             summary = @{
                 total_issues = 0
