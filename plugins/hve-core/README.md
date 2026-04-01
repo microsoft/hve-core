@@ -15,8 +15,6 @@ This collection includes agents for:
 - **Task Implementor** — Executes plans with progressive tracking and change records
 - **Task Reviewer** — Validates implementations against plans and project conventions
 - **PR Review** — Comprehensive pull request review ensuring code quality and convention compliance
-- **Dependency Reviewer** — Reviews dependency changes for necessity, licensing, SHA pinning, and environment sync
-- **Doc Update Checker** — Detects documentation drift after code changes and creates tracking issues
 
 Git workflow prompts for:
 
