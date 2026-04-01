@@ -17,7 +17,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'coding-standards',
     description: 'Language-specific coding conventions',
-    artifacts: 15,
+    artifacts: 21,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
@@ -50,6 +50,13 @@ export const collectionCards: CollectionCardData[] = [
     href: '/docs/getting-started/collections',
   },
   {
+    name: 'gitlab',
+    description: 'GitLab merge requests and pipeline workflows',
+    artifacts: 2,
+    maturity: 'Experimental',
+    href: '/docs/getting-started/collections',
+  },
+  {
     name: 'hve-core',
     description: 'RPI workflow, planning, and implementation',
     artifacts: 40,
@@ -57,10 +64,24 @@ export const collectionCards: CollectionCardData[] = [
     href: '/docs/getting-started/collections',
   },
   {
+    name: 'jira',
+    description: 'Jira backlogs, triage, and PRD-driven planning',
+    artifacts: 13,
+    maturity: 'Experimental',
+    href: '/docs/getting-started/collections',
+  },
+  {
     name: 'project-planning',
     description: 'ADRs, requirements, and architecture diagrams',
     artifacts: 49,
     maturity: 'Stable',
+    href: '/docs/getting-started/collections',
+  },
+  {
+    name: 'rai-planning',
+    description: 'Responsible AI assessment, impact analysis, and risk review',
+    artifacts: 13,
+    maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
   {
@@ -77,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 222,
+  'hve-core-all': 228,
 };

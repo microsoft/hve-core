@@ -7,7 +7,9 @@ Use this edition when you want access to everything without choosing a focused c
 
 Code review agents included (via coding-standards collection):
 
-- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Functional** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Standards** — Skills-based code reviewer that enforces project-defined coding standards via dynamic skill loading
+- **Code Review Full** — Orchestrates both functional and standards reviews in a single pass
 
 Security and planning agents included (via security collection):
 

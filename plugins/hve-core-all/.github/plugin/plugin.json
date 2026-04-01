@@ -29,6 +29,7 @@
     "commands/security/"
   ],
   "skills": [
+    "skills/coding-standards/",
     "skills/experimental/",
     "skills/gitlab/",
     "skills/installer/",
