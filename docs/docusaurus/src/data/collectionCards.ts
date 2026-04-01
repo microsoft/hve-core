@@ -17,7 +17,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'coding-standards',
     description: 'Language-specific coding conventions',
-    artifacts: 15,
+    artifacts: 21,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
@@ -98,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 222,
+  'hve-core-all': 228,
 };

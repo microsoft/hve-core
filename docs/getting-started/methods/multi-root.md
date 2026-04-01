@@ -133,6 +133,7 @@ Use the absolute clone path:
     "chat.agentSkillsLocations": {
       "/workspaces/hve-core/.github/skills": true,
       "/workspaces/hve-core/.github/skills/shared": true,
+      "/workspaces/hve-core/.github/skills/coding-standards": true,
       "My Project/.github/skills": true
     }
   },
