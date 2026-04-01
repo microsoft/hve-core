@@ -71,11 +71,11 @@ Collect the unique set of file extensions (e.g. `.py`, `.cs`, `.sh`) from the ch
 
 #### 3b: Load built-in skills
 
-Use the catalog below to map extensions to skill paths. Read each matching `SKILL.md` directly — do not search for it.
+Use the catalog below to map extensions to skill names. Resolve each name to a path using the convention `.github/skills/coding-standards/{name}/SKILL.md` and read it directly.
 
-| Extensions | Skill path                                                     |
-|------------|----------------------------------------------------------------|
-| `.py`      | `.github/skills/coding-standards/python-foundational/SKILL.md` |
+| Extensions | Skill name            |
+|------------|-----------------------|
+| `.py`      | `python-foundational` |
 
 If no extensions match the catalog, skip to 3c.
 

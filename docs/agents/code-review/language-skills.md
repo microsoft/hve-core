@@ -38,14 +38,14 @@ flowchart LR
 ```
 
 1. The agent extracts unique file extensions from the diff's changed-file list.
-2. It looks up extensions in a built-in catalog that maps extensions to known skill paths and reads each match directly.
+2. It looks up extensions in a built-in catalog that maps extensions to skill names and resolves each name to `.github/skills/coding-standards/{name}/SKILL.md`.
 3. It searches `.github/skills/` (not the entire workspace) for additional `SKILL.md` files, reads the `name` and `description` frontmatter from each, and loads those whose description mentions a language or framework present in the diff.
 4. It selects up to 8 skills total (built-in + consumer), preferring those whose domain appears most frequently in the changed files.
 5. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
 6. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
 
 > [!NOTE]
-> Built-in skills are loaded deterministically by extension match — no search or frontmatter parsing required. Consumer skills rely on a scoped search under `.github/skills/` and accurate `description` frontmatter for activation.
+> Built-in skills are loaded deterministically by extension match and naming convention; no search or frontmatter parsing required. Consumer skills rely on a scoped search under `.github/skills/` and accurate `description` frontmatter for activation.
 
 ## Built-in Skills
 
