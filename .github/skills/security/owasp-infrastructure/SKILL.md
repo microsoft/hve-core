@@ -2,6 +2,7 @@
 name: owasp-infrastructure
 description: OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments.
 license: MIT
+user-invocable: false
 metadata:
   authors: "OWASP Infrastructure Security Project"
   spec_version: "1.0"
