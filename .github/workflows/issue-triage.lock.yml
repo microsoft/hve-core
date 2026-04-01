@@ -26,7 +26,7 @@
 #   Imports:
 #     - ../agents/github/issue-triage.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"1a142b2cefcf818057e2e8bb4e0c767cf2f5483d913d8d0e1333e52fb14cc5cd","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"36fc2e90b32fe8fffdcae6429107e6757c514685f9c68056be43f51377825717","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Issue Triage"
 "on":
@@ -175,7 +175,7 @@ jobs:
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
           cat << 'GH_AW_PROMPT_EOF'
           <safe-output-tools>
-          Tools: add_comment(max:3), add_labels(max:5), remove_labels, missing_tool, missing_data, noop
+          Tools: add_comment(max:3), create_issue(max:5), add_labels(max:5), remove_labels, missing_tool, missing_data, noop
           </safe-output-tools>
           <github-context>
           The following GitHub context information is available for this workflow:
@@ -370,7 +370,7 @@ jobs:
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
           cat > ${RUNNER_TEMP}/gh-aw/safeoutputs/config.json << 'GH_AW_SAFE_OUTPUTS_CONFIG_EOF'
-          {"add_comment":{"max":3,"target":"triggering"},"add_labels":{"allowed":["feature","bug","documentation","maintenance","infrastructure","enhancement","security","breaking-change","agents","prompts","instructions","skills","good-first-issue","agent-ready"],"blocked":["admin-only","do-not-triage"],"max":5},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"remove_labels":{"allowed":["needs-triage"],"max":1}}
+          {"add_comment":{"max":3,"target":"triggering"},"add_labels":{"allowed":["feature","bug","documentation","maintenance","infrastructure","enhancement","security","breaking-change","agents","prompts","instructions","skills","good-first-issue","agent-ready"],"blocked":["admin-only","do-not-triage"],"max":5},"create_issue":{"labels":["needs-triage"],"max":5},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"remove_labels":{"allowed":["needs-triage"],"max":1}}
           GH_AW_SAFE_OUTPUTS_CONFIG_EOF
       - name: Write Safe Outputs Tools
         run: |
@@ -379,6 +379,7 @@ jobs:
             "description_suffixes": {
               "add_comment": " CONSTRAINTS: Maximum 3 comment(s) can be added. Target: triggering.",
               "add_labels": " CONSTRAINTS: Maximum 5 label(s) can be added. Only these labels are allowed: [\"feature\" \"bug\" \"documentation\" \"maintenance\" \"infrastructure\" \"enhancement\" \"security\" \"breaking-change\" \"agents\" \"prompts\" \"instructions\" \"skills\" \"good-first-issue\" \"agent-ready\"].",
+              "create_issue": " CONSTRAINTS: Maximum 5 issue(s) can be created. Labels [\"needs-triage\"] will be automatically added.",
               "remove_labels": " CONSTRAINTS: Maximum 1 label(s) can be removed. Only these labels can be removed: [needs-triage]."
             },
             "repo_params": {},
@@ -421,6 +422,39 @@ jobs:
                 "repo": {
                   "type": "string",
                   "maxLength": 256
+                }
+              }
+            },
+            "create_issue": {
+              "defaultMax": 1,
+              "fields": {
+                "body": {
+                  "required": true,
+                  "type": "string",
+                  "sanitize": true,
+                  "maxLength": 65000
+                },
+                "labels": {
+                  "type": "array",
+                  "itemType": "string",
+                  "itemSanitize": true,
+                  "itemMaxLength": 128
+                },
+                "parent": {
+                  "issueOrPRNumber": true
+                },
+                "repo": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "temporary_id": {
+                  "type": "string"
+                },
+                "title": {
+                  "required": true,
+                  "type": "string",
+                  "sanitize": true,
+                  "maxLength": 128
                 }
               }
             },
@@ -1078,6 +1112,8 @@ jobs:
       comment_url: ${{ steps.process_safe_outputs.outputs.comment_url }}
       create_discussion_error_count: ${{ steps.process_safe_outputs.outputs.create_discussion_error_count }}
       create_discussion_errors: ${{ steps.process_safe_outputs.outputs.create_discussion_errors }}
+      created_issue_number: ${{ steps.process_safe_outputs.outputs.created_issue_number }}
+      created_issue_url: ${{ steps.process_safe_outputs.outputs.created_issue_url }}
       process_safe_outputs_processed_count: ${{ steps.process_safe_outputs.outputs.processed_count }}
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
     steps:
@@ -1116,7 +1152,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,www.googleapis.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":3,\"target\":\"triggering\"},\"add_labels\":{\"allowed\":[\"feature\",\"bug\",\"documentation\",\"maintenance\",\"infrastructure\",\"enhancement\",\"security\",\"breaking-change\",\"agents\",\"prompts\",\"instructions\",\"skills\",\"good-first-issue\",\"agent-ready\"],\"blocked\":[\"admin-only\",\"do-not-triage\"],\"max\":5},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"remove_labels\":{\"allowed\":[\"needs-triage\"],\"max\":1}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":3,\"target\":\"triggering\"},\"add_labels\":{\"allowed\":[\"feature\",\"bug\",\"documentation\",\"maintenance\",\"infrastructure\",\"enhancement\",\"security\",\"breaking-change\",\"agents\",\"prompts\",\"instructions\",\"skills\",\"good-first-issue\",\"agent-ready\"],\"blocked\":[\"admin-only\",\"do-not-triage\"],\"max\":5},\"create_issue\":{\"labels\":[\"needs-triage\"],\"max\":5},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"remove_labels\":{\"allowed\":[\"needs-triage\"],\"max\":1}}"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |

@@ -20,17 +20,19 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# Automated first-pass quality review on pull requests from non-maintainers
+# Automated quality review on pull requests
 #
 # Resolved workflow manifest:
 #   Imports:
 #     - ../agents/hve-core/pr-review.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"4559458327704ba546b19359f232c0ba2b81434f30a34712b8a2b7a2102ec200","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"6f0dd0cd24e95b569ffb2c855394bde9127d86b2dd77e245ce892c49b76b94fb","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
-name: "PR First-Pass Review"
+name: "PR Review"
 "on":
   pull_request:
+    # forks: # Fork filtering applied via job conditions
+    # - "*" # Fork filtering applied via job conditions
     types:
     - opened
     - ready_for_review
@@ -44,13 +46,12 @@ concurrency:
   group: "gh-aw-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}"
   cancel-in-progress: true
 
-run-name: "PR First-Pass Review"
+run-name: "PR Review"
 
 jobs:
   activation:
     needs: pre_activation
-    if: >
-      needs.pre_activation.outputs.activated == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.id == github.repository_id)
+    if: needs.pre_activation.outputs.activated == 'true'
     runs-on: ubuntu-slim
     permissions:
       contents: read
@@ -80,7 +81,7 @@ jobs:
           GH_AW_INFO_VERSION: "latest"
           GH_AW_INFO_AGENT_VERSION: "latest"
           GH_AW_INFO_CLI_VERSION: "v0.63.1"
-          GH_AW_INFO_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_INFO_WORKFLOW_NAME: "PR Review"
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
@@ -127,7 +128,7 @@ jobs:
       - name: Check workflow file timestamps
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          GH_AW_WORKFLOW_FILE: "pr-first-pass-review.lock.yml"
+          GH_AW_WORKFLOW_FILE: "pr-review.lock.yml"
         with:
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
@@ -210,7 +211,7 @@ jobs:
           {{#runtime-import .github/agents/hve-core/pr-review.agent.md}}
           GH_AW_PROMPT_EOF
           cat << 'GH_AW_PROMPT_EOF'
-          {{#runtime-import .github/workflows/pr-first-pass-review.md}}
+          {{#runtime-import .github/workflows/pr-review.md}}
           GH_AW_PROMPT_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
@@ -292,7 +293,7 @@ jobs:
       GH_AW_ASSETS_BRANCH: ""
       GH_AW_ASSETS_MAX_SIZE_KB: 0
       GH_AW_MCP_LOG_DIR: /tmp/gh-aw/mcp-logs/safeoutputs
-      GH_AW_WORKFLOW_ID_SANITIZED: prfirstpassreview
+      GH_AW_WORKFLOW_ID_SANITIZED: prreview
     outputs:
       checkout_pr_success: ${{ steps.checkout-pr.outputs.checkout_pr_success || 'true' }}
       detection_conclusion: ${{ steps.detection_conclusion.outputs.conclusion }}
@@ -931,8 +932,8 @@ jobs:
         if: always() && steps.detection_guard.outputs.run_detection == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
-          WORKFLOW_NAME: "PR First-Pass Review"
-          WORKFLOW_DESCRIPTION: "Automated first-pass quality review on pull requests from non-maintainers"
+          WORKFLOW_NAME: "PR Review"
+          WORKFLOW_DESCRIPTION: "Automated quality review on pull requests"
           HAS_PATCH: ${{ steps.collect_output.outputs.has_patch }}
         with:
           script: |
@@ -1033,7 +1034,7 @@ jobs:
       issues: write
       pull-requests: write
     concurrency:
-      group: "gh-aw-conclusion-pr-first-pass-review"
+      group: "gh-aw-conclusion-pr-review"
       cancel-in-progress: false
     outputs:
       noop_message: ${{ steps.noop.outputs.noop_message }}
@@ -1064,7 +1065,7 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "1"
-          GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_WORKFLOW_NAME: "PR Review"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1077,7 +1078,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_WORKFLOW_NAME: "PR Review"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1091,10 +1092,10 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_WORKFLOW_NAME: "PR Review"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
-          GH_AW_WORKFLOW_ID: "pr-first-pass-review"
+          GH_AW_WORKFLOW_ID: "pr-review"
           GH_AW_SECRET_VERIFICATION_RESULT: ${{ needs.activation.outputs.secret_verification_result }}
           GH_AW_CHECKOUT_PR_SUCCESS: ${{ needs.agent.outputs.checkout_pr_success }}
           GH_AW_INFERENCE_ACCESS_ERROR: ${{ needs.agent.outputs.inference_access_error }}
@@ -1114,7 +1115,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_WORKFLOW_NAME: "PR Review"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
           GH_AW_NOOP_MESSAGE: ${{ steps.noop.outputs.noop_message }}
@@ -1128,7 +1129,6 @@ jobs:
             await main();
 
   pre_activation:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.id == github.repository_id
     runs-on: ubuntu-slim
     outputs:
       activated: ${{ steps.check_membership.outputs.is_team_member == 'true' && steps.check_skip_bots.outputs.skip_bots_ok == 'true' }}
@@ -1155,7 +1155,7 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           GH_AW_SKIP_BOTS: dependabot[bot],github-actions[bot]
-          GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+          GH_AW_WORKFLOW_NAME: "PR Review"
         with:
           script: |
             const { setupGlobals } = require('${{ runner.temp }}/gh-aw/actions/setup_globals.cjs');
@@ -1174,11 +1174,11 @@ jobs:
       pull-requests: write
     timeout-minutes: 15
     env:
-      GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/pr-first-pass-review"
+      GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/pr-review"
       GH_AW_ENGINE_ID: "copilot"
       GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
-      GH_AW_WORKFLOW_ID: "pr-first-pass-review"
-      GH_AW_WORKFLOW_NAME: "PR First-Pass Review"
+      GH_AW_WORKFLOW_ID: "pr-review"
+      GH_AW_WORKFLOW_NAME: "PR Review"
     outputs:
       code_push_failure_count: ${{ steps.process_safe_outputs.outputs.code_push_failure_count }}
       code_push_failure_errors: ${{ steps.process_safe_outputs.outputs.code_push_failure_errors }}

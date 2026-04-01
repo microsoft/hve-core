@@ -26,7 +26,7 @@
 #   Imports:
 #     - ../agents/hve-core/doc-update-checker.agent.md
 #
-# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"17c7395d55e35f4b39b8c03d9cf8d611687aeda68caa39ccbc90dcc1bd477f59","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
+# gh-aw-metadata: {"schema_version":"v3","frontmatter_hash":"423e8018bae38b3d8c04136bf9a8da2c6502bddba75695d1dca98e45b540bed7","compiler_version":"v0.63.1","strict":true,"agent_id":"copilot"}
 
 name: "Documentation Update Check"
 "on":
@@ -43,6 +43,7 @@ name: "Documentation Update Check"
     - collections/**
     - .devcontainer/**
     - .github/workflows/**
+    - "!.github/workflows/*.lock.yml"
   # skip-bots: # Skip-bots processed as bot check in pre-activation job
   # - dependabot[bot] # Skip-bots processed as bot check in pre-activation job
   # - github-actions[bot] # Skip-bots processed as bot check in pre-activation job
