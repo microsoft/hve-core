@@ -35,3 +35,44 @@
   line-height: 25.6px;
   margin: 0;
 }
+
+.heroCta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.heroCtaPrimary {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #ffffff;
+  color: #0078d4;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 2px;
+  text-decoration: none;
+}
+
+.heroCtaPrimary:hover {
+  background: #f0f0f0;
+  color: #005a9e;
+  text-decoration: none;
+}
+
+.heroCtaSecondary {
+  display: inline-block;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--ms-learn-hero-text);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--ms-learn-hero-text);
+  text-decoration: none;
+}
+
+.heroCtaSecondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
