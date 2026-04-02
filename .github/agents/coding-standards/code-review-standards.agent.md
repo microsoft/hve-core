@@ -91,7 +91,7 @@ Search for additional `SKILL.md` files under `.github/skills/` only (not the ent
 
 ### Step 4: Persist Review Artifacts
 
-Follow the shared persistence protocol in #file:../../instructions/code-review/review-artifacts.instructions.md. Use `"code-review-standards"` as the `reviewer` field value.
+Follow the shared persistence protocol in #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md. Use `"code-review-standards"` as the `reviewer` field value.
 
 ☑️ Review saved to .copilot-tracking/reviews/code-reviews/<sanitized-branch>/
 
