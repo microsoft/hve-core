@@ -20,13 +20,13 @@ estimated_reading_time: 8
 
 ## Phase Summary
 
-| Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                                                       |
-|-------|-----------------------------|------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`                                             |
-| 2     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
-| 3     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
-| 4     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
-| 5     | Review and Handoff          | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
+| Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                    |
+|-------|-----------------------------|------------------|--------------------------------------------------------------------------|---------------------------------------------------------|
+| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`          |
+| 2     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                       |
+| 3     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`               |
+| 4     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
+| 5     | Review and Handoff          | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                  |
 
 ## Phase 1: AI System Scoping
 

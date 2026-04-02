@@ -105,10 +105,10 @@ Gaps identified during Phases 2 through 4 are converted to work items using the 
 
 Each generated work item receives an autonomy tier based on the severity and complexity of the finding.
 
-| Tier    | Human involvement                                    | When assigned                                                                           |
-|---------|------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| Full    | Agent creates and submits without confirmation       | Low-severity findings with clear remediation                                            |
-| Partial | Agent creates items; user confirms before submission | Default tier for most findings                                                          |
+| Tier    | Human involvement                                    | When assigned                                              |
+|---------|------------------------------------------------------|------------------------------------------------------------|
+| Full    | Agent creates and submits without confirmation       | Low-severity findings with clear remediation               |
+| Partial | Agent creates items; user confirms before submission | Default tier for most findings                             |
 | Manual  | Agent recommends; user creates items                 | High-severity findings or cross-team coordination required |
 
 ### Content Sanitization
