@@ -78,7 +78,7 @@ The **SSSC Planner** guides teams through a structured six-phase supply chain se
 
 ## RAI Planning
 
-Guides teams through a six-phase responsible AI assessment covering AI system scoping, sensitive uses screening, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
+Guides teams through a five-phase responsible AI assessment covering AI system scoping, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
 
 ## Design Thinking
 

@@ -28,8 +28,7 @@ checkout:
     .github/workflows/copilot-setup-steps.yml
     package.json
     package-lock.json
-    **/requirements.txt
-    **/pyproject.toml
+    .github/skills/
 
 permissions:
   contents: read

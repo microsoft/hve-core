@@ -158,12 +158,21 @@ Describe 'Get-CommitCount' {
 
 Describe 'Get-DiffOutput' {
     It 'Returns array of diff lines' {
+        Mock git {
+            $global:LASTEXITCODE = 0
+            return @('diff --git a/f.txt b/f.txt', '--- a/f.txt', '+++ b/f.txt', '@@ -1 +1 @@', '-old', '+new')
+        }
         $result = Get-DiffOutput -ComparisonRef 'HEAD~1'
         $result | Should -Not -BeNullOrEmpty
+        $result.Count | Should -Be 6
+    }
+
+    It 'Executes without error against real repo' {
+        # Real git diff may return empty when merge=ours collapses lock file diffs
+        { Get-DiffOutput -ComparisonRef 'HEAD~1' } | Should -Not -Throw
     }
 
     It 'Excludes markdown when specified' {
-        # Verify the function executes without error when excluding markdown
         # The result may be empty if only markdown files were changed
         { Get-DiffOutput -ComparisonRef 'HEAD~1' -ExcludeMarkdownDiff } | Should -Not -Throw
     }
