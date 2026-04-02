@@ -24,7 +24,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'data-science',
     description: 'Data specs, notebooks, and dashboards',
-    artifacts: 19,
+    artifacts: 18,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
@@ -73,21 +73,21 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'project-planning',
     description: 'ADRs, requirements, and architecture diagrams',
-    artifacts: 49,
+    artifacts: 48,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
   {
     name: 'rai-planning',
     description: 'Responsible AI assessment, impact analysis, and risk review',
-    artifacts: 13,
+    artifacts: 12,
     maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
   {
     name: 'security',
     description: 'Security review, planning, incident response, and risk assessment',
-    artifacts: 48,
+    artifacts: 47,
     maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
@@ -98,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 229,
+  'hve-core-all': 228,
 };
