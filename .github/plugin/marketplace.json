@@ -24,7 +24,7 @@
     {
       "name": "data-science",
       "source": "data-science",
-      "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
+      "description": "Evaluation dataset creation, Jupyter notebooks, and Streamlit dashboards",
       "version": "3.3.27"
     },
     {
