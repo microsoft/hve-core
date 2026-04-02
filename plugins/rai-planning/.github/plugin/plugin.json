@@ -1,6 +1,6 @@
 {
   "name": "rai-planning",
-  "description": "Responsible AI assessment, sensitive uses screening, and standards-aligned impact analysis",
+  "description": "Responsible AI assessment and standards-aligned impact analysis",
   "version": "3.3.27",
   "agents": [
     "agents/hve-core/subagents/",

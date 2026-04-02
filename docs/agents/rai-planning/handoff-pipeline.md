@@ -37,10 +37,9 @@ flowchart LR
 
   subgraph RP ["RAI Planner"]
     RP1["Phase 1\nAI System\nScoping"]
-    RP6["Phase 6\nReview &<br/>Handoff"]
-    RP1 --> RP6
+    RP5["Phase 5\nReview &<br/>Handoff"]
+    RP1 --> RP5
   end
-
   SP6 -->|"recommends entry"| ST
   ST -->|"pre-populates"| RP1
 ```
@@ -66,11 +65,11 @@ Phase 6 produces a scorecard that quantifies assessment quality across five dime
 
 ```mermaid
 flowchart TD
-  P2["Phase 2\nSensitive Uses"] --> D1["Scope Boundary\nClarity"]
-  P4["Phase 4\nSecurity Model"] --> D2["Risk Identification\nQuality"]
-  P5["Phase 5\nImpact Assessment"] --> D3["Control Surface\nAdequacy"]
-  P5 --> D4["Evidence\nSufficiency"]
-  P5 --> D5["Future Work\nGovernance"]
+  P1["Phase 1\nAI System Scoping"] --> D1["Scope Boundary\nClarity"]
+  P3["Phase 3\nSecurity Model"] --> D2["Risk Identification\nQuality"]
+  P4["Phase 4\nImpact Assessment"] --> D3["Control Surface\nAdequacy"]
+  P4 --> D4["Evidence\nSufficiency"]
+  P4 --> D5["Future Work\nGovernance"]
 
   D1 --> SC["Scorecard Total\n(max 25)"]
   D2 --> SC
@@ -93,7 +92,7 @@ flowchart TD
 
 ## Backlog Generation
 
-Gaps identified during Phases 2 through 5 are converted to work items using the same dual-platform format as the Security Planner.
+Gaps identified during Phases 2 through 4 are converted to work items using the same dual-platform format as the Security Planner.
 
 ### Dual-Platform Support
 
@@ -110,7 +109,7 @@ Each generated work item receives an autonomy tier based on the severity and com
 |---------|------------------------------------------------------|-----------------------------------------------------------------------------------------|
 | Full    | Agent creates and submits without confirmation       | Low-severity findings with clear remediation                                            |
 | Partial | Agent creates items; user confirms before submission | Default tier for most findings                                                          |
-| Manual  | Agent recommends; user creates items                 | High-severity findings, restricted use escalations, or cross-team coordination required |
+| Manual  | Agent recommends; user creates items                 | High-severity findings or cross-team coordination required |
 
 ### Content Sanitization
 
@@ -127,14 +126,12 @@ All generated backlog content is sanitized before handoff:
 |-----------------------------|---------------------------------------------------------------------|------------------|
 | System definition pack      | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`      | Phase 1          |
 | Stakeholder impact map      | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`      | Phase 1          |
-| Sensitive uses screening    | `.copilot-tracking/rai-plans/{slug}/sensitive-uses-screening.md`    | Phase 2          |
-| Use-misuse inventory        | `.copilot-tracking/rai-plans/{slug}/use-misuse-inventory.md`        | Phase 2          |
-| RAI standards mapping       | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`       | Phase 3          |
-| RAI security model addendum | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md` | Phase 4          |
-| Control surface catalog     | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`     | Phase 5          |
-| Evidence register           | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`           | Phase 5          |
-| RAI tradeoffs               | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`               | Phase 5          |
-| RAI scorecard               | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`               | Phase 6          |
+| RAI standards mapping       | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`       | Phase 2          |
+| RAI security model addendum | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md` | Phase 3          |
+| Control surface catalog     | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`     | Phase 4          |
+| Evidence register           | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`           | Phase 4          |
+| RAI tradeoffs               | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`               | Phase 4          |
+| RAI scorecard               | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`               | Phase 5          |
 
 <details>
 <summary>End-to-end assessment flow</summary>
@@ -142,8 +139,8 @@ All generated backlog content is sanitized before handoff:
 1. Security Planner completes Phase 6 with `raiEnabled: true` and AI component data in state
 2. User starts RAI Planner with `from-security-plan` prompt, providing the security plan project slug
 3. RAI Planner reads security plan state and pre-populates Phase 1 with AI components and threat count
-4. Phases 1-5 proceed with focused assessment of AI-specific risks, building on the security plan's foundation
-5. Phase 6 produces the RAI scorecard with scored dimensions and outcome determination
+4. Phases 1-4 proceed with focused assessment of AI-specific risks, building on the security plan's foundation
+5. Phase 5 produces the RAI scorecard with scored dimensions and outcome determination
 6. Backlog items are generated for identified gaps using the user's preferred platform format
 7. Assessment artifacts persist under `.copilot-tracking/rai-plans/{project-slug}/` for future reference and updates
 

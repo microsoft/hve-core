@@ -1,12 +1,11 @@
 ---
 title: Phase Reference
-description: Complete specification of the RAI Planner's six assessment phases including NIST AI RMF mapping, artifacts, and state transitions
+description: Complete specification of the RAI Planner's five assessment phases including NIST AI RMF mapping, artifacts, and state transitions
 sidebar_position: 5
 sidebar_label: Phase Reference
 keywords:
   - RAI phases
   - NIST AI RMF
-  - sensitive uses
   - RAI security model
   - RAI scorecard
 tags:
@@ -24,11 +23,10 @@ estimated_reading_time: 8
 | Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                                                       |
 |-------|-----------------------------|------------------|--------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`                                             |
-| 2     | Sensitive Uses Assessment   | Map              | `sensitive-uses-screening.md`, `use-misuse-inventory.md`                 | `sensitiveUsesComplete`, `sensitiveUsesCategories`, `restrictedUsesCleared`, `gateResults` |
-| 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
-| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
-| 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
-| 6     | Review and Handoff          | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
+| 2     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                                                          |
+| 3     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`                                                  |
+| 4     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete`                                    |
+| 5     | Review and Handoff          | Manage           | `rai-scorecard.md`, backlog items                                        | `handoffGenerated`, `scoredDimensions`                                                     |
 
 ## Phase 1: AI System Scoping
 
@@ -70,68 +68,17 @@ In `from-security-plan` mode, AI components from the security plan are pre-popul
 | `entryMode`       | set during init | unchanged                    |
 | `securityPlanRef` | null            | path (if from-security-plan) |
 
-## Phase 2: Sensitive Uses Assessment
-
-> NIST AI RMF alignment: Map
-
-### Purpose
-
-Screen the AI system against Microsoft's sensitive uses categories and identify restricted uses that require organizational escalation. This phase acts as a gate: restricted use findings may pause the assessment pending organizational review.
-
-### Inputs
-
-* System definition pack from Phase 1
-* Stakeholder impact map from Phase 1
-
-### Process
-
-The agent evaluates the system against sensitive uses categories, including:
-
-* Applications affecting access to employment, education, housing, or financial services
-* Healthcare and medical decision support
-* Criminal justice and law enforcement
-* Government services and benefits allocation
-* Content generation that could be mistaken for human-produced content
-* Surveillance or monitoring of individuals
-
-For each applicable category, the agent assesses:
-
-* Vulnerable populations affected
-* Downstream effects on individuals and groups
-* Harm severity (negligible, moderate, significant, catastrophic)
-* Whether the use falls into Microsoft's restricted uses list
-
-### Outputs
-
-* `sensitive-uses-screening.md`: Category-by-category screening results with applicability and severity
-* `use-misuse-inventory.md`: Intended use scenarios, foreseeable misuse scenarios, and harm pathways
-
-### State Transitions
-
-| Field                        | Before | After                      |
-|------------------------------|--------|----------------------------|
-| `currentPhase`               | 2      | 3                          |
-| `sensitiveUsesComplete`      | false  | true                       |
-| `sensitiveUsesCategories`    | []     | [identified categories]    |
-| `restrictedUsesCleared`      | false  | true or escalation pending |
-| `gateResults.sensitiveUses`  | null   | pass or findings           |
-| `gateResults.restrictedUses` | null   | pass or escalation         |
-
-> [!IMPORTANT]
-> If the system triggers restricted use criteria, the agent presents findings and recommends organizational escalation before proceeding. The user decides whether to continue, modify the system scope, or halt the assessment.
-
-## Phase 3: RAI Standards Mapping
+## Phase 2: RAI Standards Mapping
 
 > NIST AI RMF alignment: Govern + Measure
 
 ### Purpose
 
-Map each AI component against applicable RAI principles and NIST AI RMF subcategories. Establish the evaluation framework used in Phases 4 and 5.
+Map each AI component against applicable RAI principles and NIST AI RMF subcategories. Establish the evaluation framework used in Phases 3 and 4.
 
 ### Inputs
 
 * System definition pack from Phase 1
-* Sensitive uses screening results from Phase 2
 
 ### Process
 
@@ -162,10 +109,10 @@ The Researcher Subagent is dispatched for runtime lookups of specific regulatory
 
 | Field             | Before | After |
 |-------------------|--------|-------|
-| `currentPhase`    | 3      | 4     |
+| `currentPhase`    | 2      | 3     |
 | `standardsMapped` | false  | true  |
 
-## Phase 4: RAI Security Model Analysis
+## Phase 3: RAI Security Model Analysis
 
 > NIST AI RMF alignment: Measure
 
@@ -176,7 +123,7 @@ Identify AI-specific threats across all components using a structured threat tax
 ### Inputs
 
 * System definition pack from Phase 1
-* RAI standards mapping from Phase 3
+* RAI standards mapping from Phase 2
 * Security plan threat catalog (when using from-security-plan mode)
 
 ### Process
@@ -215,11 +162,11 @@ Risk is calculated using a likelihood-impact matrix:
 
 | Field                   | Before | After                       |
 |-------------------------|--------|-----------------------------|
-| `currentPhase`          | 4      | 5                           |
+| `currentPhase`          | 3      | 4                           |
 | `raiRiskSurfaceStarted` | false  | true                        |
 | `raiThreatCount`        | 0      | count of identified threats |
 
-## Phase 5: RAI Impact Assessment
+## Phase 4: RAI Impact Assessment
 
 > NIST AI RMF alignment: Manage
 
@@ -229,8 +176,8 @@ Evaluate control surface completeness for each identified threat. Document evide
 
 ### Inputs
 
-* RAI security model addendum from Phase 4
-* RAI standards mapping from Phase 3
+* RAI security model addendum from Phase 3
+* RAI standards mapping from Phase 2
 * Evidence provided by the user or discovered in the codebase
 
 ### Process
@@ -260,11 +207,11 @@ Common tradeoff examples:
 
 | Field                       | Before | After |
 |-----------------------------|--------|-------|
-| `currentPhase`              | 5      | 6     |
+| `currentPhase`              | 4      | 5     |
 | `impactAssessmentGenerated` | false  | true  |
 | `evidenceRegisterComplete`  | false  | true  |
 
-## Phase 6: Review and Handoff
+## Phase 5: Review and Handoff
 
 > NIST AI RMF alignment: Manage
 
@@ -274,7 +221,7 @@ Produce the RAI scorecard summarizing assessment quality across five scored dime
 
 ### Inputs
 
-* All artifacts from Phases 1-5
+* All artifacts from Phases 1-4
 * User preferences for backlog format and handoff system
 
 ### Process
@@ -300,7 +247,7 @@ The agent scores the assessment across five dimensions on a 1-5 scale:
 
 ### Backlog Generation
 
-Gaps identified across Phases 2-5 are converted to work items using the same dual-platform format as the Security Planner:
+Gaps identified across Phases 2-4 are converted to work items using the same dual-platform format as the Security Planner:
 
 * ADO work items use `WI-RAI-{NNN}` temporary IDs
 * GitHub issues use `{{RAI-TEMP-N}}` temporary IDs
@@ -315,7 +262,7 @@ Gaps identified across Phases 2-5 are converted to work items using the same dua
 
 | Field                      | Before | After                                          |
 |----------------------------|--------|------------------------------------------------|
-| `currentPhase`             | 6      | 6 (terminal)                                   |
+| `currentPhase`             | 5      | 5 (terminal)                                   |
 | `handoffGenerated`         | false  | true                                           |
 | `scoredDimensions.*`       | null   | scored values                                  |
 | `scoredDimensions.total`   | null   | sum                                            |
