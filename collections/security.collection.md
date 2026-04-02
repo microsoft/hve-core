@@ -12,7 +12,7 @@ This collection includes agents and prompts for:
 - **Vulnerability Analysis** — Identify and prioritize security vulnerabilities
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
 - **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards
-- **RAI Planning** — Responsible AI impact assessment, sensitive-use analysis, and RAI backlog generation
+- **RAI Planning** — Responsible AI impact assessment and RAI backlog generation
 
 Supporting subagents included:
 
