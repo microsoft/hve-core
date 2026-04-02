@@ -70,11 +70,14 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent                 | Purpose                                                          | Key Constraint                          |
-|-----------------------|------------------------------------------------------------------|-----------------------------------------|
-| **pr-review**         | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code        |
-| **prompt-builder**    | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing   |
-| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents |
+| Agent                          | Purpose                                                          | Key Constraint                                        |
+|--------------------------------|------------------------------------------------------------------|-------------------------------------------------------|
+| **pr-review**                  | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code                      |
+| **prompt-builder**             | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing                 |
+| **security-reviewer**          | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents          |
+| **code-review-functional**     | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save |
+| **code-review-full**           | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
+| **code-review-standards**      | Skills-based standards reviewer for local changes and PRs        | Findings must trace to a loaded skill; experimental   |
 
 ### Generator Agents
 
@@ -354,6 +357,36 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
 
 **Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-ml`) for vulnerability references. Supports incremental comparison with prior scan reports.
+
+### code-review-functional
+
+**Creates:** Optional review artifact (user-prompted after report delivery):
+
+* `.copilot-tracking/reviews/<YYYY-MM-DD>-<branch-name>.md` (full report with YAML frontmatter)
+
+**Workflow:** Branch Analysis → Functional Review → Report Generation → Save Review
+
+**Critical:** Review-only. Focuses on five areas: Logic, Edge Cases, Error Handling, Concurrency, and Contract. Accepts a configurable `baseBranch` input (default `origin/main`). Artifact save is optional and user-confirmed after the report is presented. Applies false-positive filters before recording any finding.
+
+### code-review-full
+
+**Creates:** Merged review artifacts in a normalized branch folder:
+
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+
+**Workflow:** Compute Diff → Delegate to Functional + Standards subagents → Merge Reports → Persist Artifacts
+
+**Critical:** Orchestrator-only. Delegates functional review to `code-review-functional` and standards review to `code-review-standards`, then merges both reports into a single output. Shares the computed diff with subagents to avoid duplicate git operations. Maturity: experimental.
+
+### code-review-standards
+
+**Creates:** Review artifacts in a normalized branch folder:
+
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+
+**Workflow:** Understand Intent → Lock Scope → Apply Skills → Persist Artifacts
+
+**Critical:** Every finding must trace to a loaded skill; no invented categories. Loads at most 8 skills per review, preferring those whose domain appears most frequently in the diff. Accepts pre-computed diffs from orchestrators such as the `code-review-full` prompt. Skips artifact persistence for selected code and `#file` reviews that lack branch context. Maturity: experimental.
 
 ### gen-jupyter-notebook
 

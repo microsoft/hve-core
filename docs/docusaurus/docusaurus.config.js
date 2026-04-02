@@ -21,7 +21,6 @@ const config = {
   onBrokenLinks: 'throw',
 
   markdown: {
-    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -63,7 +62,6 @@ const config = {
   ],
 
   themes: [
-    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
