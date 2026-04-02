@@ -70,7 +70,7 @@ jobs:
             pkg:npm/%40github/copilot-linux-arm64,
             pkg:npm/%40github/copilot-linux-x64,
             pkg:npm/%40github/copilot-win32-arm64,
-            pkg:npm/%40github/copilot-win32-x64
+            pkg:npm/%40github/copilot-win32-x64,
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
