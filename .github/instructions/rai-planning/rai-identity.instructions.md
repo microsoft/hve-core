@@ -1,5 +1,5 @@
 ---
-description: 'RAI Planner identity, 6-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core'
+description: 'RAI Planner identity, 5-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

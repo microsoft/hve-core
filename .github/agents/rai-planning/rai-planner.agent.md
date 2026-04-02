@@ -111,7 +111,7 @@ State JSON schema for `state.json`:
   "raiThreatCount": 0,
   "impactAssessmentGenerated": false,
   "evidenceRegisterComplete": false,
-  "handoffGenerated": false,
+  "handoffGenerated": { "ado": false, "github": false },
   "gateResults": {},
   "scoredDimensions": {
     "scopeBoundaryClarity": null,
