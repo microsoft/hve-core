@@ -476,7 +476,7 @@ Write-Output "[]"
             $customDir = Split-Path $script:CustomOutputPath -Parent
             if (Test-Path $customDir) { Remove-Item $customDir -Recurse -Force }
 
-            Invoke-LinkLanguageCheckCore -ExcludePaths @() #-OutputPath $script:CustomOutputPath | Out-Null
+            Invoke-LinkLanguageCheckCore -ExcludePaths @() -OutputPath $script:CustomOutputPath | Out-Null
 
             Test-Path $script:CustomOutputPath | Should -BeTrue
             Test-Path (Join-Path $script:RepoRoot "logs/link-lang-check-results.json") | Should -BeFalse

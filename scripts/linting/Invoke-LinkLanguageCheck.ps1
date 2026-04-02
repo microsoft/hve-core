@@ -37,16 +37,16 @@ function Invoke-LinkLanguageCheckCore {
     [CmdletBinding()]
     param(
         [string[]]$ExcludePaths = @(),
-        [string]$OutputPath = "logs/link-lang-check-results.json"
+        [string]$OutputPath   # no default; outer script always supplies the value
     )
 
-    git rev-parse --show-toplevel > $null 2>&1
+    $repoRoot = git rev-parse --show-toplevel 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Not in a git repository"
-        return 1
+    Write-Error "Not in a git repository"
+    return 1
     }
 
-    $repoRoot = git rev-parse --show-toplevel 
+    
     if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
         $OutputPath = Join-Path $repoRoot $OutputPath
     }
@@ -95,8 +95,8 @@ function Invoke-LinkLanguageCheckCore {
 
             # Ensure output directory exists
             $outputDir = Split-Path -Parent $OutputPath
-            if (-not (Test-Path $outputDir)) {
-                New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+            if ($outputDir -and -not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
             }
 
             # Write JSON to file
@@ -149,8 +149,8 @@ $(($uniqueFiles | ForEach-Object {
 
         # Ensure output directory exists
         $outputDir = Split-Path -Parent $OutputPath
-        if (-not (Test-Path $outputDir)) {
-            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        if ($outputDir -and -not (Test-Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
         }
 
         # Write JSON to file
