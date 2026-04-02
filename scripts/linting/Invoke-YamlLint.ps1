@@ -147,7 +147,7 @@ function Invoke-YamlLintCore {
         Errors      = $issues.Count
         Warnings    = 0
         HasErrors   = $hasErrors
-        Timestamp   = (Get-Date -Format "o")
+        Timestamp   = Get-StandardTimestamp
         Tool        = "actionlint"
     }
 
