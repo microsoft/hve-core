@@ -13,10 +13,9 @@ Two gates and five scored dimensions evaluate the completeness and quality of th
 
 ### Gates
 
-| Gate                        | Criteria                                                                        | Result    |
-|-----------------------------|---------------------------------------------------------------------------------|-----------|
-| G1: Sensitive Uses Coverage | All identified sensitive uses have screening results and depth tier assignments | Pass/Fail |
-| G2: Threat Coverage         | Every RAI threat has at least one control surface and evidence entry            | Pass/Fail |
+| Gate                | Criteria                                                             | Result    |
+|---------------------|----------------------------------------------------------------------|-----------|
+| G1: Threat Coverage | Every RAI threat has at least one control surface and evidence entry | Pass/Fail |
 
 Gates are binary. Failure blocks handoff progression and requires return to the relevant phase.
 
@@ -51,10 +50,9 @@ Template for the summary scorecard produced at the end of Phase 6.
 
 ### Gate Results
 
-| Gate                        | Result      | Notes   |
-|-----------------------------|-------------|---------|
-| G1: Sensitive Uses Coverage | {Pass/Fail} | {notes} |
-| G2: Threat Coverage         | {Pass/Fail} | {notes} |
+| Gate                | Result      | Notes   |
+|---------------------|-------------|---------|
+| G1: Threat Coverage | {Pass/Fail} | {notes} |
 
 ### Dimension Scores
 
@@ -107,7 +105,6 @@ Tags applied to work items for tracking and filtering across backlog systems.
 | `rai:inclusiveness`      | Inclusiveness-related work             | Control or finding relates to Inclusiveness principle  |
 | `rai:transparency`       | Transparency-related work              | Control or finding relates to Transparency principle   |
 | `rai:accountability`     | Accountability-related work            | Control or finding relates to Accountability principle |
-| `rai:sensitive-use`      | Sensitive use screening item           | Originates from sensitive use identification           |
 | `rai:tradeoff`           | Tradeoff resolution item               | Originates from tradeoff documentation                 |
 | `rai:cross-ref-security` | Cross-references Security Planner item | Overlaps with or extends a Security Planner work item  |
 
@@ -228,11 +225,11 @@ Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` out
 
 Three tiers control how RAI work items reach the target backlog system.
 
-| Tier    | Description                                              | Applies When                                                         |
-|---------|----------------------------------------------------------|----------------------------------------------------------------------|
-| Full    | Agent creates work items without human approval          | Enhancement items (Low priority), documentation updates              |
-| Partial | Agent drafts work items for human review before creation | Control implementation (Medium-High), monitoring setup               |
-| Manual  | Agent provides recommendations; human creates items      | Remediation (Critical-High), sensitive use items, tradeoff decisions |
+| Tier    | Description                                              | Applies When                                            |
+|---------|----------------------------------------------------------|---------------------------------------------------------|
+| Full    | Agent creates work items without human approval          | Enhancement items (Low priority), documentation updates |
+| Partial | Agent drafts work items for human review before creation | Control implementation (Medium-High), monitoring setup  |
+| Manual  | Agent provides recommendations; human creates items      | Remediation (Critical-High), tradeoff decisions         |
 
 Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Store the selected preference in the session state JSON under `userPreferences.autonomyTier`.
 
@@ -245,7 +242,6 @@ Derive work item priority and autonomy tier from assessment findings.
 | Principle score 1                        | Critical           | Manual        |
 | Principle score 2                        | High               | Manual        |
 | High-likelihood high-impact evidence gap | Critical           | Manual        |
-| Sensitive use without controls           | High               | Partial       |
 | Tradeoff requiring implementation        | Medium             | Partial       |
 | Control surface gap (Prevent)            | High               | Partial       |
 | Control surface gap (Detect)             | Medium             | Partial       |

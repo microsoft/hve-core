@@ -15,7 +15,7 @@ Security and planning agents included (via security collection):
 
 - **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
 - **SSSC Planner** — Supply chain security assessment against OpenSSF Scorecard, SLSA, and SBOM standards
-- **RAI Planner** — Responsible AI assessment with sensitive uses screening, impact assessment, and dual-format backlog handoff
+- **RAI Planner** — Responsible AI assessment with impact assessment and dual-format backlog handoff
 
 Supporting subagents included:
 
