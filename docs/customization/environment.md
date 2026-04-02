@@ -137,7 +137,8 @@ Each entry maps a directory path to `true` to enable scanning:
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
-    ".github/skills/shared": true
+    ".github/skills/shared": true,
+    ".github/skills/coding-standards": true
   }
 }
 ```
