@@ -30,8 +30,11 @@ describe('collectionCards', () => {
     'design-thinking',
     'experimental',
     'github',
+    'gitlab',
     'hve-core',
+    'jira',
     'project-planning',
+    'rai-planning',
     'security',
   ];
 

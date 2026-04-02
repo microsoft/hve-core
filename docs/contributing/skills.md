@@ -526,6 +526,7 @@ npm run lint:ps               # Validate PowerShell scripts (when present)
 npm run lint:md               # Validate markdown formatting
 npm run validate:skills       # Validate skill directory structure
 npm run test:ps               # Run PowerShell unit tests
+npm run docs:test             # Validate Docusaurus artifact counts
 ```
 
 All checks **MUST** pass before merge.

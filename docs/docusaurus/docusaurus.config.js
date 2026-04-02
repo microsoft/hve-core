@@ -6,6 +6,9 @@ import * as path from 'path';
 
 const collectionsDir = path.resolve(__dirname, '../../collections');
 
+/**
+ * @param {string} name
+ */
 function countYamlPaths(name) {
   const yamlPath = path.join(collectionsDir, `${name}.collection.yml`);
   const content = fs.readFileSync(yamlPath, 'utf-8');
@@ -14,8 +17,8 @@ function countYamlPaths(name) {
 
 const collectionNames = [
   'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'hve-core', 'project-planning',
-  'security', 'hve-core-all',
+  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
+  'project-planning', 'rai-planning', 'security', 'hve-core-all',
 ];
 const collectionCounts = Object.fromEntries(
   collectionNames.map((n) => [n, countYamlPaths(n)]),
@@ -44,7 +47,6 @@ const config = {
   },
 
   markdown: {
-    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },
@@ -86,7 +88,6 @@ const config = {
   ],
 
   themes: [
-    '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
       /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */

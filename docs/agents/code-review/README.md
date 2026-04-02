@@ -102,13 +102,13 @@ Findings are severity-ordered (Critical, High, Medium, Low) with concrete code f
 
 Enforces project-defined coding standards through dynamically loaded skills. The agent is language-agnostic: it scans the workspace for `**/SKILL.md` files, matches them against the languages in the diff, and loads up to 8 relevant skills per review.
 
-Skills provide the domain-specific checklists. The standards agent provides the review protocol, output format, and verdict logic. See [Language Skills](language-skills) for details on the built-in skills and how to create your own.
+Skills provide the domain-specific checklists. The standards agent provides the review protocol, output format, and verdict logic. See [Language Skills](language-skills.md) for details on the built-in skills and how to create your own.
 
 ### Code Review Full (Orchestrator)
 
 Runs both agents in sequence and produces a merged report:
 
-1. Computes the diff once using the shared [diff computation protocol](../../contributing/instructions)
+1. Computes the diff once using the shared [diff computation protocol](../../contributing/instructions.md)
 2. Invokes Code Review Functional with the diff
 3. Invokes Code Review Standards with the diff (and optional story reference)
 4. Merges findings, deduplicates overlaps, and applies the stricter verdict
@@ -237,7 +237,7 @@ The agents work with any programming language. Standards enforcement requires sk
 
 ## Extending with Custom Skills
 
-The standards agent discovers skills dynamically at review time. You extend coverage by adding `SKILL.md` files to your repository without modifying the agent itself. See [Language Skills](language-skills) for the full guide on built-in skills, skill stacking, and authoring enterprise-specific standards.
+The standards agent discovers skills dynamically at review time. You extend coverage by adding `SKILL.md` files to your repository without modifying the agent itself. See [Language Skills](language-skills.md) for the full guide on built-in skills, skill stacking, and authoring enterprise-specific standards.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
