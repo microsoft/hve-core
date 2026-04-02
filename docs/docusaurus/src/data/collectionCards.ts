@@ -87,7 +87,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'security',
     description: 'Security review, planning, incident response, and risk assessment',
-    artifacts: 47,
+    artifacts: 48,
     maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
@@ -98,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 228,
+  'hve-core-all': 229,
 };
