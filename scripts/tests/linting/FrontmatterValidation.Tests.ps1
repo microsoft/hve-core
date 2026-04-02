@@ -127,12 +127,10 @@ Describe 'FileValidationResult Class' -Tag 'Unit' {
         }
 
         It 'Initializes with current timestamp' {
-            $before = [datetime]::UtcNow
             $result = New-FileValidationResult -FilePath 'test.md'
-            $after = [datetime]::UtcNow
 
-            $result.ValidatedAt | Should -BeGreaterOrEqual $before
-            $result.ValidatedAt | Should -BeLessOrEqual $after
+            $result.ValidatedAt | Should -Not -BeNullOrEmpty
+            $result.ValidatedAt | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
         }
 
         It 'Initializes Issues as empty list' {
@@ -346,6 +344,16 @@ Describe 'ValidationSummary Class' -Tag 'Unit' {
             $hash = $summary.ToHashtable()
 
             $hash.ContainsKey('duration') | Should -BeTrue
+        }
+
+        It 'Includes Timestamp using Get-StandardTimestamp in hashtable' {
+            $summary = New-ValidationSummary
+            $summary.Complete()
+
+            $hash = $summary.ToHashtable()
+
+            $hash.ContainsKey('Timestamp') | Should -BeTrue
+            $hash['Timestamp'] | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
         }
     }
 }
