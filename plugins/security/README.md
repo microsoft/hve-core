@@ -37,6 +37,7 @@ Skills included:
 - **OWASP Top 10** — OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
 - **OWASP LLM Top 10** — OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
 - **OWASP Agentic Top 10** — OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
+- **OWASP Docker Top 6** - OWASP Docker Top 6 vulnerability knowledge base for identifying, assessing, and remediating security risks in containerized Docker environments
 - **Security Reviewer Formats** — Format specifications and data contracts for the security reviewer orchestrator and its subagents
 
 ## Install
