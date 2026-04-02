@@ -19,7 +19,7 @@
     Classes must be imported using 'using module' syntax at the top of scripts:
     using module ./Modules/SecurityClasses.psm1
 #>
-
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 class DependencyViolation {
     <#
     .SYNOPSIS
@@ -130,7 +130,7 @@ class ComplianceReport {
     [hashtable] ToHashtable() {
         return @{
             ScanPath             = $this.ScanPath
-            Timestamp            = $this.Timestamp.ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+            Timestamp            = Get-StandardTimestamp
             TotalFiles           = $this.TotalFiles
             ScannedFiles         = $this.ScannedFiles
             TotalDependencies    = $this.TotalDependencies

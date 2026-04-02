@@ -809,7 +809,7 @@ function Get-ComplianceReportData {
     $report.Metadata = @{
         PowerShellVersion  = $PSVersionTable.PSVersion.ToString()
         Platform           = $PSVersionTable.Platform
-        ScanTimestamp      = $report.Timestamp.ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+        ScanTimestamp      = Get-StandardTimestamp
         IncludedTypes      = $IncludeTypes
         ExcludedPaths      = $ExcludePaths
         RemediationEnabled = $Remediate.IsPresent

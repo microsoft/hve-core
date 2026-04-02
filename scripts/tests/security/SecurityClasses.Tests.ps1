@@ -192,7 +192,7 @@ Describe 'ComplianceReport' -Tag 'Unit' {
         }
 
         It 'Formats Timestamp as ISO 8601 string' {
-            $script:ht['Timestamp'] | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+            $script:ht['Timestamp'] | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
         }
 
         It 'Preserves numeric values' {
