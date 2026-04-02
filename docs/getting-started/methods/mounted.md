@@ -183,7 +183,8 @@ After rebuild, update `.vscode/settings.json`:
   },
   "chat.agentSkillsLocations": {
     "/workspaces/hve-core/.github/skills": true,
-    "/workspaces/hve-core/.github/skills/shared": true
+    "/workspaces/hve-core/.github/skills/shared": true,
+    "/workspaces/hve-core/.github/skills/coding-standards": true
   }
 }
 ```
@@ -222,7 +223,8 @@ After rebuild, update `.vscode/settings.json`:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true
+          "/workspaces/hve-core/.github/skills/shared": true,
+          "/workspaces/hve-core/.github/skills/coding-standards": true
         }
       }
     }
@@ -283,7 +285,8 @@ ls /workspaces/hve-core/.github/agents
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true
+          "/workspaces/hve-core/.github/skills/shared": true,
+          "/workspaces/hve-core/.github/skills/coding-standards": true
         }
       }
     }

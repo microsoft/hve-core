@@ -101,6 +101,94 @@ Describe 'Update-JsonVersion' -Tag 'Unit' {
         $result = Get-Content -Raw $filePath | ConvertFrom-Json
         $result.'.' | Should -Be '4.0.0'
     }
+
+    It 'Updates both version and packages[""].version in package-lock.json' {
+        $filePath = Join-Path $script:TempDir 'package-lock.json'
+        @{
+            name            = 'hve-core'
+            version         = '1.0.0'
+            lockfileVersion = 3
+            packages        = @{ '' = @{ version = '1.0.0'; name = 'hve-core' } }
+        } | ConvertTo-Json -Depth 10 | Set-Content $filePath
+
+        $targetVersion = '5.0.0'
+        Update-JsonVersion -FilePath $filePath -Description 'package-lock.json' -AsHashtable -Transform {
+            param($j)
+            $j['version'] = $targetVersion
+            if ($j.ContainsKey('packages') -and $j['packages'].ContainsKey('')) {
+                $j['packages']['']['version'] = $targetVersion
+            }
+            $j
+        }
+
+        $result = Get-Content -Raw $filePath | ConvertFrom-Json -Depth 10 -AsHashtable
+        $result['version'] | Should -Be '5.0.0'
+        $result['packages']['']['version'] | Should -Be '5.0.0'
+        $result['name'] | Should -Be 'hve-core'
+    }
+
+    It 'Updates only top-level version when packages[""] is absent' {
+        $filePath = Join-Path $script:TempDir 'lock-no-root-pkg.json'
+        @{
+            name            = 'hve-core'
+            version         = '1.0.0'
+            lockfileVersion = 3
+        } | ConvertTo-Json -Depth 10 | Set-Content $filePath
+
+        $targetVersion = '6.0.0'
+        Update-JsonVersion -FilePath $filePath -Description 'package-lock.json' -AsHashtable -Transform {
+            param($j)
+            $j['version'] = $targetVersion
+            if ($j.ContainsKey('packages') -and $j['packages'].ContainsKey('')) {
+                $j['packages']['']['version'] = $targetVersion
+            }
+            $j
+        }
+
+        $result = Get-Content -Raw $filePath | ConvertFrom-Json -Depth 10 -AsHashtable
+        $result['version'] | Should -Be '6.0.0'
+        $result['name'] | Should -Be 'hve-core'
+    }
+
+    It 'Throws when file contains malformed JSON' {
+        $filePath = Join-Path $script:TempDir 'malformed.json'
+        Set-Content -Path $filePath -Value '{ invalid json }'
+
+        { Update-JsonVersion -FilePath $filePath -Description 'malformed' -Transform { param($j) $j } } |
+            Should -Throw
+    }
+
+    It 'Throws when file is empty' {
+        $filePath = Join-Path $script:TempDir 'empty.json'
+        Set-Content -Path $filePath -Value ''
+
+        { Update-JsonVersion -FilePath $filePath -Description 'empty' -Transform { param($j) $j } } |
+            Should -Throw
+    }
+
+    It 'Propagates errors thrown by the transform block' {
+        $filePath = Join-Path $script:TempDir 'transform-err.json'
+        @{ version = '1.0.0' } | ConvertTo-Json | Set-Content $filePath
+
+        { Update-JsonVersion -FilePath $filePath -Description 'transform-err' -Transform {
+            param($j) throw 'deliberate transform error'
+        } } | Should -Throw '*deliberate transform error*'
+    }
+
+    It 'Throws when file is read-only' -Skip:($IsWindows -eq $false -and (id -u) -eq 0) {
+        $filePath = Join-Path $script:TempDir 'readonly.json'
+        @{ version = '1.0.0' } | ConvertTo-Json | Set-Content $filePath
+        Set-ItemProperty -Path $filePath -Name IsReadOnly -Value $true
+
+        try {
+            { Update-JsonVersion -FilePath $filePath -Description 'readonly' -Transform {
+                param($j) $j.version = '2.0.0'; $j
+            } } | Should -Throw
+        }
+        finally {
+            Set-ItemProperty -Path $filePath -Name IsReadOnly -Value $false
+        }
+    }
 }
 
 Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
@@ -131,6 +219,12 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
             ConvertTo-Json | Set-Content (Join-Path $script:FakeRoot 'plugins/ado/.github/plugin/plugin.json')
         @{ '.' = '1.0.0' } |
             ConvertTo-Json | Set-Content (Join-Path $script:FakeRoot '.release-please-manifest.json')
+        @{
+            name            = 'hve-core'
+            version         = '1.0.0'
+            lockfileVersion = 3
+            packages        = @{ '' = @{ version = '1.0.0'; name = 'hve-core' } }
+        } | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $script:FakeRoot 'package-lock.json')
     }
 
     AfterAll {
@@ -156,6 +250,10 @@ Describe 'Update-VersionFiles script execution' -Tag 'Unit' {
 
         $manifest = Get-Content -Raw (Join-Path $script:FakeRoot '.release-please-manifest.json') | ConvertFrom-Json
         $manifest.'.' | Should -Be '2.5.0'
+
+        $lock = Get-Content -Raw (Join-Path $script:FakeRoot 'package-lock.json') | ConvertFrom-Json -Depth 10 -AsHashtable
+        $lock['version'] | Should -Be '2.5.0'
+        $lock['packages']['']['version'] | Should -Be '2.5.0'
     }
 
     It 'Updates multiple plugin.json files under plugins/' {
