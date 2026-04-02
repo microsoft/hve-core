@@ -308,21 +308,20 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### rai-planner
 
-**Creates:** Ten artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
+**Creates:** Eight artifacts across 5 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
 
 * `state.json` (session state for resume capability)
 * `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
-* `sensitive-uses-screening.md`, `use-misuse-inventory.md` (Phase 2: Sensitive Uses Assessment)
-* `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
-* `rai-security-model-addendum.md` (Phase 4: RAI Security Model Analysis)
-* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
-* `rai-scorecard.md` and backlog items (Phase 6: Review and Handoff)
+* `rai-standards-mapping.md` (Phase 2: RAI Standards Mapping)
+* `rai-security-model-addendum.md` (Phase 3: RAI Security Model Analysis)
+* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 4: RAI Impact Assessment)
+* `rai-scorecard.md` and backlog items (Phase 5: Review and Handoff)
 
-**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Sensitive Uses Assessment (Map) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
+**Workflow:** Five sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
 
 **Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
 
-**Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Screens for sensitive uses and restricted uses requiring escalation. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
+**Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Six instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
 
 ### sssc-planner
 
