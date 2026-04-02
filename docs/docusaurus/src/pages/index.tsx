@@ -13,6 +13,10 @@ export default function Home(): React.ReactElement {
       <HeroSection
         title="HVE Core"
         subtitle="AI-Driven Software Development Across the Full Lifecycle"
+        cta={[
+          { label: 'Install the Extension', href: 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core', primary: true },
+          { label: 'Browse Collections', href: '/docs/getting-started/collections' },
+        ]}
       />
 
       <main>
