@@ -9,4 +9,4 @@ This collection includes agents for:
 - **Jupyter Notebook Generation** — Build data analysis notebooks with visualizations and documentation
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
-- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
+- **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
