@@ -1,7 +1,7 @@
 {
   "name": "rai-planning",
   "description": "Responsible AI assessment and standards-aligned impact analysis",
-  "version": "3.3.27",
+  "version": "3.3.41",
   "agents": [
     "agents/hve-core/subagents/",
     "agents/rai-planning/"
