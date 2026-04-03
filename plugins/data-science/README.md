@@ -4,7 +4,7 @@
 Data specification generation, Jupyter notebooks, and Streamlit dashboards
 
 > [!CAUTION]
-> This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss sensitive use categories, or produce recommendations that are incomplete or inappropriate for your context.
+> This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
 
 ## Overview
 
@@ -19,7 +19,7 @@ This collection includes agents for:
 - **Jupyter Notebook Generation** — Build data analysis notebooks with visualizations and documentation
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
-- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
+- **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
 
 ## Install
 
@@ -54,10 +54,9 @@ copilot plugin install data-science@hve-core
 | python-script.instructions         | Instructions for Python scripting implementation - Brought to you by microsoft/hve-core                                                                                                                                                                     |
 | uv-projects.instructions           | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | rai-backlog-handoff.instructions   | RAI review and backlog handoff for Phase 6: review rubric, RAI scorecard, dual-format backlog generation                                                                                                                                                    |
-| rai-identity.instructions          | RAI Planner identity, 6-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core                                                                                                                                  |
+| rai-identity.instructions          | RAI Planner identity, 5-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core                                                                                                                                  |
 | rai-impact-assessment.instructions | RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation                                                                                                                            |
 | rai-security-model.instructions    | RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol                                                                                                                         |
-| rai-sensitive-uses.instructions    | Sensitive Uses assessment for Phase 2: screening categories, restricted uses gate, and depth tier assignment                                                                                                                                                |
 | rai-standards.instructions         | Embedded RAI standards for Phase 3: Microsoft RAI Standard v2 principles and NIST AI RMF subcategory mappings                                                                                                                                               |
 | rai-capture-coaching.instructions  | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods - Brought to you by microsoft/hve-core                                                                                                          |
 | hve-core-location.instructions     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
