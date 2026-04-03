@@ -239,7 +239,7 @@ function Invoke-CopyrightHeaderCheck {
 
     # Build output object
     $output = @{
-        timestamp = (Get-Date -Format "o")
+        timestamp = Get-StandardTimestamp
         totalFiles = $filesToCheck.Count
         filesWithHeaders = $filesWithHeaders
         filesMissingHeaders = $filesMissingHeaders
