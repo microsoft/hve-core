@@ -570,6 +570,39 @@ description: 'Skill with co-located tests directory'
             $result.IsValid | Should -BeTrue
             $result.Warnings | Should -HaveCount 0
         }
+
+        It 'Does not warn about Python environment directories in Python skills' {
+            $frontmatter = @"
+---
+name: python-env-dirs
+description: 'Python skill with environment directories'
+---
+
+# Python Env Dirs
+"@
+            $dir = New-TestSkillDirectory -SkillName 'python-env-dirs' -FrontmatterContent $frontmatter -WithPyprojectToml -OptionalDirs @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Still warns about Python environment directories in non-Python skills' {
+            $frontmatter = @"
+---
+name: non-python-env-dir
+description: 'Non-Python skill with venv directory'
+---
+
+# Non-Python Env Dir
+"@
+            $dir = New-TestSkillDirectory -SkillName 'non-python-env-dir' -FrontmatterContent $frontmatter -OptionalDirs @('.venv')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 1
+            $result.Warnings[0] | Should -BeLike "*Unrecognized subdirectory '.venv'*"
+        }
     }
 
     Context 'Result object structure' {
