@@ -188,7 +188,8 @@ SLSA Build Track level data derived from the SLSA specification, licensed under 
 Specification License 1.0. Source: <https://slsa.dev/spec/>
 
 OpenSSF Best Practices Badge criteria derived from the CII Best Practices Badge project,
-licensed under MIT. Source: <https://www.bestpractices.dev/>
+licensed under MIT (criteria) and CC BY 3.0+ (documentation).
+Source: <https://www.bestpractices.dev/>
 
 Sigstore maturity data derived from the Sigstore project, licensed under Apache 2.0.
 Source: <https://www.sigstore.dev/>

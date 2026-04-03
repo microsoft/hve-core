@@ -1,7 +1,12 @@
 ---
 name: jira
 description: 'Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. - Brought to you by microsoft/hve-core'
+license: MIT
 compatibility: 'Requires Python 3.11+ and Jira credentials in environment variables'
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-03-24"
 ---
 
 # Jira Skill

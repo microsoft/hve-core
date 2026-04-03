@@ -1,18 +1,22 @@
 THIRD-PARTY-NOTICES
 
 This file contains third-party attribution notices for content embedded in hve-core
-instruction files. These notices supplement inline attribution blocks within individual
-instruction files.
+instruction and skill files. These notices supplement inline attribution blocks within
+individual files.
 
 ---
 
-OWASP Top 10 (2025) and OWASP Top 10 for LLM Applications (2025)
+OWASP Top 10 (2025), OWASP Top 10 for LLM Applications (2025), and OWASP Top 10 for Agentic Applications (2026)
+Copyright: © OWASP Foundation
 License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
-Source: https://owasp.org/www-project-top-ten/
-Source: https://genai.owasp.org/
-Usage: Category names, IDs, and condensed descriptions embedded in security instruction
-files. Original descriptions have been summarized.
-OWASP is a registered trademark of the OWASP Foundation.
+License URI: https://creativecommons.org/licenses/by-sa/4.0/
+Source: https://owasp.org/Top10/2025/
+Source: https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/
+Source: https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+Usage: Category names, IDs, and condensed descriptions in security instruction files.
+Vulnerability reference documents in skill files restructured into agent-consumable
+format with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation.
 
 ---
 
@@ -76,5 +80,5 @@ Usage: Minimum element names referenced in supply chain security instruction fil
 
 ---
 
-OpenSSF is a registered trademark of the Linux Foundation.
-OWASP is a registered trademark of the OWASP Foundation.
+OpenSSF® is a registered trademark of the Linux Foundation.
+OWASP® is a registered trademark of the OWASP Foundation.

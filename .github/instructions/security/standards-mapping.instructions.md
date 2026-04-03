@@ -190,15 +190,15 @@ Collect findings from the output path and incorporate them into the component's 
 This table maps operational buckets to their baseline standard references. Use these as starting points and refine during Phase 3 analysis.
 
 | Bucket              | OWASP                        | NIST 800-53    | CIS (delegated) |
-|---------------------|------------------------------|----------------|------------------|
-| infra               | A05, A06                     | CM, PE, SC, SI | via delegation   |
-| devops/platform-ops | A05, A06, A08                | CA, CM, SA, SI | via delegation   |
-| build               | A06, A08                     | SA, SI         | via delegation   |
-| messaging           | A01, A03, A08                | AC, SC, SI     | via delegation   |
-| data                | A01, A02, A03                | AC, AU, SC, SI | via delegation   |
-| web/UI/reporting    | A01, A02, A03, A05, A07, A10 | AC, IA, SC, SI | via delegation   |
-| identity/auth       | A01, A02, A07                | AC, IA, PS     | via delegation   |
-| ai-ml               | A04, A06, A08                | SA, SI, RA     | via delegation   |
+|---------------------|------------------------------|----------------|-----------------|
+| infra               | A05, A06                     | CM, PE, SC, SI | via delegation  |
+| devops/platform-ops | A05, A06, A08                | CA, CM, SA, SI | via delegation  |
+| build               | A06, A08                     | SA, SI         | via delegation  |
+| messaging           | A01, A03, A08                | AC, SC, SI     | via delegation  |
+| data                | A01, A02, A03                | AC, AU, SC, SI | via delegation  |
+| web/UI/reporting    | A01, A02, A03, A05, A07, A10 | AC, IA, SC, SI | via delegation  |
+| identity/auth       | A01, A02, A07                | AC, IA, PS     | via delegation  |
+| ai-ml               | A04, A06, A08                | SA, SI, RA     | via delegation  |
 
 > [!NOTE]
 > The ai-ml row applies only when `raiEnabled` is true. When applicable, also map components against OWASP LLM Top 10 and NIST AI RMF subcategories from the sections above.
@@ -213,7 +213,7 @@ For each component, produce a standards mapping block following this structure:
 **Applicable Standards:**
 - OWASP: {items with justification}
 - NIST: {families with justification}
-- CIS: {controls with justification}
+- CIS: {delegated — include Researcher Subagent findings or N/A}
 
 **WAF/CAF Findings:** {researcher subagent results or N/A}
 
@@ -225,7 +225,8 @@ Include justification for each mapped standard, explaining why the control is re
 ## Third-Party Attribution
 
 OWASP® Top 10 (2025) and OWASP® Top 10 for LLM Applications (2025) content is derived
-from works by the OWASP Foundation, licensed under CC BY-SA 4.0.
+from works by the OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
 Sources: <https://owasp.org/www-project-top-ten/>, <https://genai.owasp.org/>
 Modifications: Descriptions condensed to single-sentence summaries.
 OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.

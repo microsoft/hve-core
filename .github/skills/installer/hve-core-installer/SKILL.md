@@ -1,6 +1,11 @@
 ---
 name: hve-core-installer
 description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+license: MIT
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-04-01"
 ---
 
 # HVE-Core Installer Skill

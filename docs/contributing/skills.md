@@ -145,6 +145,33 @@ description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - 
 | Conventions | Use `[]` for positional arguments, `key=value` for named parameters, `{option1\|option2}` for enumerations, `...` for free-form text |
 | Example     | `"input=video.mp4 [--fps={5\|10\|15\|24}] [--width=1280]"`                                                                           |
 
+**`license`** (string, optional)
+
+| Property | Value                                                                                         |
+|----------|-----------------------------------------------------------------------------------------------|
+| Purpose  | SPDX license identifier for the skill content                                                 |
+| Default  | Repository license when omitted                                                               |
+| Use case | Skills that incorporate third-party content under a specific license (e.g. CC-BY-SA-4.0, MIT) |
+| Example  | `MIT`                                                                                         |
+
+**`metadata`** (object, optional)
+
+| Property | Value                                                                              |
+|----------|-------------------------------------------------------------------------------------|
+| Purpose  | Provenance and versioning metadata for the skill                                   |
+| Use case | Skills that track authorship, upstream framework versions, or source documentation |
+
+Recognized metadata fields:
+
+| Field                | Type   | Description                                                  |
+|----------------------|--------|--------------------------------------------------------------|
+| `authors`            | string | Author or organization responsible for the skill content     |
+| `spec_version`       | string | Version of the skill specification format                    |
+| `framework_revision` | string | Version of the upstream framework the skill is based on      |
+| `last_updated`       | string | Date the skill was last updated in ISO 8601 format           |
+| `skill_based_on`     | string | URL of the specification the skill structure is based on     |
+| `content_based_on`   | string | URL of the upstream content the skill references derive from |
+
 ### Invocation Control Matrix
 
 | `user-invocable` | `disable-model-invocation` | `/` Menu | Semantic Loading | Invocation Method           |
@@ -167,6 +194,25 @@ argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
 ```
 
 This example demonstrates a skill configured for both automatic semantic loading and manual `/pr-reference` invocation, with argument hints displayed in the prompt picker.
+
+### Frontmatter Example with License and Metadata
+
+```yaml
+---
+name: owasp-llm
+description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base - Brought to you by microsoft/hve-core'
+license: CC-BY-SA-4.0
+user-invocable: false
+metadata:
+  authors: "OWASP LLM Applications Security Initiative"
+  spec_version: "1.0"
+  framework_revision: "1.0.0"
+  last_updated: "2026-02-13"
+  content_based_on: "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"
+---
+```
+
+This example demonstrates a skill incorporating third-party content with provenance tracking. Skills referencing external frameworks should include `license` to identify the content license and `metadata` to track source attribution.
 
 ## Collection Entry Requirements
 
@@ -491,6 +537,8 @@ Before submitting your skill, verify:
 * [ ] Optional: `user-invocable` set appropriately (default `true` works for most skills)
 * [ ] Optional: `disable-model-invocation` set appropriately (default `false` works for most skills)
 * [ ] Optional: `argument-hint` provides useful input guidance if set
+* [ ] Optional: `license` set when skill content uses a specific license
+* [ ] Optional: `metadata` includes provenance fields when skill references external content
 
 ### Scripts (when included)
 
