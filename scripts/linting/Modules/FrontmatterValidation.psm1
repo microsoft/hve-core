@@ -11,7 +11,7 @@
     Author: HVE Core Team
 #>
 
-Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1')
 
 #region Classes
 
@@ -194,7 +194,7 @@ class ValidationSummary {
 
     [hashtable] ToHashtable() {
         return @{
-            timestamp         = Get-StandardTimestamp
+            Timestamp         = Get-StandardTimestamp
             totalFiles        = $this.TotalFiles
             filesWithErrors   = $this.FilesWithErrors
             filesWithWarnings = $this.FilesWithWarnings
