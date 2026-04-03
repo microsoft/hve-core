@@ -1,7 +1,7 @@
 ---
 name: owasp-llm
 description: OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in large language model systems - Brought to you by microsoft/hve-core.
-license: MIT
+license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
   authors: "OWASP LLM Applications Security Initiative"
