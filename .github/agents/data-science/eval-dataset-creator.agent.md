@@ -233,17 +233,17 @@ Generate the three supporting documents in `data/evaluation/docs/`, then present
 
 ## Agent Characteristics
 
-| Characteristic        | Value  | Metrics Implications                      |
-|-----------------------|--------|-------------------------------------------|
+| Characteristic         | Value  | Metrics Implications                           |
+|------------------------|--------|------------------------------------------------|
 | Uses grounding sources | Yes/No | Groundedness, Relevance, Response Completeness |
-| Uses external tools    | Yes/No | Tool Call Accuracy                        |
+| Uses external tools    | Yes/No | Tool Call Accuracy                             |
 
 ## Selected Metrics
 
 ### Core Metrics (All Agents)
 
-| Metric           | Priority | Rationale   |
-|------------------|----------|-------------|
+| Metric            | Priority | Rationale   |
+|-------------------|----------|-------------|
 | Intent Resolution | High     | {rationale} |
 | Task Adherence    | High     | {rationale} |
 | Latency           | Medium   | {rationale} |
@@ -253,15 +253,15 @@ Generate the three supporting documents in `data/evaluation/docs/`, then present
 
 | Metric                | Priority   | Rationale   |
 |-----------------------|------------|-------------|
-| Groundedness           | {priority} | {rationale} |
-| Relevance              | {priority} | {rationale} |
-| Response Completeness  | {priority} | {rationale} |
+| Groundedness          | {priority} | {rationale} |
+| Relevance             | {priority} | {rationale} |
+| Response Completeness | {priority} | {rationale} |
 
 ### Tool-Based Metrics
 
 | Metric             | Priority   | Rationale   |
 |--------------------|------------|-------------|
-| Tool Call Accuracy  | {priority} | {rationale} |
+| Tool Call Accuracy | {priority} | {rationale} |
 
 ## Metric Definitions Reference
 
@@ -295,10 +295,10 @@ Selection Rationale: {Why this tool fits the persona and requirements}
 
 ## Tool Comparison
 
-| Tool                 | Evaluation Modes | Supported Metrics                                                                                          | Recommendation                                  |
-|----------------------|------------------|------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| MCS Agent Evaluation | Manual, Batch    | Relevance, Response Completeness, Groundedness                                                             | Best for: POC, manual testing, Citizen Developers |
-| Azure AI Foundry     | Manual, Batch    | Intent Resolution, Task Adherence, Tool Call Accuracy, Groundedness, Relevance, Response Completeness, Latency, Cost, Risk/Safety, Custom | Best for: Enterprise, Pro-Code Developers        |
+| Tool                 | Evaluation Modes | Supported Metrics                                                                                                                         | Recommendation                                    |
+|----------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| MCS Agent Evaluation | Manual, Batch    | Relevance, Response Completeness, Groundedness                                                                                            | Best for: POC, manual testing, Citizen Developers |
+| Azure AI Foundry     | Manual, Batch    | Intent Resolution, Task Adherence, Tool Call Accuracy, Groundedness, Relevance, Response Completeness, Latency, Cost, Risk/Safety, Custom | Best for: Enterprise, Pro-Code Developers         |
 
 ## Getting Started
 
