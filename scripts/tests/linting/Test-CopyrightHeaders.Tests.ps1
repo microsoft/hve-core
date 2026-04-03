@@ -598,6 +598,11 @@ Write-Host "Test"
         $results.PSObject.Properties.Name | Should -Contain 'results'
     }
 
+    It 'Timestamp field contains a UTC ISO 8601 value ending in Z' {
+        $raw = Get-Content $script:OutputPath -Raw
+        $raw | Should -Match '"timestamp":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z"'
+    }
+
     It 'Contains compliance percentage' {
         $results = Get-Content $script:OutputPath | ConvertFrom-Json
 
