@@ -1,6 +1,10 @@
 ---
 name: Evaluation Dataset Creator
 description: 'Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation - Brought to you by microsoft/hve-core'
+tools:
+  - read
+  - editFiles
+  - createFile
 ---
 
 # Evaluation Dataset Creator
