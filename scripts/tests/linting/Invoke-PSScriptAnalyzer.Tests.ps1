@@ -292,7 +292,7 @@ Describe 'Output Generation' -Tag 'Unit' {
 
             $summaryFile = Join-Path (Split-Path $script:OutputFile -Parent) 'psscriptanalyzer-summary.json'
             $summaryRaw = Get-Content $summaryFile -Raw
-            $summary = Get-Content $summaryFile | ConvertFrom-Json
+            $summary = $summaryRaw | ConvertFrom-Json
 
             $summary.Timestamp | Should -Not -BeNullOrEmpty
             $summaryRaw | Should -Match '"Timestamp"\s*:\s*"[^"]+Z"'
