@@ -95,14 +95,14 @@ See [entry modes](entry-modes.md) for detailed guidance on when to choose each m
 
 ## Related Pages
 
-| Page                                       | Description                                                            |
-|--------------------------------------------|------------------------------------------------------------------------|
-| [Why RAI planning?](why-rai-planning.md)   | The case for structured RAI assessment over ad-hoc reviews             |
-| [Agent overview](agent-overview.md)        | Architecture, state management, and interaction model                  |
-| [Entry modes](entry-modes.md)              | Choosing between capture, from-prd, and from-security-plan             |
-| [Phase reference](phase-reference.md)      | Detailed inputs, outputs, and state transitions for all six phases     |
-| [Handoff pipeline](handoff-pipeline.md)    | Backlog generation, review summary, and the Security-to-RAI pipeline   |
-| [Security planning overview](../security/) | The Security Planner agent that feeds into RAI assessment              |
+| Page                                       | Description                                                          |
+|--------------------------------------------|----------------------------------------------------------------------|
+| [Why RAI planning?](why-rai-planning.md)   | The case for structured RAI assessment over ad-hoc reviews           |
+| [Agent overview](agent-overview.md)        | Architecture, state management, and interaction model                |
+| [Entry modes](entry-modes.md)              | Choosing between capture, from-prd, and from-security-plan           |
+| [Phase reference](phase-reference.md)      | Detailed inputs, outputs, and state transitions for all six phases   |
+| [Handoff pipeline](handoff-pipeline.md)    | Backlog generation, review summary, and the Security-to-RAI pipeline |
+| [Security planning overview](../security/) | The Security Planner agent that feeds into RAI assessment            |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

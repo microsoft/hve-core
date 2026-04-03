@@ -48,13 +48,13 @@ flowchart LR
 
 When entering via `from-security-plan` mode, the RAI Planner reads the security plan's `state.json` and inherits:
 
-| Data                    | Source field         | How it is used                                     |
-|-------------------------|----------------------|----------------------------------------------------|
-| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog           |
-| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                 |
+| Data                    | Source field         | How it is used                                                        |
+|-------------------------|----------------------|-----------------------------------------------------------------------|
+| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog                              |
+| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                                    |
 | RAI depth tier          | `raiTier`            | Determines assessment depth (`Basic`, `Standard`, or `Comprehensive`) |
-| Threat count            | threat catalog size  | Starting sequence for `T-RAI-{NNN}` IDs            |
-| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing  |
+| Threat count            | threat catalog size  | Starting sequence for `T-RAI-{NNN}` IDs                               |
+| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing                     |
 
 > [!NOTE]
 > The RAI Planner reads security plan artifacts as read-only. It never modifies files under `.copilot-tracking/security-plans/`.
@@ -83,14 +83,14 @@ flowchart TD
 
 ### Review Dimensions
 
-| Dimension                    | What it covers                                                        |
-|------------------------------|-----------------------------------------------------------------------|
-| Standards Alignment        | How well AI components map to RAI principles and regulatory frameworks |
-| Threat Completeness        | Completeness and accuracy of AI-specific threat identification         |
-| Control Effectiveness      | Coverage and effectiveness of controls for identified threats          |
-| Evidence Quality           | Quality and availability of evidence supporting control effectiveness  |
-| Tradeoff Resolution        | Clarity of principle tradeoff analysis and resolution rationale        |
-| Sensitive Uses             | Whether sensitive use triggers were addressed with appropriate depth   |
+| Dimension             | What it covers                                                         |
+|-----------------------|------------------------------------------------------------------------|
+| Standards Alignment   | How well AI components map to RAI principles and regulatory frameworks |
+| Threat Completeness   | Completeness and accuracy of AI-specific threat identification         |
+| Control Effectiveness | Coverage and effectiveness of controls for identified threats          |
+| Evidence Quality      | Quality and availability of evidence supporting control effectiveness  |
+| Tradeoff Resolution   | Clarity of principle tradeoff analysis and resolution rationale        |
+| Sensitive Uses        | Whether sensitive use triggers were addressed with appropriate depth   |
 
 ## Backlog Generation
 
@@ -125,17 +125,17 @@ All generated backlog content is sanitized before handoff:
 
 ## Pipeline Artifacts
 
-| Artifact                    | Path                                                                | Generated during |
-|-----------------------------|---------------------------------------------------------------------|------------------|
-| System definition pack      | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`      | Phase 1          |
-| Stakeholder impact map      | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`      | Phase 1          |
-| Sensitive uses trigger summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2 |
-| RAI standards mapping       | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`       | Phase 3          |
-| RAI security model addendum | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md` | Phase 4          |
-| Control surface catalog     | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`     | Phase 5          |
-| Evidence register           | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`           | Phase 5          |
-| RAI tradeoffs               | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`               | Phase 5          |
-| RAI review summary          | `.copilot-tracking/rai-plans/{slug}/rai-review-summary.md`          | Phase 6          |
+| Artifact                       | Path                                                                      | Generated during |
+|--------------------------------|---------------------------------------------------------------------------|------------------|
+| System definition pack         | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`            | Phase 1          |
+| Stakeholder impact map         | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
+| Sensitive uses trigger summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
+| RAI standards mapping          | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
+| RAI security model addendum    | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
+| Control surface catalog        | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
+| Evidence register              | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`                 | Phase 5          |
+| RAI tradeoffs                  | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`                     | Phase 5          |
+| RAI review summary             | `.copilot-tracking/rai-plans/{slug}/rai-review-summary.md`                | Phase 6          |
 
 <details>
 <summary>End-to-end assessment flow</summary>

@@ -85,9 +85,9 @@ Screen the AI system for sensitive use triggers to determine the suggested asses
 
 The agent screens against three binary triggers:
 
-| Trigger | Focus area                                                                       |
-|---------|----------------------------------------------------------------------------------|
-| T1      | Legal status and life opportunities: decisions affecting rights, benefits, jobs  |
+| Trigger | Focus area                                                                      |
+|---------|---------------------------------------------------------------------------------|
+| T1      | Legal status and life opportunities: decisions affecting rights, benefits, jobs |
 | T2      | Physical or psychological injury: systems that could cause harm to individuals  |
 | T3      | Human rights restrictions: systems constraining fundamental freedoms            |
 
@@ -107,11 +107,11 @@ Each trigger is binary (triggered or not triggered). There is no partial activat
 
 ### State Transitions
 
-| Field                  | Before | After                  |
-|------------------------|--------|------------------------|
-| `currentPhase`         | 2      | 3                      |
-| `sensitiveUsesTriggers`| null   | trigger results object |
-| `suggestedDepthTier`   | null   | Basic, Standard, or Comprehensive |
+| Field                   | Before | After                             |
+|-------------------------|--------|-----------------------------------|
+| `currentPhase`          | 2      | 3                                 |
+| `sensitiveUsesTriggers` | null   | trigger results object            |
+| `suggestedDepthTier`    | null   | Basic, Standard, or Comprehensive |
 
 ## Phase 3: RAI Standards Mapping
 
@@ -191,11 +191,11 @@ Each threat receives a sequential identifier in `T-RAI-{NNN}` format. When a thr
 
 Each threat is assigned a concern level based on contextual analysis rather than a fixed matrix:
 
-| Concern level | Meaning                                                            |
-|---------------|--------------------------------------------------------------------|
-| Low           | Threat is unlikely to manifest or impact is minimal                |
-| Moderate      | Threat warrants attention and monitoring                           |
-| High          | Threat requires active mitigation before production deployment     |
+| Concern level | Meaning                                                        |
+|---------------|----------------------------------------------------------------|
+| Low           | Threat is unlikely to manifest or impact is minimal            |
+| Moderate      | Threat warrants attention and monitoring                       |
+| High          | Threat requires active mitigation before production deployment |
 
 ### Outputs
 
@@ -297,10 +297,10 @@ Gaps identified across Phases 3-5 are converted to work items using the same dua
 
 ### State Transitions
 
-| Field              | Before | After          |
-|--------------------|--------|----------------|
-| `currentPhase`     | 6      | 6 (terminal)   |
-| `handoffGenerated` | false  | true           |
+| Field              | Before | After        |
+|--------------------|--------|--------------|
+| `currentPhase`     | 6      | 6 (terminal) |
+| `handoffGenerated` | false  | true         |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

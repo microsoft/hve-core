@@ -57,15 +57,15 @@ flowchart TD
 
 The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Seven instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
 
-| Instruction file                        | Domain                                                                                 |
-|-----------------------------------------|----------------------------------------------------------------------------------------|
-| `rai-identity.instructions.md`          | Agent identity, orchestration, state management, session recovery                      |
-| `rai-sensitive-uses-triggers.instructions.md` | Sensitive uses trigger screening, depth tier assignment, restricted uses gate    |
-| `rai-standards.instructions.md`         | Microsoft Responsible AI Impact Assessment Guide, NIST AI RMF subcategories, regulatory cross-references |
-| `rai-security-model.instructions.md`    | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment            |
-| `rai-impact-assessment.instructions.md` | Control surface evaluation, evidence register, principle tradeoff analysis             |
-| `rai-backlog-handoff.instructions.md`   | Dual-format backlog handoff, content sanitization, autonomy tiers                      |
-| `rai-capture-coaching.instructions.md`  | Exploration-first questioning techniques for capture mode                              |
+| Instruction file                              | Domain                                                                                                   |
+|-----------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| `rai-identity.instructions.md`                | Agent identity, orchestration, state management, session recovery                                        |
+| `rai-sensitive-uses-triggers.instructions.md` | Sensitive uses trigger screening, depth tier assignment, restricted uses gate                            |
+| `rai-standards.instructions.md`               | Microsoft Responsible AI Impact Assessment Guide, NIST AI RMF subcategories, regulatory cross-references |
+| `rai-security-model.instructions.md`          | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                              |
+| `rai-impact-assessment.instructions.md`       | Control surface evaluation, evidence register, principle tradeoff analysis                               |
+| `rai-backlog-handoff.instructions.md`         | Dual-format backlog handoff, content sanitization, autonomy tiers                                        |
+| `rai-capture-coaching.instructions.md`        | Exploration-first questioning techniques for capture mode                                                |
 
 ## State Management
 
@@ -73,26 +73,26 @@ All assessment state persists under `.copilot-tracking/rai-plans/{project-slug}/
 
 ### State Fields
 
-| Field                       | Type           | Purpose                                                     |
-|-----------------------------|----------------|-------------------------------------------------------------|
-| `projectSlug`               | string         | Kebab-case project identifier                               |
-| `raiPlanFile`               | string         | Path to the RAI plan markdown file                          |
-| `currentPhase`              | number         | Current phase (1-6)                                         |
-| `entryMode`                 | string         | `capture`, `from-prd`, or `from-security-plan`              |
-| `securityPlanRef`           | string or null | Path to security plan state when using `from-security-plan` |
-| `assessmentDepth`           | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)   |
-| `sensitiveUsesTriggers`     | object         | Phase 2 sensitive uses trigger results                      |
+| Field                       | Type           | Purpose                                                                 |
+|-----------------------------|----------------|-------------------------------------------------------------------------|
+| `projectSlug`               | string         | Kebab-case project identifier                                           |
+| `raiPlanFile`               | string         | Path to the RAI plan markdown file                                      |
+| `currentPhase`              | number         | Current phase (1-6)                                                     |
+| `entryMode`                 | string         | `capture`, `from-prd`, or `from-security-plan`                          |
+| `securityPlanRef`           | string or null | Path to security plan state when using `from-security-plan`             |
+| `assessmentDepth`           | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)               |
+| `sensitiveUsesTriggers`     | object         | Phase 2 sensitive uses trigger results                                  |
 | `suggestedDepthTier`        | string         | Phase 2 depth tier assignment (`Basic`, `Standard`, or `Comprehensive`) |
-| `standardsMapped`           | boolean        | Whether Phase 3 mapping is complete                         |
-| `raiRiskSurfaceStarted`     | boolean        | Whether Phase 4 analysis has begun                          |
-| `raiThreatCount`            | number         | Running count of identified RAI threats                     |
-| `impactAssessmentGenerated` | boolean        | Whether Phase 5 assessment is complete                      |
-| `evidenceRegisterComplete`  | boolean        | Whether evidence register is finalized                      |
-| `handoffGenerated`          | boolean        | Whether Phase 6 backlog handoff is complete                 |
-| `gateResults`               | object         | Gate outcomes for threat coverage                           |
-| `referencesProcessed`       | array          | Files that have been read and incorporated                  |
-| `nextActions`               | array          | Pending action items for the current phase                  |
-| `userPreferences`           | object         | User-specified preferences for interaction and output       |
+| `standardsMapped`           | boolean        | Whether Phase 3 mapping is complete                                     |
+| `raiRiskSurfaceStarted`     | boolean        | Whether Phase 4 analysis has begun                                      |
+| `raiThreatCount`            | number         | Running count of identified RAI threats                                 |
+| `impactAssessmentGenerated` | boolean        | Whether Phase 5 assessment is complete                                  |
+| `evidenceRegisterComplete`  | boolean        | Whether evidence register is finalized                                  |
+| `handoffGenerated`          | boolean        | Whether Phase 6 backlog handoff is complete                             |
+| `gateResults`               | object         | Gate outcomes for threat coverage                                       |
+| `referencesProcessed`       | array          | Files that have been read and incorporated                              |
+| `nextActions`               | array          | Pending action items for the current phase                              |
+| `userPreferences`           | object         | User-specified preferences for interaction and output                   |
 
 ### Six-Step State Protocol
 
