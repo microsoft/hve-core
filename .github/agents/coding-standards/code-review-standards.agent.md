@@ -71,7 +71,7 @@ Collect the unique set of file extensions (e.g. `.py`, `.cs`, `.sh`) from the ch
 
 #### 3b: Load built-in skills
 
-Use the catalog below to map extensions to skill names. Resolve each name by trying `.github/skills/coding-standards/{name}/SKILL.md` first; if not found, fall back to `skills/coding-standards/{name}/SKILL.md`. Read the first path that resolves.
+Use the catalog below to map extensions to skill names. Use the first skill whose name and description match the task.
 
 | Extensions | Skill name            |
 |------------|-----------------------|
@@ -81,7 +81,7 @@ If no extensions match the catalog, skip to 3c.
 
 #### 3c: Discover consumer skills
 
-Search for additional `SKILL.md` files under `.github/skills/` if it exists, otherwise under `skills/` (do not search the entire workspace). For each file found that is not already loaded from the catalog, read its `name` and `description` frontmatter and check whether the description mentions a language, framework, or file type present in the diff. Load matches up to a combined maximum of 8 skills (built-in + consumer).
+If no cataloged skill matches, use any additional discovered skills whose name or description matches the languages, frameworks, or file types in the diff. Load up to 8 relevant skills total and do not broad-search the workspace.
 
 #### 3d: Apply loaded skills
 
