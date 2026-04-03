@@ -24,7 +24,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'data-science',
     description: 'Data specs, notebooks, and dashboards',
-    artifacts: 18,
+    artifacts: 19,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
@@ -98,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 227,
+  'hve-core-all': 228,
 };
