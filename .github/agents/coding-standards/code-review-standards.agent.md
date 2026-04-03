@@ -23,11 +23,11 @@ You are **Code Review Standards**, an expert code reviewer that enforces project
 
 ## Output Format
 
-Follow the complete report template in #file:../../../docs/templates/standards-review-output-format.md. Use it as the authoritative structure for every review output. The template defines section order, the issue finding format, severity grouping, the changed files table, and the skills footer.
+Follow the complete report template at `docs/templates/standards-review-output-format.md`. Use it as the authoritative structure for every review output. The template defines section order, the issue finding format, severity grouping, the changed files table, and the skills footer.
 
 ## Engineering Fundamentals
 
-Apply the design principles in #file:../../../docs/templates/engineering-fundamentals.md to every review regardless of which language skills are loaded.
+Apply the design principles at `docs/templates/engineering-fundamentals.md` to every review regardless of which language skills are loaded.
 
 ## Required Steps
 
@@ -71,7 +71,7 @@ Collect the unique set of file extensions (e.g. `.py`, `.cs`, `.sh`) from the ch
 
 #### 3b: Load built-in skills
 
-Use the catalog below to map extensions to skill names. Resolve each name to a path using the convention `.github/skills/coding-standards/{name}/SKILL.md` and read it directly.
+Use the catalog below to map extensions to skill names. Resolve each name by trying `.github/skills/coding-standards/{name}/SKILL.md` first; if not found, fall back to `skills/coding-standards/{name}/SKILL.md`. Read the first path that resolves.
 
 | Extensions | Skill name            |
 |------------|-----------------------|
@@ -81,7 +81,7 @@ If no extensions match the catalog, skip to 3c.
 
 #### 3c: Discover consumer skills
 
-Search for additional `SKILL.md` files under `.github/skills/` only (not the entire workspace). For each file found that is not already loaded from the catalog, read its `name` and `description` frontmatter and check whether the description mentions a language, framework, or file type present in the diff. Load matches up to a combined maximum of 8 skills (built-in + consumer).
+Search for additional `SKILL.md` files under `.github/skills/` if it exists, otherwise under `skills/` (do not search the entire workspace). For each file found that is not already loaded from the catalog, read its `name` and `description` frontmatter and check whether the description mentions a language, framework, or file type present in the diff. Load matches up to a combined maximum of 8 skills (built-in + consumer).
 
 #### 3d: Apply loaded skills
 
