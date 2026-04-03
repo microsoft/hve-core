@@ -86,6 +86,24 @@ export function DesignThinkingIcon({ className }: { className?: string }) {
   );
 }
 
+export function VsCodeExtensionIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="vscodeGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#29b6f6" />
+          <stop offset="35%" stopColor="#1a9fd8" />
+          <stop offset="70%" stopColor="#0d84c0" />
+          <stop offset="100%" stopColor="#0078d4" />
+        </linearGradient>
+      </defs>
+      <path d="M46 6L22 22l-10-8-6 6 10 8-10 8 6 6 10-8 24 16z" fill="url(#vscodeGrad)" />
+      <line x1="40" y1="18" x2="40" y2="38" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+      <line x1="34" y1="22" x2="34" y2="34" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function TemplatesExamplesIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">

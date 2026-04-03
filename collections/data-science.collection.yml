@@ -3,7 +3,7 @@ name: Data Science
 description: Data specification generation, Jupyter notebooks, and Streamlit dashboards
 notice: |
   > [!CAUTION]
-  > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss sensitive use categories, or produce recommendations that are incomplete or inappropriate for your context.
+  > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
 tags:
   - data
   - jupyter
@@ -45,9 +45,6 @@ items:
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-security-model.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-standards.instructions.md

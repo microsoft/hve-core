@@ -1,7 +1,7 @@
 {
   "name": "data-science",
   "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
-  "version": "3.3.27",
+  "version": "3.3.41",
   "agents": [
     "agents/data-science/",
     "agents/hve-core/subagents/",
