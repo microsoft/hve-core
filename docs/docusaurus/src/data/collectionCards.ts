@@ -80,7 +80,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'rai-planning',
     description: 'Responsible AI assessment, impact analysis, and risk review',
-    artifacts: 12,
+    artifacts: 13,
     maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
@@ -98,5 +98,5 @@ export interface MetaCollections {
 }
 
 export const metaCollections: MetaCollections = {
-  'hve-core-all': 227,
+  'hve-core-all': 228,
 };

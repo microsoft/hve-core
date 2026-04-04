@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -156,24 +156,21 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
     }
 
     It 'Finds agentic artifact references' {
-        $content = 'Template for the control-surface-catalog output section.'
-        $refs = Find-ArtifactReferences -Content $content -ArtifactClassification $script:FooterConfig.'artifact-classification'
+        $refs = Find-ArtifactReferences -ArtifactClassification $script:FooterConfig.'artifact-classification' -RelativePath 'rai-planning/control-surface-catalog.md'
         $refs.Count | Should -Be 1
         $refs[0].ArtifactName | Should -Be 'control-surface-catalog'
         $refs[0].Tier | Should -Be 'agentic'
     }
 
     It 'Finds human-facing-with-disclaimer artifact references' {
-        $content = 'Generates the handoff-summary for review.'
-        $refs = Find-ArtifactReferences -Content $content -ArtifactClassification $script:FooterConfig.'artifact-classification'
+        $refs = Find-ArtifactReferences -ArtifactClassification $script:FooterConfig.'artifact-classification' -RelativePath 'rai-planning/handoff-summary.md'
         $refs.Count | Should -Be 1
         $refs[0].RequiresDisclaimer | Should -BeTrue
         $refs[0].DisclaimerRef | Should -Be 'rai-full-disclaimer'
     }
 
     It 'Returns empty when no artifacts match' {
-        $content = 'This file mentions nothing about any tracked artifact.'
-        $refs = Find-ArtifactReferences -Content $content -ArtifactClassification $script:FooterConfig.'artifact-classification'
+        $refs = Find-ArtifactReferences -ArtifactClassification $script:FooterConfig.'artifact-classification' -RelativePath 'rai-planning/unrelated.md'
         $refs.Count | Should -Be 0
     }
 
@@ -186,11 +183,10 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
                 artifacts         = @('control-surface-catalog')
             }
         }
-        $content = 'Template for control-surface-catalog output.'
-        $refs = Find-ArtifactReferences -Content $content -ArtifactClassification $scopedClassification -RelativePath 'github/other.instructions.md'
+        $refs = Find-ArtifactReferences -ArtifactClassification $scopedClassification -RelativePath 'github/control-surface-catalog.md'
         $refs.Count | Should -Be 0
 
-        $refsInScope = Find-ArtifactReferences -Content $content -ArtifactClassification $scopedClassification -RelativePath 'rai-planning/test.instructions.md'
+        $refsInScope = Find-ArtifactReferences -ArtifactClassification $scopedClassification -RelativePath 'rai-planning/control-surface-catalog.md'
         $refsInScope.Count | Should -Be 1
     }
 }
@@ -203,7 +199,7 @@ Describe 'Test-AIArtifactCompliance' -Tag 'Unit' {
 
     Context 'Agentic tier (Tier 1 only)' {
         It 'Passes when Tier 1 footer is present' {
-            $filePath = Join-Path $script:InstructionDir 'agentic-test.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'control-surface-catalog.instructions.md'
             $content = @"
 ---
 description: Test instruction
@@ -222,7 +218,7 @@ $($script:Tier1Text)
         }
 
         It 'Fails when Tier 1 footer is missing' {
-            $filePath = Join-Path $script:InstructionDir 'agentic-missing.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'control-surface-catalog.instructions.md'
             $content = @"
 ---
 description: Test instruction
@@ -241,7 +237,7 @@ Content here with no footer.
 
     Context 'Human-facing tier (Tier 1 + checkbox)' {
         It 'Passes when both footers are present' {
-            $filePath = Join-Path $script:InstructionDir 'human-test.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'rai-review-summary.instructions.md'
             $content = @"
 ---
 description: Test instruction
@@ -261,7 +257,7 @@ $($script:CheckboxText)
         }
 
         It 'Fails when checkbox is missing' {
-            $filePath = Join-Path $script:InstructionDir 'human-no-checkbox.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'rai-review-summary.instructions.md'
             $content = @"
 ---
 description: Test instruction
@@ -283,7 +279,7 @@ $($script:Tier1Text)
 
     Context 'Human-facing-with-disclaimer tier (Tier 1 + checkbox + disclaimer)' {
         It 'Passes when all three elements are present' {
-            $filePath = Join-Path $script:InstructionDir 'disclaimer-test.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'handoff-summary.instructions.md'
             $content = @"
 ---
 description: Test instruction
@@ -305,7 +301,7 @@ $($script:DisclaimerText)
         }
 
         It 'Fails when disclaimer is missing' {
-            $filePath = Join-Path $script:InstructionDir 'disclaimer-missing.instructions.md'
+            $filePath = Join-Path $script:InstructionDir 'handoff-summary.instructions.md'
             $content = @"
 ---
 description: Test instruction

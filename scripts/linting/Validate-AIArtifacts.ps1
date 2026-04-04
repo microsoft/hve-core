@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 # Validate-AIArtifacts.ps1
@@ -212,22 +212,19 @@ function Test-DisclaimerInContent {
 function Find-ArtifactReferences {
     <#
     .SYNOPSIS
-    Identifies which artifact names from the classification config appear in a file.
+    Identifies which configured artifact names match a file by its basename.
 
     .DESCRIPTION
-    Searches file content for artifact name references (e.g., template section
-    headers, code-fenced blocks, or inline references) to determine which
-    classification tier applies.
-
-    .PARAMETER Content
-    Full file content.
+    Matches the file basename (with .instructions.md or .md extension stripped)
+    against configured artifact names to determine which classification tier
+    applies. Scope patterns filter by relative path when configured.
 
     .PARAMETER ArtifactClassification
     The artifact-classification section from footer config.
 
     .PARAMETER RelativePath
-    Relative path of the file for scope filtering. When a tier specifies scope
-    patterns, only files matching at least one pattern are checked.
+    Relative path of the file. Used for scope filtering and basename extraction
+    to match against artifact names.
 
     .OUTPUTS
     [hashtable[]] Array of hashtables with keys: ArtifactName, Tier, RequiredFooters, RequiresDisclaimer, DisclaimerRef.
@@ -236,10 +233,6 @@ function Find-ArtifactReferences {
     [OutputType([hashtable[]])]
     param(
         [Parameter(Mandatory = $true)]
-        [AllowEmptyString()]
-        [string]$Content,
-
-        [Parameter(Mandatory = $true)]
         [hashtable]$ArtifactClassification,
 
         [Parameter(Mandatory = $false)]
@@ -247,6 +240,12 @@ function Find-ArtifactReferences {
     )
 
     $foundRefs = @()
+
+    # Extract base name by stripping .instructions.md or .md extension
+    $fileBaseName = if ($RelativePath) {
+        $fileName = [System.IO.Path]::GetFileName($RelativePath)
+        $fileName -replace '\.(?:instructions\.)?md$', ''
+    } else { '' }
 
     foreach ($tierName in $ArtifactClassification.Keys) {
         $tier = $ArtifactClassification[$tierName]
@@ -266,8 +265,7 @@ function Find-ArtifactReferences {
         }
 
         foreach ($artifactName in $artifacts) {
-            # Check for the artifact name in content (case-insensitive)
-            if ($Content -match [regex]::Escape($artifactName)) {
+            if ($fileBaseName -eq $artifactName) {
                 $foundRefs += @{
                     ArtifactName       = $artifactName
                     Tier               = $tierName
@@ -279,7 +277,7 @@ function Find-ArtifactReferences {
         }
     }
 
-    Write-Output -NoEnumerate $foundRefs
+    Write-Output -NoEnumerate -InputObject $foundRefs
 }
 
 function Test-AIArtifactCompliance {
@@ -323,7 +321,7 @@ function Test-AIArtifactCompliance {
     $issues = @()
     $artifactsFound = @()
 
-    $artifactRefs = Find-ArtifactReferences -Content $content -ArtifactClassification $FooterConfig.'artifact-classification' -RelativePath $relativePath
+    $artifactRefs = Find-ArtifactReferences -ArtifactClassification $FooterConfig.'artifact-classification' -RelativePath $relativePath
 
     if ($artifactRefs.Count -eq 0) {
         return @{

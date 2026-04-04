@@ -170,16 +170,16 @@ The following table shows which footer components appear on each Phase 5 and Pha
 
 | Artifact                  | Phase | Category     | AI-content note | Review checkbox | Full disclaimer |
 |---------------------------|-------|--------------|:---------------:|:---------------:|:---------------:|
-| Control surface catalog   | 5     | Agentic      | ✓               |                 |                 |
-| Evidence register         | 5     | Agentic      | ✓               |                 |                 |
-| RAI tradeoffs             | 5     | Human-facing | ✓               | ✓               |                 |
-| RAI review summary        | 6     | Human-facing | ✓               | ✓               |                 |
-| ADO work items            | 6     | Human-facing | ✓               | ✓               |                 |
-| GitHub issues             | 6     | Human-facing | ✓               | ✓               |                 |
-| Transparency note outline | 6     | Human-facing | ✓               | ✓               |                 |
-| Monitoring summary        | 6     | Human-facing | ✓               | ✓               |                 |
-| Handoff summary           | 6     | Human-facing | ✓               | ✓               | ✓               |
-| Compact handoff summary   | 6     | Human-facing | ✓               | ✓               | ✓               |
+| Control surface catalog   | 5     | Agentic      |        ✓        |                 |                 |
+| Evidence register         | 5     | Agentic      |        ✓        |                 |                 |
+| RAI tradeoffs             | 5     | Human-facing |        ✓        |        ✓        |                 |
+| RAI review summary        | 6     | Human-facing |        ✓        |        ✓        |                 |
+| ADO work items            | 6     | Human-facing |        ✓        |        ✓        |                 |
+| GitHub issues             | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Transparency note outline | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Monitoring summary        | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Handoff summary           | 6     | Human-facing |        ✓        |        ✓        |        ✓        |
+| Compact handoff summary   | 6     | Human-facing |        ✓        |        ✓        |        ✓        |
 
 > [!NOTE]
 > Transparency note outline and monitoring summary are optional artifacts generated only when the user opts in during Phase 6.

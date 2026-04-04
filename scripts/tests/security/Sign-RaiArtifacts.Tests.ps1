@@ -72,7 +72,7 @@ Describe 'Manifest Generation' -Tag 'Unit' {
                 Set-Location $TestDrive
                 & $script:ScriptPath -ProjectSlug $missingSlug
             }
-            catch { }
+            catch { $_ | Out-Null }
             finally {
                 Set-Location $originalPWD
             }
@@ -87,7 +87,7 @@ Describe 'Manifest Generation' -Tag 'Unit' {
                 Set-Location $TestDrive
                 & $script:ScriptPath -ProjectSlug $script:projectSlug
             }
-            catch { }
+            catch { $_ | Out-Null }
             finally {
                 Set-Location $originalPWD
             }
@@ -232,7 +232,7 @@ Describe 'Cosign Signing' -Tag 'Unit' {
                 Set-Location $TestDrive
                 & $script:ScriptPath -ProjectSlug $script:projectSlug -IncludeCosign
             }
-            catch { }
+            catch { $_ | Out-Null }
             finally {
                 Set-Location $originalPWD
             }
