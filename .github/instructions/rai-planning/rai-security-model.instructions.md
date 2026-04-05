@@ -153,9 +153,9 @@ Suggest a qualitative concern level for each identified threat based on contextu
 
 | Concern Level    | Criteria                                                                                |
 |------------------|-----------------------------------------------------------------------------------------|
-| Low Concern      | Threat is theoretical or mitigated by existing controls; no immediate action suggested.  |
-| Moderate Concern | Threat is plausible and partially mitigated; additional controls recommended.            |
-| High Concern     | Threat is likely or unmitigated; priority mitigation suggested.                          |
+| Low Concern      | Threat is theoretical or mitigated by existing controls; no immediate action suggested. |
+| Moderate Concern | Threat is plausible and partially mitigated; additional controls recommended.           |
+| High Concern     | Threat is likely or unmitigated; priority mitigation suggested.                         |
 
 The concern level is a suggested assessment for the team's consideration, not a definitive risk rating.
 
@@ -167,20 +167,20 @@ After populating the threat table, present a summary grouped by Suggested Threat
 
 Adjust threat table column visibility based on `userPreferences.outputDetailLevel`:
 
-| Level         | Visible Columns                                                                                                                          |
-|---------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| summary       | RAI ID, STRIDE, Concern Level, Suggested Threat Origin.                                                                                  |
-| standard      | All columns (default).                                                                                                                   |
+| Level         | Visible Columns                                                                                                                           |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| summary       | RAI ID, STRIDE, Concern Level, Suggested Threat Origin.                                                                                   |
+| standard      | All columns (default).                                                                                                                    |
 | comprehensive | All columns plus a "Detailed Rationale" column with per-threat analysis explaining the concern level assignment and mitigation reasoning. |
 
 ### Audience Adaptation
 
 Adjust ML STRIDE matrix presentation based on `userPreferences.audienceProfile`:
 
-| Profile   | Presentation                                                                                  |
-|-----------|-----------------------------------------------------------------------------------------------|
-| technical | Include the full ML STRIDE matrix.                                                            |
-| executive | Summarize ML-specific threats in narrative prose; omit the matrix.                            |
+| Profile   | Presentation                                                                                    |
+|-----------|-------------------------------------------------------------------------------------------------|
+| technical | Include the full ML STRIDE matrix.                                                              |
+| executive | Summarize ML-specific threats in narrative prose; omit the matrix.                              |
 | mixed     | Include the matrix with regulatory cross-references and contextual notes for diverse audiences. |
 
 ## ML STRIDE Matrix

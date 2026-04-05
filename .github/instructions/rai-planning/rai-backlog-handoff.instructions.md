@@ -13,21 +13,21 @@ A review checkpoint and six quality dimensions evaluate the completeness and qua
 
 ### Review Checkpoints
 
-| Checkpoint      | Criteria                                                             | Status              |
-|-----------------|----------------------------------------------------------------------|---------------------|
+| Checkpoint      | Criteria                                                             | Status            |
+|-----------------|----------------------------------------------------------------------|-------------------|
 | Threat Coverage | Every RAI threat has at least one control surface and evidence entry | ☐ Met / ☐ Not Met |
 
 Review checkpoints are binary verification steps. A checkpoint marked "Not Met" indicates the relevant phase should be revisited before proceeding with handoff.
 
 ### Review Quality Checklist
 
-| Dimension             | Description                                                                 | Status       |
-|-----------------------|-----------------------------------------------------------------------------|--------------|
-| Standards Alignment   | Coverage of responsible AI principles and NIST AI RMF subcategories         | ☐ Addressed |
-| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion | ☐ Addressed |
-| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each principle   | ☐ Addressed |
-| Evidence Quality      | Evidence register completeness, confidence levels, gap identification       | ☐ Addressed |
-| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority      | ☐ Addressed |
+| Dimension             | Description                                                                     | Status      |
+|-----------------------|---------------------------------------------------------------------------------|-------------|
+| Standards Alignment   | Coverage of responsible AI principles and NIST AI RMF subcategories             | ☐ Addressed |
+| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion     | ☐ Addressed |
+| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each principle       | ☐ Addressed |
+| Evidence Quality      | Evidence register completeness, confidence levels, gap identification           | ☐ Addressed |
+| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority          | ☐ Addressed |
 | Sensitive Uses        | Sensitive uses trigger coverage, depth tier justification, downstream alignment | ☐ Addressed |
 
 Review status derivation:
@@ -59,14 +59,14 @@ Template for the review summary produced at the end of Phase 6.
 
 ### Per-Principle Summary
 
-| Principle            | Maturity Level                                  | Key Observations | Open Items |
-|----------------------|-------------------------------------------------|------------------|------------|
-| Fairness             | {Foundational/Developing/Established/Advanced}  | {summary}        | {count}    |
-| Reliability & Safety | {level}                                         | {summary}        | {count}    |
-| Privacy & Security   | {level}                                         | {summary}        | {count}    |
-| Inclusiveness        | {level}                                         | {summary}        | {count}    |
-| Transparency         | {level}                                         | {summary}        | {count}    |
-| Accountability       | {level}                                         | {summary}        | {count}    |
+| Principle            | Maturity Level                                 | Key Observations | Open Items |
+|----------------------|------------------------------------------------|------------------|------------|
+| Fairness             | {Foundational/Developing/Established/Advanced} | {summary}        | {count}    |
+| Reliability & Safety | {level}                                        | {summary}        | {count}    |
+| Privacy & Security   | {level}                                        | {summary}        | {count}    |
+| Inclusiveness        | {level}                                        | {summary}        | {count}    |
+| Transparency         | {level}                                        | {summary}        | {count}    |
+| Accountability       | {level}                                        | {summary}        | {count}    |
 
 ### Key Findings
 
@@ -85,11 +85,11 @@ Template for the review summary produced at the end of Phase 6.
 
 ### Suggested Remediation Horizon Summary
 
-| Horizon             | Work Item Count | Key Items    |
-|---------------------|-----------------|--------------|
-| Pre-Production      | {count}         | {top items}  |
-| Early Operations    | {count}         | {top items}  |
-| Ongoing Governance  | {count}         | {top items}  |
+| Horizon            | Work Item Count | Key Items   |
+|--------------------|-----------------|-------------|
+| Pre-Production     | {count}         | {top items} |
+| Early Operations   | {count}         | {top items} |
+| Ongoing Governance | {count}         | {top items} |
 
 ### Suggested Review Status: {Ready for stakeholder review / Additional attention suggested / Significant areas need further consideration}
 ### Remediation Suggested: {Yes/No}
@@ -107,13 +107,13 @@ When `principleTracker` data is incomplete for a principle, note the gap in the 
 
 Five categories classify RAI work items by purpose and urgency.
 
-| Category               | Description                                                | Suggested Horizon    | Priority Range        | Source                                                    |
-|------------------------|------------------------------------------------------------|----------------------|-----------------------|-----------------------------------------------------------|
-| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production       | Immediate–Near-term   | Evidence gaps, principles with limited coverage            |
-| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production       | Near-term–Planned     | Control surface gaps                                       |
-| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations     | Planned               | Detect controls without implementation                     |
-| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance   | Planned–Backlog       | Documentation gaps, tradeoff records                       |
-| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance   | Backlog               | Principles at Developing or Established seeking Advanced   |
+| Category               | Description                                                | Suggested Horizon  | Priority Range      | Source                                                   |
+|------------------------|------------------------------------------------------------|--------------------|---------------------|----------------------------------------------------------|
+| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, principles with limited coverage          |
+| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Near-term–Planned   | Control surface gaps                                     |
+| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Planned             | Detect controls without implementation                   |
+| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Planned–Backlog     | Documentation gaps, tradeoff records                     |
+| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Backlog             | Principles at Developing or Established seeking Advanced |
 
 ## RAI Tags
 
@@ -268,11 +268,11 @@ Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` out
 
 Three tiers control how RAI work items reach the target backlog system.
 
-| Tier    | Description                                              | Applies When                                                  |
-|---------|----------------------------------------------------------|---------------------------------------------------------------|
-| Full    | Agent creates work items without human approval          | Enhancement items (Backlog priority), documentation updates   |
-| Partial | Agent drafts work items for human review before creation | Control implementation (Planned–Near-term), monitoring setup  |
-| Manual  | Agent provides recommendations; human creates items      | Remediation (Immediate–Near-term), tradeoff decisions         |
+| Tier    | Description                                              | Applies When                                                 |
+|---------|----------------------------------------------------------|--------------------------------------------------------------|
+| Full    | Agent creates work items without human approval          | Enhancement items (Backlog priority), documentation updates  |
+| Partial | Agent drafts work items for human review before creation | Control implementation (Planned–Near-term), monitoring setup |
+| Manual  | Agent provides recommendations; human creates items      | Remediation (Immediate–Near-term), tradeoff decisions        |
 
 Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Store the selected preference in the session state JSON under `userPreferences.autonomyTier`.
 
@@ -280,17 +280,17 @@ Ask the user in Phase 6 which tier they prefer. Default to Partial on first use.
 
 Derive suggested work item priority and autonomy tier from assessment observations and principleTracker data.
 
-| Assessment Observation                                      | Suggested Priority | Autonomy Tier | Suggested Horizon    |
-|-------------------------------------------------------------|--------------------|---------------|----------------------|
-| Principle at Foundational maturity with critical gaps        | Immediate          | Manual        | Pre-Production       |
-| Principle at Foundational maturity                           | Near-term          | Manual        | Pre-Production       |
-| Multiple open observations for a principle                   | Near-term          | Partial       | Pre-Production       |
-| Tradeoff requiring implementation                            | Planned            | Partial       | Early Operations     |
-| Control surface gap (Prevent)                                | Near-term          | Partial       | Pre-Production       |
-| Control surface gap (Detect)                                 | Planned            | Partial       | Early Operations     |
-| Control surface gap (Respond)                                | Planned            | Partial       | Early Operations     |
-| Documentation gap                                            | Backlog            | Full          | Ongoing Governance   |
-| Enhancement recommendation                                   | Backlog            | Full          | Ongoing Governance   |
+| Assessment Observation                                | Suggested Priority | Autonomy Tier | Suggested Horizon  |
+|-------------------------------------------------------|--------------------|---------------|--------------------|
+| Principle at Foundational maturity with critical gaps | Immediate          | Manual        | Pre-Production     |
+| Principle at Foundational maturity                    | Near-term          | Manual        | Pre-Production     |
+| Multiple open observations for a principle            | Near-term          | Partial       | Pre-Production     |
+| Tradeoff requiring implementation                     | Planned            | Partial       | Early Operations   |
+| Control surface gap (Prevent)                         | Near-term          | Partial       | Pre-Production     |
+| Control surface gap (Detect)                          | Planned            | Partial       | Early Operations   |
+| Control surface gap (Respond)                         | Planned            | Partial       | Early Operations   |
+| Documentation gap                                     | Backlog            | Full          | Ongoing Governance |
+| Enhancement recommendation                            | Backlog            | Full          | Ongoing Governance |
 
 Within the same priority level, order remediation items before control implementation items. Consider fairness and reliability findings for earlier attention due to direct impact potential.
 
@@ -346,17 +346,17 @@ After generating all work items, produce a handoff summary covering totals, cros
 
 ### Suggested Remediation Horizon Breakdown
 
-| Horizon              | Count | Key Items |
-|----------------------|-------|-----------|
-| Pre-Production       | {n}   | {items}   |
-| Early Operations     | {n}   | {items}   |
-| Ongoing Governance   | {n}   | {items}   |
+| Horizon            | Count | Key Items |
+|--------------------|-------|-----------|
+| Pre-Production     | {n}   | {items}   |
+| Early Operations   | {n}   | {items}   |
+| Ongoing Governance | {n}   | {items}   |
 
 ### Security Planner Cross-References
 
-| RAI Item      | Security Item | Relationship   |
-|---------------|---------------|----------------|
-| WI-RAI-{NNN}  | WI-SEC-{NNN}  | {relationship} |
+| RAI Item     | Security Item | Relationship   |
+|--------------|---------------|----------------|
+| WI-RAI-{NNN} | WI-SEC-{NNN}  | {relationship} |
 
 ### Outstanding Tradeoffs
 

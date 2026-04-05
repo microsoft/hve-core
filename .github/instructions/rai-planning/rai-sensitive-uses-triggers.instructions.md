@@ -68,11 +68,11 @@ Evaluate the AI system against three binary triggers derived from the Microsoft 
 
 ### Trigger Table
 
-| Trigger | Description |
-|---------|-------------|
-| T1: Legal Status / Life Opportunities | The use or misuse of the AI system could affect an individual's legal status, legal rights, access to credit, education, employment, healthcare, housing, insurance, social welfare benefits/services/opportunities, or the terms on which they are provided. |
-| T2: Physical / Psychological Injury | The use or misuse of the AI system could result in significant physical or psychological injury to an individual. |
-| T3: Human Rights Restrictions | The use or misuse of the AI system could restrict, infringe upon, or undermine the ability to realize an individual's human rights. Because human rights are interdependent and interrelated, AI can affect nearly every internationally recognized human right. |
+| Trigger                               | Description                                                                                                                                                                                                                                                      |
+|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| T1: Legal Status / Life Opportunities | The use or misuse of the AI system could affect an individual's legal status, legal rights, access to credit, education, employment, healthcare, housing, insurance, social welfare benefits/services/opportunities, or the terms on which they are provided.    |
+| T2: Physical / Psychological Injury   | The use or misuse of the AI system could result in significant physical or psychological injury to an individual.                                                                                                                                                |
+| T3: Human Rights Restrictions         | The use or misuse of the AI system could restrict, infringe upon, or undermine the ability to realize an individual's human rights. Because human rights are interdependent and interrelated, AI can affect nearly every internationally recognized human right. |
 
 ### Trigger 1: Legal Status / Life Opportunities (T1)
 
@@ -113,10 +113,10 @@ If triggered:
 
 The suggested depth tier flows automatically from trigger activation count. Do not assign a tier manually based on judgment.
 
-| Tier | Criteria | Description |
-|------|----------|-------------|
-| Basic | 0 triggers activated | No sensitive use triggers identified. Subsequent phases use baseline analysis depth. |
-| Standard | 1 trigger activated | One sensitive area identified. Subsequent phases include additional analysis for the triggered area. |
+| Tier          | Criteria              | Description                                                                                                   |
+|---------------|-----------------------|---------------------------------------------------------------------------------------------------------------|
+| Basic         | 0 triggers activated  | No sensitive use triggers identified. Subsequent phases use baseline analysis depth.                          |
+| Standard      | 1 trigger activated   | One sensitive area identified. Subsequent phases include additional analysis for the triggered area.          |
 | Comprehensive | 2+ triggers activated | Multiple sensitive areas identified. Subsequent phases use comprehensive analysis across all triggered areas. |
 
 Present the suggested depth tier to the user with the rationale (trigger count). The user must confirm the tier before advancing to Phase 3. This is a hard gate because tier changes affect scope and effort of all downstream phases.
@@ -133,11 +133,11 @@ Present screening results using this format:
 
 ### Trigger Assessment
 
-| Trigger | Triggered | Observation |
-|---------|-----------|-------------|
+| Trigger                               | Triggered  | Observation          |
+|---------------------------------------|------------|----------------------|
 | T1: Legal Status / Life Opportunities | [Yes / No] | [observation or N/A] |
-| T2: Physical / Psychological Injury | [Yes / No] | [observation or N/A] |
-| T3: Human Rights Restrictions | [Yes / No] | [observation or N/A] |
+| T2: Physical / Psychological Injury   | [Yes / No] | [observation or N/A] |
+| T3: Human Rights Restrictions         | [Yes / No] | [observation or N/A] |
 
 ### Suggested Depth Tier
 

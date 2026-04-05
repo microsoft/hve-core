@@ -140,12 +140,12 @@ Priority is derived from the combination of concern levels, trigger severity, an
 
 ### Priority Levels
 
-| Priority | Criteria | Suggested Action |
-|----------|----------|------------------|
+| Priority  | Criteria                                                                                                                                | Suggested Action                            |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | Immediate | Restricted use trigger fired, or High concern level on safety-critical threat, or multiple principles show "Not yet addressed" maturity | Warrants prompt attention before deployment |
-| Near-term | Moderate concern level with partial control coverage, or single principle shows "Not yet addressed" maturity | Recommended for upcoming development cycles |
-| Planned | Low-to-Moderate concern level with identified improvement opportunities | Consider for future iterations |
-| Backlog | Low concern level with existing controls in place | Note for long-term consideration |
+| Near-term | Moderate concern level with partial control coverage, or single principle shows "Not yet addressed" maturity                            | Recommended for upcoming development cycles |
+| Planned   | Low-to-Moderate concern level with identified improvement opportunities                                                                 | Consider for future iterations              |
+| Backlog   | Low concern level with existing controls in place                                                                                       | Note for long-term consideration            |
 
 ### Derivation Rules
 
@@ -282,11 +282,11 @@ Generate work items from the evidence register for entries with Coverage Status 
 
 ### Suggested Remediation Horizons
 
-| Horizon | Description | Typical Triggers |
-|---------|-------------|------------------|
-| Pre-Production | Address before initial deployment | Safety-critical controls, restricted use gates, Immediate priority items |
-| Early Operations | Address within first operational cycle | Monitoring controls, user feedback loops, Near-term priority items |
-| Ongoing Governance | Continuous improvement items | Process refinement, training updates, Planned or Backlog priority items |
+| Horizon            | Description                            | Typical Triggers                                                         |
+|--------------------|----------------------------------------|--------------------------------------------------------------------------|
+| Pre-Production     | Address before initial deployment      | Safety-critical controls, restricted use gates, Immediate priority items |
+| Early Operations   | Address within first operational cycle | Monitoring controls, user feedback loops, Near-term priority items       |
+| Ongoing Governance | Continuous improvement items           | Process refinement, training updates, Planned or Backlog priority items  |
 
 ### Horizon Derivation Rules
 

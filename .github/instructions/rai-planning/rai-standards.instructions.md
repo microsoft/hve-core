@@ -39,48 +39,48 @@ The Microsoft Responsible AI Impact Assessment Guide (June 2022) defines a struc
 
 ### Guide Sections
 
-| Section | Title                | Agent Phase Mapping                                |
-|---------|----------------------|----------------------------------------------------|
-| 01      | Project Overview     | Phase 1: AI System Scoping                         |
-| 02      | Intended Uses        | Phase 1–2: Scoping and Sensitive Uses              |
-| 03      | Adverse Impact       | Phase 2–4: Sensitive Uses and Security Model        |
-| 04      | Data Requirements    | Phase 3: Standards Mapping                         |
-| 05      | Summary of Impact    | Phase 5–6: Impact Assessment and Review            |
+| Section | Title             | Agent Phase Mapping                          |
+|---------|-------------------|----------------------------------------------|
+| 01      | Project Overview  | Phase 1: AI System Scoping                   |
+| 02      | Intended Uses     | Phase 1–2: Scoping and Sensitive Uses        |
+| 03      | Adverse Impact    | Phase 2–4: Sensitive Uses and Security Model |
+| 04      | Data Requirements | Phase 3: Standards Mapping                   |
+| 05      | Summary of Impact | Phase 5–6: Impact Assessment and Review      |
 
 ### Goals by Principle
 
 #### Accountability
 
-| Goal | Description                     | Planning Focus                                       |
-|------|---------------------------------|------------------------------------------------------|
-| A2   | Oversight and control           | Governance structures, escalation paths              |
-| A3   | Fit for purpose                 | Validation of system purpose and context             |
-| A4   | Data governance and management  | Data lifecycle, quality, and compliance              |
-| A5   | Human oversight and control     | Human-in-the-loop mechanisms, override capability    |
+| Goal | Description                    | Planning Focus                                    |
+|------|--------------------------------|---------------------------------------------------|
+| A2   | Oversight and control          | Governance structures, escalation paths           |
+| A3   | Fit for purpose                | Validation of system purpose and context          |
+| A4   | Data governance and management | Data lifecycle, quality, and compliance           |
+| A5   | Human oversight and control    | Human-in-the-loop mechanisms, override capability |
 
 #### Transparency
 
-| Goal | Description                        | Planning Focus                                      |
-|------|------------------------------------|-----------------------------------------------------|
-| T1   | Intelligibility                    | Model explainability, decision traceability         |
-| T2   | Communication to stakeholders      | Disclosure practices, user-facing documentation     |
-| T3   | Disclosure of AI interaction       | Users informed when interacting with AI             |
+| Goal | Description                   | Planning Focus                                  |
+|------|-------------------------------|-------------------------------------------------|
+| T1   | Intelligibility               | Model explainability, decision traceability     |
+| T2   | Communication to stakeholders | Disclosure practices, user-facing documentation |
+| T3   | Disclosure of AI interaction  | Users informed when interacting with AI         |
 
 #### Fairness
 
-| Goal | Description                                    | Planning Focus                                  |
-|------|------------------------------------------------|-------------------------------------------------|
-| F1   | Quality of service                             | Equitable performance across user groups        |
-| F2   | Allocation of resources and opportunities      | Fair distribution of outcomes                   |
-| F3   | Minimization of stereotyping                   | Avoidance of harmful stereotypes in outputs     |
+| Goal | Description                               | Planning Focus                              |
+|------|-------------------------------------------|---------------------------------------------|
+| F1   | Quality of service                        | Equitable performance across user groups    |
+| F2   | Allocation of resources and opportunities | Fair distribution of outcomes               |
+| F3   | Minimization of stereotyping              | Avoidance of harmful stereotypes in outputs |
 
 #### Reliability and Safety
 
-| Goal | Description                | Planning Focus                                            |
-|------|----------------------------|-----------------------------------------------------------|
-| RS1  | Reliability guidance       | Operational reliability standards and expectations        |
-| RS2  | Failures and remediations  | Failure mode analysis and remediation planning            |
-| RS3  | Ongoing monitoring         | Continuous monitoring and incident response               |
+| Goal | Description               | Planning Focus                                     |
+|------|---------------------------|----------------------------------------------------|
+| RS1  | Reliability guidance      | Operational reliability standards and expectations |
+| RS2  | Failures and remediations | Failure mode analysis and remediation planning     |
+| RS3  | Ongoing monitoring        | Continuous monitoring and incident response        |
 
 #### Privacy and Security
 
@@ -245,14 +245,14 @@ These Measure subcategories overlap directly with security security model analys
 
 This table maps RAI Planner phases to NIST AI RMF subcategories. Use these alignments as starting points for each phase's standards coverage.
 
-| RAI Planner Phase                    | AI RMF Function  | Key Subcategories                                                                                                    |
-|--------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------|
-| Phase 1 (Scoping)                    | Govern + Map     | GV-1 (policies), MP-1 through MP-5 (context, requirements, benefits and costs, third-party risks, impact assessment) |
-| Phase 2 (Sensitive Uses)             | Govern           | GV-1 (policies), GV-3 (DEI&A), GV-5 (stakeholder engagement)                                                        |
-| Phase 3 (Standards Mapping)          | Govern + Measure | GV-1 through GV-6 (full governance), MS-1 (measurement approach)                                                     |
-| Phase 4 (Security Model Analysis)    | Measure          | MS-2.5 through MS-2.11 (trustworthiness evaluation per characteristic)                                               |
-| Phase 5 (Impact Assessment)          | Manage           | MN-1 through MN-4 (risk prioritization, response, monitoring, documentation)                                         |
-| Phase 6 (Review and Handoff)         | Manage           | MN-3 (third-party monitoring), MN-4 (continual improvement, incident communication)                                  |
+| RAI Planner Phase                 | AI RMF Function  | Key Subcategories                                                                                                    |
+|-----------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------|
+| Phase 1 (Scoping)                 | Govern + Map     | GV-1 (policies), MP-1 through MP-5 (context, requirements, benefits and costs, third-party risks, impact assessment) |
+| Phase 2 (Sensitive Uses)          | Govern           | GV-1 (policies), GV-3 (DEI&A), GV-5 (stakeholder engagement)                                                         |
+| Phase 3 (Standards Mapping)       | Govern + Measure | GV-1 through GV-6 (full governance), MS-1 (measurement approach)                                                     |
+| Phase 4 (Security Model Analysis) | Measure          | MS-2.5 through MS-2.11 (trustworthiness evaluation per characteristic)                                               |
+| Phase 5 (Impact Assessment)       | Manage           | MN-1 through MN-4 (risk prioritization, response, monitoring, documentation)                                         |
+| Phase 6 (Review and Handoff)      | Manage           | MN-3 (third-party monitoring), MN-4 (continual improvement, incident communication)                                  |
 
 ### Trustworthiness Characteristics Hierarchy
 
