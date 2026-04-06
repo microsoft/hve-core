@@ -286,6 +286,17 @@ Describe 'Output Generation' -Tag 'Unit' {
             try { Invoke-PSScriptAnalyzerCore -OutputPath $script:OutputFile } catch { $null = $_ }
             { Get-Content $script:OutputFile | ConvertFrom-Json } | Should -Not -Throw
         }
+
+        It 'Summary file contains a valid UTC timestamp' {
+            try { Invoke-PSScriptAnalyzerCore -OutputPath $script:OutputFile } catch { $null = $_ }
+
+            $summaryFile = Join-Path (Split-Path $script:OutputFile -Parent) 'psscriptanalyzer-summary.json'
+            $summaryRaw = Get-Content $summaryFile -Raw
+            $summary = $summaryRaw | ConvertFrom-Json
+
+            $summary.Timestamp | Should -Not -BeNullOrEmpty
+            $summaryRaw | Should -Match '"Timestamp"\s*:\s*"[^"]+Z"'
+        }
     }
 }
 
