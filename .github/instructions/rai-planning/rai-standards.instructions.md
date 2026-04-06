@@ -188,11 +188,10 @@ This table maps RAI Planner phases to NIST AI RMF subcategories. Use these align
 | RAI Planner Phase           | AI RMF Function  | Key Subcategories                                                                                                    |
 |-----------------------------|------------------|----------------------------------------------------------------------------------------------------------------------|
 | Phase 1 (Scoping)           | Govern + Map     | GV-1 (policies), MP-1 through MP-5 (context, requirements, benefits and costs, third-party risks, impact assessment) |
-| Phase 2 (Sensitive Uses)    | Map              | MP-3 (capabilities), MP-4 (third-party risks), sensitive uses screening                                              |
-| Phase 3 (Standards Mapping) | Govern + Measure | GV-1 through GV-6 (full governance), MS-1 (measurement approach)                                                     |
-| Phase 4 (Assessment)        | Measure          | MS-2.5 through MS-2.11 (trustworthiness evaluation per characteristic)                                               |
-| Phase 5 (Mitigation)        | Manage           | MN-1 through MN-4 (risk prioritization, response, monitoring, documentation)                                         |
-| Phase 6 (Review)            | Manage           | MN-3 (third-party monitoring), MN-4 (continual improvement, incident communication)                                  |
+| Phase 2 (Standards Mapping) | Govern + Measure | GV-1 through GV-6 (full governance), MS-1 (measurement approach)                                                     |
+| Phase 3 (Assessment)        | Measure          | MS-2.5 through MS-2.11 (trustworthiness evaluation per characteristic)                                               |
+| Phase 4 (Mitigation)        | Manage           | MN-1 through MN-4 (risk prioritization, response, monitoring, documentation)                                         |
+| Phase 5 (Review)            | Manage           | MN-3 (third-party monitoring), MN-4 (continual improvement, incident communication)                                  |
 
 ### Trustworthiness Characteristics Hierarchy
 

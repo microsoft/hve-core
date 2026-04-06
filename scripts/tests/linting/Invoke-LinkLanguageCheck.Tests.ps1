@@ -120,6 +120,18 @@ Write-Output $json
             $script:WriteHostMessages | Should -Contain '📄 docs/a.md'
             $script:WriteHostMessages | Should -Contain '📄 docs/b.md'
         }
+
+        It 'Calls Get-StandardTimestamp for result JSON timestamp' {
+            Mock Get-StandardTimestamp { return 'MOCK-TIMESTAMP' }
+
+            Invoke-LinkLanguageCheckCore -ExcludePaths @('scripts/tests/**') | Out-Null
+
+            Should -Invoke Get-StandardTimestamp -Times 1
+
+            $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
+            $json = Get-Content $resultFile -Raw | ConvertFrom-Json
+            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
+        }
     }
 
     Context 'No issues found' {
@@ -161,6 +173,18 @@ Write-Output $json
             Should -Invoke Write-Host -Times 1 -ParameterFilter { $Object -like '*✅ No URLs with language paths found*' }
             Should -Invoke Write-Host -Times 0 -ParameterFilter { $Object -like '*📄*' }
             Should -Invoke Write-Host -Times 0 -ParameterFilter { $Object -like '*⚠️*' }
+        }
+
+        It 'Calls Get-StandardTimestamp for empty result JSON timestamp' {
+            Mock Get-StandardTimestamp { return 'MOCK-TIMESTAMP' }
+
+            Invoke-LinkLanguageCheckCore -ExcludePaths @() | Out-Null
+
+            Should -Invoke Get-StandardTimestamp -Times 1
+
+            $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
+            $json = Get-Content $resultFile -Raw | ConvertFrom-Json
+            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
         }
     }
 }

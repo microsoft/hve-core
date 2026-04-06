@@ -1,6 +1,6 @@
 {
   "name": "hve-core",
-  "version": "3.3.10",
+  "version": "3.3.41",
   "description": "HVE Core",
   "private": true,
   "scripts": {
@@ -36,6 +36,7 @@
     "plugin:validate": "npm run lint:collections-metadata",
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
+    "docs:test": "npm --prefix docs/docusaurus test",
     "docs:serve": "npm --prefix docs/docusaurus run serve"
   },
   "devDependencies": {
@@ -49,7 +50,11 @@
   },
   "overrides": {
     "markdown-it": "14.1.1",
+    "picomatch@^2": "2.3.2",
+    "picomatch@^4": "4.0.4",
+    "smol-toml": "1.6.1",
     "undici": "7.24.1",
+    "yaml": "2.8.3",
     "yauzl": "3.2.1"
   },
   "repository": {

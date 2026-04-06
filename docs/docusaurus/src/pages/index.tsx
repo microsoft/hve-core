@@ -1,6 +1,5 @@
 import React from 'react';
 import Layout from '@theme/Layout';
-import Mermaid from '@theme/Mermaid';
 import HeroSection from '../components/HeroSection';
 import { IconCard, BoxCard, CardGrid } from '../components/Cards';
 import CollectionCard from '../components/CollectionCards';
@@ -8,28 +7,16 @@ import { iconCards, boxCards } from '../data/hubCards';
 import { collectionCards } from '../data/collectionCards';
 import styles from './styles.module.css';
 
-const collectionDiagram = `graph TD
-    HCA["hve-core-all<br/>(163 artifacts)"]
-    INS["installer<br/>(2 artifacts)"]
-    ADO["ado"] CS["coding-standards"] DS["data-science"]
-    DT["design-thinking"] EXP["experimental"] GH["github"]
-    HC["hve-core"] PP["project-planning"] SP["security"]
-    HCA --> ADO
-    HCA --> CS
-    HCA --> DS
-    HCA --> DT
-    HCA --> EXP
-    HCA --> GH
-    HCA --> HC
-    HCA --> PP
-    HCA --> SP`;
-
 export default function Home(): React.ReactElement {
   return (
     <Layout title="HVE Core" description="AI-Driven Software Development Across the Full Lifecycle">
       <HeroSection
         title="HVE Core"
         subtitle="AI-Driven Software Development Across the Full Lifecycle"
+        cta={[
+          { label: 'Install the Extension', href: 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core', primary: true },
+          { label: 'Browse Collections', href: '/docs/getting-started/collections' },
+        ]}
       />
 
       <main>
@@ -63,9 +50,6 @@ export default function Home(): React.ReactElement {
               <CollectionCard key={card.name} {...card} />
             ))}
           </CardGrid>
-          <div className={styles.diagramContainer}>
-            <Mermaid value={collectionDiagram} />
-          </div>
         </section>
       </main>
     </Layout>

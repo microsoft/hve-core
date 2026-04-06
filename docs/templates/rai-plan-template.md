@@ -16,7 +16,7 @@ This template defines the standard structure for Responsible AI assessment docum
 
 ## Preamble
 
-_Important to note:_ This Responsible AI assessment cannot certify or attest to the complete safety or fairness of an AI system. This document is intended to help produce RAI-focused backlog items, evaluate against Microsoft RAI Standard v2 and NIST AI RMF 1.0, and document assessment findings including sensitive uses screening, security model analysis, and tradeoff decisions.
+_Important to note:_ This Responsible AI assessment cannot certify or attest to the complete safety or fairness of an AI system. This document is intended to help produce RAI-focused backlog items, evaluate against Microsoft RAI Standard v2 and NIST AI RMF 1.0, and document assessment findings including security model analysis, impact assessment, and tradeoff decisions.
 
 ## System Definition
 
@@ -50,29 +50,6 @@ _Important to note:_ This Responsible AI assessment cannot certify or attest to 
 | Stakeholder Group | Potential Impact                  | Impact Pathway      | Risk Level                 | Vulnerable Population |
 |-------------------|-----------------------------------|---------------------|----------------------------|-----------------------|
 | [Group name]      | [Description of potential impact] | [How impact occurs] | [Critical/High/Medium/Low] | [Yes/No]              |
-
-## Sensitive Uses Screening
-
-### Screening Summary
-
-| Category                            | Applicable | Severity                                       | Restricted Use |
-|-------------------------------------|------------|------------------------------------------------|----------------|
-| Consequential impact on individuals | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Consequential impact on communities | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Potential for physical harm         | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Potential for psychological harm    | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Surveillance and tracking           | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Deception risk                      | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Transparency and disclosure         | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Impacts on human autonomy           | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-| Dual-use potential                  | [Yes/No]   | [Negligible/Moderate/Significant/Catastrophic] | [Yes/No]       |
-
-### Use-Misuse Inventory
-
-| Scenario Type | Description                   | Harm Pathway           | Severity                                       |
-|---------------|-------------------------------|------------------------|------------------------------------------------|
-| Intended use  | [Intended use scenario]       | [N/A or minimal risk]  | [Negligible/Moderate/Significant/Catastrophic] |
-| Misuse        | [Foreseeable misuse scenario] | [How harm could occur] | [Negligible/Moderate/Significant/Catastrophic] |
 
 ## RAI Standards Mapping
 
