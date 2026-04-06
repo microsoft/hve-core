@@ -9,6 +9,7 @@
     "commands/coding-standards/"
   ],
   "skills": [
-    "skills/coding-standards/"
+    "skills/coding-standards/",
+    "skills/shared/"
   ]
 }
