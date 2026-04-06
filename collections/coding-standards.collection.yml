@@ -67,5 +67,7 @@ items:
   - path: .github/skills/coding-standards/python-foundational
     kind: skill
     maturity: experimental
+  - path: .github/skills/shared/pr-reference
+    kind: skill
 display:
   ordering: alpha
