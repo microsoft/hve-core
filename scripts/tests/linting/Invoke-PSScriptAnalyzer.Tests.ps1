@@ -286,6 +286,15 @@ Describe 'Output Generation' -Tag 'Unit' {
             try { Invoke-PSScriptAnalyzerCore -OutputPath $script:OutputFile } catch { $null = $_ }
             { Get-Content $script:OutputFile | ConvertFrom-Json } | Should -Not -Throw
         }
+
+        It 'Summary JSON contains Timestamp from Get-StandardTimestamp' {
+            Mock Get-StandardTimestamp { return 'MOCK-TIMESTAMP' }
+            try { Invoke-PSScriptAnalyzerCore -OutputPath $script:OutputFile } catch { $null = $_ }
+            $summaryFile = Join-Path $script:TempDir 'psscriptanalyzer-summary.json'
+            $summary = Get-Content $summaryFile -Raw | ConvertFrom-Json
+            $summary.Timestamp | Should -Be 'MOCK-TIMESTAMP'
+            Should -Invoke Get-StandardTimestamp -Times 1
+        }
     }
 }
 
