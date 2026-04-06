@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Layout from '@theme/Layout';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import HeroSection from '../components/HeroSection';
 import { IconCard, BoxCard, CardGrid } from '../components/Cards';
 import CollectionCard from '../components/CollectionCards';
 import { iconCards, boxCards } from '../data/hubCards';
-import { collectionCards } from '../data/collectionCards';
+import { resolveCollectionCards } from '../data/collectionCards';
 import styles from './styles.module.css';
 
 export default function Home(): React.ReactElement {
+  const { siteConfig } = useDocusaurusContext();
+  const counts = (siteConfig.customFields?.collectionCounts ?? {}) as Record<string, number>;
+
+  const collectionCards = useMemo(() => resolveCollectionCards(counts), [counts]);
+
   return (
     <Layout title="HVE Core" description="AI-Driven Software Development Across the Full Lifecycle">
       <HeroSection
