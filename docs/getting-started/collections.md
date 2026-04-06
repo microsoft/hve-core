@@ -54,20 +54,20 @@ The following diagram shows how the domain collections relate to the two marketp
 
 ```mermaid
 graph TD
-    HCA["hve-core-all<br/>(221 artifacts)"]
+    HCA["hve#45;core#45;all<br/>(221 artifacts)"]
     INS["installer<br/>(2 artifacts)"]
 
     ADO["ado"]
-    CS["coding-standards"]
-    DS["data-science"]
-    DT["design-thinking"]
+    CS["coding#45;standards"]
+    DS["data#45;science"]
+    DT["design#45;thinking"]
     EXP["experimental"]
     GH["github"]
     GL["gitlab"]
-    HC["hve-core"]
+    HC["hve#45;core"]
     JR["jira"]
-    PP["project-planning"]
-    RP["rai-planning"]
+    PP["project#45;planning"]
+    RP["rai#45;planning"]
     SP["security"]
 
     HCA --> ADO

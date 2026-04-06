@@ -135,6 +135,7 @@ function Invoke-PSScriptAnalyzerCore {
         Warnings       = @($allResults | Where-Object Severity -eq 'Warning').Count
         Information    = @($allResults | Where-Object Severity -eq 'Information').Count
         HasErrors      = $hasErrors
+        Timestamp      = Get-StandardTimestamp
     }
 
     # Ensure logs directory exists
