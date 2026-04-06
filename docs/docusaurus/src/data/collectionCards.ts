@@ -17,7 +17,7 @@ export const collectionCards: CollectionCardData[] = [
   {
     name: 'coding-standards',
     description: 'Language-specific coding conventions',
-    artifacts: 21,
+    artifacts: 22,
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
