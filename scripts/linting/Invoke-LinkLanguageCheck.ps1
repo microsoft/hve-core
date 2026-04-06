@@ -1,17 +1,30 @@
 ﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-#
-# Invoke-LinkLanguageCheck.ps1
-#
-# Purpose: Wrapper for Link-Lang-Check.ps1 with GitHub Actions integration
-# Author: HVE Core Team
+
+<#
+.SYNOPSIS
+    Checks for URLs with language paths and outputs results to JSON.
+.DESCRIPTION
+    Wrapper for Link-Lang-Check.ps1 with GitHub Actions integration.
+    Validates URLs and writes results to a specified output path.
+.PARAMETER ExcludePaths
+    Array of paths to exclude from the check.
+.PARAMETER OutputPath
+    Path where the JSON result file will be written. 
+    Defaults to "logs/link-lang-check-results.json".
+.EXAMPLE
+    Invoke-LinkLanguageCheck.ps1
+.EXAMPLE
+    Invoke-LinkLanguageCheck.ps1 -OutputPath "custom/results.json"
+#>
 
 #Requires -Version 7.0
 
 [CmdletBinding()]
 param(
-    [string[]]$ExcludePaths = @()
+    [string[]]$ExcludePaths = @(),
+    [string]$OutputPath = "logs/link-lang-check-results.json"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,7 +36,8 @@ Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 function Invoke-LinkLanguageCheckCore {
     [CmdletBinding()]
     param(
-        [string[]]$ExcludePaths = @()
+        [string[]]$ExcludePaths = @(),
+        [string]$OutputPath   # no default; outer script always supplies the value
     )
 
     $repoRoot = git rev-parse --show-toplevel 2>$null
@@ -32,9 +46,9 @@ function Invoke-LinkLanguageCheckCore {
         return 1
     }
 
-    $logsDir = Join-Path $repoRoot "logs"
-    if (-not (Test-Path $logsDir)) {
-        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    
+    if (-not [System.IO.Path]::IsPathRooted($OutputPath)) {
+        $OutputPath = Join-Path $repoRoot $OutputPath
     }
 
     Write-Host "🔍 Checking for URLs with language paths..." -ForegroundColor Cyan
@@ -78,7 +92,15 @@ function Invoke-LinkLanguageCheckCore {
                 }
                 issues = $results
             }
-            $outputData | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
+
+            # Ensure output directory exists
+            $outputDir = Split-Path -Parent $OutputPath
+            if ($outputDir -and -not (Test-Path $outputDir)) {
+                New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+            }
+
+            # Write JSON to file
+            $outputData | ConvertTo-Json -Depth 3 | Out-File -FilePath $OutputPath -Encoding utf8
 
             Set-CIOutput -Name "issues" -Value $results.Count
             Set-CIEnv -Name "LINK_LANG_FAILED" -Value "true"
@@ -124,8 +146,15 @@ $(($uniqueFiles | ForEach-Object {
             }
             issues = @()
         }
-        $emptyResults | ConvertTo-Json -Depth 3 | Out-File (Join-Path $logsDir "link-lang-check-results.json") -Encoding utf8
 
+        # Ensure output directory exists
+        $outputDir = Split-Path -Parent $OutputPath
+        if ($outputDir -and -not (Test-Path $outputDir)) {
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+        }
+
+        # Write JSON to file
+        $emptyResults | ConvertTo-Json -Depth 3 | Out-File -FilePath $OutputPath -Encoding utf8
         Set-CIOutput -Name "issues" -Value "0"
 
         Write-CIStepSummary -Content @"
@@ -148,7 +177,7 @@ No URLs with language-specific paths detected.
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        $exitCode = Invoke-LinkLanguageCheckCore -ExcludePaths $ExcludePaths
+        $exitCode = Invoke-LinkLanguageCheckCore -ExcludePaths $ExcludePaths -OutputPath $OutputPath
         exit $exitCode
     }
     catch {
@@ -158,3 +187,4 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 }
 #endregion Main Execution
+

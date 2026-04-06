@@ -1,6 +1,12 @@
 ---
 name: video-to-gif
 description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+license: MIT
+compatibility: 'Requires FFmpeg on PATH'
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-03-18"
 ---
 
 # Video-to-GIF Conversion Skill

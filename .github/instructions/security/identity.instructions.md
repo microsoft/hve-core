@@ -54,7 +54,7 @@ After the standard scoping questionnaire, assess for AI/ML components:
 ### Phase 3: Standards Mapping
 
 * Entry: Phase 2 complete (all bucket analyses documented)
-* Activities: map components to OWASP Top 10, NIST 800-53, and CIS Controls; delegate WAF/CAF lookups to the Researcher Subagent
+* Activities: map components to OWASP Top 10 and NIST 800-53; delegate CIS Controls, WAF/CAF, and other lookups to the Researcher Subagent
 * Exit: all components mapped to applicable standards
 * Artifacts: standards mapping tables in the security plan
 * Transition: advance to Phase 4
