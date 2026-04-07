@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 # Validate-SkillStructure.ps1
@@ -491,7 +491,7 @@ function Write-SkillValidationResults {
     }
 
     $jsonOutput = @{
-        timestamp    = Get-StandardTimestamp
+        Timestamp    = Get-StandardTimestamp
         totalSkills  = $totalSkills
         skillErrors  = $errorCount
         skillWarnings = $warningCount
