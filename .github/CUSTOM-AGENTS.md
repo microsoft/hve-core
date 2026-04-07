@@ -355,7 +355,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
 
-**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-infrastructure`) for vulnerability references. Supports incremental comparison with prior scan reports.
+**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`) for vulnerability references. Supports incremental comparison with prior scan reports.
 
 ### code-review-functional
 

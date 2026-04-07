@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-infrastructure`).
+Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`).
 
 ### Technology Signals
 
@@ -51,6 +51,9 @@ owasp-top-10:
   - "REST API endpoints"
   - "Server-side templates"
   - "Web framework config (Express, Django, Flask, Rails, Spring)"
+owasp-mcp:
+  - "MCP server or client code"
+  - "MCP tool definitions"
 owasp-infrastructure:
   - "Dockerfile"
   - "docker-compose.yml"
