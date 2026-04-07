@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -239,7 +239,7 @@ function Invoke-CopyrightHeaderCheck {
 
     # Build output object
     $output = @{
-        timestamp = Get-StandardTimestamp
+        Timestamp = Get-StandardTimestamp
         totalFiles = $filesToCheck.Count
         filesWithHeaders = $filesWithHeaders
         filesMissingHeaders = $filesMissingHeaders
