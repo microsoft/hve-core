@@ -219,9 +219,9 @@ The challenge tracking document uses this structure:
 
 ## Unresolved Items
 
-| # | Area | Last Question Asked | Reason |
-|---|------|---------------------|--------|
-| 1 | {{area}} | {{question}} | No new depth after two probes |
+| # | Area     | Last Question Asked | Reason                        |
+|---|----------|---------------------|-------------------------------|
+| 1 | {{area}} | {{question}}        | No new depth after two probes |
 ````
 
 ## Response Format

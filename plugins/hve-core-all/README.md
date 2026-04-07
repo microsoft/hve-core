@@ -149,6 +149,7 @@ copilot plugin install hve-core-all@hve-core
 | prompt-refactor                             | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core                        |
 | pull-request                                | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                                     |
 | rpi                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core                          |
+| task-challenge                              | Adversarial What/Why/How interrogation of completed implementation artifacts - Brought to you by microsoft/hve-core                              |
 | task-implement                              | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                                          |
 | task-plan                                   | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core                             |
 | task-research                               | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                                 |
