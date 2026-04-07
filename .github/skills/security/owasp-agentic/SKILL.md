@@ -1,7 +1,7 @@
 ---
 name: owasp-agentic
 description: OWASP Agentic Security Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in AI agent systems - Brought to you by microsoft/hve-core.
-license: MIT
+license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
   authors: "OWASP Agentic Security Initiative"
@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/"
 ---
 
-# OWASP Agentic Top 10 — Skill Entry
+# OWASP® Agentic Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OWASP Agentic Top 10 skill.
 
@@ -40,6 +40,17 @@ security risks in AI agent systems.
 * `references/` — the Agentic Top 10 normative documents.
   * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP Agentic Security numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® Top 10 for Agentic Applications (2026) content is derived from works by the
+OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
 
 ---
 

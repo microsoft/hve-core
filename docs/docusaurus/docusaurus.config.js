@@ -1,6 +1,36 @@
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const collectionsDir = path.resolve(__dirname, '../../collections');
+
+/**
+ * @param {string} name
+ */
+function countYamlPaths(name) {
+  const yamlPath = path.join(collectionsDir, `${name}.collection.yml`);
+  let content;
+  try {
+    content = fs.readFileSync(yamlPath, 'utf-8');
+  } catch {
+    throw new Error(
+      `[docusaurus.config.js] Cannot read collection manifest: ${yamlPath}\n` +
+      `Ensure "${name}" exists in the collections/ directory.`,
+    );
+  }
+  return (content.match(/^\s*- path:/gm) || []).length;
+}
+
+const collectionNames = [
+  'ado', 'coding-standards', 'data-science', 'design-thinking',
+  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
+  'project-planning', 'rai-planning', 'security', 'hve-core-all',
+];
+const collectionCounts = Object.fromEntries(
+  collectionNames.map((n) => [n, countYamlPaths(n)]),
+);
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -19,6 +49,10 @@ const config = {
   projectName: 'hve-core',
 
   onBrokenLinks: 'throw',
+
+  customFields: {
+    collectionCounts,
+  },
 
   markdown: {
     hooks: {

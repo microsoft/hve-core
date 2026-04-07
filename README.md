@@ -102,6 +102,14 @@ Microsoft encourages customers to review its Responsible AI Standard when develo
 
 This project is licensed under the [MIT License](./LICENSE).
 
+### Licensing
+
+Most content in this repository is covered by the MIT License. Certain skill content
+derived from OWASP Foundation publications is licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Each affected
+skill identifies its license in frontmatter and includes a Third-Party Attribution
+section. See [THIRD-PARTY-NOTICES](./THIRD-PARTY-NOTICES) for full details.
+
 See [SECURITY.md](./SECURITY.md) for the security policy and vulnerability reporting.
 
 See [GOVERNANCE.md](./GOVERNANCE.md) for the project governance model.

@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/sssc-plans/**'
 
 # SSSC Phase 3: Standards Mapping
 
-Map the assessed supply chain posture against OpenSSF standards. Use the Phase 2 assessment results as input.
+Map the assessed supply chain posture against OpenSSF® standards. Use the Phase 2 assessment results as input.
 
 ## OpenSSF Scorecard: 20 Checks
 
@@ -178,3 +178,29 @@ Update `state.json`:
 * Set `phases.3-standards.status` to `✅`
 * Add `standards-mapping.md` to `phases.3-standards.artifacts`
 * Advance `currentPhase` to `4`
+
+## Third-Party Attribution
+
+OpenSSF® Scorecard check data derived from the OpenSSF Scorecard project, licensed under
+Apache 2.0. Source: <https://github.com/ossf/scorecard>
+
+SLSA Build Track level data derived from the SLSA specification, licensed under Community
+Specification License 1.0. Source: <https://slsa.dev/spec/>
+
+OpenSSF Best Practices Badge criteria derived from the CII Best Practices Badge project,
+licensed under MIT (criteria) and CC BY 3.0+ (documentation).
+Source: <https://www.bestpractices.dev/>
+
+Sigstore maturity data derived from the Sigstore project, licensed under Apache 2.0.
+Source: <https://www.sigstore.dev/>
+
+SPDX content derived from the SPDX specification, licensed under Community Specification
+License 1.0. Source: <https://spdx.dev/>
+
+CycloneDX content derived from the CycloneDX specification, licensed under Apache 2.0.
+Source: <https://cyclonedx.org/>
+
+NTIA Minimum Elements content is derived from a U.S. government publication. Not subject
+to copyright (17 U.S.C. § 105).
+
+OpenSSF® is a registered trademark of the Linux Foundation.
