@@ -130,7 +130,7 @@ class ComplianceReport {
     [hashtable] ToHashtable() {
         return @{
             ScanPath             = $this.ScanPath
-            Timestamp            = $this.Timestamp.ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
+            Timestamp            = $this.Timestamp.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ')
             TotalFiles           = $this.TotalFiles
             ScannedFiles         = $this.ScannedFiles
             TotalDependencies    = $this.TotalDependencies

@@ -1,7 +1,7 @@
 ---
 name: owasp-llm
 description: OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in large language model systems - Brought to you by microsoft/hve-core.
-license: MIT
+license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
   authors: "OWASP LLM Applications Security Initiative"
@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/"
 ---
 
-# OWASP LLM Top 10 — Skill Entry
+# OWASP® LLM Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OWASP LLM Top 10 skill.
 
@@ -40,6 +40,17 @@ security risks in large language model systems.
 * `references/` — the LLM Top 10 normative documents.
   * `00-vulnerability-index.md` — master index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP LLM Applications numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® Top 10 for LLM Applications (2025) content is derived from works by the
+OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
 
 ---
 
