@@ -5,6 +5,12 @@
 #
 # Purpose: Validates the structural integrity of skill directories under .github/skills/
 # Author: HVE Core Team
+#
+# .PARAMETER OutputPath
+# Output file path for validation results (default: logs/skill-validation-results.json)
+#
+# .EXAMPLE
+# pwsh -File scripts/linting/Validate-SkillStructure.ps1 -OutputPath "custom-dir/custom-results.json"
 
 #Requires -Version 7.0
 
@@ -20,7 +26,10 @@ param(
     [switch]$ChangedFilesOnly,
 
     [Parameter(Mandatory = $false)]
-    [string]$BaseBranch = 'origin/main'
+    [string]$BaseBranch = 'origin/main',
+
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = "logs/skill-validation-results.json"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -30,6 +39,9 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelper
 
 # Recognized subdirectories within a skill directory
 $script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests')
+
+# Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
+$script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
 
 function Get-SkillFrontmatter {
     <#
@@ -309,13 +321,17 @@ function Test-SkillDirectory {
         foreach ($warn in $pyResult.Warnings) { $warnings.Add($warn) }
     }
 
-    # Check for unrecognized subdirectories
-    $subdirs = Get-ChildItem -Path $Directory.FullName -Directory -ErrorAction SilentlyContinue
+    # Check for unrecognized subdirectories (-Force includes dot-prefixed dirs hidden on Linux)
+    $subdirs = Get-ChildItem -Path $Directory.FullName -Directory -Force -ErrorAction SilentlyContinue
     foreach ($subdir in $subdirs) {
         if ($subdir.Name -notin $script:RecognizedSubdirectories) {
             # Python package directories (containing __init__.py) are valid in Python skills
             $initPyPath = Join-Path -Path $subdir.FullName -ChildPath '__init__.py'
             if ($isPythonSkill -and (Test-Path $initPyPath -PathType Leaf)) {
+                continue
+            }
+            # Standard Python environment directories are expected in Python skills
+            if ($isPythonSkill -and $subdir.Name -in $script:PythonEnvironmentDirs) {
                 continue
             }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")
@@ -405,8 +421,11 @@ function Write-SkillValidationResults {
     .PARAMETER RepoRoot
     Repository root path for resolving the logs directory.
 
+    .PARAMETER OutputPath
+    Output file path for validation results (default: logs/skill-validation-results.json)
+
     .EXAMPLE
-    Write-SkillValidationResults -Results $results -RepoRoot '/repo'
+    Write-SkillValidationResults -Results $results -RepoRoot '/repo' -OutputPath 'custom-dir/custom-results.json'
     #>
     [CmdletBinding()]
     [OutputType([void])]
@@ -416,7 +435,10 @@ function Write-SkillValidationResults {
 
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "logs/skill-validation-results.json"
     )
 
     $isCI = Test-CIEnvironment
@@ -462,9 +484,10 @@ function Write-SkillValidationResults {
     Write-Host "   With warnings:   $warningCount" -ForegroundColor $(if ($warningCount -gt 0) { 'Yellow' } else { 'Green' })
 
     # Write JSON results
-    $logsDir = Join-Path -Path $RepoRoot -ChildPath 'logs'
-    if (-not (Test-Path $logsDir)) {
-        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    $resolvedOutputPath = Join-Path -Path $RepoRoot -ChildPath $OutputPath
+    $outputDir = Split-Path -Parent $resolvedOutputPath
+    if (-not (Test-Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
     $jsonOutput = @{
@@ -483,9 +506,8 @@ function Write-SkillValidationResults {
         })
     }
 
-    $outputPath = Join-Path -Path $logsDir -ChildPath 'skill-validation-results.json'
-    $jsonOutput | ConvertTo-Json -Depth 10 | Set-Content -Path $outputPath -Encoding UTF8
-    Write-Host "📊 Results written to: $outputPath" -ForegroundColor Cyan
+    $jsonOutput | ConvertTo-Json -Depth 10 | Set-Content -Path $resolvedOutputPath -Encoding UTF8
+    Write-Host "📊 Results written to: $resolvedOutputPath" -ForegroundColor Cyan
 }
 
 function Invoke-SkillStructureValidation {
@@ -511,11 +533,14 @@ function Invoke-SkillStructureValidation {
     .PARAMETER BaseBranch
     Git reference for the base branch comparison when using ChangedFilesOnly.
 
+    .PARAMETER OutputPath
+    Output file path for validation results (default: logs/skill-validation-results.json)
+
     .OUTPUTS
     [int] Exit code: 0 for success, 1 for failure.
 
     .EXAMPLE
-    $exitCode = Invoke-SkillStructureValidation -SkillsPath '.github/skills'
+    $exitCode = Invoke-SkillStructureValidation -SkillsPath '.github/skills' -OutputPath 'custom-dir/custom-results.json'
     #>
     [CmdletBinding()]
     [OutputType([int])]
@@ -530,7 +555,10 @@ function Invoke-SkillStructureValidation {
         [switch]$ChangedFilesOnly,
 
         [Parameter(Mandatory = $false)]
-        [string]$BaseBranch = 'origin/main'
+        [string]$BaseBranch = 'origin/main',
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = "logs/skill-validation-results.json"
     )
 
     try {
@@ -611,7 +639,7 @@ function Invoke-SkillStructureValidation {
             }
         }
 
-        Write-SkillValidationResults -Results $results -RepoRoot $repoRoot
+        Write-SkillValidationResults -Results $results -RepoRoot $repoRoot -OutputPath $OutputPath
 
         # Calculate exit code
         $hasErrors = @($results | Where-Object { -not $_.IsValid }).Count -gt 0
@@ -641,7 +669,8 @@ if ($MyInvocation.InvocationName -ne '.') {
         -SkillsPath $SkillsPath `
         -WarningsAsErrors:$WarningsAsErrors `
         -ChangedFilesOnly:$ChangedFilesOnly `
-        -BaseBranch $BaseBranch
+        -BaseBranch $BaseBranch `
+        -OutputPath $OutputPath
     exit $exitCode
 }
 #endregion Main Execution

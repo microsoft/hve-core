@@ -16,12 +16,27 @@ tags:
   - uv
 items:
   # Agents
-  - path: .github/agents/coding-standards/functional-code-review.agent.md
+  - path: .github/agents/coding-standards/code-review-full.agent.md
     kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/code-review-functional.agent.md
+    kind: agent
+  - path: .github/agents/coding-standards/code-review-standards.agent.md
+    kind: agent
+    maturity: experimental
   # Prompts
-  - path: .github/prompts/coding-standards/functional-code-review.prompt.md
+  - path: .github/prompts/coding-standards/code-review-functional.prompt.md
     kind: prompt
+  - path: .github/prompts/coding-standards/code-review-full.prompt.md
+    kind: prompt
+    maturity: experimental
   # Instructions
+  - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/coding-standards/bash/bash.instructions.md
     kind: instruction
   - path: .github/instructions/coding-standards/bicep/bicep.instructions.md
@@ -48,5 +63,11 @@ items:
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/coding-standards/python-foundational
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/pr-reference
+    kind: skill
 display:
   ordering: alpha

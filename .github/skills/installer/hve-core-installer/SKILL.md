@@ -1,6 +1,12 @@
 ---
 name: hve-core-installer
 description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
+license: MIT
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-04-01"
 ---
 
 # HVE-Core Installer Skill
@@ -414,7 +420,8 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/shared": true
+    "<PREFIX>/.github/skills/shared": true,
+    "<PREFIX>/.github/skills/coding-standards": true
   }
 }
 ```
@@ -502,7 +509,8 @@ Add to devcontainer.json:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true
+          "/workspaces/hve-core/.github/skills/shared": true,
+          "/workspaces/hve-core/.github/skills/coding-standards": true
         }
       }
     }

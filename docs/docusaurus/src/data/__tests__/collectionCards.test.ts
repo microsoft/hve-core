@@ -1,9 +1,26 @@
-import { collectionCards, metaCollections } from '../collectionCards';
+import { collectionCardDefinitions, resolveCollectionCards, resolveMetaCollections } from '../collectionCards';
 import type { CollectionCardData } from '../collectionCards';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const collectionsDir = path.resolve(__dirname, '../../../../../collections');
+
+function countYamlPaths(collectionName: string): number {
+  const yamlPath = path.join(
+    collectionsDir,
+    `${collectionName}.collection.yml`,
+  );
+  const content = fs.readFileSync(yamlPath, 'utf-8');
+  return (content.match(/^\s*- path:/gm) || []).length;
+}
+
+const counts = Object.fromEntries(
+  [...collectionCardDefinitions.map((c) => c.name), 'hve-core-all'].map(
+    (name) => [name, countYamlPaths(name)],
+  ),
+);
+const collectionCards = resolveCollectionCards(counts);
+const metaCollections = resolveMetaCollections(counts);
 
 describe('collectionCards', () => {
   const expectedNames = [
@@ -13,8 +30,11 @@ describe('collectionCards', () => {
     'design-thinking',
     'experimental',
     'github',
+    'gitlab',
     'hve-core',
+    'jira',
     'project-planning',
+    'rai-planning',
     'security',
   ];
 
@@ -61,7 +81,7 @@ describe('metaCollections', () => {
   });
 
   it('has positive integer values', () => {
-    for (const [key, value] of Object.entries(metaCollections)) {
+    for (const [, value] of Object.entries(metaCollections)) {
       expect(Number.isInteger(value)).toBe(true);
       expect(value).toBeGreaterThan(0);
     }
@@ -69,15 +89,6 @@ describe('metaCollections', () => {
 });
 
 describe('artifact count cross-validation', () => {
-  function countYamlPaths(collectionName: string): number {
-    const yamlPath = path.join(
-      collectionsDir,
-      `${collectionName}.collection.yml`,
-    );
-    const content = fs.readFileSync(yamlPath, 'utf-8');
-    return (content.match(/^\s*- path:/gm) || []).length;
-  }
-
   it.each(collectionCards.map((c): [string] => [c.name]))(
     '%s artifact count matches YAML manifest',
     (name) => {

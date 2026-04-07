@@ -2,7 +2,9 @@ Enforce language-specific coding conventions and best practices across your proj
 
 This collection includes:
 
-- **Functional Code Review** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Functional** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
+- **Code Review Standards** — Skills-based code reviewer that enforces project-defined coding standards via dynamic skill loading
+- **Code Review Full** — Orchestrates both functional and standards reviews in a single pass
 
 Instructions for:
 

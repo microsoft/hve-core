@@ -53,6 +53,12 @@ items:
   - path: .github/skills/security/owasp-agentic
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/owasp-mcp
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-infrastructure
+    kind: skill
+    maturity: experimental
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
     maturity: experimental
@@ -143,9 +149,6 @@ items:
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-standards.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-security-model.instructions.md

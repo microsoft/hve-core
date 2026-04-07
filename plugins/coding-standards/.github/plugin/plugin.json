@@ -1,11 +1,15 @@
 {
   "name": "coding-standards",
   "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
-  "version": "3.3.27",
+  "version": "3.3.41",
   "agents": [
     "agents/coding-standards/"
   ],
   "commands": [
     "commands/coding-standards/"
+  ],
+  "skills": [
+    "skills/coding-standards/",
+    "skills/shared/"
   ]
 }
