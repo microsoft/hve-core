@@ -7,6 +7,8 @@ Language-specific coding instructions and pre-PR code review agents for bash, Bi
 
 Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes:
 
 - **Code Review Functional** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
@@ -22,6 +24,8 @@ Instructions for:
 - **Python** — Scripting implementation with type hints, docstrings, uv project management, and pytest testing
 - **Rust** — Rust development conventions targeting the 2021 edition
 - **Terraform** — Infrastructure as code with provider configuration and module structure
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
 
 ## Install
 

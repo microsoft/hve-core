@@ -3,6 +3,8 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 > [!CAUTION]
 > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents and prompts for:
 
 - **Security Plan Creation** - Generate threat models and security architecture documents
@@ -24,10 +26,12 @@ Supporting subagents included:
 
 Skills included:
 
-- **OWASP Top 10** - OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
-- **OWASP LLM Top 10** - OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
-- **OWASP Agentic Top 10** - OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
-- **OWASP MCP Top 10** - OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments
-- **OWASP Infrastructure Top 10** - OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments
-- **OWASP CI/CD Top 10** - OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments
-- **Security Reviewer Formats** - Format specifications and data contracts for the security reviewer orchestrator and its subagents
+- **OWASP Top 10** — OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
+- **OWASP LLM Top 10** — OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
+- **OWASP Agentic Top 10** — OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
+- **OWASP MCP Top 10** — OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments
+- **OWASP Infrastructure Top 10** — OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments
+- **OWASP CI/CD Top 10** — OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments
+- **Security Reviewer Formats** — Format specifications and data contracts for the security reviewer orchestrator and its subagents
+
+<!-- END AUTO-GENERATED ARTIFACTS -->

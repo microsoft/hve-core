@@ -467,6 +467,188 @@ description: "My skill description"
         $content | Should -Match '# HVE Core - No Description'
         $content | Should -Match 'No description body'
     }
+
+    Context 'Maturity filtering' {
+        It 'Excludes experimental items when AllowedMaturities contains only stable' {
+            $collection = @{
+                id    = 'maturity-test'
+                name  = 'Maturity Test'
+                description = 'Maturity filtering test'
+                items = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
+                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'experimental' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'maturity-filter.collection.md'
+            'Maturity body.' | Set-Content -Path $mdPath
+            $outPath = Join-Path $script:tempDir 'README.maturity-filter.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable')
+
+            $content = Get-Content -Path $outPath -Raw
+            $content | Should -Match 'alpha'
+            $content | Should -Not -Match 'zebra'
+        }
+
+        It 'Includes experimental items when AllowedMaturities allows them' {
+            $collection = @{
+                id    = 'maturity-test2'
+                name  = 'Maturity Test 2'
+                description = 'Maturity filtering test'
+                items = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
+                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'experimental' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'maturity-all.collection.md'
+            'All maturity body.' | Set-Content -Path $mdPath
+            $outPath = Join-Path $script:tempDir 'README.maturity-all.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable', 'preview', 'experimental')
+
+            $content = Get-Content -Path $outPath -Raw
+            $content | Should -Match 'alpha'
+            $content | Should -Match 'zebra'
+        }
+
+        It 'Excludes deprecated items regardless of channel' {
+            $collection = @{
+                id    = 'deprecated-test'
+                name  = 'Deprecated Test'
+                description = 'Deprecated filtering test'
+                items = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md'; maturity = 'stable' },
+                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md'; maturity = 'deprecated' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'deprecated.collection.md'
+            'Deprecated body.' | Set-Content -Path $mdPath
+            $outPath = Join-Path $script:tempDir 'README.deprecated.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath -AllowedMaturities @('stable', 'preview', 'experimental')
+
+            $content = Get-Content -Path $outPath -Raw
+            $content | Should -Match 'alpha'
+            $content | Should -Not -Match 'zebra'
+        }
+    }
+
+    Context 'Template marker handling' {
+        It 'Preserves intro text and replaces marker section in README' {
+            $collection = @{
+                id          = 'marker-intro'
+                name        = 'Marker Intro'
+                description = 'Marker intro test'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'marker-intro.collection.md'
+            @"
+Hand-authored intro paragraph.
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Old stale artifact list.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.marker-intro.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+            $content = Get-Content -Path $outPath -Raw
+            $content | Should -Match 'Hand-authored intro paragraph'
+            $content | Should -Not -Match 'Old stale artifact list'
+        }
+
+        It 'Writes back updated artifact section into collection.md' {
+            $collection = @{
+                id          = 'marker-wb'
+                name        = 'Marker Writeback'
+                description = 'Marker writeback test'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'marker-wb.collection.md'
+            @"
+Writeback intro.
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Old content to replace.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.marker-wb.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+            $mdContent = Get-Content -Path $mdPath -Raw
+            $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+            $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+            $mdContent | Should -Match 'alpha'
+            $mdContent | Should -Not -Match 'Old content to replace'
+        }
+
+        It 'Works without markers for backward compatibility' {
+            $collection = @{
+                id          = 'no-markers'
+                name        = 'No Markers'
+                description = 'No markers test'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'no-markers.collection.md'
+            'Legacy body content without markers.' | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.no-markers.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+            $content = Get-Content -Path $outPath -Raw
+            $content | Should -Match 'Legacy body content without markers'
+        }
+
+        It 'Preserves footer content after end marker' {
+            $collection = @{
+                id          = 'marker-footer'
+                name        = 'Marker Footer'
+                description = 'Marker footer test'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'marker-footer.collection.md'
+            @"
+Footer intro.
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Old artifacts.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+
+## Prerequisites
+
+This requires setup first.
+"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.marker-footer.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+            $readmeContent = Get-Content -Path $outPath -Raw
+            $readmeContent | Should -Match 'Footer intro'
+            $readmeContent | Should -Match 'Prerequisites'
+
+            $mdContent = Get-Content -Path $mdPath -Raw
+            $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+            $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+            $mdContent | Should -Match '## Prerequisites'
+            $mdContent | Should -Match 'This requires setup first'
+        }
+    }
 }
 
 #endregion Package Generation Function Tests

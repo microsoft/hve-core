@@ -5,6 +5,8 @@ Use this edition when you want access to everything without choosing a focused c
 > [!CAUTION]
 > This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 Code review agents included (via coding-standards collection):
 
 - **Code Review Functional** — Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps
@@ -33,3 +35,5 @@ Skills included:
 - **Jira Integration** — Jira backlog discovery, triage, execution, and PRD planning workflows backed by Jira issue operations and field discovery
 - **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
 - **Video to GIF** — Converts video files to optimized GIF animations using FFmpeg two-pass palette optimization
+
+<!-- END AUTO-GENERATED ARTIFACTS -->

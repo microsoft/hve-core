@@ -1,5 +1,7 @@
 Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies — all from within VS Code.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents and prompts for:
 
 - **Work Item Management** — Discover, create, update, and plan work items across ADO projects
@@ -7,3 +9,5 @@ This collection includes agents and prompts for:
 - **Pull Request Creation** — Generate PRs with linked work items and reviewer identification
 - **PRD-to-Work-Item Conversion** — Transform Product Requirements Documents into ADO feature/user-story/task hierarchies
 - **Backlog Management** — Orchestrated triage, discovery, sprint planning, and work item creation workflows through a central ADO Backlog Manager agent
+
+<!-- END AUTO-GENERATED ARTIFACTS -->

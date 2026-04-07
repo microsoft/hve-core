@@ -224,6 +224,8 @@ function Invoke-ExtensionCollectionsGeneration {
         files are removed.
     .PARAMETER RepoRoot
         Repository root path containing collections/ and extension/templates/.
+    .PARAMETER Channel
+        Release channel controlling maturity filtering for README generation.
     .OUTPUTS
         [string[]] Array of generated file paths.
     #>
@@ -231,11 +233,16 @@ function Invoke-ExtensionCollectionsGeneration {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'Stable'
     )
 
     $collectionsDir = Join-Path $RepoRoot 'collections'
     $templatesDir = Join-Path $RepoRoot 'extension/templates'
+
+    $allowedMaturities = Get-AllowedMaturities -Channel $Channel
 
     $packageTemplatePath = Join-Path $templatesDir 'package.template.json'
 
@@ -317,7 +324,7 @@ function Invoke-ExtensionCollectionsGeneration {
             default        { Join-Path $RepoRoot "extension/README.$collectionId.md" }
         }
 
-        New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath
+        New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath -AllowedMaturities $allowedMaturities
     }
 
     return $expectedFiles
@@ -368,6 +375,45 @@ function Get-ArtifactDescription {
     return ''
 }
 
+function Split-CollectionMdByMarkers {
+    <#
+    .SYNOPSIS
+        Splits collection.md content at auto-generation markers.
+    #>
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $beginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+    $endMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
+
+    $beginIdx = $Content.IndexOf($beginMarker)
+    $endIdx = $Content.IndexOf($endMarker)
+
+    if ($beginIdx -lt 0 -or $endIdx -lt 0 -or $endIdx -le $beginIdx) {
+        return @{
+            HasMarkers = $false
+            Intro      = $Content
+            Existing   = ''
+            Footer     = ''
+        }
+    }
+
+    $intro = $Content.Substring(0, $beginIdx).TrimEnd()
+    $endMarkerEnd = $endIdx + $endMarker.Length
+    $footer = if ($endMarkerEnd -lt $Content.Length) {
+        $Content.Substring($endMarkerEnd).TrimStart("`r", "`n")
+    } else { '' }
+
+    return @{
+        HasMarkers = $true
+        Intro      = $intro
+        Existing   = ''
+        Footer     = $footer
+    }
+}
+
 function New-CollectionReadme {
     <#
     .SYNOPSIS
@@ -388,6 +434,8 @@ function New-CollectionReadme {
         Repository root path for resolving artifact file paths.
     .PARAMETER OutputPath
         Destination path for the generated README.
+    .PARAMETER AllowedMaturities
+        Maturity levels to include in artifact tables. Defaults to stable only.
     #>
     [CmdletBinding()]
     param(
@@ -404,7 +452,9 @@ function New-CollectionReadme {
         [string]$RepoRoot,
 
         [Parameter(Mandatory = $true)]
-        [string]$OutputPath
+        [string]$OutputPath,
+
+        [string[]]$AllowedMaturities = @('stable')
     )
 
     $collectionId = [string]$Collection.id
@@ -423,7 +473,17 @@ function New-CollectionReadme {
         '> **⚠️ Experimental** — This collection is experimental and available only in the Pre-Release channel. Contents may change or be removed without notice.'
     } else { '' }
 
-    $bodyContent = (Get-Content -Path $CollectionMdPath -Raw).Trim()
+    $bodyContent = Get-Content -Path $CollectionMdPath -Raw
+    $parsed = Split-CollectionMdByMarkers -Content $bodyContent
+
+    if ($parsed.HasMarkers) {
+        $bodyForTemplate = $parsed.Intro
+        if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+            $bodyForTemplate = $bodyForTemplate + "`n`n" + $parsed.Footer.TrimEnd()
+        }
+    } else {
+        $bodyForTemplate = $bodyContent.Trim()
+    }
 
     # Collect artifacts with descriptions grouped by kind
     $agents = @()
@@ -434,6 +494,10 @@ function New-CollectionReadme {
     if ($Collection.ContainsKey('items')) {
         foreach ($item in $Collection.items) {
             if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                continue
+            }
+            $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+            if ($AllowedMaturities -and $AllowedMaturities -notcontains $maturity) {
                 continue
             }
             $kind = [string]$item.kind
@@ -478,6 +542,19 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
+    # Write back updated artifact section into collection.md when markers are present
+    if ($parsed.HasMarkers) {
+        $beginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+        $endMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
+        $generatedBlock = $artifactSections.ToString().TrimEnd()
+        $updatedCollectionMd = "$($parsed.Intro)`n`n$beginMarker`n`n$generatedBlock`n`n$endMarker"
+        if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+            $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
+        }
+        $updatedCollectionMd += "`n"
+        Set-ContentIfChanged -Path $CollectionMdPath -Value $updatedCollectionMd
+    }
+
     $fullEdition = if ($collectionId -notin @('hve-core', 'hve-core-all')) {
         "## Full Edition`n`nLooking for more agents covering additional domains? Check out the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
     }
@@ -491,7 +568,7 @@ function New-CollectionReadme {
         -replace '\{\{DISPLAY_NAME\}\}', $displayName `
         -replace '\{\{DESCRIPTION\}\}', $description `
         -replace '\{\{MATURITY_NOTICE\}\}', $maturityNotice `
-        -replace '\{\{BODY\}\}', $bodyContent `
+        -replace '\{\{BODY\}\}', $bodyForTemplate `
         -replace '\{\{ARTIFACTS\}\}', $artifactSections.ToString().TrimEnd() `
         -replace '\{\{FULL_EDITION\}\}', $fullEdition
 
@@ -1521,7 +1598,7 @@ function Invoke-PrepareExtension {
     # This ensures extension/package.json and extension/package.*.json exist
     # with the correct version from the template before any reads occur.
     try {
-        $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot
+        $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot -Channel $Channel
         Write-Host "Generated $($generated.Count) collection package file(s)" -ForegroundColor Green
     }
     catch {

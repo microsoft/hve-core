@@ -1,5 +1,7 @@
 HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents for:
 
 - **RPI Agent** — Autonomous orchestrator that drives the full four-phase workflow
@@ -28,3 +30,5 @@ Supporting subagents included:
 Skills included:
 
 - **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
+
+<!-- END AUTO-GENERATED ARTIFACTS -->

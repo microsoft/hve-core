@@ -1,5 +1,7 @@
 Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents for:
 
 - **Agile Coach** — Create or refine goal-oriented user stories with clear acceptance criteria
@@ -22,3 +24,5 @@ Supporting subagents included:
 - **Phase Implementor** — Executes a single implementation phase from a plan with full codebase access and change tracking
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
+
+<!-- END AUTO-GENERATED ARTIFACTS -->

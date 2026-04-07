@@ -11,6 +11,8 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 
 > **Preview** — Core features are complete and functional. Suitable for adoption with the understanding that refinements may follow.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents, prompts, and instructions for:
 
 - **DT Start Project** — Initializes a new Design Thinking coaching project with state file creation, frozen/fluid classification, and first Method 1 coaching interaction
@@ -61,6 +63,8 @@ This collection includes agents, prompts, and instructions for:
 - **DT Curriculum Module 8: User Testing** — Key concepts (leap-enabling vs leap-killing questions, non-linear iteration loops, behavior over opinions), task-based testing techniques, comprehension checks, and manufacturing practice exercises for teaching Method 8
 - **DT Curriculum Module 9: Iteration at Scale** — Key concepts (telemetry-driven enhancement, high-frequency pattern focus, incremental enhancement), production telemetry techniques, comprehension checks, and manufacturing practice exercises for teaching Method 9
 - **DT Curriculum Scenario: Manufacturing** — Factory floor improvement reference scenario (Meridian Components) with interview excerpts, observation data points, and test results used across all 9 curriculum modules for progressive learning exercises
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
 
 ## Install
 

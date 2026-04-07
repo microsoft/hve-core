@@ -3,6 +3,8 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 > [!CAUTION]
 > The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified human review, organizational RAI review boards, or regulatory compliance programs. All AI-generated RAI artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risks, or produce recommendations that are incomplete or inappropriate for your context.
 
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
 This collection includes agents for:
 
 - **Data Specification Generation** — Create structured data schemas and specifications from requirements
@@ -10,3 +12,5 @@ This collection includes agents for:
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
 - **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
