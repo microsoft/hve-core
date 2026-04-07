@@ -70,4 +70,11 @@ to prevent recurrence.
 
 ---
 
+Content derived from works by the **UK Government Security Group** (Crown Copyright) licensed
+under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+and the **Australian Signals Directorate / ACSC** (© Commonwealth of Australia) licensed under
+[CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+Modifications: Synthesized into structured principle-checklist format with OWASP cross-references;
+merged UK and AU guidance into unified principle areas.
+
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

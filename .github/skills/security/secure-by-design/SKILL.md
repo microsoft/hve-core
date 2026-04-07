@@ -1,13 +1,14 @@
 ---
 name: secure-by-design
 description: Secure by Design principles knowledge base for assessing adherence to security-first design, development, and deployment practices across the software lifecycle - Brought to you by microsoft/hve-core.
-license: MIT
+license: OGL-UK-3.0 AND CC-BY-4.0
 user-invocable: false
 metadata:
   authors: "UK Government Security Group, Australian Signals Directorate (ASD) ACSC"
-  content_based_on:
-    - "https://www.security.gov.uk/policy-and-guidance/secure-by-design/principles/"
-    - "https://www.cyber.gov.au/business-government/secure-design/secure-by-design/secure-by-design-foundations"
+  spec_version: "1.0"
+  framework_revision: "1.0.0"
+  last_updated: "2026-03-27"
+  content_based_on: "https://www.security.gov.uk/policy-and-guidance/secure-by-design/principles/ AND https://www.cyber.gov.au/business-government/secure-design/secure-by-design/secure-by-design-foundations"
 ---
 
 # Secure by Design — Skill Entry
@@ -40,6 +41,24 @@ secure-by-design practices across the software lifecycle.
 * `references/` — the Secure by Design normative documents.
   * `00-principle-index.md` — index of all principle identifiers, categories, source mappings, and cross-references.
   * `01` through `11` — one document per synthesized principle area merging UK and AU guidance.
+
+## Third-Party Attribution
+
+### UK Government Secure by Design Principles
+
+* **Copyright**: Crown Copyright, UK Government Security Group
+* **License**: [Open Government Licence v3.0 (OGL-UK-3.0)](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/)
+* **Source**: <https://www.security.gov.uk/policy-and-guidance/secure-by-design/principles/>
+* **Modifications**: Synthesized into structured principle-checklist format with cross-references; merged with Australian guidance into unified principle areas
+* **Trademark**: Use of UK Government content does not imply endorsement
+
+### Australian ASD/ACSC Secure by Design Foundations
+
+* **Copyright**: © Commonwealth of Australia, Australian Signals Directorate
+* **License**: [Creative Commons Attribution 4.0 (CC-BY-4.0)](https://creativecommons.org/licenses/by/4.0/)
+* **Source**: <https://www.cyber.gov.au/business-government/secure-design/secure-by-design/secure-by-design-foundations>
+* **Modifications**: Synthesized into structured principle-checklist format with cross-references; merged with UK guidance into unified principle areas
+* **Trademark**: Use of ASD/ACSC content does not imply endorsement
 
 ---
 

@@ -31,11 +31,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-<<<<<<< HEAD
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`).
-=======
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `secure-by-design`).
->>>>>>> 496fe469 (feat(agents): update security skill references in agent descriptions and prompts)
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `secure-by-design`).
 
 ### Technology Signals
 
