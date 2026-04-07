@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -130,7 +130,7 @@ Write-Output $json
 
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
+            $json.Timestamp | Should -Be 'MOCK-TIMESTAMP'
         }
     }
 
@@ -184,7 +184,7 @@ Write-Output $json
 
             $resultFile = Join-Path $script:RepoRoot 'logs/link-lang-check-results.json'
             $json = Get-Content $resultFile -Raw | ConvertFrom-Json
-            $json.timestamp | Should -Be 'MOCK-TIMESTAMP'
+            $json.Timestamp | Should -Be 'MOCK-TIMESTAMP'
         }
     }
 }
