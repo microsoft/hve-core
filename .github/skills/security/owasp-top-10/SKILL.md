@@ -1,7 +1,7 @@
 ---
 name: owasp-top-10
 description: OWASP Top 10 for Web Applications (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in web application environments - Brought to you by microsoft/hve-core.
-license: MIT
+license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
   authors: "OWASP Web Application Security Project"
@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://owasp.org/Top10/2025/"
 ---
 
-# OWASP Top 10 — Skill Entry
+# OWASP® Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OWASP Top 10 skill.
 
@@ -38,8 +38,18 @@ risks.
 
 * `SKILL.md` — this file (skill entrypoint).
 * `references/` — the Web Top 10 normative documents.
-  * `00-vulnerability-index.md` — master index of all vulnerability identifiers, categories, and cross-references.
+  * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP Web Application Security numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® Top 10 (2025) content is derived from works by the OWASP Foundation, licensed
+under CC BY-SA 4.0 (<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://owasp.org/Top10/2025/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
 
 ---
 

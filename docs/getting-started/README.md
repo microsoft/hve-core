@@ -42,6 +42,9 @@ methods, or install the
 [VS Code extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 for the quickest path.
 
+Not sure which bundle of agents you need?  
+Browse the available [Extension Collections](collections.md) to see curated sets of HVE capabilities.
+
 ## Troubleshooting
 
 ### Installation Issues

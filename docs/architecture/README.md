@@ -82,6 +82,7 @@ GitHub workflows orchestrate script execution for continuous integration, runnin
 ## Further Reading
 
 * [AI Artifacts Architecture](ai-artifacts.md) - Four-tier artifact delegation model
+* [Agentic Workflows](agentic-workflows) - End-to-end process flow for AI-driven issue triage, implementation, and review
 * [Build Workflows](workflows.md) - GitHub Actions CI/CD pipeline architecture
 * [Testing Architecture](testing.md) - PowerShell Pester test infrastructure
 

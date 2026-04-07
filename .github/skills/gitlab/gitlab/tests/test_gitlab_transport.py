@@ -7,11 +7,11 @@ from __future__ import annotations
 import json
 import urllib.request
 from typing import cast
-from unittest.mock import patch
 
 import gitlab
 import pytest
 from conftest import ConfiguredGitLab, HttpErrorFactory, ResponseFactory
+from pytest_mock import MockerFixture
 from test_constants import (
     TEST_API_URL,
     TEST_GITLAB_TOKEN,
@@ -88,43 +88,44 @@ class TestProject:
     )
     def test_parses_supported_remote_urls(
         self,
+        mocker: MockerFixture,
         remote_url: str,
         expected: str,
     ) -> None:
-        with patch("subprocess.check_output", return_value=remote_url):
-            assert gitlab.project() == expected
+        mocker.patch("subprocess.check_output", return_value=remote_url)
+        assert gitlab.project() == expected
 
     def test_requires_remote_when_project_not_configured(
-        self, capsys: pytest.CaptureFixture[str]
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        with patch("subprocess.check_output", side_effect=FileNotFoundError):
-            with pytest.raises(SystemExit) as exc_info:
-                gitlab.project()
+        mocker.patch("subprocess.check_output", side_effect=FileNotFoundError)
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.project()
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert PROJECT_NOT_FOUND in capsys.readouterr().err
 
     def test_rejects_unparseable_remote(
-        self, capsys: pytest.CaptureFixture[str]
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        with patch(
+        mocker.patch(
             "subprocess.check_output",
             return_value="ssh://gitlab.example.com/group/project.git\n",
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                gitlab.project()
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.project()
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert PARSE_REMOTE_ERROR in capsys.readouterr().err
 
     def test_rejects_empty_path_after_host(
-        self, capsys: pytest.CaptureFixture[str]
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        with patch(
+        mocker.patch(
             "subprocess.check_output", return_value="https://gitlab.example.com/.git\n"
-        ):
-            with pytest.raises(SystemExit) as exc_info:
-                gitlab.project()
+        )
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.project()
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert EMPTY_REMOTE_PATH_ERROR in capsys.readouterr().err
@@ -138,6 +139,7 @@ class TestRequest:
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
         captured_request: dict[str, urllib.request.Request] = {}
 
@@ -145,8 +147,8 @@ class TestRequest:
             captured_request["request"] = request
             return response_factory(REQUEST_BODY)
 
-        with patch("urllib.request.urlopen", side_effect=fake_urlopen):
-            parsed = gitlab.request("POST", REQUEST_ENDPOINT, {"title": "MR"})
+        mocker.patch("urllib.request.urlopen", side_effect=fake_urlopen)
+        parsed = gitlab.request("POST", REQUEST_ENDPOINT, {"title": "MR"})
 
         assert parsed == REQUEST_JSON
         request = cast(urllib.request.Request, captured_request["request"])
@@ -162,12 +164,13 @@ class TestRequest:
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
-        with patch(
+        mocker.patch(
             "urllib.request.urlopen",
             return_value=response_factory('{"iid": 7}'),
-        ):
-            parsed = gitlab.request("GET", REQUEST_ENDPOINT, quiet=True)
+        )
+        parsed = gitlab.request("GET", REQUEST_ENDPOINT, quiet=True)
 
         assert parsed == {"iid": 7}
         assert capsys.readouterr().out == ""
@@ -176,21 +179,23 @@ class TestRequest:
         self,
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
+        mocker: MockerFixture,
     ) -> None:
-        with patch("urllib.request.urlopen", return_value=response_factory("   ")):
-            assert gitlab.request("GET", REQUEST_ENDPOINT) is None
+        mocker.patch("urllib.request.urlopen", return_value=response_factory("   "))
+        assert gitlab.request("GET", REQUEST_ENDPOINT) is None
 
     def test_prints_raw_text_for_non_json_response(
         self,
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
-        with patch(
+        mocker.patch(
             "urllib.request.urlopen",
             return_value=response_factory(NON_JSON_BODY),
-        ):
-            parsed = gitlab.request("GET", REQUEST_ENDPOINT)
+        )
+        parsed = gitlab.request("GET", REQUEST_ENDPOINT)
 
         assert parsed is None
         assert capsys.readouterr().out.strip() == NON_JSON_BODY
@@ -200,12 +205,13 @@ class TestRequest:
         configured_gitlab: ConfiguredGitLab,
         http_error_factory: HttpErrorFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
         error = http_error_factory('{"message": "forbidden"}', code=403)
 
-        with patch("urllib.request.urlopen", side_effect=error):
-            with pytest.raises(SystemExit) as exc_info:
-                gitlab.request("GET", REQUEST_ENDPOINT)
+        mocker.patch("urllib.request.urlopen", side_effect=error)
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.request("GET", REQUEST_ENDPOINT)
 
         assert exc_info.value.code == gitlab.EXIT_FAILURE
         error_lines = capsys.readouterr().err.splitlines()
@@ -217,12 +223,13 @@ class TestRequest:
         configured_gitlab: ConfiguredGitLab,
         http_error_factory: HttpErrorFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
         error = http_error_factory("Service unavailable", code=503)
 
-        with patch("urllib.request.urlopen", side_effect=error):
-            with pytest.raises(SystemExit):
-                gitlab.request("DELETE", REQUEST_ENDPOINT)
+        mocker.patch("urllib.request.urlopen", side_effect=error)
+        with pytest.raises(SystemExit):
+            gitlab.request("DELETE", REQUEST_ENDPOINT)
 
         error_lines = capsys.readouterr().err.splitlines()
         assert error_lines[0] == "Service unavailable"
@@ -237,12 +244,13 @@ class TestCmdJobLog:
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
-        with patch(
+        mocker.patch(
             "urllib.request.urlopen",
             return_value=response_factory("line one\nline two"),
-        ):
-            gitlab.cmd_job_log(["99"])
+        )
+        gitlab.cmd_job_log(["99"])
 
         assert capsys.readouterr().out.strip().splitlines() == ["line one", "line two"]
 
@@ -266,12 +274,13 @@ class TestCmdJobLog:
         configured_gitlab: ConfiguredGitLab,
         http_error_factory: HttpErrorFactory,
         capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
     ) -> None:
         error = http_error_factory(TRACE_UNAVAILABLE, code=404)
 
-        with patch("urllib.request.urlopen", side_effect=error):
-            with pytest.raises(SystemExit) as exc_info:
-                gitlab.cmd_job_log(["99"])
+        mocker.patch("urllib.request.urlopen", side_effect=error)
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_job_log(["99"])
 
         assert exc_info.value.code == gitlab.EXIT_FAILURE
         error_lines = capsys.readouterr().err.splitlines()

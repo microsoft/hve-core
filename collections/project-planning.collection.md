@@ -11,7 +11,7 @@ This collection includes agents for:
 - **System Architecture Reviewer** — System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment
 - **RPI Agent** — Autonomous RPI orchestrator running specialized subagents through Research, Plan, Implement, and Review phases
 - **Product Requirements Documents** — Build PRDs with stakeholder-driven refinement
-- **RAI Planner** — Responsible AI assessment with sensitive uses screening, security model analysis, impact assessment, and dual-format backlog handoff
+- **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
 - **Security Planner** — STRIDE-based security model analysis with operational bucket classification, standards mapping, and automated backlog generation
 - **SSSC Planner** — Software supply-chain security assessment with gap analysis, standards mapping, and automated backlog generation
 
