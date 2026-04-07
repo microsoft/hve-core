@@ -64,6 +64,10 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../collections/Modules/CollectionHelpers.psm1") -Force
 
+# Auto-generation marker constants shared across Split-CollectionMdByMarkers and New-CollectionReadme
+$script:CollectionMdBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+$script:CollectionMdEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
+
 #region Pure Functions
 
 #region Package Generation Functions
@@ -385,23 +389,19 @@ function Split-CollectionMdByMarkers {
         [string]$Content
     )
 
-    $beginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-    $endMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
-
-    $beginIdx = $Content.IndexOf($beginMarker)
-    $endIdx = $Content.IndexOf($endMarker)
+    $beginIdx = $Content.IndexOf($script:CollectionMdBeginMarker)
+    $endIdx = $Content.IndexOf($script:CollectionMdEndMarker)
 
     if ($beginIdx -lt 0 -or $endIdx -lt 0 -or $endIdx -le $beginIdx) {
         return @{
             HasMarkers = $false
             Intro      = $Content
-            Existing   = ''
             Footer     = ''
         }
     }
 
     $intro = $Content.Substring(0, $beginIdx).TrimEnd()
-    $endMarkerEnd = $endIdx + $endMarker.Length
+    $endMarkerEnd = $endIdx + $script:CollectionMdEndMarker.Length
     $footer = if ($endMarkerEnd -lt $Content.Length) {
         $Content.Substring($endMarkerEnd).TrimStart("`r", "`n")
     } else { '' }
@@ -409,7 +409,6 @@ function Split-CollectionMdByMarkers {
     return @{
         HasMarkers = $true
         Intro      = $intro
-        Existing   = ''
         Footer     = $footer
     }
 }
@@ -424,10 +423,14 @@ function New-CollectionReadme {
         with descriptions read from each artifact's YAML frontmatter.
         Tokens: {{DISPLAY_NAME}}, {{DESCRIPTION}}, {{BODY}}, {{ARTIFACTS}},
         {{FULL_EDITION}}.
+        When the collection markdown file contains BEGIN/END markers, the
+        generated artifact section is written back into the source file via
+        Set-ContentIfChanged so the collection.md stays in sync.
     .PARAMETER Collection
         Parsed collection manifest hashtable.
     .PARAMETER CollectionMdPath
-        Path to the collection markdown body file.
+        Path to the collection markdown body file. When markers are present,
+        this file is updated in place with the generated artifact section.
     .PARAMETER TemplatePath
         Path to the README template file containing placeholder tokens.
     .PARAMETER RepoRoot
@@ -454,6 +457,7 @@ function New-CollectionReadme {
         [Parameter(Mandatory = $true)]
         [string]$OutputPath,
 
+        [ValidateNotNullOrEmpty()]
         [string[]]$AllowedMaturities = @('stable')
     )
 
@@ -544,10 +548,8 @@ function New-CollectionReadme {
 
     # Write back updated artifact section into collection.md when markers are present
     if ($parsed.HasMarkers) {
-        $beginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-        $endMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
         $generatedBlock = $artifactSections.ToString().TrimEnd()
-        $updatedCollectionMd = "$($parsed.Intro)`n`n$beginMarker`n`n$generatedBlock`n`n$endMarker"
+        $updatedCollectionMd = "$($parsed.Intro)`n`n$($script:CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($script:CollectionMdEndMarker)"
         if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
             $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
         }

@@ -23,6 +23,10 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'Modules/CollectionHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
+# Auto-generation marker constants for collection.md validation
+$script:CollectionMdBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+$script:CollectionMdEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
+
 #region Validation Helpers
 
 function Test-KindSuffix {
@@ -173,18 +177,16 @@ function Invoke-CollectionValidation {
 
         if (Test-Path -Path $companionPath) {
             $mdContent = Get-Content -Path $companionPath -Raw
-            $beginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-            $endMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
-            $hasBegin = $mdContent.Contains($beginMarker)
-            $hasEnd = $mdContent.Contains($endMarker)
+            $hasBegin = $mdContent.Contains($script:CollectionMdBeginMarker)
+            $hasEnd = $mdContent.Contains($script:CollectionMdEndMarker)
 
             if ($hasBegin -xor $hasEnd) {
                 Write-Host "  WARN $($file.Name): $baseName.collection.md has mismatched auto-generation markers" -ForegroundColor Yellow
             }
 
             if ($hasBegin -and $hasEnd) {
-                $beginIdx = $mdContent.IndexOf($beginMarker)
-                $endIdx = $mdContent.IndexOf($endMarker)
+                $beginIdx = $mdContent.IndexOf($script:CollectionMdBeginMarker)
+                $endIdx = $mdContent.IndexOf($script:CollectionMdEndMarker)
                 if ($endIdx -le $beginIdx) {
                     Write-Host "  WARN $($file.Name): $baseName.collection.md has markers in wrong order" -ForegroundColor Yellow
                 }

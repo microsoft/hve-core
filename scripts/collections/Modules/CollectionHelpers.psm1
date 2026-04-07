@@ -49,7 +49,7 @@ function Set-ContentIfChanged {
     if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
         New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
     }
-    Set-Content -LiteralPath $Path -Value $Value -Encoding utf8 -NoNewline
+    Set-Content -LiteralPath $Path -Value $Value -Encoding utf8NoBOM -NoNewline
     return $true
 }
 

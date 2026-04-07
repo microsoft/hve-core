@@ -2865,4 +2865,55 @@ Describe 'New-CollectionReadme - maturity notice' {
 
 #endregion Maturity Notice Tests
 
+#region Split-CollectionMdByMarkers Tests
+
+Describe 'Split-CollectionMdByMarkers' {
+    It 'Returns HasMarkers false for content without markers' {
+        $result = Split-CollectionMdByMarkers -Content 'Hello world'
+        $result.HasMarkers | Should -BeFalse
+        $result.Intro | Should -Be 'Hello world'
+        $result.Footer | Should -Be ''
+    }
+
+    It 'Throws for empty string input' {
+        { Split-CollectionMdByMarkers -Content '' } | Should -Throw
+    }
+
+    It 'Parses intro and footer around markers' {
+        $content = "Intro text`n`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`nGenerated`n`n<!-- END AUTO-GENERATED ARTIFACTS -->`n`nFooter text"
+        $result = Split-CollectionMdByMarkers -Content $content
+        $result.HasMarkers | Should -BeTrue
+        $result.Intro | Should -Be 'Intro text'
+        $result.Footer | Should -Be 'Footer text'
+    }
+
+    It 'Returns HasMarkers false when only BEGIN marker is present' {
+        $content = "Intro`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`nSome content"
+        $result = Split-CollectionMdByMarkers -Content $content
+        $result.HasMarkers | Should -BeFalse
+    }
+
+    It 'Returns HasMarkers false when END marker appears before BEGIN' {
+        $content = "<!-- END AUTO-GENERATED ARTIFACTS -->`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->"
+        $result = Split-CollectionMdByMarkers -Content $content
+        $result.HasMarkers | Should -BeFalse
+    }
+
+    It 'Returns HasMarkers false for duplicate BEGIN markers without END' {
+        $content = "<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`nContent"
+        $result = Split-CollectionMdByMarkers -Content $content
+        $result.HasMarkers | Should -BeFalse
+    }
+
+    It 'Does not include an Existing key in the result' {
+        $noMarkers = Split-CollectionMdByMarkers -Content 'plain'
+        $noMarkers.Keys | Should -Not -Contain 'Existing'
+
+        $withMarkers = Split-CollectionMdByMarkers -Content "Intro`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`n<!-- END AUTO-GENERATED ARTIFACTS -->"
+        $withMarkers.Keys | Should -Not -Contain 'Existing'
+    }
+}
+
+#endregion Split-CollectionMdByMarkers Tests
+
 #endregion Additional Coverage Tests
