@@ -36,6 +36,49 @@
       "type": "string",
       "maxLength": 256,
       "description": "Hint text displayed in the VS Code prompt picker showing expected inputs."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "SPDX license identifier for the skill content (e.g. MIT, CC-BY-SA-4.0). Defaults to the repository license when omitted."
+    },
+    "compatibility": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Runtime requirements or prerequisites for the skill (e.g. interpreters, CLI tools, credentials)."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Provenance and versioning metadata for the skill.",
+      "properties": {
+        "authors": {
+          "type": "string",
+          "description": "Author or organization responsible for the skill content."
+        },
+        "spec_version": {
+          "type": "string",
+          "description": "Version of the skill specification format."
+        },
+        "framework_revision": {
+          "type": "string",
+          "description": "Version of the upstream framework the skill is based on."
+        },
+        "last_updated": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Date the skill content was last updated in ISO 8601 format (YYYY-MM-DD)."
+        },
+        "skill_based_on": {
+          "type": "string",
+          "description": "URL of the specification or template the skill structure is based on."
+        },
+        "content_based_on": {
+          "type": "string",
+          "description": "URL of the upstream content the skill references are derived from."
+        }
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": false

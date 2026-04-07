@@ -96,7 +96,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
+Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -112,6 +112,8 @@ Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-
 * owasp-agentic
 * owasp-llm
 * owasp-top-10
+* owasp-mcp
+* owasp-infrastructure
 
 ## Subagent Prompt Templates
 
