@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
@@ -319,7 +319,7 @@ function Invoke-MarkdownLinkCheck {
     }
 
     $results = @{
-        timestamp = Get-StandardTimestamp
+        Timestamp = Get-StandardTimestamp
         script = 'markdown-link-check'
         summary = @{
             total_files = $totalFiles
