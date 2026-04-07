@@ -18,80 +18,228 @@ Orchestrator that runs a two-phase code review on code changes by delegating to 
 
 * Story reference (optional): a work item ID matching patterns like `AIAA-123` or `AB#456`. When provided, forward to the standards subagent so it can prompt for the story definition and include an Acceptance Criteria Coverage table.
 
+## Response Format
+
+Emit these announcements at the specified moments. Include them in the conversation response so the user sees live progress.
+
+### Step 1 Announcement
+
+Emit after diff computation completes:
+
+```markdown
+**🔍 Code Review Full, Step 1: Diff computed**
+
+| Field  | Value                       |
+|--------|-----------------------------|
+| Branch | `<branch>` → `<base>`       |
+| Files  | <N> source files in scope   |
+| Status | ✅ Ready for parallel review |
+```
+
+### Step 2a Announcement
+
+Emit immediately after subagents are dispatched. When a subagent is unavailable, show `⏭️ Skipped` instead of `⏳ Running`:
+
+```markdown
+**🔍 Code Review Full, Step 2: Parallel reviews dispatched**
+
+| Reviewer   | Status                 |
+|------------|------------------------|
+| Functional | ⏳ Running / ⏭️ Skipped |
+| Standards  | ⏳ Running / ⏭️ Skipped |
+```
+
+### Step 2b Announcement
+
+Emit after both subagents complete:
+
+```markdown
+**🔍 Code Review Full, Step 2: Both reviews complete**
+
+| Reviewer   | Findings                                       | Verdict |
+|------------|------------------------------------------------|---------|
+| Functional | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+| Standards  | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+```
+
+### L/XL Batch Announcement Variant
+
+For L or XL reviews, replace the two-reviewer rows in Step 2a/2b with one row per batch. Emit ⏳ when the batch is dispatched and ✅ when it completes.
+
+Step 2a (all batches dispatched):
+
+```markdown
+**🔍 Code Review Full, Step 2: Batch reviews dispatched**
+
+| Batch   | Status    |
+|---------|-----------|
+| Batch 1 | ⏳ Running |
+| Batch 2 | ⏳ Running |
+```
+
+Step 2b (all batches complete): replace the running table with a 3-column summary:
+
+```markdown
+**🔍 Code Review Full, Step 2: All batches complete**
+
+| Batch   | Findings                                       | Verdict |
+|---------|------------------------------------------------|---------|
+| Batch 1 | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+| Batch 2 | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+| Total   | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+```
+
+## Read Discipline
+
+Read every external file exactly once using a single full-range `read_file` call. Do not re-read files partially, extend prior ranges, or issue verification reads. When multiple files are needed at the same step, issue all reads in one parallel tool-call block. This rule applies to diff content, instructions files, findings JSON, and review-artifact protocols throughout all steps.
+
 ## Required Steps
 
 ### Step 1: Compute Diff
 
 Run the diff a single time so both review phases operate on the same input without redundant git operations.
 
-Follow the complete protocol in #file:../../instructions/coding-standards/code-review/diff-computation.instructions.md to detect the diff type, run the appropriate git commands, filter non-source artifacts, and handle large diffs.
+Use the Decision Tree in #file:../../instructions/coding-standards/code-review/diff-computation.instructions.md to determine the diff type. Apply the Non-Source Artifact Skip List and Large Diff Handling rules from that file.
 
-Store the resulting **diff content** and **changed file list** for use in Steps 2 and 3. Do not embed full file contents in subagent prompts; pass only the diff output and the changed file list. Subagents read source files from disk when they need additional context beyond the diff.
+#### Pre-clean findings folder
 
-### Step 2: Functional Code Review
+Before writing any review artifacts, remove stale outputs from prior runs. Using the branch name already determined by the Decision Tree, derive the findings folder path (replacing `/` with `-`) and recreate it:
 
-Invoke `Code Review Functional` subagent via `runSubagent`, providing the pre-computed diff, changed file list, and this instruction: `"A pre-computed diff and changed file list are provided — skip diff computation. Skip artifact persistence; the orchestrator handles it via rule 12."`
+* **Bash/Zsh**: `rm -rf ".copilot-tracking/reviews/code-reviews/<sanitized-branch>" && mkdir -p ".copilot-tracking/reviews/code-reviews/<sanitized-branch>"`
+* **PowerShell**: `Remove-Item -Recurse -Force ".copilot-tracking/reviews/code-reviews/<sanitized-branch>" -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path ".copilot-tracking/reviews/code-reviews/<sanitized-branch>" -Force`
 
-The subagent returns findings in its native format. If the subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke the subagent with the answers included. If the subagent returns questions a second time, skip the step.
+Use whichever variant matches the active terminal.
 
-If the subagent is not available, skip this step and note: "Code Review Functional agent not available, skipping Step 2."
+#### Generate PR reference
 
-### Step 3: Standards Code Review
+Invoke the `pr-reference` skill to produce the structured XML diff following the Feature Branch Diff section in diff-computation.instructions.md:
 
-Invoke `Code Review Standards` subagent via `runSubagent`, providing the pre-computed diff, changed file list, and this instruction: `"A pre-computed diff and changed file list are provided — skip diff computation. Skip Step 4 artifact persistence; the orchestrator handles it via rule 12."` Forward any story reference from the original user input.
+1. Generate the structured diff: `generate.sh --base-branch auto --merge-base --exclude-ext min.js,min.css,map`
+2. Get the changed file list: `list-changed-files.sh --exclude-type deleted --format plain`
+3. For large diffs, use chunk planning: `read-diff.sh --info` then `read-diff.sh --chunk N`
 
-The subagent returns findings in its native format. Handle clarifying questions the same way as Step 2.
+#### Working-tree supplement
 
-If the subagent is not available, skip this step and note: "Code Review Standards agent not available, skipping Step 3."
+After generating the PR reference, apply the working-tree supplement from the Feature Branch Diff case in diff-computation.instructions.md. This captures untracked, unstaged, and staged files that the committed diff does not cover. Merge the surviving paths into the changed file list produced by `list-changed-files.sh`, deduplicating entries that already appear in the committed diff.
 
-### Step 4: Merged Report
+#### Write diff-state.json
+
+After diff computation completes, extract the branch name, base branch, changed file list, and diff line count from the pr-reference output and terminal results. Write a single `diff-state.json` to the findings folder:
+
+```json
+{
+  "branch": "<branch-name>",
+  "base": "<base-branch>",
+  "files": ["<file1>", "<file2>"],
+  "untrackedFiles": ["<path1>", "<path2>"],
+  "extensions": ["<ext1>", "<ext2>"],
+  "tshirtSize": "<XS|S|M|L|XL>",
+  "diffPatchPath": ".copilot-tracking/pr/pr-reference.xml",
+  "findingsFolder": ".copilot-tracking/reviews/code-reviews/<sanitized-branch>/"
+}
+```
+
+The `untrackedFiles` array lists paths that have no committed diff. Subagents read these files in full and treat all lines as in-scope for findings. Omit the field or use an empty array when no untracked files exist.
+
+#### T-Shirt Size Classification
+
+Classify the review size and record it in `diff-state.json`:
+
+| T-Shirt | Files | Diff Lines  | Strategy                                                |
+|---------|-------|-------------|---------------------------------------------------------|
+| XS      | <5    | <100        | File path to diff; single parallel pair                 |
+| S       | 5–19  | 100–399     | File path to diff; single parallel pair                 |
+| M       | 20–49 | 400–999     | File path to diff; single parallel pair                 |
+| L       | 50–99 | 1,000–2,999 | File path to diff; batches of ≤30 files per pair        |
+| XL      | 100+  | 3,000+      | File path to diff; multi-round batches, high-risk first |
+
+For L and XL reviews, split the file list into batches and create one `diff-state-batch-N.json` per batch in the same findings folder. Each batch JSON carries its subset of files in `files` (the reporting scope), references the **same full `diffPatchPath`** as the root `diff-state.json`, and includes a `findingsFile` field set to `findings-batch-N.json`. Subagents report findings only for their batch files but may read the full diff for cross-file context.
+
+When files and lines fall in different tiers, use the **smaller** tier.
+
+Emit the **Step 1 Announcement** defined in Response Format before proceeding.
+
+### Step 2: Parallel Code Reviews
+
+Check agent availability before invoking:
+
+* If `Code Review Functional` is not available, skip the functional review and note: "Code Review Functional agent not available, skipping functional review."
+* If `Code Review Standards` is not available, skip the standards review and note: "Code Review Standards agent not available, skipping standards review."
+
+#### 2A: Build prompts
+
+Construct the full prompt string for each available subagent **before dispatching either one**. The prompt content depends on the t-shirt size:
+
+**XS / S / M (file path):** Provide the path to `diff-state.json` and instruct each subagent to read the diff from `diffPatchPath`. Do not embed diff content in the prompt.
+
+* Functional prompt: `"A diff-state.json path is provided — read diff-state.json once for metadata, then read the diff from diffPatchPath once. Write findings as structured JSON to <findingsFolder>/functional-findings.json. Do not write markdown findings. Lane: focus on logic errors, edge cases, error handling, concurrency, and contract violations. Do not flag coding style, naming conventions, or skill-backed standards — the Standards agent covers those."`
+* Standards prompt: `"A diff-state.json path is provided — read diff-state.json once for metadata, then read the diff from diffPatchPath once. Write findings as structured JSON to <findingsFolder>/standards-findings.json. Do not write markdown findings. Lane: focus on coding standards violations traceable to loaded skills. Do not flag logic errors, edge cases, or behavioral bugs unless they violate a loaded skill rule — the Functional agent covers those."`
+
+**L / XL (batched file path):** Dispatch one Functional + Standards pair per batch. Each batch subagent receives its `diff-state-batch-N.json` (scoped file list for reporting) and reads the full diff from `diffPatchPath` for cross-file context. The Functional subagent writes to `<findingsFolder>/functional-findings-batch-N.json` and the Standards subagent writes to `<findingsFolder>/standards-findings-batch-N.json`. Append the same lane directives from the XS/S/M prompts above to each batch prompt.
+
+**Standards prompt additions (all sizes):**
+
+* If a story reference was present and the story definition has been received, append the full story definition (title, description, and acceptance criteria). If the definition has not yet been received, append the reference ID only.
+* If the user provided clarifying question answers for a prior Standards invocation, append only those answers.
+
+**Untracked files addition (all sizes):**
+
+* If `untrackedFiles` in `diff-state.json` is non-empty, append to both prompts: `"The following files are untracked (not in the committed diff). Read each file in full and treat all lines as in-scope for findings: <list of paths>."` Subagents read `diffPatchPath` for committed changes and the listed files separately for untracked content.
+
+#### 2B: Dispatch both subagents in parallel
+
+**Issue both `runSubagent` calls in a single tool-call block so they execute concurrently.** Do not wait for one subagent to finish before dispatching the other. For L/XL reviews, issue all batch pairs in a single tool-call block.
+
+Wait for all dispatched subagents to complete, then emit the **Step 2b Announcement**.
+
+If a subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke that subagent once with each subagent receiving only its own prior questions and the user's corresponding answers. If a subagent returns questions a second time, mark it as ⚠️ Skipped.
+
+### Step 3: Merged Report
 
 If both subagents were skipped, inform the user that no review could be performed and stop.
 
-> **Note on `disable-model-invocation`:** This agent sets `disable-model-invocation: true` to suppress unsolicited auto-invocations. When invoked manually, full model reasoning is available and all transformation rules below execute normally. If transformation rules cannot be applied due to missing or malformed subagent output, present both subagent outputs verbatim and prepend the warning: `⚠️ Merged report could not be produced — subagent outputs shown separately.`
+#### Read Findings
 
-Normalize issue headings from both subagents into a consistent `#### Issue {number}:` format, then combine them into a single report using the transformation rules and report skeleton below.
+Read all findings, the review-artifacts protocol, and the output format template in a single parallel read:
+
+* `<findingsFolder>/functional-findings.json`
+* `<findingsFolder>/standards-findings.json`
+* #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md (for the persistence protocol — read exactly once here; do not re-read later)
+* `docs/templates/full-review-output-format.md` (for the JSON schema, report skeleton, and persist-and-present rules — read exactly once here)
+
+Issue all four `read_file` calls in one tool-call block. Do not read any of these files a second time during this step. Do not read source files, diff content, diff-state.json, or agent definition files during Step 3 — all information needed for the merge is contained in the findings JSON files, the review-artifacts protocol, and the output format template.
+
+For L or XL batch reviews, read `functional-findings-batch-N.json` and `standards-findings-batch-N.json` for each batch and concatenate findings arrays within each reviewer before applying transformation rules.
+
+#### Output Format Reference
+
+Read `docs/templates/full-review-output-format.md` for the Subagent Findings JSON Schema, Report Skeleton, and Persist and Present protocol. This file is loaded in the Read Findings parallel batch — do not read it separately.
 
 #### Transformation Rules
 
-1. Assign new issue numbers starting from 1 across both subagents' findings, ordered by severity (Critical, High, Medium, Low).
-2. Append `[Functional]` or `[Standards]` to the end of each issue title to indicate the originating subagent (for example, `#### Issue 1: Missing null check [Functional]`). For findings originating from the standards subagent, preserve the **Skill** name and **Category** fields (for example, `Skill: python-foundational`, `Category: Anti-Patterns to Avoid`). For findings originating from the functional subagent, include its **Category** field (for example, `Category: Contract`). Omit skill/category fields only when the subagent did not provide them.
-3. If both subagents flag overlapping line ranges in the same file for concerns that address the same underlying code pattern, keep one finding and note that both agents identified it. Before annotating a finding as deduplicated, confirm the finding appears in both subagent outputs by matching file path and line range. Prefer the fix that addresses more edge cases or provides more implementation detail. When deduplicated findings have different severities, use the higher severity.
-4. Security-adjacent findings (eval, pickle, hardcoded secrets, injection) that both agents surface under different categories are merged into a single finding that notes both agents' categories, using the more detailed fix and the higher severity. Apply the same verification as Rule 3 — confirm both subagent outputs contain the finding before merging.
-5. Union both changed files tables. Where a file appears in both, use the higher risk level and sum the issue counts. After merging, verify each file's issue count by counting the renumbered findings that reference that file. All counts reflect post-deduplication totals.
-6. Merge Positive Changes and Strengths into one list. Merge Testing Recommendations into one list.
-7. Include the standards subagent's Recommended Actions as a standalone section.
-8. Union observations from both subagents. Deduplicate entries that reference the same file and concern.
-9. Use the standards subagent's Risk Assessment as the merged report's Risk Assessment.
-10. When a story was provided and the standards subagent produced a coverage table, pass it through to the merged report.
-11. Use the stricter of the two verdicts: ❌ Request changes is stricter than 💬 Approve with comments, which is stricter than ✅ Approve. When only one subagent ran, use that subagent's verdict. After selecting the verdict, apply a severity floor: if any Critical-severity findings exist, the verdict must be ❌ Request changes regardless of what the subagents chose.
-12. Save artifacts using the shared protocol in #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md with `reviewer` set to `code-review-full`.
+These rules operate on the JSON `findings` arrays from both subagents. **Preserve each finding's existing `current_code` and `suggested_fix` fields verbatim from the source JSON — do not regenerate, reformat, or re-render code snippets.**
 
-#### Report Skeleton
+1. Concatenate both `findings` arrays and sort by severity (Critical, High, Medium, Low). Assign new sequential `number` values starting from 1.
+2. Append `[Functional]` or `[Standards]` to the end of each finding's `title` to indicate the originating subagent (for example, `Missing null check [Functional]`). Preserve the `skill` and `category` fields from each subagent's output. Omit skill/category fields only when the subagent did not provide them.
+3. Deduplicate: if both subagents produced findings referencing the same `file` and the same function or symbol name (or overlapping `lines` when no function name is apparent), keep one finding, note both agents identified it, use the more detailed `suggested_fix`, and the higher severity. Match on function/symbol name first; fall back to `lines` overlap only when the finding lacks a clear function scope.
+4. Union both `changed_files` arrays. Where a file appears in both, use the higher `risk` and sum `issue_count`. After merging, verify each file's `issue_count` by counting findings that reference it. All counts reflect post-deduplication totals.
+6. Concatenate both `positive_changes` arrays and both `testing_recommendations` arrays, deduplicating equivalent entries.
+7. Use the standards subagent's `recommended_actions`. If the standards subagent was skipped, use the functional subagent's; omit if both are absent.
+8. Union both `out_of_scope_observations` arrays. Deduplicate entries with the same `file` and concern.
+9. Use the standards subagent's `risk_assessment`. If skipped, derive from the functional subagent's highest-severity finding.
+10. When a story was provided and the standards subagent produced `acceptance_criteria_coverage`, pass it through.
+11. Use the stricter of the two `verdict` values: `request_changes` > `approve_with_comments` > `approve`. When only one subagent ran, use that subagent's verdict. Severity floor: if any Critical-severity findings exist, verdict must be `request_changes`.
 
-Structure the merged report in this section order:
+#### Report Skeleton and Persistence
 
-1. Metadata header: reviewer name, branch, date, aggregate severity counts, and the standards subagent's Code/PR Summary as the report description. If the standards subagent was skipped, use the functional subagent's executive summary as the description.
-2. Changed Files Overview: unified table of all reviewed files with risk levels and issue counts.
-3. Merged Findings: all issues renumbered and tagged by source subagent, grouped by severity.
-4. Acceptance Criteria Coverage: the standards subagent's coverage table, included only when a story input was provided.
-5. Positive Changes: combined positive observations from both subagents.
-6. Testing Recommendations: combined testing guidance from both subagents.
-7. Recommended Actions: actions from the standards subagent's review. If the standards subagent was skipped, include any recommendations from the functional subagent; omit the section if both are absent.
-8. Out-of-scope Observations: combined observations from both subagents.
-9. Risk Assessment: the standards subagent's risk assessment for the overall change. If the standards subagent was skipped, derive risk level from the functional subagent's highest-severity finding.
-10. Verdict: the stricter of the two subagent verdicts with brief justification.
-
-Omit sections sourced exclusively from a subagent that was skipped.
-
-Present the merged report in the conversation response. Artifact persistence is handled separately by transformation rule 12.
+Follow the Report Skeleton and Persist and Present sections from the output format template loaded in the Read Findings step.
 
 ## Error Recovery
 
 * If Step 1 diff computation fails, report the error and stop. Do not invoke subagents without a valid diff.
-* If a subagent invocation fails or returns no output, treat it as skipped and apply the skip messaging defined in Steps 2 and 3.
-* If a subagent returns malformed output (missing sections, truncated content), include the available output and annotate the affected transformation rules as partially applied.
-* If rule 12 artifact persistence fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
+* If a subagent invocation fails or returns no output, treat it as skipped and apply the skip messaging defined in Step 2.
+* If a subagent returns malformed output (missing sections, truncated content), re-invoke it once targeting only files whose paths suggest elevated risk — files with `security`, `auth`, `cred`, `token`, `payment`, `secret`, `api`, `route`, `middleware`, `schema`, or `migration` anywhere in their path or name. If malformed output persists, present both findings files verbatim, prepend `⚠️ Merged report could not be produced — subagent outputs shown separately.`, and annotate the affected transformation rules as partially applied.
+* If artifact persistence in the Persist and Present step fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
 * If both subagents return only clarifying questions after two invocations each, stop and surface all outstanding questions to the user.
 
 ---

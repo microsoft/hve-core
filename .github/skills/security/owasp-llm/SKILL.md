@@ -38,7 +38,7 @@ security risks in large language model systems.
 
 * `SKILL.md` — this file (skill entrypoint).
 * `references/` — the LLM Top 10 normative documents.
-  * `00-vulnerability-index.md` — master index of all vulnerability identifiers, categories, and cross-references.
+  * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP LLM Applications numbering.
 
 ## Third-Party Attribution
