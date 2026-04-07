@@ -33,10 +33,8 @@ Use delegated runtime lookup when one or more of these conditions is true:
 
 Start delegated research from these sources:
 
-* <https://learn.microsoft.com/en-us/azure/iot-operations/manage-layered-network/concept-iot-operations-in-layered-network>
+* <https://learn.microsoft.com/azure/iot-operations/manage-layered-network/concept-iot-operations-in-layered-network>
 * <https://github.com/Azure-Samples/explore-iot-operations/blob/main/samples/layered-networking/aio-layered-network.md>
-* <https://learn.microsoft.com/en-us/azure/well-architected/>
-* <https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/>
 
 ## Research Query Templates
 
