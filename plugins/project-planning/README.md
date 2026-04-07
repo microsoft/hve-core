@@ -31,6 +31,10 @@ Supporting subagents included:
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
 
+Skills included:
+
+- **Network Azure Guidance** — Runtime lookup patterns for Azure IoT Operations layered networking, WAF, and CAF alignment during ISA-95 planning
+
 ## Install
 
 ```bash
@@ -47,7 +51,7 @@ copilot plugin install project-planning@hve-core
 | adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai                                                                                         |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                                                                                                              |
 | brd-builder                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                                   |
-| network-isa95-planner        | ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core                                                                                                                                      |
+| network-isa95-planner        | ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core                                                                                                            |
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core                                                                                                                                                            |
 | rpi-agent                    | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core                                                                                                  |
 | prd-builder                  | Product Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                                    |
@@ -100,6 +104,12 @@ copilot plugin install project-planning@hve-core
 | sssc-handoff.instructions          | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | hve-core-location.instructions     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality.instructions         | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+
+## Skills
+
+| Skill                  | Description                                                                                                                                                                                                                                                                                                                |
+|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| network-azure-guidance | Runtime lookup guidance for ISA-95 network planning across Azure IoT Operations layered networking, Well-Architected Framework, and Cloud Adoption Framework references. Use when brownfield reuse tradeoffs or greenfield target-state mapping require current Microsoft guidance. - Brought to you by microsoft/hve-core |
 
 ---
 

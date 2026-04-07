@@ -26,7 +26,7 @@ items:
     kind: agent
   - path: .github/agents/project-planning/brd-builder.agent.md
     kind: agent
-  - path: .github/agents/project-planning/network-isa95-planner.agent.md
+  - path: .github/agents/network/network-isa95-planner.agent.md
     kind: agent
   - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
     kind: agent
@@ -146,5 +146,8 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/shared/network-azure-guidance
+    kind: skill
 display:
   ordering: manual

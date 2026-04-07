@@ -23,3 +23,7 @@ Supporting subagents included:
 - **Phase Implementor** — Executes a single implementation phase from a plan with full codebase access and change tracking
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
+
+Skills included:
+
+- **Network Azure Guidance** — Runtime lookup patterns for Azure IoT Operations layered networking, WAF, and CAF alignment during ISA-95 planning

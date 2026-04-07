@@ -13,6 +13,7 @@
     "agents/hve-core/",
     "agents/hve-core/subagents/",
     "agents/jira/",
+    "agents/network/",
     "agents/project-planning/",
     "agents/rai-planning/",
     "agents/security/",
