@@ -180,6 +180,7 @@ When contributing a new artifact:
 5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
 6. Run `npm run plugin:validate` to validate collection manifests
 7. Run `npm run plugin:generate` to regenerate plugin directories
+8. Run `npm run docs:test` to verify the Docusaurus site reflects the updated collection counts
 
 ### Repo-Specific Artifact Exclusion
 

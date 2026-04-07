@@ -1,5 +1,5 @@
 ---
-description: "Embedded OWASP, NIST, and CIS security standards with researcher subagent delegation for WAF/CAF runtime lookups - Brought to you by microsoft/hve-core"
+description: "Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups - Brought to you by microsoft/hve-core"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
@@ -9,7 +9,7 @@ Frequently-used security standards are embedded directly in this file for immedi
 
 At least one standard from each embedded framework should map to every component in the security plan. The cross-reference table provides starting-point mappings by bucket; refine these during Phase 3 analysis.
 
-## Embedded OWASP Top 10
+## Embedded OWASP® Top 10
 
 The OWASP Top 10 (2025) covers the most critical web application security risks. At least one OWASP item must map to every web/UI/reporting and identity/auth component.
 
@@ -119,23 +119,6 @@ These families address organizational and personnel-level controls:
 | PM     | Program Management: Enterprise-wide security program, risk management strategy, and architecture integration. |
 | PS     | Personnel Security: Personnel screening, access agreements, and role-change or termination procedures.        |
 
-## Embedded CIS Controls
-
-The CIS Critical Security Controls provide prioritized, actionable guidance. The top 10 controls most commonly applicable to software architectures follow.
-
-| Control | Description                                                                                                                 |
-|---------|-----------------------------------------------------------------------------------------------------------------------------|
-| CIS 1   | Inventory and Control of Enterprise Assets: Maintain an accurate inventory of all hardware assets connected to the network. |
-| CIS 2   | Inventory and Control of Software Assets: Track and manage all software running in the environment.                         |
-| CIS 3   | Data Protection: Identify, classify, and protect sensitive data at rest and in transit.                                     |
-| CIS 4   | Secure Configuration of Enterprise Assets and Software: Establish and maintain hardened configurations for all assets.      |
-| CIS 5   | Account Management: Manage lifecycle of system and application accounts including creation, use, and deactivation.          |
-| CIS 6   | Access Control Management: Create, assign, manage, and revoke access credentials and privileges.                            |
-| CIS 7   | Continuous Vulnerability Management: Continuously identify and remediate vulnerabilities across the environment.            |
-| CIS 8   | Audit Log Management: Collect, review, and retain audit logs for detection and forensic purposes.                           |
-| CIS 9   | Email and Web Browser Protections: Improve protections against email and web-based threats.                                 |
-| CIS 10  | Malware Defenses: Prevent or control installation and execution of malicious software.                                      |
-
 ## Researcher Subagent Delegation
 
 Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups are delegated to the Researcher Subagent at runtime. These frameworks evolve frequently and contain extensive cloud-specific guidance best retrieved on demand.
@@ -152,8 +135,9 @@ The following standards are also delegated for runtime lookup due to version sen
 | SOC 2                                             | Audit-framework specific, organization-dependent scope     |
 | HIPAA                                             | Regulated domain, requires current interpretation          |
 | FedRAMP                                           | Government-specific, dynamic control baselines             |
+| CIS Critical Security Controls                    | License terms prohibit redistribution; use runtime lookup  |
 
-Do NOT delegate OWASP, NIST 800-53, CIS, OWASP LLM Top 10, or NIST AI RMF lookups. Those standards are embedded above.
+Do NOT delegate OWASP, NIST 800-53, OWASP LLM Top 10, or NIST AI RMF lookups. Those standards are embedded above.
 
 ### When to Delegate
 
@@ -205,16 +189,16 @@ Collect findings from the output path and incorporate them into the component's 
 
 This table maps operational buckets to their baseline standard references. Use these as starting points and refine during Phase 3 analysis.
 
-| Bucket              | OWASP                        | NIST 800-53    | CIS        |
-|---------------------|------------------------------|----------------|------------|
-| infra               | A05, A06                     | CM, PE, SC, SI | 1, 2, 4, 7 |
-| devops/platform-ops | A05, A06, A08                | CA, CM, SA, SI | 2, 4, 7    |
-| build               | A06, A08                     | SA, SI         | 2, 4, 7    |
-| messaging           | A01, A03, A08                | AC, SC, SI     | 3, 4, 8    |
-| data                | A01, A02, A03                | AC, AU, SC, SI | 3, 5, 6, 8 |
-| web/UI/reporting    | A01, A02, A03, A05, A07, A10 | AC, IA, SC, SI | 4, 5, 6, 9 |
-| identity/auth       | A01, A02, A07                | AC, IA, PS     | 5, 6       |
-| ai-ml               | A04, A06, A08                | SA, SI, RA     | 2, 7       |
+| Bucket              | OWASP                        | NIST 800-53    | CIS (delegated) |
+|---------------------|------------------------------|----------------|-----------------|
+| infra               | A05, A06                     | CM, PE, SC, SI | via delegation  |
+| devops/platform-ops | A05, A06, A08                | CA, CM, SA, SI | via delegation  |
+| build               | A06, A08                     | SA, SI         | via delegation  |
+| messaging           | A01, A03, A08                | AC, SC, SI     | via delegation  |
+| data                | A01, A02, A03                | AC, AU, SC, SI | via delegation  |
+| web/UI/reporting    | A01, A02, A03, A05, A07, A10 | AC, IA, SC, SI | via delegation  |
+| identity/auth       | A01, A02, A07                | AC, IA, PS     | via delegation  |
+| ai-ml               | A04, A06, A08                | SA, SI, RA     | via delegation  |
 
 > [!NOTE]
 > The ai-ml row applies only when `raiEnabled` is true. When applicable, also map components against OWASP LLM Top 10 and NIST AI RMF subcategories from the sections above.
@@ -229,7 +213,7 @@ For each component, produce a standards mapping block following this structure:
 **Applicable Standards:**
 - OWASP: {items with justification}
 - NIST: {families with justification}
-- CIS: {controls with justification}
+- CIS: {delegated — include Researcher Subagent findings or N/A}
 
 **WAF/CAF Findings:** {researcher subagent results or N/A}
 
@@ -237,3 +221,16 @@ For each component, produce a standards mapping block following this structure:
 ```
 
 Include justification for each mapped standard, explaining why the control is relevant to the specific component. Flag gaps where a standard should apply based on the cross-reference table but no corresponding control exists in the current architecture.
+
+## Third-Party Attribution
+
+OWASP® Top 10 (2025) and OWASP® Top 10 for LLM Applications (2025) content is derived
+from works by the OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Sources: <https://owasp.org/www-project-top-ten/>, <https://genai.owasp.org/>
+Modifications: Descriptions condensed to single-sentence summaries.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
+
+NIST SP 800-53 and NIST AI RMF 1.0 content is derived from publications by the National
+Institute of Standards and Technology, U.S. Department of Commerce. Not subject to copyright
+(17 U.S.C. § 105).
