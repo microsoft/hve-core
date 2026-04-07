@@ -30,7 +30,7 @@ Store the resulting **diff content** and **changed file list** for use in Steps 
 
 ### Step 2: Functional Code Review
 
-Invoke `Code Review Functional` subagent via `runSubagent`. Pass pre-computed diff + file list and instruct it to skip its own diff computation and persistence.
+Invoke `Code Review Functional` subagent via `runSubagent`, providing the pre-computed diff, changed file list, and this instruction: `"A pre-computed diff and changed file list are provided — skip diff computation. Skip artifact persistence; the orchestrator handles it via rule 12."`
 
 The subagent returns findings in its native format. If the subagent returns clarifying questions instead of findings, surface the questions to the user, collect answers, and re-invoke the subagent with the answers included. If the subagent returns questions a second time, skip the step.
 
@@ -38,7 +38,7 @@ If the subagent is not available, skip this step and note: "Code Review Function
 
 ### Step 3: Standards Code Review
 
-Invoke `Code Review Standards` subagent via `runSubagent`. Pass pre-computed diff + file list (so it skips scope detection) and forward story if present. Instruct it to skip persistence.
+Invoke `Code Review Standards` subagent via `runSubagent`, providing the pre-computed diff, changed file list, and this instruction: `"A pre-computed diff and changed file list are provided — skip diff computation. Skip Step 4 artifact persistence; the orchestrator handles it via rule 12."` Forward any story reference from the original user input.
 
 The subagent returns findings in its native format. Handle clarifying questions the same way as Step 2.
 
@@ -47,6 +47,8 @@ If the subagent is not available, skip this step and note: "Code Review Standard
 ### Step 4: Merged Report
 
 If both subagents were skipped, inform the user that no review could be performed and stop.
+
+> **Note on `disable-model-invocation`:** This agent sets `disable-model-invocation: true` to suppress unsolicited auto-invocations. When invoked manually, full model reasoning is available and all transformation rules below execute normally. If transformation rules cannot be applied due to missing or malformed subagent output, present both subagent outputs verbatim and prepend the warning: `⚠️ Merged report could not be produced — subagent outputs shown separately.`
 
 Normalize issue headings from both subagents into a consistent `#### Issue {number}:` format, then combine them into a single report using the transformation rules and report skeleton below.
 
@@ -69,20 +71,28 @@ Normalize issue headings from both subagents into a consistent `#### Issue {numb
 
 Structure the merged report in this section order:
 
-1. Metadata header: reviewer name, branch, date, aggregate severity counts, and the standards subagent's Code/PR Summary as the report description. The functional subagent's executive summary is not included in the metadata header.
+1. Metadata header: reviewer name, branch, date, aggregate severity counts, and the standards subagent's Code/PR Summary as the report description. If the standards subagent was skipped, use the functional subagent's executive summary as the description.
 2. Changed Files Overview: unified table of all reviewed files with risk levels and issue counts.
 3. Merged Findings: all issues renumbered and tagged by source subagent, grouped by severity.
 4. Acceptance Criteria Coverage: the standards subagent's coverage table, included only when a story input was provided.
 5. Positive Changes: combined positive observations from both subagents.
 6. Testing Recommendations: combined testing guidance from both subagents.
-7. Recommended Actions: actions from the standards subagent's review.
+7. Recommended Actions: actions from the standards subagent's review. If the standards subagent was skipped, include any recommendations from the functional subagent; omit the section if both are absent.
 8. Out-of-scope Observations: combined observations from both subagents.
-9. Risk Assessment: the standards subagent's risk assessment for the overall change.
+9. Risk Assessment: the standards subagent's risk assessment for the overall change. If the standards subagent was skipped, derive risk level from the functional subagent's highest-severity finding.
 10. Verdict: the stricter of the two subagent verdicts with brief justification.
 
 Omit sections sourced exclusively from a subagent that was skipped.
 
 Present the merged report in the conversation response. Artifact persistence is handled separately by transformation rule 12.
+
+## Error Recovery
+
+* If Step 1 diff computation fails, report the error and stop. Do not invoke subagents without a valid diff.
+* If a subagent invocation fails or returns no output, treat it as skipped and apply the skip messaging defined in Steps 2 and 3.
+* If a subagent returns malformed output (missing sections, truncated content), include the available output and annotate the affected transformation rules as partially applied.
+* If rule 12 artifact persistence fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
+* If both subagents return only clarifying questions after two invocations each, stop and surface all outstanding questions to the user.
 
 ---
 

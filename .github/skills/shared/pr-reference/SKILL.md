@@ -1,8 +1,13 @@
 ---
 name: pr-reference
 description: 'Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core'
+license: MIT
 user-invocable: true
 compatibility: 'Requires git available on PATH'
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-03-16"
 ---
 
 # PR Reference Generation Skill
