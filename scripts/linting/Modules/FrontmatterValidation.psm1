@@ -11,6 +11,8 @@
     Author: HVE Core Team
 #>
 
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1')
+
 #region Classes
 
 class ValidationIssue {
@@ -76,13 +78,13 @@ class FileValidationResult {
     [hashtable]$Frontmatter
     [FileTypeInfo]$FileType
     [System.Collections.Generic.List[ValidationIssue]]$Issues
-    [datetime]$ValidatedAt
+    [string]$ValidatedAt
 
     FileValidationResult([string]$filePath) {
         $this.FilePath = $filePath
         $this.RelativePath = $filePath
         $this.Issues = [System.Collections.Generic.List[ValidationIssue]]::new()
-        $this.ValidatedAt = [datetime]::UtcNow
+        $this.ValidatedAt = Get-StandardTimestamp
     }
 
     [bool] HasErrors() {
@@ -152,7 +154,7 @@ class ValidationSummary {
 
     ValidationSummary() {
         $this.Results = [System.Collections.ArrayList]::new()
-        $this.StartedAt = [datetime]::UtcNow
+        $this.StartedAt = (Get-Date).ToUniversalTime()
     }
 
     # Type constraint removed for testability (PowerShell class identity conflicts)
@@ -174,7 +176,7 @@ class ValidationSummary {
     }
 
     [void] Complete() {
-        $this.CompletedAt = [datetime]::UtcNow
+        $this.CompletedAt = (Get-Date).ToUniversalTime()
         $this.Duration = $this.CompletedAt - $this.StartedAt
     }
 
@@ -192,6 +194,7 @@ class ValidationSummary {
 
     [hashtable] ToHashtable() {
         return @{
+            Timestamp         = Get-StandardTimestamp
             totalFiles        = $this.TotalFiles
             filesWithErrors   = $this.FilesWithErrors
             filesWithWarnings = $this.FilesWithWarnings

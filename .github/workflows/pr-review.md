@@ -59,6 +59,9 @@ Check the PR state from the event context.
 **You MUST call `noop` and stop immediately if any of these conditions are true:**
 
 * The PR is a draft: call `noop` with message "Skipping: PR is a draft."
+* The PR has the `skip-review` label AND the PR author's association is `MEMBER`,
+  `OWNER`, or `COLLABORATOR`: call `noop` with message "Skipping: skip-review label
+  set by maintainer."
 
 **Failure to call `noop` when no review action is taken will cause workflow failure.**
 
