@@ -68,6 +68,7 @@ items:
   kind: agent
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-implementor.agent.md
   kind: agent
 - path: .github/agents/hve-core/task-planner.agent.md
@@ -220,6 +221,7 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-challenge.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/task-implement.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/task-plan.prompt.md

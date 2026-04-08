@@ -90,11 +90,10 @@ Define research scope, explicit questions, and potential risks. Run subagents fo
 
 #### Step 1: Prepare Primary Research Document
 
-1. Check `.copilot-tracking/challenges/` for challenge tracking documents. If present, read Q&A logs and unresolved items — these carry the primary research scope when the session originated from a Task Challenger handoff.
-2. Extract research questions from the user request, conversation context, and any challenge document unresolved items.
-3. Identify sources to investigate (codebase, external docs, repositories).
-4. Create the primary research document if it does not already exist with placeholders.
-5. Update the primary research document with known or discovered information including: requirements, topics, expectations, scope, and research questions.
+1. Extract research questions from the user request and conversation context.
+2. Identify sources to investigate (codebase, external docs, repositories).
+3. Create the primary research document if it does not already exist with placeholders.
+4. Update the primary research document with known or discovered information including: requirements, topics, expectations, scope, and research questions.
 
 #### Step 2: Iterate Running Parallel Researcher Subagents
 

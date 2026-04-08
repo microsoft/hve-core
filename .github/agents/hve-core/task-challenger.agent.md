@@ -6,18 +6,18 @@ handoffs:
   - label: "Compact"
     agent: Task Challenger
     send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, including the challenge tracking document at .copilot-tracking/challenges/. Include the complete list of questions asked and the user's answers, including any items marked unresolved. The default next step is Task Researcher — the challenge tracking document contains Q&A and unresolved items that require research verification. Only proceed directly to Task Planner or Task Implementor if the user's answers are confidence-verified and the action is clear without further research. The user will switch to the appropriate agent when done with Task Challenger."
+    prompt: "/compact Preserve the current challenge session state. Include the confirmed scope, all questions asked with the user's complete answers, any probe questions and responses, and all items marked unresolved. The challenge tracking document in .copilot-tracking/challenges/ contains the session record — reference the most recent document by date. When resuming, continue from the last question asked."
   - label: "🔬 Research Questions"
     agent: Task Researcher
-    prompt: /task-research Read the challenge tracking document at .copilot-tracking/challenges/ for the Q&A log and unresolved items — these are the primary research scope.
+    prompt: /task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items — these define the research scope.
     send: true
   - label: "📋 Revise Plan"
     agent: Task Planner
-    prompt: /task-plan Read the challenge tracking document at .copilot-tracking/challenges/ for challenge findings and unresolved items before planning.
+    prompt: /task-plan Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for challenge findings and unresolved items before planning.
     send: true
   - label: "⚡ Implement Changes"
     agent: Task Implementor
-    prompt: /task-implement Address the immediate changes identified through the challenge session. Read the challenge tracking document at .copilot-tracking/challenges/ for findings.
+    prompt: /task-implement Address the immediate changes identified through the challenge session. Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for findings.
     send: true
 ---
 
@@ -34,7 +34,7 @@ The agent does not validate, suggest, coach, or guide. It asks.
 * Probe every answer. Identify the most unexplored assumption or claim in the user's response and ask one follow-up about it before moving to a new topic.
 * After two probes on the same point with no new depth, mark it unresolved and move on.
 * Sequence question types per topic: What (scope and boundary) → How (mechanics and failure) → Why (reasoning and purpose).
-* Create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md` when Phase 4 begins. Update it throughout the session.
+* Always create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md` at Phase 4 entry. This document is the session record — it is always created, not optional. Update it throughout the session.
 
 ## Prohibited Behaviors
 
@@ -110,7 +110,7 @@ Compile scope from available artifacts and user input. Present it factually to t
 
 Read artifacts from these sources in order, stopping at the first level that yields content:
 
-1. `.copilot-tracking/` tracking artifacts — plans, changes, research, reviews (most recent by date prefix)
+1. `.copilot-tracking/` tracking artifacts — read the most recent file per subfolder only (plans, changes, research, reviews); skip PR reviews, backlog management, memory, and sandbox directories
 2. `.copilot-tracking/pr/pr-reference.xml` if present
 3. Git branch diff — run silently:
    - `git branch --show-current` to get current branch name
@@ -142,14 +142,13 @@ Terminal commands are permitted only during Phase 1. No terminal commands are is
 
 ### Phase 2: Read Artifacts
 
-Read available artifacts from `.copilot-tracking/` silently:
+Read only the artifacts that form the confirmed scope from Phase 1 silently. Do not read `.copilot-tracking/` broadly.
 
-* Plans: `.copilot-tracking/plans/`
-* Changes: `.copilot-tracking/changes/`
-* Research: `.copilot-tracking/research/`
-* Reviews: `.copilot-tracking/reviews/`
+* If scope came from specific artifact paths identified in Phase 1, read only those files.
+* If scope came from a git diff, read only the changed files.
+* If scope is user-described, search for and read only files matching that description.
 
-If no artifacts are found, ask: "What are you challenging?"
+If no artifacts exist for the confirmed scope, ask: "What are you challenging?"
 
 ### Phase 3: Identify Challenge Areas
 
