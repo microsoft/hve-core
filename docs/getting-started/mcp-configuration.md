@@ -11,6 +11,8 @@ keywords:
   - azure devops
   - github
   - context7
+  - figma
+  - figjam
 estimated_reading_time: 8
 ---
 
@@ -21,7 +23,7 @@ Some HVE Core agents use Model Context Protocol (MCP) servers to integrate with 
 
 ## Overview
 
-MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE Core references four curated MCP servers. Configure only the servers relevant to your workflow.
+MCP tools extend GitHub Copilot's capabilities by connecting to external services. HVE Core references five curated MCP servers. Configure only the servers relevant to your workflow.
 
 ## Choosing GitHub vs Azure DevOps
 
@@ -37,19 +39,20 @@ Configuring both is unnecessary unless you work across platforms. If you use oth
 
 ## Agent MCP Dependencies
 
-| Agent                  | MCP Servers Used         | Notes                           |
+| Agent / Prompt         | MCP Servers Used         | Notes                           |
 |------------------------|--------------------------|---------------------------------|
 | ado-prd-to-wit         | ado, microsoft-docs      | ADO work item creation          |
 | github-backlog-manager | github                   | GitHub backlog management       |
 | task-researcher        | context7, microsoft-docs | Documentation lookup (optional) |
 | task-planner           | context7, microsoft-docs | Documentation lookup (optional) |
 | rpi-agent              | Varies by subagent       | Delegates to specialized agents |
+| dt-figma-export        | figma                    | DT artifact export to FigJam    |
 
 Agents without MCP dependencies work without any MCP configuration.
 
 ## Curated MCP Servers
 
-HVE Core documents these four MCP servers:
+HVE Core documents these five MCP servers:
 
 ### context7
 
@@ -87,6 +90,20 @@ GitHub repository and issue management.
 |----------|--------------------------------------|
 | Type     | http                                 |
 | URL      | `https://api.githubcopilot.com/mcp/` |
+
+### figma
+
+Figma and FigJam board creation and reading.
+
+| Property      | Value                          |
+|---------------|--------------------------------|
+| Type          | http                           |
+| URL           | `https://mcp.figma.com/mcp`    |
+| Auth          | Browser-based OAuth on first call |
+| Local install | None                           |
+| Used by       | `dt-figma-export` prompt       |
+
+The Figma MCP server requires a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month. Authentication happens automatically via browser OAuth on first use.
 
 ## Complete Configuration Template
 
@@ -126,6 +143,10 @@ Copy this template to `.vscode/mcp.json` in your workspace root. Remove servers 
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
     }
   }
 }
@@ -161,6 +182,7 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 
 * GitHub: Uses VS Code's built-in GitHub authentication
 * ADO: Verify organization name and tenant ID are correct
+* Figma: OAuth launches in your browser on first tool call. Re-authenticate by restarting VS Code if the session expires
 
 ### MCP Server Not Starting
 
@@ -174,6 +196,7 @@ MCP configuration can be placed in the `.code-workspace` file under `settings` o
 * [GitHub MCP Server](https://github.com/github/github-mcp-server)
 * [Azure DevOps MCP Server](https://learn.microsoft.com/azure/devops/mcp-server/mcp-server-overview?view=azure-devops)
 * [Microsoft Learn MCP Server](https://github.com/microsoftdocs/mcp)
+* [Figma MCP Server](https://mcp.figma.com)
 
 ---
 
