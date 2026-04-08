@@ -72,7 +72,7 @@ jobs:
       title: ${{ steps.sanitized.outputs.title }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Generate agentic run info
@@ -120,7 +120,7 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
       - name: Checkout .github and .agents folders
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -280,7 +280,7 @@ jobs:
         run: bash ${RUNNER_TEMP}/gh-aw/actions/print_prompt_summary.sh
       - name: Upload activation artifact
         if: success()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: activation
           path: |
@@ -310,7 +310,7 @@ jobs:
       output_types: ${{ steps.collect_output.outputs.output_types }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Set runtime paths
@@ -320,7 +320,7 @@ jobs:
           echo "GH_AW_SAFE_OUTPUTS_CONFIG_PATH=${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" >> "$GITHUB_OUTPUT"
           echo "GH_AW_SAFE_OUTPUTS_TOOLS_PATH=${RUNNER_TEMP}/gh-aw/safeoutputs/tools.json" >> "$GITHUB_OUTPUT"
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -823,7 +823,7 @@ jobs:
       - name: Upload agent artifacts
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: agent
           path: |
@@ -841,7 +841,7 @@ jobs:
       - name: Upload firewall audit logs
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: firewall-audit-logs
           path: |
@@ -871,7 +871,7 @@ jobs:
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Download agent output artifact
@@ -969,7 +969,7 @@ jobs:
       detection_success: ${{ steps.detection_conclusion.outputs.success }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Download agent output artifact
@@ -1077,7 +1077,7 @@ jobs:
           XDG_CONFIG_HOME: /home/runner
       - name: Upload threat detection log
         if: always() && steps.detection_guard.outputs.run_detection == 'true'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: detection
           path: /tmp/gh-aw/threat-detection/detection.log
@@ -1103,7 +1103,7 @@ jobs:
       matched_command: ''
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Check team membership for workflow
@@ -1148,7 +1148,7 @@ jobs:
       process_safe_outputs_temporary_id_map: ${{ steps.process_safe_outputs.outputs.temporary_id_map }}
     steps:
       - name: Setup Scripts
-        uses: github/gh-aw-actions/setup@934698b44320d87a7a9196339f90293f10bd2247 # v0.65.4
+        uses: github/gh-aw-actions/setup@536ea1bad8c6715d098a9dc1afea8d403733acfe # v0.65.6
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
       - name: Download agent output artifact
@@ -1192,7 +1192,7 @@ jobs:
             await main();
       - name: Upload Safe Output Items
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
         with:
           name: safe-output-items
           path: /tmp/gh-aw/safe-output-items.jsonl

@@ -53,6 +53,15 @@ items:
   - path: .github/skills/security/owasp-agentic
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/owasp-mcp
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/owasp-infrastructure
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/secure-by-design
+    kind: skill
+    maturity: experimental
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
     maturity: experimental
@@ -78,6 +87,9 @@ items:
     kind: prompt
     maturity: experimental
   - path: .github/prompts/security/security-review-web.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/security/security-review-sbd.prompt.md
     kind: prompt
     maturity: experimental
   # SSSC Planner Prompts

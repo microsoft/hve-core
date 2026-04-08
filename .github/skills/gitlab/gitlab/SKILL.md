@@ -1,7 +1,12 @@
 ---
 name: gitlab
 description: 'Manage GitLab merge requests and pipelines with a Python CLI - Brought to you by microsoft/hve-core'
+license: MIT
 compatibility: 'Requires Python 3.11+. GitLab credentials via GITLAB_URL and GITLAB_TOKEN environment variables.'
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-03-24"
 ---
 
 # GitLab Skill
