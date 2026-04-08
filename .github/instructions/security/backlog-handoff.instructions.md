@@ -161,7 +161,7 @@ Each RAI work item includes three additional fields beyond the standard template
 
 * `rai-principle`: Which of the six Microsoft RAI principles the item addresses (fairness, reliability and safety, privacy and security, inclusiveness, transparency, accountability).
 * `rai-phase`: Which RAI Planner phase generated the item.
-* `rai-priority`: RAI-specific priority based on sensitive uses screening.
+* `rai-priority`: RAI-specific priority based on impact assessment.
 
 These fields appear in the YAML metadata block for GitHub issues and as custom fields in ADO work items. They supplement (not replace) the standard priority, tags, and CIA fields.
 

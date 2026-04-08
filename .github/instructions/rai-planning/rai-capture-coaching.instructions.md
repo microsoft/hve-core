@@ -96,6 +96,6 @@ Never characterize the current state of mitigations as inadequate during capture
 During capture mode, prioritize completeness and accuracy of the user's own understanding:
 
 * **Record the user's own words.** Do not paraphrase or reinterpret during capture.
-* **Defer categorization.** Sensitive uses screening, standards mapping, and threat classification happen in Phases 2 through 4. Phase 1 captures the system as the user sees it.
+* **Defer categorization.** Standards mapping and threat classification happen in Phases 2 and 3. Phase 1 captures the system as the user sees it.
 * **Redirect solution proposals.** When the user jumps to mitigations ("we should add fairness testing"), acknowledge and note it, then redirect: "Good — we'll map that when we get to controls. For now, tell me more about how the model's outputs reach end users."
 * **Capture contradictions without resolving them.** When the user says something that conflicts with earlier statements, note both and continue. Resolution happens during summarization.

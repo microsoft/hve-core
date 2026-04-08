@@ -12,7 +12,7 @@ This collection includes agents and prompts for:
 - **Vulnerability Analysis** — Identify and prioritize security vulnerabilities
 - **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
 - **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards
-- **RAI Planning** — Responsible AI impact assessment, sensitive-use analysis, and RAI backlog generation
+- **RAI Planning** — Responsible AI impact assessment and RAI backlog generation
 
 Supporting subagents included:
 
@@ -27,4 +27,6 @@ Skills included:
 - **OWASP Top 10** — OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
 - **OWASP LLM Top 10** — OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
 - **OWASP Agentic Top 10** — OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
+- **OWASP MCP Top 10** - OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments
+- **OWASP Infrastructure Top 10** - OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments
 - **Security Reviewer Formats** — Format specifications and data contracts for the security reviewer orchestrator and its subagents

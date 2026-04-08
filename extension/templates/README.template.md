@@ -22,6 +22,14 @@ After installing this extension, the chat agents are available in GitHub Copilot
 
 Some chat agents create workflow artifacts in your project directory. See the [installation guide](https://github.com/microsoft/hve-core/blob/main/docs/getting-started/install.md#post-installation-update-your-gitignore) for recommended `.gitignore` configuration and other setup details.
 
+## Browse All Collections
+
+This extension is part of the HVE ecosystem.
+
+See the full list of available collections and capabilities:
+
+[Browse Extension Collections](https://microsoft.github.io/hve-core/docs/getting-started/collections)
+
 ## Pre-release Channel
 
 HVE Core offers two installation channels:

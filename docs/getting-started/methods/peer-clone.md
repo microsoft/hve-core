@@ -107,7 +107,8 @@ Create or update `.vscode/settings.json` in your project:
   },
   "chat.agentSkillsLocations": {
     "../hve-core/.github/skills": true,
-    "../hve-core/.github/skills/shared": true
+    "../hve-core/.github/skills/shared": true,
+    "../hve-core/.github/skills/coding-standards": true
   }
 }
 ```

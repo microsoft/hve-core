@@ -10,8 +10,14 @@ items:
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/code-review/functional-code-review.agent.md
+- path: .github/agents/coding-standards/code-review-full.agent.md
   kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/code-review-functional.agent.md
+  kind: agent
+- path: .github/agents/coding-standards/code-review-standards.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-jupyter-notebook.agent.md
@@ -132,7 +138,10 @@ items:
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
   kind: prompt
-- path: .github/prompts/code-review/functional-code-review.prompt.md
+- path: .github/prompts/coding-standards/code-review-full.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
 - path: .github/prompts/design-thinking/dt-figma-export.prompt.md
   kind: prompt
@@ -250,6 +259,9 @@ items:
 - path: .github/prompts/security/security-review-llm.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/security/security-review-sbd.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/security-review-web.prompt.md
   kind: prompt
   maturity: experimental
@@ -288,6 +300,12 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/bicep/bicep.instructions.md
   kind: instruction
+- path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
@@ -485,9 +503,6 @@ items:
 - path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-sensitive-uses.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/rai-planning/rai-standards.instructions.md
   kind: instruction
   maturity: experimental
@@ -528,6 +543,9 @@ items:
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/skills/coding-standards/python-foundational
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/video-to-gif
@@ -543,10 +561,19 @@ items:
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
+- path: .github/skills/security/owasp-infrastructure
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-llm
   kind: skill
   maturity: experimental
+- path: .github/skills/security/owasp-mcp
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-top-10
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/secure-by-design
   kind: skill
   maturity: experimental
 - path: .github/skills/security/security-reviewer-formats

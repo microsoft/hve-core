@@ -17,6 +17,7 @@
     "plugins/**/docs/**",
     "plugins/**/scripts/**",
     ".github/instructions/**",
+    ".github/aw/logs/**",
     ".github/agents/**",
     ".github/prompts/**",
     ".github/skills/**"

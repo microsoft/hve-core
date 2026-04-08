@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
+  "files.insertFinalNewline": true,
   "editor.defaultFormatter": "yzhang.markdown-all-in-one",
   "[markdown]": {
     "editor.defaultFormatter": "davidanson.vscode-markdownlint"
@@ -33,7 +34,7 @@
   },
   "chat.agentFilesLocations": {
     ".github/agents/ado": true,
-    ".github/agents/code-review": true,
+    ".github/agents/coding-standards": true,
     ".github/agents/data-science": true,
     ".github/agents/design-thinking": true,
     ".github/agents/experimental": true,
@@ -49,7 +50,7 @@
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
-    ".github/prompts/code-review": true,
+    ".github/prompts/coding-standards": true,
     ".github/prompts/design-thinking": true,
     ".github/prompts/experimental": true,
     ".github/prompts/github": true,
@@ -61,6 +62,7 @@
   "chat.agentSkillsLocations": {
     ".github/skills": true,
     ".github/skills/shared": true,
+    ".github/skills/coding-standards": true,
     ".github/skills/experimental": true,
     ".github/skills/security": true,
     ".github/skills/jira": true,

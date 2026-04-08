@@ -1,6 +1,12 @@
 ---
 name: hve-core-installer
 description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
+license: MIT
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  last_updated: "2026-04-01"
 ---
 
 # HVE-Core Installer Skill
@@ -387,7 +393,7 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
 {
   "chat.agentFilesLocations": {
     "<PREFIX>/.github/agents/ado": true,
-    "<PREFIX>/.github/agents/code-review": true,
+    "<PREFIX>/.github/agents/coding-standards": true,
     "<PREFIX>/.github/agents/data-science": true,
     "<PREFIX>/.github/agents/design-thinking": true,
     "<PREFIX>/.github/agents/github": true,
@@ -398,7 +404,7 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.promptFilesLocations": {
     "<PREFIX>/.github/prompts/ado": true,
-    "<PREFIX>/.github/prompts/code-review": true,
+    "<PREFIX>/.github/prompts/coding-standards": true,
     "<PREFIX>/.github/prompts/design-thinking": true,
     "<PREFIX>/.github/prompts/github": true,
     "<PREFIX>/.github/prompts/hve-core": true,
@@ -414,7 +420,8 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/shared": true
+    "<PREFIX>/.github/skills/shared": true,
+    "<PREFIX>/.github/skills/coding-standards": true
   }
 }
 ```
@@ -475,7 +482,7 @@ Add to devcontainer.json:
       "settings": {
         "chat.agentFilesLocations": {
           "/workspaces/hve-core/.github/agents/ado": true,
-          "/workspaces/hve-core/.github/agents/code-review": true,
+          "/workspaces/hve-core/.github/agents/coding-standards": true,
           "/workspaces/hve-core/.github/agents/data-science": true,
           "/workspaces/hve-core/.github/agents/design-thinking": true,
           "/workspaces/hve-core/.github/agents/github": true,
@@ -486,7 +493,7 @@ Add to devcontainer.json:
         },
         "chat.promptFilesLocations": {
           "/workspaces/hve-core/.github/prompts/ado": true,
-          "/workspaces/hve-core/.github/prompts/code-review": true,
+          "/workspaces/hve-core/.github/prompts/coding-standards": true,
           "/workspaces/hve-core/.github/prompts/design-thinking": true,
           "/workspaces/hve-core/.github/prompts/github": true,
           "/workspaces/hve-core/.github/prompts/hve-core": true,
@@ -502,7 +509,8 @@ Add to devcontainer.json:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true
+          "/workspaces/hve-core/.github/skills/shared": true,
+          "/workspaces/hve-core/.github/skills/coding-standards": true
         }
       }
     }

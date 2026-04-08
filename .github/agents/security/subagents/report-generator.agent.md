@@ -1,6 +1,6 @@
 ---
 name: Report Generator
-description: "Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core"
+description: "Collates verified security skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core"
 tools:
   - edit/createDirectory
   - edit/createFile
@@ -19,7 +19,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Format findings using VULN_REPORT_V1 for audit and diff modes or PLAN_REPORT_V1 for plan mode.
 * Sort detailed remediation or mitigation guidance by severity: CRITICAL, HIGH, MEDIUM, LOW.
 * Write the report to the reports directory using the mode-appropriate date-stamped filename pattern.
-* Group findings by skill and OWASP framework.
+* Group findings by skill and security framework.
 
 ## Inputs
 
@@ -107,7 +107,7 @@ Read the `security-reviewer-formats` skill for full format specifications before
   8. Use "None identified." as the section content when a section has no findings.
 * When mode is `diff`:
   1. Follow the same steps as audit mode with these modifications.
-  2. Use the diff mode title: `# OWASP Security Assessment Report — Changed Files Only`.
+  2. Use the diff mode title: `# Security Assessment Report — Changed Files Only`.
   3. Add the `**Scope:** Changed files relative to {default_branch}` header field.
   4. Build all standard VULN_REPORT_V1 sections as in audit mode.
   5. Append a "Changed Files" appendix section after the Skills Used appendix, listing each changed file with its change type (added, modified, renamed).
