@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
@@ -1683,3 +1683,4 @@ description: 'Skill for default output path test'
     }
 }
 #endregion Default OutputPath Parameter Test
+
