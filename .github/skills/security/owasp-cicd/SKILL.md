@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://owasp.org/www-project-top-10-ci-cd-security-risks/"
 ---
 
-# OWASP CI/CD Top 10 — Skill Entry
+# OWASP® CI/CD Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OWASP CI/CD Top 10 skill.
 
