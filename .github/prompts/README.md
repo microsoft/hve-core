@@ -75,6 +75,7 @@ Jira workflow support is available through dedicated prompts in this directory. 
 * **[Security Review](./security/security-review.prompt.md)** - OWASP vulnerability assessment against the current codebase with configurable mode, scope, and skill selection
 * **[Security Review - Web](./security/security-review-web.prompt.md)** - OWASP Top 10 web vulnerability assessment without codebase profiling (target-skill fast-path)
 * **[Security Review - LLM](./security/security-review-llm.prompt.md)** - OWASP LLM and Agentic vulnerability assessments with codebase profiling for context
+* **[Security Review - Secure by Design](./security/security-review-sbd.prompt.md)** - Secure by Design principles assessment based on UK and Australian government guidance (target-skill fast-path)
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 * **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
