@@ -91,3 +91,20 @@ export const collectionCardDefinitions: CollectionCardDefinition[] = [
 export interface MetaCollections {
   'hve-core-all': number;
 }
+
+export function resolveCollectionCards(
+  counts: Record<string, number>,
+): CollectionCardData[] {
+  return collectionCardDefinitions.map((def) => ({
+    ...def,
+    artifacts: counts[def.name] ?? 0,
+  }));
+}
+
+export function resolveMetaCollections(
+  counts: Record<string, number>,
+): MetaCollections {
+  return {
+    'hve-core-all': counts['hve-core-all'] ?? 0,
+  };
+}

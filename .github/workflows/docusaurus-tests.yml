@@ -38,6 +38,8 @@ jobs:
       - name: Run tests
         working-directory: docs/docusaurus
         run: npm test
+        env:
+          COLLECTIONS_DIR: ${{ github.workspace }}/collections
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Build site
