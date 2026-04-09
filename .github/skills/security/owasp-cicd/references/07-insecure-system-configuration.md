@@ -83,7 +83,6 @@ secrets and production deployment configurations.
 
 ### Scenario B — Unpatched build server compromise
 
-
 A self-managed Jenkins instance runs an outdated version with a known remote code execution
 vulnerability. The system is accessible from the internet. An attacker exploits the vulnerability
 to gain shell access on the Jenkins server, accesses stored pipeline credentials, and uses them
