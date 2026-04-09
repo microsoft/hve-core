@@ -85,7 +85,6 @@ registries, and the SCM from every organization using the compromised tool.
 
 ### Scenario B — OAuth token theft from analytics platform
 
-
 A git analytics platform is granted OAuth access to the organization's GitHub repositories for
 code analysis. An attacker gains access to the analytics platform's database and steals the stored
 OAuth tokens for all customers. The attacker uses the tokens to access and modify source code in
