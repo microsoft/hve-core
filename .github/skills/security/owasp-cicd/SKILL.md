@@ -40,6 +40,17 @@ that an agent can query to identify, assess, and remediate CI/CD pipeline securi
   * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP CI/CD Security numbering.
 
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® Top 10 CI/CD Security Risks content is derived from works by the
+OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://owasp.org/www-project-top-10-ci-cd-security-risks/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
+
 ---
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
