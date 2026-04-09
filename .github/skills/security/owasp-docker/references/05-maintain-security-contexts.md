@@ -1,11 +1,11 @@
 ---
-title: 'DKR05: Maintain Security Contexts'
+title: 'D05: Maintain Security Contexts'
 description: OWASP Docker Top 6 reference for security context vulnerabilities including mixed trust-level containers and insufficient isolation boundaries
 ---
 
 # 05 Maintain Security Contexts
 
-Identifier: DKR05:2025
+Identifier: D05
 Category: Isolation
 
 ## Description

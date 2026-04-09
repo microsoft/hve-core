@@ -1,11 +1,11 @@
 ---
-title: 'DKR04: Secure Defaults and Hardening'
+title: 'D04: Secure Defaults and Hardening'
 description: OWASP Docker Top 6 reference for secure defaults and hardening vulnerabilities including disabled security profiles and excessive capabilities
 ---
 
 # 04 Secure Defaults and Hardening
 
-Identifier: DKR04:2025
+Identifier: D04
 Category: Configuration Management
 
 ## Description
@@ -14,7 +14,7 @@ Container environments expose services across three domains: the orchestration t
 etcd, APIs), the host (RPC services, OpenSSHD, avahi, systemd network services), and the
 containers themselves (microservice endpoints and distribution-bundled tools).
 Default configurations frequently leave unnecessary services running or insufficiently protected.
-Network-based mitigations (see DKR03) address the symptom rather than the root cause; disabling or
+Network-based mitigations (see D03) address the symptom rather than the root cause; disabling or
 hardening an unneeded service eliminates the attack surface entirely.
 Linux kernel syscalls accessible from within containers present an additional vector; a defective
 syscall can escalate privileges from a container user to root on the host.

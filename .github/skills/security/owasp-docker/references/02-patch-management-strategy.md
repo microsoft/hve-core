@@ -1,11 +1,11 @@
 ---
-title: 'DKR02: Patch Management Strategy'
+title: 'D02: Patch Management Strategy'
 description: OWASP Docker Top 6 reference for patch management vulnerabilities including outdated base images and unpatched container components
 ---
 
 # 02 Patch Management Strategy
 
-Identifier: DKR02:2025
+Identifier: D02
 Category: Patch Management
 
 ## Description

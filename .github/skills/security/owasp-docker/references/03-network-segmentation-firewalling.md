@@ -1,11 +1,11 @@
 ---
-title: 'DKR03: Network Segmentation and Firewalling'
+title: 'D03: Network Segmentation and Firewalling'
 description: OWASP Docker Top 6 reference for network segmentation vulnerabilities including unrestricted container communication and missing egress controls
 ---
 
 # 03 Network Segmentation and Firewalling
 
-Identifier: DKR03:2025
+Identifier: D03
 Category: Network Security
 
 ## Description

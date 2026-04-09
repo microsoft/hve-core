@@ -1,11 +1,11 @@
 ---
-title: 'DKR06: Resource Protection'
+title: 'D07: Resource Protection'
 description: OWASP Docker Top 6 reference for resource protection vulnerabilities including missing resource limits and container resource exhaustion
 ---
 
 # 06 Resource Protection
 
-Identifier: DKR06:2025
+Identifier: D07
 Category: Resource Management
 
 ## Description

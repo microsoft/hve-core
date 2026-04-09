@@ -1,11 +1,11 @@
 ---
-title: 'DKR01: Secure User Mapping'
+title: 'D01: Secure User Mapping'
 description: OWASP Docker Top 6 reference for secure user mapping vulnerabilities including root container execution and privilege escalation
 ---
 
 # 01 Secure User Mapping
 
-Identifier: DKR01:2025
+Identifier: D01
 Category: Privilege Management
 
 ## Description
