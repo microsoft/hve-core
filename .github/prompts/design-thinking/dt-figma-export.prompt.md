@@ -2,12 +2,17 @@
 description: 'Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core'
 agent: 'DT Coach'
 argument-hint: "project-slug=... [board-title=...] [method=latest] [output-type=figjam]"
-tools: ['read_file', 'figma/*']
+tools:
+  - read_file
+  - figma/whoami
+  - figma/create_new_file
+  - figma/use_figma
+  - figma/get_figjam
+  - figma/get_metadata
+  - figma/generate_diagram
 ---
 
 # DT Figma Export
-
-## Overview
 
 Export Design Thinking artifacts from `.copilot-tracking/dt/{project-slug}/` to a FigJam board or Figma Design file using the official `figma` MCP server.
 Use this prompt after a team has produced Method 1, 3, 4, 5, or 6 artifacts that would benefit from collaborative visual review.
@@ -27,6 +32,7 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
 * The `figma` MCP server MUST be configured in your workspace (see `.vscode/mcp.json`).
 * The user MUST have a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month.
 * Authentication happens automatically via browser OAuth on first use. No credential files or API keys are required.
+* The `figma/use_figma` write tool is currently in beta and free during the beta period. Figma has indicated it will eventually become a usage-based paid feature. The read-only tools (`figma/get_figjam`, `figma/get_screenshot`, `figma/generate_diagram`) are not affected.
 
 ## Workflow Steps
 
@@ -39,17 +45,17 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    Prefer explicit artifact files referenced in the coaching state over directory guessing.
 
 3. Validate Figma Availability:
-   Call `whoami` to confirm the Figma MCP server is connected and the user is authenticated.
+   Call `figma/whoami` to confirm the Figma MCP server is connected and the user is authenticated.
    If the `figma` MCP server or tools are unavailable, stop and provide the setup path:
    Add `{"figma": {"type": "http", "url": "https://mcp.figma.com/mcp"}}` to `.vscode/mcp.json` under `servers`, then restart VS Code.
 
 4. Create the Destination File:
-   Use `create_new_file` to create a new FigJam file (for `figjam` output) or a new Figma Design file (for `design` output) or both (for `both` output).
+   Use `figma/create_new_file` to create a new FigJam file (for `figjam` output) or a new Figma Design file (for `design` output) or both (for `both` output).
    Use `${input:board-title}` when provided; otherwise derive a clear title from project and method context.
-   If the user specifies an existing Figma URL instead of a title, use `get_figjam` or `get_metadata` to read the existing file before modifying it.
+   If the user specifies an existing Figma URL instead of a title, use `figma/get_figjam` or `figma/get_metadata` to read the existing file before modifying it.
 
 5. Build FigJam Export Layout (when output-type is `figjam` or `both`):
-   Use `use_figma` to create sections, sticky notes, text, shapes, and connectors on the FigJam board.
+   Use `figma/use_figma` to create sections, sticky notes, text, shapes, and connectors on the FigJam board.
    Translate artifact content into a left-to-right section layout with grouping areas and labeled sticky notes.
 
    **FIRST: Build the Project Details card** at position (0, 0) using the Universal: Project Details Card template below. All exercise sections must be offset below it.
@@ -69,13 +75,13 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    Keep sticky content concise: 1-3 short sentences per sticky.
 
    **Diagram generation:**
-   Where structured relationships exist in the artifacts, use `generate_diagram` to create Mermaid-based diagrams:
+   Where structured relationships exist in the artifacts, use `figma/generate_diagram` to create Mermaid-based diagrams:
    * Method 1: Stakeholder relationship flowchart showing influence and impact.
    * Method 3: Theme-to-evidence cluster diagram showing how evidence supports themes.
    * Method 8: User testing flow diagrams showing test scenarios and outcomes.
 
 6. Build Figma Design Export Layout (when output-type is `design` or `both`):
-   Use `use_figma` to create structured frames with auto-layout in a Figma Design file.
+   Use `figma/use_figma` to create structured frames with auto-layout in a Figma Design file.
 
    **Frame structure:**
    * Main frame: Named after the project and method, using auto-layout (vertical, 40px gap).
@@ -100,6 +106,10 @@ FigJam boards are the default output type. They provide a collaborative whiteboa
    For Method 5, export concepts, evaluation notes, and stakeholder reactions. Create concept comparison cards.
    For Method 6, export prototype plan, build decisions, and testing hypotheses. Create a hypothesis tracking board.
    If artifacts span multiple methods, group by method first and then by theme.
+
+8. Report Results:
+   Summarize the file title, file URL (provided by `figma/create_new_file` or `figma/use_figma`), output type, and counts of sections, stickies, text elements, and diagrams created.
+   Call out any skipped or failed items with actionable reasons.
 
 ## Exercise Templates
 
@@ -461,10 +471,6 @@ Pull persona data from artifact files under `.copilot-tracking/dt/{project-slug}
 
 If a field is missing from the artifact, omit that row. Do not invent placeholder data.
 
-8. Report Results:
-   Summarize the file title, file URL (provided by `create_new_file` or `use_figma`), output type, and counts of sections, stickies, text elements, and diagrams created.
-   Call out any skipped or failed items with actionable reasons.
-
 ## Success Criteria
 
 * [ ] DT artifacts were read from `.copilot-tracking/dt/{project-slug}/`.
@@ -494,7 +500,7 @@ If a field is missing from the artifact, omit that row. Do not invent placeholde
 
 * If the DT project directory or coaching state is missing, stop and direct the user to create or resume the project before export.
 * If the `figma` MCP server is not configured, stop and provide the setup instructions rather than attempting a partial export.
-* If `whoami` indicates a Starter plan, warn the user about the 6-call monthly limit and suggest batching exports.
+* If `figma/whoami` indicates a Starter plan, warn the user about the 6-call monthly limit and suggest batching exports.
 * If artifacts are incomplete for the requested method, explain the gap and ask whether to export the available subset or return to coaching.
 * If file creation or widget placement fails, report exactly which sections or elements failed and preserve the successfully created content.
 
@@ -506,10 +512,6 @@ The Figma MCP server applies rate limits based on your Figma plan:
 * **Dev or Full seats on Professional/Organization/Enterprise**: Per-minute rate limits matching Figma REST API Tier 1.
 
 For best results, ensure team members have Dev or Full seats on a paid Figma plan.
-
-## Beta Notice
-
-The `use_figma` write tool is currently in beta and free during the beta period. Figma has indicated it will eventually become a usage-based paid feature. The read-only tools (`get_figjam`, `get_screenshot`, `generate_diagram`) are not affected by this and will continue to work.
 
 ---
 
