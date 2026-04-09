@@ -54,7 +54,12 @@ owasp-top-10:
 owasp-docker:
   - "Dockerfile"
   - "docker-compose.yml"
+  - "docker-compose.yaml"
   - "Container manifests"
+  - ".dockerignore"
+  - ".containerignore"
+  - "Containerfile"
+  - "docker-bake.hcl"
 ```
 
 ## Codebase Profile Format
