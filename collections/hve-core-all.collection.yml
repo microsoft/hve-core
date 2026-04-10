@@ -549,6 +549,8 @@ items:
   kind: skill
 - path: .github/skills/experimental/vscode-playwright
   kind: skill
+- path: .github/skills/github/github-security
+  kind: skill
 - path: .github/skills/gitlab/gitlab
   kind: skill
 - path: .github/skills/installer/hve-core-installer

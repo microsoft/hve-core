@@ -13,6 +13,7 @@ This collection includes agents and prompts for:
 - **Triage** — Automated label suggestion, milestone assignment, and priority assessment
 - **Sprint Planning** — Organize issues into sprints with effort estimation
 - **Backlog Execution** — Execute planned operations against issue backlogs
+- **Security Scanning** — Query and triage code scanning, secret scanning, and Dependabot alerts from the GitHub Security tab
 
 ## Install
 
@@ -47,6 +48,12 @@ copilot plugin install github@hve-core
 | github-backlog-update.instructions    | Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations                                                                                                                                           |
 | community-interaction.instructions    | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
 | hve-core-location.instructions        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| SKILL | SKILL.md    |
 
 ---
 

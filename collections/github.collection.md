@@ -6,3 +6,4 @@ This collection includes agents and prompts for:
 - **Triage** — Automated label suggestion, milestone assignment, and priority assessment
 - **Sprint Planning** — Organize issues into sprints with effort estimation
 - **Backlog Execution** — Execute planned operations against issue backlogs
+- **Security Scanning** — Query and triage code scanning, secret scanning, and Dependabot alerts from the GitHub Security tab
