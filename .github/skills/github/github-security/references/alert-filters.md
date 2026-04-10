@@ -1,4 +1,18 @@
-# Alert Filters Reference
+---
+title: GitHub Security Alert Filters Reference
+description: Advanced jq filter patterns for code scanning, secret scanning, and Dependabot alert queries via gh api CLI
+author: Microsoft
+ms.date: 2026-04-10
+ms.topic: reference
+keywords:
+  - github
+  - security
+  - code scanning
+  - secret scanning
+  - dependabot
+  - jq
+estimated_reading_time: 3
+---
 
 Advanced `jq` filter patterns for GitHub Security alert queries. All commands use `{owner}/{repo}` placeholders. Combine filters with `--paginate` for complete result sets.
 
@@ -192,3 +206,7 @@ gh api repos/{owner}/{repo}/dependabot/alerts --paginate \
   -f state=open \
   --jq '[.[] | select(.dependency.scope == "development")]'
 ```
+
+<!-- markdownlint-disable MD036 -->
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+<!-- markdownlint-enable MD036 -->

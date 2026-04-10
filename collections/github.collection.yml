@@ -38,7 +38,7 @@ items:
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
-  - path: .github/skills/github/github-security/SKILL.md
+  - path: .github/skills/github/github-security
     kind: skill
 display:
   ordering: manual
