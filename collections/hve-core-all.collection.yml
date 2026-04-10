@@ -497,10 +497,10 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-security-model.instructions.md
+- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-sensitive-uses-triggers.instructions.md
+- path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/rai-planning/rai-standards.instructions.md
