@@ -6,10 +6,11 @@ individual files.
 
 ---
 
-OWASP Top 10 (2025), OWASP Top 10 for LLM Applications (2025), and OWASP Top 10 for Agentic Applications (2026)
+OWASP Top 10 Infrastructure Security Risks (2024), OWASP Top 10 (2025), OWASP Top 10 for LLM Applications (2025), and OWASP Top 10 for Agentic Applications (2026)
 Copyright: © OWASP Foundation
 License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 License URI: https://creativecommons.org/licenses/by-sa/4.0/
+Source: https://owasp.org/www-project-top-10-infrastructure-security-risks/
 Source: https://owasp.org/Top10/2025/
 Source: https://genai.owasp.org/resource/owasp-top-10-for-llm-applications-2025/
 Source: https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
