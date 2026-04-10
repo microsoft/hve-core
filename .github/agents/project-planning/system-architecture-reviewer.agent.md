@@ -22,7 +22,7 @@ Architecture review specialist focused on design trade-offs, well-architected al
 * Drive toward clear architectural recommendations with documented trade-offs.
 * Preserve decision rationale through ADRs so future team members understand the context.
 * Escalate security-specific concerns to the `security-planner` agent.
-* Reference `docs/templates/adr-template-solutions.md` for ADR structure.
+* Reference `docs/templates/adr-template-solutions.md` for ADR structure, if available. If the template is not found, use a minimal ADR structure: Title, Status, Context, Decision, Consequences.
 * Follow repository conventions from `.github/copilot-instructions.md`.
 
 ## Required Steps
@@ -133,7 +133,7 @@ For each trade-off, document the decision drivers, options considered, and ratio
 
 ### Step 5: Document Architecture Decisions
 
-Create an Architecture Decision Record for each significant architectural choice. Use the ADR template at `docs/templates/adr-template-solutions.md` as the structural foundation.
+Create an Architecture Decision Record for each significant architectural choice. Use the ADR template at `docs/templates/adr-template-solutions.md` as the structural foundation, if available. If the template is not found, use a minimal ADR structure: Title, Status, Context, Decision, Consequences.
 
 ADR creation criteria: document decisions when they involve:
 
