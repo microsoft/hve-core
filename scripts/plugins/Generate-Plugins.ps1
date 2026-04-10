@@ -307,6 +307,74 @@ function Invoke-PluginGeneration {
             }
         }
 
+        #region Update collection.md artifact tables
+        if (-not $DryRun) {
+            $collectionMdPath = Join-Path $collectionsDir "$id.collection.md"
+            if (Test-Path $collectionMdPath) {
+                $bodyContent = Get-Content -Path $collectionMdPath -Raw
+                $parsed = Split-CollectionMdByMarkers -Content $bodyContent
+
+                if ($parsed.HasMarkers) {
+                    $agents = @()
+                    $prompts = @()
+                    $instructions = @()
+                    $skills = @()
+
+                    foreach ($item in $filteredCollection.items) {
+                        if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                            continue
+                        }
+                        $kind = [string]$item.kind
+                        $path = [string]$item.path
+                        $artifactName = Get-CollectionArtifactKey -Kind $kind -Path $path
+
+                        $resolvedPath = Join-Path $RepoRoot ($path -replace '^\.\//', '')
+                        if ($kind -eq 'skill') {
+                            $resolvedPath = Join-Path $resolvedPath 'SKILL.md'
+                        }
+                        $artifactDesc = Get-ArtifactDescription -FilePath $resolvedPath
+
+                        $entry = @{ Name = $artifactName; Description = $artifactDesc }
+                        switch ($kind) {
+                            'agent' { $agents += $entry }
+                            'prompt' { $prompts += $entry }
+                            'instruction' { $instructions += $entry }
+                            'skill' { $skills += $entry }
+                        }
+                    }
+
+                    $artifactSections = [System.Text.StringBuilder]::new()
+
+                    foreach ($section in @(
+                        @{ Title = 'Chat Agents'; Items = $agents },
+                        @{ Title = 'Prompts'; Items = $prompts },
+                        @{ Title = 'Instructions'; Items = $instructions },
+                        @{ Title = 'Skills'; Items = $skills }
+                    )) {
+                        if ($section.Items.Count -eq 0) { continue }
+
+                        $null = $artifactSections.AppendLine("### $($section.Title)")
+                        $null = $artifactSections.AppendLine()
+                        $null = $artifactSections.AppendLine('| Name | Description |')
+                        $null = $artifactSections.AppendLine('|------|-------------|')
+                        foreach ($entry in ($section.Items | Sort-Object { $_.Name })) {
+                            $null = $artifactSections.AppendLine("| **$($entry.Name)** | $($entry.Description) |")
+                        }
+                        $null = $artifactSections.AppendLine()
+                    }
+
+                    $generatedBlock = $artifactSections.ToString().TrimEnd()
+                    $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+                    if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+                        $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
+                    }
+                    $updatedCollectionMd += "`n"
+                    Set-ContentIfChanged -Path $collectionMdPath -Value $updatedCollectionMd
+                }
+            }
+        }
+        #endregion
+
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount
         $totalCommands += $result.CommandCount

@@ -10,6 +10,12 @@
 #Requires -Modules PowerShell-Yaml
 
 # ---------------------------------------------------------------------------
+# Marker Constants (shared across collection scripts)
+# ---------------------------------------------------------------------------
+$script:CollectionMdBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+$script:CollectionMdEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
+
+# ---------------------------------------------------------------------------
 # Internal Utilities
 # ---------------------------------------------------------------------------
 
@@ -594,17 +600,116 @@ function Update-HveCoreAllCollection {
     }
 }
 
+function Split-CollectionMdByMarkers {
+    <#
+    .SYNOPSIS
+        Splits collection markdown content at auto-generation markers.
+    .DESCRIPTION
+        Locates the BEGIN and END auto-generated-artifact markers in the
+        supplied markdown string and returns the intro (before), footer (after),
+        and a flag indicating whether markers were found.
+    .PARAMETER Content
+        The full text content of a collection.md file.
+    .OUTPUTS
+        [hashtable] with keys HasMarkers ([bool]), Intro ([string]),
+        and Footer ([string]).
+    .NOTES
+        Returns the entire content as Intro with HasMarkers = $false when
+        markers are missing or mis-ordered.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $beginIdx = $Content.IndexOf($script:CollectionMdBeginMarker)
+    $endIdx = $Content.IndexOf($script:CollectionMdEndMarker)
+
+    if ($beginIdx -lt 0 -or $endIdx -lt 0 -or $endIdx -le $beginIdx) {
+        return @{
+            HasMarkers = $false
+            Intro      = $Content
+            Footer     = ''
+        }
+    }
+
+    $intro = $Content.Substring(0, $beginIdx).TrimEnd()
+    $endMarkerEnd = $endIdx + $script:CollectionMdEndMarker.Length
+    $footer = if ($endMarkerEnd -lt $Content.Length) {
+        $Content.Substring($endMarkerEnd).TrimStart("`r", "`n")
+    } else { '' }
+
+    return @{
+        HasMarkers = $true
+        Intro      = $intro
+        Footer     = $footer
+    }
+}
+
+function Get-ArtifactDescription {
+    <#
+    .SYNOPSIS
+        Reads the description from an artifact file's YAML frontmatter.
+    .DESCRIPTION
+        Parses the YAML frontmatter block at the top of a markdown file and
+        returns the description field value. Returns an empty string when the
+        file is missing, has no frontmatter, or lacks a description field.
+        Strips the common " - Brought to you by microsoft/hve-core" suffix.
+    .PARAMETER FilePath
+        Absolute path to the artifact markdown file.
+    .OUTPUTS
+        [string] Description text, or empty string if unavailable.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    if (-not (Test-Path $FilePath)) {
+        return ''
+    }
+
+    $content = Get-Content -Path $FilePath -Raw
+    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
+        $yamlBlock = $Matches[1]
+        try {
+            $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
+            if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
+                $desc = [string]$frontmatter.description
+                # Strip the common branding suffix
+                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
+                return $desc.Trim()
+            }
+        }
+        catch {
+            Write-Verbose "Failed to parse frontmatter from $FilePath`: $_"
+        }
+    }
+
+    return ''
+}
+
 Export-ModuleMember -Function @(
     'Get-AllCollections',
+    'Get-ArtifactDescription',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
     'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
     'Resolve-CollectionItemMaturity',
     'Set-ContentIfChanged',
+    'Split-CollectionMdByMarkers',
     'Test-ArtifactDeprecated',
     'Test-DeprecatedPath',
     'Test-HveCoreRepoRelativePath',
     'Test-HveCoreRepoSpecificPath',
     'Update-HveCoreAllCollection'
+)
+
+Export-ModuleMember -Variable @(
+    'CollectionMdBeginMarker',
+    'CollectionMdEndMarker'
 )

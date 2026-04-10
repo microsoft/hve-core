@@ -64,10 +64,6 @@ $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "../collections/Modules/CollectionHelpers.psm1") -Force
 
-# Auto-generation marker constants shared across Split-CollectionMdByMarkers and New-CollectionReadme
-$script:CollectionMdBeginMarker = '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
-$script:CollectionMdEndMarker = '<!-- END AUTO-GENERATED ARTIFACTS -->'
-
 #region Pure Functions
 
 #region Package Generation Functions
@@ -334,85 +330,6 @@ function Invoke-ExtensionCollectionsGeneration {
     return $expectedFiles
 }
 
-function Get-ArtifactDescription {
-    <#
-    .SYNOPSIS
-        Reads the description from an artifact file's YAML frontmatter.
-    .DESCRIPTION
-        Parses the YAML frontmatter block at the top of a markdown file and
-        returns the description field value. Returns an empty string when the
-        file is missing, has no frontmatter, or lacks a description field.
-        Strips the common " - Brought to you by microsoft/hve-core" suffix.
-    .PARAMETER FilePath
-        Absolute path to the artifact markdown file.
-    .OUTPUTS
-        [string] Description text, or empty string if unavailable.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    if (-not (Test-Path $FilePath)) {
-        return ''
-    }
-
-    $content = Get-Content -Path $FilePath -Raw
-    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-        $yamlBlock = $Matches[1]
-        try {
-            $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
-            if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
-                $desc = [string]$frontmatter.description
-                # Strip the common branding suffix
-                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
-                return $desc.Trim()
-            }
-        }
-        catch {
-            Write-Verbose "Failed to parse frontmatter from $FilePath`: $_"
-        }
-    }
-
-    return ''
-}
-
-function Split-CollectionMdByMarkers {
-    <#
-    .SYNOPSIS
-        Splits collection.md content at auto-generation markers.
-    #>
-    param(
-        [Parameter(Mandatory)]
-        [string]$Content
-    )
-
-    $beginIdx = $Content.IndexOf($script:CollectionMdBeginMarker)
-    $endIdx = $Content.IndexOf($script:CollectionMdEndMarker)
-
-    if ($beginIdx -lt 0 -or $endIdx -lt 0 -or $endIdx -le $beginIdx) {
-        return @{
-            HasMarkers = $false
-            Intro      = $Content
-            Footer     = ''
-        }
-    }
-
-    $intro = $Content.Substring(0, $beginIdx).TrimEnd()
-    $endMarkerEnd = $endIdx + $script:CollectionMdEndMarker.Length
-    $footer = if ($endMarkerEnd -lt $Content.Length) {
-        $Content.Substring($endMarkerEnd).TrimStart("`r", "`n")
-    } else { '' }
-
-    return @{
-        HasMarkers = $true
-        Intro      = $intro
-        Footer     = $footer
-    }
-}
-
 function New-CollectionReadme {
     <#
     .SYNOPSIS
@@ -549,7 +466,7 @@ function New-CollectionReadme {
     # Write back updated artifact section into collection.md when markers are present
     if ($parsed.HasMarkers) {
         $generatedBlock = $artifactSections.ToString().TrimEnd()
-        $updatedCollectionMd = "$($parsed.Intro)`n`n$($script:CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($script:CollectionMdEndMarker)"
+        $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
         if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
             $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
         }
