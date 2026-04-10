@@ -21,6 +21,18 @@ OWASP® is a registered trademark of the OWASP Foundation.
 
 ---
 
+OWASP MCP Top 10 (2025)
+Copyright: © OWASP Foundation
+License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+License URI: https://creativecommons.org/licenses/by-nc-sa/4.0/
+Source: https://owasp.org/www-project-mcp-top-10/
+Usage: Category names, IDs, and condensed descriptions in security instruction files.
+Vulnerability reference documents in skill files restructured into agent-consumable
+format with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation.
+
+---
+
 NIST SP 800-53 Rev. 5 and NIST AI RMF 1.0
 License: Public Domain (17 U.S.C. § 105 — U.S. Government Work)
 Source: https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final
@@ -83,3 +95,4 @@ Usage: Minimum element names referenced in supply chain security instruction fil
 
 OpenSSF® is a registered trademark of the Linux Foundation.
 OWASP® is a registered trademark of the OWASP Foundation.
+
