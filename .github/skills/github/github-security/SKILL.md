@@ -30,12 +30,13 @@ The `repo` scope also satisfies `security_events`. The `gh` CLI handles authenti
 Run this command to get a grouped summary of open code scanning alerts, sorted by frequency. This is the recommended first command when triaging a repository's security posture.
 
 ```bash
-gh api "repos/{owner}/{repo}/code-scanning/alerts?state=open&ref=refs/heads/main&per_page=100" \
-  --paginate \
-  --jq '[.[] | {number, rule_description: .rule.description, rule_id: .rule.id, tool: .tool.name, security_severity: .rule.security_severity_level, path: .most_recent_instance.location.path}] | group_by(.rule_description) | map({rule_description: .[0].rule_description, rule_id: .[0].rule_id, tool: .[0].tool, security_severity: .[0].security_severity, count: length, sample_paths: [.[].path] | unique}) | sort_by(-.count)'
+pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
 
 This groups open alerts by rule title and sorts results by occurrence count, descending.
+
+> [!NOTE]
+> In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
 
 ## When to Use This Skill
 
@@ -55,6 +56,8 @@ gh api "repos/{owner}/{repo}/code-scanning/alerts?state=open&ref=refs/heads/main
 Use `ref=refs/heads/main` to scope to a specific branch. Omit `ref` to return alerts from all branches.
 
 ### Group by rule title
+
+Use `Get-CodeScanningAlerts.ps1` for automated or one-shot grouping. The `gh api` form below is retained as an advanced reference and for environments without PowerShell.
 
 ```bash
 gh api "repos/{owner}/{repo}/code-scanning/alerts?state=open&ref=refs/heads/main&per_page=100" \

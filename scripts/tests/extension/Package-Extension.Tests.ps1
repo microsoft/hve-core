@@ -797,9 +797,9 @@ Describe 'Get-PackagingDirectorySpec' {
         $script:extDir = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-ext'
     }
 
-    It 'Returns array of 3 directory specifications' {
+    It 'Returns array of 4 directory specifications' {
         $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
-        $result.Count | Should -Be 3
+        $result.Count | Should -Be 4
     }
 
     It 'Includes .github directory specification' {
@@ -822,6 +822,14 @@ Describe 'Get-PackagingDirectorySpec' {
         $templatesSpec = $result | Where-Object { $_.Source -like '*templates' }
         $templatesSpec | Should -Not -BeNullOrEmpty
         $templatesSpec.IsFile | Should -BeFalse
+    }
+
+    It 'Includes scripts/security directory specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $securitySpec = $result | Where-Object { $_.Source -like '*scripts/security' }
+        $securitySpec | Should -Not -BeNullOrEmpty
+        $securitySpec.Destination | Should -BeLike '*scripts/security'
+        $securitySpec.IsFile | Should -BeFalse
     }
 
     It 'Uses correct path joining for source and destination' {
