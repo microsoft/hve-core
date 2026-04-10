@@ -1,6 +1,6 @@
 ---
 name: Finding Deep Verifier
-description: "Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill - Brought to you by microsoft/hve-core"
+description: "Deep adversarial verification of FAIL and PARTIAL findings for a single security skill - Brought to you by microsoft/hve-core"
 tools:
   - search/codebase
   - search/fileSearch
@@ -11,7 +11,7 @@ user-invocable: false
 
 # Finding Deep Verifier
 
-Perform deep adversarial verification of all FAIL and PARTIAL findings for a single OWASP skill. Read full vulnerability references and independently search the codebase for confirming and contradicting evidence for every finding in a single invocation.
+Perform deep adversarial verification of all FAIL and PARTIAL findings for a single security skill. Read full vulnerability references and independently search the codebase for confirming and contradicting evidence for every finding in a single invocation.
 
 ## Purpose
 
@@ -24,14 +24,14 @@ Perform deep adversarial verification of all FAIL and PARTIAL findings for a sin
 
 ## Inputs
 
-* Skill name: the OWASP skill identifier (for example, `owasp-top-10`).
+* Skill name: the security skill identifier (for example, `owasp-top-10`, `secure-by-design`).
 * Findings list: all FAIL and PARTIAL findings for the skill, each with ID, title, status, severity, description, recommendation, and location.
 * Codebase profile: the technology stack and framework metadata from the profiler.
 * (Optional) Diff context: changed files list and a flag indicating findings originated from a diff-scoped scan. Provided by the scanner in diff mode.
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-docker`). Follow the skill's normative reference links to access vulnerability references.
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `owasp-docker`, `secure-by-design`). Follow the skill's normative reference links to access vulnerability references.
 
 Verdict values: CONFIRMED, DISPROVED, DOWNGRADED.
 
@@ -141,7 +141,7 @@ Where:
 
 ### Pre-requisite: Setup
 
-1. Read the applicable OWASP skill by name to obtain framework metadata and context.
+1. Read the applicable security skill by name to obtain framework metadata and context.
 2. Parse the findings list from the input. Every finding in the list is verified within this single invocation.
 
 ### Step 1: Read Vulnerability References
