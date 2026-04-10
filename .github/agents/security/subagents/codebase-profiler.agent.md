@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `secure-by-design`).
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`).
 
 ### Technology Signals
 
@@ -64,6 +64,14 @@ owasp-infrastructure:
   - "Bicep files (.bicep)"
   - "CloudFormation templates"
   - "Ansible playbooks"
+owasp-cicd:
+  - "CI/CD pipeline definitions"
+  - "Build scripts"
+  - "Deployment configurations"
+  - ".github/workflows/"
+  - "Jenkinsfile"
+  - ".gitlab-ci.yml"
+  - "azure-pipelines.yml"
 secure-by-design:
   - "SECURITY.md or security policy files"
   - "Threat model documents"
