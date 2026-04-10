@@ -66,7 +66,7 @@ Two required lines:
 
 Placement: after `#!/usr/bin/env bash`, before any other content.
 
-CI validates copyright headers via `npm run validate:copyright` using `scripts/linting/Test-CopyrightHeaders.ps1`.
+CI validates copyright headers through the repository's copyright validation script, if one is configured. Check `package.json` for a copyright validation command.
 
 <!-- <example-copyright-header> -->
 ```bash
