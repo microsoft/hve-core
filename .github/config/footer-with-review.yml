@@ -13,12 +13,12 @@ footers:
     label: "AI-Content Note (Tier 1)"
     text: >-
       > **Note** — The author created this content with assistance from AI.
-      All outputs should be reviewed and validated before use.
+      All outputs should be reviewed and validated by a qualified human reviewer before use.
 
   human-review-checkbox:
     id: human-review-checkbox
     label: "Human Review Checkbox"
-    text: "> - [ ] Reviewed and validated by a human reviewer"
+    text: "> - [ ] Reviewed and validated by a qualified human reviewer"
 
 artifact-classification:
   # Agentic artifacts: Tier 1 note only (no human review required)

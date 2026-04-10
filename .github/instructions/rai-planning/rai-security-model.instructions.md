@@ -1,39 +1,39 @@
 ---
-description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol'
+description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 
 # RAI Security Model Analysis
 
-AI-specific security model analysis extensions for Phase 4 of the RAI Planner. This guidance extends the STRIDE methodology with RAI principle overlaps, AI element types, trust boundaries, data flow patterns, and a dual threat ID convention. A merge protocol enables interoperation with Security Planner security models when operating in `from-security-plan` mode.
+AI-specific security model analysis extensions for Phase 4 of the RAI Planner. This guidance extends the STRIDE methodology with NIST trustworthiness characteristic overlaps, AI element types, trust boundaries, data flow patterns, and a dual threat ID convention. A merge protocol enables interoperation with Security Planner security models when operating in `from-security-plan` mode.
 
 ## AI STRIDE Extensions
 
-Standard STRIDE categories gain RAI-specific dimensions when applied to AI systems. Each category maps to one or more RAI principles that amplify the threat surface beyond traditional software concerns.
+Standard STRIDE categories gain AI-specific dimensions when applied to AI systems. Each category maps to one or more NIST trustworthiness characteristics that amplify the threat surface beyond traditional software concerns.
 
-| STRIDE Category        | RAI Principle Overlay        | AI-Specific Threat Examples                                                                     |
-|------------------------|------------------------------|-------------------------------------------------------------------------------------------------|
-| Spoofing               | Reliability, Transparency    | Adversarial inputs mimicking legitimate data, model impersonation, synthetic identity injection |
-| Tampering              | Fairness, Reliability        | Training data poisoning introducing bias, model weight manipulation, feedback loop corruption   |
-| Repudiation            | Accountability, Transparency | Unattributable automated decisions, audit log gaps for model outputs, governance bypass         |
-| Information Disclosure | Privacy                      | Training data extraction, model inversion attacks, membership inference, embedding leakage      |
-| Denial of Service      | Reliability                  | Model resource exhaustion, inference throttling attacks, adversarial input causing degradation  |
-| Elevation of Privilege | Privacy, Reliability         | Prompt injection bypassing safety filters, jailbreaking, unauthorized model capability access   |
+| STRIDE Category        | NIST Characteristic Overlay                                | AI-Specific Threat Examples                                                                     |
+|------------------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| Spoofing               | Valid and Reliable, Explainable and Interpretable          | Adversarial inputs mimicking legitimate data, model impersonation, synthetic identity injection |
+| Tampering              | Fair with Harmful Bias Managed, Valid and Reliable         | Training data poisoning introducing bias, model weight manipulation, feedback loop corruption   |
+| Repudiation            | Accountable and Transparent, Explainable and Interpretable | Unattributable automated decisions, audit log gaps for model outputs, governance bypass         |
+| Information Disclosure | Privacy-Enhanced                                           | Training data extraction, model inversion attacks, membership inference, embedding leakage      |
+| Denial of Service      | Valid and Reliable                                         | Model resource exhaustion, inference throttling attacks, adversarial input causing degradation  |
+| Elevation of Privilege | Privacy-Enhanced, Valid and Reliable                       | Prompt injection bypassing safety filters, jailbreaking, unauthorized model capability access   |
 
 ## AI Element Types
 
-Eight AI-specific element types define the components subject to RAI threat analysis. Each element type carries primary RAI concerns that guide threat identification.
+Eight AI-specific element types define the components subject to RAI threat analysis. Each element type carries primary NIST concerns that guide threat identification.
 
-| Element Type         | Description                             | Primary RAI Concerns                                                    |
-|----------------------|-----------------------------------------|-------------------------------------------------------------------------|
-| Training Data Store  | Datasets used for model training        | Fairness (bias), Privacy (PII), Accountability (provenance)             |
-| Model Artifact       | Trained model files and weights         | Reliability (integrity), Transparency (explainability)                  |
-| Inference Endpoint   | API or service serving predictions      | Reliability (availability), Privacy (query privacy)                     |
-| Feature Pipeline     | Data transformation for model input     | Fairness (feature bias), Privacy (data flow)                            |
-| Feedback Loop        | User feedback incorporated into model   | Fairness (feedback bias), Reliability (drift)                           |
-| Human Review Queue   | Human oversight checkpoints             | Accountability (review coverage), Transparency (decision documentation) |
-| Monitoring Dashboard | Model performance and behavior tracking | Transparency (observability), Reliability (alerting)                    |
-| Orchestration Layer  | Agent or pipeline orchestration         | Accountability (decision routing), Reliability (failure handling)       |
+| Element Type         | Description                             | Primary NIST Concerns                                                                                   |
+|----------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Training Data Store  | Datasets used for model training        | Fair with Harmful Bias Managed (bias), Privacy-Enhanced (PII), Accountable and Transparent (provenance) |
+| Model Artifact       | Trained model files and weights         | Valid and Reliable (integrity), Explainable and Interpretable (explainability)                           |
+| Inference Endpoint   | API or service serving predictions      | Valid and Reliable (availability), Privacy-Enhanced (query privacy)                                      |
+| Feature Pipeline     | Data transformation for model input     | Fair with Harmful Bias Managed (feature bias), Privacy-Enhanced (data flow)                              |
+| Feedback Loop        | User feedback incorporated into model   | Fair with Harmful Bias Managed (feedback bias), Valid and Reliable (drift)                               |
+| Human Review Queue   | Human oversight checkpoints             | Accountable and Transparent (review coverage), Explainable and Interpretable (decision documentation)   |
+| Monitoring Dashboard | Model performance and behavior tracking | Explainable and Interpretable (observability), Valid and Reliable (alerting)                             |
+| Orchestration Layer  | Agent or pipeline orchestration         | Accountable and Transparent (decision routing), Valid and Reliable (failure handling)                    |
 
 ## AI Trust Boundaries
 
@@ -125,12 +125,12 @@ Both IDs appear in the extended threat table, linking the RAI assessment to the 
 
 ## Extended Threat Table Format
 
-The threat table extends the Security Planner format with five additional columns: RAI ID, RAI Principle, NIST AI RMF, Suggested Threat Origin, and Concern Level.
+The threat table extends the Security Planner format with five additional columns: RAI ID, NIST Characteristic, NIST AI RMF, Suggested Threat Origin, and Concern Level.
 
 ```markdown
-| Threat ID     | RAI ID    | STRIDE    | RAI Principle | NIST AI RMF | Description                                          | AI Element          | Trust Boundary         | Suggested Threat Origin | Concern Level | Mitigation                                                    |
-|---------------|-----------|-----------|---------------|-------------|------------------------------------------------------|---------------------|------------------------|-------------------------|---------------|---------------------------------------------------------------|
-| T-DATA-AI-001 | T-RAI-003 | Tampering | Fairness      | Map 2.3     | Training data poisoning introducing demographic bias | Training Data Store | Training Data Boundary | Data Pipeline           | High Concern  | Data validation pipeline, bias detection, provenance tracking |
+| Threat ID     | RAI ID    | STRIDE    | NIST Characteristic            | NIST AI RMF | Description                                          | AI Element          | Trust Boundary         | Suggested Threat Origin | Concern Level | Mitigation                                                    |
+|---------------|-----------|-----------|--------------------------------|-------------|------------------------------------------------------|---------------------|------------------------|-------------------------|---------------|---------------------------------------------------------------|
+| T-DATA-AI-001 | T-RAI-003 | Tampering | Fair with Harmful Bias Managed | Map 2.3     | Training data poisoning introducing demographic bias | Training Data Store | Training Data Boundary | Data Pipeline           | High Concern  | Data validation pipeline, bias detection, provenance tracking |
 ```
 
 ### Column Definitions
@@ -138,13 +138,13 @@ The threat table extends the Security Planner format with five additional column
 * Threat ID: Security Planner cross-reference ID (`T-{BUCKET}-AI-{NNN}`), or blank if no bucket overlap exists.
 * RAI ID: Sequential RAI threat identifier (`T-RAI-{NNN}`).
 * STRIDE: Applicable STRIDE category.
-* RAI Principle: Primary RAI principle affected (Fairness, Reliability, Privacy, Inclusiveness, Transparency, Accountability).
+* NIST Characteristic: Primary NIST trustworthiness characteristic affected (Valid and Reliable, Safe, Secure and Resilient, Accountable and Transparent, Explainable and Interpretable, Privacy-Enhanced, Fair with Harmful Bias Managed).
 * NIST AI RMF: Applicable NIST AI RMF subcategory reference.
 * Description: Clear description of the threat, attack vector, and affected behavior.
 * AI Element: Element type from the AI Element Types table.
 * Trust Boundary: Boundary crossed or affected from the AI Trust Boundaries table.
 * Suggested Threat Origin: Where the threat originates (Data Pipeline, Model, Interface, Infrastructure, or Cross-cutting).
-* Concern Level: Qualitative assessment of threat significance (Low Concern, Moderate Concern, or High Concern).
+* Concern Level: Qualitative assessment of threat significance (Low Concern, Moderate Concern, or High Concern). See Concern Level Assessment below for criteria.
 * Mitigation: Proposed mitigation strategy with standards references.
 
 ### Concern Level Assessment
@@ -185,25 +185,28 @@ Adjust ML STRIDE matrix presentation based on `userPreferences.audienceProfile`:
 
 ## ML STRIDE Matrix
 
-Extended matrix covering AI system components with RAI principle annotations. Each cell contains threat applicability (High/Medium/Low/N/A) and the primary RAI principle relevant to that intersection.
+Extended matrix covering AI system components with NIST trustworthiness characteristic annotations. Each cell contains threat applicability (High/Medium/Low/N/A) and the primary NIST characteristic relevant to that intersection.
 
-| Component        | Spoofing             | Tampering               | Repudiation             | Info Disclosure       | DoS                  | EoP                     |
-|------------------|----------------------|-------------------------|-------------------------|-----------------------|----------------------|-------------------------|
-| Training Data    | Medium / Reliability | High / Fairness         | Medium / Accountability | High / Privacy        | Low / Reliability    | Low / Privacy           |
-| Feature Pipeline | Low / Transparency   | High / Fairness         | Medium / Accountability | Medium / Privacy      | Low / Reliability    | Low / Fairness          |
-| Model Training   | Medium / Reliability | High / Fairness         | High / Accountability   | High / Privacy        | Medium / Reliability | Medium / Reliability    |
-| Model Serving    | High / Reliability   | Medium / Reliability    | Medium / Transparency   | High / Privacy        | High / Reliability   | High / Reliability      |
-| Inference API    | High / Reliability   | High / Reliability      | Medium / Transparency   | Medium / Privacy      | High / Reliability   | High / Privacy          |
-| Feedback Loop    | Medium / Fairness    | High / Fairness         | High / Accountability   | Medium / Privacy      | Low / Reliability    | Medium / Fairness       |
-| Human Review     | Low / Accountability | Medium / Accountability | High / Accountability   | Low / Privacy         | N/A                  | Medium / Accountability |
-| Model Monitoring | Low / Transparency   | Medium / Reliability    | High / Transparency     | Medium / Transparency | Medium / Reliability | Low / Reliability       |
+> [!NOTE]
+> The STRIDE categories in this matrix (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) correspond to the AI-extended definitions in the AI STRIDE Extensions table above. Refer to that table for AI-specific threat examples and NIST characteristic overlays for each category.
+
+| Component        | Spoofing                                | Tampering                                  | Repudiation                              | Info Disclosure                        | DoS                         | EoP                                     |
+|------------------|-----------------------------------------|--------------------------------------------|------------------------------------------|----------------------------------------|-----------------------------|-----------------------------------------|
+| Training Data    | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed      | Medium / Accountable and Transparent     | High / Privacy-Enhanced                | Low / Valid and Reliable    | Low / Privacy-Enhanced                  |
+| Feature Pipeline | Low / Explainable and Interpretable     | High / Fair with Harmful Bias Managed      | Medium / Accountable and Transparent     | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Low / Fair with Harmful Bias Managed    |
+| Model Training   | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed      | High / Accountable and Transparent       | High / Privacy-Enhanced                | Medium / Valid and Reliable | Medium / Valid and Reliable             |
+| Model Serving    | High / Valid and Reliable               | Medium / Valid and Reliable                | Medium / Explainable and Interpretable   | High / Privacy-Enhanced                | High / Valid and Reliable   | High / Valid and Reliable               |
+| Inference API    | High / Valid and Reliable               | High / Valid and Reliable                  | Medium / Explainable and Interpretable   | Medium / Privacy-Enhanced              | High / Valid and Reliable   | High / Privacy-Enhanced                 |
+| Feedback Loop    | Medium / Fair with Harmful Bias Managed | High / Fair with Harmful Bias Managed      | High / Accountable and Transparent       | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Medium / Fair with Harmful Bias Managed |
+| Human Review     | Low / Accountable and Transparent       | Medium / Accountable and Transparent       | High / Accountable and Transparent       | Low / Privacy-Enhanced                 | N/A                         | Medium / Accountable and Transparent    |
+| Model Monitoring | Low / Explainable and Interpretable     | Medium / Valid and Reliable                | High / Explainable and Interpretable     | Medium / Explainable and Interpretable | Medium / Valid and Reliable | Low / Valid and Reliable                |
 
 ### Reading the Matrix
 
-Each cell uses the format `Applicability / RAI Principle`:
+Each cell uses the format `Applicability / NIST Characteristic`:
 
 * Applicability indicates how likely the STRIDE category applies to the component (High, Medium, Low, N/A).
-* RAI Principle identifies which RAI principle is most relevant for that specific threat intersection.
+* NIST Characteristic identifies which NIST trustworthiness characteristic is most relevant for that specific threat intersection.
 * Use this matrix as a starting point for threat identification. Investigate all High-applicability cells first, then Medium, then Low. N/A cells can be skipped unless the system architecture suggests otherwise.
 
 ## Merge Protocol
@@ -277,8 +280,8 @@ description: RAI-specific threat analysis extending security plan security model
 
 ## Extended Threat Table
 
-| Threat ID | RAI ID    | STRIDE | RAI Principle | NIST AI RMF | Description | AI Element | Trust Boundary | Suggested Threat Origin | Concern Level | Mitigation |
-|-----------|-----------|--------|---------------|-------------|-------------|------------|----------------|-------------------------|---------------|------------|
+| Threat ID | RAI ID    | STRIDE | NIST Characteristic | NIST AI RMF | Description | AI Element | Trust Boundary | Suggested Threat Origin | Concern Level | Mitigation |
+|-----------|-----------|--------|---------------------|-------------|-------------|------------|----------------|-------------------------|---------------|------------|
 |           | T-RAI-001 |        |               |             |             |            |                |                         |               |            |
 
 ## Cross-Reference
@@ -318,7 +321,7 @@ For each threat, document the control surface:
 |-----------------------|-------------------------------------------|
 | RAI Threat ID         | T-RAI-{NNN}                               |
 | Security Threat ID    | T-{BUCKET}-AI-{NNN} or N/A                |
-| RAI Principle         | {principle}                               |
+| NIST Characteristic   | {characteristic}                          |
 | Control Category      | Preventive, Detective, or Corrective      |
 | Control Description   | {description}                             |
 | Implementation Status | Implemented, Partial, Planned, or Missing |

@@ -23,22 +23,22 @@ Review checkpoints are binary verification steps. A checkpoint marked "Not Met" 
 
 | Dimension             | Description                                                                     | Status      |
 |-----------------------|---------------------------------------------------------------------------------|-------------|
-| Standards Alignment   | Coverage of responsible AI principles and NIST AI RMF subcategories             | ☐ Addressed |
-| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion     | ☐ Addressed |
-| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each principle       | ☐ Addressed |
-| Evidence Quality      | Evidence register completeness, confidence levels, gap identification           | ☐ Addressed |
-| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority          | ☐ Addressed |
-| Sensitive Uses        | Sensitive uses trigger coverage, depth tier justification, downstream alignment | ☐ Addressed |
+| Standards Alignment   | Coverage of NIST AI RMF trustworthiness characteristics and subcategories           | ☐ Addressed |
+| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion         | ☐ Addressed |
+| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each characteristic     | ☐ Addressed |
+| Evidence Quality      | Evidence register completeness, confidence levels, gap identification               | ☐ Addressed |
+| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority              | ☐ Addressed |
+| Risk Classification   | Risk classification coverage, depth tier justification, downstream alignment       | ☐ Addressed |
 
 Review status derivation:
 
-* **Ready for stakeholder review** — All dimensions addressed with supporting evidence; no critical gaps identified.
+* **Ready for stakeholder review** — All dimensions addressed with supporting evidence.
 * **Additional attention suggested** — Most dimensions addressed; one or more areas flagged for further consideration.
 * **Significant areas need further consideration** — Multiple dimensions have limited coverage or missing evidence.
 
 Before presenting review quality results, explain the checklist dimensions and what each status means in plain language. Frame all assessments as suggested observations based on session findings.
 
-When presenting review quality results, explain each dimension's status by citing specific session observations. For example: "Standards Alignment is addressed — the assessment mapped all six responsible AI principles to system components with NIST AI RMF cross-references."
+When presenting review quality results, explain each dimension's status by citing specific session observations. For example: "Standards Alignment is addressed — the assessment mapped all seven NIST AI RMF trustworthiness characteristics to system components with subcategory cross-references."
 
 ## RAI Review Summary
 
@@ -57,16 +57,17 @@ Template for the review summary produced at the end of Phase 6.
 |-----------------|---------------|---------|
 | Threat Coverage | {Met/Not Met} | {notes} |
 
-### Per-Principle Summary
+### Per-Characteristic Summary
 
-| Principle            | Maturity Level                                 | Key Observations | Open Items |
-|----------------------|------------------------------------------------|------------------|------------|
-| Fairness             | {Foundational/Developing/Established/Advanced} | {summary}        | {count}    |
-| Reliability & Safety | {level}                                        | {summary}        | {count}    |
-| Privacy & Security   | {level}                                        | {summary}        | {count}    |
-| Inclusiveness        | {level}                                        | {summary}        | {count}    |
-| Transparency         | {level}                                        | {summary}        | {count}    |
-| Accountability       | {level}                                        | {summary}        | {count}    |
+| Characteristic                 | Maturity Level                                 | Key Observations | Open Items |
+|--------------------------------|------------------------------------------------|------------------|------------|
+| Valid and Reliable             | {Foundational/Developing/Established/Advanced} | {summary}        | {count}    |
+| Safe                           | {level}                                        | {summary}        | {count}    |
+| Secure and Resilient           | {level}                                        | {summary}        | {count}    |
+| Accountable and Transparent    | {level}                                        | {summary}        | {count}    |
+| Explainable and Interpretable  | {level}                                        | {summary}        | {count}    |
+| Privacy-Enhanced               | {level}                                        | {summary}        | {count}    |
+| Fair with Harmful Bias Managed | {level}                                        | {summary}        | {count}    |
 
 ### Key Findings
 
@@ -81,7 +82,7 @@ Template for the review summary produced at the end of Phase 6.
 | Control Effectiveness | {Addressed/Needs Attention} | {notes} |
 | Evidence Quality      | {Addressed/Needs Attention} | {notes} |
 | Tradeoff Resolution   | {Addressed/Needs Attention} | {notes} |
-| Sensitive Uses        | {Addressed/Needs Attention} | {notes} |
+| Risk Classification   | {Addressed/Needs Attention} | {notes} |
 
 ### Suggested Remediation Horizon Summary
 
@@ -96,12 +97,12 @@ Template for the review summary produced at the end of Phase 6.
 ### Work Items Generated: {count}
 
 > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
-Populate the Per-Principle Summary table from `principleTracker`: maturity level from the Phase 5 assessment, key observations from the most significant `openObservations` and `resolvedObservations`, open item count from `openObservations.length`.
+Populate the Per-Characteristic Summary table from `principleTracker`: maturity level from the Phase 5 assessment, key observations from the most significant `openObservations` and `resolvedObservations`, open item count from `openObservations.length`.
 
-When `principleTracker` data is incomplete for a principle, note the gap in the Key Observations column and suggest revisiting the relevant phase.
+When `principleTracker` data is incomplete for a characteristic, note the gap in the Key Observations column and suggest revisiting the relevant phase.
 
 ## Work Item Categories
 
@@ -109,26 +110,27 @@ Five categories classify RAI work items by purpose and urgency.
 
 | Category               | Description                                                | Suggested Horizon  | Priority Range      | Source                                                   |
 |------------------------|------------------------------------------------------------|--------------------|---------------------|----------------------------------------------------------|
-| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, principles with limited coverage          |
+| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, characteristics with limited coverage     |
 | Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Near-term–Planned   | Control surface gaps                                     |
 | Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Planned             | Detect controls without implementation                   |
 | Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Planned–Backlog     | Documentation gaps, tradeoff records                     |
-| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Backlog             | Principles at Developing or Established seeking Advanced |
+| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Backlog             | Characteristics at Developing or Established seeking Advanced |
 
 ## RAI Tags
 
 Tags applied to work items for tracking and filtering across backlog systems.
 
-| Tag                      | Purpose                                | Applied When                                           |
-|--------------------------|----------------------------------------|--------------------------------------------------------|
-| `rai:fairness`           | Fairness-related work                  | Control or finding relates to Fairness principle       |
-| `rai:reliability`        | Reliability-related work               | Control or finding relates to Reliability principle    |
-| `rai:privacy`            | Privacy-related work                   | Control or finding relates to Privacy principle        |
-| `rai:inclusiveness`      | Inclusiveness-related work             | Control or finding relates to Inclusiveness principle  |
-| `rai:transparency`       | Transparency-related work              | Control or finding relates to Transparency principle   |
-| `rai:accountability`     | Accountability-related work            | Control or finding relates to Accountability principle |
-| `rai:tradeoff`           | Tradeoff resolution item               | Originates from tradeoff documentation                 |
-| `rai:cross-ref-security` | Cross-references Security Planner item | Overlaps with or extends a Security Planner work item  |
+| Tag                             | Purpose                                     | Applied When                                                                |
+|---------------------------------|---------------------------------------------|-----------------------------------------------------------------------------|
+| `rai:valid-reliable`            | Valid and Reliable related work              | Control or finding relates to Valid and Reliable characteristic              |
+| `rai:safe`                      | Safe related work                            | Control or finding relates to Safe characteristic                           |
+| `rai:secure-resilient`          | Secure and Resilient related work            | Control or finding relates to Secure and Resilient characteristic           |
+| `rai:accountable-transparent`   | Accountable and Transparent related work     | Control or finding relates to Accountable and Transparent characteristic    |
+| `rai:explainable-interpretable` | Explainable and Interpretable related work   | Control or finding relates to Explainable and Interpretable characteristic  |
+| `rai:privacy-enhanced`          | Privacy-Enhanced related work                | Control or finding relates to Privacy-Enhanced characteristic               |
+| `rai:fair-bias-managed`         | Fair with Harmful Bias Managed related work  | Control or finding relates to Fair with Harmful Bias Managed characteristic |
+| `rai:tradeoff`                  | Tradeoff resolution item                     | Originates from tradeoff documentation                                      |
+| `rai:cross-ref-security`        | Cross-references Security Planner item       | Overlaps with or extends a Security Planner work item                       |
 
 ## Target System Selection
 
@@ -153,7 +155,7 @@ Required fields per work item:
 * ID: `WI-RAI-{NNN}`
 * Type: User Story / Task / Bug
 * Title: `[RAI] {concise description}`
-* Description: HTML-formatted with sections for Context, RAI Principle, Related Threat, Control Surface, Acceptance Criteria.
+* Description: HTML-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
 * Priority: Immediate / Near-term / Planned / Backlog
 * Suggested Remediation Horizon: Pre-Production / Early Operations / Ongoing Governance
 * Tags: From the RAI Tags table.
@@ -166,7 +168,7 @@ HTML template for description fields:
 ```html
 <div>
   <h3>RAI Control: {control_name}</h3>
-  <p><strong>RAI Principle:</strong> {principle}</p>
+  <p><strong>NIST Characteristic:</strong> {characteristicistic}</p>
   <p><strong>Threat:</strong> {threat_id} - {threat_description}</p>
   <p><strong>Control Surface:</strong> {prevent|detect|respond} - {control_details}</p>
   <p><strong>Evidence:</strong> {evidence_status}</p>
@@ -180,18 +182,18 @@ HTML template for description fields:
   </ul>
   <blockquote>
   <p><strong>Note</strong> — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.</p>
-  <ul><li><input type="checkbox" disabled /> Reviewed and validated by a human reviewer</li></ul>
+  <ul><li><input type="checkbox" disabled /> Reviewed and validated by a qualified human reviewer</li></ul>
   </blockquote>
 </div>
 ```
 
 Work item hierarchy maps from the RAI assessment structure:
 
-* Epic: RAI Principle (one per principle with findings).
-* Feature: Control Category (Prevent, Detect, Respond per principle).
+* Epic: NIST Characteristic (one per characteristic with findings).
+* Feature: Control Category (Prevent, Detect, Respond per characteristic).
 * User Story: Specific control or mitigation.
 * Task: Implementation steps for a user story.
-* Bug: Existing RAI areas of concern requiring attention.
+* Bug: Suggested RAI area requiring attention.
 
 Execution follows `ado-update-wit-items.instructions.md`.
 
@@ -201,10 +203,10 @@ Assign temporary IDs using the format `{{RAI-TEMP-N}}`, replaced with real issue
 
 Required fields per issue:
 
-* Title: `[RAI-{Principle}] {concise description}`
+* Title: `[RAI-{Characteristic}] {concise description}`
 * Labels: From the RAI Tags table (without `rai:` prefix for GitHub labels).
 * Milestone: Linked to assessment phase.
-* Body: Markdown-formatted with sections for Context, RAI Principle, Related Threat, Control Surface, Acceptance Criteria.
+* Body: Markdown-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
 * Security Cross-Reference: Link to Security Planner issue when overlapping.
 * RAI Owner: (Optional) Role accountable for this issue (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement."
 
@@ -212,7 +214,7 @@ Include a YAML metadata block at the top of the issue body:
 
 ```yaml
 ---
-rai_principle: {principle}
+rai_characteristic: {characteristicistic}
 threat_id: T-RAI-{NNN}
 suggested_priority: {Immediate|Near-term|Planned|Backlog}
 suggested_horizon: {Pre-Production|Early Operations|Ongoing Governance}
@@ -227,7 +229,7 @@ Markdown template for issue body:
 ```markdown
 ## RAI Control: {control_name}
 
-**RAI Principle:** {principle}
+**NIST Characteristic:** {characteristicistic}
 **Threat:** {threat_id} - {threat_description}
 **Control Surface:** {prevent|detect|respond} - {control_details}
 **Suggested Priority:** {priority_level}
@@ -243,7 +245,7 @@ Markdown template for issue body:
 * [ ] {criterion_2}
 
 > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 Execution follows `github-backlog-update.instructions.md`.
@@ -258,7 +260,7 @@ Sanitization rules:
 2. Replace full file system paths with relative references.
 3. Remove state JSON content or references.
 4. Remove internal tracking IDs that are not work item IDs.
-5. Preserve standards references (responsible AI principles, NIST AI RMF IDs) in all cases.
+5. Preserve standards references (NIST AI RMF trustworthiness characteristics, NIST AI RMF IDs) in all cases.
 
 After generating each work item, scan the output for `.copilot-tracking/`. If found, strip the path and log the sanitization action.
 
@@ -282,9 +284,9 @@ Derive suggested work item priority and autonomy tier from assessment observatio
 
 | Assessment Observation                                | Suggested Priority | Autonomy Tier | Suggested Horizon  |
 |-------------------------------------------------------|--------------------|---------------|--------------------|
-| Principle at Foundational maturity with critical gaps | Immediate          | Manual        | Pre-Production     |
-| Principle at Foundational maturity                    | Near-term          | Manual        | Pre-Production     |
-| Multiple open observations for a principle            | Near-term          | Partial       | Pre-Production     |
+| Characteristic at Foundational maturity with critical gaps | Immediate          | Manual        | Pre-Production     |
+| Characteristic at Foundational maturity                    | Near-term          | Manual        | Pre-Production     |
+| Multiple open observations for a characteristic            | Near-term          | Partial       | Pre-Production     |
 | Tradeoff requiring implementation                     | Planned            | Partial       | Early Operations   |
 | Control surface gap (Prevent)                         | Near-term          | Partial       | Pre-Production     |
 | Control surface gap (Detect)                          | Planned            | Partial       | Early Operations   |
@@ -292,7 +294,7 @@ Derive suggested work item priority and autonomy tier from assessment observatio
 | Documentation gap                                     | Backlog            | Full          | Ongoing Governance |
 | Enhancement recommendation                            | Backlog            | Full          | Ongoing Governance |
 
-Within the same priority level, order remediation items before control implementation items. Consider fairness and reliability findings for earlier attention due to direct impact potential.
+Within the same priority level, order remediation items before control implementation items. Consider Fair with Harmful Bias Managed and Valid and Reliable findings for earlier attention due to direct impact potential.
 
 When multiple observations apply to a single work item, use the highest suggested priority among them.
 
@@ -367,9 +369,9 @@ After generating all work items, produce a handoff summary covering totals, cros
 {recommended follow-up actions}
 
 > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 >
-> **Disclaimer** — This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal review and decision‑making. All RAI assessments, sensitive use screenings, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate legal and compliance reviewers before use. Outputs from this tool do not constitute legal approval, compliance certification, or regulatory sign‑off.
+> **Disclaimer** — This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal review and decision‑making. All RAI assessments, risk classification screenings, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate legal and compliance reviewers before use. Outputs from this tool do not constitute legal approval, compliance certification, or regulatory sign‑off.
 ```
 
 Log all generation decisions (create, update, skip, link) in the handoff summary. Items that could not be generated include the reason for each failure.
@@ -416,10 +418,10 @@ When accepted, generate a skeleton transparency note appended to the handoff sum
 {How users report issues, request explanations, or provide input on system behavior}
 
 > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
-Generate a "Documentation" category work item: `[RAI] Complete transparency note from Phase 6 outline`. Assign priority Planned–Backlog and tag `rai:transparency`.
+Generate a "Documentation" category work item: `[RAI] Complete transparency note from Phase 6 outline`. Assign priority Planned–Backlog and tag `rai:accountable-transparent`.
 
 ### Monitoring Summary
 
@@ -435,10 +437,10 @@ When accepted, auto-populate from "Monitoring Setup" category work items generat
 | WI-RAI-{NNN} | {metric_name} | {threshold}        | {alert_mechanism} | {cadence}      |
 
 > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
-Generate a "Documentation" category work item: `[RAI] Validate and operationalize monitoring summary`. Assign priority Planned and tag `rai:accountability`.
+Generate a "Documentation" category work item: `[RAI] Validate and operationalize monitoring summary`. Assign priority Planned and tag `rai:accountable-transparent`.
 
 ### Artifact Signing
 
@@ -448,14 +450,14 @@ When accepted, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` via `exe
 
 If the user also requests cosign signing, append `-IncludeCosign` to the command. Cosign uses keyless signing via Sigstore; it requires `cosign` in PATH and an OIDC identity provider.
 
-Generate a "Documentation" category work item: `[RAI] Verify artifact manifest integrity and configure signing in CI pipeline`. Assign priority Planned-Backlog and tag `rai:accountability`.
+Generate a "Documentation" category work item: `[RAI] Verify artifact manifest integrity and configure signing in CI pipeline`. Assign priority Planned-Backlog and tag `rai:accountable-transparent`.
 
 ## Audience Adaptation
 
 Adjust handoff output formatting based on `userPreferences.audienceProfile`:
 
 * **technical** — Full implementation detail with control specifications, threat IDs, and suggested monitoring thresholds.
-* **executive** — High-level summary with business impact, principle maturity overview, and key action items.
+* **executive** — High-level summary with business impact, characteristic maturity overview, and key action items.
 * **compliance** — Full detail with regulatory mapping, standards traceability, and audit trail references.
 * **mixed** — Balanced format with executive summary followed by technical detail sections.
 

@@ -12,7 +12,6 @@ tags:
   - rai-planning
   - architecture
   - reference
-author: Microsoft
 ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 7
@@ -40,7 +39,7 @@ flowchart TD
     I3["rai-security-model"]
     I4["rai-impact-assessment"]
     I5["rai-backlog-handoff"]
-    I6["rai-sensitive-uses-triggers"]
+    I6["rai-risk-classification"]
     I7["rai-capture-coaching"]
   end
 
@@ -60,10 +59,10 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 | Instruction file                              | Domain                                                                                                   |
 |-----------------------------------------------|----------------------------------------------------------------------------------------------------------|
 | `rai-identity.instructions.md`                | Agent identity, orchestration, state management, session recovery                                        |
-| `rai-sensitive-uses-triggers.instructions.md` | Sensitive uses trigger screening, depth tier assignment, restricted uses gate                            |
-| `rai-standards.instructions.md`               | Microsoft Responsible AI Impact Assessment Guide, NIST AI RMF subcategories, regulatory cross-references |
+| `rai-risk-classification.instructions.md`     | Risk classification screening, depth tier assignment, prohibited uses gate                            |
+| `rai-standards.instructions.md`               | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation architecture |
 | `rai-security-model.instructions.md`          | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                              |
-| `rai-impact-assessment.instructions.md`       | Control surface evaluation, evidence register, principle tradeoff analysis                               |
+| `rai-impact-assessment.instructions.md`       | Control surface evaluation, evidence register, characteristic tradeoff analysis                       |
 | `rai-backlog-handoff.instructions.md`         | Dual-format backlog handoff, content sanitization, autonomy tiers                                        |
 | `rai-capture-coaching.instructions.md`        | Exploration-first questioning techniques for capture mode                                                |
 
@@ -81,7 +80,7 @@ All assessment state persists under `.copilot-tracking/rai-plans/{project-slug}/
 | `entryMode`                 | string         | `capture`, `from-prd`, or `from-security-plan`                          |
 | `securityPlanRef`           | string or null | Path to security plan state when using `from-security-plan`             |
 | `assessmentDepth`           | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)               |
-| `sensitiveUsesTriggers`     | object         | Phase 2 sensitive uses trigger results                                  |
+| `riskClassification`        | object         | Phase 2 risk classification results                                     |
 | `suggestedDepthTier`        | string         | Phase 2 depth tier assignment (`Basic`, `Standard`, or `Comprehensive`) |
 | `standardsMapped`           | boolean        | Whether Phase 3 mapping is complete                                     |
 | `raiRiskSurfaceStarted`     | boolean        | Whether Phase 4 analysis has begun                                      |
@@ -148,7 +147,7 @@ When conversation context is compacted, a five-step recovery process reconstruct
 
 * All files are created under `.copilot-tracking/rai-plans/{project-slug}/`
 * The agent never modifies application source code
-* Embedded standards (Microsoft Responsible AI Impact Assessment Guide, NIST AI RMF 1.0) are referenced from the rai-standards instruction file
+* Embedded standards (NIST AI RMF 1.0) are referenced from the rai-standards instruction file
 * Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) are delegated to the Researcher Subagent
 * In `from-security-plan` mode, security plan artifacts are read-only
 

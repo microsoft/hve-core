@@ -12,7 +12,6 @@ tags:
   - rai-planning
   - reference
   - phases
-author: Microsoft
 ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 8
@@ -23,7 +22,7 @@ estimated_reading_time: 8
 | Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                    |
 |-------|-----------------------------|------------------|--------------------------------------------------------------------------|---------------------------------------------------------|
 | 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`          |
-| 2     | Sensitive Uses Assessment   | Govern           | Sensitive uses trigger summary (appended to `system-definition-pack.md`) | `sensitiveUsesTriggers`, `suggestedDepthTier`           |
+| 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`, `suggestedDepthTier`              |
 | 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                       |
 | 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`               |
 | 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
@@ -69,13 +68,13 @@ In `from-security-plan` mode, AI components from the security plan are pre-popul
 | `entryMode`       | set during init | unchanged                    |
 | `securityPlanRef` | null            | path (if from-security-plan) |
 
-## Phase 2: Sensitive Uses Assessment
+## Phase 2: Risk Classification
 
 > NIST AI RMF alignment: Govern
 
 ### Purpose
 
-Screen the AI system for sensitive use triggers to determine the suggested assessment depth tier for subsequent phases. This phase uses three binary assessments derived from the Microsoft Responsible AI Impact Assessment Template §3.6.
+Screen the AI system for risk using NIST AI RMF 1.0 trustworthiness characteristics to determine the suggested assessment depth tier for subsequent phases. The prohibited uses gate executes first, then three risk indicators derived from NIST subcategories determine the suggested depth tier.
 
 ### Inputs
 
@@ -83,19 +82,19 @@ Screen the AI system for sensitive use triggers to determine the suggested asses
 
 ### Process
 
-The agent screens against three binary triggers:
+The agent evaluates three risk indicators derived from NIST AI RMF 1.0 trustworthiness characteristics:
 
-| Trigger | Focus area                                                                      |
-|---------|---------------------------------------------------------------------------------|
-| T1      | Legal status and life opportunities: decisions affecting rights, benefits, jobs |
-| T2      | Physical or psychological injury: systems that could cause harm to individuals  |
-| T3      | Human rights restrictions: systems constraining fundamental freedoms            |
+| Indicator                 | NIST source                | Method      | Domain                                                                                |
+|---------------------------|----------------------------|-------------|---------------------------------------------------------------------------------------|
+| `safety_reliability`      | Valid and Reliable, Safe   | Binary      | Physical harm, psychological injury, operational disruption from unreliable outputs    |
+| `rights_fairness_privacy` | Accountable and Transparent, Privacy-Enhanced, Fair with Harmful Bias Managed | Categorical | Discrimination, rights restriction, equitable access, personal data misuse |
+| `security_explainability` | Secure and Resilient, Explainable and Interpretable | Continuous  | Adversarial attacks, data poisoning, model theft, inability to explain decisions       |
 
-Each trigger is binary (triggered or not triggered). There is no partial activation or severity grading within triggers. When the user has supplied custom sensitive use categories, those are incorporated as additional evaluation criteria alongside the fixed T1/T2/T3 triggers.
+Each indicator uses its own assessment method (binary, categorical, or continuous). When the user has supplied custom risk indicator extensions, those are incorporated as additional evaluation criteria alongside the default NIST-derived indicators.
 
 ### Depth Tier Assignment
 
-| Triggered count | Suggested tier |
+| Activated count | Suggested tier |
 |-----------------|----------------|
 | 0               | Basic          |
 | 1               | Standard       |
@@ -103,14 +102,14 @@ Each trigger is binary (triggered or not triggered). There is no partial activat
 
 ### Outputs
 
-* Sensitive uses trigger summary appended to `system-definition-pack.md`
+* Risk classification screening summary appended to `system-definition-pack.md`
 
 ### State Transitions
 
 | Field                   | Before | After                             |
 |-------------------------|--------|-----------------------------------|
 | `currentPhase`          | 2      | 3                                 |
-| `sensitiveUsesTriggers` | null   | trigger results object            |
+| `riskClassification`    | null   | risk classification results object |
 | `suggestedDepthTier`    | null   | Basic, Standard, or Comprehensive |
 
 ## Phase 3: RAI Standards Mapping
@@ -119,7 +118,7 @@ Each trigger is binary (triggered or not triggered). There is no partial activat
 
 ### Purpose
 
-Map each AI component against applicable RAI principles and NIST AI RMF subcategories. Establish the evaluation framework used in Phases 4 and 5.
+Map each AI component against NIST AI RMF 1.0 trustworthiness characteristics and subcategories. Establish the evaluation framework used in Phases 4 and 5.
 
 ### Inputs
 
@@ -127,18 +126,19 @@ Map each AI component against applicable RAI principles and NIST AI RMF subcateg
 
 ### Process
 
-The agent maps components against six RAI principles:
+The agent maps components against seven NIST AI RMF 1.0 trustworthiness characteristics:
 
-| Principle              | Focus area                                               |
-|------------------------|----------------------------------------------------------|
-| Fairness               | Bias detection, equitable outcomes, allocation harms     |
-| Reliability and Safety | Consistent performance, failure modes, degradation paths |
-| Privacy and Security   | Data protection, consent, inference prevention           |
-| Inclusiveness          | Accessibility, diverse populations, language equity      |
-| Transparency           | Explainability, disclosure, decision traceability        |
-| Accountability         | Oversight mechanisms, audit trails, remediation channels |
+| Characteristic                    | Focus area                                                     |
+|-----------------------------------|----------------------------------------------------------------|
+| Valid and Reliable                | Accurate outputs, consistent performance, degradation paths    |
+| Safe                              | Physical and psychological harm prevention, failure modes      |
+| Secure and Resilient              | Adversarial robustness, data protection, recovery mechanisms   |
+| Accountable and Transparent       | Oversight mechanisms, audit trails, decision traceability      |
+| Explainable and Interpretable     | Model interpretability, decision explanation, disclosure       |
+| Privacy-Enhanced                  | Data minimization, consent, inference prevention               |
+| Fair with Harmful Bias Managed    | Bias detection, equitable outcomes, allocation harms           |
 
-For each principle-component pair, the agent identifies:
+For each characteristic-component pair, the agent identifies:
 
 * Applicable NIST AI RMF subcategories
 * Regulatory jurisdiction and framework obligations
@@ -148,7 +148,7 @@ The Researcher Subagent is dispatched for runtime lookups of specific regulatory
 
 ### Outputs
 
-* `rai-standards-mapping.md`: Principle-by-component mapping with NIST subcategory references and compliance gaps
+* `rai-standards-mapping.md`: Characteristic-by-component mapping with NIST subcategory references and compliance gaps
 
 ### State Transitions
 
@@ -215,7 +215,7 @@ Each threat is assigned a concern level based on contextual analysis rather than
 
 ### Purpose
 
-Explore control surface completeness for each identified threat. Document evidence of existing mitigations, identify gaps, and analyze tradeoffs between competing RAI principles.
+Explore control surface completeness for each identified threat. Document evidence of existing mitigations, identify gaps, and analyze tradeoffs between competing trustworthiness characteristics.
 
 ### Inputs
 
@@ -229,7 +229,7 @@ For each threat identified in Phase 4, the agent evaluates:
 
 * Whether a control or mitigation exists
 * What evidence supports the control's effectiveness
-* Whether the control introduces tradeoffs with other RAI principles
+* Whether the control introduces tradeoffs with other trustworthiness characteristics
 * What gaps remain and what remediation is recommended
 
 Common tradeoff examples:
@@ -244,7 +244,7 @@ Common tradeoff examples:
 
 * `control-surface-catalog.md`: Control inventory mapped to threats with effectiveness ratings
 * `evidence-register.md`: Evidence log documenting existing mitigations, gaps, and collection difficulty
-* `rai-tradeoffs.md`: Principle conflict analysis with resolution recommendations
+* `rai-tradeoffs.md`: Characteristic conflict analysis with resolution recommendations
 
 The control surface catalog and evidence register are agentic artifacts that include only the AI-content transparency note. RAI tradeoffs is a human-facing artifact that also includes the human review checkbox. See [Handoff Pipeline](handoff-pipeline#artifact-attribution-and-review) for the complete footer classification.
 
@@ -275,12 +275,12 @@ The agent generates a review summary covering observations across six dimensions
 
 | Dimension             | What it covers                                                        |
 |-----------------------|-----------------------------------------------------------------------|
-| Standards Alignment   | Whether findings map to RAI principles and NIST AI RMF subcategories  |
+| Standards Alignment   | Whether findings map to NIST AI RMF 1.0 trustworthiness characteristics and subcategories |
 | Threat Completeness   | Completeness and accuracy of threat identification                    |
 | Control Effectiveness | Coverage and effectiveness of controls for identified threats         |
 | Evidence Quality      | Quality and availability of evidence supporting control effectiveness |
-| Tradeoff Resolution   | Whether competing principle tradeoffs have been analyzed and resolved |
-| Sensitive Uses        | Whether sensitive use triggers were addressed with appropriate depth  |
+| Tradeoff Resolution   | Whether competing characteristic tradeoffs have been analyzed and resolved |
+| Risk Classification   | Whether risk indicators were evaluated with documented mitigations  |
 
 The review summary presents observations and maturity indicators rather than numeric scores. Findings are organized to support handoff decisions and backlog prioritization.
 

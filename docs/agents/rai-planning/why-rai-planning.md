@@ -13,7 +13,6 @@ tags:
   - rai-planning
   - responsible-ai
   - concepts
-author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
@@ -39,13 +38,13 @@ Both questions matter. They require different analytical frameworks, different t
 
 Establishes what the AI system does, who it affects, and where it operates. Identifies all AI and ML components, their data inputs, and the decisions they influence. Without clear boundaries, risk assessment cannot be comprehensive.
 
-### Phase 2: Sensitive Uses Assessment
+### Phase 2: Risk Classification
 
-Screens the AI system against three binary sensitive use triggers: legal status and life opportunities (T1), physical or psychological injury (T2), and human rights restrictions (T3). Assigns a depth tier that determines assessment thoroughness for subsequent phases.
+Screens the AI system against three risk indicators derived from NIST AI RMF 1.0 trustworthiness characteristics: safety and reliability, rights and fairness and privacy, and security and explainability. Assigns a depth tier that determines assessment thoroughness for subsequent phases.
 
 ### Phase 3: RAI Standards Mapping
 
-Maps each AI component against the six responsible AI principles and NIST AI RMF subcategories. Identifies which principles apply to which components and what regulatory obligations exist. This mapping becomes the evaluation framework for Phases 4 and 5.
+Maps each AI component against seven NIST AI RMF 1.0 trustworthiness characteristics and subcategories. Identifies which characteristics apply to which components and what regulatory obligations exist. This mapping becomes the evaluation framework for Phases 4 and 5.
 
 ### Phase 4: RAI Security Model Analysis
 
@@ -53,7 +52,7 @@ Applies AI-specific threat analysis across seven categories: data poisoning, mod
 
 ### Phase 5: RAI Impact Assessment
 
-Explores whether adequate controls exist for each identified threat. Documents evidence of mitigations already in place and identifies gaps. Analyzes tradeoffs where RAI principles compete, such as transparency versus privacy or fairness across different demographic groups.
+Explores whether adequate controls exist for each identified threat. Documents evidence of mitigations already in place and identifies gaps. Analyzes tradeoffs where trustworthiness characteristics compete, such as transparency versus privacy or fairness across different demographic groups.
 
 ### Phase 6: Review and Handoff
 
@@ -64,7 +63,7 @@ Produces a review summary covering observations across six dimensions and conver
 | Dimension                | Ad-hoc assessment                   | RAI Planner                                                           |
 |--------------------------|-------------------------------------|-----------------------------------------------------------------------|
 | Threat coverage          | Varies by assessor expertise        | Seven AI-specific threat categories applied systematically            |
-| Standards traceability   | Often informal or missing           | Each finding mapped to RAI principles and NIST AI RMF subcategories   |
+| Standards traceability   | Often informal or missing           | Each finding mapped to NIST AI RMF 1.0 trustworthiness characteristics and subcategories |
 | Reproducibility          | Depends on individual documentation | Structured state and artifacts produce consistent results             |
 | Backlog integration      | Manual translation to work items    | Automated generation with autonomy tiers and dual-platform support    |
 | Security plan continuity | Separate process, no shared context | `from-security-plan` mode inherits AI components and threat sequences |

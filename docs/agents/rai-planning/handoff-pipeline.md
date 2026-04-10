@@ -12,7 +12,6 @@ tags:
   - rai-planning
   - concepts
   - handoff
-author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
@@ -66,7 +65,7 @@ Phase 6 produces a review summary covering observations across six dimensions. T
 ```mermaid
 flowchart TD
   P1["Phase 1\nAI System Scoping"] --> D1["Standards\nAlignment"]
-  P2["Phase 2\nSensitive Uses"] --> D6["Sensitive\nUses"]
+  P2["Phase 2\nRisk Classification"] --> D6["Risk\nClassification"]
   P3["Phase 3\nStandards Mapping"] --> D1
   P4["Phase 4\nSecurity Model"] --> D2["Threat\nCompleteness"]
   P5["Phase 5\nImpact Assessment"] --> D3["Control\nEffectiveness"]
@@ -85,12 +84,12 @@ flowchart TD
 
 | Dimension             | What it covers                                                         |
 |-----------------------|------------------------------------------------------------------------|
-| Standards Alignment   | How well AI components map to RAI principles and regulatory frameworks |
+| Standards Alignment   | How well AI components map to trustworthiness characteristics and regulatory frameworks |
 | Threat Completeness   | Completeness and accuracy of AI-specific threat identification         |
 | Control Effectiveness | Coverage and effectiveness of controls for identified threats          |
 | Evidence Quality      | Quality and availability of evidence supporting control effectiveness  |
-| Tradeoff Resolution   | Clarity of principle tradeoff analysis and resolution rationale        |
-| Sensitive Uses        | Whether sensitive use triggers were addressed with appropriate depth   |
+| Tradeoff Resolution   | Clarity of characteristic tradeoff analysis and resolution rationale   |
+| Risk Classification   | Whether risk indicators were evaluated with documented mitigations     |
 
 ## Backlog Generation
 
@@ -129,7 +128,7 @@ All generated backlog content is sanitized before handoff:
 |--------------------------------|---------------------------------------------------------------------------|------------------|
 | System definition pack         | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`            | Phase 1          |
 | Stakeholder impact map         | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
-| Sensitive uses trigger summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
+| Risk classification screening summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
 | RAI standards mapping          | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
 | RAI security model addendum    | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
 | Control surface catalog        | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
@@ -147,7 +146,7 @@ Persisted RAI artifacts include transparency footers that communicate AI involve
 Every Phase 5 and Phase 6 artifact includes a transparency note at the end of the file:
 
 <!-- markdownlint-disable search-replace -->
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
 <!-- markdownlint-enable search-replace -->
 
 ### Human Review Checkbox
@@ -155,7 +154,7 @@ Every Phase 5 and Phase 6 artifact includes a transparency note at the end of th
 Artifacts delivered to human reviewers include a review validation checkbox beneath the AI-content note:
 
 <!-- markdownlint-disable MD004 -->
-> - [ ] Reviewed and validated by a human reviewer
+> - [ ] Reviewed and validated by a qualified human reviewer
 <!-- markdownlint-enable MD004 -->
 
 Reviewers check this box upon completing their assessment to signal that the content has been validated.

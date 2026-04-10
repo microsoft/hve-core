@@ -21,7 +21,7 @@ When materials are attached (PRD, security plan, design documents), scan them be
 
 1. Identify the system name, purpose, and primary users.
 2. Note any explicitly stated RAI concerns or risk areas.
-3. Detect potential sensitive use triggers from the description.
+3. Detect potential risk classification indicators from the description.
 4. Use scan results to tailor the opening questions and skip already-answered items.
 5. Present a brief summary of what was detected: "Based on the attached materials, I've identified [system name] as [purpose]. I noticed [observations]. Let me start with [first question based on context]."
 

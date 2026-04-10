@@ -1,18 +1,16 @@
 ---
 title: RAI Planning
-description: Structured Responsible AI assessment planning through a 6-phase conversational workflow aligned with the Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF 1.0
+description: Structured Responsible AI assessment planning through a 6-phase conversational workflow aligned with NIST AI RMF 1.0
 sidebar_position: 1
 sidebar_label: Overview
 keywords:
   - responsible AI
   - RAI planner
   - NIST AI RMF
-  - Microsoft Responsible AI Impact Assessment Guide
   - AI risk assessment
 tags:
   - agents
   - rai-planning
-author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 8
@@ -26,7 +24,7 @@ estimated_reading_time: 8
 
 The RAI Planner agent transforms informal AI ethics reviews into repeatable, evidence-backed assessment planning:
 
-* 🔍 **Systematic coverage** maps each AI component against six RAI principles and seven threat categories, eliminating the guesswork of ad-hoc reviews
+* 🔍 **Systematic coverage** maps each AI component against seven NIST AI RMF 1.0 trustworthiness characteristics and seven threat categories, eliminating the guesswork of ad-hoc reviews
 * 📊 **Structured outcomes** produce suggested backlog items and maturity indicators so stakeholders can prioritize RAI improvements across projects
 * 🔗 **Security plan integration** picks up where the Security Planner leaves off, inheriting AI component data and continuing threat ID sequences without duplication
 
@@ -41,7 +39,7 @@ The RAI Planner follows six sequential phases, each mapped to NIST AI RMF functi
 flowchart LR
     subgraph govern ["Govern + Map"]
         P1["Phase 1\nAI System Scoping"]
-        P2["Phase 2\nSensitive Uses"]
+        P2["Phase 2\nRisk Classification"]
     end
 
     subgraph measure ["Govern + Measure"]
@@ -61,13 +59,13 @@ flowchart LR
 
 Discover the AI system's purpose, technology stack, deployment model, and stakeholder roles. Classify AI components and establish assessment boundaries. Maps to NIST Govern and Map functions.
 
-### Phase 2: Sensitive Uses Screening
+### Phase 2: Risk Classification
 
-Screen the AI system for sensitive use triggers using three binary assessments: legal status and life opportunities, physical or psychological injury, and human rights restrictions. Determine the suggested assessment depth tier for subsequent phases.
+Classify the AI system's risk level through the prohibited uses gate and three binary risk indicators aligned with NIST AI RMF trustworthiness characteristics. Determine the suggested assessment depth tier for subsequent phases.
 
 ### Phase 3: RAI Standards Mapping
 
-Map AI system components and behaviors to the six RAI principles: fairness, reliability and safety, privacy and security, inclusiveness, transparency, and accountability. Cross-reference with NIST AI RMF subcategories and applicable regulations.
+Map AI system components and behaviors to the seven NIST AI RMF 1.0 trustworthiness characteristics: Valid and Reliable, Safe, Secure and Resilient, Accountable and Transparent, Explainable and Interpretable, Privacy-Enhanced, and Fair with Harmful Bias Managed. Cross-reference with NIST AI RMF subcategories and applicable regulations.
 
 ### Phase 4: RAI Security Model Analysis
 
@@ -75,7 +73,7 @@ Facilitate AI-specific threat analysis per component using AI STRIDE extensions,
 
 ### Phase 5: RAI Impact Assessment
 
-Explore control surface coverage for each identified threat. Document existing mitigations, identify gaps, analyze tradeoffs between competing RAI principles, and prepare the control surface catalog and evidence register.
+Explore control surface coverage for each identified threat. Document existing mitigations, identify gaps, analyze tradeoffs between competing trustworthiness characteristics, and prepare the control surface catalog and evidence register.
 
 ### Phase 6: Review and Handoff
 
