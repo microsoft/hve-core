@@ -25,7 +25,7 @@ Describe 'Get-StandardTimestamp' -Tag 'Unit' {
     }
 
     It 'Matches ISO 8601 UTC format ending in Z' {
-        Get-StandardTimestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+        Get-StandardTimestamp | Should -Match (Get-StandardTimestampPattern)
     }
 
     It 'Returns monotonically increasing timestamps on consecutive calls' {
@@ -39,6 +39,18 @@ Describe 'Get-StandardTimestamp' -Tag 'Unit' {
         $second = [datetime]::Parse((Get-StandardTimestamp))
 
         $second | Should -BeGreaterThan $first
+    }
+}
+
+Describe 'Get-StandardTimestampPattern' -Tag 'Unit' {
+    It 'Returns a non-empty string' {
+        Get-StandardTimestampPattern | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Pattern matches Get-StandardTimestamp output' {
+        $timestamp = Get-StandardTimestamp
+        $pattern = Get-StandardTimestampPattern
+        $timestamp | Should -Match $pattern
     }
 }
 
