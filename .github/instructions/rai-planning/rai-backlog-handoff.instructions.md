@@ -21,14 +21,14 @@ Review checkpoints are binary verification steps. A checkpoint marked "Not Met" 
 
 ### Review Quality Checklist
 
-| Dimension             | Description                                                                     | Status      |
-|-----------------------|---------------------------------------------------------------------------------|-------------|
-| Standards Alignment   | Coverage of NIST AI RMF trustworthiness characteristics and subcategories           | ☐ Addressed |
-| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion         | ☐ Addressed |
-| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each characteristic     | ☐ Addressed |
-| Evidence Quality      | Evidence register completeness, confidence levels, gap identification               | ☐ Addressed |
-| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority              | ☐ Addressed |
-| Risk Classification   | Risk classification coverage, depth tier justification, downstream alignment       | ☐ Addressed |
+| Dimension             | Description                                                                    | Status      |
+|-----------------------|--------------------------------------------------------------------------------|-------------|
+| Standards Alignment   | Coverage of NIST AI RMF trustworthiness characteristics and subcategories      | ☐ Addressed |
+| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion    | ☐ Addressed |
+| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each characteristic | ☐ Addressed |
+| Evidence Quality      | Evidence register completeness, confidence levels, gap identification          | ☐ Addressed |
+| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority         | ☐ Addressed |
+| Risk Classification   | Risk classification coverage, depth tier justification, downstream alignment   | ☐ Addressed |
 
 Review status derivation:
 
@@ -108,12 +108,12 @@ When `principleTracker` data is incomplete for a characteristic, note the gap in
 
 Five categories classify RAI work items by purpose and urgency.
 
-| Category               | Description                                                | Suggested Horizon  | Priority Range      | Source                                                   |
-|------------------------|------------------------------------------------------------|--------------------|---------------------|----------------------------------------------------------|
-| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, characteristics with limited coverage     |
-| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Near-term–Planned   | Control surface gaps                                     |
-| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Planned             | Detect controls without implementation                   |
-| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Planned–Backlog     | Documentation gaps, tradeoff records                     |
+| Category               | Description                                                | Suggested Horizon  | Priority Range      | Source                                                        |
+|------------------------|------------------------------------------------------------|--------------------|---------------------|---------------------------------------------------------------|
+| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, characteristics with limited coverage          |
+| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Near-term–Planned   | Control surface gaps                                          |
+| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Planned             | Detect controls without implementation                        |
+| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Planned–Backlog     | Documentation gaps, tradeoff records                          |
 | Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Backlog             | Characteristics at Developing or Established seeking Advanced |
 
 ## RAI Tags
@@ -122,15 +122,15 @@ Tags applied to work items for tracking and filtering across backlog systems.
 
 | Tag                             | Purpose                                     | Applied When                                                                |
 |---------------------------------|---------------------------------------------|-----------------------------------------------------------------------------|
-| `rai:valid-reliable`            | Valid and Reliable related work              | Control or finding relates to Valid and Reliable characteristic              |
-| `rai:safe`                      | Safe related work                            | Control or finding relates to Safe characteristic                           |
-| `rai:secure-resilient`          | Secure and Resilient related work            | Control or finding relates to Secure and Resilient characteristic           |
-| `rai:accountable-transparent`   | Accountable and Transparent related work     | Control or finding relates to Accountable and Transparent characteristic    |
-| `rai:explainable-interpretable` | Explainable and Interpretable related work   | Control or finding relates to Explainable and Interpretable characteristic  |
-| `rai:privacy-enhanced`          | Privacy-Enhanced related work                | Control or finding relates to Privacy-Enhanced characteristic               |
-| `rai:fair-bias-managed`         | Fair with Harmful Bias Managed related work  | Control or finding relates to Fair with Harmful Bias Managed characteristic |
-| `rai:tradeoff`                  | Tradeoff resolution item                     | Originates from tradeoff documentation                                      |
-| `rai:cross-ref-security`        | Cross-references Security Planner item       | Overlaps with or extends a Security Planner work item                       |
+| `rai:valid-reliable`            | Valid and Reliable related work             | Control or finding relates to Valid and Reliable characteristic             |
+| `rai:safe`                      | Safe related work                           | Control or finding relates to Safe characteristic                           |
+| `rai:secure-resilient`          | Secure and Resilient related work           | Control or finding relates to Secure and Resilient characteristic           |
+| `rai:accountable-transparent`   | Accountable and Transparent related work    | Control or finding relates to Accountable and Transparent characteristic    |
+| `rai:explainable-interpretable` | Explainable and Interpretable related work  | Control or finding relates to Explainable and Interpretable characteristic  |
+| `rai:privacy-enhanced`          | Privacy-Enhanced related work               | Control or finding relates to Privacy-Enhanced characteristic               |
+| `rai:fair-bias-managed`         | Fair with Harmful Bias Managed related work | Control or finding relates to Fair with Harmful Bias Managed characteristic |
+| `rai:tradeoff`                  | Tradeoff resolution item                    | Originates from tradeoff documentation                                      |
+| `rai:cross-ref-security`        | Cross-references Security Planner item      | Overlaps with or extends a Security Planner work item                       |
 
 ## Target System Selection
 
@@ -282,17 +282,17 @@ Ask the user in Phase 6 which tier they prefer. Default to Partial on first use.
 
 Derive suggested work item priority and autonomy tier from assessment observations and principleTracker data.
 
-| Assessment Observation                                | Suggested Priority | Autonomy Tier | Suggested Horizon  |
-|-------------------------------------------------------|--------------------|---------------|--------------------|
+| Assessment Observation                                     | Suggested Priority | Autonomy Tier | Suggested Horizon  |
+|------------------------------------------------------------|--------------------|---------------|--------------------|
 | Characteristic at Foundational maturity with critical gaps | Immediate          | Manual        | Pre-Production     |
 | Characteristic at Foundational maturity                    | Near-term          | Manual        | Pre-Production     |
 | Multiple open observations for a characteristic            | Near-term          | Partial       | Pre-Production     |
-| Tradeoff requiring implementation                     | Planned            | Partial       | Early Operations   |
-| Control surface gap (Prevent)                         | Near-term          | Partial       | Pre-Production     |
-| Control surface gap (Detect)                          | Planned            | Partial       | Early Operations   |
-| Control surface gap (Respond)                         | Planned            | Partial       | Early Operations   |
-| Documentation gap                                     | Backlog            | Full          | Ongoing Governance |
-| Enhancement recommendation                            | Backlog            | Full          | Ongoing Governance |
+| Tradeoff requiring implementation                          | Planned            | Partial       | Early Operations   |
+| Control surface gap (Prevent)                              | Near-term          | Partial       | Pre-Production     |
+| Control surface gap (Detect)                               | Planned            | Partial       | Early Operations   |
+| Control surface gap (Respond)                              | Planned            | Partial       | Early Operations   |
+| Documentation gap                                          | Backlog            | Full          | Ongoing Governance |
+| Enhancement recommendation                                 | Backlog            | Full          | Ongoing Governance |
 
 Within the same priority level, order remediation items before control implementation items. Consider Fair with Harmful Bias Managed and Valid and Reliable findings for earlier attention due to direct impact potential.
 

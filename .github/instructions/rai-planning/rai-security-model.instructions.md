@@ -27,13 +27,13 @@ Eight AI-specific element types define the components subject to RAI threat anal
 | Element Type         | Description                             | Primary NIST Concerns                                                                                   |
 |----------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------|
 | Training Data Store  | Datasets used for model training        | Fair with Harmful Bias Managed (bias), Privacy-Enhanced (PII), Accountable and Transparent (provenance) |
-| Model Artifact       | Trained model files and weights         | Valid and Reliable (integrity), Explainable and Interpretable (explainability)                           |
-| Inference Endpoint   | API or service serving predictions      | Valid and Reliable (availability), Privacy-Enhanced (query privacy)                                      |
-| Feature Pipeline     | Data transformation for model input     | Fair with Harmful Bias Managed (feature bias), Privacy-Enhanced (data flow)                              |
-| Feedback Loop        | User feedback incorporated into model   | Fair with Harmful Bias Managed (feedback bias), Valid and Reliable (drift)                               |
+| Model Artifact       | Trained model files and weights         | Valid and Reliable (integrity), Explainable and Interpretable (explainability)                          |
+| Inference Endpoint   | API or service serving predictions      | Valid and Reliable (availability), Privacy-Enhanced (query privacy)                                     |
+| Feature Pipeline     | Data transformation for model input     | Fair with Harmful Bias Managed (feature bias), Privacy-Enhanced (data flow)                             |
+| Feedback Loop        | User feedback incorporated into model   | Fair with Harmful Bias Managed (feedback bias), Valid and Reliable (drift)                              |
 | Human Review Queue   | Human oversight checkpoints             | Accountable and Transparent (review coverage), Explainable and Interpretable (decision documentation)   |
-| Monitoring Dashboard | Model performance and behavior tracking | Explainable and Interpretable (observability), Valid and Reliable (alerting)                             |
-| Orchestration Layer  | Agent or pipeline orchestration         | Accountable and Transparent (decision routing), Valid and Reliable (failure handling)                    |
+| Monitoring Dashboard | Model performance and behavior tracking | Explainable and Interpretable (observability), Valid and Reliable (alerting)                            |
+| Orchestration Layer  | Agent or pipeline orchestration         | Accountable and Transparent (decision routing), Valid and Reliable (failure handling)                   |
 
 ## AI Trust Boundaries
 
@@ -190,16 +190,16 @@ Extended matrix covering AI system components with NIST trustworthiness characte
 > [!NOTE]
 > The STRIDE categories in this matrix (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) correspond to the AI-extended definitions in the AI STRIDE Extensions table above. Refer to that table for AI-specific threat examples and NIST characteristic overlays for each category.
 
-| Component        | Spoofing                                | Tampering                                  | Repudiation                              | Info Disclosure                        | DoS                         | EoP                                     |
-|------------------|-----------------------------------------|--------------------------------------------|------------------------------------------|----------------------------------------|-----------------------------|-----------------------------------------|
-| Training Data    | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed      | Medium / Accountable and Transparent     | High / Privacy-Enhanced                | Low / Valid and Reliable    | Low / Privacy-Enhanced                  |
-| Feature Pipeline | Low / Explainable and Interpretable     | High / Fair with Harmful Bias Managed      | Medium / Accountable and Transparent     | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Low / Fair with Harmful Bias Managed    |
-| Model Training   | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed      | High / Accountable and Transparent       | High / Privacy-Enhanced                | Medium / Valid and Reliable | Medium / Valid and Reliable             |
-| Model Serving    | High / Valid and Reliable               | Medium / Valid and Reliable                | Medium / Explainable and Interpretable   | High / Privacy-Enhanced                | High / Valid and Reliable   | High / Valid and Reliable               |
-| Inference API    | High / Valid and Reliable               | High / Valid and Reliable                  | Medium / Explainable and Interpretable   | Medium / Privacy-Enhanced              | High / Valid and Reliable   | High / Privacy-Enhanced                 |
-| Feedback Loop    | Medium / Fair with Harmful Bias Managed | High / Fair with Harmful Bias Managed      | High / Accountable and Transparent       | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Medium / Fair with Harmful Bias Managed |
-| Human Review     | Low / Accountable and Transparent       | Medium / Accountable and Transparent       | High / Accountable and Transparent       | Low / Privacy-Enhanced                 | N/A                         | Medium / Accountable and Transparent    |
-| Model Monitoring | Low / Explainable and Interpretable     | Medium / Valid and Reliable                | High / Explainable and Interpretable     | Medium / Explainable and Interpretable | Medium / Valid and Reliable | Low / Valid and Reliable                |
+| Component        | Spoofing                                | Tampering                             | Repudiation                            | Info Disclosure                        | DoS                         | EoP                                     |
+|------------------|-----------------------------------------|---------------------------------------|----------------------------------------|----------------------------------------|-----------------------------|-----------------------------------------|
+| Training Data    | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed | Medium / Accountable and Transparent   | High / Privacy-Enhanced                | Low / Valid and Reliable    | Low / Privacy-Enhanced                  |
+| Feature Pipeline | Low / Explainable and Interpretable     | High / Fair with Harmful Bias Managed | Medium / Accountable and Transparent   | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Low / Fair with Harmful Bias Managed    |
+| Model Training   | Medium / Valid and Reliable             | High / Fair with Harmful Bias Managed | High / Accountable and Transparent     | High / Privacy-Enhanced                | Medium / Valid and Reliable | Medium / Valid and Reliable             |
+| Model Serving    | High / Valid and Reliable               | Medium / Valid and Reliable           | Medium / Explainable and Interpretable | High / Privacy-Enhanced                | High / Valid and Reliable   | High / Valid and Reliable               |
+| Inference API    | High / Valid and Reliable               | High / Valid and Reliable             | Medium / Explainable and Interpretable | Medium / Privacy-Enhanced              | High / Valid and Reliable   | High / Privacy-Enhanced                 |
+| Feedback Loop    | Medium / Fair with Harmful Bias Managed | High / Fair with Harmful Bias Managed | High / Accountable and Transparent     | Medium / Privacy-Enhanced              | Low / Valid and Reliable    | Medium / Fair with Harmful Bias Managed |
+| Human Review     | Low / Accountable and Transparent       | Medium / Accountable and Transparent  | High / Accountable and Transparent     | Low / Privacy-Enhanced                 | N/A                         | Medium / Accountable and Transparent    |
+| Model Monitoring | Low / Explainable and Interpretable     | Medium / Valid and Reliable           | High / Explainable and Interpretable   | Medium / Explainable and Interpretable | Medium / Valid and Reliable | Low / Valid and Reliable                |
 
 ### Reading the Matrix
 
@@ -282,7 +282,7 @@ description: RAI-specific threat analysis extending security plan security model
 
 | Threat ID | RAI ID    | STRIDE | NIST Characteristic | NIST AI RMF | Description | AI Element | Trust Boundary | Suggested Threat Origin | Concern Level | Mitigation |
 |-----------|-----------|--------|---------------------|-------------|-------------|------------|----------------|-------------------------|---------------|------------|
-|           | T-RAI-001 |        |               |             |             |            |                |                         |               |            |
+|           | T-RAI-001 |        |                     |             |             |            |                |                         |               |            |
 
 ## Cross-Reference
 

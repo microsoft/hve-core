@@ -12,6 +12,7 @@ tags:
   - rai-planning
   - concepts
   - handoff
+author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
@@ -82,14 +83,14 @@ flowchart TD
 
 ### Review Dimensions
 
-| Dimension             | What it covers                                                         |
-|-----------------------|------------------------------------------------------------------------|
+| Dimension             | What it covers                                                                          |
+|-----------------------|-----------------------------------------------------------------------------------------|
 | Standards Alignment   | How well AI components map to trustworthiness characteristics and regulatory frameworks |
-| Threat Completeness   | Completeness and accuracy of AI-specific threat identification         |
-| Control Effectiveness | Coverage and effectiveness of controls for identified threats          |
-| Evidence Quality      | Quality and availability of evidence supporting control effectiveness  |
-| Tradeoff Resolution   | Clarity of characteristic tradeoff analysis and resolution rationale   |
-| Risk Classification   | Whether risk indicators were evaluated with documented mitigations     |
+| Threat Completeness   | Completeness and accuracy of AI-specific threat identification                          |
+| Control Effectiveness | Coverage and effectiveness of controls for identified threats                           |
+| Evidence Quality      | Quality and availability of evidence supporting control effectiveness                   |
+| Tradeoff Resolution   | Clarity of characteristic tradeoff analysis and resolution rationale                    |
+| Risk Classification   | Whether risk indicators were evaluated with documented mitigations                      |
 
 ## Backlog Generation
 
@@ -124,18 +125,18 @@ All generated backlog content is sanitized before handoff:
 
 ## Pipeline Artifacts
 
-| Artifact                       | Path                                                                      | Generated during |
-|--------------------------------|---------------------------------------------------------------------------|------------------|
-| System definition pack         | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`            | Phase 1          |
-| Stakeholder impact map         | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
+| Artifact                              | Path                                                                      | Generated during |
+|---------------------------------------|---------------------------------------------------------------------------|------------------|
+| System definition pack                | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`            | Phase 1          |
+| Stakeholder impact map                | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
 | Risk classification screening summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
-| RAI standards mapping          | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
-| RAI security model addendum    | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
-| Control surface catalog        | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
-| Evidence register              | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`                 | Phase 5          |
-| RAI tradeoffs                  | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`                     | Phase 5          |
-| RAI review summary             | `.copilot-tracking/rai-plans/{slug}/rai-review-summary.md`                | Phase 6          |
-| Handoff summary                | `.copilot-tracking/rai-plans/{slug}/rai-backlog-handoff-summary.md`       | Phase 6          |
+| RAI standards mapping                 | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
+| RAI security model addendum           | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
+| Control surface catalog               | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
+| Evidence register                     | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`                 | Phase 5          |
+| RAI tradeoffs                         | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`                     | Phase 5          |
+| RAI review summary                    | `.copilot-tracking/rai-plans/{slug}/rai-review-summary.md`                | Phase 6          |
+| Handoff summary                       | `.copilot-tracking/rai-plans/{slug}/rai-backlog-handoff-summary.md`       | Phase 6          |
 
 ## Artifact Attribution and Review
 

@@ -26,15 +26,15 @@ NIST AI RMF 1.0 defines 7 trustworthiness characteristics for AI systems. These 
 
 ### Characteristic Keys
 
-| Key                        | Characteristic                    | MS-2.x  | Description                                      |
-|----------------------------|-----------------------------------|---------|--------------------------------------------------|
-| `validReliable`            | Valid and Reliable                | MS-2.5  | Base characteristic; assess first                |
-| `safe`                     | Safe                              | MS-2.6  | Builds on validity and reliability               |
-| `secureResilient`          | Secure and Resilient              | MS-2.7  | Builds on validity and reliability               |
-| `accountableTransparent`   | Accountable and Transparent       | MS-2.8  | Cross-cutting vertical; assess throughout        |
-| `explainableInterpretable` | Explainable and Interpretable     | MS-2.9  | Builds on validity and reliability               |
-| `privacyEnhanced`          | Privacy-Enhanced                  | MS-2.10 | Builds on validity and reliability               |
-| `fairBiasManaged`          | Fair with Harmful Bias Managed    | MS-2.11 | Builds on validity and reliability               |
+| Key                        | Characteristic                 | MS-2.x  | Description                               |
+|----------------------------|--------------------------------|---------|-------------------------------------------|
+| `validReliable`            | Valid and Reliable             | MS-2.5  | Base characteristic; assess first         |
+| `safe`                     | Safe                           | MS-2.6  | Builds on validity and reliability        |
+| `secureResilient`          | Secure and Resilient           | MS-2.7  | Builds on validity and reliability        |
+| `accountableTransparent`   | Accountable and Transparent    | MS-2.8  | Cross-cutting vertical; assess throughout |
+| `explainableInterpretable` | Explainable and Interpretable  | MS-2.9  | Builds on validity and reliability        |
+| `privacyEnhanced`          | Privacy-Enhanced               | MS-2.10 | Builds on validity and reliability        |
+| `fairBiasManaged`          | Fair with Harmful Bias Managed | MS-2.11 | Builds on validity and reliability        |
 
 ### Characteristic Hierarchy
 
@@ -184,13 +184,13 @@ Risk prioritization, treatment, monitoring, and continuous improvement. 4 catego
 
 RAI and security concerns overlap at specific intersection points. Use this mapping to identify components requiring both trustworthiness characteristic evaluation and security model analysis.
 
-| NIST Characteristic              | STRIDE Category                   | Overlap Area                                                       |
-|----------------------------------|-----------------------------------|--------------------------------------------------------------------|
-| Privacy-Enhanced                 | Information Disclosure, Tampering | Data protection, model inversion attacks, training data extraction |
-| Safe                             | Denial of Service, Tampering      | Adversarial examples, data poisoning, model degradation            |
-| Fair with Harmful Bias Managed   | Tampering                         | Biased training data injection, demographic targeting              |
-| Accountable and Transparent      | Repudiation                       | Audit trail integrity, decision provenance                         |
-| Explainable and Interpretable    | Information Disclosure            | Model explanation versus intellectual property protection          |
+| NIST Characteristic            | STRIDE Category                   | Overlap Area                                                       |
+|--------------------------------|-----------------------------------|--------------------------------------------------------------------|
+| Privacy-Enhanced               | Information Disclosure, Tampering | Data protection, model inversion attacks, training data extraction |
+| Safe                           | Denial of Service, Tampering      | Adversarial examples, data poisoning, model degradation            |
+| Fair with Harmful Bias Managed | Tampering                         | Biased training data injection, demographic targeting              |
+| Accountable and Transparent    | Repudiation                       | Audit trail integrity, decision provenance                         |
+| Explainable and Interpretable  | Information Disclosure            | Model explanation versus intellectual property protection          |
 
 ## Security-Adjacent Subcategories
 
@@ -346,11 +346,11 @@ Include justification for each mapped standard, explaining why the characteristi
 
 When `userPreferences.outputDetailLevel` is set, adjust output accordingly:
 
-| Detail Level  | Behavior                                                                                               |
-|---------------|--------------------------------------------------------------------------------------------------------|
-| summary       | Emit only the characteristic name, mapped standard reference, and one-line rationale.                  |
-| standard      | Emit the full mapping table with rationale column (current default behavior).                          |
-| comprehensive | Emit the full mapping table plus evidence chains linking each mapping to source NIST subcategories.    |
+| Detail Level  | Behavior                                                                                            |
+|---------------|-----------------------------------------------------------------------------------------------------|
+| summary       | Emit only the characteristic name, mapped standard reference, and one-line rationale.               |
+| standard      | Emit the full mapping table with rationale column (current default behavior).                       |
+| comprehensive | Emit the full mapping table plus evidence chains linking each mapping to source NIST subcategories. |
 
 ### Progressive Presentation
 

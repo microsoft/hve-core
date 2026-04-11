@@ -11,15 +11,15 @@ Phase 5 evaluates control surface completeness for each identified threat, docum
 
 The taxonomy maps seven NIST AI RMF 1.0 trustworthiness characteristics against three control types. Each cell represents a control surface that may contain one or more mitigations.
 
-| Characteristic                  | Prevent                                                                                    | Detect                                                                                  | Respond                                                                                       |
-|---------------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| Valid and Reliable              | Input validation, adversarial robustness testing, failsafe defaults                        | Drift detection, performance degradation alerts, anomaly monitoring                     | Graceful degradation, fallback models, incident response                                      |
-| Safe                            | Safety boundary enforcement, hazard analysis, fail-safe design                             | Safety event monitoring, operational limit alerts                                       | Emergency shutdown procedures, safety incident response                                       |
-| Secure and Resilient            | Differential privacy, data minimization, access controls, adversarial robustness           | Data leakage detection, membership inference monitoring, intrusion detection            | Breach response, data deletion, re-anonymization, system recovery                             |
-| Accountable and Transparent     | Model cards, decision audit trails, role-based access, approval workflows                  | Compliance monitoring, audit trail verification, explanation quality monitoring          | Escalation procedures, corrective action tracking, documentation updates                      |
-| Explainable and Interpretable   | Explanation interfaces, interpretable model selection, decision documentation               | User comprehension testing, explanation fidelity monitoring                             | Explanation correction, model documentation updates                                           |
-| Privacy-Enhanced                | Differential privacy, data minimization, consent management, PII controls                  | Data leakage detection, membership inference monitoring, consent compliance             | Breach response, data deletion, re-anonymization, consent revocation                          |
-| Fair with Harmful Bias Managed  | Bias testing, balanced training data, algorithmic audits, demographic analysis              | Demographic parity monitoring, disparate impact alerts, usage gap analysis              | Retraining pipelines, model rollback, remediation workflows, content adaptation               |
+| Characteristic                 | Prevent                                                                          | Detect                                                                          | Respond                                                                         |
+|--------------------------------|----------------------------------------------------------------------------------|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| Valid and Reliable             | Input validation, adversarial robustness testing, failsafe defaults              | Drift detection, performance degradation alerts, anomaly monitoring             | Graceful degradation, fallback models, incident response                        |
+| Safe                           | Safety boundary enforcement, hazard analysis, fail-safe design                   | Safety event monitoring, operational limit alerts                               | Emergency shutdown procedures, safety incident response                         |
+| Secure and Resilient           | Differential privacy, data minimization, access controls, adversarial robustness | Data leakage detection, membership inference monitoring, intrusion detection    | Breach response, data deletion, re-anonymization, system recovery               |
+| Accountable and Transparent    | Model cards, decision audit trails, role-based access, approval workflows        | Compliance monitoring, audit trail verification, explanation quality monitoring | Escalation procedures, corrective action tracking, documentation updates        |
+| Explainable and Interpretable  | Explanation interfaces, interpretable model selection, decision documentation    | User comprehension testing, explanation fidelity monitoring                     | Explanation correction, model documentation updates                             |
+| Privacy-Enhanced               | Differential privacy, data minimization, consent management, PII controls        | Data leakage detection, membership inference monitoring, consent compliance     | Breach response, data deletion, re-anonymization, consent revocation            |
+| Fair with Harmful Bias Managed | Bias testing, balanced training data, algorithmic audits, demographic analysis   | Demographic parity monitoring, disparate impact alerts, usage gap analysis      | Retraining pipelines, model rollback, remediation workflows, content adaptation |
 
 ### Prevent Controls
 
@@ -69,11 +69,11 @@ When `userPreferences.outputDetailLevel` is set, adjust the evidence register ou
 
 ### Evidence Summary Table
 
-| Evidence ID  | Threat ID | Characteristic                  | Control Type | Coverage Status |
-|--------------|-----------|----------------------------------|--------------|------------------|
-| EV-FAIR-001  | T-RAI-001 | Fair with Harmful Bias Managed  | Prevent      | Full            |
-| EV-VR-001    | T-RAI-002 | Valid and Reliable              | Detect       | Partial         |
-| EV-PRIV-001  | T-RAI-003 | Privacy-Enhanced                | Respond      | Gap             |
+| Evidence ID | Threat ID | Characteristic                 | Control Type | Coverage Status |
+|-------------|-----------|--------------------------------|--------------|-----------------|
+| EV-FAIR-001 | T-RAI-001 | Fair with Harmful Bias Managed | Prevent      | Full            |
+| EV-VR-001   | T-RAI-002 | Valid and Reliable             | Detect       | Partial         |
+| EV-PRIV-001 | T-RAI-003 | Privacy-Enhanced               | Respond      | Gap             |
 
 ## Guardrail Verification Checklist
 
@@ -141,12 +141,12 @@ Priority is derived from the combination of concern levels, trigger severity, an
 
 ### Priority Levels
 
-| Priority  | Criteria                                                                                                                                                        | Suggested Action                            |
-|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
+| Priority  | Criteria                                                                                                                              | Suggested Action                            |
+|-----------|---------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------|
 | Immediate | Prohibited use trigger fired, or High concern level on safety-critical threat, or multiple characteristics show Foundational maturity | Warrants prompt attention before deployment |
 | Near-term | Moderate concern level with partial control coverage, or single characteristic shows Foundational maturity                            | Recommended for upcoming development cycles |
-| Planned   | Low-to-Moderate concern level with identified improvement opportunities                                                                 | Consider for future iterations              |
-| Backlog   | Low concern level with existing controls in place                                                                                       | Note for long-term consideration            |
+| Planned   | Low-to-Moderate concern level with identified improvement opportunities                                                               | Consider for future iterations              |
+| Backlog   | Low concern level with existing controls in place                                                                                     | Note for long-term consideration            |
 
 ### Derivation Rules
 
@@ -294,11 +294,11 @@ Generate work items from the evidence register for entries with Coverage Status 
 
 ### Suggested Remediation Horizons
 
-| Horizon            | Description                            | Typical Triggers                                                          |
-|--------------------|----------------------------------------|---------------------------------------------------------------------------|
-| Pre-Production     | Address before initial deployment      | Safety-critical controls, prohibited use gates, Immediate priority items  |
-| Early Operations   | Address within first operational cycle | Monitoring controls, user feedback loops, Near-term priority items        |
-| Ongoing Governance | Continuous improvement items           | Process refinement, training updates, Planned or Backlog priority items   |
+| Horizon            | Description                            | Typical Triggers                                                         |
+|--------------------|----------------------------------------|--------------------------------------------------------------------------|
+| Pre-Production     | Address before initial deployment      | Safety-critical controls, prohibited use gates, Immediate priority items |
+| Early Operations   | Address within first operational cycle | Monitoring controls, user feedback loops, Near-term priority items       |
+| Ongoing Governance | Continuous improvement items           | Process refinement, training updates, Planned or Backlog priority items  |
 
 ### Horizon Derivation Rules
 

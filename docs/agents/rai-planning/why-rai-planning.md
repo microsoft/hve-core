@@ -13,6 +13,7 @@ tags:
   - rai-planning
   - responsible-ai
   - concepts
+author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 6
@@ -60,13 +61,13 @@ Produces a review summary covering observations across six dimensions and conver
 
 ## Quality Comparison
 
-| Dimension                | Ad-hoc assessment                   | RAI Planner                                                           |
-|--------------------------|-------------------------------------|-----------------------------------------------------------------------|
-| Threat coverage          | Varies by assessor expertise        | Seven AI-specific threat categories applied systematically            |
+| Dimension                | Ad-hoc assessment                   | RAI Planner                                                                              |
+|--------------------------|-------------------------------------|------------------------------------------------------------------------------------------|
+| Threat coverage          | Varies by assessor expertise        | Seven AI-specific threat categories applied systematically                               |
 | Standards traceability   | Often informal or missing           | Each finding mapped to NIST AI RMF 1.0 trustworthiness characteristics and subcategories |
-| Reproducibility          | Depends on individual documentation | Structured state and artifacts produce consistent results             |
-| Backlog integration      | Manual translation to work items    | Automated generation with autonomy tiers and dual-platform support    |
-| Security plan continuity | Separate process, no shared context | `from-security-plan` mode inherits AI components and threat sequences |
+| Reproducibility          | Depends on individual documentation | Structured state and artifacts produce consistent results                                |
+| Backlog integration      | Manual translation to work items    | Automated generation with autonomy tiers and dual-platform support                       |
+| Security plan continuity | Separate process, no shared context | `from-security-plan` mode inherits AI components and threat sequences                    |
 
 ## Learning Curve
 

@@ -11,6 +11,7 @@ keywords:
 tags:
   - agents
   - rai-planning
+author: Microsoft
 ms.date: 2026-03-11
 ms.topic: concept
 estimated_reading_time: 8

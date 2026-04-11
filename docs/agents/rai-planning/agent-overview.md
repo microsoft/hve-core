@@ -12,6 +12,7 @@ tags:
   - rai-planning
   - architecture
   - reference
+author: Microsoft
 ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 7
@@ -56,15 +57,15 @@ flowchart TD
 
 The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Seven instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
 
-| Instruction file                              | Domain                                                                                                   |
-|-----------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `rai-identity.instructions.md`                | Agent identity, orchestration, state management, session recovery                                        |
-| `rai-risk-classification.instructions.md`     | Risk classification screening, depth tier assignment, prohibited uses gate                            |
-| `rai-standards.instructions.md`               | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation architecture |
-| `rai-security-model.instructions.md`          | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                              |
-| `rai-impact-assessment.instructions.md`       | Control surface evaluation, evidence register, characteristic tradeoff analysis                       |
-| `rai-backlog-handoff.instructions.md`         | Dual-format backlog handoff, content sanitization, autonomy tiers                                        |
-| `rai-capture-coaching.instructions.md`        | Exploration-first questioning techniques for capture mode                                                |
+| Instruction file                          | Domain                                                                                                  |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `rai-identity.instructions.md`            | Agent identity, orchestration, state management, session recovery                                       |
+| `rai-risk-classification.instructions.md` | Risk classification screening, depth tier assignment, prohibited uses gate                              |
+| `rai-standards.instructions.md`           | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation architecture |
+| `rai-security-model.instructions.md`      | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                             |
+| `rai-impact-assessment.instructions.md`   | Control surface evaluation, evidence register, characteristic tradeoff analysis                         |
+| `rai-backlog-handoff.instructions.md`     | Dual-format backlog handoff, content sanitization, autonomy tiers                                       |
+| `rai-capture-coaching.instructions.md`    | Exploration-first questioning techniques for capture mode                                               |
 
 ## State Management
 

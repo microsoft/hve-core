@@ -12,6 +12,7 @@ tags:
   - rai-planning
   - reference
   - phases
+author: Microsoft
 ms.date: 2026-03-11
 ms.topic: reference
 estimated_reading_time: 8
@@ -19,14 +20,14 @@ estimated_reading_time: 8
 
 ## Phase Summary
 
-| Phase | Name                        | NIST AI RMF      | Key output                                                               | State fields updated                                    |
-|-------|-----------------------------|------------------|--------------------------------------------------------------------------|---------------------------------------------------------|
-| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                 | `currentPhase`, `entryMode`, `securityPlanRef`          |
+| Phase | Name                        | NIST AI RMF      | Key output                                                                      | State fields updated                                    |
+|-------|-----------------------------|------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|
+| 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                        | `currentPhase`, `entryMode`, `securityPlanRef`          |
 | 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`, `suggestedDepthTier`              |
-| 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                               | `standardsMapped`                                       |
-| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                         | `raiRiskSurfaceStarted`, `raiThreatCount`               |
-| 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
-| 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                   | `handoffGenerated`                                      |
+| 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                                      | `standardsMapped`                                       |
+| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                                | `raiRiskSurfaceStarted`, `raiThreatCount`               |
+| 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`        | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
+| 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                          | `handoffGenerated`                                      |
 
 ## Phase 1: AI System Scoping
 
@@ -84,11 +85,11 @@ Screen the AI system for risk using NIST AI RMF 1.0 trustworthiness characterist
 
 The agent evaluates three risk indicators derived from NIST AI RMF 1.0 trustworthiness characteristics:
 
-| Indicator                 | NIST source                | Method      | Domain                                                                                |
-|---------------------------|----------------------------|-------------|---------------------------------------------------------------------------------------|
-| `safety_reliability`      | Valid and Reliable, Safe   | Binary      | Physical harm, psychological injury, operational disruption from unreliable outputs    |
-| `rights_fairness_privacy` | Accountable and Transparent, Privacy-Enhanced, Fair with Harmful Bias Managed | Categorical | Discrimination, rights restriction, equitable access, personal data misuse |
-| `security_explainability` | Secure and Resilient, Explainable and Interpretable | Continuous  | Adversarial attacks, data poisoning, model theft, inability to explain decisions       |
+| Indicator                 | NIST source                                                                   | Method      | Domain                                                                              |
+|---------------------------|-------------------------------------------------------------------------------|-------------|-------------------------------------------------------------------------------------|
+| `safety_reliability`      | Valid and Reliable, Safe                                                      | Binary      | Physical harm, psychological injury, operational disruption from unreliable outputs |
+| `rights_fairness_privacy` | Accountable and Transparent, Privacy-Enhanced, Fair with Harmful Bias Managed | Categorical | Discrimination, rights restriction, equitable access, personal data misuse          |
+| `security_explainability` | Secure and Resilient, Explainable and Interpretable                           | Continuous  | Adversarial attacks, data poisoning, model theft, inability to explain decisions    |
 
 Each indicator uses its own assessment method (binary, categorical, or continuous). When the user has supplied custom risk indicator extensions, those are incorporated as additional evaluation criteria alongside the default NIST-derived indicators.
 
@@ -106,11 +107,11 @@ Each indicator uses its own assessment method (binary, categorical, or continuou
 
 ### State Transitions
 
-| Field                   | Before | After                             |
-|-------------------------|--------|-----------------------------------|
-| `currentPhase`          | 2      | 3                                 |
-| `riskClassification`    | null   | risk classification results object |
-| `suggestedDepthTier`    | null   | Basic, Standard, or Comprehensive |
+| Field                | Before | After                              |
+|----------------------|--------|------------------------------------|
+| `currentPhase`       | 2      | 3                                  |
+| `riskClassification` | null   | risk classification results object |
+| `suggestedDepthTier` | null   | Basic, Standard, or Comprehensive  |
 
 ## Phase 3: RAI Standards Mapping
 
@@ -128,15 +129,15 @@ Map each AI component against NIST AI RMF 1.0 trustworthiness characteristics an
 
 The agent maps components against seven NIST AI RMF 1.0 trustworthiness characteristics:
 
-| Characteristic                    | Focus area                                                     |
-|-----------------------------------|----------------------------------------------------------------|
-| Valid and Reliable                | Accurate outputs, consistent performance, degradation paths    |
-| Safe                              | Physical and psychological harm prevention, failure modes      |
-| Secure and Resilient              | Adversarial robustness, data protection, recovery mechanisms   |
-| Accountable and Transparent       | Oversight mechanisms, audit trails, decision traceability      |
-| Explainable and Interpretable     | Model interpretability, decision explanation, disclosure       |
-| Privacy-Enhanced                  | Data minimization, consent, inference prevention               |
-| Fair with Harmful Bias Managed    | Bias detection, equitable outcomes, allocation harms           |
+| Characteristic                 | Focus area                                                   |
+|--------------------------------|--------------------------------------------------------------|
+| Valid and Reliable             | Accurate outputs, consistent performance, degradation paths  |
+| Safe                           | Physical and psychological harm prevention, failure modes    |
+| Secure and Resilient           | Adversarial robustness, data protection, recovery mechanisms |
+| Accountable and Transparent    | Oversight mechanisms, audit trails, decision traceability    |
+| Explainable and Interpretable  | Model interpretability, decision explanation, disclosure     |
+| Privacy-Enhanced               | Data minimization, consent, inference prevention             |
+| Fair with Harmful Bias Managed | Bias detection, equitable outcomes, allocation harms         |
 
 For each characteristic-component pair, the agent identifies:
 
@@ -273,14 +274,14 @@ Generate a review summary covering observations across six dimensions and produc
 
 The agent generates a review summary covering observations across six dimensions:
 
-| Dimension             | What it covers                                                        |
-|-----------------------|-----------------------------------------------------------------------|
+| Dimension             | What it covers                                                                            |
+|-----------------------|-------------------------------------------------------------------------------------------|
 | Standards Alignment   | Whether findings map to NIST AI RMF 1.0 trustworthiness characteristics and subcategories |
-| Threat Completeness   | Completeness and accuracy of threat identification                    |
-| Control Effectiveness | Coverage and effectiveness of controls for identified threats         |
-| Evidence Quality      | Quality and availability of evidence supporting control effectiveness |
-| Tradeoff Resolution   | Whether competing characteristic tradeoffs have been analyzed and resolved |
-| Risk Classification   | Whether risk indicators were evaluated with documented mitigations  |
+| Threat Completeness   | Completeness and accuracy of threat identification                                        |
+| Control Effectiveness | Coverage and effectiveness of controls for identified threats                             |
+| Evidence Quality      | Quality and availability of evidence supporting control effectiveness                     |
+| Tradeoff Resolution   | Whether competing characteristic tradeoffs have been analyzed and resolved                |
+| Risk Classification   | Whether risk indicators were evaluated with documented mitigations                        |
 
 The review summary presents observations and maturity indicators rather than numeric scores. Findings are organized to support handoff decisions and backlog prioritization.
 
