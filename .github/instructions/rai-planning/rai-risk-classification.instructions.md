@@ -68,11 +68,11 @@ Evaluate the AI system against the active framework's risk indicators. When no c
 
 ### Default Indicator Table
 
-| Indicator ID              | NIST Source                  | Method      | Domain                                                                                                    |
-|---------------------------|------------------------------|-------------|-----------------------------------------------------------------------------------------------------------|
-| `safety_reliability`      | MS-2.5, MS-2.6              | Binary      | Physical harm, psychological injury, operational disruption from inaccurate or unreliable outputs         |
-| `rights_fairness_privacy` | MS-2.8, MS-2.10, MS-2.11    | Categorical | Discrimination, rights restriction, equitable access, personal data misuse, accountability gaps           |
-| `security_explainability` | MS-2.7, MS-2.9              | Continuous  | Adversarial attacks, data poisoning, model theft, inability to explain consequential decisions             |
+| Indicator ID              | NIST Source              | Method      | Domain                                                                                            |
+|---------------------------|--------------------------|-------------|---------------------------------------------------------------------------------------------------|
+| `safety_reliability`      | MS-2.5, MS-2.6           | Binary      | Physical harm, psychological injury, operational disruption from inaccurate or unreliable outputs |
+| `rights_fairness_privacy` | MS-2.8, MS-2.10, MS-2.11 | Categorical | Discrimination, rights restriction, equitable access, personal data misuse, accountability gaps   |
+| `security_explainability` | MS-2.7, MS-2.9           | Continuous  | Adversarial attacks, data poisoning, model theft, inability to explain consequential decisions    |
 
 ### Safety and Reliability (`safety_reliability`)
 
@@ -99,9 +99,9 @@ MS-2.8 (Accountable and Transparent) groups with fairness and privacy because ac
 
 Categories:
 
-| Category | Description                                                                                                                          |
-|----------|--------------------------------------------------------------------------------------------------------------------------------------|
-| None     | No measurable fairness, privacy, or rights impact.                                                                                   |
+| Category | Description                                                                                                                           |
+|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| None     | No measurable fairness, privacy, or rights impact.                                                                                    |
 | Indirect | System outputs may influence decisions affecting rights, fairness, or privacy, but the system does not directly make those decisions. |
 | Direct   | System directly processes personal data or makes decisions affecting individual rights, fairness, or privacy.                         |
 | Primary  | System's core purpose involves rights-affecting decisions, protected class data, or privacy-sensitive operations.                     |
@@ -125,10 +125,10 @@ Assessment method: Continuous (0.0–1.0 score). NIST source: Secure and Resilie
 
 Score each dimension from 0.0 (minimal risk) to 1.0 (severe risk):
 
-| Dimension                   | Range   | Description                                                                                                                |
-|-----------------------------|---------|----------------------------------------------------------------------------------------------------------------------------|
-| Attack surface exposure     | 0.0–1.0 | Breadth and accessibility of interfaces vulnerable to adversarial input, data poisoning, or model extraction.               |
-| Data sensitivity level      | 0.0–1.0 | Classification and protection requirements of data the system processes, stores, or generates.                              |
+| Dimension                   | Range   | Description                                                                                                                   |
+|-----------------------------|---------|-------------------------------------------------------------------------------------------------------------------------------|
+| Attack surface exposure     | 0.0–1.0 | Breadth and accessibility of interfaces vulnerable to adversarial input, data poisoning, or model extraction.                 |
+| Data sensitivity level      | 0.0–1.0 | Classification and protection requirements of data the system processes, stores, or generates.                                |
 | Decision explainability gap | 0.0–1.0 | Distance between the system's decision complexity and stakeholders' ability to understand, audit, or contest those decisions. |
 
 The overall score is the mean of the three dimension scores. A score of 0.5 or higher counts as activated for depth tier purposes.
@@ -145,11 +145,11 @@ When not activated: Record `activated = false` with the score, dimension values,
 
 Three assessment methods evaluate risk indicators. Each indicator specifies its method type, and the dispatch routes evaluation accordingly.
 
-| Method      | Input                            | Output                                                                    | Use Case                                        |
-|-------------|----------------------------------|---------------------------------------------------------------------------|------------------------------------------------ |
-| Binary      | Yes/No screening question        | `{ activated: boolean, observation: string }`                             | Clear-cut risk presence or absence              |
-| Categorical | Multi-level classification       | `{ category: string, matchedDomains: string[], observation: string }`     | Graduated impact assessment across defined levels |
-| Continuous  | Numeric dimensions (0.0–1.0)     | `{ score: number, dimensions: [{name, value}], observation: string }`     | Multidimensional risk quantification            |
+| Method      | Input                        | Output                                                                | Use Case                                          |
+|-------------|------------------------------|-----------------------------------------------------------------------|---------------------------------------------------|
+| Binary      | Yes/No screening question    | `{ activated: boolean, observation: string }`                         | Clear-cut risk presence or absence                |
+| Categorical | Multi-level classification   | `{ category: string, matchedDomains: string[], observation: string }` | Graduated impact assessment across defined levels |
+| Continuous  | Numeric dimensions (0.0–1.0) | `{ score: number, dimensions: [{name, value}], observation: string }` | Multidimensional risk quantification              |
 
 Each method contributes to the activated count for depth tier assignment:
 
@@ -157,7 +157,7 @@ Each method contributes to the activated count for depth tier assignment:
 |-------------|------------------------------------------------------------------|
 | Binary      | `activated = true` adds 1 to the activated count.                |
 | Categorical | A result of "Direct" or "Primary" adds 1 to the activated count. |
-| Continuous  | A score of 0.5 or higher adds 1 to the activated count.         |
+| Continuous  | A score of 0.5 or higher adds 1 to the activated count.          |
 
 The dispatch applies identically to default indicators, custom framework indicators, and risk indicator extensions.
 
@@ -201,11 +201,11 @@ When no code-of-conduct documents are loaded, skip this section.
 
 The suggested depth tier flows automatically from the activated indicator count. Do not assign a tier manually based on judgment.
 
-| Tier          | Criteria                    | Description                                                                               |
-|---------------|-----------------------------|-------------------------------------------------------------------------------------------|
-| Basic         | 0 indicators activated      | No significant risks identified. Subsequent phases use baseline analysis depth.           |
-| Standard      | 1 indicator activated       | One risk area identified. Subsequent phases include additional analysis for that area.    |
-| Comprehensive | 2+ indicators activated     | Multiple risk areas identified. Subsequent phases use comprehensive analysis.             |
+| Tier          | Criteria                | Description                                                                            |
+|---------------|-------------------------|----------------------------------------------------------------------------------------|
+| Basic         | 0 indicators activated  | No significant risks identified. Subsequent phases use baseline analysis depth.        |
+| Standard      | 1 indicator activated   | One risk area identified. Subsequent phases include additional analysis for that area. |
+| Comprehensive | 2+ indicators activated | Multiple risk areas identified. Subsequent phases use comprehensive analysis.          |
 
 The activated count includes both default (or custom framework) indicators and any risk indicator extensions. When a custom framework defines its own depth tier mapping, use that mapping instead of the default table.
 
@@ -217,26 +217,26 @@ Present classification results using this format:
 
 ### Prohibited Uses Gate
 
-| Field               | Value                                                                                    |
-|---------------------|------------------------------------------------------------------------------------------|
-| Status              | [Passed / Flagged]                                                                       |
+| Field               | Value                                                                                     |
+|---------------------|-------------------------------------------------------------------------------------------|
+| Status              | [Passed / Flagged]                                                                        |
 | Source framework(s) | [framework name(s) evaluated, or "user knowledge" if no frameworks loaded]                |
 | Notes               | [if flagged, prohibited use category, source framework, and justification for proceeding] |
 
 ### Risk Indicator Assessment
 
-| Indicator ID              | Activated  | Method      | Result Summary                    | Observation          |
-|---------------------------|------------|-------------|-----------------------------------|----------------------|
-| `safety_reliability`      | [Yes / No] | Binary      | [Yes/No]                          | [observation or N/A] |
-| `rights_fairness_privacy` | [Yes / No] | Categorical | [None/Indirect/Direct/Primary]    | [observation or N/A] |
-| `security_explainability` | [Yes / No] | Continuous  | [0.00–1.00 score]                 | [observation or N/A] |
-| [extension indicator IDs] | [Yes / No] | [method]    | [result summary]                  | [observation or N/A] |
+| Indicator ID              | Activated  | Method      | Result Summary                 | Observation          |
+|---------------------------|------------|-------------|--------------------------------|----------------------|
+| `safety_reliability`      | [Yes / No] | Binary      | [Yes/No]                       | [observation or N/A] |
+| `rights_fairness_privacy` | [Yes / No] | Categorical | [None/Indirect/Direct/Primary] | [observation or N/A] |
+| `security_explainability` | [Yes / No] | Continuous  | [0.00–1.00 score]              | [observation or N/A] |
+| [extension indicator IDs] | [Yes / No] | [method]    | [result summary]               | [observation or N/A] |
 
 ### Code-of-Conduct Conflicts
 
-| Provider     | Conflicting Policy           | Recommendation               |
-|--------------|------------------------------|------------------------------|
-| [provider]   | [policy description]         | [action recommendation]      |
+| Provider   | Conflicting Policy   | Recommendation          |
+|------------|----------------------|-------------------------|
+| [provider] | [policy description] | [action recommendation] |
 
 Omit this table when no code-of-conduct documents are loaded or no conflicts exist.
 
