@@ -39,7 +39,7 @@ Placement varies by file type:
 # SPDX-License-Identifier: MIT
 ```
 
-CI validates copyright headers via `npm run validate:copyright` using `scripts/linting/Test-CopyrightHeaders.ps1`.
+CI validates copyright headers through the repository's copyright validation script, if one is configured. Check `package.json` for a copyright validation command.
 
 ## Script Structure
 
@@ -243,7 +243,7 @@ param(
 
 ## PSScriptAnalyzer Compliance
 
-PSScriptAnalyzer configuration lives at `scripts/linting/PSScriptAnalyzer.psd1`. Run analysis via `npm run lint:ps`.
+Use the repository's PSScriptAnalyzer configuration file (typically a `.psd1` file) for analysis. Check `package.json` for a PowerShell linting command, or run `Invoke-ScriptAnalyzer` directly with the configuration file path.
 
 Key enforced rules:
 
