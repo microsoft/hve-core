@@ -28,20 +28,17 @@ Types MUST be one of the following:
 
 ## Scopes
 
-Scopes MUST be one of the following:
+Derive the commit scope from the primary directory affected by the change. Use the directory name in lowercase as the scope. Common scopes include:
 
-* `(agents)` - Custom agent definitions in `.github/agents/`
-* `(prompts)` - Prompt templates in `.github/prompts/`
-* `(instructions)` - Coding guidelines in `.github/instructions/`
-* `(skills)` - Skill packages in `.github/skills/`
-* `(templates)` - Issue and PR templates in `.github/ISSUE_TEMPLATE/`
-* `(workflows)` - GitHub Actions in `.github/workflows/`
-* `(extension)` - VS Code extension in `extension/`
-* `(scripts)` - Automation scripts in `scripts/`
-* `(docs)` - Documentation in `docs/`
-* `(adrs)` - Architecture Decision Records
-* `(settings)` - Configuration files (`.vscode/`, linter configs)
+* `(docs)` - Documentation
+* `(agents)` - Custom agent definitions
+* `(prompts)` - Prompt templates
+* `(instructions)` - Coding guidelines
+* `(workflows)` - CI/CD workflows
 * `(build)` - Build system and dependencies
+* `(settings)` - Configuration files
+
+Use additional scopes matching the repository's directory structure when changes target directories not listed above. If the repository defines a scope list in its project instructions, follow that list.
 
 ## Description
 

@@ -143,7 +143,7 @@ Characteristics:
 
 * Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
-* Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/hve-core/subagents/`) to separate them from user-facing agents.
+* Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/{collection}/subagents/`) to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Cannot run their own subagents; only the parent agent orchestrates subagent calls.
@@ -386,7 +386,7 @@ Skill files also include a standard attribution footer as the last line of body 
 
 Frontmatter field requirements for prompt engineering artifacts follow.
 
-Maturity is tracked in `collections/*.collection.yml` item metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
+When the repository uses a collection system, maturity is tracked in collection manifest metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. When using collections, set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
 
 ### Required Fields
 
