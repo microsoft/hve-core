@@ -317,6 +317,206 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
     }
 }
 
+Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'folder-consistency-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Matching folder structure
+        $matchDir = Join-Path $script:repoRoot '.github/agents/my-collection'
+        New-Item -ItemType Directory -Path $matchDir -Force | Out-Null
+        Set-Content -Path (Join-Path $matchDir 'match.agent.md') -Value '---\ndescription: matching agent\n---'
+
+        # Mismatched folder structure
+        $mismatchDir = Join-Path $script:repoRoot '.github/agents/wrong-folder'
+        New-Item -ItemType Directory -Path $mismatchDir -Force | Out-Null
+        Set-Content -Path (Join-Path $mismatchDir 'mismatch.agent.md') -Value '---\ndescription: mismatched agent\n---'
+
+        # Shared folder structure
+        $sharedDir = Join-Path $script:repoRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $sharedDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedDir 'shared.instructions.md') -Value '---\ndescription: shared instruction\n---'
+
+        # hve-core folder structure (cross-collection reference allowed without warning)
+        $hveCoreDir = Join-Path $script:repoRoot '.github/agents/hve-core'
+        New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
+        Set-Content -Path (Join-Path $hveCoreDir 'core.agent.md') -Value '---\ndescription: hve-core agent\n---'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Passes when collection-id matches folder name' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection with matching folder'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/my-collection/match.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*my-collection'
+        }
+    }
+
+    It 'Warns but does not fail when collection-id does not match folder name' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection with mismatched folder'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*wrong-folder'
+        }
+    }
+
+    It 'Allows items from hve-core/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing hve-core item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/hve-core/core.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Allows items from shared/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing shared item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/instructions/shared/shared.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Allows hve-core-all to reference items from any folder' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'HVE Core All'
+            description = 'Aggregate collection'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/my-collection/match.agent.md'
+                    kind = 'agent'
+                },
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                },
+                [ordered]@{
+                    path = '.github/instructions/shared/shared.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
+                    path = '.github/agents/hve-core/core.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Emits warning output for mismatched folder name without failing' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Mismatch for warning output test'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        # Advisory warning uses Write-Host WARN; validation still passes
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*wrong-folder'
+        }
+    }
+}
+
 Describe 'Invoke-CollectionValidation - error paths' {
     BeforeAll {
         Import-Module PowerShell-Yaml -ErrorAction Stop
