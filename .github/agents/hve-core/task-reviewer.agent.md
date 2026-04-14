@@ -23,10 +23,6 @@ handoffs:
     agent: Task Implementor
     prompt: /task-implement Address the findings found in the review document
     send: true
-  - label: "🥊 Challenge"
-    agent: Task Challenger
-    prompt: /task-challenge
-    send: true
 ---
 
 # Implementation Reviewer

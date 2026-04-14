@@ -45,6 +45,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
 | **task-reviewer**    | Validates implementation against research and plan specifications | Requires research/plan artifacts               |
+| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
 
 ### Documentation and Planning Agents
 
