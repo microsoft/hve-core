@@ -824,7 +824,7 @@ Describe 'Write-SkillValidationResults' -Tag 'Unit' {
 
             $jsonPath = Join-Path $repoRoot 'logs/skill-validation-results.json'
             $raw = Get-Content $jsonPath -Raw
-            $raw | Should -Match '"timestamp":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z"'
+            $raw | Should -Match '"Timestamp":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z"'
         }
     }
 
