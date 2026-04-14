@@ -71,7 +71,7 @@ Analyze the incumbent solution:
 
 Tag each element of the JTBD analysis with its evidence basis: observed (from user research), reported (from stakeholder or user feedback), or assumed (team hypothesis). Journey maps built primarily on assumptions should include a recommendation to validate through user interviews before influencing design.
 
-Document the JTBD analysis using the Jobs-to-be-Done Analysis section of the [user journey template](../../../docs/templates/user-journey-template.md).
+Document the JTBD analysis using the Jobs-to-be-Done Analysis section of the user journey template at `docs/templates/user-journey-template.md` in repo, extension or plugin context. If the template is not found, structure the JTBD analysis with: Job Statement, Context, Functional/Emotional/Social dimensions, and Success Metrics.
 
 ### Step 3: User Journey Mapping
 
@@ -85,7 +85,7 @@ Structure each journey around sequential stages (awareness, exploration, action,
 * Pain points that create friction, confusion, or abandonment.
 * Design opportunities that address the identified pain points.
 
-Use the [user journey template](../../../docs/templates/user-journey-template.md) as the structural foundation.
+Use the user journey template at `docs/templates/user-journey-template.md` as the structural foundation. If the template is not found, structure journey maps with: Persona, Scenario, Phases (with steps, touchpoints, emotions, pain points, opportunities per phase), and Key Insights.
 
 ### Step 4: Accessibility Requirements
 
@@ -128,7 +128,7 @@ When collaborating with the product manager, provide journey maps and JTBD analy
 
 ## Documentation Output
 
-Save research artifacts using the [user journey template](../../../docs/templates/user-journey-template.md) structure. Place completed journey maps in a location appropriate to the project's documentation conventions.
+Save research artifacts using the user journey template at `docs/templates/user-journey-template.md` if available. Place completed journey maps in a location appropriate to the project's documentation conventions. If the template is not found, use the structural patterns described in this agent.
 
 Each research cycle produces:
 
