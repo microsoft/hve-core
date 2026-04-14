@@ -349,7 +349,7 @@ Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
     Context 'Timestamp standardization' {
         It 'Uses Get-StandardTimestamp for result JSON timestamp' {
             $src = Get-Content (Join-Path $PSScriptRoot '../../linting/Markdown-Link-Check.ps1') -Raw
-            $src | Should -Match 'timestamp\s*=\s*Get-StandardTimestamp'
+            $src | Should -Match 'Timestamp\s*=\s*Get-StandardTimestamp'
             $src | Should -Not -Match 'ToUniversalTime\(\)\.ToString'
         }
     }
