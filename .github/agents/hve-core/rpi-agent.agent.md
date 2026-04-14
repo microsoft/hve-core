@@ -6,8 +6,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
   - Phase Implementor
-  - RPI Validator
-  - Implementation Validator
 handoffs:
   - label: Compact
     agent: RPI Agent
