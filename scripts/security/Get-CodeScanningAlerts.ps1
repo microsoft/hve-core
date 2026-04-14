@@ -54,16 +54,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $env:GH_PAGER = ''
 
-$url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branch&per_page=100"
-$raw = gh api $url --paginate 2>&1
+$Url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branch&per_page=100"
+$Raw = gh api $Url --paginate
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "gh api call failed (exit $LASTEXITCODE): $raw"
+    Write-Error "gh api call failed (exit $LASTEXITCODE): $Raw"
 }
 
-$alerts = $raw | ConvertFrom-Json
+$Alerts = $Raw | ConvertFrom-Json
 
-$grouped = $alerts |
+$Grouped = $Alerts |
     Group-Object { $_.rule.description } |
     ForEach-Object {
         [PSCustomObject]@{
@@ -79,9 +79,9 @@ $grouped = $alerts |
 
 switch ($OutputFormat) {
     'Table' {
-        $grouped | Format-Table -AutoSize -Property Count, SecuritySeverity, RuleId, RuleDescription
+        $Grouped | Format-Table -AutoSize -Property Count, SecuritySeverity, RuleId, RuleDescription
     }
     { $_ -in 'Json', 'GroupedJson' } {
-        $grouped | ConvertTo-Json -Depth 5
+        $Grouped | ConvertTo-Json -Depth 5
     }
 }

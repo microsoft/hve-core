@@ -4,9 +4,14 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Get-CodeScanningAlerts.ps1'
+    $script:OriginalGhPager = $env:GH_PAGER
 
     # Sample alert JSON representing two rules with multiple occurrences
     $script:MockAlertJson = '[{"number":1,"rule":{"id":"js/sql-injection","description":"Database query built from user-controlled sources","security_severity_level":"high"},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"src/db.js"}}},{"number":2,"rule":{"id":"js/sql-injection","description":"Database query built from user-controlled sources","security_severity_level":"high"},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"src/api.js"}}},{"number":3,"rule":{"id":"js/xss","description":"Cross-site scripting vulnerability","security_severity_level":"medium"},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"src/render.js"}}}]'
+}
+
+AfterAll {
+    $env:GH_PAGER = $script:OriginalGhPager
 }
 
 Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
