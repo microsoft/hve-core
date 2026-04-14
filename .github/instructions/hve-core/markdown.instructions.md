@@ -76,10 +76,10 @@ These instructions define the Markdown style guide enforced by markdownlint in t
 
 ### Schema Validation
 
-* Schemas are located in `scripts/linting/schemas/`
-* Pattern-based mapping in `schema-mapping.json` determines which schema applies to each file
-* VS Code YAML extension (`redhat.vscode-yaml`) provides in-editor validation
-* Run validation: `npm run validate:frontmatter` or `pwsh scripts/linting/Validate-MarkdownFrontmatter.ps1`
+* Schemas define required and optional frontmatter fields per file type
+* Pattern-based mapping determines which schema applies to each file
+* VS Code YAML extension (`redhat.vscode-yaml`) provides in-editor validation when schemas are configured
+* Run the repository's frontmatter validation if available (check `package.json` for a validation command)
 
 ### Schema Pattern Matching
 
@@ -104,19 +104,18 @@ Pattern examples:
 <!-- <example-frontmatter-docs> -->
 ```yaml
 ---
-title: Getting Started with HVE Core
-description: Quick setup guide for using HVE Core Copilot customizations in your projects
-author: Microsoft
+title: Getting Started Guide
+description: Quick setup guide for configuring your project
+author: Your Team
 ms.date: 2025-11-15
 ms.topic: tutorial
 keywords:
-  - github copilot
   - setup
   - getting started
 estimated_reading_time: 5
 ---
 
-# Getting Started with HVE Core
+## Getting Started
 
 This guide shows you how to configure your project...
 ```

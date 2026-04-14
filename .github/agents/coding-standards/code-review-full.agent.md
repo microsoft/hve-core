@@ -205,7 +205,7 @@ Read all findings, the review-artifacts protocol, and the output format template
 * `<findingsFolder>/functional-findings.json`
 * `<findingsFolder>/standards-findings.json`
 * #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md (for the persistence protocol — read exactly once here; do not re-read later)
-* `docs/templates/full-review-output-format.md` (for the JSON schema, report skeleton, and persist-and-present rules — read exactly once here)
+* `docs/templates/full-review-output-format.md` (for the JSON schema, report skeleton, and persist-and-present rules — read exactly once here). If the file is not found, apply a best-effort structure using the section names and field definitions in this agent as guidance and note: "⚠️ Report template not found — output structure may vary."
 
 Issue all four `read_file` calls in one tool-call block. Do not read any of these files a second time during this step. Do not read source files, diff content, diff-state.json, or agent definition files during Step 3 — all information needed for the merge is contained in the findings JSON files, the review-artifacts protocol, and the output format template.
 
@@ -213,7 +213,7 @@ For L or XL batch reviews, read `functional-findings-batch-N.json` and `standard
 
 #### Output Format Reference
 
-Read `docs/templates/full-review-output-format.md` for the Subagent Findings JSON Schema, Report Skeleton, and Persist and Present protocol. This file is loaded in the Read Findings parallel batch — do not read it separately.
+Read `docs/templates/full-review-output-format.md` for the Subagent Findings JSON Schema, Report Skeleton, and Persist and Present protocol. This file is loaded in the Read Findings parallel batch — do not read it separately. If the file was not found during the parallel read, apply a best-effort report structure.
 
 #### Transformation Rules
 
