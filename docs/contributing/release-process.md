@@ -2,7 +2,7 @@
 title: Release Process
 description: Trunk-based release workflow using release-please automation and manual VS Code extension publishing
 sidebar_position: 9
-ms.date: 2026-01-08
+ms.date: 2026-04-14
 ms.topic: how-to
 author: WilliamBerryiii
 ---
@@ -17,9 +17,9 @@ This project uses trunk-based development with automated release management. All
 flowchart LR
     A[Feature PR] -->|merge| B[main branch]
     B --> C[release-please updates Release PR]
-    C -->|you merge| D[GitHub Release created]
+    C -->|you merge| D[(draft) GitHub Release created]
     D --> E[Tag created on main]
-    E -.->|manual| F[Extension published]
+    E -->|automatically| F[Extension published]
 ```
 
 When you merge a PR to `main`:
@@ -36,6 +36,8 @@ The Release PR is not a branch cut or deployment. It is a staging mechanism cont
 
 * Updated `package.json` version
 * Updated `extension/templates/package.template.json` version
+* Updated `.github/plugin/marketplace.json` (version and plugins[*].version)
+* Updated `plugins/*/.github/plugin/plugin.json` (glob across all plugin directories)
 * Updated `CHANGELOG.md`
 
 Your actual code changes are already on `main` from your feature PRs. The Release PR accumulates version and changelog updates until you are ready to release.
@@ -50,6 +52,8 @@ Release-please determines the version bump from commit prefixes:
 | `fix:`                         | Patch        | 1.0.0 → 1.0.1        |
 | `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0        |
 | `docs:`, `chore:`, `refactor:` | No bump      | Grouped in changelog |
+
+> **Note**: Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
 
 ## For Contributors
 
@@ -79,8 +83,8 @@ The Release PR titled "chore(main): release X.Y.Z" updates automatically as PRs 
 
 1. Review the accumulated changelog in the PR
 2. Verify version bump is appropriate for the changes
-3. Merge the Release PR
-4. A GitHub Release is created automatically with the changelog
+3. Merge the Release PR (which is initially created as a draft)
+4. A published GitHub Release is created automatically with the changelog after the `publish-release` workflow runs
 
 ### Release Cadence
 
@@ -94,7 +98,7 @@ There is no requirement to release after every PR merge.
 
 ## Extension Publishing
 
-VS Code extension publishing is manual via GitHub Actions workflow dispatch.
+VS Code extension publishing is automated via the `publish-release` job, which calls `gh release edit --draft=false` to promote a draft release to a published release upon merging the Release PR.
 
 ### Publishing Steps
 
