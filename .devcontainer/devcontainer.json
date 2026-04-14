@@ -3,7 +3,7 @@
   "image": "${localEnv:HVE_DEVCONTAINER_IMAGE:mcr.microsoft.com/devcontainers/base:2-jammy}",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
+      "version": "24"
     },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"

@@ -1,6 +1,6 @@
 ---
 name: Security Reviewer
-description: "OWASP assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core"
+description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core"
 agents:
   - Codebase Profiler
   - Skill Assessor
@@ -32,7 +32,7 @@ Orchestrate vulnerability assessment by delegating to subagents. Profile the cod
 * (Optional) Mode: `audit`, `diff`, or `plan`. Defaults to `audit` when not specified.
 * (Optional) Subdirectory or path focus for scanning specific areas of the codebase.
 * (Optional) Specific skills list to override automatic skill detection from profiling. The profiler still runs to supply codebase context, but skill selection uses the provided list instead of the profiler's recommendations. Accepts multiple skills. Provide as a comma-separated list.
-* (Optional) Target skill: a single OWASP skill name (e.g., `owasp-top-10`). Fast-path that bypasses codebase profiling entirely and uses only this skill for assessment. Use for re-scanning a known skill without profiling overhead. Takes precedence over the specific skills list when both are provided.
+* (Optional) Target skill: a single security skill name (e.g., `owasp-top-10`, `secure-by-design`). Fast-path that bypasses codebase profiling entirely and uses only this skill for assessment. Use for re-scanning a known skill without profiling overhead. Takes precedence over the specific skills list when both are provided.
 * (Optional) Prior scan report path for incremental comparison.
 * (Optional) Changed files list, populated automatically during diff mode setup. Not user-provided.
 * (Optional) Plan document path or content for plan mode analysis. Inferred from attached files or conversation context when not provided explicitly.
@@ -96,7 +96,7 @@ Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk
 
 Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
 
-Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
+Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`) to access vulnerability references. Follow the skill's normative reference links to load vulnerability reference documents.
 
 ### Subagents
 
@@ -114,6 +114,8 @@ Skill resolution: Read the applicable OWASP skill (e.g., `owasp-top-10`, `owasp-
 * owasp-top-10
 * owasp-mcp
 * owasp-infrastructure
+* owasp-cicd
+* secure-by-design
 
 ## Subagent Prompt Templates
 
@@ -121,32 +123,32 @@ Mode-specific prompt templates used by the orchestrator when invoking subagents.
 
 ### Codebase Profiler Prompts
 
-* `audit`: "Profile this codebase for OWASP vulnerability assessment. Identify the technology stack and list all applicable OWASP skills."
-* `diff`: "Profile this codebase for OWASP vulnerability assessment. Scope technology detection to the following changed files.\n\nChanged Files:\n{changed_files_list}\n\nIdentify the technology stack and list applicable OWASP skills relevant to the changed files."
-* `plan`: "Profile the following implementation plan for OWASP vulnerability assessment. Extract technology signals from the plan text and list applicable OWASP skills.\n\nPlan Document:\n{plan_document_content}"
+* `audit`: "Profile this codebase for security vulnerability assessment. Identify the technology stack and list all applicable security skills."
+* `diff`: "Profile this codebase for security vulnerability assessment. Scope technology detection to the following changed files.\n\nChanged Files:\n{changed_files_list}\n\nIdentify the technology stack and list applicable security skills relevant to the changed files."
+* `plan`: "Profile the following implementation plan for security vulnerability assessment. Extract technology signals from the plan text and list applicable security skills.\n\nPlan Document:\n{plan_document_content}"
 
 When a subdirectory focus is provided (audit and diff only), append: "Focus profiling on the following subdirectory: {subdirectory_focus}"
 
 ### Skill Assessor Prompts
 
-* `audit`: "Assess the following OWASP skill against the codebase.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}"
-* `diff`: "Assess the following OWASP skill against the codebase. Scope analysis to the changed files listed below.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}"
-* `plan`: "Assess the following OWASP skill against the implementation plan. Evaluate plan content against vulnerability references and assign plan-mode statuses (RISK, CAUTION, COVERED, NOT_APPLICABLE).\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nPlan Document:\n{plan_document_content}"
+* `audit`: "Assess the following security skill against the codebase.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}"
+* `diff`: "Assess the following security skill against the codebase. Scope analysis to the changed files listed below.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}"
+* `plan`: "Assess the following security skill against the implementation plan. Evaluate plan content against vulnerability references and assign plan-mode statuses (RISK, CAUTION, COVERED, NOT_APPLICABLE).\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nPlan Document:\n{plan_document_content}"
 
 When a subdirectory focus is provided (audit only), append: "Subdirectory Focus: {subdirectory_focus}"
 
 ### Finding Deep Verifier Prompts
 
-* `audit`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
-* `diff`: "Perform deep adversarial verification of all findings listed below for this OWASP skill. Verify every finding in this list within this single invocation. These findings originate from a diff-scoped scan. Search the full repository for evidence, including unchanged code.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
+* `audit`: "Perform deep adversarial verification of all findings listed below for this security skill. Verify every finding in this list within this single invocation.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
+* `diff`: "Perform deep adversarial verification of all findings listed below for this security skill. Verify every finding in this list within this single invocation. These findings originate from a diff-scoped scan. Search the full repository for evidence, including unchanged code.\n\nSkill: {skill_name}\n\nCodebase Profile:\n{codebase_profile}\n\nChanged Files:\n{changed_files_list}\n\nFindings to verify:\n{findings}\n\nReturn one Deep Verification Verdict block per finding."
 
 `{findings}` uses the Finding Serialization Format from the `security-reviewer-formats` skill (see `references/finding-formats.md` in that skill).
 
 ### Report Generator Prompts
 
-* `audit`: "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format.\n\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}"
-* `diff`: "Generate the OWASP vulnerability assessment report following your VULN_REPORT_V1 format. This is a diff-scoped scan of changed files only.\n\nMode: diff\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\n\nChanged Files:\n{changed_files_list}\n\nUse the diff report filename pattern. Include a changed files appendix."
-* `plan`: "Generate the OWASP pre-implementation security risk assessment following your PLAN_REPORT_V1 format.\n\nMode: plan\nPlan Findings:\n{plan_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\nPlan Source: {plan_document_path}\n\nUse the plan report filename pattern. Include risk ratings and implementation guidance."
+* `audit`: "Generate the security vulnerability assessment report following your VULN_REPORT_V1 format.\n\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}"
+* `diff`: "Generate the security vulnerability assessment report following your VULN_REPORT_V1 format. This is a diff-scoped scan of changed files only.\n\nMode: diff\nVerified Findings (using the Verified Findings Collection Format):\n{verified_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\n\nChanged Files:\n{changed_files_list}\n\nUse the diff report filename pattern. Include a changed files appendix."
+* `plan`: "Generate the security pre-implementation risk assessment following your PLAN_REPORT_V1 format.\n\nMode: plan\nPlan Findings:\n{plan_findings}\n\nRepository: {repo_name}\nDate: {report_date}\nSkills assessed: {applicable_skills}\nPlan Source: {plan_document_path}\n\nUse the plan report filename pattern. Include risk ratings and implementation guidance."
 
 When a prior scan report path is provided, append to any prompt: "Prior Report:\n{prior_scan_report_path}"
 
@@ -167,7 +169,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 
 1. Set the report date to today's date.
 2. Determine the scanning mode. When mode is explicitly provided (e.g., `mode=diff`), use the explicit value. If the explicit value is not `audit`, `diff`, or `plan`, display a scan status update: phase "Setup", message "Invalid mode '{mode}'. Supported modes are audit, diff, and plan." Stop the scan. When mode is not explicitly provided, infer from the user's request: keywords like "changes", "branch", "diff", "PR", "pull request", or "compare" suggest `diff` mode; keywords like "plan", "design", "proposal", "architecture", or "RFC" suggest `plan` mode. Default to `audit` when no signal is present.
-3. Display a scan status update: phase "Setup", message "Starting OWASP vulnerability assessment in {mode} mode".
+3. Display a scan status update: phase "Setup", message "Starting security vulnerability assessment in {mode} mode".
 4. Resolve mode-specific inputs before proceeding to the assessment pipeline.
 
 * When mode is `audit`: no additional setup is required. Proceed to Step 1.
@@ -201,7 +203,7 @@ Detect the scanning mode, profile the codebase or plan document, assess applicab
 * Intersect the profiler's recommended skills with the Available Skills list defined in `Orchestrator Constants` above. Only skills present in both lists are applicable.
 * When a specific skills list is provided, override the profiler's skill selection with the provided list. Intersect the provided list with the Available Skills list defined in `Orchestrator Constants` above to validate entries. The profiler still runs to supply codebase profile context.
 * When the profiler's signals for a skill are ambiguous, include the skill. Prefer false-positive inclusion over missed coverage.
-* If no applicable skills remain after intersection, display a scan status update: phase "Profiling", message "No applicable OWASP skills detected for this codebase. Available skills: {available_skills}." Stop the scan.
+* If no applicable skills remain after intersection, display a scan status update: phase "Profiling", message "No applicable security skills detected for this codebase. Available skills: {available_skills}." Stop the scan.
 * Display a scan status update: phase "Profiling", message "Profiling complete. Applicable skills identified."
 
 ### Step 2: Assess Applicable Skills

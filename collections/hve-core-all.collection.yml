@@ -256,6 +256,9 @@ items:
 - path: .github/prompts/security/security-review-llm.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/security/security-review-sbd.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/security-review-web.prompt.md
   kind: prompt
   maturity: experimental
@@ -555,6 +558,9 @@ items:
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
+- path: .github/skills/security/owasp-cicd
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-infrastructure
   kind: skill
   maturity: experimental
@@ -565,6 +571,9 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/security/owasp-top-10
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/secure-by-design
   kind: skill
   maturity: experimental
 - path: .github/skills/security/security-reviewer-formats

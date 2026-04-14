@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-03-28
+ms.date: 2026-04-06
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -25,7 +25,31 @@ The Code Review Standards agent enforces coding conventions through skills, not 
 
 ## How Skill Loading Works
 
-The agent uses a two-layer approach: a built-in catalog for known skills and a scoped search for consumer-authored skills.
+The skill loading path depends on whether the Standards agent is running standalone or under the Code Review Full orchestrator.
+
+### Orchestrated Mode (via Code Review Full)
+
+When the orchestrator dispatches the Standards agent, it provides a `diff-state.json` containing the file extensions from the diff. The Standards agent uses those extensions to discover and load skills itself.
+
+```mermaid
+flowchart LR
+  A["Orchestrator:<br/>write diff-state.json"] --> B["Standards agent:<br/>read extensions"]
+  B --> C["Search skills/<br/>coding-standards/"]
+  C --> D["Load matched skills"]
+  D --> E["Apply checklists"]
+  E --> F["Write JSON findings"]
+```
+
+1. The orchestrator extracts file extensions from the diff during Step 1 and writes them to the `extensions` array in `diff-state.json`.
+2. The Standards agent reads `diff-state.json`, extracts the extensions, and searches `skills/coding-standards/` for matching `SKILL.md` files.
+3. It loads up to 8 matching skills and applies each skill's checklist to the diff.
+4. It writes structured JSON findings for the orchestrator to merge.
+
+Skill discovery is owned entirely by the Standards agent. The orchestrator supplies the extensions; the Standards agent decides which skills to load.
+
+### Standalone Mode
+
+When invoked directly (without an orchestrator), the agent uses a two-layer approach: a built-in catalog for known skills and a scoped search for consumer-authored skills.
 
 ```mermaid
 flowchart LR
@@ -37,15 +61,16 @@ flowchart LR
   F --> G["Produce findings\nciting skill by name"]
 ```
 
+In standalone mode:
+
 1. The agent extracts unique file extensions from the diff's changed-file list.
-2. It looks up extensions in a built-in catalog that maps extensions to skill names and resolves each name to `.github/skills/coding-standards/{name}/SKILL.md`.
-3. It searches `.github/skills/` (not the entire workspace) for additional `SKILL.md` files, reads the `name` and `description` frontmatter from each, and loads those whose description mentions a language or framework present in the diff.
-4. It selects up to 8 skills total (built-in + consumer), preferring those whose domain appears most frequently in the changed files.
-5. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
-6. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
+2. It normalizes each extension to language tokens (for example, `.py` to `python`, `.cs` to `csharp`, `.sh` to `bash`) and searches `skills/coding-standards/` for `SKILL.md` files whose `name` or `description` matches those tokens. Literal extension matches also count.
+3. It selects up to 8 matching skills, preferring those whose domain appears most frequently in the changed files.
+4. It loads the full `SKILL.md` body for each selected skill and applies its checklist to the diff.
+5. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
 
 > [!NOTE]
-> Built-in skills are loaded deterministically by extension match and naming convention; no search or frontmatter parsing required. Consumer skills rely on a scoped search under `.github/skills/` and accurate `description` frontmatter for activation.
+> Both orchestrated and standalone modes use the same skill discovery logic inside the Standards agent. The only difference is the input source: in orchestrated mode, extensions come from `diff-state.json`; in standalone mode, the agent extracts them from the diff itself. Discovery normalizes file extensions to language tokens before matching against skill metadata.
 
 ## Built-in Skills
 
@@ -204,6 +229,7 @@ A frontend team authors `.github/skills/northwind/react-standards/SKILL.md` with
 |-----------------------------|----------------------------------------------------------------|
 | python-foundational skill   | `.github/skills/coding-standards/python-foundational/SKILL.md` |
 | Standards output format     | `docs/templates/standards-review-output-format.md`             |
+| Full review output format   | `docs/templates/full-review-output-format.md`                  |
 | Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
 | Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)       |
 | Contributing skills         | [Contributing: Skills](../../contributing/skills.md)           |

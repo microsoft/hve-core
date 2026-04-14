@@ -146,7 +146,7 @@ Prepare thorough post-incident documentation using the organization's RCA templa
 
 #### RCA Documentation
 
-Use the RCA template located at `docs/templates/rca-template.md` in this repository. This template follows industry best practices including [Google's SRE Postmortem format](https://sre.google/sre-book/example-postmortem/).
+Use the RCA template located at `docs/templates/rca-template.md` if available in this repository, extension or plugin context. If the template is not found, structure the RCA using industry best practices including [Google's SRE Postmortem format](https://sre.google/sre-book/example-postmortem/): Summary, Impact, Root Causes, Trigger, Detection, Resolution, Action Items, Lessons Learned, Timeline.
 
 Key practices:
 

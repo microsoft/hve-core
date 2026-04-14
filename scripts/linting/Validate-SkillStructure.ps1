@@ -491,7 +491,7 @@ function Write-SkillValidationResults {
     }
 
     $jsonOutput = @{
-        timestamp    = (Get-Date -Format 'o')
+        Timestamp    = Get-StandardTimestamp
         totalSkills  = $totalSkills
         skillErrors  = $errorCount
         skillWarnings = $warningCount

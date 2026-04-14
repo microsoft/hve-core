@@ -15,31 +15,32 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 This collection includes agents and prompts for:
 
-- **Security Plan Creation** — Generate threat models and security architecture documents
-- **Security Review** — Evaluate code and architecture for security vulnerabilities
-- **Incident Response** — Build incident response runbooks and playbooks
-- **Risk Assessment** — Evaluate security risks with structured assessment frameworks
-- **Vulnerability Analysis** — Identify and prioritize security vulnerabilities
-- **Root Cause Analysis** — Structured RCA templates and guided analysis workflows
-- **SSSC Planning** — Supply chain security assessment and backlog generation against OpenSSF standards
-- **RAI Planning** — Responsible AI impact assessment and RAI backlog generation
+- **Security Plan Creation** - Generate threat models and security architecture documents
+- **Security Review** - Evaluate code and architecture for security vulnerabilities
+- **Incident Response** - Build incident response runbooks and playbooks
+- **Risk Assessment** - Evaluate security risks with structured assessment frameworks
+- **Vulnerability Analysis** - Identify and prioritize security vulnerabilities
+- **Root Cause Analysis** - Structured RCA templates and guided analysis workflows
+- **SSSC Planning** - Supply chain security assessment and backlog generation against OpenSSF standards
+- **RAI Planning** - Responsible AI impact assessment and RAI backlog generation
 
 Supporting subagents included:
 
-- **Researcher Subagent** — Research subagent using search tools, read tools, fetch web page, github repo, and MCP tools
-- **Codebase Profiler** — Scans the repository to build a technology profile and identify which OWASP skills apply
-- **Finding Deep Verifier** — Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill
-- **Report Generator** — Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report
-- **Skill Assessor** — Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings
+- **Researcher Subagent** - Research subagent using search tools, read tools, fetch web page, github repo, and MCP tools
+- **Codebase Profiler** - Scans the repository to build a technology profile and identify which OWASP skills apply
+- **Finding Deep Verifier** - Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill
+- **Report Generator** - Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report
+- **Skill Assessor** - Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings
 
 Skills included:
 
-- **OWASP Top 10** — OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
-- **OWASP LLM Top 10** — OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
-- **OWASP Agentic Top 10** — OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
+- **OWASP Top 10** - OWASP Top 10 for Web Applications (2025) vulnerability knowledge base
+- **OWASP LLM Top 10** - OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base
+- **OWASP Agentic Top 10** - OWASP Agentic Security Top 10 vulnerability knowledge base for AI agent systems
 - **OWASP MCP Top 10** - OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments
 - **OWASP Infrastructure Top 10** - OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments
-- **Security Reviewer Formats** — Format specifications and data contracts for the security reviewer orchestrator and its subagents
+- **OWASP CI/CD Top 10** - OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments
+- **Security Reviewer Formats** - Format specifications and data contracts for the security reviewer orchestrator and its subagents
 
 ## Install
 
@@ -55,11 +56,11 @@ copilot plugin install security@hve-core
 | sssc-planner          | Guides users through a six-phase assessment of their repository's supply chain security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog referencing reusable workflows from hve-core and microsoft/physical-ai-toolchain.                   |
 | rai-planner           | Responsible AI assessment agent with 5-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core |
 | researcher-subagent   | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                                                       |
-| security-reviewer     | OWASP assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core                                                                                                                                                                            |
-| codebase-profiler     | Scans the repository to build a technology profile and identify which OWASP skills apply to the codebase - Brought to you by microsoft/hve-core                                                                                                                                                    |
-| finding-deep-verifier | Deep adversarial verification of FAIL and PARTIAL findings for a single OWASP skill - Brought to you by microsoft/hve-core                                                                                                                                                                         |
-| report-generator      | Collates verified OWASP skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core                                                                                                                 |
-| skill-assessor        | Assesses a single OWASP skill against the codebase, reading vulnerability references and returning structured findings - Brought to you by microsoft/hve-core                                                                                                                                      |
+| security-reviewer     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core                                                                                                                                                                   |
+| codebase-profiler     | Scans the repository to build a technology profile and identify which security skills apply to the codebase - Brought to you by microsoft/hve-core                                                                                                                                                 |
+| finding-deep-verifier | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill - Brought to you by microsoft/hve-core                                                                                                                                                                      |
+| report-generator      | Collates verified security skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core                                                                                                              |
+| skill-assessor        | Assesses a single security knowledge skill against the codebase, reading vulnerability references and returning structured findings - Brought to you by microsoft/hve-core                                                                                                                         |
 
 ## Commands
 
@@ -72,6 +73,7 @@ copilot plugin install security@hve-core
 | security-review             | Runs an OWASP vulnerability assessment against the current codebase - Brought to you by microsoft/hve-core                               |
 | security-review-llm         | Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context - Brought to you by microsoft/hve-core          |
 | security-review-web         | Runs an OWASP Top 10 web vulnerability assessment without codebase profiling - Brought to you by microsoft/hve-core                      |
+| security-review-sbd         | Runs a Secure by Design principles assessment based on UK and Australian government guidance - Brought to you by microsoft/hve-core      |
 | sssc-capture                | Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode                                         |
 | sssc-from-prd               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                        |
 | sssc-from-brd               | Start an SSSC assessment from existing BRD artifacts using the SSSC Planner agent                                                        |
@@ -112,6 +114,8 @@ copilot plugin install security@hve-core
 | owasp-agentic             | OWASP Agentic Security Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in AI agent systems - Brought to you by microsoft/hve-core.                                                                                                                                                                                                                                   |
 | owasp-mcp                 | OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments - Brought to you by microsoft/hve-core.                                                                                                                                                                                                                             |
 | owasp-infrastructure      | OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments - Brought to you by microsoft/hve-core.                                                                                                                                                                                                              |
+| owasp-cicd                | OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments - Brought to you by microsoft/hve-core.                                                                                                                                                                                                   |
+| secure-by-design          | Secure by Design principles knowledge base for assessing adherence to security-first design, development, and deployment practices across the software lifecycle - Brought to you by microsoft/hve-core.                                                                                                                                                                                                            |
 | security-reviewer-formats | Format specifications and data contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core.                                                                                                                                                                                                                                                                           |
 | pr-reference              | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. - Brought to you by microsoft/hve-core |
 

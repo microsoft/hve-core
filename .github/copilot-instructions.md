@@ -71,6 +71,18 @@ By convention, skills are self-contained packages organized under `.github/skill
 * Contributing (`docs/contributing/`) - Guidelines for instructions, prompts, agents, and AI artifacts.
 * Templates (`docs/templates/`) - Templates for custom agents, instructions, and prompts.
 
+### Documentation Templates
+
+Templates for agent and prompt outputs are stored in `docs/templates/`:
+
+* `docs/templates/full-review-output-format.md` - Code review full output format.
+* `docs/templates/standards-review-output-format.md` - Standards review output format.
+* `docs/templates/engineering-fundamentals.md` - Engineering fundamentals reference.
+* `docs/templates/brd-template.md` - Business requirements document template.
+* `docs/templates/user-journey-template.md` - User journey template.
+* `docs/templates/adr-template-solutions.md` - Architecture decision record template.
+* `docs/templates/rca-template.md` - Root cause analysis template.
+
 ### Copilot Tracking
 
 The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow artifacts:
@@ -117,6 +129,52 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Artifacts at the root of `.github/agents/`, `.github/instructions/`, `.github/prompts/`, or `.github/skills/` (without a subdirectory) are repo-specific and excluded from collection manifests, plugin generation, and extension packaging. Validation enforces this rule.
 
 PowerShell scripts follow PSScriptAnalyzer rules from `scripts/linting/PSScriptAnalyzer.psd1` and include proper comment-based help. Validation runs via `npm run lint:ps` with results output to `logs/`.
+
+### Commit Message Scopes
+
+Commit message scopes map to repository directories:
+
+* `(agents)` = `.github/agents/`
+* `(prompts)` = `.github/prompts/`
+* `(instructions)` = `.github/instructions/`
+* `(skills)` = `.github/skills/`
+* `(templates)` = `.github/ISSUE_TEMPLATE/`
+* `(workflows)` = `.github/workflows/`
+* `(extension)` = `extension/`
+* `(scripts)` = `scripts/`
+* `(docs)` = `docs/`
+* `(collections)` = `collections/`
+* `(adrs)` = Architecture Decision Records
+* `(settings)` = Configuration files (`.vscode/`, linter configs)
+* `(build)` = Build system and dependencies
+* `(ci)` = CI/CD configuration changes
+
+### Frontmatter Schema Validation
+
+Frontmatter schemas are stored in `scripts/linting/schemas/`. Schema-to-file mapping is defined in `scripts/linting/schemas/schema-mapping.json`. Run `npm run validate:frontmatter` or `pwsh scripts/linting/Validate-MarkdownFrontmatter.ps1` to validate.
+
+### PowerShell Conventions
+
+* Copyright header validation: `scripts/linting/Test-CopyrightHeaders.ps1` (also used by bash scripts).
+* Shared CI helpers module: `scripts/lib/Modules/CIHelpers.psm1`.
+* Test directories follow the pattern `scripts/tests/{category}/Test-*.Tests.ps1`.
+* Test organization mirrors source: `scripts/linting/` tests live in `scripts/tests/linting/`, `scripts/security/` tests live in `scripts/tests/security/`.
+
+### Documentation Operations
+
+The doc-ops agent scans these directories for documentation coverage analysis:
+
+* `docs/` - Primary documentation tree.
+* `scripts/` - Script-level markdown files and inline documentation.
+* `extension/` - Extension packaging documentation.
+* `.github/` - Agent, prompt, instruction, and skill documentation.
+
+Validation commands for documentation quality:
+
+* `npm run lint:md` - Markdown linting.
+* `npm run lint:frontmatter` - Frontmatter validation.
+* `npm run lint:md-links` - Markdown link checking.
+* Parse JSON output from `logs/` when available for structured validation results.
 <!-- </script-operations> -->
 
 <!-- <coding-agent-environment> -->
@@ -126,7 +184,7 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 
 ### Pre-installed Tools
 
-* Node.js 20 with npm dependencies from `package.json`
+* Node.js 24 with npm dependencies from `package.json`
 * Python 3.11
 * uv and uvx for Python package management and skill dependency sync
 * PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
