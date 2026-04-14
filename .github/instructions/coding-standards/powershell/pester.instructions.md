@@ -5,7 +5,7 @@ applyTo: '**/*.Tests.ps1'
 
 # Pester Testing Instructions
 
-Pester 5.x is the testing framework for all PowerShell code. Tests run exclusively through `npm run test:ps`. Never invoke Pester or test scripts directly.
+Pester 5.x is the testing framework for all PowerShell code. Run tests through the repository's test runner (check `package.json` for a test script, or invoke `Invoke-Pester` directly if no runner is configured). Follow the repository's conventions for test execution.
 
 ## Test File Naming
 
@@ -19,25 +19,18 @@ Test files use a `.Tests.ps1` suffix matching the production file name:
 
 ## Test File Location
 
-**Mirror directory pattern**: Test files in `scripts/tests/` mirror the production `scripts/` layout. Each production subdirectory has a corresponding test subdirectory:
+**Mirror directory pattern**: Place test files in a `tests/` directory that mirrors the production directory layout. Each production subdirectory has a corresponding test subdirectory. Discover the repository's test directory structure by examining existing test files.
 
-| Production directory   | Test directory               |
-|------------------------|------------------------------|
-| `scripts/collections/` | `scripts/tests/collections/` |
-| `scripts/linting/`     | `scripts/tests/linting/`     |
-| `scripts/security/`    | `scripts/tests/security/`    |
-| `scripts/lib/`         | `scripts/tests/lib/`         |
-
-**Co-located skill tests**: Skills place tests inside the skill directory rather than the mirror tree:
+**Co-located tests**: Self-contained packages (such as skills or plugins) place tests inside the package directory rather than the mirror tree:
 
 ```text
-.github/skills/shared/pr-reference/
+package-root/
 ├── scripts/
-│   ├── generate.ps1
-│   └── shared.psm1
+│   ├── action.ps1
+│   └── helpers.psm1
 └── tests/
-    ├── generate.Tests.ps1
-    └── shared.Tests.ps1
+    ├── action.Tests.ps1
+    └── helpers.Tests.ps1
 ```
 
 ## Test File Header
@@ -244,20 +237,23 @@ AfterAll {
 
 ## Running Tests
 
-Run all tests:
+Check `package.json` for a test runner script (common name: `test:ps`). If a runner is configured, use it to execute tests:
 
 ```bash
+# Example: run all tests via the repository's test runner
 npm run test:ps
+
+# Example: run tests for a specific directory or file
+npm run test:ps -- -TestPath "path/to/tests/"
 ```
 
-Run tests for a specific directory or file:
+If no runner is configured, invoke Pester directly:
 
-```bash
-npm run test:ps -- -TestPath "scripts/tests/linting/"
-npm run test:ps -- -TestPath "scripts/tests/security/Test-DependencyPinning.Tests.ps1"
+```powershell
+Invoke-Pester -Path './tests/' -Output Detailed
 ```
 
-After execution, check `logs/pester-summary.json` for overall status and `logs/pester-failures.json` for failure details.
+After execution, check the repository's log or output directory for structured test results (such as summary and failure JSON files) when available.
 
 ## Complete Test Example
 

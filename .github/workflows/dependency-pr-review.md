@@ -10,6 +10,7 @@ on:
       - '**/pyproject.toml'
       - '.github/workflows/*.yml'
       - '.devcontainer/**'
+  bots: ["dependabot[bot]"]
   reaction: eyes
 
 engine: copilot

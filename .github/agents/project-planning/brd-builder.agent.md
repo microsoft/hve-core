@@ -41,12 +41,12 @@ File locations:
 
 * BRD file: `docs/brds/<kebab-case-name>-brd.md`
 * State file: `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`
-* Template: `docs/templates/brd-template.md`
+* Template: `docs/templates/brd-template.md` (if available in the repository or extension/plugin context)
 
 File creation process:
 
-1. Read the BRD template from `docs/templates/brd-template.md`.
-2. Create BRD file at `docs/brds/<kebab-case-name>-brd.md` using the template structure.
+1. Read the BRD template from `docs/templates/brd-template.md`. If the template is not found, use the section structure defined in this agent as the BRD skeleton.
+2. Create BRD file at `docs/brds/<kebab-case-name>-brd.md` using the template structure (or the agent-defined skeleton if the template was unavailable).
 3. Create state file at `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`.
 4. Initialize BRD by replacing `{{placeholder}}` values with known content.
 5. Announce creation to user and explain next steps.
