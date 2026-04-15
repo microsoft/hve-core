@@ -23,9 +23,9 @@ estimated_reading_time: 8
 | Phase | Name                        | NIST AI RMF      | Key output                                                                      | State fields updated                                    |
 |-------|-----------------------------|------------------|---------------------------------------------------------------------------------|---------------------------------------------------------|
 | 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                        | `currentPhase`, `entryMode`, `securityPlanRef`          |
-| 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`, `suggestedDepthTier`              |
+| 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`                                    |
 | 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                                      | `standardsMapped`                                       |
-| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                                | `raiRiskSurfaceStarted`, `raiThreatCount`               |
+| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                                | `securityModelAnalysisStarted`, `raiThreatCount`        |
 | 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`        | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
 | 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                          | `handoffGenerated`                                      |
 
@@ -111,7 +111,6 @@ Each indicator uses its own assessment method (binary, categorical, or continuou
 |----------------------|--------|------------------------------------|
 | `currentPhase`       | 2      | 3                                  |
 | `riskClassification` | null   | risk classification results object |
-| `suggestedDepthTier` | null   | Basic, Standard, or Comprehensive  |
 
 ## Phase 3: RAI Standards Mapping
 
@@ -206,8 +205,8 @@ Each threat is assigned a concern level based on contextual analysis rather than
 
 | Field                   | Before | After                       |
 |-------------------------|--------|-----------------------------|
-| `currentPhase`          | 4      | 5                           |
-| `raiRiskSurfaceStarted` | false  | true                        |
+| `currentPhase`              | 4      | 5                           |
+| `securityModelAnalysisStarted` | false  | true                        |
 | `raiThreatCount`        | 0      | count of identified threats |
 
 ## Phase 5: RAI Impact Assessment
@@ -304,8 +303,8 @@ All Phase 6 artifacts are human-facing and include the AI-content transparency n
 
 | Field              | Before | After        |
 |--------------------|--------|--------------|
-| `currentPhase`     | 6      | 6 (terminal) |
-| `handoffGenerated` | false  | true         |
+| `currentPhase`     | 6      | 6 (terminal)                         |
+| `handoffGenerated` | `{ "ado": false, "github": false }` | `{ "ado": true, "github": true }` |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

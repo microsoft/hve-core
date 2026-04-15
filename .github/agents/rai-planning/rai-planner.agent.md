@@ -180,13 +180,6 @@ State JSON schema for `state.json`:
       "sourceDescription": "",
       "processedInPhase": null,
       "status": "pending | processed | error"
-    },
-    {
-      "filePath": ".copilot-tracking/rai-plans/references/provider-usage-policy.md",
-      "type": "code-of-conduct",
-      "sourceDescription": "AI Provider Usage Policy",
-      "processedInPhase": 1,
-      "status": "processed"
     }
   ],
   "nextActions": [],

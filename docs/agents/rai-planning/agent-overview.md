@@ -73,26 +73,30 @@ All assessment state persists under `.copilot-tracking/rai-plans/{project-slug}/
 
 ### State Fields
 
-| Field                       | Type           | Purpose                                                                 |
-|-----------------------------|----------------|-------------------------------------------------------------------------|
-| `projectSlug`               | string         | Kebab-case project identifier                                           |
-| `raiPlanFile`               | string         | Path to the RAI plan markdown file                                      |
-| `currentPhase`              | number         | Current phase (1-6)                                                     |
-| `entryMode`                 | string         | `capture`, `from-prd`, or `from-security-plan`                          |
-| `securityPlanRef`           | string or null | Path to security plan state when using `from-security-plan`             |
-| `assessmentDepth`           | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)               |
-| `riskClassification`        | object         | Phase 2 risk classification results                                     |
-| `suggestedDepthTier`        | string         | Phase 2 depth tier assignment (`Basic`, `Standard`, or `Comprehensive`) |
-| `standardsMapped`           | boolean        | Whether Phase 3 mapping is complete                                     |
-| `raiRiskSurfaceStarted`     | boolean        | Whether Phase 4 analysis has begun                                      |
-| `raiThreatCount`            | number         | Running count of identified RAI threats                                 |
-| `impactAssessmentGenerated` | boolean        | Whether Phase 5 assessment is complete                                  |
-| `evidenceRegisterComplete`  | boolean        | Whether evidence register is finalized                                  |
-| `handoffGenerated`          | boolean        | Whether Phase 6 backlog handoff is complete                             |
-| `gateResults`               | object         | Gate outcomes for threat coverage                                       |
-| `referencesProcessed`       | array          | Files that have been read and incorporated                              |
-| `nextActions`               | array          | Pending action items for the current phase                              |
-| `userPreferences`           | object         | User-specified preferences for interaction and output                   |
+| Field                          | Type           | Purpose                                                                          |
+|--------------------------------|----------------|----------------------------------------------------------------------------------|
+| `projectSlug`                  | string         | Kebab-case project identifier                                                    |
+| `raiPlanFile`                  | string         | Path to the RAI plan markdown file                                               |
+| `currentPhase`                 | number         | Current phase (1-6)                                                              |
+| `entryMode`                    | string         | `capture`, `from-prd`, or `from-security-plan`                                   |
+| `disclaimerShownAt`            | string or null | ISO 8601 timestamp when the disclaimer was displayed                             |
+| `securityPlanRef`              | string or null | Path to security plan state when using `from-security-plan`                      |
+| `assessmentDepth`              | string         | Assessment tier (`Basic`, `Standard`, or `Comprehensive`)                        |
+| `riskClassification`           | object         | Phase 2 risk classification results including `suggestedDepthTier`               |
+| `standardsMapped`              | boolean        | Whether Phase 3 mapping is complete                                              |
+| `securityModelAnalysisStarted` | boolean        | Whether Phase 4 analysis has begun                                               |
+| `raiThreatCount`               | number         | Running count of identified RAI threats                                          |
+| `impactAssessmentGenerated`    | boolean        | Whether Phase 5 assessment is complete                                           |
+| `evidenceRegisterComplete`     | boolean        | Whether evidence register is finalized                                           |
+| `handoffGenerated`             | object         | Dual-format handoff status (`{ "ado": false, "github": false }`)                |
+| `gateResults`                  | object         | Gate outcomes for threat coverage                                                |
+| `runningObservations`          | array          | Cross-phase observation log with phase number, observation text, and flag level  |
+| `principleTracker`             | object         | Per-principle coverage status, threat counts, and open observations              |
+| `referencesProcessed`          | array          | Files that have been read and incorporated                                       |
+| `nextActions`                  | array          | Pending action items for the current phase                                       |
+| `signingRequested`             | boolean        | Whether artifact signing was requested                                           |
+| `signingManifestPath`          | string or null | Path to the signing manifest file                                                |
+| `userPreferences`              | object         | User-specified preferences for interaction and output                            |
 
 ### Six-Step State Protocol
 
