@@ -108,22 +108,40 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
     }
   },
   "riskClassification": {
-    "framework": "nist-ai-rmf-1.0",
-    "replaceDefaultFramework": false,
-    "replaceDefaultIndicators": false,
-    "customFrameworkSource": null,
-    "screeningCompleted": false,
-    "indicatorResults": {},
-    "suggestedDepthTier": null,
-    "assessmentDepth": null,
-    "prohibitedUsesGateResult": null,
-    "activeFrameworkProfile": {
-      "name": "NIST AI RMF 1.0",
-      "principleCount": 7,
-      "principleKeys": ["validReliable", "safe", "secureResilient", "accountableTransparent", "explainableInterpretable", "privacyEnhanced", "fairBiasManaged"],
-      "hasPhaseMapping": true,
-      "hasSubcategories": true
-    }
+    "framework": {
+      "id": "nist-ai-rmf",
+      "name": "NIST AI Risk Management Framework",
+      "version": "1.0",
+      "source": "rai-standards.instructions.md",
+      "replaceDefaultIndicators": false,
+      "replaceDefaultFramework": false
+    },
+    "indicators": {
+      "safety_reliability": {
+        "method": "binary",
+        "nistSource": ["MS-2.5", "MS-2.6"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "rights_fairness_privacy": {
+        "method": "categorical",
+        "nistSource": ["MS-2.8", "MS-2.10", "MS-2.11"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "security_explainability": {
+        "method": "continuous",
+        "nistSource": ["MS-2.7", "MS-2.9"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      }
+    },
+    "activatedCount": 0,
+    "riskScore": null,
+    "suggestedDepthTier": "Basic"
   },
   "runningObservations": [
     { "phase": 1, "observation": "", "flagLevel": "noted" }
@@ -163,14 +181,14 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
 }
 ```
 
-### Active Framework Profile
+### Framework Object
 
-The `activeFrameworkProfile` object inside `riskClassification` is computed during Phase 1 (reference content discovery) or Phase 2 (risk classification) and describes the evaluation framework in use for the current assessment.
+The `framework` object inside `riskClassification` identifies the evaluation framework in use for the current assessment and is populated during Phase 1 (reference content discovery) or Phase 2 (risk classification).
 
-* When `replaceDefaultFramework` is `false` (default), the profile reflects NIST AI RMF 1.0: `name` = "NIST AI RMF 1.0", `principleCount` = 7, `principleKeys` = the seven camelCase trustworthiness characteristic keys, `hasPhaseMapping` = `true`, `hasSubcategories` = `true`.
-* When `replaceDefaultFramework` is `true`, the profile is derived from the user-supplied custom framework document processed by the Researcher Subagent: `name` = the custom framework's title, `principleCount` and `principleKeys` = extracted from the custom framework, `hasPhaseMapping` and `hasSubcategories` = `true` only if the custom framework includes explicit phase-to-principle or subcategory mappings.
+* When `replaceDefaultFramework` is `false` (default), the object reflects NIST AI RMF: `id` = `"nist-ai-rmf"`, `name` = `"NIST AI Risk Management Framework"`, `version` = `"1.0"`, `source` = `"rai-standards.instructions.md"`.
+* When `replaceDefaultFramework` is `true`, the object is derived from the user-supplied custom framework document processed by the Researcher Subagent: `id`, `name`, `version`, and `source` are extracted from the custom framework, and `replaceDefaultIndicators` may also be set to `true` if the custom framework supplies its own indicator definitions.
 
-Downstream phases reference `activeFrameworkProfile` to determine which characteristic names, phase mappings, and subcategory references to use in activities, artifacts, and exit criteria. Subagents receive the profile as context so they can adapt their outputs to the active framework.
+Downstream phases reference `riskClassification.framework` to determine which framework name, version, phase mappings, and characteristic references to use in activities, artifacts, and exit criteria. Subagents receive the framework identity as context so they can adapt their outputs to the active framework.
 
 ### Six-Step State Protocol
 
@@ -199,7 +217,7 @@ When no `state.json` exists for the project slug:
 Phase advancement updates `currentPhase` and sets phase-specific completion flags:
 
 * Phase 1 → 2: AI system scoping confirmed.
-* Phase 2 → 3: Risk classification confirmed. `riskClassification` updated, `screeningCompleted: true`, depth tier set.
+* Phase 2 → 3: Risk classification confirmed. `riskClassification.indicators` evaluated, `activatedCount` and `suggestedDepthTier` set.
 * Phase 3 → 4: `standardsMapped: true`, `principleTracker` entries updated with `mappedInPhase3` and `suggestedStatus`.
 * Phase 4 → 5: `securityModelAnalysisStarted: true`, `raiThreatCount` updated.
 * Phase 5 → 6: `impactAssessmentGenerated: true`, `evidenceRegisterComplete: true`.
@@ -308,7 +326,7 @@ Display the disclaimer blockquote and attribution notices to the user at the beg
 1. Display the disclaimer blockquote: "This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal review and decision-making. All RAI assessments, risk classification screenings, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate legal and compliance reviewers before use. Outputs from this tool do not constitute legal approval, compliance certification, or regulatory sign-off."
 2. Display the framework attribution based on the active framework:
    * When `replaceDefaultFramework` is `false` (default): "This assessment uses the NIST AI Risk Management Framework 1.0 (U.S. Government work, not subject to copyright protection in the United States) as the default evaluation framework."
-   * When `replaceDefaultFramework` is `true`: "This assessment uses {activeFrameworkProfile.name}, a custom evaluation framework supplied by the user. The default NIST AI RMF 1.0 framework has been replaced." (where `{activeFrameworkProfile.name}` is the value of `riskClassification.activeFrameworkProfile.name` from `state.json`)
+   * When `replaceDefaultFramework` is `true`: "This assessment uses {framework.name}, a custom evaluation framework supplied by the user. The default NIST AI RMF 1.0 framework has been replaced." (where `{framework.name}` is the value of `riskClassification.framework.name` from `state.json`)
 3. Display both notices before beginning any phase work or asking any questions.
 
 ### Exit Point Reminder

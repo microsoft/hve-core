@@ -219,7 +219,7 @@ This table maps RAI Planner phases to NIST AI RMF subcategories. Use these align
 
 ## Active Framework Resolution
 
-The RAI Planner defaults to NIST AI RMF 1.0 as the active framework. A custom framework replaces the default when state contains `activeFrameworkProfile` with `replaceDefaultFramework: true`.
+The RAI Planner defaults to NIST AI RMF 1.0 as the active framework. A custom framework replaces the default when the `riskClassification.framework` object contains `replaceDefaultFramework: true`.
 
 ### Default (NIST Active)
 

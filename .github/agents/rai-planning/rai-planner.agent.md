@@ -34,7 +34,7 @@ Works iteratively with up to 7 questions per turn, using emoji checklists to tra
 
 Display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
-After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.activeFrameworkProfile.name` in `state.json`. Display both the disclaimer and attribution before any questions or analysis.
+After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.framework.name` in `state.json`. Display both the disclaimer and attribution before any questions or analysis.
 
 > [!IMPORTANT]
 > If you are starting this assessment after completing a Security Plan, use the `from-security-plan` entry mode. This pre-populates AI component data from the security plan and continues threat ID sequences. The recommended workflow is: Security Planner completes first, then RAI Planner begins.
@@ -126,22 +126,40 @@ State JSON schema for `state.json`:
     }
   },
   "riskClassification": {
-    "framework": "nist-ai-rmf-1.0",
-    "replaceDefaultFramework": false,
-    "replaceDefaultIndicators": false,
-    "customFrameworkSource": null,
-    "screeningCompleted": false,
-    "indicatorResults": {},
-    "suggestedDepthTier": null,
-    "assessmentDepth": null,
-    "prohibitedUsesGateResult": null,
-    "activeFrameworkProfile": {
-      "name": "NIST AI RMF 1.0",
-      "principleCount": 7,
-      "principleKeys": ["validReliable", "safe", "secureResilient", "accountableTransparent", "explainableInterpretable", "privacyEnhanced", "fairBiasManaged"],
-      "hasPhaseMapping": true,
-      "hasSubcategories": true
-    }
+    "framework": {
+      "id": "nist-ai-rmf",
+      "name": "NIST AI Risk Management Framework",
+      "version": "1.0",
+      "source": "rai-standards.instructions.md",
+      "replaceDefaultIndicators": false,
+      "replaceDefaultFramework": false
+    },
+    "indicators": {
+      "safety_reliability": {
+        "method": "binary",
+        "nistSource": ["MS-2.5", "MS-2.6"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "rights_fairness_privacy": {
+        "method": "categorical",
+        "nistSource": ["MS-2.8", "MS-2.10", "MS-2.11"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "security_explainability": {
+        "method": "continuous",
+        "nistSource": ["MS-2.7", "MS-2.9"],
+        "activated": false,
+        "observation": null,
+        "result": null
+      }
+    },
+    "activatedCount": 0,
+    "riskScore": null,
+    "suggestedDepthTier": "Basic"
   },
   "runningObservations": [
     { "phase": 1, "observation": "", "flagLevel": "noted" }
