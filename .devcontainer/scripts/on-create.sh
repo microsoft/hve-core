@@ -35,7 +35,7 @@ main() {
   curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
 
   echo "Checking actionlint tarball integrity..."
-  if ! echo "${ACTIONLINT_SHA256} /tmp/actionlint.tar.gz" | sha256sum -c --quiet -; then
+  if ! echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for actionlint tarball" >&2
     rm /tmp/actionlint.tar.gz
     exit 1
@@ -68,7 +68,7 @@ main() {
   curl -sSfL "${GITHUB_RELEASES_URL}/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GITLEAKS_ARCH}.tar.gz" -o /tmp/gitleaks.tar.gz
   
   echo "Checking gitleaks tarball integrity..."
-  if ! echo "${GITLEAKS_SHA256} /tmp/gitleaks.tar.gz" | sha256sum -c --quiet -; then
+  if ! echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for gitleaks tarball" >&2
     rm /tmp/gitleaks.tar.gz
     exit 1
@@ -91,7 +91,7 @@ main() {
   curl -sSfL "${GITHUB_RELEASES_URL}/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-${COSIGN_ARCH}" -o /tmp/cosign
 
   echo "Checking cosign binary integrity..."
-  if ! echo "${COSIGN_SHA256} /tmp/cosign" | sha256sum -c --quiet -; then
+  if ! echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for cosign binary" >&2
     rm /tmp/cosign
     exit 1
@@ -115,7 +115,7 @@ main() {
   curl -sSfL "${GITHUB_RELEASES_URL}/astral-sh/uv/releases/download/${UV_VERSION}/uv-${UV_ARCH}.tar.gz" -o /tmp/uv.tar.gz
 
   echo "Checking uv tarball integrity..."
-  if ! echo "${UV_SHA256} /tmp/uv.tar.gz" | sha256sum -c --quiet -; then
+  if ! echo "${UV_SHA256}  /tmp/uv.tar.gz" | sha256sum -c --quiet -; then
     echo "ERROR: SHA256 checksum verification failed for uv tarball" >&2
     rm -f /tmp/uv.tar.gz
     exit 1

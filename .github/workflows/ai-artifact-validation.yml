@@ -49,10 +49,8 @@ jobs:
           if-no-files-found: ignore
 
       - name: Check results
-        if: "!inputs.soft-fail"
+        if: always() && steps.validate.outcome == 'failure' && !inputs.soft-fail
         shell: pwsh
         run: |
-          if ($env:AI_ARTIFACT_VALIDATION_FAILED -eq 'true') {
-            Write-Error "AI artifact validation found violations"
-            exit 1
-          }
+          Write-Error "AI artifact validation found violations — check uploaded results for details"
+          exit 1

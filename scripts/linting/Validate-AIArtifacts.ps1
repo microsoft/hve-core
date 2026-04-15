@@ -1,16 +1,43 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿#!/usr/bin/env pwsh
+# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
-# Validate-AIArtifacts.ps1
-#
-# Purpose: Validates AI artifact footer and disclaimer presence in instruction templates
-# Author: HVE Core Team
-#
-# Reads footer-with-review.yml and disclaimers.yml config files as the single source
-# of truth, then scans instruction files for required footer text based on artifact
-# classification rules.
-
 #Requires -Version 7.0
+
+<#
+.SYNOPSIS
+    Validates AI artifact footer and disclaimer presence in instruction templates.
+
+.DESCRIPTION
+    Reads footer-with-review.yml and disclaimers.yml config files as the single source
+    of truth, then scans instruction files for required footer text based on artifact
+    classification rules. Outputs results as JSON and sets CI environment variables on
+    failure.
+
+.PARAMETER Paths
+    Directories to scan for instruction files. Defaults to '.github/instructions'.
+
+.PARAMETER ExcludePaths
+    Directories to exclude from scanning.
+
+.PARAMETER FooterConfigPath
+    Path to the footer-with-review.yml config file.
+
+.PARAMETER DisclaimerConfigPath
+    Path to the disclaimers.yml config file.
+
+.PARAMETER FailOnMissing
+    When specified, treats missing footers and disclaimers as validation failures.
+
+.PARAMETER OutputPath
+    Path for the JSON results file. Defaults to 'logs/ai-artifact-results.json'.
+
+.EXAMPLE
+    ./Validate-AIArtifacts.ps1 -FailOnMissing
+
+.EXAMPLE
+    ./Validate-AIArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
+#>
 
 [CmdletBinding()]
 param(

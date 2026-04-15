@@ -80,6 +80,7 @@ function Get-ArtifactHash {
 #endregion
 
 #region Main Execution
+if ($MyInvocation.InvocationName -ne '.') {
 
 $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
 
@@ -177,3 +178,6 @@ if ($IncludeCosign) {
 #endregion
 
 Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
+
+}
+#endregion Main Execution
