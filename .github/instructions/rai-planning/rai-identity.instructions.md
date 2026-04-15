@@ -91,6 +91,7 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
   "raiPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
+  "disclaimerShownAt": null,
   "securityPlanRef": null,
   "assessmentDepth": "standard",
   "standardsMapped": false,
@@ -229,22 +230,24 @@ Seven rules govern question flow across all phases:
 
 ### Resume Protocol
 
-Four-step resume when returning to an existing assessment:
+Five-step resume when returning to an existing assessment:
 
 1. Read `state.json` from the project slug directory.
-2. Display the disclaimer blockquote and attribution notices per the Disclaimer and Attribution Protocol.
-3. Display current phase progress and checklist status. Summarize completed phases and remaining work.
-4. Continue from the last incomplete action.
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement from the agent definition verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Display current phase progress and checklist status.
+4. Summarize completed phases and remaining work.
+5. Continue from the last incomplete action.
 
 ### Post-Summarization Recovery
 
-Five-step recovery when conversation context is compacted:
+Six-step recovery when conversation context is compacted:
 
 1. Read `state.json` for project slug and current phase.
-2. Read the RAI plan file referenced in `raiPlanFile`.
-3. Reconstruct context from existing artifacts: system definition pack, standards mapping, security model addendum, control surface catalog, evidence register, and tradeoffs.
-4. Identify the next incomplete task within the current phase.
-5. Display the disclaimer blockquote and attribution notices per the Disclaimer and Attribution Protocol, then resume with a brief summary of recovered state and the next action.
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement from the agent definition verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Read the RAI plan file referenced in `raiPlanFile`.
+4. Reconstruct context from existing artifacts: system definition pack, standards mapping, security model addendum, control surface catalog, evidence register, and tradeoffs.
+5. Identify the next incomplete task within the current phase.
+6. Resume with a brief summary of recovered state and the next action.
 
 ## Error Handling
 
