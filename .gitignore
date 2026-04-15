@@ -40,6 +40,9 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Binary seed / corpus files
+*.bin
+
 # Build results on 'Bin' directories
 **/[Bb]in/*
 # Uncomment if you have tasks that rely on *.refresh files to move binaries
