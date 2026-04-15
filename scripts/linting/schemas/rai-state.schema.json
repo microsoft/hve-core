@@ -1,0 +1,464 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/rai-state.schema.json",
+  "title": "RAI Planner State Schema",
+  "description": "Schema for RAI Planner state.json files under .copilot-tracking/rai-plans/{project-slug}/",
+  "type": "object",
+  "required": [
+    "projectSlug",
+    "raiPlanFile",
+    "currentPhase",
+    "entryMode",
+    "assessmentDepth",
+    "standardsMapped",
+    "securityModelAnalysisStarted",
+    "raiThreatCount",
+    "impactAssessmentGenerated",
+    "evidenceRegisterComplete",
+    "handoffGenerated",
+    "gateResults",
+    "riskClassification",
+    "runningObservations",
+    "principleTracker",
+    "referencesProcessed",
+    "nextActions",
+    "signingRequested",
+    "userPreferences"
+  ],
+  "properties": {
+    "projectSlug": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case project identifier used as the directory name"
+    },
+    "raiPlanFile": {
+      "type": "string",
+      "description": "Relative path to the RAI plan markdown file"
+    },
+    "currentPhase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "description": "Current assessment phase (1-6)"
+    },
+    "entryMode": {
+      "type": "string",
+      "enum": ["capture", "from-prd", "from-security-plan"],
+      "description": "How the assessment was initiated"
+    },
+    "disclaimerShownAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when disclaimer was displayed, or null if not yet shown"
+    },
+    "securityPlanRef": {
+      "type": ["string", "null"],
+      "description": "Path to the source security plan when entryMode is from-security-plan"
+    },
+    "assessmentDepth": {
+      "type": "string",
+      "enum": ["basic", "standard", "comprehensive"],
+      "description": "Depth tier for the assessment determined by risk classification"
+    },
+    "standardsMapped": {
+      "type": "boolean",
+      "description": "Whether Phase 3 standards mapping is complete"
+    },
+    "securityModelAnalysisStarted": {
+      "type": "boolean",
+      "description": "Whether Phase 4 security model analysis has begun"
+    },
+    "raiThreatCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of RAI-specific threats identified in Phase 4"
+    },
+    "impactAssessmentGenerated": {
+      "type": "boolean",
+      "description": "Whether Phase 5 impact assessment has been generated"
+    },
+    "evidenceRegisterComplete": {
+      "type": "boolean",
+      "description": "Whether Phase 5 evidence register is complete"
+    },
+    "handoffGenerated": {
+      "type": "object",
+      "required": ["ado", "github"],
+      "properties": {
+        "ado": {
+          "type": "boolean",
+          "description": "Whether ADO backlog handoff has been generated"
+        },
+        "github": {
+          "type": "boolean",
+          "description": "Whether GitHub Issues backlog handoff has been generated"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Platform-specific handoff generation status"
+    },
+    "gateResults": {
+      "type": "object",
+      "required": ["prohibitedUsesGate"],
+      "properties": {
+        "prohibitedUsesGate": {
+          "$ref": "#/$defs/prohibitedUsesGate"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Phase gate evaluation results"
+    },
+    "riskClassification": {
+      "$ref": "#/$defs/riskClassification"
+    },
+    "runningObservations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observation"
+      },
+      "description": "Phase-keyed observations accumulated during the assessment"
+    },
+    "principleTracker": {
+      "type": "object",
+      "required": [
+        "validReliable",
+        "safe",
+        "secureResilient",
+        "accountableTransparent",
+        "explainableInterpretable",
+        "privacyEnhanced",
+        "fairBiasManaged"
+      ],
+      "properties": {
+        "validReliable": { "$ref": "#/$defs/principleEntry" },
+        "safe": { "$ref": "#/$defs/principleEntry" },
+        "secureResilient": { "$ref": "#/$defs/principleEntry" },
+        "accountableTransparent": { "$ref": "#/$defs/principleEntry" },
+        "explainableInterpretable": { "$ref": "#/$defs/principleEntry" },
+        "privacyEnhanced": { "$ref": "#/$defs/principleEntry" },
+        "fairBiasManaged": { "$ref": "#/$defs/principleEntry" }
+      },
+      "additionalProperties": false,
+      "description": "NIST AI RMF trustworthiness characteristic tracker"
+    },
+    "referencesProcessed": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/referenceEntry"
+      },
+      "description": "User-supplied reference content processed during the assessment"
+    },
+    "nextActions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Pending actions for the current phase"
+    },
+    "signingRequested": {
+      "type": "boolean",
+      "description": "Whether artifact signing was requested by the user"
+    },
+    "signingManifestPath": {
+      "type": ["string", "null"],
+      "description": "Path to the signing manifest file, or null if signing not requested"
+    },
+    "userPreferences": {
+      "$ref": "#/$defs/userPreferences"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "prohibitedUsesGate": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["pending", "passed", "failed"],
+          "description": "Gate evaluation result"
+        },
+        "sourceFrameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Frameworks that contributed to the gate evaluation"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Evaluator notes on gate outcome"
+        }
+      },
+      "additionalProperties": false
+    },
+    "riskClassification": {
+      "type": "object",
+      "required": [
+        "framework",
+        "indicators",
+        "activatedCount",
+        "riskScore",
+        "suggestedDepthTier"
+      ],
+      "properties": {
+        "framework": {
+          "$ref": "#/$defs/framework"
+        },
+        "indicators": {
+          "type": "object",
+          "required": [
+            "safety_reliability",
+            "rights_fairness_privacy",
+            "security_explainability"
+          ],
+          "properties": {
+            "safety_reliability": { "$ref": "#/$defs/riskIndicator" },
+            "rights_fairness_privacy": { "$ref": "#/$defs/riskIndicator" },
+            "security_explainability": { "$ref": "#/$defs/riskIndicator" }
+          },
+          "additionalProperties": { "$ref": "#/$defs/riskIndicator" },
+          "description": "Risk indicators; three defaults required, additional custom indicators allowed"
+        },
+        "activatedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of risk indicators that have been activated"
+        },
+        "riskScore": {
+          "type": ["number", "null"],
+          "description": "Computed risk score, or null before classification"
+        },
+        "suggestedDepthTier": {
+          "type": "string",
+          "enum": ["Basic", "Standard", "Comprehensive"],
+          "description": "Recommended assessment depth based on risk classification"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Risk classification state from Phase 2"
+    },
+    "framework": {
+      "type": "object",
+      "required": ["id", "name", "version", "source", "replaceDefaultIndicators", "replaceDefaultFramework"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Framework identifier (e.g., nist-ai-rmf)"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Framework display name"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Framework version"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Instructions file providing the framework definition"
+        },
+        "replaceDefaultIndicators": {
+          "type": "boolean",
+          "description": "Whether this framework replaces the default risk indicators"
+        },
+        "replaceDefaultFramework": {
+          "type": "boolean",
+          "description": "Whether this framework replaces the default NIST AI RMF"
+        }
+      },
+      "additionalProperties": false
+    },
+    "riskIndicator": {
+      "type": "object",
+      "required": ["method", "nistSource", "activated", "observation", "result"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["binary", "categorical", "continuous"],
+          "description": "Assessment method for this indicator"
+        },
+        "nistSource": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "NIST AI RMF subcategory references"
+        },
+        "activated": {
+          "type": "boolean",
+          "description": "Whether this indicator has been activated during screening"
+        },
+        "observation": {
+          "type": ["string", "null"],
+          "description": "Evaluator observation for this indicator"
+        },
+        "result": {
+          "type": ["string", "null"],
+          "description": "Assessment result for this indicator"
+        }
+      },
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "required": ["phase", "observation", "flagLevel"],
+      "properties": {
+        "phase": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Phase in which the observation was recorded"
+        },
+        "observation": {
+          "type": "string",
+          "description": "Observation text"
+        },
+        "flagLevel": {
+          "type": "string",
+          "enum": ["noted", "concern", "critical"],
+          "description": "Severity level of the observation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "principleEntry": {
+      "type": "object",
+      "required": [
+        "suggestedStatus",
+        "mappedInPhase3",
+        "threatsIdentified",
+        "controlsEvaluated",
+        "nistSubcat",
+        "openObservations"
+      ],
+      "properties": {
+        "suggestedStatus": {
+          "type": "string",
+          "enum": ["not-yet-covered", "partial", "addressed", "gap-identified"],
+          "description": "Current coverage status for this principle"
+        },
+        "mappedInPhase3": {
+          "type": "boolean",
+          "description": "Whether this principle was mapped during Phase 3"
+        },
+        "threatsIdentified": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of threats identified for this principle"
+        },
+        "controlsEvaluated": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of controls evaluated for this principle"
+        },
+        "nistSubcat": {
+          "type": "string",
+          "description": "NIST AI RMF subcategory reference"
+        },
+        "openObservations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Unresolved observations for this principle"
+        }
+      },
+      "additionalProperties": false
+    },
+    "referenceEntry": {
+      "type": "object",
+      "required": ["filePath", "type", "sourceDescription", "processedInPhase", "status"],
+      "properties": {
+        "filePath": {
+          "type": "string",
+          "description": "Path to the processed reference file"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "risk-indicator-category",
+            "prohibited-use-framework",
+            "output-format",
+            "code-of-conduct"
+          ],
+          "description": "Category of the reference content"
+        },
+        "sourceDescription": {
+          "type": "string",
+          "description": "Brief description of the reference source"
+        },
+        "processedInPhase": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Phase in which the reference was processed, or null if pending"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processed", "error"],
+          "description": "Processing status of the reference"
+        }
+      },
+      "additionalProperties": false
+    },
+    "userPreferences": {
+      "type": "object",
+      "required": [
+        "autonomyTier",
+        "outputDetailLevel",
+        "targetSystem",
+        "audienceProfile",
+        "includeOptionalArtifacts"
+      ],
+      "properties": {
+        "autonomyTier": {
+          "type": "string",
+          "enum": ["guided", "partial", "full"],
+          "description": "How much autonomy the agent has in proceeding between phases"
+        },
+        "outputDetailLevel": {
+          "type": "string",
+          "enum": ["minimal", "standard", "detailed"],
+          "description": "Level of detail in generated artifacts"
+        },
+        "targetSystem": {
+          "type": "string",
+          "enum": ["ado", "github", "both"],
+          "description": "Target backlog system for handoff"
+        },
+        "audienceProfile": {
+          "type": "string",
+          "enum": ["technical", "executive", "mixed"],
+          "description": "Primary audience for generated artifacts"
+        },
+        "includeOptionalArtifacts": {
+          "type": "object",
+          "required": ["transparencyNote", "monitoringSummary", "artifactSigning"],
+          "properties": {
+            "transparencyNote": {
+              "type": "boolean",
+              "description": "Whether to generate a transparency note artifact"
+            },
+            "monitoringSummary": {
+              "type": "boolean",
+              "description": "Whether to generate a monitoring summary artifact"
+            },
+            "artifactSigning": {
+              "type": "boolean",
+              "description": "Whether to enable cosign artifact signing"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

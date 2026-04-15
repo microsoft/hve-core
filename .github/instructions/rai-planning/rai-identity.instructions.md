@@ -85,6 +85,8 @@ All state files live under `.copilot-tracking/rai-plans/{project-slug}/`.
 
 ### State JSON Schema
 
+The formal JSON Schema definition is at `scripts/linting/schemas/rai-state.schema.json`. The default template below shows initial values for a new assessment:
+
 ```json
 {
   "projectSlug": "",
