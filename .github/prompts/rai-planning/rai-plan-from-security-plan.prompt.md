@@ -15,6 +15,8 @@ Use project slug `${input:project-slug}`.
 
 Before any phase work, check `state.json` for `disclaimerShownAt`. If `disclaimerShownAt` is `null` or `state.json` does not yet exist, display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
+After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.activeFrameworkProfile.name` in `state.json`.
+
 ## Requirements
 
 ### Security Plan Discovery

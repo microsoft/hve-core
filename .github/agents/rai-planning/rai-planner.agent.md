@@ -34,6 +34,8 @@ Works iteratively with up to 7 questions per turn, using emoji checklists to tra
 
 Display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
+After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.activeFrameworkProfile.name` in `state.json`. Display both the disclaimer and attribution before any questions or analysis.
+
 > [!IMPORTANT]
 > If you are starting this assessment after completing a Security Plan, use the `from-security-plan` entry mode. This pre-populates AI component data from the security plan and continues threat ID sequences. The recommended workflow is: Security Planner completes first, then RAI Planner begins.
 
