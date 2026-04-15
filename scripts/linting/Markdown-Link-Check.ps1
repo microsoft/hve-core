@@ -319,7 +319,7 @@ function Invoke-MarkdownLinkCheck {
     }
 
     $results = @{
-        timestamp = (Get-Date).ToUniversalTime().ToString('o')
+        Timestamp = Get-StandardTimestamp
         script = 'markdown-link-check'
         summary = @{
             total_files = $totalFiles

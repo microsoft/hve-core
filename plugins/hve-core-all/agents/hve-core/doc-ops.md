@@ -1,0 +1,1 @@
+../../../../.github/agents/hve-core/doc-ops.agent.md

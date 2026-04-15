@@ -1,1 +1,0 @@
-../../../.github/instructions/ado/ado-backlog-triage.instructions.md

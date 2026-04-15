@@ -1,1 +1,0 @@
-../../../.github/instructions/ado/ado-interaction-templates.instructions.md

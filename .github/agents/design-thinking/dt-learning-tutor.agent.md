@@ -2,12 +2,13 @@
 name: DT Learning Tutor
 description: 'Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing - Brought to you by microsoft/hve-core'
 tools:
-  - read_file
-  - semantic_search
-  - create_file
+  - read/readFile
+  - search
+  - edit/createFile
 handoffs:
-  - agent: dt-coach
+  - agent: DT Coach
     label: Start a DT project
+    prompt: /dt-start-project
 ---
 
 # Design Thinking Learning Tutor

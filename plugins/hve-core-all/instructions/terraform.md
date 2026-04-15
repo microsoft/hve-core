@@ -1,1 +1,0 @@
-../../../.github/instructions/coding-standards/terraform/terraform.instructions.md

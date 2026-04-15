@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/doc-ops-update.prompt.md

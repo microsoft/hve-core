@@ -1,1 +1,0 @@
-../../../.github/agents/experimental/pptx.agent.md

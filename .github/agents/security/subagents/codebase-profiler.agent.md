@@ -1,6 +1,6 @@
 ---
 name: Codebase Profiler
-description: "Scans the repository to build a technology profile and identify which OWASP skills apply to the codebase - Brought to you by microsoft/hve-core"
+description: "Scans the repository to build a technology profile and identify which security skills apply to the codebase - Brought to you by microsoft/hve-core"
 tools:
   - search/changes
   - search/codebase
@@ -12,7 +12,7 @@ user-invocable: false
 
 # Codebase Profiler
 
-Scan the repository to identify its technology stack and determine which OWASP skills apply to the codebase. Return a structured profile for the parent orchestrator.
+Scan the repository to identify its technology stack and determine which security skills apply to the codebase. Return a structured profile for the parent orchestrator.
 
 ## Purpose
 
@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which OWASP s
 
 ## Constants
 
-Skill resolution: Read the applicable OWASP skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`).
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`).
 
 ### Technology Signals
 
@@ -51,6 +51,33 @@ owasp-top-10:
   - "REST API endpoints"
   - "Server-side templates"
   - "Web framework config (Express, Django, Flask, Rails, Spring)"
+owasp-mcp:
+  - "MCP server or client code"
+  - "MCP tool definitions"
+owasp-infrastructure:
+  - "Dockerfile"
+  - "docker-compose.yml"
+  - ".github/workflows/**"
+  - "Jenkinsfile"
+  - "terraform/**"
+  - "Terraform files (.tf)"
+  - "Bicep files (.bicep)"
+  - "CloudFormation templates"
+  - "Ansible playbooks"
+owasp-cicd:
+  - "CI/CD pipeline definitions"
+  - "Build scripts"
+  - "Deployment configurations"
+  - ".github/workflows/"
+  - "Jenkinsfile"
+  - ".gitlab-ci.yml"
+  - "azure-pipelines.yml"
+secure-by-design:
+  - "SECURITY.md or security policy files"
+  - "Threat model documents"
+  - "CI/CD pipeline configuration (GitHub Actions, Azure Pipelines, Jenkins)"
+  - "Infrastructure as code (Terraform, Bicep, CloudFormation)"
+  - "Deployment configuration (Dockerfile, Kubernetes manifests)"
 ```
 
 ## Codebase Profile Format

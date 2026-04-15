@@ -1,1 +1,0 @@
-../../../.github/agents/security/subagents/skill-assessor.agent.md

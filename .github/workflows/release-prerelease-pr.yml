@@ -156,7 +156,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
@@ -187,36 +187,8 @@ jobs:
           # GitHub to auto-close the open PR.
           git checkout -B "$BRANCH"
 
-          # Update package.json
-          jq --arg v "$PRE_VERSION" '.version = $v' package.json > package.json.tmp \
-            && mv package.json.tmp package.json
-
-          # Update extension/templates/package.template.json
-          jq --arg v "$PRE_VERSION" '.version = $v' extension/templates/package.template.json > tmp.json \
-            && mv tmp.json extension/templates/package.template.json
-
-          # Update .github/plugin/marketplace.json (metadata.version and plugins[*].version)
-          jq --arg v "$PRE_VERSION" '
-            .metadata.version = $v |
-            .plugins[].version = $v
-          ' .github/plugin/marketplace.json > tmp.json \
-            && mv tmp.json .github/plugin/marketplace.json
-
-          # Update plugins/*/.github/plugin/plugin.json (glob)
-          for f in plugins/*/.github/plugin/plugin.json; do
-            if [ -f "$f" ]; then
-              jq --arg v "$PRE_VERSION" '.version = $v' "$f" > tmp.json \
-                && mv tmp.json "$f"
-            fi
-          done
-
-          # Update .release-please-manifest.json so release-please sees the
-          # odd-minor version when this PR merges to main
-          jq --arg v "$PRE_VERSION" '.["."] = $v' .release-please-manifest.json > tmp.json \
-            && mv tmp.json .release-please-manifest.json
-
-          # Regenerate plugin outputs so plugin-validation passes
-          npm run plugin:generate
+          # Update all version-tracked files and regenerate plugin outputs
+          pwsh -File scripts/release/Update-VersionFiles.ps1 -Version "$PRE_VERSION"
 
           git add -A
           git commit -m "chore: bump pre-release version to ${PRE_VERSION}" || echo "No version changes to commit"

@@ -17,11 +17,13 @@ Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelp
 function Get-PluginItemName {
     <#
     .SYNOPSIS
-    Strips artifact-type suffix from a filename.
+    Returns an artifact filename, stripping kind suffixes for CLI display.
 
     .DESCRIPTION
-    Removes the kind-specific suffix from a filename and returns the
-    simplified name with a .md extension (or the directory name for skills).
+    Validated entry point for filename handling in the plugin pipeline.
+    Agent and prompt files have their kind suffix (.agent.md, .prompt.md)
+    replaced with .md so the CLI title is clean. Instruction files keep
+    their suffix because VS Code discovery filters on *.instructions.md.
 
     .PARAMETER FileName
     The original filename (e.g. task-researcher.agent.md).
@@ -30,7 +32,7 @@ function Get-PluginItemName {
     The artifact kind: agent, prompt, instruction, or skill.
 
     .OUTPUTS
-    [string] The simplified item name.
+    [string] The processed filename.
     #>
     [CmdletBinding()]
     [OutputType([string])]
@@ -44,19 +46,65 @@ function Get-PluginItemName {
     )
 
     switch ($Kind) {
-        'agent' {
-            return ($FileName -replace '\.agent\.md$', '') + '.md'
-        }
-        'prompt' {
-            return ($FileName -replace '\.prompt\.md$', '') + '.md'
-        }
-        'instruction' {
-            return ($FileName -replace '\.instructions\.md$', '') + '.md'
-        }
-        'skill' {
-            return $FileName
-        }
+        'agent'       { return $FileName -replace '\.agent\.md$', '.md' }
+        'prompt'      { return $FileName -replace '\.prompt\.md$', '.md' }
+        'instruction' { return $FileName }
+        'skill'       { return $FileName }
     }
+}
+
+function Get-PluginItemSubpath {
+    <#
+    .SYNOPSIS
+    Extracts the subdirectory path between the kind root prefix and the leaf.
+
+    .DESCRIPTION
+    Given a repo-relative item path and its kind, strips the known prefix
+    (e.g. .github/agents/) and returns the intermediate directory segments.
+    Returns empty string when the item is directly under the kind root.
+
+    .PARAMETER Path
+    Repo-relative item path (e.g. .github/agents/hve-core/rpi-agent.agent.md).
+
+    .PARAMETER Kind
+    The artifact kind: agent, prompt, instruction, or skill.
+
+    .OUTPUTS
+    [string] Intermediate subdirectory path, or empty string.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [string]$Kind
+    )
+
+    $prefixMap = @{
+        'agent'       = '.github/agents/'
+        'prompt'      = '.github/prompts/'
+        'instruction' = '.github/instructions/'
+        'skill'       = '.github/skills/'
+    }
+
+    $prefix = $prefixMap[$Kind]
+    $normalized = $Path -replace '\\', '/'
+
+    if (-not $normalized.StartsWith($prefix)) {
+        return ''
+    }
+
+    $relative = $normalized.Substring($prefix.Length)
+    $parts = $relative -split '/'
+
+    if ($parts.Count -gt 1) {
+        return ($parts[0..($parts.Count - 2)] -join '/')
+    }
+
+    return ''
 }
 
 function Get-PluginSubdirectory {
@@ -97,7 +145,10 @@ function New-PluginManifestContent {
 
     .DESCRIPTION
     Creates a hashtable representing the plugin manifest with name,
-    description, and version sourced from the repository package.json.
+    description, version, and component path declarations. When explicit
+    path arrays are provided, uses them so the CLI discovers artifacts
+    in nested subdirectories. When omitted, falls back to convention
+    defaults for lightweight marketplace entries.
 
     .PARAMETER CollectionId
     The collection identifier used as the plugin name.
@@ -108,8 +159,18 @@ function New-PluginManifestContent {
     .PARAMETER Version
     Semantic version string from the repository package.json.
 
+    .PARAMETER AgentPaths
+    Optional. Array of relative directory paths containing .agent.md files.
+
+    .PARAMETER CommandPaths
+    Optional. Array of relative directory paths containing .prompt.md files.
+
+    .PARAMETER SkillPaths
+    Optional. Array of relative directory paths containing skill subdirs.
+
     .OUTPUTS
-    [hashtable] Plugin manifest with name, description, and version keys.
+    [hashtable] Plugin manifest with name, description, version, and
+    component path keys.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -121,14 +182,42 @@ function New-PluginManifestContent {
         [string]$Description,
 
         [Parameter(Mandatory = $true)]
-        [string]$Version
+        [string]$Version,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$AgentPaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$CommandPaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$SkillPaths
     )
 
-    return [ordered]@{
+    $manifest = [ordered]@{
         name        = $CollectionId
         description = $Description
         version     = $Version
     }
+
+    # Emit explicit path arrays when provided; the CLI does not recurse
+    # into subdirectories, so each leaf directory must be declared.
+    if ($AgentPaths -and $AgentPaths.Count -gt 0) {
+        $manifest['agents'] = @($AgentPaths | Sort-Object)
+    }
+
+    if ($CommandPaths -and $CommandPaths.Count -gt 0) {
+        $manifest['commands'] = @($CommandPaths | Sort-Object)
+    }
+
+    if ($SkillPaths -and $SkillPaths.Count -gt 0) {
+        $manifest['skills'] = @($SkillPaths | Sort-Object)
+    }
+
+    return $manifest
 }
 
 function New-PluginReadmeContent {
@@ -604,6 +693,17 @@ function Write-PluginDirectory {
         SkillCount       = 0
     }
 
+    # Track unique directories per kind for plugin.json path arrays
+    $agentDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $commandDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $skillDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+
     $readmeItems = @()
     $generatedFiles = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
@@ -618,7 +718,12 @@ function Write-PluginDirectory {
             # Skills are directory symlinks; use the directory name as FileName
             $fileName = Split-Path -Leaf $item.path
             $itemName = Get-PluginItemName -FileName $fileName -Kind $kind
-            $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            $itemSubpath = Get-PluginItemSubpath -Path $item.path -Kind $kind
+            if ($itemSubpath) {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemSubpath, $itemName
+            } else {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            }
 
             # Read frontmatter from SKILL.md for description; fall back to directory name
             $skillMdPath = Join-Path -Path $sourcePath -ChildPath 'SKILL.md'
@@ -633,7 +738,12 @@ function Write-PluginDirectory {
         else {
             $fileName = Split-Path -Leaf $item.path
             $itemName = Get-PluginItemName -FileName $fileName -Kind $kind
-            $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            $itemSubpath = Get-PluginItemSubpath -Path $item.path -Kind $kind
+            if ($itemSubpath) {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemSubpath, $itemName
+            } else {
+                $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
+            }
 
             # Read frontmatter from the source file for description
             $fallback = $itemName -replace '\.md$', ''
@@ -653,12 +763,28 @@ function Write-PluginDirectory {
             Kind        = $kind
         }
 
-        # Update counts
+        # Update counts and collect parent directories for manifest paths
         switch ($kind) {
-            'agent'       { $counts.AgentCount++ }
-            'prompt'      { $counts.CommandCount++ }
+            'agent' {
+                $counts.AgentCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$agentDirs.Add("$relDir/")
+            }
+            'prompt' {
+                $counts.CommandCount++
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$commandDirs.Add("$relDir/")
+            }
             'instruction' { $counts.InstructionCount++ }
-            'skill'       { $counts.SkillCount++ }
+            'skill' {
+                $counts.SkillCount++
+                # Skills: the CLI scans for <name>/SKILL.md; point at the grandparent
+                $parentDir = Split-Path -Parent $destPath
+                $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
+                [void]$skillDirs.Add("$relDir/")
+            }
         }
 
         [void]$generatedFiles.Add($destPath)
@@ -696,10 +822,16 @@ function Write-PluginDirectory {
         New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
     }
 
-    # Generate plugin.json
+    # Generate plugin.json with explicit path arrays for CLI discovery
     $manifestDir = Join-Path -Path $pluginRoot -ChildPath '.github' -AdditionalChildPath 'plugin'
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
-    $manifest = New-PluginManifestContent -CollectionId $collectionId -Description $Collection.description -Version $Version
+    $manifest = New-PluginManifestContent `
+        -CollectionId $collectionId `
+        -Description $Collection.description `
+        -Version $Version `
+        -AgentPaths @($agentDirs) `
+        -CommandPaths @($commandDirs) `
+        -SkillPaths @($skillDirs)
     [void]$generatedFiles.Add($manifestPath)
 
     if ($DryRun) {
@@ -867,6 +999,7 @@ function Repair-PluginSymlinkIndex {
 
 Export-ModuleMember -Function @(
     'Get-PluginItemName',
+    'Get-PluginItemSubpath',
     'Get-PluginSubdirectory',
     'New-GenerateResult',
     'New-MarketplaceManifestContent',

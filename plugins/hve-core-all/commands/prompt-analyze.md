@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/prompt-analyze.prompt.md

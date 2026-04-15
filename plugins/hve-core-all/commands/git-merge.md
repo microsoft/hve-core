@@ -1,1 +1,0 @@
-../../../.github/prompts/hve-core/git-merge.prompt.md

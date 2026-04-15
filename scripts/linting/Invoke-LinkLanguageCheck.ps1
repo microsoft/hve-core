@@ -84,7 +84,7 @@ function Invoke-LinkLanguageCheckCore {
             }
 
             $outputData = @{
-                timestamp = (Get-Date).ToUniversalTime().ToString("o")
+                Timestamp = Get-StandardTimestamp
                 script = "link-lang-check"
                 summary = @{
                     total_issues = $results.Count
@@ -96,7 +96,7 @@ function Invoke-LinkLanguageCheckCore {
             # Ensure output directory exists
             $outputDir = Split-Path -Parent $OutputPath
             if ($outputDir -and -not (Test-Path $outputDir)) {
-            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+                New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
             }
 
             # Write JSON to file
@@ -138,7 +138,7 @@ $(($uniqueFiles | ForEach-Object {
         Write-Host "✅ No URLs with language paths found" -ForegroundColor Green
 
         $emptyResults = @{
-            timestamp = (Get-Date).ToUniversalTime().ToString("o")
+            Timestamp = Get-StandardTimestamp
             script = "link-lang-check"
             summary = @{
                 total_issues = 0
@@ -150,7 +150,7 @@ $(($uniqueFiles | ForEach-Object {
         # Ensure output directory exists
         $outputDir = Split-Path -Parent $OutputPath
         if ($outputDir -and -not (Test-Path $outputDir)) {
-        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+            New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
         }
 
         # Write JSON to file

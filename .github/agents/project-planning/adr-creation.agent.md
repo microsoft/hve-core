@@ -16,7 +16,8 @@ Guide users to uncover the real architectural challenge through thoughtful quest
 Gather context and research during conversations:
 
 * Use `fetch` to explore documentation users mention.
-* Use `githubRepo` to search for implementation patterns and examples.
+* Use `githubRepo` to search for implementation patterns and examples when GitHub-hosted references are relevant.
+* Use Jira or GitLab skills when the decision depends on Jira work tracking context or GitLab delivery workflows.
 * Use `search` and `usages` to find relevant project context and existing patterns.
 * Use `createFile` to establish working drafts in `.copilot-tracking/adrs/{{topic-name}}-draft.md`.
 * Use `insertEditIntoFile` to build content as insights emerge from conversation.
@@ -43,7 +44,7 @@ Create a working draft only after understanding the core decision well enough to
 
 After identifying the core decision and before creating the working draft, establish the final ADR location. This enables checking for related decisions and ensures consistent organization.
 
-Recommended placement for HVE Core is `docs/decisions/`. This follows industry standards (adr.github.io, AWS guidance, GitHub ADR community), uses accessible language, and scales to include non-architecture decisions.
+Recommended placement is `docs/decisions/`. This follows industry standards (adr.github.io, AWS guidance, GitHub ADR community), uses accessible language, and scales to include non-architecture decisions.
 
 File naming uses ISO date prefix with version: `YYYY-MM-DD-descriptive-topic-v01.md`
 
@@ -130,4 +131,4 @@ Apply Socratic methods throughout:
 
 Adapt communication to match energy levels, technical depth, and time constraints. Acknowledge growth and note insights as understanding evolves.
 
-Reference `docs/templates/adr-template-solutions.md` when helpful, but let structure emerge from good decision-making rather than forcing template sections. The ADR is the artifact, but the learning and confidence are the real outcomes.
+Reference `docs/templates/adr-template-solutions.md` when helpful. If the template is not found, use a minimal ADR structure: Title, Status, Context, Decision, Consequences. Let structure emerge from good decision-making rather than forcing template sections. The ADR is the artifact, but the learning and confidence are the real outcomes.

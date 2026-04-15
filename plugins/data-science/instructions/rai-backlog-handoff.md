@@ -1,1 +1,0 @@
-../../../.github/instructions/rai-planning/rai-backlog-handoff.instructions.md

@@ -1,6 +1,6 @@
 /** @type {import('jest').Config} */
 module.exports = {
-  testEnvironment: 'jsdom',
+  testEnvironment: '@happy-dom/jest-environment',
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
       tsconfig: {
@@ -17,6 +17,7 @@ module.exports = {
     '\\.svg$': '<rootDir>/src/__mocks__/svgMock.js',
     '^@docusaurus/Link$': '<rootDir>/src/__mocks__/@docusaurus/Link',
     '^@docusaurus/useBaseUrl$': '<rootDir>/src/__mocks__/@docusaurus/useBaseUrl',
+    '^@docusaurus/useDocusaurusContext$': '<rootDir>/src/__mocks__/@docusaurus/useDocusaurusContext',
     '^@theme/(.*)$': '<rootDir>/src/__mocks__/@theme/$1',
   },
   testPathIgnorePatterns: ['/node_modules/', '/build/'],

@@ -7,7 +7,7 @@ Tests mock PyMuPDF (fitz) since it may not be installed in all environments.
 
 import argparse
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from render_pdf_images import (
@@ -82,8 +82,8 @@ class TestParseSlideNumbers:
 class TestRenderPages:
     """Tests for render_pages with mocked fitz."""
 
-    @patch.dict("sys.modules", {"fitz": MagicMock()})
-    def test_render_creates_output(self, tmp_path):
+    def test_render_creates_output(self, mocker, tmp_path):
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
         import sys
 
         mock_fitz = sys.modules["fitz"]
@@ -105,8 +105,8 @@ class TestRenderPages:
         assert count == 1
         mock_pix.save.assert_called_once()
 
-    @patch.dict("sys.modules", {"fitz": MagicMock()})
-    def test_render_multiple_pages(self, tmp_path):
+    def test_render_multiple_pages(self, mocker, tmp_path):
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
         import sys
 
         mock_fitz = sys.modules["fitz"]
@@ -127,8 +127,8 @@ class TestRenderPages:
         count = render_pages(pdf_path, output_dir, 150)
         assert count == 3
 
-    @patch.dict("sys.modules", {"fitz": MagicMock()})
-    def test_render_with_slide_numbers(self, tmp_path):
+    def test_render_with_slide_numbers(self, mocker, tmp_path):
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
         import sys as _sys
 
         mock_fitz = _sys.modules["fitz"]
@@ -153,9 +153,9 @@ class TestRenderPages:
         pix_save_args = [c.args[0] for c in save_calls.call_args_list]
         assert "slide-005.jpg" in pix_save_args[0]
 
-    @patch.dict("sys.modules", {"fitz": MagicMock()})
-    def test_render_with_mismatched_slide_numbers(self, tmp_path):
+    def test_render_with_mismatched_slide_numbers(self, mocker, tmp_path):
         """Mismatched slide_numbers count falls back to sequential."""
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
         import sys as _sys
 
         mock_fitz = _sys.modules["fitz"]
@@ -176,9 +176,9 @@ class TestRenderPages:
         count = rp(pdf_path, output_dir, 150, slide_numbers=[1, 2])
         assert count == 3
 
-    @patch.dict("sys.modules", {"fitz": None})
-    def test_render_pages_fitz_import_error(self, tmp_path):
+    def test_render_pages_fitz_import_error(self, mocker, tmp_path):
         """Missing PyMuPDF triggers sys.exit."""
+        mocker.patch.dict("sys.modules", {"fitz": None})
         pdf_path = tmp_path / "test.pdf"
         pdf_path.write_bytes(b"fake pdf")
         with pytest.raises(SystemExit) as exc_info:
@@ -211,8 +211,8 @@ class TestRun:
         result = run(args)
         assert result != 0  # EXIT_ERROR
 
-    @patch("render_pdf_images.render_pages", return_value=3)
-    def test_successful_run(self, mock_render, tmp_path):
+    def test_successful_run(self, mocker, tmp_path):
+        mock_render = mocker.patch("render_pdf_images.render_pages", return_value=3)
         pdf_file = tmp_path / "test.pdf"
         pdf_file.write_bytes(b"%PDF-1.4")
         out_dir = tmp_path / "output"
@@ -227,8 +227,8 @@ class TestRun:
         assert result == 0
         mock_render.assert_called_once()
 
-    @patch("render_pdf_images.render_pages", return_value=2)
-    def test_run_with_slide_numbers(self, mock_render, tmp_path):
+    def test_run_with_slide_numbers(self, mocker, tmp_path):
+        mock_render = mocker.patch("render_pdf_images.render_pages", return_value=2)
         pdf_file = tmp_path / "test.pdf"
         pdf_file.write_bytes(b"%PDF-1.4")
         out_dir = tmp_path / "output"
@@ -253,9 +253,9 @@ class TestRun:
 class TestMainRenderPdf:
     """Tests for main() entry point."""
 
-    @patch("render_pdf_images.run", return_value=0)
-    def test_main_success(self, mock_run, tmp_path):
-        with patch(
+    def test_main_success(self, mocker, tmp_path):
+        mocker.patch("render_pdf_images.run", return_value=0)
+        mocker.patch(
             "sys.argv",
             [
                 "render_pdf_images.py",
@@ -264,13 +264,13 @@ class TestMainRenderPdf:
                 "--output-dir",
                 str(tmp_path / "out"),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result == 0
 
-    @patch("render_pdf_images.run", side_effect=KeyboardInterrupt)
-    def test_main_keyboard_interrupt(self, mock_run, tmp_path):
-        with patch(
+    def test_main_keyboard_interrupt(self, mocker, tmp_path):
+        mocker.patch("render_pdf_images.run", side_effect=KeyboardInterrupt)
+        mocker.patch(
             "sys.argv",
             [
                 "render_pdf_images.py",
@@ -279,13 +279,13 @@ class TestMainRenderPdf:
                 "--output-dir",
                 str(tmp_path / "out"),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result == 130
 
-    @patch("render_pdf_images.run", side_effect=RuntimeError("boom"))
-    def test_main_unexpected_error(self, mock_run, tmp_path):
-        with patch(
+    def test_main_unexpected_error(self, mocker, tmp_path):
+        mocker.patch("render_pdf_images.run", side_effect=RuntimeError("boom"))
+        mocker.patch(
             "sys.argv",
             [
                 "render_pdf_images.py",
@@ -294,24 +294,22 @@ class TestMainRenderPdf:
                 "--output-dir",
                 str(tmp_path / "out"),
             ],
-        ):
-            result = main()
+        )
+        result = main()
         assert result != 0
 
-    @patch("render_pdf_images.run", side_effect=BrokenPipeError)
-    def test_main_broken_pipe(self, mock_run, tmp_path):
-        with (
-            patch(
-                "sys.argv",
-                [
-                    "render_pdf_images.py",
-                    "--input",
-                    str(tmp_path / "test.pdf"),
-                    "--output-dir",
-                    str(tmp_path / "out"),
-                ],
-            ),
-            patch.object(sys, "stderr", MagicMock()),
-        ):
-            result = main()
+    def test_main_broken_pipe(self, mocker, tmp_path):
+        mocker.patch("render_pdf_images.run", side_effect=BrokenPipeError)
+        mocker.patch(
+            "sys.argv",
+            [
+                "render_pdf_images.py",
+                "--input",
+                str(tmp_path / "test.pdf"),
+                "--output-dir",
+                str(tmp_path / "out"),
+            ],
+        )
+        mocker.patch.object(sys, "stderr", MagicMock())
+        result = main()
         assert result == EXIT_FAILURE

@@ -1,1 +1,0 @@
-../../../.github/prompts/security/sssc-from-brd.prompt.md

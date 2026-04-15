@@ -143,7 +143,7 @@ Characteristics:
 
 * Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
-* Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/hve-core/subagents/`) to separate them from user-facing agents.
+* Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/{collection}/subagents/`) to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * Cannot run their own subagents; only the parent agent orchestrates subagent calls.
@@ -386,7 +386,7 @@ Skill files also include a standard attribution footer as the last line of body 
 
 Frontmatter field requirements for prompt engineering artifacts follow.
 
-Maturity is tracked in `collections/*.collection.yml` item metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. Set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
+When the repository uses a collection system, maturity is tracked in collection manifest metadata, not in frontmatter. Do not include a `maturity` field in artifact frontmatter. When using collections, set maturity on the artifact's matching collection item entry; when omitted, maturity defaults to `stable`.
 
 ### Required Fields
 
@@ -413,6 +413,8 @@ Optional fields available by file type:
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
 * `model:` - Model specification. Accepts any valid model identifier string (for example, `gpt-4o`, `claude-sonnet-4`). When omitted, the default model is used.
+* `license:` - SPDX license identifier for skill content (for example, `MIT`, `CC-BY-SA-4.0`). Defaults to the repository license when omitted. Use for skills that incorporate third-party content under a specific license.
+* `metadata:` - Object containing provenance and versioning metadata for skills. Recognized fields include `authors`, `spec_version`, `framework_revision`, `last_updated`, `skill_based_on`, and `content_based_on`.
 
 ### Frontmatter Examples
 
@@ -467,6 +469,31 @@ description: "Required instructions for creating commit messages"
 applyTo: '**'
 ---
 ```
+
+## Path Portability
+
+Artifacts distribute in three contexts: repository (`.github/`), VS Code extension, and CLI plugin. Cross-file `#file:` references must resolve in all contexts.
+
+### Resolution Rule
+
+`#file:` resolves relative to the containing file, not the workspace root. Plugin packaging preserves the relative depth between kind directories (`agents/{collection}/`, `commands/{collection}/`, `instructions/{collection}/`), matching the repo layout minus the `.github/` prefix.
+
+### Cross-Kind References
+
+Cross-directory `#file:` traversal from prompts to instructions works because plugin packaging mirrors the repo directory structure:
+
+```text
+Repo:   .github/prompts/{collection}/  →  ../../instructions/{collection}/file.instructions.md
+Plugin: commands/{collection}/          →  ../../instructions/{collection}/file.instructions.md
+```
+
+### Guidelines
+
+* Use original suffixes in `#file:` references: `.instructions.md`, `.agent.md`, `.prompt.md`.
+* Never use absolute paths or `.github/` prefix in `#file:` references.
+* Same-directory references use `#file:./sibling.instructions.md`.
+* Cross-kind references use `#file:../../instructions/{collection}/name.instructions.md`.
+* When a `#file:` target belongs to a different collection, ensure the target appears in the same collection manifest as the referencing file.
 
 ## Protocol Patterns
 

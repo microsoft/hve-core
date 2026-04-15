@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with constraint-based AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-03-22
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -54,10 +54,10 @@ Not sure which to choose? Start with HVE Core All. You can switch to HVE Install
 
 | Component    | Count | Description                                                          | Documentation                                  |
 |--------------|-------|----------------------------------------------------------------------|------------------------------------------------|
-| Agents       | 34    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
-| Instructions | 68    | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
-| Prompts      | 40    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
-| Skills       | 3     | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
+| Agents       | 49    | Specialized AI assistants for research, planning, and implementation | [Agents](.github/CUSTOM-AGENTS.md)             |
+| Instructions | 102   | Repository-specific coding guidelines applied automatically          | [Instructions](.github/instructions/README.md) |
+| Prompts      | 63    | Reusable templates for common tasks like commits and PRs             | [Prompts](.github/prompts/README.md)           |
+| Skills       | 11    | Self-contained packages with cross-platform scripts and guidance     | [Skills](.github/skills/)                      |
 | Scripts      | N/A   | Validation tools for linting, security, and quality                  | [Scripts](scripts/README.md)                   |
 
 ## Documentation
@@ -101,6 +101,14 @@ Microsoft encourages customers to review its Responsible AI Standard when develo
 ## Legal
 
 This project is licensed under the [MIT License](./LICENSE).
+
+### Licensing
+
+Most content in this repository is covered by the MIT License. Certain skill content
+derived from OWASP Foundation publications is licensed under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Each affected
+skill identifies its license in frontmatter and includes a Third-Party Attribution
+section. See [THIRD-PARTY-NOTICES](./THIRD-PARTY-NOTICES) for full details.
 
 See [SECURITY.md](./SECURITY.md) for the security policy and vulnerability reporting.
 

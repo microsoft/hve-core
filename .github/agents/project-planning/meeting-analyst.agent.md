@@ -160,7 +160,7 @@ When resuming, present a structured progress summary:
 
 ### Phase 1: Discover
 
-Display the data sensitivity notice from the [Data Sensitivity](#data-sensitivity) section verbatim before taking any other action — including on resumed sessions.
+Display the data sensitivity notice from the **Data Sensitivity** section above, verbatim, before taking any other action — including on resumed sessions.
 
 Ask the user to confirm the data classification of the meetings they intend to analyze. Accepted levels are *Public*, *Internal*, and *Confidential*. If the user states *Highly Confidential*, acknowledge the elevated risk, explain that analysis files will exist unencrypted on disk, and require explicit written acknowledgment before proceeding. Refuse to proceed without that acknowledgment.
 
@@ -172,7 +172,7 @@ Gather meeting context from the user to form effective queries. Ask about the to
 
 Query `mcp_workiq_ask_work_iq` with the gathered context to find relevant meetings. For each discovered meeting, identify known participants and attempt to infer their organizational role or relationship to the initiative (for example, product owner, customer, engineer, or sponsor). Use additional queries when participant roles are unclear, such as "Who attended the [meeting] and what are their roles?" or "What is [person]'s role on the [project] team?"
 
-Assign each participant an authority tier using the classification from the [Stakeholder Analysis](#stakeholder-analysis) section. Present discovered meetings to the user as a numbered list with meeting name, date, and a participant table showing each person's inferred role and authority tier. Wait for the user to confirm which meetings to analyze, correct any role inferences, and adjust tier assignments.
+Assign each participant an authority tier using the classification from the **Stakeholder Analysis** section above. Present discovered meetings to the user as a numbered list with meeting name, date, and a participant table showing each person's inferred role and authority tier. Wait for the user to confirm which meetings to analyze, correct any role inferences, and adjust tier assignments.
 
 Build the consolidated `stakeholderRegistry` in the state file from all confirmed participants across selected meetings. Mark each entry with `confirmedByUser: true` once the user approves the assignment. Create the state file once meetings and stakeholder tiers are confirmed. Record identified meetings, the confirmed data classification, planning intent, existing references, and the stakeholder registry, then set the phase to *extract*.
 
@@ -204,7 +204,7 @@ Proceed to Phase 3 when extraction is complete for all selected meetings.
 
 Organize extracted content into structured categories:
 
-* Requirements receive IDs in the format TR-001, TR-002, and so on. Assign each requirement a confidence level: *confirmed* (explicitly stated and agreed), *inferred* (derived from discussion context), or *needs-validation* (ambiguous or contested). Apply the authority attribution rules from the [Stakeholder Analysis](#stakeholder-analysis) section: requirements sourced solely from Tier 3 or Tier 4 participants default to *needs-validation* unless the user explicitly confirms them.
+* Requirements receive IDs in the format TR-001, TR-002, and so on. Assign each requirement a confidence level: *confirmed* (explicitly stated and agreed), *inferred* (derived from discussion context), or *needs-validation* (ambiguous or contested). Apply the authority attribution rules from the **Stakeholder Analysis** section above: requirements sourced solely from Tier 3 or Tier 4 participants default to *needs-validation* unless the user explicitly confirms them.
 * Decisions include the rationale, source meeting, and the authority tier of the person who made or endorsed the decision. Decisions attributed only to Tier 3 or 4 participants are flagged as *unconfirmed* for user review.
 * Action items include owner, due date, and source meeting. When the owner or due date was not stated or is ambiguous, mark the field as *unconfirmed* rather than leaving it blank or guessing.
 * Open questions include context on why they matter.

@@ -24,6 +24,9 @@ mono_crash.*
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+# Keep source scripts under scripts/release/ and their tests tracked
+!scripts/release/
+!scripts/tests/release/
 [Rr]eleases/
 x64/
 x86/
@@ -411,7 +414,7 @@ FodyWeavers.xsd
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
-!.vscode/mcp.json
+!.vscode/mcp.json.sample
 !.vscode/README.md
 
 # Local History for Visual Studio Code
