@@ -30,7 +30,7 @@ Assess exactly one security knowledge skill per invocation. Read all vulnerabili
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `secure-by-design`). Follow the skill's normative reference links to access the vulnerability index and individual vulnerability references.
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Follow the skill's normative reference links to access the vulnerability index and individual vulnerability references.
 
 ### Status Values
 

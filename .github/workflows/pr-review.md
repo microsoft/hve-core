@@ -2,7 +2,7 @@
 description: "Automated quality review on pull requests"
 on:
   pull_request:
-    types: [opened, ready_for_review]
+    types: [opened, ready_for_review, synchronize]
     forks: ["*"]
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
