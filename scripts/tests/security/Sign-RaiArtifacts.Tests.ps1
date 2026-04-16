@@ -169,6 +169,52 @@ Describe 'Manifest Generation' -Tag 'Unit' {
             $manifest = Get-Content $customPath -Raw | ConvertFrom-Json
             $manifest.fileCount | Should -Be 2
         }
+
+        It 'Includes generatedAt in ISO 8601 format' {
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $script:projectSlug
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $raw = Get-Content $script:outputPath -Raw
+            $raw | Should -Match '"generatedAt"\s*:\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
+        }
+
+        It 'Orders artifacts alphabetically by path' {
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $script:projectSlug
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $manifest = Get-Content $script:outputPath -Raw | ConvertFrom-Json
+            $paths = $manifest.artifacts | ForEach-Object { $_.path }
+            $sorted = $paths | Sort-Object
+            $paths | Should -Be $sorted
+        }
+
+        It 'Contains all required top-level manifest fields' {
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $script:projectSlug
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $manifest = Get-Content $script:outputPath -Raw | ConvertFrom-Json
+            $fields = ($manifest | Get-Member -MemberType NoteProperty).Name | Sort-Object
+            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'version') | Sort-Object
+            $fields | Should -Be $expected
+        }
     }
 
     Context 'exclude patterns' {

@@ -81,6 +81,10 @@ disclaimers:
     $script:DisclaimerConfigPath = Join-Path $script:ConfigDir 'disclaimers.yml'
     Set-Content -Path $script:FooterConfigPath -Value $script:FooterConfigContent -Encoding utf8
     Set-Content -Path $script:DisclaimerConfigPath -Value $script:DisclaimerConfigContent -Encoding utf8
+
+    # Pre-create bad config files for negative tests (avoids Pester-context YAML parsing issues)
+    $script:BadDisclaimerSectionPath = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
+    [System.IO.File]::WriteAllText($script:BadDisclaimerSectionPath, "version: '1.0'`nplaceholder: true`n")
 }
 
 AfterAll {
@@ -118,6 +122,25 @@ Describe 'Import-DisclaimerConfig' -Tag 'Unit' {
     It 'Throws when file does not exist' {
         { Import-DisclaimerConfig -ConfigPath (Join-Path $script:TempTestDir 'nonexistent.yml') } | Should -Throw '*not found*'
     }
+
+    It 'Throws when version is missing' {
+        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-version.yml'
+        @"
+disclaimers:
+  rai-planner:
+    id: test
+"@ | Set-Content -Path $badConfig -Encoding utf8
+        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'version'*"
+    }
+
+    It 'Throws when disclaimers section is missing' {
+        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
+        @"
+version: '1.0'
+placeholder: true
+"@ | Set-Content -Path $badConfig -Encoding utf8
+        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'disclaimers'*"
+    }
 }
 
 Describe 'Get-FooterSearchText' -Tag 'Unit' {
@@ -147,6 +170,24 @@ $($script:Tier1Text)
     It 'Returns false when footer text is absent' {
         $content = '# Heading\n\nSome content with no footer.'
         Test-FooterInContent -Content $content -FooterText $script:Tier1Text | Should -BeFalse
+    }
+}
+
+Describe 'Test-DisclaimerInContent' -Tag 'Unit' {
+    It 'Returns true when disclaimer text is present' {
+        $content = @"
+# Heading
+
+Some content here.
+
+$($script:DisclaimerText)
+"@
+        Test-DisclaimerInContent -Content $content -DisclaimerText $script:DisclaimerText | Should -BeTrue
+    }
+
+    It 'Returns false when disclaimer text is absent' {
+        $content = '# Heading\n\nSome content with no disclaimer.'
+        Test-DisclaimerInContent -Content $content -DisclaimerText $script:DisclaimerText | Should -BeFalse
     }
 }
 
@@ -337,6 +378,158 @@ description: Unrelated instruction
             $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:FooterConfig -DisclaimerConfig $script:DisclaimerConfig -RepoRoot $script:TempTestDir
             $result.Skipped | Should -BeTrue
             $result.Passed | Should -BeTrue
+        }
+    }
+}
+
+Describe 'Test-AIArtifactValidation' -Tag 'Unit' {
+    BeforeAll {
+        $script:FooterConfig = Import-FooterConfig -ConfigPath $script:FooterConfigPath
+        $script:DisclaimerConfig = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
+    }
+
+    BeforeEach {
+        # Create compliant agentic file (control-surface-catalog)
+        $agenticPath = Join-Path $script:InstructionDir 'control-surface-catalog.instructions.md'
+        $agenticContent = @"
+---
+description: Control surface catalog
+---
+
+# Control Surface Catalog
+
+$($script:Tier1Text)
+"@
+        Set-Content -Path $agenticPath -Value $agenticContent -Encoding utf8
+
+        # Create non-compliant human-facing file (rai-review-summary) missing checkbox
+        $humanPath = Join-Path $script:InstructionDir 'rai-review-summary.instructions.md'
+        $humanContent = @"
+---
+description: RAI review summary
+---
+
+# RAI Review Summary
+
+$($script:Tier1Text)
+"@
+        Set-Content -Path $humanPath -Value $humanContent -Encoding utf8
+    }
+
+    Context 'Multi-file processing' {
+        It 'Returns correct summary counts' {
+            Mock git { $script:TempTestDir } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-FilesRecursive {
+                Get-ChildItem -Path $script:InstructionDir -Filter '*.instructions.md' -Recurse
+            }
+            Mock Write-CIAnnotation {}
+            Mock Test-CIEnvironment { $false }
+            Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+            Mock Write-Host {}
+
+            $result = Test-AIArtifactValidation `
+                -Paths @('.github/instructions') `
+                -FooterConfigPath '.github/config/footer-with-review.yml' `
+                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+
+            $result.TotalFiles | Should -BeGreaterOrEqual 2
+            $result.FilesWithArtifacts | Should -BeGreaterOrEqual 2
+            $result.FilesWithIssues | Should -BeGreaterOrEqual 1
+        }
+    }
+
+    Context 'Exclude path filtering' {
+        It 'Skips files matching exclude patterns' {
+            $subDir = Join-Path $script:InstructionDir 'excluded'
+            New-Item -ItemType Directory -Path $subDir -Force | Out-Null
+            $excludedFile = Join-Path $subDir 'control-surface-catalog.instructions.md'
+            Set-Content -Path $excludedFile -Value '# No footers' -Encoding utf8
+
+            Mock git { $script:TempTestDir } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-FilesRecursive {
+                Get-ChildItem -Path $script:InstructionDir -Filter '*.instructions.md' -Recurse
+            }
+            Mock Write-CIAnnotation {}
+            Mock Test-CIEnvironment { $false }
+            Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+            Mock Write-Host {}
+
+            $result = Test-AIArtifactValidation `
+                -Paths @('.github/instructions') `
+                -FooterConfigPath '.github/config/footer-with-review.yml' `
+                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -ExcludePaths @('**/excluded/**')
+
+            $excludedResults = $result.Results | Where-Object { $_.RelativePath -like '*excluded*' }
+            $excludedResults | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'FailOnMissing behavior' {
+        It 'Sets HasFailures to true when FailOnMissing and issues exist' {
+            Mock git { $script:TempTestDir } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-FilesRecursive {
+                Get-ChildItem -Path $script:InstructionDir -Filter '*.instructions.md' -Recurse
+            }
+            Mock Write-CIAnnotation {}
+            Mock Test-CIEnvironment { $false }
+            Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+            Mock Write-Host {}
+
+            $result = Test-AIArtifactValidation `
+                -Paths @('.github/instructions') `
+                -FooterConfigPath '.github/config/footer-with-review.yml' `
+                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -FailOnMissing
+
+            $result.HasFailures | Should -BeTrue
+        }
+
+        It 'Sets HasFailures to false without FailOnMissing even when issues exist' {
+            Mock git { $script:TempTestDir } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-FilesRecursive {
+                Get-ChildItem -Path $script:InstructionDir -Filter '*.instructions.md' -Recurse
+            }
+            Mock Write-CIAnnotation {}
+            Mock Test-CIEnvironment { $false }
+            Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+            Mock Write-Host {}
+
+            $result = Test-AIArtifactValidation `
+                -Paths @('.github/instructions') `
+                -FooterConfigPath '.github/config/footer-with-review.yml' `
+                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+
+            $result.HasFailures | Should -BeFalse
+        }
+    }
+
+    Context 'JSON export' {
+        It 'Writes valid JSON to OutputPath' {
+            $outputPath = '.github/config/test-results.json'
+            $outputFullPath = Join-Path $script:TempTestDir $outputPath
+
+            Mock git { $script:TempTestDir } -ParameterFilter { $args[0] -eq 'rev-parse' }
+            Mock Get-FilesRecursive {
+                Get-ChildItem -Path $script:InstructionDir -Filter '*.instructions.md' -Recurse
+            }
+            Mock Write-CIAnnotation {}
+            Mock Test-CIEnvironment { $false }
+            Mock Get-StandardTimestamp { '2025-01-01T00:00:00Z' }
+            Mock Write-Host {}
+
+            Test-AIArtifactValidation `
+                -Paths @('.github/instructions') `
+                -FooterConfigPath '.github/config/footer-with-review.yml' `
+                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -OutputPath $outputPath
+
+            $outputFullPath | Should -Exist
+            $raw = Get-Content -Path $outputFullPath -Raw
+            $raw | Should -Match '"timestamp"\s*:\s*"2025-01-01T00:00:00Z"'
+            $json = $raw | ConvertFrom-Json
+            $json.totalFiles | Should -BeGreaterOrEqual 2
+            $json.results | Should -Not -BeNullOrEmpty
         }
     }
 }
