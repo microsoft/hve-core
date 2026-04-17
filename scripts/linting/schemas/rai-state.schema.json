@@ -232,7 +232,7 @@
         },
         "suggestedDepthTier": {
           "type": "string",
-          "enum": ["Basic", "Standard", "Comprehensive"],
+          "enum": ["basic", "standard", "comprehensive"],
           "description": "Recommended assessment depth based on risk classification"
         }
       },

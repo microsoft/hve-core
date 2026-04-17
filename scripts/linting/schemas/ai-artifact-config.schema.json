@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "ai-artifact-config.schema.json",
+  "$id": "https://github.com/microsoft/hve-core/schemas/ai-artifact-config.schema.json",
   "title": "Footer Configuration Schema",
   "description": "Validates footer-with-review.yml and disclaimers.yml config files",
   "type": "object",
