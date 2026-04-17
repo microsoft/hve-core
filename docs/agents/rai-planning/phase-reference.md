@@ -203,11 +203,11 @@ Each threat is assigned a concern level based on contextual analysis rather than
 
 ### State Transitions
 
-| Field                   | Before | After                       |
-|-------------------------|--------|-----------------------------|
-| `currentPhase`              | 4      | 5                           |
+| Field                          | Before | After                       |
+|--------------------------------|--------|-----------------------------|
+| `currentPhase`                 | 4      | 5                           |
 | `securityModelAnalysisStarted` | false  | true                        |
-| `raiThreatCount`        | 0      | count of identified threats |
+| `raiThreatCount`               | 0      | count of identified threats |
 
 ## Phase 5: RAI Impact Assessment
 
@@ -301,9 +301,9 @@ All Phase 6 artifacts are human-facing and include the AI-content transparency n
 
 ### State Transitions
 
-| Field              | Before | After        |
-|--------------------|--------|--------------|
-| `currentPhase`     | 6      | 6 (terminal)                         |
+| Field              | Before                              | After                             |
+|--------------------|-------------------------------------|-----------------------------------|
+| `currentPhase`     | 6                                   | 6 (terminal)                      |
 | `handoffGenerated` | `{ "ado": false, "github": false }` | `{ "ado": true, "github": true }` |
 
 <!-- markdownlint-disable MD036 -->
