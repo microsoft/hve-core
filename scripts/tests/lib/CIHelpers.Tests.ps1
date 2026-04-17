@@ -25,7 +25,7 @@ Describe 'Get-StandardTimestamp' -Tag 'Unit' {
     }
 
     It 'Matches ISO 8601 UTC format ending in Z' {
-        Get-StandardTimestamp | Should -Match (Get-StandardTimestampPattern)
+        Get-StandardTimestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
     }
 
     It 'Returns monotonically increasing timestamps on consecutive calls' {
@@ -45,6 +45,18 @@ Describe 'Get-StandardTimestamp' -Tag 'Unit' {
 Describe 'Get-StandardTimestampPattern' -Tag 'Unit' {
     It 'Returns a non-empty string' {
         Get-StandardTimestampPattern | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Matches a valid ISO 8601 UTC timestamp' {
+        '2026-04-16T14:55:00.0000000Z' | Should -Match (Get-StandardTimestampPattern)
+    }
+
+    It 'Does not match a timestamp missing fractional seconds' {
+        '2026-04-16T14:55:00Z' | Should -Not -Match (Get-StandardTimestampPattern)
+    }
+
+    It 'Does not match a local time without Z suffix' {
+        '2026-04-16T14:55:00.0000000+00:00' | Should -Not -Match (Get-StandardTimestampPattern)
     }
 
     It 'Pattern matches Get-StandardTimestamp output' {
