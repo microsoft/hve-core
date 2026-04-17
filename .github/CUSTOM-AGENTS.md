@@ -312,13 +312,13 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 * `state.json` (session state for resume capability)
 * `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
-* Sensitive uses screening output (Phase 2: Sensitive Uses Assessment)
+* Risk classification screening output (Phase 2: Risk Classification)
 * `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
 * `rai-threat-addendum.md` (Phase 4: RAI Security Model Analysis)
 * `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
 * `rai-review-summary.md` and backlog items (Phase 6: Review and Handoff)
 
-**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Sensitive Uses Assessment (Govern) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
+**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Risk Classification (Govern) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
 
 **Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
 
