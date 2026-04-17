@@ -128,12 +128,12 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action                   | Result                                                       |
-|--------------------------|--------------------------------------------------------------|
-| Merge feature PR to main | Release PR updates with new changelog entry                  |
+| Action                   | Result                                                        |
+|--------------------------|---------------------------------------------------------------|
+| Merge feature PR to main | Release PR updates with new changelog entry                   |
 | Merge Release PR         | Draft GitHub Release created, then auto-promoted to published |
-| Release published        | Extension automatically published to marketplace             |
-| Merge docs-only PR       | Changelog updated, no version bump          |
+| Release published        | Extension automatically published to marketplace              |
+| Merge docs-only PR       | Changelog updated, no version bump                            |
 
 ## Extension Channels and Maturity
 
