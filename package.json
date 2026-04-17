@@ -49,6 +49,7 @@
     "markdownlint-rule-search-replace": "1.2.0"
   },
   "overrides": {
+    "basic-ftp": "5.3.0",
     "markdown-it": "14.1.1",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
