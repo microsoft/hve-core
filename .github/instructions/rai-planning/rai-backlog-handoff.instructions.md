@@ -168,7 +168,7 @@ HTML template for description fields:
 ```html
 <div>
   <h3>RAI Control: {control_name}</h3>
-  <p><strong>NIST Characteristic:</strong> {characteristicistic}</p>
+  <p><strong>NIST Characteristic:</strong> {characteristic}</p>
   <p><strong>Threat:</strong> {threat_id} - {threat_description}</p>
   <p><strong>Control Surface:</strong> {prevent|detect|respond} - {control_details}</p>
   <p><strong>Evidence:</strong> {evidence_status}</p>
@@ -214,7 +214,7 @@ Include a YAML metadata block at the top of the issue body:
 
 ```yaml
 ---
-rai_characteristic: {characteristicistic}
+rai_characteristic: {characteristic}
 threat_id: T-RAI-{NNN}
 suggested_priority: {Immediate|Near-term|Planned|Backlog}
 suggested_horizon: {Pre-Production|Early Operations|Ongoing Governance}
@@ -229,7 +229,7 @@ Markdown template for issue body:
 ```markdown
 ## RAI Control: {control_name}
 
-**NIST Characteristic:** {characteristicistic}
+**NIST Characteristic:** {characteristic}
 **Threat:** {threat_id} - {threat_description}
 **Control Surface:** {prevent|detect|respond} - {control_details}
 **Suggested Priority:** {priority_level}

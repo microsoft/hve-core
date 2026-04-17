@@ -51,7 +51,7 @@ Explore the AI system's purpose, technology stack, deployment model, stakeholder
 
 ### Phase 2: Risk Classification (NIST Govern)
 
-Classify risk level using the active framework's risk indicators. The default NIST framework uses three indicators: `safety_reliability` (binary), `rights_fairness_privacy` (binary), and `security_explainability` (binary). Run the Prohibited Uses Gate first using any `prohibited-use-framework` references or the active framework's prohibited uses definitions. Then evaluate each risk indicator; for activated indicators, ask depth questions to capture evidence and context. Determine the suggested assessment depth tier based on activated count (0 = Basic, 1 = Standard, 2+ = Comprehensive). When a custom framework is active (`replaceDefaultIndicators: true`), use the custom framework's indicators and assessment methods instead. Present risk classification screening summary and suggested depth tier for user confirmation before advancing.
+Classify risk level using the active framework's risk indicators. The default NIST framework uses three indicators: `safety_reliability` (binary), `rights_fairness_privacy` (categorical), and `security_explainability` (continuous). Run the Prohibited Uses Gate first using any `prohibited-use-framework` references or the active framework's prohibited uses definitions. Then evaluate each risk indicator; for activated indicators, ask depth questions to capture evidence and context. Determine the suggested assessment depth tier based on activated count (0 = Basic, 1 = Standard, 2+ = Comprehensive). When a custom framework is active (`replaceDefaultIndicators: true`), use the custom framework's indicators and assessment methods instead. Present risk classification screening summary and suggested depth tier for user confirmation before advancing.
 
 * Artifacts: Risk classification screening summary in `system-definition-pack.md`
 
@@ -120,7 +120,7 @@ State JSON schema for `state.json`:
   "handoffGenerated": { "ado": false, "github": false },
   "gateResults": {
     "prohibitedUsesGate": {
-      "status": "passed",
+      "status": "pending",
       "sourceFrameworks": [],
       "notes": null
     }
