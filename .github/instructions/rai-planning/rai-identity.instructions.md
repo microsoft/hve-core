@@ -104,7 +104,7 @@ The formal JSON Schema definition is at `scripts/linting/schemas/rai-state.schem
   "handoffGenerated": { "ado": false, "github": false },
   "gateResults": {
     "prohibitedUsesGate": {
-      "status": "passed",
+      "status": "pending",
       "sourceFrameworks": [],
       "notes": null
     }

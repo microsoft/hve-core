@@ -302,9 +302,9 @@ Risk classification updates the following state fields:
 },
 "gateResults": {
   "prohibitedUsesGate": {
-    "status": "",
+    "status": "pending",
     "sourceFrameworks": [],
-    "notes": ""
+    "notes": null
   }
 }
 ```
