@@ -1,8 +1,8 @@
 ---
 title: Release Process
-description: Trunk-based release workflow using release-please automation and manual VS Code extension publishing
+description: Trunk-based release workflow using release-please automation and automated VS Code extension publishing
 sidebar_position: 9
-ms.date: 2026-04-14
+ms.date: 2026-04-17
 ms.topic: how-to
 author: WilliamBerryiii
 ---
@@ -17,9 +17,10 @@ This project uses trunk-based development with automated release management. All
 flowchart LR
     A[Feature PR] -->|merge| B[main branch]
     B --> C[release-please updates Release PR]
-    C -->|you merge| D[(draft) GitHub Release created]
-    D --> E[Tag created on main]
-    E -->|automatically| F[Extension published]
+    C -->|you merge| D[Draft release + tag created]
+    D --> E[CI attaches assets and attestations]
+    E --> F[publish-release promotes to published]
+    F -->|automatically| G[Extension published to marketplace]
 ```
 
 When you merge a PR to `main`:
@@ -27,8 +28,9 @@ When you merge a PR to `main`:
 1. **release-please analyzes commits** using conventional commit messages
 2. **Updates the Release PR** with version bumps and changelog entries
 3. **You decide** when to merge the Release PR
-4. **Merging creates** a GitHub Release with the changelog
-5. **Extension publishing** is a separate manual step
+4. **Merging creates** a draft GitHub Release with the changelog
+5. **CI attaches assets**, then the `publish-release` job promotes the draft to published
+6. **Extension publishing** triggers automatically when the release is published
 
 ## The Release PR
 
@@ -53,7 +55,8 @@ Release-please determines the version bump from commit prefixes:
 | `feat!:` or `BREAKING CHANGE:` | Major        | 1.0.0 → 2.0.0        |
 | `docs:`, `chore:`, `refactor:` | No bump      | Grouped in changelog |
 
-> **Note**: Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
+> [!NOTE]
+> Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
 
 ## For Contributors
 
@@ -83,8 +86,10 @@ The Release PR titled "chore(main): release X.Y.Z" updates automatically as PRs 
 
 1. Review the accumulated changelog in the PR
 2. Verify version bump is appropriate for the changes
-3. Merge the Release PR (which is initially created as a draft)
-4. A published GitHub Release is created automatically with the changelog after the `publish-release` workflow runs
+3. Merge the Release PR (this creates a draft GitHub Release)
+4. CI attaches VSIX packages, plugin ZIPs, SBOMs, and attestations to the draft release
+5. The `publish-release` job promotes the draft to a published release
+6. The `release: published` event triggers the marketplace publish workflow automatically
 
 ### Release Cadence
 
@@ -98,18 +103,18 @@ There is no requirement to release after every PR merge.
 
 ## Extension Publishing
 
-VS Code extension publishing is automated via the `publish-release` job, which calls `gh release edit --draft=false` to promote a draft release to a published release upon merging the Release PR.
+VS Code extension publishing is automated. When the `publish-release` job promotes a draft release to published, the `release: published` event triggers [`release-marketplace-stable.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml), which packages and publishes the extension to the VS Code Marketplace using Azure OIDC authentication.
 
-### Publishing Steps
+### Manual Fallback
 
-1. Navigate to **Actions → Stable Marketplace Publish** in the repository (see [release-marketplace-stable.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/release-marketplace-stable.yml) for workflow details)
+If the automated publish did not trigger or you need to republish, use the workflow dispatch fallback:
+
+1. Navigate to **Actions → Stable Marketplace Publish** in the repository
 2. Select **Run workflow**
 3. Choose the `main` branch
 4. Optionally specify a version (defaults to `package.json` version)
 5. Optionally enable dry-run mode to package without publishing
 6. Click **Run workflow**
-
-The workflow packages the extension and publishes to the VS Code Marketplace using Azure OIDC authentication.
 
 ### When to Publish
 
@@ -123,11 +128,11 @@ Documentation-only releases may not require an extension publish.
 
 ## Version Quick Reference
 
-| Action                   | Result                                      |
-|--------------------------|---------------------------------------------|
-| Merge feature PR to main | Release PR updates with new changelog entry |
-| Merge Release PR         | GitHub Release created, tag applied         |
-| Run publish workflow     | Extension published to marketplace          |
+| Action                   | Result                                                       |
+|--------------------------|--------------------------------------------------------------|
+| Merge feature PR to main | Release PR updates with new changelog entry                  |
+| Merge Release PR         | Draft GitHub Release created, then auto-promoted to published |
+| Release published        | Extension automatically published to marketplace             |
 | Merge docs-only PR       | Changelog updated, no version bump          |
 
 ## Extension Channels and Maturity
