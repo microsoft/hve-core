@@ -433,9 +433,9 @@ jobs:
             # Dependencies should be array (even if empty)
             , $result.Dependencies | Should -BeOfType [System.Object[]]
 
-            # Verify mock API calls: 2 GraphQL batches (repos + commits) + 3 tool release checks
+            # Verify mock API calls: 2 GraphQL batches (repos + commits) + 4 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 3 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 4 -Exactly
         }
 
         It 'Processes stale dependencies with array count operations' {
@@ -498,9 +498,9 @@ jobs:
             $logContent = Get-Content $logPath -Raw
             $logContent | Should -Match 'Checking tool staleness'
 
-            # Verify API calls: 2 GraphQL batches + 3 tool release checks
+            # Verify API calls: 2 GraphQL batches + 4 tool release checks
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 2 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 3 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 4 -Exactly
         }
 
         It 'Executes result formatting with array operations' {
@@ -650,7 +650,7 @@ jobs:
 
             # No actions found so no GraphQL calls, but tool staleness still runs
             Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*graphql*' } -Times 0 -Exactly
-            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 3 -Exactly
+            Should -Invoke Invoke-GitHubAPIWithRetry -ParameterFilter { $Uri -like '*/releases/latest' } -Times 4 -Exactly
         }
 
         It 'Processes single stale dependency with array coercion' {
