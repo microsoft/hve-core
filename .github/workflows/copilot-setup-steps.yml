@@ -149,7 +149,10 @@ jobs:
             exit 1
           fi
           curl -sSfL "${GITHUB_RELEASES_URL}/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-${COSIGN_ARCH}" -o /tmp/cosign
-          echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c -
+          if ! echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c --quiet -; then
+            echo "ERROR: cosign checksum verification failed" >&2
+            exit 1
+          fi
           sudo install /tmp/cosign /usr/local/bin/cosign
           rm /tmp/cosign
           cosign version

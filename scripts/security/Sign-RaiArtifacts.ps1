@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -86,105 +86,110 @@ function Get-ArtifactHash {
 
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        #region Artifact Generation
 
-    #region Artifact Generation
+        $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
 
-    $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+        if (-not (Test-Path -Path $artifactDir -PathType Container)) {
+            Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
+            exit 1
+        }
 
-    if (-not (Test-Path -Path $artifactDir -PathType Container)) {
-        Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
-        exit 1
-    }
+        if (-not $OutputPath) {
+            $OutputPath = Join-Path -Path $artifactDir -ChildPath 'artifact-manifest.json'
+        }
 
-    if (-not $OutputPath) {
-        $OutputPath = Join-Path -Path $artifactDir -ChildPath 'artifact-manifest.json'
-    }
+        # File patterns to exclude from the manifest to avoid circular references
+        $excludePatterns = @(
+            'artifact-manifest.json',
+            '*.sig',
+            '*.bundle'
+        )
 
-    # File patterns to exclude from the manifest to avoid circular references
-    $excludePatterns = @(
-        'artifact-manifest.json',
-        '*.sig',
-        '*.bundle'
-    )
+        Write-Host "🔐 Generating artifact manifest for project: $ProjectSlug" -ForegroundColor Cyan
 
-    Write-Host "🔐 Generating artifact manifest for project: $ProjectSlug" -ForegroundColor Cyan
+        $artifacts = Get-ChildItem -Path $artifactDir -File -Recurse |
+            Where-Object {
+                $fileName = $_.Name
+                -not ($excludePatterns | Where-Object { $fileName -like $_ })
+            } |
+            Sort-Object FullName
 
-    $artifacts = Get-ChildItem -Path $artifactDir -File -Recurse |
-        Where-Object {
-            $fileName = $_.Name
-            -not ($excludePatterns | Where-Object { $fileName -like $_ })
-        } |
-        Sort-Object FullName
-
-    if ($artifacts.Count -eq 0) {
-        Write-Host "⚠️  No artifacts found in: $artifactDir" -ForegroundColor Yellow
-        exit 0
-    }
-
-    Write-Host "📁 Found $($artifacts.Count) artifact(s) to hash" -ForegroundColor Cyan
-
-    $fileEntries = [System.Collections.Generic.List[object]]::new()
-
-    foreach ($file in $artifacts) {
-        $relativePath = $file.FullName.Substring($artifactDir.Length + 1) -replace '\\', '/'
-        $hash = Get-ArtifactHash -FilePath $file.FullName
-        $fileEntries.Add(@{
-                path      = $relativePath
-                sha256    = $hash
-                sizeBytes = $file.Length
-            })
-        Write-Host "  ✅ $relativePath" -ForegroundColor Green
-    }
-
-    $manifest = [ordered]@{
-        version     = '1.0'
-        projectSlug = $ProjectSlug
-        generatedAt = (Get-Date -Format 'o')
-        algorithm   = 'SHA256'
-        fileCount   = $fileEntries.Count
-        artifacts   = $fileEntries.ToArray()
-    }
-
-    $manifestJson = $manifest | ConvertTo-Json -Depth 10
-    Set-Content -Path $OutputPath -Value $manifestJson -Encoding utf8NoBOM
-
-    Write-Host "📋 Manifest written to: $OutputPath" -ForegroundColor Green
-    Write-Host "   Files hashed: $($fileEntries.Count)" -ForegroundColor Cyan
-
-    #endregion Artifact Generation
-
-    #region Cosign Signing
-
-    if ($IncludeCosign) {
-        $cosignCmd = Get-Command -Name 'cosign' -ErrorAction SilentlyContinue
-
-        if (-not $cosignCmd) {
-            Write-Host "⚠️  cosign not found in PATH. Skipping signature." -ForegroundColor Yellow
-            Write-Host "   Install cosign from https://docs.sigstore.dev/cosign/system_config/installation/" -ForegroundColor Yellow
+        if ($artifacts.Count -eq 0) {
+            Write-Host "⚠️  No artifacts found in: $artifactDir" -ForegroundColor Yellow
             exit 0
         }
 
-        Write-Host "🔏 Signing manifest with cosign keyless signing..." -ForegroundColor Cyan
+        Write-Host "📁 Found $($artifacts.Count) artifact(s) to hash" -ForegroundColor Cyan
 
-        try {
-            & cosign sign-blob `
-                --yes `
-                --output-signature "$OutputPath.sig" `
-                --bundle "$OutputPath.bundle" `
-                $OutputPath
+        $fileEntries = [System.Collections.Generic.List[object]]::new()
 
-            Write-Host "✅ Manifest signed successfully" -ForegroundColor Green
-            Write-Host "   Signature: $OutputPath.sig" -ForegroundColor Cyan
-            Write-Host "   Bundle:    $OutputPath.bundle" -ForegroundColor Cyan
+        foreach ($file in $artifacts) {
+            $relativePath = $file.FullName.Substring($artifactDir.Length + 1) -replace '\\', '/'
+            $hash = Get-ArtifactHash -FilePath $file.FullName
+            $fileEntries.Add(@{
+                    path      = $relativePath
+                    sha256    = $hash
+                    sizeBytes = $file.Length
+                })
+            Write-Host "  ✅ $relativePath" -ForegroundColor Green
         }
-        catch {
-            Write-Host "❌ Cosign signing failed: $_" -ForegroundColor Red
-            exit 2
+
+        $manifest = [ordered]@{
+            version     = '1.0'
+            projectSlug = $ProjectSlug
+            generatedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ")
+            algorithm   = 'SHA256'
+            fileCount   = $fileEntries.Count
+            artifacts   = $fileEntries.ToArray()
         }
+
+        $manifestJson = $manifest | ConvertTo-Json -Depth 10
+        Set-Content -Path $OutputPath -Value $manifestJson -Encoding utf8NoBOM
+
+        Write-Host "📋 Manifest written to: $OutputPath" -ForegroundColor Green
+        Write-Host "   Files hashed: $($fileEntries.Count)" -ForegroundColor Cyan
+
+        #endregion Artifact Generation
+
+        #region Cosign Signing
+
+        if ($IncludeCosign) {
+            $cosignCmd = Get-Command -Name 'cosign' -ErrorAction SilentlyContinue
+
+            if (-not $cosignCmd) {
+                Write-Host "⚠️  cosign not found in PATH. Skipping signature." -ForegroundColor Yellow
+                Write-Host "   Install cosign from https://docs.sigstore.dev/cosign/system_config/installation/" -ForegroundColor Yellow
+                exit 0
+            }
+
+            Write-Host "🔏 Signing manifest with cosign keyless signing..." -ForegroundColor Cyan
+
+            try {
+                & cosign sign-blob `
+                    --yes `
+                    --output-signature "$OutputPath.sig" `
+                    --bundle "$OutputPath.bundle" `
+                    $OutputPath
+
+                Write-Host "✅ Manifest signed successfully" -ForegroundColor Green
+                Write-Host "   Signature: $OutputPath.sig" -ForegroundColor Cyan
+                Write-Host "   Bundle:    $OutputPath.bundle" -ForegroundColor Cyan
+            }
+            catch {
+                Write-Host "❌ Cosign signing failed: $_" -ForegroundColor Red
+                exit 2
+            }
+        }
+
+        #endregion Cosign Signing
+
+        Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
     }
-
-    #endregion Cosign Signing
-
-    Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
+    catch {
+        Write-Error "Sign-RaiArtifacts failed: $($_.Exception.Message)" -ErrorAction Continue
+        exit 1
+    }
 }
 #endregion Main Execution
