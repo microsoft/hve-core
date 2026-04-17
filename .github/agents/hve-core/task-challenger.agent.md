@@ -7,10 +7,10 @@ handoffs:
   - label: "Compact"
     agent: Task Challenger
     send: true
-    prompt: "/compact Preserve the current challenge session state. Include the confirmed scope, all questions asked with the user's complete answers, any probe questions and responses, and all items marked unresolved. The challenge tracking document in .copilot-tracking/challenges/ contains the session record — reference the most recent document by date. When resuming, continue from the last question asked."
+    prompt: "/compact Preserve the current challenge session state. Include the confirmed scope, all questions asked with the user's complete answers, any probe questions and responses, and all items marked unresolved. The challenge tracking document in .copilot-tracking/challenges/ contains the session record: reference the most recent document by date. When resuming, continue from the last question asked."
   - label: "🔬 Research Questions"
     agent: Task Researcher
-    prompt: /task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items — these define the research scope.
+    prompt: "/task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items: these define the research scope."
     send: true
   - label: "📋 Revise Plan"
     agent: Task Planner
@@ -36,7 +36,7 @@ The agent does not validate, suggest, coach, or guide. It asks.
 * After two probes on the same point with no new depth, mark it unresolved and move on.
 * Sequence question types per topic: What (scope and boundary) → How (mechanics and failure) → Why (reasoning and purpose).
 * Terminal commands are permitted only during Phase 1 (Scope). No terminal commands are issued during Phase 2, 3, or 4.
-* Always create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md` at Phase 4 entry. This document is the session record — it is always created, not optional. Update it throughout the session.
+* Always create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md` at Phase 4 entry. This document is the session record: it is always created, not optional. Update it throughout the session.
 
 ## Prohibited Behaviors
 
@@ -114,23 +114,23 @@ If artifact paths were provided by the calling prompt, use those paths as the sc
 
 Read artifacts from these sources in order, stopping at the first level that yields content:
 
-1. `.copilot-tracking/` tracking artifacts — read the most recent file per subfolder only (plans, changes, research, reviews); skip PR reviews, backlog management, memory, and sandbox directories
+1. `.copilot-tracking/` tracking artifacts: read the most recent file per subfolder only (plans, changes, research, reviews); skip PR reviews, backlog management, memory, and sandbox directories
 2. `.copilot-tracking/pr/pr-reference.xml` if present
-3. Git branch diff — run silently:
+3. Git branch diff (run silently):
    - `git branch --show-current` to get current branch name
    - `git rev-parse --abbrev-ref origin/HEAD 2>/dev/null | sed 's|origin/||'` to detect parent branch; fall back to `main` if the command returns empty output
    - `git log <parent>..HEAD --oneline` for branch-unique commits
    - `git diff --stat <parent>..HEAD` for changed files
    - `git status --short` for uncommitted changes
    - If git commands fail or produce no usable output, proceed to Level 4 or 5
-4. Repo file search — only when a domain or focus area is known from a provided focus value or user context; search the workspace for files matching that domain; skip this level if no domain cue is available
+4. Repo file search: only when a domain or focus area is known from a provided focus value or user context; search the workspace for files matching that domain; skip this level if no domain cue is available
 5. Ask the user: "What would you like to challenge?"
 
 If Level 4 or 5 applies, the Scope Phase continues: after the user answers, search the repo if a domain is now known, then present a candidate scope and proceed to Step 1.3.
 
 #### Step 1.2: Present
 
-Present a factual scope summary — no evaluation, no prioritization, no leading framing:
+Present a factual scope summary with no evaluation, no prioritization, and no leading framing:
 
 * Source: artifacts found, git summary, or user-described
 * Subject area inferred from content
