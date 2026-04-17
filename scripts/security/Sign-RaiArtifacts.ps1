@@ -141,7 +141,8 @@ if ($MyInvocation.InvocationName -ne '.') {
         projectSlug = $ProjectSlug
         generatedAt = (Get-Date -Format 'o')
         algorithm   = 'SHA256'
-        files       = $fileEntries.ToArray()
+        fileCount   = $fileEntries.Count
+        artifacts   = $fileEntries.ToArray()
     }
 
     $manifestJson = $manifest | ConvertTo-Json -Depth 10
