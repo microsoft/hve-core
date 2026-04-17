@@ -54,8 +54,12 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$ProjectSlug,
 
+    [Parameter(Mandatory = $false)]
     [string]$OutputPath,
 
+    [Parameter(Mandatory = $false)]    [string]$OutputPath,
+
+    [Parameter(Mandatory = $false)]
     [switch]$IncludeCosign
 )
 
@@ -65,10 +69,16 @@ $ErrorActionPreference = 'Stop'
 
 function Get-ArtifactHash {
     <#
-    .SYNOPSIS
-        Computes the SHA-256 hash of a file and returns a lowercase hex string.
+    .OUTPUTS
+        [string] Lowercase hex SHA-256 digest.
     #>
     [CmdletBinding()]
+    [OutputType([string]e SHA-256 hash of a file and returns a lowercase hex string.
+    .OUTPUTS
+        [string] Lowercase hex SHA-256 digest.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
     param(
         [Parameter(Mandatory)]
         [string]$FilePath
@@ -77,12 +87,16 @@ function Get-ArtifactHash {
     (Get-FileHash -Path $FilePath -Algorithm SHA256).Hash.ToLower()
 }
 
-#endregion
+    #region Artifact Generation
+
+    #endregion
 
 #region Main Execution
 if ($MyInvocation.InvocationName -ne '.') {
 
-$artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+    #region Artifact Generation
+
+    $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
 
 if (-not (Test-Path -Path $artifactDir -PathType Container)) {
     Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
@@ -134,19 +148,19 @@ $manifest = [ordered]@{
     projectSlug = $ProjectSlug
     generatedAt = (Get-Date -Format 'o')
     algorithm   = 'SHA256'
-    fileCount   = $fileEntries.Count
-    artifacts   = $fileEntries
-}
+    Write-Host "📋 Manifest written to: $OutputPath" -ForegroundColor Green
+    Write-Host "   Files hashed: $($fileEntries.Count)" -ForegroundColor Cyan
 
-$manifestJson = $manifest | ConvertTo-Json -Depth 4
-Set-Content -Path $OutputPath -Value $manifestJson -Encoding utf8NoBOM
+    #endregion Artifact Generation
 
-Write-Host "📋 Manifest written to: $OutputPath" -ForegroundColor Green
-Write-Host "   Files hashed: $($fileEntries.Count)" -ForegroundColor Cyan
+    Set-Content -Path $OutputPath -Value $manifestJson -Encoding utf8NoBOM
 
-#endregion
+    Write-Host "📋 Manifest written to: $OutputPath" -ForegroundColor Green
+    Write-Host "   Files hashed: $($fileEntries.Count)" -ForegroundColor Cyan
 
-#region Cosign Signing
+    #endregion Artifact Generation
+
+    #region Cosign Signing
 
 if ($IncludeCosign) {
     $cosignCmd = Get-Command -Name 'cosign' -ErrorAction SilentlyContinue
@@ -169,16 +183,16 @@ if ($IncludeCosign) {
         Write-Host "✅ Manifest signed successfully" -ForegroundColor Green
         Write-Host "   Signature: $OutputPath.sig" -ForegroundColor Cyan
         Write-Host "   Bundle:    $OutputPath.bundle" -ForegroundColor Cyan
-    }
-    catch {
-        Write-Host "❌ Cosign signing failed: $_" -ForegroundColor Red
+    #endregion Cosign Signing
+
+            Write-Host "❌ Cosign signing failed: $_" -ForegroundColor Red
         exit 2
     }
 }
 
-#endregion
+    #endregion Cosign Signing
 
-Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
+    Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
 
 }
 #endregion Main Execution
