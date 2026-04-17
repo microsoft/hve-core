@@ -3,15 +3,6 @@ name: Network ISA-95 Planner
 description: 'ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core'
 agents:
   - Researcher Subagent
-handoffs:
-  - label: "🛡️ Security Plan"
-    agent: Security Plan Creator
-    prompt: "Create a detailed security plan for the identified ISA-95 network gaps and remediation priorities."
-    send: true
-  - label: "📋 Build Implementation Plan"
-    agent: Task Planner
-    prompt: /task-plan
-    send: true
 ---
 
 # Network ISA-95 Planner

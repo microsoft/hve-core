@@ -25,5 +25,3 @@ Supporting subagents included:
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
 
 Skills included:
-
-- **Network Azure Guidance** — Runtime lookup patterns for Azure IoT Operations layered networking, WAF, and CAF alignment during ISA-95 planning

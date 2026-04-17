@@ -33,8 +33,6 @@ Supporting subagents included:
 
 Skills included:
 
-- **Network Azure Guidance** — Runtime lookup patterns for Azure IoT Operations layered networking, WAF, and CAF alignment during ISA-95 planning
-
 ## Install
 
 ```bash
@@ -104,12 +102,6 @@ copilot plugin install project-planning@hve-core
 | sssc-handoff.instructions          | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | hve-core-location.instructions     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality.instructions         | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
-
-## Skills
-
-| Skill                  | Description                                                                                                                                                                                                                                                                                                                |
-|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| network-azure-guidance | Runtime lookup guidance for ISA-95 network planning across Azure IoT Operations layered networking, Well-Architected Framework, and Cloud Adoption Framework references. Use when brownfield reuse tradeoffs or greenfield target-state mapping require current Microsoft guidance. - Brought to you by microsoft/hve-core |
 
 ---
 

@@ -5,7 +5,6 @@
   "agents": [
     "agents/hve-core/",
     "agents/hve-core/subagents/",
-    "agents/network/",
     "agents/project-planning/",
     "agents/rai-planning/",
     "agents/security/"
@@ -13,8 +12,5 @@
   "commands": [
     "commands/rai-planning/",
     "commands/security/"
-  ],
-  "skills": [
-    "skills/shared/"
   ]
 }

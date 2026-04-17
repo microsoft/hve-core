@@ -78,8 +78,6 @@ items:
   kind: agent
 - path: .github/agents/jira/jira-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/network/network-isa95-planner.agent.md
-  kind: agent
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -90,6 +88,9 @@ items:
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
   kind: agent
+- path: .github/agents/project-planning/network-isa95-planner.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
@@ -581,8 +582,6 @@ items:
 - path: .github/skills/security/security-reviewer-formats
   kind: skill
   maturity: experimental
-- path: .github/skills/shared/network-azure-guidance
-  kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:
