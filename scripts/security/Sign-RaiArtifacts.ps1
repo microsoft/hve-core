@@ -106,7 +106,8 @@ $artifacts = Get-ChildItem -Path $artifactDir -File -Recurse |
     Where-Object {
         $fileName = $_.Name
         -not ($excludePatterns | Where-Object { $fileName -like $_ })
-    }
+    } |
+    Sort-Object FullName
 
 if ($artifacts.Count -eq 0) {
     Write-Host "⚠️  No artifacts found in: $artifactDir" -ForegroundColor Yellow
