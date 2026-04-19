@@ -780,8 +780,11 @@ function Get-PSModuleStaleness {
             if ($response -and $response.properties -and $response.properties.Version) {
                 $latestVersion = [string]$response.properties.Version
             }
-            elseif ($response -and $response.entry -and $response.entry.properties -and $response.entry.properties.Version) {
-                $latestVersion = [string]$response.entry.properties.Version
+            elseif ($response -and $response.entry) {
+                $entry = if ($response.entry -is [array]) { $response.entry[0] } else { $response.entry }
+                if ($entry -and $entry.properties -and $entry.properties.Version) {
+                    $latestVersion = [string]$entry.properties.Version
+                }
             }
 
             if (-not $latestVersion) {
