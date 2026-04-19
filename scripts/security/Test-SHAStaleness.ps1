@@ -736,6 +736,7 @@ function Get-PSModuleStaleness {
         Path to the tool-checksums.json manifest file.
     #>
     [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
     param(
         [Parameter()]
         [string]$ManifestPath = (Join-Path $PSScriptRoot "tool-checksums.json")
@@ -926,7 +927,7 @@ function Invoke-SHAStalenessCheck {
             Write-SecurityLog "All PowerShell modules are up to date" -Level Info
         }
 
-        $errorModules = @($moduleResults | Where-Object { $null -ne $_.Error })
+        $errorModules = @($moduleResults | Where-Object { $null -ne $_.Error -and $_.Error -notlike 'psModules entry missing*' })
         if (@($errorModules).Count -gt 0) {
             Write-SecurityLog "Failed to check $(@($errorModules).Count) PowerShell module(s)" -Level Warning
         }
