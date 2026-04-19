@@ -346,11 +346,21 @@ function Get-PSGalleryApiBase {
     .SYNOPSIS
         Returns the PowerShell Gallery API base URL, respecting HVE_PSGALLERY_REPOSITORY.
 
+    .DESCRIPTION
+        Returns the OData v2 API base URL used for PowerShell Gallery queries
+        (for example, package metadata lookups in staleness checks). When the
+        HVE_PSGALLERY_REPOSITORY environment variable is set, its value is
+        returned to support offline mirrors and test doubles.
+
     .OUTPUTS
         [string] The API base URL without a trailing slash.
 
     .EXAMPLE
         $apiBase = Get-PSGalleryApiBase
+
+    .NOTES
+        Mirrors the shape of Get-GitHubApiBase. Callers append OData query
+        paths (for example, "/Packages()?`$filter=...") directly to the result.
     #>
     [CmdletBinding()]
     [OutputType([string])]
