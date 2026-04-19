@@ -1,5 +1,4 @@
 {
-  "$schema": "./ps-module-versions.schema.json",
   "_comment": "Canonical pinned versions for PowerShell modules used across this repository. Single source of truth consumed by the test runner and Test-PSModulePins.ps1 validator. Update versions here; CI enforces consistency.",
   "modules": {
     "Pester": {
