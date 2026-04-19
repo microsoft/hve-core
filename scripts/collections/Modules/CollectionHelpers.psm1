@@ -7,7 +7,7 @@
 # Author: HVE Core Team
 
 #Requires -Version 7.0
-#Requires -Modules PowerShell-Yaml
+#Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 # ---------------------------------------------------------------------------
 # Internal Utilities

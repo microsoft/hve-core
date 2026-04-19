@@ -341,6 +341,25 @@ function Get-GitHubApiBase {
     return 'https://api.github.com'
 }
 
+function Get-PSGalleryApiBase {
+    <#
+    .SYNOPSIS
+        Returns the PowerShell Gallery API base URL, respecting HVE_PSGALLERY_REPOSITORY.
+
+    .OUTPUTS
+        [string] The API base URL without a trailing slash.
+
+    .EXAMPLE
+        $apiBase = Get-PSGalleryApiBase
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    if ($env:HVE_PSGALLERY_REPOSITORY) { return $env:HVE_PSGALLERY_REPOSITORY }
+    return 'https://www.powershellgallery.com/api/v2'
+}
+
 function Test-GitHubToken {
     <#
     .SYNOPSIS
@@ -620,6 +639,7 @@ Export-ModuleMember -Function @(
     'New-SecurityIssue'
     'Write-SecurityReport'
     'Get-GitHubApiBase'
+    'Get-PSGalleryApiBase'
     'Test-GitHubToken'
     'Invoke-GitHubAPIWithRetry'
 )
