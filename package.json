@@ -46,6 +46,7 @@
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "1.7.0",
     "markdownlint-cli2": "0.22.0",
+    "markdownlint-cli2-formatter-json": "0.0.9",
     "markdownlint-rule-search-replace": "1.2.0"
   },
   "overrides": {

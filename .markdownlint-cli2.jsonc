@@ -24,5 +24,8 @@
   ],
   "customRules": [
     "markdownlint-rule-search-replace"
+  ],
+  "outputFormatters": [
+    ["markdownlint-cli2-formatter-json", { "name": "logs/markdownlint-results.json" }]
   ]
 }
