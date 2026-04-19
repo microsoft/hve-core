@@ -755,6 +755,23 @@ function Get-PSModuleStaleness {
     $results = @()
 
     foreach ($mod in $manifest.psModules) {
+        if ([string]::IsNullOrWhiteSpace($mod.name) -or [string]::IsNullOrWhiteSpace($mod.version)) {
+            $missing = @()
+            if ([string]::IsNullOrWhiteSpace($mod.name)) { $missing += 'name' }
+            if ([string]::IsNullOrWhiteSpace($mod.version)) { $missing += 'version' }
+            $errorMsg = "psModules entry missing required field(s): $($missing -join ', ')"
+            Write-Warning $errorMsg
+            $results += [PSCustomObject]@{
+                Module         = if ($mod.name) { $mod.name } else { '<unnamed>' }
+                CurrentVersion = $mod.version
+                LatestVersion  = $null
+                IsStale        = $null
+                Notes          = $mod.notes
+                Error          = $errorMsg
+            }
+            continue
+        }
+
         $uri = "$apiBase/Packages()?`$filter=Id eq '$($mod.name)' and IsLatestVersion"
         try {
             $response = Invoke-RestMethod -Uri $uri -ErrorAction Stop
@@ -912,6 +929,20 @@ function Invoke-SHAStalenessCheck {
         $errorModules = @($moduleResults | Where-Object { $null -ne $_.Error })
         if (@($errorModules).Count -gt 0) {
             Write-SecurityLog "Failed to check $(@($errorModules).Count) PowerShell module(s)" -Level Warning
+        }
+
+        $malformedModules = @($moduleResults | Where-Object { $_.Error -like 'psModules entry missing*' })
+        foreach ($bad in $malformedModules) {
+            $script:StaleDependencies.Add([PSCustomObject]@{
+                Type           = "PowerShellModule"
+                File           = "scripts/security/tool-checksums.json"
+                Name           = $bad.Module
+                CurrentVersion = $bad.CurrentVersion
+                LatestVersion  = $null
+                DaysOld        = $null
+                Severity       = "High"
+                Message        = $bad.Error
+            })
         }
     }
 
