@@ -165,9 +165,7 @@ jobs:
       - name: Install PowerShell-Yaml
         shell: pwsh
         run: |
-          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-            Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
-          }
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Update prerelease/next branch with version files
         env:
