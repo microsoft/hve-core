@@ -231,7 +231,7 @@ Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
     }
 }
 
-Describe 'Get-PSModuleStaleness' {
+Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
     Context 'With mock manifest and mocked PSGallery' {
         BeforeEach {
             $script:TempManifest = Join-Path $TestDrive 'tool-checksums.json'
