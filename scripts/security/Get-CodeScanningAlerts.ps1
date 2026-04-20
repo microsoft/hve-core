@@ -67,6 +67,9 @@ $Url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branc
 $Raw = gh api $Url --paginate
 
 if ($LASTEXITCODE -ne 0) {
+    if ($Raw -match '403|Resource not accessible by integration') {
+        Write-Error "gh api call failed: missing required scope. Run 'gh auth refresh -s security_events' and re-run this script."
+    }
     Write-Error "gh api call failed (exit $LASTEXITCODE): $Raw"
 }
 

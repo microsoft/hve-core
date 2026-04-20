@@ -101,6 +101,19 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
 
             { & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' } | Should -Throw
         }
+
+        It 'Throws with scope refresh hint when gh api returns 403' {
+            ${Function:gh} = {
+                if ($args[0] -eq 'auth') {
+                    $global:LASTEXITCODE = 0
+                    return 'Logged in to github.com'
+                }
+                $global:LASTEXITCODE = 1
+                return 'HTTP 403: Resource not accessible by integration'
+            }
+
+            { & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' } | Should -Throw '*gh auth refresh -s security_events*'
+        }
     }
 }
 
