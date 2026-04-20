@@ -38,6 +38,9 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 
 This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
 
+> [!IMPORTANT]
+> **Success is determined by stdout content, not exit code.** If the output starts with `[` and parses as a JSON array, the command succeeded. The terminal shell (zsh/bash) may display a non-zero exit code or an `INT` marker in its prompt decoration due to a previously interrupted command in the session — this does not reflect the exit status of this script. Never retry the command or fall back to `gh api` when valid JSON output is present.
+
 > [!NOTE]
 > In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
 
@@ -53,7 +56,7 @@ Count SecuritySeverity RuleId                         RuleDescription
     1 high             BranchProtectionID             Branch-Protection
 ```
 
-An empty table with only headers means no open alerts exist on that branch. Any output matching this format is a successful result — do not treat it as a failure or attempt fallback commands. A terminal prompt showing `INT` from a prior interrupted command does not indicate that this script failed; read the table output to confirm results.
+An empty table with only headers means no open alerts exist on that branch. The same stdout-content success rule applies: if the header row is present, the command succeeded regardless of the terminal's reported exit code or prompt decoration.
 
 ## When to Use This Skill
 
@@ -301,14 +304,14 @@ Enable these toolsets via `toolsets: all` or explicit toolset configuration (for
 
 ## Troubleshooting
 
-| Symptom                                                    | Likely cause                                                       | Fix                                                                                                                        |
-|------------------------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                                             | Install from https://cli.github.com, then re-open your terminal                                                            |
-| `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                                            | Run `gh auth login`; ensure `security_events` scope is granted                                                             |
-| `gh: command not found` (raw shell, not via script)        | `gh` CLI not installed                                             | Install from https://cli.github.com                                                                                        |
-| `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token                           | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope                             |
-| Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch                     | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                                   |
-| Terminal prompt shows `INT` after the script run           | A prior shell command was interrupted; the script itself succeeded | Read the table output above the `INT` marker — if the header row is present, results are valid; do not retry with `gh api` |
+| Symptom                                                    | Likely cause                                                       | Fix                                                                                                                 |
+|------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                                             | Install from https://cli.github.com, then re-open your terminal                                                     |
+| `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                                            | Run `gh auth login`; ensure `security_events` scope is granted                                                      |
+| `gh: command not found` (raw shell, not via script)        | `gh` CLI not installed                                             | Install from https://cli.github.com                                                                                 |
+| `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token                           | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope                      |
+| Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch                     | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                            |
+| Terminal prompt shows `INT` after the script run           | A prior shell command was interrupted; the script itself succeeded | Check stdout — if output starts with `[` (JSON) or contains the table header row, the result is valid; do not retry |
 
 ---
 
