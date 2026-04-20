@@ -16,10 +16,10 @@ Code scanning alerts are produced by static analysis tools such as CodeQL and Sc
 
 ## Prerequisites
 
-| Requirement | Details                                                                   |
-|-------------|---------------------------------------------------------------------------|
-| `pwsh`      | PowerShell 7+; install from <https://learn.microsoft.com/powershell>     |
-| `gh` CLI    | Installed and on `PATH`; install from <https://cli.github.com>           |
+| Requirement | Details                                                                 |
+|-------------|-------------------------------------------------------------------------|
+| `pwsh`      | PowerShell 7+; install from <https://learn.microsoft.com/powershell>    |
+| `gh` CLI    | Installed and on `PATH`; install from <https://cli.github.com>          |
 | Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope |
 | Scope       | `security_events` for private repos; `public_repo` for public-only      |
 
@@ -45,12 +45,12 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 
 ## Parameters Reference
 
-| Parameter       | Type   | Required | Default | Description                                                                       |
-|-----------------|--------|----------|---------|-----------------------------------------------------------------------------------|
-| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                              |
-| `-Repo`         | String | Yes      |         | Repository name                                                                   |
-| `-OutputFormat` | String | No       | Table   | Output format: always use `Json` for programmatic consumption                     |
-| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                                     |
+| Parameter       | Type   | Required | Default | Description                                                   |
+|-----------------|--------|----------|---------|---------------------------------------------------------------|
+| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository          |
+| `-Repo`         | String | Yes      |         | Repository name                                               |
+| `-OutputFormat` | String | No       | Table   | Output format: always use `Json` for programmatic consumption |
+| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                 |
 
 ## Script Reference
 
