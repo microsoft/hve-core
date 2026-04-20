@@ -53,12 +53,12 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 
 ## Parameters Reference
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `-Owner` | String | Yes | | GitHub organization or user that owns the repository |
-| `-Repo` | String | Yes | | Repository name |
-| `-OutputFormat` | String | No | Table | Output format: `Json` for programmatic consumption; omit for human-readable table |
-| `-Branch` | String | No | `main` | Branch to scope alert results |
+| Parameter       | Type   | Required | Default | Description                                                                       |
+|-----------------|--------|----------|---------|-----------------------------------------------------------------------------------|
+| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                              |
+| `-Repo`         | String | Yes      |         | Repository name                                                                   |
+| `-OutputFormat` | String | No       | Table   | Output format: `Json` for programmatic consumption; omit for human-readable table |
+| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                                     |
 
 ## Script Reference
 
@@ -263,11 +263,11 @@ When the GitHub MCP server is configured with the `code_security` toolset, read-
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH` | Install from https://cli.github.com, then re-open your terminal |
-| `gh CLI is not authenticated. Run 'gh auth login'` | `gh` auth not completed | Run `gh auth login`; ensure `security_events` scope is granted |
-| `HTTP 403 Resource not accessible by integration` | Missing `security_events` scope on token | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
-| Empty results `[]` | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`) |
+| Symptom                                                    | Likely cause                                   | Fix                                                                                            |
+|------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                         | Install from https://cli.github.com, then re-open your terminal                                |
+| `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                        | Run `gh auth login`; ensure `security_events` scope is granted                                 |
+| `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
+| Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
 
 > Brought to you by microsoft/hve-core

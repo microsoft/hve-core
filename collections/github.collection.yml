@@ -40,5 +40,6 @@ items:
   # Skills
   - path: .github/skills/github/github-security
     kind: skill
+    maturity: experimental
 display:
   ordering: manual

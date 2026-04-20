@@ -51,9 +51,9 @@ copilot plugin install github@hve-core
 
 ## Skills
 
-| Skill           | Description                                                                                      |
-|-----------------|--------------------------------------------------------------------------------------------------|
-| github-security | Read and act on GitHub Security tab alerts via gh api CLI - Brought to you by microsoft/hve-core |
+| Skill           | Description     |
+|-----------------|-----------------|
+| github-security | github-security |
 
 ---
 
