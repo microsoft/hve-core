@@ -84,7 +84,7 @@ $Grouped = $Alerts |
             Tool             = $_.Group[0].tool.name
             SecuritySeverity = $_.Group[0].rule.security_severity_level
             Count            = $_.Count
-            SamplePaths      = ($_.Group | ForEach-Object { $_.most_recent_instance.location.path } | Sort-Object -Unique)
+            SamplePaths      = @($_.Group | ForEach-Object { $_.most_recent_instance.location.path } | Sort-Object -Unique)
         }
     } |
     Sort-Object -Property Count -Descending

@@ -103,11 +103,21 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
     "SamplePaths": [
       ".github/workflows/validate.yml"
     ]
+  },
+  {
+    "RuleDescription": "Branch-Protection",
+    "RuleId": "BranchProtectionID",
+    "Tool": "Scorecard",
+    "SecuritySeverity": "high",
+    "Count": 1,
+    "SamplePaths": [
+      "no file associated with this alert"
+    ]
   }
 ]
 ```
 
-`SecuritySeverity` is `null` when the rule has no severity tier assigned. `SamplePaths` lists unique, sorted file paths across all alert instances for the rule group.
+`SecuritySeverity` is `null` when the rule has no severity tier assigned. `SamplePaths` is always a JSON array. When an alert has no associated source file (for example, `BranchProtectionID`), the array contains the sentinel string `"no file associated with this alert"`.
 
 ### Get single alert detail
 
