@@ -21,7 +21,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload markdown lint results
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: markdown-lint-results
           path: markdown-lint-output.txt
@@ -78,3 +78,4 @@ jobs:
         run: |
           echo "Markdown lint failed"
           exit 1
+
