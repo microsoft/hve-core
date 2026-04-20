@@ -18,6 +18,8 @@ items:
     kind: skill
   - path: .github/skills/experimental/powerpoint
     kind: skill
+  - path: .github/skills/experimental/tts-voiceover
+    kind: skill
   - path: .github/skills/experimental/video-to-gif
     kind: skill
   - path: .github/skills/experimental/vscode-playwright

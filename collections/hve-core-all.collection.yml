@@ -529,6 +529,8 @@ items:
 - path: .github/instructions/rai-planning/rai-standards.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security-planning/mcp-security.instructions.md
+  kind: instruction
 - path: .github/instructions/security/backlog-handoff.instructions.md
   kind: instruction
   maturity: experimental
@@ -574,6 +576,8 @@ items:
 - path: .github/skills/experimental/customer-card-render
   kind: skill
 - path: .github/skills/experimental/powerpoint
+  kind: skill
+- path: .github/skills/experimental/tts-voiceover
   kind: skill
 - path: .github/skills/experimental/video-to-gif
   kind: skill
