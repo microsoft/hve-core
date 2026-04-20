@@ -17,13 +17,16 @@ The GitHub Security tab is not accessible through the default MCP toolset, so th
 
 ## Prerequisites
 
-| Requirement | Details                                                            |
-|-------------|--------------------------------------------------------------------|
-| `gh` CLI    | Authenticated via `gh auth login` or `GH_TOKEN` env var            |
-| Scope       | `security_events` for private repos; `public_repo` for public-only |
-| `jq`        | Pre-installed on most systems; required for `--jq` filters         |
+| Requirement | Details                                                                        |
+|-------------|--------------------------------------------------------------------------------|
+| `gh` CLI    | Installed and on `PATH`; install from https://cli.github.com                   |
+| Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope        |
+| Scope       | `security_events` for private repos; `public_repo` for public-only             |
+| `jq`        | Pre-installed on most systems; required for `--jq` filters                     |
 
 The `repo` scope also satisfies `security_events`. The `gh` CLI handles authentication automatically — no explicit token passing is needed in commands.
+
+`Get-CodeScanningAlerts.ps1` validates both prerequisites at startup and aborts with a targeted error message if either check fails.
 
 ## Quick Start
 
@@ -252,11 +255,13 @@ Enable these toolsets via `toolsets: all` or explicit toolset configuration (for
 
 ## Troubleshooting
 
-| Symptom                                           | Likely cause                                   | Fix                                                                                            |
-|---------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `gh: command not found`                           | `gh` CLI not installed                         | Install from https://cli.github.com                                                            |
-| `HTTP 403 Resource not accessible by integration` | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
-| Empty results `[]`                                | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
+| Symptom                                                                | Likely cause                                   | Fix                                                                                            |
+|------------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `gh CLI not found. Install it from https://cli.github.com`             | `gh` CLI not on `PATH`                         | Install from https://cli.github.com, then re-open your terminal                                |
+| `gh CLI is not authenticated. Run 'gh auth login'`                     | `gh` auth not completed                        | Run `gh auth login`; ensure `security_events` scope is granted                                 |
+| `gh: command not found` (raw shell, not via script)                    | `gh` CLI not installed                         | Install from https://cli.github.com                                                            |
+| `HTTP 403 Resource not accessible by integration`                      | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
+| Empty results `[]`                                                      | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
 
 ---
 

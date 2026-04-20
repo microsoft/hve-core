@@ -103,3 +103,45 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
         }
     }
 }
+
+Describe 'Get-CodeScanningAlerts - Prerequisite guards' -Tag 'Unit' {
+
+    BeforeEach {
+        Remove-Item 'Function:gh' -ErrorAction SilentlyContinue
+        $global:LASTEXITCODE = 0
+    }
+
+    AfterEach {
+        Remove-Item 'Function:gh' -ErrorAction SilentlyContinue
+        Remove-Item 'Function:Get-Command' -ErrorAction SilentlyContinue
+        $global:LASTEXITCODE = 0
+    }
+
+    Context 'gh CLI not available' {
+        It 'Throws with gh install link when gh is not on PATH' {
+            # Shadow Get-Command so it reports gh as missing regardless of environment
+            ${Function:Get-Command} = {
+                if ($args[0] -eq 'gh') { return $null }
+                Microsoft.PowerShell.Core\Get-Command @args
+            }
+
+            { & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' } | Should -Throw '*https://cli.github.com*'
+        }
+    }
+
+    Context 'gh CLI not authenticated' {
+        It 'Throws with auth hint when gh auth status returns non-zero' {
+            $mockJson = $script:MockAlertJson
+            ${Function:gh} = {
+                if ($args[0] -eq 'auth') {
+                    $global:LASTEXITCODE = 1
+                    return 'You are not logged into any GitHub hosts.'
+                }
+                $global:LASTEXITCODE = 0
+                return $mockJson
+            }.GetNewClosure()
+
+            { & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' } | Should -Throw '*gh auth login*'
+        }
+    }
+}

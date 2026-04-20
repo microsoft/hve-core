@@ -54,6 +54,15 @@ param(
 $ErrorActionPreference = 'Stop'
 $env:GH_PAGER = ''
 
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    Write-Error "gh CLI not found. Install it from https://cli.github.com and re-run this script."
+}
+
+gh auth status 2>&1 | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "gh CLI is not authenticated. Run 'gh auth login' and ensure the 'security_events' scope is granted, then re-run this script."
+}
+
 $Url = "repos/$Owner/$Repo/code-scanning/alerts?state=open&ref=refs/heads/$Branch&per_page=100"
 $Raw = gh api $Url --paginate
 
