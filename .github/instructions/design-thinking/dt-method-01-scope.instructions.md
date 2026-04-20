@@ -187,6 +187,33 @@ Environmental constraints often reveal why initial solution requests will not wo
 * Shared understanding of what good outcomes look like.
 * Customer excitement about collaborative discovery.
 
+## Method 1 Closure Checkpoint: Canonical Deck Snapshot
+
+Before advancing from Method 1 to Method 2, the canonical deck snapshot MUST be generated. This is non-negotiable.
+
+**What triggers this requirement:**
+- Any transition from Method 1 to Method 2
+- Any method suspension or project pause while in Method 1
+
+**Required action:**
+1. Ensure canonical artifact baseline exists:
+   - `canonical/vision-statement.md` (required)
+   - `canonical/problem-statement.md` (required)
+   - `canonical/scenarios/` with at least one scenario (if scenarios exist in scope)
+   - `canonical/personas/` with at least one persona (if personas exist in scope)
+2. Invoke `/generate-canonical-deck` prompt with:
+   - `method-context: 1`
+   - `output-dir: canonical`
+3. Update `coaching-state.md`:
+   - Set `canonical_deck.snapshots.method_1.status: "generated"`
+   - Populate `entry_count` and `candidate_count` from generation results
+   - Record `timestamp` and `fingerprints` for staleness detection
+
+**Why this matters:**
+- The canonical deck is the single source of truth for customer-facing cards. Skipping snapshot generation at method boundaries breaks traceability.
+- Fingerprints enable staleness detection: if artifacts change in Method 2, the coach can flag which ones need deck refresh.
+- Entry count and candidate count inform readiness assessment for later handoffs.
+
 ## Transition to Method 2
 
 Use scope conversation outputs to prepare for design research:

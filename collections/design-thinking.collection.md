@@ -16,9 +16,12 @@ This collection includes agents, prompts, and instructions for:
 - **DT Method 6: Planning** — Concept analysis and prototype approach design for Method 6a lo-fi prototyping
 - **DT Method 6: Building** — Scrappy prototype building with fidelity enforcement for Method 6b
 - **DT Method 6: Testing** — Hypothesis-driven testing and constraint validation for Method 6c
+- **DT Canonical Deck Offer** — Offers canonical deck creation or refresh after canonical artifacts change, updates snapshot metadata, and chains into downstream visual generation when the team wants it
+- **DT Build Customer Cards PPTX** — Periodically offers PowerPoint generation when the canonical deck advances, runs the project-scoped canonical-to-PPTX build script on confirmation, and reports success/failure with friendly diagnostics
+- **Generate Canonical Deck** — Generates or updates the canonical internal deck entry structure from HVE Core Design Thinking artifacts, producing structured markdown files with customer-friendly summaries and internal metadata for traceability
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
 - **DT Coach**: Conversational coaching agent that guides teams through all 9 methods with Think/Speak/Empower philosophy
-- **DT Coaching State** — Session persistence schema, method progress tracking, and session recovery protocol enabling the coach to resume seamlessly across conversations
+- **DT Coaching State** — Session persistence schema, method progress tracking, canonical deck render state, and session recovery protocol enabling the coach to resume seamlessly across conversations
 - **DT Method Sequencing** — Governs the nine-method sequence across three spaces, space boundary transition protocols with readiness signals, non-linear iteration patterns, method routing logic, and coaching state tracking
 - **DT Quality Constraints** — Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods
 - **DT Method 01: Scope Conversations** — Frozen vs fluid assessment, stakeholder discovery, constraint patterns, and conversation navigation for transforming initial customer requests into genuine understanding of business challenges

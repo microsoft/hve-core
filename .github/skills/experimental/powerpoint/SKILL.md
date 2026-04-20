@@ -81,6 +81,15 @@ copilot --version
 * `content.yaml` — Per-slide content definition (text, shapes, images, layout)
 * (Optional) `content-extra.py` — Custom Python for complex slide drawings
 
+## Customer Card Render Fidelity
+
+For DT customer cards generated from canonical markdown, keep the canonical-to-slide contract aligned with `.github/skills/experimental/powerpoint/customer-card-render/references/mapping-spec.md`.
+
+Two sections are especially important:
+
+* Vision slides must render both the canonical vision summary and `### Why This Matters`.
+* Scenario slides must render `### Description`, `### Scenario Narrative`, and `### How Might We` as distinct sections.
+
 ## Content Directory Structure
 
 All slide content lives under the working directory's `content/` folder:
@@ -401,6 +410,115 @@ python scripts/render_pdf_images.py \
 ```
 
 **Dependencies**: Requires LibreOffice for PPTX-to-PDF conversion and either `pdftoppm` (from `poppler`) or `pymupdf` (pip) for PDF-to-JPG rendering.
+
+## Specialized Tools: Customer Card Render
+
+The `customer-card-render/` subdirectory provides turnkey PPTX generation for Design Thinking canonical artifacts (Vision, Problem, Scenarios, Personas). This tool is used by Design Thinking Coach to generate professional customer-facing decks from markdown sources.
+
+### Overview
+
+Customer Card Render pipeline:
+
+1. **Extract** (`generate_cards.py`) — Parse canonical markdown files and produce per-slide YAML definitions
+2. **Build** (`build-cards.ps1`) — Orchestrate YAML generation and PPTX compilation via the core PowerPoint skill pipeline
+3. **Output** — Professional multi-slide PPTX with all canonical content preserved (no truncation)
+
+### Directory Structure
+
+```text
+customer-card-render/
+├── scripts/
+│   ├── build-cards.ps1         # Orchestrator: runs generate_cards.py then Invoke-PptxPipeline.ps1
+│   └── generate_cards.py        # Extracts canonical markdown → per-slide YAML
+└── references/
+    └── mapping-spec.md          # Layout specifications for Scenario and Persona slides
+```
+
+### Generate PPTX from Canonical Artifacts
+
+```powershell
+./.github/skills/experimental/powerpoint/customer-card-render/scripts/build-cards.ps1 `
+  -CanonicalDir ./.copilot-tracking/dt/customer-card-visuals/canonical `
+  -ContentDir ./.copilot-tracking/dt/customer-card-visuals/render/content `
+  -OutputPath ./.copilot-tracking/dt/customer-card-visuals/render/output/customer-cards.pptx
+```
+
+**Parameters:**
+
+| Parameter       | Required | Default | Description                                 |
+|-----------------|----------|---------|---------------------------------------------|
+| `-CanonicalDir` | Yes      | —       | Path to canonical markdown source directory |
+| `-ContentDir`   | Yes      | —       | Output directory for generated YAML slides  |
+| `-OutputPath`   | Yes      | —       | Destination PPTX file path                  |
+
+**Supported Artifact Types:**
+
+* **Vision Statement** — Generates 1 slide using only the `Vision Statement` section content
+* **Problem Statement** — Generates 1 slide using only the `Problem Statement` section content
+* **Scenario** — Generates 1 slide using only the required sections:
+  - `Scenario Narrative`
+  - `How Might We`
+* **Use Case** — Generates one or more slides using only the required sections, in order:
+  - Use Case Description, Business Value, Use Case Overview, Primary User, Secondary User
+  - Preconditions, Steps, Data Requirements, Equipment Requirements, Operating Environment
+  - Success Criteria, Pain Points, Evidence
+* **Persona** — Generates 2 slides (Part 1/2) with all persona sections:
+  - Part 1: Summary, Description, User Goal, User Needs
+  - Part 2: User Mindset
+
+**Output Layout:**
+
+* Scenario, use case, and persona cards use structured 2-column layouts
+* All markdown list syntax (`*` items and `1.` numbering) is preserved in text rendering
+* Text is shrink-to-fit (no truncation); font size adjusts to fit full content
+* Section headers do not overlap with content areas
+
+### Generate YAML Only (Advanced)
+
+To generate per-slide YAML without running the full PPTX build:
+
+```bash
+python ./.github/skills/experimental/powerpoint/customer-card-render/scripts/generate_cards.py \
+  --canonical-dir ./.copilot-tracking/dt/customer-card-visuals/canonical \
+  --output-dir ./.copilot-tracking/dt/customer-card-visuals/render/content
+```
+
+Output files are written to `output-dir/slide-NNN/content.yaml` for each generated slide. This is useful for debugging or customizing YAML before building the PPTX.
+
+### Integration with Design Thinking Coach
+
+When Design Thinking Coach completes deck generation, it offers to build the PPTX automatically:
+
+```
+🖼️ I can generate the customer-card PowerPoint from the canonical deck now. Would you like me to run the build?
+```
+
+When confirmed, the `/dt-build-customer-cards` prompt:
+
+1. Resolves the build script from `./.github/skills/experimental/powerpoint/customer-card-render/scripts/build-cards.ps1`
+2. Checks runtime availability for the approved customer-card commands only
+3. Executes with explicit project-specific paths for canonical, content, and output directories
+4. Reports success/failure with diagnostics
+
+### Content Preservation and Layout Constraints
+
+The customer-card-render tool enforces zero truncation:
+
+* **Text rendering** — All canonical section content is included; textbox sizing uses shrink-to-fit to fit content at smaller font size rather than clipping
+* **List formatting** — Markdown unordered (`*`) and ordered (`1.`) lists are converted to slide bullets/numbers and rendered with proper line breaks
+* **Multi-part slides** — Personas are split across multiple slides to preserve all sub-sections without crowding
+
+Customer-card render mapping constraints:
+
+* Vision cards render only the `Vision Statement` section into the body area.
+* Scenario cards render only `Scenario Narrative` and `How Might We`.
+* Persona cards use `Description` as the customer summary area; they do not render the full canonical body into that field.
+
+When content exceeds available space even with font shrinking, the YAML generator logs a warning. In such cases, review the canonical source for excessive section content or consider reducing verbosity.
+
+### Advanced: Custom Rendering (content-extra.py)
+
+For customer card slides requiring custom drawings or layout modifications beyond the standard grid, create a `content-extra.py` file in the generated slide folder. See the [content-extra.py template](content-extra-py-template.md) for the full template and security validation constraints.
 
 ## Script Architecture
 

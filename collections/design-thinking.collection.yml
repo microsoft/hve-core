@@ -56,6 +56,15 @@ items:
   - path: .github/prompts/design-thinking/dt-method-06-testing.prompt.md
     kind: prompt
     maturity: preview
+  - path: .github/prompts/design-thinking/dt-canonical-deck-offer.prompt.md
+    kind: prompt
+    maturity: preview
+  - path: .github/prompts/design-thinking/dt-build-customer-cards.prompt.md
+    kind: prompt
+    maturity: preview
+  - path: .github/prompts/design-thinking/generate-canonical-deck.prompt.md
+    kind: prompt
+    maturity: preview
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
@@ -74,6 +83,9 @@ items:
     kind: instruction
     maturity: preview
   - path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
+    kind: instruction
+    maturity: preview
+  - path: .github/instructions/design-thinking/dt-canonical-deck.instructions.md
     kind: instruction
     maturity: preview
   - path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
