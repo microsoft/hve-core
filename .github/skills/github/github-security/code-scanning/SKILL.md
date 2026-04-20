@@ -1,6 +1,6 @@
 ---
 name: github-security-code-scanning
-description: 'Read and act on GitHub code scanning alerts from the Security tab via Get-CodeScanningAlerts.ps1 and gh api CLI - Brought to you by microsoft/hve-core'
+description: 'Read GitHub code scanning alerts from the Security tab via Get-CodeScanningAlerts.ps1 - Brought to you by microsoft/hve-core'
 license: MIT
 metadata:
   authors: "microsoft/hve-core"
@@ -12,7 +12,7 @@ metadata:
 
 ## Overview
 
-Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides `Get-CodeScanningAlerts.ps1` for all read operations and `gh api` CLI commands for write operations.
+Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides `Get-CodeScanningAlerts.ps1` for all read operations.
 
 ## Prerequisites
 
@@ -29,11 +29,9 @@ The `repo` scope also satisfies `security_events`. The `gh` CLI handles authenti
 
 ## When to Use This Skill
 
-Use this skill when the task involves code scanning alerts only. It uses `Get-CodeScanningAlerts.ps1` for all read operations and `gh api` for write operations (dismiss, reopen).
+Use this skill when the task involves reading code scanning alerts only. `Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` must not be used as a fallback for listing or grouping.
 
-`Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` is not a fallback for listing or grouping and must not be used for that purpose.
-
-When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`. Write operations always require `gh api` regardless of MCP configuration.
+When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`.
 
 ## Quick Start
 
@@ -44,9 +42,9 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
 
 > [!NOTE]
-> If the terminal shows `INT ✘` after this command, see [Reading Command Output](#reading-command-output) for how to interpret results.
+> If using oh-my-zsh and the terminal shows `INT ✘` after this command, see [Reading Command Output](#reading-command-output) for how to interpret results.
 
-This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
+This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically.
 
 > [!NOTE]
 > In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
@@ -57,7 +55,7 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 |-----------------|--------|----------|---------|-----------------------------------------------------------------------------------|
 | `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                              |
 | `-Repo`         | String | Yes      |         | Repository name                                                                   |
-| `-OutputFormat` | String | No       | Table   | Output format: `Json` for programmatic consumption; omit for human-readable table |
+| `-OutputFormat` | String | No       | Table   | Output format: always use `Json` for programmatic consumption                     |
 | `-Branch`       | String | No       | `main`  | Branch to scope alert results                                                     |
 
 ## Script Reference
@@ -67,9 +65,6 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 Groups and sorts open code scanning alerts by occurrence count, descending.
 
 ```bash
-# Human-readable summary
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
-
 # JSON output for programmatic consumption
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 
@@ -85,43 +80,28 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 The only signal that determines whether `Get-CodeScanningAlerts.ps1` succeeded or failed is the content written to stdout:
 
 * JSON output: stdout starts with `[` and is a valid JSON array. The command succeeded.
-* Table output: stdout contains the header line `Count SecuritySeverity RuleId`. The command succeeded.
 * Error output: stdout contains a line starting with `Error:` or `gh CLI not found`. The command failed.
 
-Do not use the shell exit code or prompt decoration to determine success. zsh and oh-my-zsh display an `INT` marker and a non-zero exit code in the prompt when a previous command in the session was interrupted by the user. This marker persists across subsequent commands and does not reflect the exit status of the most recently run script. A prompt showing `INT ✘` after the script run does not mean the script failed.
+Do not use the shell exit code or prompt decoration to determine success. oh-my-zsh displays an `INT` marker and a non-zero exit code in the prompt when a previous command in the session was interrupted by the user. This marker persists across subsequent commands and does not reflect the exit status of the most recently run script. A prompt showing `INT ✘` after the script run does not mean the script failed.
 
-When stdout starts with `[` or contains `Count SecuritySeverity RuleId`: the command succeeded. Present the output to the user. This is the only next action required.
+When stdout starts with `[`: the command succeeded. Present the output to the user. This is the only next action required.
 
 When stdout contains `Error:` or `gh CLI not found`: report the error to the user.
 
 When `run_in_terminal` returns no output: use `get_terminal_output` to read the terminal buffer. The script writes valid output even when the sync capture mode does not return it.
 
-### Expected output (Table format)
-
-A successful run produces a PowerShell `Format-Table` summary:
-
-```
-Count SecuritySeverity RuleId                         RuleDescription
------ ---------------- ------                         ---------------
-   23                  py/empty-except                Empty except
-    2 medium           actions/code-injection/medium  Code injection
-    1 high             BranchProtectionID             Branch-Protection
-```
-
-An empty table with only headers means no open alerts exist on that branch. The same stdout-content success rule applies: if the header row is present, the command succeeded regardless of the terminal's reported exit code or prompt decoration.
-
 ## Code Scanning Alerts
 
 ### List and group open alerts
 
-Always run with `-OutputFormat Json`. Parse the JSON output and present it to the user. The table format (without `-OutputFormat Json`) is for human display only and produces output that cannot be reliably parsed programmatically.
+Always run with `-OutputFormat Json`. Parse the JSON output and present it to the user.
 
 ```bash
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
 > [!NOTE]
-> See [Reading Command Output](#reading-command-output) for how to interpret results and handle `INT ✘` prompt decoration.
+> See [Reading Command Output](#reading-command-output) for how to interpret results.
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
 
@@ -205,28 +185,6 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 - `tool.version`: version of the analysis tool
 - `warning` / `error`: any issues reported during analysis
 
-## Write Operations
-
-### Dismiss alert
-
-```bash
-gh api --method PATCH repos/{owner}/{repo}/code-scanning/alerts/{alert_number} \
-  -f state=dismissed \
-  -f dismissed_reason="false positive" \
-  -f dismissed_comment="Not applicable due to sanitizer"
-```
-
-Valid `dismissed_reason` values: `false positive`, `won't fix`, `used in tests`
-
-### Reopen alert
-
-Use the same PATCH endpoint with `state=open` to reopen a dismissed alert.
-
-```bash
-gh api --method PATCH repos/{owner}/{repo}/code-scanning/alerts/{alert_number} \
-  -f state=open
-```
-
 ## Backlog Issue Creation
 
 ### Dedup check before creation
@@ -259,7 +217,7 @@ The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded 
 
 ## MCP Availability Note
 
-When the GitHub MCP server is configured with the `code_security` toolset, read-only access to code scanning alerts is available without `gh api`. Enable via `toolsets: all` or explicit toolset configuration. Write operations always require `gh api` regardless of toolset.
+When the GitHub MCP server is configured with the `code_security` toolset, read-only access to code scanning alerts is available without `gh api`. Enable via `toolsets: all` or explicit toolset configuration.
 
 ## Troubleshooting
 
