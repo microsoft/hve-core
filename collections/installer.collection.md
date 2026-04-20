@@ -2,4 +2,4 @@ Deploy HVE Core artifacts across workspace configurations with the hve-core-inst
 
 This collection includes skills for:
 
-- **HVE Core Installer** — Decision-driven installer that deploys selected HVE Core artifacts into target workspaces
+- **HVE Core Installer** - Decision-driven installer that deploys selected HVE Core artifacts into target workspaces

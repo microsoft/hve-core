@@ -5,10 +5,10 @@ Assess AI systems for responsible AI risks using structured standards-aligned an
 
 This collection includes agents and prompts for:
 
-- **RAI Assessment** — Conduct structured responsible AI assessments aligned to Microsoft RAI Standard v2 and NIST AI RMF
-- **Impact Analysis** — Evaluate fairness, reliability, privacy, security, inclusiveness, transparency, and accountability impacts
-- **Security Model Analysis** — Identify AI-specific threats using extended STRIDE methodology with ML-specific attack patterns
-- **Backlog Handoff** — Generate prioritized RAI work items in ADO or GitHub formats
+- **RAI Assessment** - Conduct structured responsible AI assessments aligned to Microsoft RAI Standard v2 and NIST AI RMF
+- **Impact Analysis** - Evaluate fairness, reliability, privacy, security, inclusiveness, transparency, and accountability impacts
+- **Security Model Analysis** - Identify AI-specific threats using extended STRIDE methodology with ML-specific attack patterns
+- **Backlog Handoff** - Generate prioritized RAI work items in ADO or GitHub formats
 
 ## Prerequisites
 

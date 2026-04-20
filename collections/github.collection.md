@@ -2,7 +2,7 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 
 This collection includes agents and prompts for:
 
-- **Issue Discovery** — Find and analyze issues across repositories with duplicate detection
-- **Triage** — Automated label suggestion, milestone assignment, and priority assessment
-- **Sprint Planning** — Organize issues into sprints with effort estimation
-- **Backlog Execution** — Execute planned operations against issue backlogs
+- **Issue Discovery** - Find and analyze issues across repositories with duplicate detection
+- **Triage** - Automated label suggestion, milestone assignment, and priority assessment
+- **Sprint Planning** - Organize issues into sprints with effort estimation
+- **Backlog Execution** - Execute planned operations against issue backlogs

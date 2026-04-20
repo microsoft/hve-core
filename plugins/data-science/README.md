@@ -15,11 +15,11 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 This collection includes agents for:
 
-- **Data Specification Generation** — Create structured data schemas and specifications from requirements
-- **Jupyter Notebook Generation** — Build data analysis notebooks with visualizations and documentation
-- **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
-- **Dashboard Testing** — Comprehensive test suites for Streamlit applications
-- **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
+- **Data Specification Generation** - Create structured data schemas and specifications from requirements
+- **Jupyter Notebook Generation** - Build data analysis notebooks with visualizations and documentation
+- **Streamlit Dashboard Generation** - Create interactive dashboards from data sources
+- **Dashboard Testing** - Comprehensive test suites for Streamlit applications
+- **RAI Planner** - Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
 
 ## Install
 

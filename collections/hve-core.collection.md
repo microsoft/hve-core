@@ -2,29 +2,29 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 This collection includes agents for:
 
-- **RPI Agent** — Autonomous orchestrator that drives the full four-phase workflow
-- **Task Researcher** — Gathers context, discovers patterns, and produces research documents
-- **Task Planner** — Creates detailed implementation plans from research findings
-- **Task Implementor** — Executes plans with progressive tracking and change records
-- **Task Reviewer** — Validates implementations against plans and project conventions
-- **PR Review** — Comprehensive pull request review ensuring code quality and convention compliance
+- **RPI Agent** - Autonomous orchestrator that drives the full four-phase workflow
+- **Task Researcher** - Gathers context, discovers patterns, and produces research documents
+- **Task Planner** - Creates detailed implementation plans from research findings
+- **Task Implementor** - Executes plans with progressive tracking and change records
+- **Task Reviewer** - Validates implementations against plans and project conventions
+- **PR Review** - Comprehensive pull request review ensuring code quality and convention compliance
 
 Git workflow prompts for:
 
-- **Commit Messages** — Generate conventional commit messages following project standards
-- **Merge Operations** — Handle merges, rebases, and conflict resolution workflows
-- **Repository Setup** — Initialize repositories with recommended configuration
-- **Pull Requests** — Create and manage pull requests with linked context
+- **Commit Messages** - Generate conventional commit messages following project standards
+- **Merge Operations** - Handle merges, rebases, and conflict resolution workflows
+- **Repository Setup** - Initialize repositories with recommended configuration
+- **Pull Requests** - Create and manage pull requests with linked context
 
 Supporting subagents included:
 
-- **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
-- **External Researcher** — Retrieves external documentation, SDK references, and code samples
-- **Phase Implementor** — Executes single implementation phases with change tracking
-- **Artifact Validator** — Validates implementation work against plans and conventions
-- **Prompt Tester** — Tests prompt files by following them literally in a sandbox
-- **Prompt Evaluator** — Evaluates prompt execution results against quality criteria
+- **Codebase Researcher** - Searches workspace for code patterns, conventions, and implementations
+- **External Researcher** - Retrieves external documentation, SDK references, and code samples
+- **Phase Implementor** - Executes single implementation phases with change tracking
+- **Artifact Validator** - Validates implementation work against plans and conventions
+- **Prompt Tester** - Tests prompt files by following them literally in a sandbox
+- **Prompt Evaluator** - Evaluates prompt execution results against quality criteria
 
 Skills included:
 
-- **PR Reference** — Generates PR reference XML files with commit history and diffs for pull request workflows
+- **PR Reference** - Generates PR reference XML files with commit history and diffs for pull request workflows
