@@ -551,6 +551,7 @@ items:
   kind: skill
 - path: .github/skills/github/github-security/code-scanning
   kind: skill
+  maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
 - path: .github/skills/installer/hve-core-installer
