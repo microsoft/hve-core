@@ -1,6 +1,6 @@
 ---
 name: github-security-code-scanning
-description: 'Read GitHub code scanning alerts from the Security tab via Get-CodeScanningAlerts.ps1 - Brought to you by microsoft/hve-core'
+description: 'GitHub code scanning alerts via Get-CodeScanningAlerts.ps1 - Brought to you by microsoft/hve-core'
 license: MIT
 metadata:
   authors: "microsoft/hve-core"
@@ -16,22 +16,16 @@ Code scanning alerts are produced by static analysis tools such as CodeQL and Sc
 
 ## Prerequisites
 
-| Requirement | Details                                                                 |
-|-------------|-------------------------------------------------------------------------|
-| `pwsh`      | PowerShell 7+; install from https://learn.microsoft.com/powershell      |
-| `gh` CLI    | Installed and on `PATH`; install from https://cli.github.com            |
+| Requirement | Details                                                                   |
+|-------------|---------------------------------------------------------------------------|
+| `pwsh`      | PowerShell 7+; install from <https://learn.microsoft.com/powershell>     |
+| `gh` CLI    | Installed and on `PATH`; install from <https://cli.github.com>           |
 | Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope |
 | Scope       | `security_events` for private repos; `public_repo` for public-only      |
 
 The `repo` scope also satisfies `security_events`. The `gh` CLI handles authentication automatically; no explicit token passing is needed in commands.
 
 `Get-CodeScanningAlerts.ps1` validates both prerequisites at startup and aborts with a targeted error message if either check fails.
-
-## When to Use This Skill
-
-Use this skill when the task involves reading code scanning alerts only. `Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` must not be used as a fallback for listing or grouping.
-
-When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`.
 
 ## Quick Start
 
@@ -71,6 +65,12 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 # Scope to a specific branch
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -Branch "{branch}" -OutputFormat Json
 ```
+
+## When to Use This Skill
+
+Use this skill when the task involves reading code scanning alerts only. `Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` must not be used as a fallback for listing or grouping.
+
+When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`.
 
 ## Reading Command Output
 
@@ -149,6 +149,8 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
 
 ### Get single alert detail
 
+This call returns one record; it is not a listing or grouping operation and does not conflict with the `gh api` restriction above.
+
 ```bash
 gh api repos/{owner}/{repo}/code-scanning/alerts/{alert_number}
 ```
@@ -159,10 +161,10 @@ Use `-OutputFormat Json` and read the `SamplePaths` field from each rule group. 
 
 ### Key fields
 
-- `rule.security_severity_level`: severity tier: `critical`, `high`, `medium`, or `low`
-- `rule.id`: rule identifier used for deduplication and cross-referencing
-- `tool.name`: analysis tool that produced the alert (for example, `CodeQL`)
-- `most_recent_instance.location.path`: source file path of the most recent alert occurrence
+* `rule.security_severity_level`: severity tier: `critical`, `high`, `medium`, or `low`
+* `rule.id`: rule identifier used for deduplication and cross-referencing
+* `tool.name`: analysis tool that produced the alert (for example, `CodeQL`)
+* `most_recent_instance.location.path`: source file path of the most recent alert occurrence
 
 ## Code Scanning Analyses
 
@@ -179,11 +181,11 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 
 ### Key fields
 
-- `created_at`: timestamp of the analysis run
-- `results_count`: number of alerts produced
-- `rules_count`: number of rules evaluated
-- `tool.version`: version of the analysis tool
-- `warning` / `error`: any issues reported during analysis
+* `created_at`: timestamp of the analysis run
+* `results_count`: number of alerts produced
+* `rules_count`: number of rules evaluated
+* `tool.version`: version of the analysis tool
+* `warning` / `error`: any issues reported during analysis
 
 ## Backlog Issue Creation
 
@@ -223,7 +225,7 @@ When the GitHub MCP server is configured with the `code_security` toolset, read-
 
 | Symptom                                                    | Likely cause                                   | Fix                                                                                            |
 |------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                         | Install from https://cli.github.com, then re-open your terminal                                |
+| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                         | Install from <https://cli.github.com>, then re-open your terminal                              |
 | `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                        | Run `gh auth login`; ensure `security_events` scope is granted                                 |
 | `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
 | Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
