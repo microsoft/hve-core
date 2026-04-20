@@ -35,9 +35,6 @@ Run this command to get a grouped summary of open code scanning alerts, sorted b
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
-> [!NOTE]
-> If using oh-my-zsh and the terminal shows `INT ✘` after this command, see [Reading Command Output](#reading-command-output) for how to interpret results.
-
 This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically.
 
 > [!NOTE]
@@ -82,8 +79,6 @@ The only signal that determines whether `Get-CodeScanningAlerts.ps1` succeeded o
 * JSON output: stdout starts with `[` and is a valid JSON array. The command succeeded.
 * Error output: stdout contains a line starting with `Error:` or `gh CLI not found`. The command failed.
 
-Do not use the shell exit code or prompt decoration to determine success. oh-my-zsh displays an `INT` marker and a non-zero exit code in the prompt when a previous command in the session was interrupted by the user. This marker persists across subsequent commands and does not reflect the exit status of the most recently run script. A prompt showing `INT ✘` after the script run does not mean the script failed.
-
 When stdout starts with `[`: the command succeeded. Present the output to the user. This is the only next action required.
 
 When stdout contains `Error:` or `gh CLI not found`: report the error to the user.
@@ -99,9 +94,6 @@ Always run with `-OutputFormat Json`. Parse the JSON output and present it to th
 ```bash
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
-
-> [!NOTE]
-> See [Reading Command Output](#reading-command-output) for how to interpret results.
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
 
