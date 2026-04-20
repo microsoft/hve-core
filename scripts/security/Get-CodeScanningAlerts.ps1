@@ -97,3 +97,5 @@ switch ($OutputFormat) {
         $Grouped | ConvertTo-Json -Depth 5
     }
 }
+
+exit 0

@@ -6,7 +6,7 @@ compatibility: 'Requires gh CLI authenticated on PATH with security_events scope
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-10"
+  last_updated: "2026-04-20"
 ---
 
 # GitHub Security Skill
@@ -36,13 +36,32 @@ Run this command to get a grouped summary of open code scanning alerts, sorted b
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
-This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
+> [!WARNING]
+> The terminal prompt may show `INT ✘` after this script runs. Ignore it entirely. Read stdout only. When stdout starts with `[`, the command succeeded — present the JSON output immediately without retrying or issuing any other commands.
 
-> [!IMPORTANT]
-> **Success is determined by stdout content, not exit code.** If the output starts with `[` and parses as a JSON array, the command succeeded. The terminal shell (zsh/bash) may display a non-zero exit code or an `INT` marker in its prompt decoration due to a previously interrupted command in the session — this does not reflect the exit status of this script. Never retry the command or fall back to `gh api` when valid JSON output is present.
+This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
 
 > [!NOTE]
 > In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
+
+## Reading Command Output
+
+> [!IMPORTANT]
+> Read stdout. Ignore exit codes and shell prompt decorations entirely.
+
+The only signal that determines whether `Get-CodeScanningAlerts.ps1` succeeded or failed is the content written to stdout:
+
+* JSON output: stdout starts with `[` and is a valid JSON array. The command succeeded.
+* Table output: stdout contains the header line `Count SecuritySeverity RuleId`. The command succeeded.
+* Error output: stdout contains a line starting with `Error:` or `gh CLI not found`. The command failed.
+
+Do not use the shell exit code or prompt decoration to determine success. zsh and oh-my-zsh display an `INT` marker and a non-zero exit code in the prompt when a previous command in the session was interrupted by the user. This marker persists across subsequent commands and does not reflect the exit status of the most recently run script. A prompt showing `INT ✘` after the script run does not mean the script failed.
+
+When stdout starts with `[` or contains `Count SecuritySeverity RuleId`: the command succeeded. Present the output to the user. This is the only next action required.
+
+When stdout contains `Error:` or `gh CLI not found`: report the error to the user.
+
+`Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. `gh api` does not provide equivalent grouping and is not a valid substitute.
 
 ### Expected output (Table format)
 
@@ -68,15 +87,16 @@ When GitHub MCP server is configured with non-default toolsets, read-only access
 
 ### List and group open alerts
 
-`Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. Do not use `gh api` as a fallback for listing or grouping alerts.
+`Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. `gh api` is not a fallback for listing or grouping code scanning alerts and must not be used for that purpose.
+
+Always run with `-OutputFormat Json`. Parse the JSON output and present it to the user. The table format (without `-OutputFormat Json`) is for human display only and produces output that cannot be reliably parsed programmatically.
 
 ```bash
-# Machine-readable JSON — use this when processing results
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
-
-# Human-readable table — use this only for display
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
+
+> [!WARNING]
+> When the terminal shows `INT ✘` after this command: read stdout only. When stdout starts with `[`, the command succeeded. Proceed to presenting the results. Do not retry. Do not use `gh api` instead.
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
 
@@ -311,7 +331,7 @@ Enable these toolsets via `toolsets: all` or explicit toolset configuration (for
 | `gh: command not found` (raw shell, not via script)        | `gh` CLI not installed                                             | Install from https://cli.github.com                                                                                 |
 | `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token                           | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope                      |
 | Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch                     | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                            |
-| Terminal prompt shows `INT` after the script run           | A prior shell command was interrupted; the script itself succeeded | Check stdout — if output starts with `[` (JSON) or contains the table header row, the result is valid; do not retry |
+
 
 ---
 
