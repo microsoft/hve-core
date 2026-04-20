@@ -37,7 +37,7 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
 
 > [!WARNING]
-> The terminal prompt may show `INT ✘` after this script runs. Ignore it entirely. Read stdout only. When stdout starts with `[`, the command succeeded — present the JSON output immediately without retrying or issuing any other commands.
+> The terminal prompt may show `INT ✘` after this script runs. Ignore it entirely. Read stdout only. When stdout starts with `[`, the command succeeded. Present the JSON output immediately without retrying or issuing any other commands. When `run_in_terminal` returns no output, use `get_terminal_output` to read the terminal buffer before retrying.
 
 This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
 
@@ -60,6 +60,8 @@ Do not use the shell exit code or prompt decoration to determine success. zsh an
 When stdout starts with `[` or contains `Count SecuritySeverity RuleId`: the command succeeded. Present the output to the user. This is the only next action required.
 
 When stdout contains `Error:` or `gh CLI not found`: report the error to the user.
+
+When `run_in_terminal` returns no output: use `get_terminal_output` to read the terminal buffer. The script writes valid output even when the sync capture mode does not return it.
 
 `Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. `gh api` does not provide equivalent grouping and is not a valid substitute.
 
@@ -96,7 +98,7 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
 
 > [!WARNING]
-> When the terminal shows `INT ✘` after this command: read stdout only. When stdout starts with `[`, the command succeeded. Proceed to presenting the results. Do not retry. Do not use `gh api` instead.
+> When the terminal shows `INT ✘` after this command: read stdout only. When stdout starts with `[`, the command succeeded. Proceed to presenting the results. Do not retry. Do not use `gh api` instead. When `run_in_terminal` returns no output, use `get_terminal_output` to read the terminal buffer before retrying.
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
 
