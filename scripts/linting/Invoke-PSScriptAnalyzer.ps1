@@ -54,7 +54,7 @@ function Invoke-PSScriptAnalyzerCore {
     # Ensure PSScriptAnalyzer is available
     if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
         Write-Host "Installing PSScriptAnalyzer module..." -ForegroundColor Yellow
-        Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository PSGallery
+        Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository PSGallery
     }
 
     Import-Module PSScriptAnalyzer
