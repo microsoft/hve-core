@@ -33,10 +33,10 @@ The `repo` scope also satisfies `security_events`. The `gh` CLI handles authenti
 Run this command to get a grouped summary of open code scanning alerts, sorted by frequency. This is the recommended first command when triaging a repository's security posture.
 
 ```bash
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
+pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
-This groups open alerts by rule title and sorts results by occurrence count, descending.
+This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically. Omit `-OutputFormat Json` only when producing a human-readable summary for display.
 
 > [!NOTE]
 > In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
@@ -68,11 +68,11 @@ When GitHub MCP server is configured with non-default toolsets, read-only access
 `Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. Do not use `gh api` as a fallback for listing or grouping alerts.
 
 ```bash
-# Human-readable table (default)
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
-
-# Machine-readable JSON with full details including SamplePaths and Tool
+# Machine-readable JSON — use this when processing results
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
+
+# Human-readable table — use this only for display
+pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 ```
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
