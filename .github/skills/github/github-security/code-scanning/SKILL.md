@@ -1,6 +1,6 @@
 ---
-name: github-security
-description: 'Read and act on GitHub Security tab alerts via gh api CLI - Brought to you by microsoft/hve-core'
+name: github-security-code-scanning
+description: 'Read and act on GitHub code scanning alerts from the Security tab via Get-CodeScanningAlerts.ps1 and gh api CLI - Brought to you by microsoft/hve-core'
 license: MIT
 metadata:
   authors: "microsoft/hve-core"
@@ -8,11 +8,11 @@ metadata:
   last_updated: "2026-04-20"
 ---
 
-# GitHub Security Skill
+# GitHub Security — Code Scanning Skill
 
 ## Overview
 
-The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides `gh api` CLI commands for all read and write operations against GitHub Security alerts. The three alert types covered are code scanning (static analysis), secret scanning (credential detection), and Dependabot (dependency vulnerability). Advanced `jq` filter patterns for extended use cases are collected in [`references/alert-filters.md`](references/alert-filters.md).
+Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides `Get-CodeScanningAlerts.ps1` for all read operations and `gh api` CLI commands for write operations.
 
 ## Prerequisites
 
@@ -22,7 +22,6 @@ The GitHub Security tab is not accessible through the default MCP toolset, so th
 | `gh` CLI    | Installed and on `PATH`; install from https://cli.github.com            |
 | Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope |
 | Scope       | `security_events` for private repos; `public_repo` for public-only      |
-| `jq`        | Pre-installed on most systems; required for `--jq` filters              |
 
 The `repo` scope also satisfies `security_events`. The `gh` CLI handles authentication automatically; no explicit token passing is needed in commands.
 
@@ -30,13 +29,15 @@ The `repo` scope also satisfies `security_events`. The `gh` CLI handles authenti
 
 ## When to Use This Skill
 
-This skill uses `Get-CodeScanningAlerts.ps1` for all code scanning read operations and `gh api` for all write operations and for secret scanning and Dependabot reads. Write operations (dismissing, reopening, or resolving alerts) always require `gh api` regardless of MCP configuration.
+Use this skill when the task involves code scanning alerts only. It uses `Get-CodeScanningAlerts.ps1` for all read operations and `gh api` for write operations (dismiss, reopen).
 
-When GitHub MCP server is configured with non-default toolsets, read-only access is available without `gh api`. See the [MCP Availability Note](#mcp-availability-note) section for details on optional read-only MCP access.
+`Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` is not a fallback for listing or grouping and must not be used for that purpose.
+
+When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`. Write operations always require `gh api` regardless of MCP configuration.
 
 ## Quick Start
 
-Run this command to get a grouped summary of open code scanning alerts, sorted by frequency. This is the recommended first command when triaging a repository's security posture.
+Run this command to get a grouped summary of open code scanning alerts, sorted by frequency. This is the recommended first command when triaging a repository's code scanning posture.
 
 ```bash
 pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
@@ -113,8 +114,6 @@ An empty table with only headers means no open alerts exist on that branch. The 
 
 ### List and group open alerts
 
-`Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. `gh api` is not a fallback for listing or grouping code scanning alerts and must not be used for that purpose.
-
 Always run with `-OutputFormat Json`. Parse the JSON output and present it to the user. The table format (without `-OutputFormat Json`) is for human display only and produces output that cannot be reliably parsed programmatically.
 
 ```bash
@@ -128,7 +127,7 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
 
 ### JSON output shape
 
-`-OutputFormat Json` returns an array of group objects. Each object has the following fields:
+`-OutputFormat Json` returns an array of group objects:
 
 ```json
 [
@@ -206,71 +205,9 @@ gh api repos/{owner}/{repo}/code-scanning/analyses \
 - `tool.version`: version of the analysis tool
 - `warning` / `error`: any issues reported during analysis
 
-## Secret Scanning
-
-### List open alerts
-
-```bash
-gh api repos/{owner}/{repo}/secret-scanning/alerts \
-  --paginate \
-  -f state=open \
-  -f per_page=100
-```
-
-### Filter active open secrets
-
-Active secrets represent the highest-risk alerts because the credential is still valid.
-
-```bash
-gh api repos/{owner}/{repo}/secret-scanning/alerts --paginate \
-  --jq '[.[] | select(.state == "open" and .validity == "active")]'
-```
-
-### Group by secret type with active counts
-
-See [`references/alert-filters.md`](references/alert-filters.md) for the full group-by pattern that includes active counts per secret type.
-
-### Key fields
-
-- `secret_type`: machine-readable type identifier (for example, `github_personal_access_token`)
-- `secret_type_display_name`: human-readable label for the secret type
-- `validity`: `active`, `inactive`, or `unknown`
-- `publicly_leaked`: `true` when the secret was exposed in a public location
-- `push_protection_bypassed`: `true` when a developer bypassed push protection to commit the secret
-
-## Dependabot Alerts
-
-### List open alerts by severity
-
-Returns critical and high severity open alerts with CVE, affected package, and available patch version.
-
-```bash
-gh api repos/{owner}/{repo}/dependabot/alerts \
-  --paginate \
-  -f severity=critical,high \
-  -f state=open \
-  --jq '.[] | {number, package: .dependency.package.name, ecosystem: .dependency.package.ecosystem, severity: .security_advisory.severity, cve: .security_advisory.cve_id, patched: .security_vulnerability.first_patched_version.identifier}'
-```
-
-### Filter by ecosystem
-
-Use `-f ecosystem=npm,pip` (comma-separated) to restrict results to specific package ecosystems.
-
-### Filter for alerts with an available patch
-
-Use `-f has=patch` to return only alerts where an upgraded version resolves the vulnerability.
-
-### Key fields
-
-- `dependency.package.ecosystem`: package manager (for example, `npm`, `pip`, `nuget`)
-- `dependency.scope`: `runtime` or `development`
-- `security_advisory.severity`: `critical`, `high`, `medium`, or `low`
-- `security_vulnerability.first_patched_version.identifier`: lowest version that resolves the vulnerability
-- `security_advisory.epss.percentage`: EPSS exploit probability score (0–1)
-
 ## Write Operations
 
-### Dismiss code scanning alert
+### Dismiss alert
 
 ```bash
 gh api --method PATCH repos/{owner}/{repo}/code-scanning/alerts/{alert_number} \
@@ -281,7 +218,7 @@ gh api --method PATCH repos/{owner}/{repo}/code-scanning/alerts/{alert_number} \
 
 Valid `dismissed_reason` values: `false positive`, `won't fix`, `used in tests`
 
-### Reopen code scanning alert
+### Reopen alert
 
 Use the same PATCH endpoint with `state=open` to reopen a dismissed alert.
 
@@ -289,31 +226,6 @@ Use the same PATCH endpoint with `state=open` to reopen a dismissed alert.
 gh api --method PATCH repos/{owner}/{repo}/code-scanning/alerts/{alert_number} \
   -f state=open
 ```
-
-### Resolve secret scanning alert
-
-```bash
-gh api --method PATCH repos/{owner}/{repo}/secret-scanning/alerts/{alert_number} \
-  -f state=resolved \
-  -f resolution="false_positive" \
-  -f resolution_comment="Not a real credential"
-```
-
-Valid `resolution` values: `false_positive`, `wont_fix`, `revoked`, `used_in_tests`
-
-> [!NOTE]
-> `dismissed_reason` values (code scanning) use spaces; `resolution` values (secret scanning) use underscores. These formats match the underlying GitHub API field conventions.
-
-### Dismiss Dependabot alert
-
-```bash
-gh api --method PATCH repos/{owner}/{repo}/dependabot/alerts/{alert_number} \
-  -f state=dismissed \
-  -f dismissed_reason=tolerable_risk \
-  -f dismissed_comment="Mitigated by WAF rule"
-```
-
-Valid `dismissed_reason` values: `fix_started`, `inaccurate`, `no_bandwidth`, `not_used`, `tolerable_risk`
 
 ## Backlog Issue Creation
 
@@ -343,27 +255,19 @@ if [[ -z "$existing" ]]; then
 fi
 ```
 
-The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor. The dedup search uses `gh issue list --search` to find existing issues before creating duplicates. Replace all `{placeholders}` with actual values from the alert-grouping `jq` output.
+The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
 
 ## MCP Availability Note
 
-When the GitHub MCP server is configured with non-default toolsets, read-only access to security alerts is available without `gh api`. The relevant toolsets are:
-
-- `code_security`: code scanning alerts
-- `dependabot`: Dependabot alerts
-- `secret_protection`: secret scanning alerts
-- `security_advisories`: security advisory data
-
-Enable these toolsets via `toolsets: all` or explicit toolset configuration (for example, `https://api.githubcopilot.com/mcp/x/all` for the hosted remote server). Write operations (dismissing, reopening, and resolving alerts) are NOT available via MCP regardless of toolset and always require `gh api`.
+When the GitHub MCP server is configured with the `code_security` toolset, read-only access to code scanning alerts is available without `gh api`. Enable via `toolsets: all` or explicit toolset configuration. Write operations always require `gh api` regardless of toolset.
 
 ## Troubleshooting
 
-| Symptom                                                    | Likely cause                                                       | Fix                                                                                                                 |
-|------------------------------------------------------------|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
-| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                                             | Install from https://cli.github.com, then re-open your terminal                                                     |
-| `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                                            | Run `gh auth login`; ensure `security_events` scope is granted                                                      |
-| `gh: command not found` (raw shell, not via script)        | `gh` CLI not installed                                             | Install from https://cli.github.com                                                                                 |
-| `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token                           | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope                      |
-| Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch                     | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                            |
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH` | Install from https://cli.github.com, then re-open your terminal |
+| `gh CLI is not authenticated. Run 'gh auth login'` | `gh` auth not completed | Run `gh auth login`; ensure `security_events` scope is granted |
+| `HTTP 403 Resource not accessible by integration` | Missing `security_events` scope on token | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
+| Empty results `[]` | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`) |
 
 > Brought to you by microsoft/hve-core
