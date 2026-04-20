@@ -17,12 +17,12 @@ The GitHub Security tab is not accessible through the default MCP toolset, so th
 
 ## Prerequisites
 
-| Requirement | Details                                                                        |
-|-------------|--------------------------------------------------------------------------------|
-| `gh` CLI    | Installed and on `PATH`; install from https://cli.github.com                   |
-| Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope        |
-| Scope       | `security_events` for private repos; `public_repo` for public-only             |
-| `jq`        | Pre-installed on most systems; required for `--jq` filters                     |
+| Requirement | Details                                                                 |
+|-------------|-------------------------------------------------------------------------|
+| `gh` CLI    | Installed and on `PATH`; install from https://cli.github.com            |
+| Auth        | Run `gh auth login` or set `GH_TOKEN`; requires `security_events` scope |
+| Scope       | `security_events` for private repos; `public_repo` for public-only      |
+| `jq`        | Pre-installed on most systems; required for `--jq` filters              |
 
 The `repo` scope also satisfies `security_events`. The `gh` CLI handles authentication automatically — no explicit token passing is needed in commands.
 
@@ -41,32 +41,41 @@ This groups open alerts by rule title and sorts results by occurrence count, des
 > [!NOTE]
 > In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
 
+### Expected output (Table format)
+
+A successful run produces a PowerShell `Format-Table` summary:
+
+```
+Count SecuritySeverity RuleId                         RuleDescription
+----- ---------------- ------                         ---------------
+   23                  py/empty-except                Empty except
+    2 medium           actions/code-injection/medium  Code injection
+    1 high             BranchProtectionID             Branch-Protection
+```
+
+An empty table with only headers means no open alerts exist on that branch. Any output matching this format is a successful result — do not treat it as a failure or attempt fallback commands. A terminal prompt showing `INT` from a prior interrupted command does not indicate that this script failed; read the table output to confirm results.
+
 ## When to Use This Skill
 
-The GitHub Security tab is not accessible in the default MCP toolset. This skill provides `gh api` commands for all read and write operations across the three alert types. Write operations — dismissing, reopening, or resolving alerts — always require `gh api` regardless of MCP configuration.
+The GitHub Security tab is not accessible in the default MCP toolset. This skill uses `Get-CodeScanningAlerts.ps1` for all code scanning read operations and `gh api` for all write operations and for secret scanning and Dependabot reads. Write operations — dismissing, reopening, or resolving alerts — always require `gh api` regardless of MCP configuration.
 
 When GitHub MCP server is configured with non-default toolsets, read-only access is available without `gh api`. See the [MCP Availability Note](#mcp-availability-note) section for details on optional read-only MCP access.
 
 ## Code Scanning Alerts
 
-### List open alerts
+### List and group open alerts
+
+`Get-CodeScanningAlerts.ps1` is the only supported method for reading code scanning alerts. Do not use `gh api` as a fallback for listing or grouping alerts.
 
 ```bash
-gh api "repos/{owner}/{repo}/code-scanning/alerts?state=open&ref=refs/heads/main&per_page=100" \
-  --paginate
+# Human-readable table (default)
+pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
+
+# Machine-readable JSON with full details including SamplePaths and Tool
+pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
-Use `ref=refs/heads/main` to scope to a specific branch. Omit `ref` to return alerts from all branches.
-
-### Group by rule title
-
-Use `Get-CodeScanningAlerts.ps1` for automated or one-shot grouping. The `gh api` form below is retained as an advanced reference and for environments without PowerShell.
-
-```bash
-gh api "repos/{owner}/{repo}/code-scanning/alerts?state=open&ref=refs/heads/main&per_page=100" \
-  --paginate \
-  --jq '[.[] | {number, rule_description: .rule.description, rule_id: .rule.id, tool: .tool.name, security_severity: .rule.security_severity_level, path: .most_recent_instance.location.path}] | group_by(.rule_description) | map({rule_description: .[0].rule_description, rule_id: .[0].rule_id, tool: .[0].tool, security_severity: .[0].security_severity, count: length, sample_paths: [.[].path] | unique}) | sort_by(-.count)'
-```
+Use `-Branch {branch}` to scope to a branch other than `main`.
 
 ### Get single alert detail
 
@@ -76,12 +85,7 @@ gh api repos/{owner}/{repo}/code-scanning/alerts/{alert_number}
 
 ### List affected file paths
 
-Returns a unique, sorted list of file paths touched by open alerts.
-
-```bash
-gh api repos/{owner}/{repo}/code-scanning/alerts --paginate \
-  --jq '[.[].most_recent_instance.location.path] | unique | sort[]'
-```
+Use `-OutputFormat Json` and read the `SamplePaths` field from each rule group. The JSON output includes `RuleDescription`, `RuleId`, `Tool`, `SecuritySeverity`, `Count`, and `SamplePaths` (unique, sorted file paths) per group.
 
 ### Key fields
 
@@ -255,13 +259,14 @@ Enable these toolsets via `toolsets: all` or explicit toolset configuration (for
 
 ## Troubleshooting
 
-| Symptom                                                                | Likely cause                                   | Fix                                                                                            |
-|------------------------------------------------------------------------|------------------------------------------------|------------------------------------------------------------------------------------------------|
-| `gh CLI not found. Install it from https://cli.github.com`             | `gh` CLI not on `PATH`                         | Install from https://cli.github.com, then re-open your terminal                                |
-| `gh CLI is not authenticated. Run 'gh auth login'`                     | `gh` auth not completed                        | Run `gh auth login`; ensure `security_events` scope is granted                                 |
-| `gh: command not found` (raw shell, not via script)                    | `gh` CLI not installed                         | Install from https://cli.github.com                                                            |
-| `HTTP 403 Resource not accessible by integration`                      | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
-| Empty results `[]`                                                      | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
+| Symptom                                                    | Likely cause                                                       | Fix                                                                                                                        |
+|------------------------------------------------------------|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `gh CLI not found. Install it from https://cli.github.com` | `gh` CLI not on `PATH`                                             | Install from https://cli.github.com, then re-open your terminal                                                            |
+| `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                                            | Run `gh auth login`; ensure `security_events` scope is granted                                                             |
+| `gh: command not found` (raw shell, not via script)        | `gh` CLI not installed                                             | Install from https://cli.github.com                                                                                        |
+| `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token                           | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope                             |
+| Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch                     | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                                   |
+| Terminal prompt shows `INT` after the script run           | A prior shell command was interrupted; the script itself succeeded | Read the table output above the `INT` marker — if the header row is present, results are valid; do not retry with `gh api` |
 
 ---
 
