@@ -1,0 +1,1 @@
+../../../../.github/prompts/design-thinking/generate-canonical-deck.prompt.md
