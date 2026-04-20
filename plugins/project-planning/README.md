@@ -31,8 +31,6 @@ Supporting subagents included:
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
 
-Skills included:
-
 ## Install
 
 ```bash
