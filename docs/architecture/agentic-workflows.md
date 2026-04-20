@@ -92,13 +92,13 @@ flowchart TD
 
 ## Workflow Details
 
-| Workflow             | Trigger                                | Agent                                                                                                                            | Key Actions                                                                          |
-|----------------------|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                       | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness    |
-| Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)      | Research codebase, plan changes, implement, open PR                                  |
-| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                    | Review correctness, conventions, security; label `review-passed` or `needs-revision` |
-| Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)         | Validate licensing, SHA pinning, environment sync; approve safe bumps                |
-| Documentation Update | Push to main                           | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md) | Map code changes to docs, create issues for stale documentation                      |
+| Workflow             | Trigger                                | Agent                                                                                                                            | Key Actions                                                                                                                                             |
+|----------------------|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                       | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness                                                                       |
+| Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)      | Research codebase, plan changes, implement, open PR                                                                                                     |
+| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                    | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
+| Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)         | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
+| Documentation Update | Push to main                           | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md) | Map code changes to docs, create issues for stale documentation                                                                                         |
 
 > [!TIP]
 > The triage agent only classifies, labels, and optionally decomposes issues. It does not close issues, assign users, or modify issue titles.
@@ -107,6 +107,13 @@ flowchart TD
 
 > [!NOTE]
 > The implementation agent keeps PRs small and focused. If the issue is ambiguous or too large, it posts a comment requesting clarification instead of guessing.
+
+<!-- markdownlint-disable-next-line MD028 -->
+
+> [!NOTE]
+> **Maintainer advisory mode.** When the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, the PR Review Agent switches to advisory mode: it posts a `COMMENT` review prefixed with "Advisory review …", never uses `REQUEST_CHANGES`, does not add the `needs-revision` label, and does not convert the PR to draft.
+>
+> **`skip-review` label guard.** The `skip-review` label only skips the PR Review workflow when the PR author's association is `MEMBER`, `OWNER`, or `COLLABORATOR`; PRs from other authors are reviewed normally even when the label is present.
 
 ## Workflow Configuration
 
