@@ -1,3 +1,7 @@
+---
+description: "Canonical-to-visual mapping specification for customer-card PowerPoint render"
+---
+
 <!-- markdownlint-disable-file -->
 # Customer Card Canonical-to-Visual Mapping Spec
 
@@ -228,3 +232,7 @@ The PPTX lands in `render/output/`:
 render/output/
 └── customer-cards.pptx
 ```
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
