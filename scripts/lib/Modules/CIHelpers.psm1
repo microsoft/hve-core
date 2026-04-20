@@ -571,8 +571,30 @@ function Get-StandardTimestamp {
     return (Get-Date).ToUniversalTime().ToString('o')
 }
 
+function Get-StandardTimestampPattern {
+    <#
+    .SYNOPSIS
+    Returns the regex pattern that matches Get-StandardTimestamp output.
+
+    .DESCRIPTION
+    Returns a single-source regex anchored to the ISO 8601 round-trip format
+    produced by Get-StandardTimestamp (e.g. "2025-01-15T18:30:00.0000000Z").
+    Use this function in tests instead of hard-coding the pattern so that all
+    assertions stay in sync when the timestamp format changes.
+
+    .OUTPUTS
+    System.String - Anchored regex pattern for ISO 8601 UTC timestamps.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param()
+
+    return '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+}
+
 Export-ModuleMember -Function @(
     'Get-StandardTimestamp',
+    'Get-StandardTimestampPattern',
     'ConvertTo-GitHubActionsEscaped',
     'ConvertTo-AzureDevOpsEscaped',
     'Get-CIPlatform',
