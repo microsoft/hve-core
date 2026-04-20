@@ -77,6 +77,38 @@ pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}"
 
 Use `-Branch {branch}` to scope to a branch other than `main`.
 
+### JSON output shape
+
+`-OutputFormat Json` returns an array of group objects. Each object has the following fields:
+
+```json
+[
+  {
+    "RuleDescription": "Empty except",
+    "RuleId": "py/empty-except",
+    "Tool": "CodeQL",
+    "SecuritySeverity": null,
+    "Count": 23,
+    "SamplePaths": [
+      "scripts/collections/Get-CollectionItems.py",
+      "scripts/linting/Validate-MarkdownFrontmatter.py"
+    ]
+  },
+  {
+    "RuleDescription": "Code injection",
+    "RuleId": "actions/code-injection/medium",
+    "Tool": "CodeQL",
+    "SecuritySeverity": "medium",
+    "Count": 2,
+    "SamplePaths": [
+      ".github/workflows/validate.yml"
+    ]
+  }
+]
+```
+
+`SecuritySeverity` is `null` when the rule has no severity tier assigned. `SamplePaths` lists unique, sorted file paths across all alert instances for the rule group.
+
 ### Get single alert detail
 
 ```bash
