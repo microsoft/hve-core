@@ -69,22 +69,6 @@ Use this skill when the task involves reading code scanning alerts only. `Get-Co
 
 When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`.
 
-## Reading Command Output
-
-> [!IMPORTANT]
-> Read stdout. Ignore exit codes and shell prompt decorations entirely.
-
-The only signal that determines whether `Get-CodeScanningAlerts.ps1` succeeded or failed is the content written to stdout:
-
-* JSON output: stdout starts with `[` and is a valid JSON array. The command succeeded.
-* Error output: stdout contains a line starting with `Error:` or `gh CLI not found`. The command failed.
-
-When stdout starts with `[`: the command succeeded. Present the output to the user. This is the only next action required.
-
-When stdout contains `Error:` or `gh CLI not found`: report the error to the user.
-
-When `run_in_terminal` returns no output: use `get_terminal_output` to read the terminal buffer. The script writes valid output even when the sync capture mode does not return it.
-
 ## Code Scanning Alerts
 
 ### List and group open alerts
