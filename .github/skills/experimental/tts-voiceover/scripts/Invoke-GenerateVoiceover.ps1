@@ -76,6 +76,8 @@ Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
 
 #region Main
 
+if ($MyInvocation.InvocationName -ne '.') {
+
 $null = Test-UvAvailability
 
 if (-not $SkipVenvSetup) {
@@ -88,18 +90,20 @@ if (-not (Test-Path $python)) {
 }
 
 $script = Join-Path $ScriptDir 'generate_voiceover.py'
-$args_ = @()
+$PythonArgs = @()
 
-if ($DryRun) { $args_ += '--dry-run' }
-if ($Voice) { $args_ += '--voice', $Voice }
-if ($Rate) { $args_ += '--rate', $Rate }
-if ($ContentDir) { $args_ += '--content-dir', $ContentDir }
-if ($OutputDir) { $args_ += '--output-dir', $OutputDir }
-if ($Lexicon) { $args_ += '--lexicon', $Lexicon }
+if ($DryRun) { $PythonArgs += '--dry-run' }
+if ($Voice) { $PythonArgs += '--voice', $Voice }
+if ($Rate) { $PythonArgs += '--rate', $Rate }
+if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }
+if ($OutputDir) { $PythonArgs += '--output-dir', $OutputDir }
+if ($Lexicon) { $PythonArgs += '--lexicon', $Lexicon }
 
-& $python $script @args_
+& $python $script @PythonArgs
 if ($LASTEXITCODE -ne 0) {
     throw "generate_voiceover.py exited with code $LASTEXITCODE"
 }
 
-#endregion
+}
+
+#endregion Main

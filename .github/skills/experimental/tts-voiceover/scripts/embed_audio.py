@@ -83,9 +83,8 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    """Entry point for audio embedding."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+def _run() -> int:
+    """Core logic for audio embedding."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -106,6 +105,7 @@ def main() -> int:
 
     prs = Presentation(str(input_path))
     embedded_count = 0
+    failed_count = 0
 
     for idx, slide in enumerate(prs.slides, start=1):
         wav_name = f"slide-{idx:03d}.wav"
@@ -118,13 +118,32 @@ def main() -> int:
             embedded_count += 1
             logger.info("Embedded %s into slide %d", wav_name, idx)
         else:
+            failed_count += 1
             logger.error("FAILED to embed %s into slide %d", wav_name, idx)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
-    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
+    logger.info(
+        "Saved %s with %d embedded audio files (%d failed)",
+        output_path,
+        embedded_count,
+        failed_count,
+    )
 
-    return EXIT_SUCCESS
+    return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
+
+
+def main() -> int:
+    """Entry point for audio embedding."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    try:
+        return _run()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user", file=sys.stderr)
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return EXIT_FAILURE
 
 
 if __name__ == "__main__":

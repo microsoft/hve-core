@@ -1,5 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+# TtsVoiceoverHelpers.psm1
+# Purpose: Shared helper functions for tts-voiceover skill PowerShell wrappers.
 #Requires -Version 7.0
 
 <#
@@ -74,4 +76,8 @@ function Get-VenvPythonPath {
     return Join-Path $VenvDir 'bin/python'
 }
 
-Export-ModuleMember -Function Test-UvAvailability, Initialize-PythonEnvironment, Get-VenvPythonPath
+Export-ModuleMember -Function @(
+    'Test-UvAvailability'
+    'Initialize-PythonEnvironment'
+    'Get-VenvPythonPath'
+)

@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 import sys
 import time
 import xml.sax.saxutils
@@ -68,25 +69,32 @@ def load_acronyms(path: Path) -> dict[str, str]:
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """Replace acronyms with SSML ``<sub alias>`` elements.
 
-    Processes longest acronyms first to avoid partial matches.
+    Uses single-pass regex substitution to avoid corrupting
+    previously-inserted SSML tags.
     """
-    for acronym, alias in sorted(acronyms.items(), key=lambda x: -len(x[0])):
-        if acronym in text:
-            alias_escaped = xml.sax.saxutils.escape(alias, {'"': "&quot;"})
-            replacement = (
-                f'<sub alias="{alias_escaped}">{xml.sax.saxutils.escape(acronym)}</sub>'
-            )
-            text = text.replace(acronym, replacement)
-    return text
+    if not acronyms:
+        return text
+    sorted_acronyms = sorted(acronyms.items(), key=lambda x: -len(x[0]))
+    pattern = re.compile("|".join(re.escape(a) for a, _ in sorted_acronyms))
+
+    def _replace(m: re.Match) -> str:
+        acronym = m.group(0)
+        alias = acronyms[acronym]
+        alias_escaped = xml.sax.saxutils.escape(alias, {'"': "&quot;"})
+        return f'<sub alias="{alias_escaped}">{xml.sax.saxutils.escape(acronym)}</sub>'
+
+    return pattern.sub(_replace, text)
 
 
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
     """Wrap processed text in a full SSML document."""
+    safe_voice = xml.sax.saxutils.quoteattr(voice)
+    safe_rate = xml.sax.saxutils.quoteattr(rate)
     return (
         '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"'
         ' xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">\n'
-        f'  <voice name="{voice}">\n'
-        f'    <prosody rate="{rate}">\n'
+        f"  <voice name={safe_voice}>\n"
+        f"    <prosody rate={safe_rate}>\n"
         f"      {text}\n"
         "    </prosody>\n"
         "  </voice>\n"
@@ -182,9 +190,8 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    """Entry point for TTS voice-over generation."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+def _run() -> int:
+    """Core logic for TTS voice-over generation."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -301,6 +308,19 @@ def main() -> int:
         )
 
     return EXIT_SUCCESS
+
+
+def main() -> int:
+    """Entry point for TTS voice-over generation."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    try:
+        return _run()
+    except KeyboardInterrupt:
+        print("\nInterrupted by user", file=sys.stderr)
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return EXIT_FAILURE
 
 
 if __name__ == "__main__":

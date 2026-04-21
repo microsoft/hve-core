@@ -909,7 +909,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=9.0" },
-    { name = "pytest-cov", specifier = ">=7.0" },
+    { name = "pytest-cov", specifier = ">=5.0" },
     { name = "ruff", specifier = ">=0.15" },
 ]
 fuzz = [{ name = "atheris", specifier = ">=3.0" }]

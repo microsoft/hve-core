@@ -55,6 +55,8 @@ Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
 
 #region Main
 
+if ($MyInvocation.InvocationName -ne '.') {
+
 $null = Test-UvAvailability
 
 if (-not $SkipVenvSetup) {
@@ -67,14 +69,16 @@ if (-not (Test-Path $python)) {
 }
 
 $script = Join-Path $ScriptDir 'embed_audio.py'
-$args_ = @('--input', $InputPath)
+$PythonArgs = @('--input', $InputPath)
 
-if ($AudioDir) { $args_ += '--audio-dir', $AudioDir }
-if ($OutputPath) { $args_ += '--output', $OutputPath }
+if ($AudioDir) { $PythonArgs += '--audio-dir', $AudioDir }
+if ($OutputPath) { $PythonArgs += '--output', $OutputPath }
 
-& $python $script @args_
+& $python $script @PythonArgs
 if ($LASTEXITCODE -ne 0) {
     throw "embed_audio.py exited with code $LASTEXITCODE"
 }
 
-#endregion
+}
+
+#endregion Main
