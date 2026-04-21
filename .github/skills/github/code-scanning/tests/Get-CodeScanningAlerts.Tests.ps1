@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
-    $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Get-CodeScanningAlerts.ps1'
+    $script:ScriptPath = Join-Path $PSScriptRoot '../scripts/Get-CodeScanningAlerts.ps1'
     $script:OriginalGhPager = $env:GH_PAGER
 
     # Sample alert JSON representing two rules with multiple occurrences
