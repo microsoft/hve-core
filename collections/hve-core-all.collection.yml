@@ -241,6 +241,9 @@ items:
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/data-science/synth-data-generate.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/security/incident-response.prompt.md
   kind: prompt
   maturity: experimental
