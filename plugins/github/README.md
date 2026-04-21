@@ -51,9 +51,9 @@ copilot plugin install github@hve-core
 
 ## Skills
 
-| Skill           | Description     |
-|-----------------|-----------------|
-| github-security | github-security |
+| Skill         | Description                                                                                       |
+|---------------|---------------------------------------------------------------------------------------------------|
+| code-scanning | GitHub code scanning alerts via Get-CodeScanningAlerts.ps1 - Brought to you by microsoft/hve-core |
 
 ---
 
