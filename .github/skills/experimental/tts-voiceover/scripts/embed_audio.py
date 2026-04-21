@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 from pptx import Presentation
+from pptx.slide import Slide
 from pptx.util import Inches
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ AUDIO_MIME_TYPE = "audio/wav"
 ICON_SIZE = Inches(0.1)
 
 
-def embed_slide_audio(slide: object, wav_path: Path) -> bool:
+def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
     """Embed a WAV file into a PowerPoint slide.
 
     Returns True on success, False on failure.

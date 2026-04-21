@@ -72,8 +72,9 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """
     for acronym, alias in sorted(acronyms.items(), key=lambda x: -len(x[0])):
         if acronym in text:
+            alias_escaped = xml.sax.saxutils.escape(alias, {'"': "&quot;"})
             replacement = (
-                f'<sub alias="{xml.sax.saxutils.escape(alias)}">'
+                f'<sub alias="{alias_escaped}">'
                 f"{xml.sax.saxutils.escape(acronym)}</sub>"
             )
             text = text.replace(acronym, replacement)
@@ -82,13 +83,11 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
 
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
     """Wrap processed text in a full SSML document."""
-    safe_voice = xml.sax.saxutils.quoteattr(voice)
-    safe_rate = xml.sax.saxutils.quoteattr(rate)
     return (
         '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"'
         ' xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">\n'
-        f"  <voice name={safe_voice}>\n"
-        f"    <prosody rate={safe_rate}>\n"
+        f'  <voice name="{voice}">\n'
+        f'    <prosody rate="{rate}">\n'
         f"      {text}\n"
         "    </prosody>\n"
         "  </voice>\n"
@@ -96,7 +95,9 @@ def wrap_ssml(text: str, voice: str, rate: str) -> str:
     )
 
 
-def generate_audio(ssml: str, output_path: Path, speech_config: object) -> float | None:
+def generate_audio(
+    ssml: str, output_path: Path, speech_config: object
+) -> float | None:
     """Generate a WAV file from SSML. Returns duration in seconds or ``None``."""
     import azure.cognitiveservices.speech as speechsdk
 
@@ -124,7 +125,9 @@ def _make_entra_config(
 
     Returns (config, expires_at).
     """
-    token_obj = credential.get_token("https://cognitiveservices.azure.com/.default")
+    token_obj = credential.get_token(
+        "https://cognitiveservices.azure.com/.default"
+    )
     auth_token = f"aad#{resource_id}#{token_obj.token}"
     config = speechsdk.SpeechConfig(auth_token=auth_token, region=region)
     config.set_speech_synthesis_output_format(
@@ -205,6 +208,9 @@ def main() -> int:
     speech_config = None
     credential = None
     token_expires_at = 0
+    speech_key: str | None = None
+    speech_region: str = "eastus"
+    speech_resource_id: str | None = None
     if not args.dry_run:
         try:
             import azure.cognitiveservices.speech as speechsdk
@@ -230,7 +236,9 @@ def main() -> int:
             try:
                 from azure.identity import DefaultAzureCredential
             except ImportError:
-                logger.error("azure-identity package is required for Entra ID auth")
+                logger.error(
+                    "azure-identity package is required for Entra ID auth"
+                )
                 return EXIT_FAILURE
             credential = DefaultAzureCredential()
             speech_config, token_expires_at = _make_entra_config(

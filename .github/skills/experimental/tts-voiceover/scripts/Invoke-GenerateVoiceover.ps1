@@ -72,71 +72,17 @@ $ScriptDir = $PSScriptRoot
 $SkillRoot = Split-Path $ScriptDir
 $VenvDir = Join-Path $SkillRoot '.venv'
 
-#region Environment Setup
-
-function Test-UvAvailability {
-    <#
-    .SYNOPSIS
-        Verifies uv is available on PATH.
-    .OUTPUTS
-        [string] The resolved uv command path.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param()
-
-    $resolved = Get-Command 'uv' -ErrorAction SilentlyContinue
-    if ($resolved) {
-        return $resolved.Source
-    }
-    throw 'uv is required but was not found on PATH. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh'
-}
-
-function Initialize-PythonEnvironment {
-    <#
-    .SYNOPSIS
-        Syncs the Python virtual environment and dependencies via uv.
-    #>
-    [CmdletBinding()]
-    [OutputType([void])]
-    param()
-
-    Write-Host 'Syncing Python environment via uv...'
-    & uv sync --directory $SkillRoot
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Failed to sync Python environment via uv.'
-    }
-    Write-Host 'Environment synchronized.'
-}
-
-function Get-VenvPythonPath {
-    <#
-    .SYNOPSIS
-        Returns the path to the venv Python executable.
-    .OUTPUTS
-        [string] Absolute path to the venv python binary.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param()
-
-    if ($IsWindows) {
-        return Join-Path $VenvDir 'Scripts/python.exe'
-    }
-    return Join-Path $VenvDir 'bin/python'
-}
-
-#endregion
+Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
 
 #region Main
 
 $null = Test-UvAvailability
 
 if (-not $SkipVenvSetup) {
-    Initialize-PythonEnvironment
+    Initialize-PythonEnvironment -SkillRoot $SkillRoot
 }
 
-$python = Get-VenvPythonPath
+$python = Get-VenvPythonPath -VenvDir $VenvDir
 if (-not (Test-Path $python)) {
     throw "Python not found at $python. Run without -SkipVenvSetup to initialize."
 }
