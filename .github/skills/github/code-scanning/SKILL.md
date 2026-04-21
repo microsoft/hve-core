@@ -1,9 +1,9 @@
 ---
 name: code-scanning
-description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI. Use when the GitHub Security tab is unavailable through MCP. - Brought to you by microsoft/hve-core'
+description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core'
 license: MIT
-user-invocable: true
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
+ms.date: 2026-04-21
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
@@ -47,6 +47,8 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 | `-Repo`         | String | Yes      |         | Repository name                                               |
 | `-OutputFormat` | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption |
 | `-Branch`       | String | No       | `main`  | Branch to scope alert results                                 |
+
+> These parameters apply to `Get-CodeScanningAlerts.ps1`. For bash script flags including `-s {severity}`, see the Script Reference section below.
 
 ## Script Reference
 
@@ -217,6 +219,7 @@ The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded 
 | `gh CLI is not authenticated. Run 'gh auth login'`         | `gh` auth not completed                        | Run `gh auth login`; ensure `security_events` scope is granted                                 |
 | `HTTP 403 Resource not accessible by integration`          | Missing `security_events` scope on token       | Re-authenticate: `gh auth refresh -s security_events` or set `GH_TOKEN` with appropriate scope |
 | Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)       |
+| `bash: jq: command not found`                              | `jq` not installed                             | Install via `brew install jq` (macOS), `apt-get install jq` (Debian/Ubuntu), or from <https://jqlang.github.io/jq/> |
 
 > Brought to you by microsoft/hve-core
 
