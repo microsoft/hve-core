@@ -1,71 +1,60 @@
 ---
 description: "Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships"
-agent: agent
-version: '1.1.0'
-tools: ['edit', 'execute/runNotebookCell', 'read/getNotebookSummary', 'read/readNotebookCellOutput', 'search', 'vscode/getProjectSetupInfo', 'vscode/runCommand', 'execute/getTerminalOutput', 'execute/runInTerminal', 'read/terminalLastCommand', 'read/terminalSelection', 'execute/createAndRunTask', 'execute/getTaskOutput', 'execute/runTask', 'read/problems', 'todo']
 ---
 
 # Synthetic Data Generator
 
 Generate comprehensive synthetic data for: **${input:subject}**
 
-You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided.
+You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided while working completely automously in a Jupyter notebook. Follow the detailed requirements and steps below to ensure high-quality output.
 
-**AUTONOMOUS OPERATION MODE**: You must work completely autonomously. Create notebook cells and execute them immediately using tools. NEVER ask the user to run code manually or provide code blocks for copy/paste. Execute everything directly in the notebook.
+## Inputs
 
-**NO CODE BLOCKS IN CHAT**: NEVER display code in chat messages or create code blocks that require a "continue" button. Always create code directly in notebook cells using `edit_notebook_file` and execute immediately with `run_notebook_cell`. Work silently through tools without showing code to the user in chat.
+* ${input:subject}: User query describing the subject for synthetic data generation
+* ${input:example_data}: (Optional) Free-form input describing any existing data source, schema, or file to use as a reference for structure and patterns.
 
-**CRITICAL REQUIREMENTS - FOLLOW EXACTLY IN ORDER**:
+## Required Steps
 
-**STEP 1 - MANDATORY PROJECT SETUP**:
-* BEFORE ANY OTHER ACTION: Create project folder and notebook using the **File Naming Convention** specified below
+### Step 1 : Perform Mandatory Project Setup:
+* Before any other action: Create project folder and notebook using the **File Naming Convention** specified below
 * Use `create_directory` to make the project folder
 * Use `create_new_jupyter_notebook` to create the notebook file
-* STOP and confirm both are created before proceeding
+* Stop and confirm both are created before proceeding
 
-**STEP 2 - DATA SOURCE VALIDATION** (Skip if no existing data mentioned):
+### Step 2 : Validate Data Source (skip if no existing data mentioned):
 * If user mentions existing data source/schema/file: FIRST attempt to locate and access it
 * Write inspection code in a separate cell to load and examine the existing data
-* If data source cannot be found/opened/accessed: IMMEDIATELY inform user "The specified data source '[name]' cannot be accessed. Please verify the file exists and is accessible. Cannot proceed with synthetic data generation." and STOP all processing
+* If data source cannot be found/opened/accessed: Immediately inform user "The specified data source '[name]' cannot be accessed. Please verify the file exists and is accessible. Cannot proceed with synthetic data generation." and STOP all processing
 * If found: Use it as the strict reference for structure, schema, and patterns
 
-**STEP 3 - DATA OPERATION MODE**:
-* If told to UPDATE/ADD to existing data: Create a backup of the file using the filename with `.bak` extension it must be saved to the same directory where the notebook was created.
-* If told to UPDATE/ADD to existing data: Modify the existing data source, DO NOT create new files
-* If told to CREATE new synthetic data: Follow normal generation process
+### Step 3 : Select Data Operation Mode
+* If told to update/ADD to existing data: Create a backup of the file using the filename with `.bak` extension it must be saved to the same directory where the notebook was created.
+* If told to update/add to existing data: Modify the existing data source, DO NOT create new files
+* If told to create new synthetic data: Follow normal generation process
 * When working with existing schema: Adhere strictly to all fields, data types, and relationships
 
-**STEP 4 - AUTONOMOUS EXECUTION REQUIREMENT**:
-* **CRITICAL**: Execute EVERY notebook cell immediately after creation using `run_notebook_cell` - DO NOT ask the user to run cells manually
-* **NEVER** provide code blocks for the user to copy/paste - always create and execute cells directly in the notebook
-* **NO CODE IN CHAT**: Do not display any code in chat messages - create code only in notebook cells through tools
-* **NO TERMINAL COMMANDS IN CHAT**: Do not display terminal commands in chat - always execute them directly using `run_in_terminal` tool
-* **NO PAUSING DURING EXECUTION**: Once notebook creation begins, complete all steps continuously without interruption
-* If any cell fails: Fix the error and re-run before creating the next cell
-* This ensures code validity and catches errors early
-* The agent must be fully autonomous for code execution - no user intervention required
-
-**STEP 5 - IMAGE PROCESSING SETUP** (Skip if no image processing mentioned):
-* If user mentions reading images or OCR: Verify Tesseract is installed before proceeding. Your goal is to extract text from images which can represent an ERD or data fields to inform the synthetic data generation process.
-* Use `run_in_terminal` tool to check: `tesseract --version` - DO NOT show this command in chat
-* If not installed, inform user: "Tesseract OCR is required for image processing. Please install it first using: `brew install tesseract` (macOS) or appropriate package manager for your system."
-* Only proceed with image-related data generation after confirming Tesseract availability
-
-**STEP 6 - PII PROTECTION**:
+### Step 4 : Protect PII
 * If generating PII-like data: Obtain explicit user confirmation with warning about legal/ethical issues
 * Use Faker library or similar for realistic but anonymized data generation
 
+### Step 5 : Setup Image Processing (skip if no image processing mentioned):
+* If user mentions reading images or OCR: Verify Tesseract is installed before proceeding. Your goal is to extract text from images which can represent an ERD or data fields to inform the synthetic data generation process.
+* Use `run_in_terminal` tool to check: `tesseract --version` - Do not show this command in chat
+* If not installed, inform user: "Tesseract OCR is required for image processing. Please install it first using: `brew install tesseract` (macOS) or appropriate package manager for your system."
+* Only proceed with image-related data generation after confirming Tesseract availability
+
+
 ## Output Requirements
 
-**Default Export Format**:
-* For NEW synthetic datasets: Export data as CSV format unless the user specifically requests a different format (e.g., JSON, Parquet, Excel, etc.)
-* For EXISTING data source updates: Modify the original data source directly, do NOT create additional CSV exports since the original file already serves as the data source
+### Default Export Format:
+* For **new** synthetic datasets: Export data as CSV format unless the user specifically requests a different format (e.g., JSON, Parquet, Excel, etc.)
+* For **existing** data source updates: Modify the original data source directly, do NOT create additional CSV exports since the original file already serves as the data source
 
-**Default Data Size**:
+### Default Data Size:
 * If not specified by the user, the default size for synthetic datasets should not exceed 10,000 rows or objects.
 * When generating files, consider the impact of file size on performance and usability. Aim for a balance between comprehensiveness and manageability.
 
-**Data Comprehensiveness**:
+### Data Comprehensiveness:
 * The synthetic data should closely mimic real-world data in terms of distributions, correlations, and patterns. This includes:
   * Using realistic ranges and distributions for numerical values
   * Incorporating common categorical values and their relationships
@@ -73,25 +62,26 @@ You are an expert data scientist and synthetic data generator. Create realistic,
   * Ensuring geographic or demographic variations are represented
   * Incorporate seed values for reproducibility when generating random data. Use a truly random seed by generating it programmatically (e.g., `random_seed = random.randint(1, 100000)` or `random_seed = int(datetime.now().timestamp())`) rather than hardcoding values like 42.
 
-**Comprehensiveness Measurement**:
+### Comprehensiveness Measurement:
 * If a real dataset was provided, measure the AUC of a model that tries to distinguish between real and synthetic data.
 
-**Visualization Display Requirements**:
+### Visualization Display Requirements:
 * All visualization cells must render charts inline in the notebook output. Always call `plt.show()` in each visualization cell.
 * Saving charts to files is optional and should be in addition to inline display. If you also save, call `plt.savefig(...)` and still call `plt.show()` (do not rely solely on file writes).
 * Do not call `plt.close()` before `plt.show()` in visualization cells, as that suppresses inline rendering. Closing figures after showing is acceptable.
 
 ## Project Organization
 
-**Create Descriptive Project Structure**: All files for the synthetic data project should be organized in a dedicated folder based on the subject to prevent workspace clutter.
+### Create Descriptive Project Structure
+All files for the synthetic data project should be organized in a dedicated folder based on the subject to prevent workspace clutter.
 
-**File Naming Convention**:
-1. **Parse Subject**: Extract key concepts from `${input:subject}` for naming
-2. **Create Project Folder**: Use format `{parsed_subject}/` (e.g., "weather for 12 states for 12 months" → `weather_12_states_12_months/`)
-3. **Notebook File**: `{project_folder}/synth_{parsed_subject}.ipynb`
-4. **CSV File**: `{project_folder}/synthetic_{parsed_subject}_data.csv`
+### File Naming Convention
+1. Parse Subject: Extract key concepts from `${input:subject}` for naming
+2. Create Project Folder: Use format `{parsed_subject}/` (e.g., "weather for 12 states for 12 months" → `weather_12_states_12_months/`)
+3. Notebook File: `{project_folder}/synth_{parsed_subject}.ipynb`
+4. CSV File: `{project_folder}/synthetic_{parsed_subject}_data.csv`
 
-**Examples**:
+### Examples:
 - "weather for 12 states for 12 months" →
   - Folder: `weather_12_states_12_months/`
   - Notebook: `weather_12_states_12_months/synth_weather_12_states_12_months.ipynb`
@@ -101,26 +91,26 @@ You are an expert data scientist and synthetic data generator. Create realistic,
   - Notebook: `sales_data_retail_stores/synth_sales_data_retail_stores.ipynb`
   - CSV: `sales_data_retail_stores/synthetic_sales_data_retail_stores_data.csv`
 
-**IMPORTANT**:
-* For NEW synthetic datasets: Export data only once in the designated export cell. Multiple exports create confusion and workspace clutter.
-* For EXISTING data source updates: Only update the original file - do NOT create additional CSV exports or backup files in wrong locations.
+### Important:
+* For new synthetic datasets: Export data only once in the designated export cell. Multiple exports create confusion and workspace clutter.
+* For existing data source updates: Only update the original file - do NOT create additional CSV exports or backup files in wrong locations.
 
 ### Notebook Structure Requirements
 Create a well-structured notebook with the following cells:
 
-1. **Title Cell** (Markdown): Clear title with the subject
-2. **Package Installation Cell** (Python): Install required packages using `%pip install pandas numpy matplotlib seaborn scipy`
-3. **Library Import Cell** (Python): Import all required libraries
-4. **Data Structure Explanation** (Markdown): Explain the data structure and approach
-5. **Backup Creation** (Python): If updating existing data source, create backup in notebook directory with `.bak` extension
-6. **Data Generation Function** (Python): Main function with detailed comments
-7. **Parameter Configuration** (Markdown): Explain parameters for data generation
-8. **Data Generation Execution** (Python): Execute the data generation
-9. **Data Export** (Python): For NEW datasets export as CSV; for EXISTING data sources update original file only
-10. **Multiple Visualization Cells** (Python): Charts using matplotlib and seaborn. Include map visualizations if data contains geographic information. These cells MUST display plots inline using `plt.show()`; saving with `plt.savefig(...)` is optional and must not replace inline display.
-11. **Summary Statistics** (Python): Comprehensive data analysis
-12. **Validation & Quality Checks** (Python): Verify data Comprehensiveness
-13. **Comprehensiveness Measurement** (Python): If real dataset provided, measure AUC of a model distinguishing real vs. synthetic data.
+1. Title Cell (Markdown): Clear title with the subject
+2. Package Installation Cell (Python): Install required packages using `%pip install pandas numpy matplotlib seaborn scipy`
+3. Library Import Cell (Python): Import all required libraries
+4. Data Structure Explanation (Markdown): Explain the data structure and approach
+5. Backup Creation (Python): If updating existing data source, create backup in notebook directory with `.bak` extension
+6. Data Generation Function (Python): Main function with detailed comments
+7. Parameter Configuration (Markdown): Explain parameters for data generation
+8. Data Generation Execution (Python): Execute the data generation
+9. Data Export (Python): For NEW datasets export as CSV; for EXISTING data sources update original file only
+10. Multiple Visualization Cells (Python): Charts using matplotlib and seaborn. Include map visualizations if data contains geographic information. These cells MUST display plots inline using `plt.show()`; saving with `plt.savefig(...)` is optional and must not replace inline display.
+11. Summary Statistics (Python): Comprehensive data analysis
+12. Validation & Quality Checks (Python): Verify data Comprehensiveness
+13. Comprehensiveness Measurement (Python): If real dataset provided, measure AUC of a model distinguishing real vs. synthetic data.
 
 ## Analysis & Planning
 
@@ -149,7 +139,6 @@ hour = int(np.random.choice(range(8, 19)))
 minute = int(np.random.randint(0, 60))
 start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, minutes=minute)
 ```
-
 
 ### Data Types & Ranges
 - Use appropriate data types (numeric, categorical, datetime, text, boolean)
@@ -188,34 +177,35 @@ start_time = datetime.combine(day, datetime.min.time()) + timedelta(hours=hour, 
 
 ## Implementation Guide
 
-**Environment Setup**
+### Environment Setup
 1. Use `configure_python_environment` to automatically set up the Python environment
 2. Use `configure_notebook` to prepare the notebook environment
 3. Use `notebook_install_packages` to install: `['pandas', 'numpy', 'matplotlib', 'seaborn', 'scipy']`
 
-**Project Creation**
+### Project Creation
 1. Parse `${input:subject}` to extract key concepts for naming
 2. Create descriptive project folder using `create_directory`
 3. Create notebook using `create_new_jupyter_notebook` with query: "Generate synthetic data for ${input:subject} with realistic patterns and comprehensive analysis"
 
-**Notebook Development**
+### Notebook Development
 1. Use `edit_notebook_file` to create structured cells as outlined above
-2. **MANDATORY CELL TYPE SPECIFICATION**: When creating code cells, always specify `language="python"` in the `edit_notebook_file` tool call to ensure proper cell typing
-3. **MANDATORY AUTONOMOUS EXECUTION**: Use `run_notebook_cell` immediately after creating each cell - NEVER ask user to run code manually
-4. **NO CODE BLOCKS IN CHAT**: Do not provide code in markdown format or chat messages - always create executable notebook cells through tools only
-5. **NO TERMINAL COMMANDS IN CHAT**: Do not display terminal commands in chat - always execute them directly using `run_in_terminal` tool
-6. **WORK THROUGH TOOLS SILENTLY**: Create and execute all code through notebook tools without displaying code content in chat
-7. **CONTINUOUS EXECUTION WORKFLOW**: Complete all notebook creation and code execution without pausing or triggering continuation prompts
-8. Ensure all code executes without errors before proceeding
-9. Export data only once in the designated export cell
-10. Ensure all visualization cells end with `plt.show()` so figures render inline in the notebook output.
+2. Mandatory Cell Type Specification: When creating code cells, always specify `language="python"` in the `edit_notebook_file` tool call to ensure proper cell typing
+3. Mandatory Autonomous Execution: Use `run_notebook_cell` immediately after creating each cell - Never ask user to run code manually
+4. No Code Blocks in Chat: Do not provide code in markdown format or chat messages - always create executable notebook cells through tools only. 
+5. Never provide code blocks for the user to copy/paste - always create and execute cells directly in the notebook
+6. No Terminal Commands in Chat: Do not display terminal commands in chat - always execute them directly using `run_in_terminal` tool
+7. Work Through Tools Silently: Create and execute all code through notebook tools without displaying code content in chat
+8. Continuous Execution Workflow: Complete all notebook creation and code execution without pausing or triggering continuation prompts. Once notebook creation begins, complete all steps continuously without interruption.
+9. Ensure all code executes without errors before proceeding. If any cell fails: fix the error and re-run before creating the next cell to validate the fix worked. If the error still could not be fixed after 2 attempts, inform the user of the issue and immediately terminate any further processing.
+10. Export data only once in the designated export cell
+11. Ensure all visualization cells end with `plt.show()` so figures render inline in the notebook output.
 
-**Validation**
+### Validation
 - Run all cells to ensure end-to-end functionality
 - Confirm realistic data patterns and distributions
 - Verify project folder contains both notebook and data file
 
-**Comprehensiveness Validation**
+### Comprehensiveness Validation
 - If no real dataset was provided as an input, skip this step. Otherwise:
 - Assign Label == 1 to synthetic data and Label == 0 to real data
 - If labels imbalance exceeds 8:1, dilute the dominating class by random sampling to achieve a maximum 8:1 ratio.
@@ -327,36 +317,36 @@ print(f"\\nGeneration timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
 
 ## Required Outputs
 
-1. **Jupyter Notebook**: Well-structured notebook with organized cells
-2. **Data Generation Function**: Modular, parameterized function with type hints
-3. **Realistic Data**: Values that domain experts would find believable
-4. **File Management**: For NEW datasets create CSV export; for EXISTING data sources update original file only with backup in notebook directory
-5. **Multiple Visualizations**: Charts using matplotlib and seaborn (displayed inline with `plt.show()`). Include map visualizations if data contains geographic information.
-6. **Statistical Summary**: Comprehensive descriptive statistics
-7. **Data Validation**: Quality checks to ensure data comprehensiveness and realism
-8. **Comprehensiveness Measurement**: AUC score for distinguishing real vs. synthetic data if real dataset provided
-9. **Documentation**: Clear markdown explanations for each step
+1. Jupyter Notebook: Well-structured notebook with organized cells
+2. Data Generation Function: Modular, parameterized function with type hints
+3. Realistic Data: Values that domain experts would find believable
+4. File Management: For NEW datasets create CSV export; for EXISTING data sources update original file only with backup in notebook directory
+5. Multiple Visualizations: Charts using matplotlib and seaborn (displayed inline with `plt.show()`). Include map visualizations if data contains geographic information.
+6. Statistical Summary: Comprehensive descriptive statistics
+7. Data Validation: Quality checks to ensure data comprehensiveness and realism
+8. Comprehensiveness Measurement: AUC score for distinguishing real vs. synthetic data if real dataset provided
+9. Documentation: Clear markdown explanations for each step
 
 ## Quality Standards
 
-- **Realism**: Data should look authentic to subject matter experts
-- **Completeness**: Cover all important aspects of the domain
-- **Scalability**: Function should work with different dataset sizes
-- **Flexibility**: Allow customization through parameters
-- **Statistical Validity**: Distributions and correlations make sense
-- **Usability**: Data ready for analysis, modeling, or visualization
+- Realism: Data should look authentic to subject matter experts
+- Completeness: Cover all important aspects of the domain
+- Scalability: Function should work with different dataset sizes
+- Flexibility: Allow customization through parameters
+- Statistical Validity: Distributions and correlations make sense
+- Usability: Data ready for analysis, modeling, or visualization
 
 ## Final Deliverables
 
-1. **Project Folder**: Organized folder structure with descriptive name
-2. **Jupyter Notebook**: Complete implementation with all required cells
-3. **Data Management**: For NEW datasets create data file; for EXISTING data sources update original file with backup in notebook directory
-4. **Rich Documentation**: Clear explanations throughout the notebook
-5. **Multiple Visualizations**: Charts showing data patterns and relationships.
-6. **Data Validation**: Evidence that synthetic data is realistic and high-quality
-7. **Comprehensiveness Measurement**: AUC score for distinguishing real vs. synthetic data if real dataset provided
+1. Project Folder: Organized folder structure with descriptive name
+2. Jupyter Notebook: Complete implementation with all required cells
+3. Data Management: For NEW datasets create data file; for EXISTING data sources update original file with backup in notebook directory
+4. Rich Documentation: Clear explanations throughout the notebook
+5. Multiple Visualizations: Charts showing data patterns and relationships.
+6. Data Validation: Evidence that synthetic data is realistic and high-quality
+7. Comprehensiveness Measurement: AUC score for distinguishing real vs. synthetic data if real dataset provided
 
-**Project Structure Example**:
+## Project Structure Example:
 ```
 weather_12_states_12_months/
 ├── synth_weather_12_states_12_months.ipynb
