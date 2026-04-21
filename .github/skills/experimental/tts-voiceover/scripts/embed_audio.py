@@ -85,8 +85,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     """Entry point for audio embedding."""
-    logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
 
@@ -123,8 +122,7 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
-    logger.info("Saved %s with %d embedded audio files",
-                output_path, embedded_count)
+    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     return EXIT_SUCCESS
 

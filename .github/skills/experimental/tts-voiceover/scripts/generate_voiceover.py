@@ -74,8 +74,7 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
         if acronym in text:
             alias_escaped = xml.sax.saxutils.escape(alias, {'"': "&quot;"})
             replacement = (
-                f'<sub alias="{alias_escaped}">'
-                f"{xml.sax.saxutils.escape(acronym)}</sub>"
+                f'<sub alias="{alias_escaped}">{xml.sax.saxutils.escape(acronym)}</sub>'
             )
             text = text.replace(acronym, replacement)
     return text
@@ -95,9 +94,7 @@ def wrap_ssml(text: str, voice: str, rate: str) -> str:
     )
 
 
-def generate_audio(
-    ssml: str, output_path: Path, speech_config: object
-) -> float | None:
+def generate_audio(ssml: str, output_path: Path, speech_config: object) -> float | None:
     """Generate a WAV file from SSML. Returns duration in seconds or ``None``."""
     import azure.cognitiveservices.speech as speechsdk
 
@@ -125,9 +122,7 @@ def _make_entra_config(
 
     Returns (config, expires_at).
     """
-    token_obj = credential.get_token(
-        "https://cognitiveservices.azure.com/.default"
-    )
+    token_obj = credential.get_token("https://cognitiveservices.azure.com/.default")
     auth_token = f"aad#{resource_id}#{token_obj.token}"
     config = speechsdk.SpeechConfig(auth_token=auth_token, region=region)
     config.set_speech_synthesis_output_format(
@@ -189,8 +184,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     """Entry point for TTS voice-over generation."""
-    logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
 
@@ -237,9 +231,7 @@ def main() -> int:
             try:
                 from azure.identity import DefaultAzureCredential
             except ImportError:
-                logger.error(
-                    "azure-identity package is required for Entra ID auth"
-                )
+                logger.error("azure-identity package is required for Entra ID auth")
                 return EXIT_FAILURE
             credential = DefaultAzureCredential()
             speech_config, token_expires_at = _make_entra_config(
