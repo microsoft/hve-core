@@ -37,7 +37,7 @@ ICON_SIZE = Inches(0.1)
 
 
 def embed_slide_audio(slide: object, wav_path: Path) -> bool:
-    """Embed a WAV file into a slide as a media object.
+    """Embed a WAV file into a PowerPoint slide.
 
     Returns True on success, False on failure.
     """
@@ -121,9 +121,7 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
-    logger.info(
-        "Saved %s with %d embedded audio files", output_path, embedded_count
-    )
+    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     return EXIT_SUCCESS
 
