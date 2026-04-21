@@ -1,6 +1,6 @@
 ---
 name: code-scanning
-description: 'Retrieves and groups GitHub code scanning alerts from a repository using static analysis tools such as CodeQL and Scorecard. Use when you need to list open security alerts, triage by severity or rule, identify affected file paths, or create backlog issues from scan findings. The GitHub Security tab is not accessible through the default MCP toolset; use this skill instead. - Brought to you by microsoft/hve-core'
+description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI. Use when the GitHub Security tab is unavailable through MCP. - Brought to you by microsoft/hve-core'
 license: MIT
 user-invocable: true
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
@@ -45,7 +45,7 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 |-----------------|--------|----------|---------|---------------------------------------------------------------|
 | `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository          |
 | `-Repo`         | String | Yes      |         | Repository name                                               |
-| `-OutputFormat` | String | No       | Table   | Output format: always use `Json` for programmatic consumption |
+| `-OutputFormat` | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption |
 | `-Branch`       | String | No       | `main`  | Branch to scope alert results                                 |
 
 ## Script Reference
@@ -61,6 +61,7 @@ pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputF
 # Scope to a specific branch
 pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -Branch "{branch}" -OutputFormat Json
 ```
+
 ### get-code-scanning-alerts.sh
 
 Groups and sorts open code scanning alerts by occurrence count, descending. Requires `jq`.
@@ -75,11 +76,12 @@ bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -b "{branch}"
 # Filter by severity
 bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -s critical
 ```
+
 ## When to Use This Skill
 
 Use this skill when the task involves reading code scanning alerts only. `Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` must not be used as a fallback for listing or grouping.
 
-When GitHub MCP server is configured with the `code_security` toolset, read-only access is available without `gh api`.
+When the GitHub MCP server is configured with the `code_security` toolset, read-only access to code scanning alerts is available without `gh api`. Enable via `toolsets: all` or explicit toolset configuration.
 
 ## Code Scanning Alerts
 
@@ -156,6 +158,8 @@ Use `-OutputFormat Json` and read the `SamplePaths` field from each rule group. 
 
 ## Code Scanning Analyses
 
+These calls retrieve analysis metadata, not alert listings, and do not conflict with the `gh api` restriction above.
+
 ### List recent analyses
 
 Returns the last 10 CodeQL runs on the main branch.
@@ -204,10 +208,6 @@ fi
 ```
 
 The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded in the issue body and serves as the deduplication anchor. Replace all `{placeholders}` with actual values from the alert-grouping JSON output.
-
-## MCP Availability Note
-
-When the GitHub MCP server is configured with the `code_security` toolset, read-only access to code scanning alerts is available without `gh api`. Enable via `toolsets: all` or explicit toolset configuration.
 
 ## Troubleshooting
 
