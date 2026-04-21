@@ -3,15 +3,16 @@ name = "tts-voiceover-skill"
 version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
-    "azure-cognitiveservices-speech>=1.41",
-    "azure-identity>=1.19",
-    "python-pptx>=1.0",
-    "pyyaml>=6.0",
+    "azure-cognitiveservices-speech",
+    "azure-identity",
+    "python-pptx",
+    "pyyaml",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0",
+    "pytest-cov>=7.0",
     "ruff>=0.15",
 ]
 fuzz = [
