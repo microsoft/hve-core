@@ -51,9 +51,9 @@ copilot plugin install github@hve-core
 
 ## Skills
 
-| Skill         | Description                                                                                                                                                                                                                                                                                                                                                                                                                   |
-|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| code-scanning | Retrieves and groups GitHub code scanning alerts from a repository using static analysis tools such as CodeQL and Scorecard. Use when you need to list open security alerts, triage by severity or rule, identify affected file paths, or create backlog issues from scan findings. The GitHub Security tab is not accessible through the default MCP toolset; use this skill instead. - Brought to you by microsoft/hve-core |
+| Skill         | Description                                                                                                                   |
+|---------------|-------------------------------------------------------------------------------------------------------------------------------|
+| code-scanning | Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core |
 
 ---
 
