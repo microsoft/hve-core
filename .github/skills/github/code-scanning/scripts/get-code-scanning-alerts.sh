@@ -43,6 +43,19 @@ if [[ -z "$OWNER" || -z "$REPO" ]]; then
     usage
 fi
 
+if [[ ! "$OWNER" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+    echo "Error: -o OWNER contains invalid characters." >&2; exit 1
+fi
+if [[ ! "$REPO" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    echo "Error: -r REPO contains invalid characters." >&2; exit 1
+fi
+if [[ ! "$BRANCH" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+    echo "Error: -b BRANCH contains invalid characters." >&2; exit 1
+fi
+if [[ -n "$SEVERITY" && ! "$SEVERITY" =~ ^(critical|high|medium|low)$ ]]; then
+    echo "Error: -s SEVERITY must be critical, high, medium, or low." >&2; exit 1
+fi
+
 if ! command -v gh &>/dev/null; then
     echo "Error: gh CLI not found. Install from https://cli.github.com" >&2
     exit 1

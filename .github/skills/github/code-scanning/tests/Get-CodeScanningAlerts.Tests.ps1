@@ -35,9 +35,16 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
     }
 
     Context 'Pager suppression' {
-        It 'Sets GH_PAGER to empty string before invoking gh' {
-            & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' | Out-Null
+        BeforeEach {
+            $env:GH_PAGER = 'pager-was-set'
+            ${Function:gh} = { $global:LASTEXITCODE = 0 }.GetNewClosure()
+            & $script:ScriptPath -Owner 'owner' -Repo 'repo'
+        }
+        AfterEach {
+            Remove-Item Env:GH_PAGER -ErrorAction SilentlyContinue
+        }
 
+        It 'Sets GH_PAGER to empty string before invoking gh' {
             $env:GH_PAGER | Should -Be ''
         }
     }
