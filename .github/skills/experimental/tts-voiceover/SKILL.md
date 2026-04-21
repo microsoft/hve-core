@@ -64,22 +64,22 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### generate_voiceover.py
 
-| Parameter       | Type   | Default                             | Description                                   |
-|:----------------|:-------|:------------------------------------|:----------------------------------------------|
-| `--dry-run`     | flag   | `false`                             | Print SSML templates without generating audio |
-| `--voice`       | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
-| `--rate`        | string | `+10%`                              | Speech prosody rate                           |
-| `--content-dir` | path   | `content`                           | Path to slide content directory               |
-| `--output-dir`  | path   | `voice-over`                        | Path to WAV output directory                  |
-| `--lexicon`     | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
+| Parameter       | Type   | Default                              | Description                                    |
+|:----------------|:-------|:-------------------------------------|:-----------------------------------------------|
+| `--dry-run`     | flag   | `false`                              | Print SSML templates without generating audio  |
+| `--voice`       | string | `en-US-Andrew:DragonHDLatestNeural`  | Azure TTS voice name                           |
+| `--rate`        | string | `+10%`                               | Speech prosody rate                            |
+| `--content-dir` | path   | `content`                            | Path to slide content directory                |
+| `--output-dir`  | path   | `voice-over`                         | Path to WAV output directory                   |
+| `--lexicon`     | path   | *(auto-detect)*                      | Custom acronyms.yaml path                      |
 
 ### embed_audio.py
 
-| Parameter     | Type | Default           | Description                  |
-|:--------------|:-----|:------------------|:-----------------------------|
-| `--input`     | path | *(required)*      | Source PPTX file path        |
-| `--audio-dir` | path | `voice-over`      | Directory with slide-NNN.wav |
-| `--output`    | path | `*-narrated.pptx` | Output PPTX file path        |
+| Parameter      | Type | Default              | Description                      |
+|:---------------|:-----|:---------------------|:---------------------------------|
+| `--input`      | path | *(required)*         | Source PPTX file path            |
+| `--audio-dir`  | path | `voice-over`         | Directory with slide-NNN.wav     |
+| `--output`     | path | `*-narrated.pptx`   | Output PPTX file path            |
 
 ## Cross-Platform Wrappers
 
@@ -181,13 +181,15 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                       |
-|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
-| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
+| Issue | Solution |
+|:------|:---------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID` | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`. |
+| 401 with Entra ID auth | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
+| Empty WAV files or skipped slides | Verify `speaker_notes:` is present and non-empty in `content.yaml`. |
+| Mispronounced acronyms | Add entries to `acronyms.yaml` with phonetic aliases. |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory. |
+| Audio icon visible in PPTX | Reposition or resize the audio object in PowerPoint after embedding. |
 
 > Brought to you by microsoft/hve-core
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
