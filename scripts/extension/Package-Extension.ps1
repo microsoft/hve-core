@@ -456,11 +456,6 @@ function Get-PackagingDirectorySpec {
             IsFile      = $true
         },
         @{
-            Source      = Join-Path $RepoRoot "scripts/security"
-            Destination = Join-Path $ExtensionDirectory "scripts/security"
-            IsFile      = $false
-        },
-        @{
             Source      = Join-Path $RepoRoot "docs/templates"
             Destination = Join-Path $ExtensionDirectory "docs/templates"
             IsFile      = $false

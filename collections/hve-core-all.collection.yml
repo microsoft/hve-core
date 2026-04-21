@@ -549,7 +549,7 @@ items:
   kind: skill
 - path: .github/skills/experimental/vscode-playwright
   kind: skill
-- path: .github/skills/github/github-security/code-scanning
+- path: .github/skills/github/code-scanning
   kind: skill
   maturity: experimental
 - path: .github/skills/gitlab/gitlab

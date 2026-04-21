@@ -1,14 +1,16 @@
 ---
-name: github-security-code-scanning
-description: 'GitHub code scanning alerts via Get-CodeScanningAlerts.ps1 - Brought to you by microsoft/hve-core'
+name: code-scanning
+description: 'Retrieves and groups GitHub code scanning alerts from a repository using static analysis tools such as CodeQL and Scorecard. Use when you need to list open security alerts, triage by severity or rule, identify affected file paths, or create backlog issues from scan findings. The GitHub Security tab is not accessible through the default MCP toolset; use this skill instead. - Brought to you by microsoft/hve-core'
 license: MIT
+user-invocable: true
+compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-04-20"
+  last_updated: "2026-04-21"
 ---
 
-# GitHub Security — Code Scanning Skill
+# Code Scanning Skill
 
 ## Overview
 
@@ -32,13 +34,10 @@ The `repo` scope also satisfies `security_events`. The `gh` CLI handles authenti
 Run this command to get a grouped summary of open code scanning alerts, sorted by frequency. This is the recommended first command when triaging a repository's code scanning posture.
 
 ```bash
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
+pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
 This returns a JSON array of alert groups sorted by occurrence count, descending. Always use `-OutputFormat Json` when consuming results programmatically.
-
-> [!NOTE]
-> In a repository checkout (local dev or CI), the script resolves to `scripts/security/Get-CodeScanningAlerts.ps1` relative to the workspace root. When using the installed hve-core VS Code extension without a repo checkout, the same file ships inside the extension directory alongside other hve-core scripts.
 
 ## Parameters Reference
 
@@ -57,12 +56,25 @@ Groups and sorts open code scanning alerts by occurrence count, descending.
 
 ```bash
 # JSON output for programmatic consumption
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
+pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 
 # Scope to a specific branch
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -Branch "{branch}" -OutputFormat Json
+pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -Branch "{branch}" -OutputFormat Json
 ```
+### get-code-scanning-alerts.sh
 
+Groups and sorts open code scanning alerts by occurrence count, descending. Requires `jq`.
+
+```bash
+# JSON output for programmatic consumption
+bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}"
+
+# Scope to a specific branch
+bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -b "{branch}"
+
+# Filter by severity
+bash scripts/get-code-scanning-alerts.sh -o "{owner}" -r "{repo}" -s critical
+```
 ## When to Use This Skill
 
 Use this skill when the task involves reading code scanning alerts only. `Get-CodeScanningAlerts.ps1` is the only supported method for listing and grouping code scanning alerts. `gh api` must not be used as a fallback for listing or grouping.
@@ -76,7 +88,7 @@ When GitHub MCP server is configured with the `code_security` toolset, read-only
 Always run with `-OutputFormat Json`. Parse the JSON output and present it to the user.
 
 ```bash
-pwsh scripts/security/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
+pwsh scripts/Get-CodeScanningAlerts.ps1 -Owner "{owner}" -Repo "{repo}" -OutputFormat Json
 ```
 
 Use `-Branch {branch}` to scope to a branch other than `main`.

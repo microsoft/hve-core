@@ -38,7 +38,7 @@ items:
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
-  - path: .github/skills/github/github-security/code-scanning
+  - path: .github/skills/github/code-scanning
     kind: skill
     maturity: experimental
 display:
