@@ -51,9 +51,9 @@ copilot plugin install github@hve-core
 
 ## Skills
 
-| Skill         | Description   |
-|---------------|---------------|
-| code-scanning | code-scanning |
+| Skill            | Description                                                                                                                   |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| gh-code-scanning | Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core |
 
 ---
 
