@@ -412,7 +412,7 @@ Describe 'Output Generation' -Tag 'Unit' {
 
             Invoke-YamlLintCore -OutputPath $script:OutputFile
             $summary = Get-Content 'logs/yaml-lint-summary.json' | ConvertFrom-Json
-            $summary.Timestamp.ToString('o') | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z$'
+            $summary.Timestamp.ToString('o') | Should -Match (Get-StandardTimestampPattern)
             Should -Invoke Get-StandardTimestamp -Times 1 -Exactly
         }
     }
