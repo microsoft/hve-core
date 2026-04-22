@@ -1,5 +1,5 @@
 ---
-name: code-scanning
+name: gh-code-scanning
 description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core'
 license: MIT
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
@@ -10,11 +10,11 @@ metadata:
   last_updated: "2026-04-21"
 ---
 
-# Code Scanning Skill
+# GitHub Code Scanning Skill
 
 ## Overview
 
-Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides scripts for all read operations.
+GitHub code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides scripts for all read operations.
 
 ## Prerequisites
 
