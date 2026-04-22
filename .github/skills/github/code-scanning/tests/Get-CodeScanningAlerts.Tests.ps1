@@ -44,8 +44,8 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             Remove-Item Env:GH_PAGER -ErrorAction SilentlyContinue
         }
 
-        It 'Sets GH_PAGER to empty string before invoking gh' {
-            $env:GH_PAGER | Should -Be ''
+        It 'Suppresses pager by clearing GH_PAGER before invoking gh' {
+            $env:GH_PAGER | Should -BeNullOrEmpty
         }
     }
 
