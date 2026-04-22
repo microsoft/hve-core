@@ -549,6 +549,8 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/experimental/customer-card-render
+  kind: skill
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/video-to-gif

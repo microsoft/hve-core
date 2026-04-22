@@ -41,7 +41,8 @@ def test_emit_content_yaml_shape(tmp_path: Path) -> None:
     canonical = tmp_path / "canonical"
     canonical.mkdir(parents=True)
     (canonical / "vision-statement.md").write_text(
-        "---\ntitle: Vision Statement\n---\n\n## Vision Statement\nA customer-ready vision.",
+        "---\ntitle: Vision Statement\n---\n\n"
+        "## Vision Statement\nA customer-ready vision.",
         encoding="utf-8",
     )
 
@@ -98,8 +99,10 @@ def test_yaml_escape_encodes_list_newlines() -> None:
 def test_yaml_escape_unwraps_hard_wrapped_prose() -> None:
     module = _load_module()
     raw = (
-        "Enable shift-based operations teams to hand off maintenance issues as complete,\n"
-        "actionable work so the incoming shift can recognize urgency, understand context,\n"
+        "Enable shift-based operations teams to hand off maintenance issues "
+        "as complete,\n"
+        "actionable work so the incoming shift can recognize urgency, "
+        "understand context,\n"
         "and continue follow-up without re-diagnosing the issue."
     )
     escaped = module.yaml_escape(raw)

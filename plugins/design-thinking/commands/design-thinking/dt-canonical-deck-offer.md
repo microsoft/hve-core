@@ -1,1 +1,0 @@
-../../../../.github/prompts/design-thinking/dt-canonical-deck-offer.prompt.md

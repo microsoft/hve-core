@@ -408,19 +408,19 @@ python scripts/render_pdf_images.py \
 
 The build and extraction scripts use shared modules in the `scripts/` directory:
 
-| Module                 | Purpose                                                                                                                                   |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| `pptx_utils.py`        | Shared utilities: exit codes, logging configuration, slide filter parsing, unit conversion (`emu_to_inches()`), YAML loading              |
-| `pptx_colors.py`       | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries)                                                   |
-| `pptx_fonts.py`        | Font resolution, family normalization, weight suffix handling, alignment mapping                                                          |
-| `pptx_shapes.py`       | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities                                               |
-| `pptx_fills.py`        | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles                                            |
+| Module                 | Purpose                                                                                                                                                                                                |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `pptx_utils.py`        | Shared utilities: exit codes, logging configuration, slide filter parsing, unit conversion (`emu_to_inches()`), YAML loading                                                                           |
+| `pptx_colors.py`       | Color resolution (`#hex`, `@theme`, dict with brightness), theme color map (16 entries)                                                                                                                |
+| `pptx_fonts.py`        | Font resolution, family normalization, weight suffix handling, alignment mapping                                                                                                                       |
+| `pptx_shapes.py`       | Shape constant map (29 entries + circle alias), auto-shape name mapping, rotation utilities                                                                                                            |
+| `pptx_fills.py`        | Solid, gradient, and pattern fill application/extraction; line/border styling with dash styles                                                                                                         |
 | `pptx_text.py`         | Text frame properties (margins, auto-size, vertical anchor), paragraph properties (spacing, level), run properties (underline, hyperlink), markdown-like list parsing to bullet/auto-number paragraphs |
-| `pptx_tables.py`       | Table element creation and extraction with cell merging, banding, and per-cell styling                                                    |
-| `pptx_charts.py`       | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.)                                  |
-| `validate_deck.py`     | PPTX-only validation for speaker notes and slide count                                                                                    |
-| `validate_slides.py`   | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output            |
-| `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming                                                                  |
+| `pptx_tables.py`       | Table element creation and extraction with cell merging, banding, and per-cell styling                                                                                                                 |
+| `pptx_charts.py`       | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.)                                                                                               |
+| `validate_deck.py`     | PPTX-only validation for speaker notes and slide count                                                                                                                                                 |
+| `validate_slides.py`   | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output                                                                         |
+| `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming                                                                                                                               |
 
 ## python-pptx Constraints
 

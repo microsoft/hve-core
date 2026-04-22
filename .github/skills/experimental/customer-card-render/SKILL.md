@@ -69,22 +69,22 @@ For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpo
 
 ## Supported Artifact Types
 
-| Artifact Type     | Slide Layout              |
-|-------------------|---------------------------|
-| Vision Statement  | Single slide              |
-| Problem Statement | Single slide              |
-| Scenario          | Single slide              |
-| Use Case          | **4 slides** (see below)   |
-| Persona           | Single slide              |
+| Artifact Type     | Slide Layout             |
+|-------------------|--------------------------|
+| Vision Statement  | Single slide             |
+| Problem Statement | Single slide             |
+| Scenario          | Single slide             |
+| Use Case          | **4 slides** (see below) |
+| Persona           | Single slide             |
 
 ### Use Case 3-Slide Layout
 
 Each Use Case expands into 3 consecutive slides with distinct sections:
 
-| Slide | Content |
-|-------|---------|
-| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User |
-| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements |
+| Slide       | Content                                                                                |
+|-------------|----------------------------------------------------------------------------------------|
+| **Slide 1** | Use Case Description, Use Case Overview, Business Value, Primary User                  |
+| **Slide 2** | Secondary User, Preconditions, Steps, Data Requirements                                |
 | **Slide 3** | Equipment Requirements, Operating Environment, Success Criteria, Pain Points, Evidence |
 
 Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case → Persona), then alphabetically by title within each type. Use Cases appear with all 4 slides consecutive (Slide N, N+1, N+2, N+3).
@@ -101,11 +101,11 @@ python .github/skills/experimental/customer-card-render/scripts/generate_cards.p
 
 #### generate_cards.py CLI Reference
 
-| Flag              | Required | Default                          | Description                                       |
-|-------------------|----------|----------------------------------|---------------------------------------------------|
-| `--canonical-dir` | No       | `<skill-root>/canonical`         | Directory containing canonical DT markdown files  |
-| `--output-dir`    | No       | `<skill-root>/scripts/content`   | Directory to write generated `content.yaml` files |
-| `-v`, `--verbose` | No       | —                                | Enable debug-level logging                        |
+| Flag              | Required | Default                        | Description                                       |
+|-------------------|----------|--------------------------------|---------------------------------------------------|
+| `--canonical-dir` | No       | `<skill-root>/canonical`       | Directory containing canonical DT markdown files  |
+| `--output-dir`    | No       | `<skill-root>/scripts/content` | Directory to write generated `content.yaml` files |
+| `-v`, `--verbose` | No       | —                              | Enable debug-level logging                        |
 
 The script reads each markdown file in `--canonical-dir`, detects the artifact type from frontmatter, extracts required sections, and generates `content.yaml` files. Vision, Problem, Scenario, and Persona artifacts produce one slide each. Use Case artifacts produce 3 consecutive slides per use case.
 
@@ -152,12 +152,14 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 
 ## Troubleshooting
 
-| Issue                           | Cause                                        | Solution                                                          |
-|---------------------------------|----------------------------------------------|-------------------------------------------------------------------|
-| `uv` not found                  | uv not installed                             | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
-| Python not found by uv          | No Python 3.11+ on PATH                      | Run `uv python install 3.11`                                      |
-| Template not found              | `--canonical-dir` contains unknown type      | Check frontmatter `type:` field against supported artifact types  |
-| Empty output directory          | No canonical markdown files found            | Confirm `--canonical-dir` path and that files have `---` frontmatter |
-| PPTX build fails after generate | PowerPoint skill missing or path incorrect   | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/` |
+| Issue                           | Cause                                      | Solution                                                                                 |
+|---------------------------------|--------------------------------------------|------------------------------------------------------------------------------------------|
+| `uv` not found                  | uv not installed                           | Run `curl -LsSf https://astral.sh/uv/install.sh \| sh` (macOS/Linux) or `pip install uv` |
+| Python not found by uv          | No Python 3.11+ on PATH                    | Run `uv python install 3.11`                                                             |
+| Template not found              | `--canonical-dir` contains unknown type    | Check frontmatter `type:` field against supported artifact types                         |
+| Empty output directory          | No canonical markdown files found          | Confirm `--canonical-dir` path and that files have `---` frontmatter                     |
+| PPTX build fails after generate | PowerPoint skill missing or path incorrect | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/`          |
 
 > Brought to you by microsoft/hve-core
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.

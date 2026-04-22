@@ -170,3 +170,5 @@ Example with 2 scenarios, 1 use case, 1 persona:
 ## Missing Data Contract
 
 If canonical sections use `<insufficient knowledge>`, preserve it verbatim in generated slide fields. The generator must not invent replacement content.
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.

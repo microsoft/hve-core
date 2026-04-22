@@ -131,12 +131,18 @@ def normalize_text(text: str) -> str:
 
     def flush_prose() -> None:
         if prose_lines:
-            normalized_blocks.append(" ".join(line.strip() for line in prose_lines if line.strip()))
+            normalized_blocks.append(
+                " ".join(
+                    line.strip() for line in prose_lines if line.strip()
+                )
+            )
             prose_lines.clear()
 
     def flush_list() -> None:
         if list_lines:
-            normalized_blocks.append("\n".join(line.strip() for line in list_lines if line.strip()))
+            normalized_blocks.append(
+                "\n".join(line.strip() for line in list_lines if line.strip())
+            )
             list_lines.clear()
 
     for raw_line in text.splitlines():
@@ -186,7 +192,9 @@ def _vision_sections(body: str) -> dict[str, str]:
 def _problem_sections(body: str) -> dict[str, str]:
     """Extract sections for Problem Statement card."""
     return {
-        "P_PROBLEM_STATEMENT": extract_section(body, "Problem Statement") or extract_section(body, "Customer-friendly summary"),
+        "P_PROBLEM_STATEMENT": extract_section(
+            body, "Problem Statement"
+        ) or extract_section(body, "Customer-friendly summary"),
     }
 
 
@@ -247,8 +255,6 @@ def _use_case_slide4(body: str) -> dict[str, str]:
         "UC_EVIDENCE": extract_section(body, "Evidence"),
     }
 
-
-
 def parse_card(path: Path, canonical_root: Path) -> Card | None:
     text = path.read_text(encoding="utf-8")
     frontmatter, body = parse_frontmatter(text)
@@ -258,13 +264,19 @@ def parse_card(path: Path, canonical_root: Path) -> Card | None:
         LOGGER.debug("Skipping unknown artifact: %s", path)
         return None
 
-    title = frontmatter.get("title") or extract_first_heading(body) or path.stem.replace("-", " ").title()
+    title = (
+        frontmatter.get("title")
+        or extract_first_heading(body)
+        or path.stem.replace("-", " ").title()
+    )
     source_path = frontmatter.get("source path") or frontmatter.get("source file path")
     if not source_path:
         source_path = path.relative_to(canonical_root).as_posix()
 
     metadata_last_updated = frontmatter.get("last updated")
-    last_updated = metadata_last_updated or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    last_updated = metadata_last_updated or datetime.now(
+        timezone.utc
+    ).strftime("%Y-%m-%d")
 
     # Default summary (used as fallback if sections are empty)
     summary = extract_intro_block(body) or ""
@@ -280,20 +292,20 @@ def parse_card(path: Path, canonical_root: Path) -> Card | None:
 
 def expand_cards(card: Card, body: str) -> list[Card]:
     """Expand a single card into multiple slides if needed.
-    
+
     Use Case artifacts expand into 4 slides; all others return a single-element list
     with section-specific placeholders.
     """
     sections: dict[str, str] | None = None
     slide_part = 0
-    
+
     if card.artifact_type == "Use Case":
         # Use Cases expand to 4 slides
         slide1_sections = _use_case_slide1(body)
         slide2_sections = _use_case_slide2(body)
         slide3_sections = _use_case_slide3(body)
         slide4_sections = _use_case_slide4(body)
-        
+
         return [
             Card(
                 artifact_type=card.artifact_type,
@@ -340,7 +352,7 @@ def expand_cards(card: Card, body: str) -> list[Card]:
         sections = _scenario_sections(body)
     elif card.artifact_type == "Persona":
         sections = _persona_sections(body)
-    
+
     return [
         Card(
             artifact_type=card.artifact_type,
@@ -356,7 +368,14 @@ def expand_cards(card: Card, body: str) -> list[Card]:
 
 def collect_cards(canonical_root: Path) -> list[Card]:
     files: list[Path] = []
-    files.extend(path for path in [canonical_root / "vision-statement.md", canonical_root / "problem-statement.md"] if path.exists())
+    files.extend(
+        path
+        for path in [
+            canonical_root / "vision-statement.md",
+            canonical_root / "problem-statement.md",
+        ]
+        if path.exists()
+    )
 
     for folder in ["scenarios", "use-cases", "personas"]:
         dir_path = canonical_root / folder
@@ -371,14 +390,22 @@ def collect_cards(canonical_root: Path) -> list[Card]:
         _, body = parse_frontmatter(path.read_text(encoding="utf-8"))
         expanded = expand_cards(card, body)
         cards.extend(expanded)
-    
-    cards.sort(key=lambda card: (ORDER.index(card.artifact_type), card.title.lower(), card.slide_part))
+
+    cards.sort(
+        key=lambda card: (
+            ORDER.index(card.artifact_type),
+            card.title.lower(),
+            card.slide_part,
+        )
+    )
     return cards
 
 
 def render_slide(card: Card, slide_number: int) -> str:
-    template_text = template_for_type(card.artifact_type, card.slide_part).read_text(encoding="utf-8")
-    
+    template_text = template_for_type(
+        card.artifact_type, card.slide_part
+    ).read_text(encoding="utf-8")
+
     # Base replacements for all slides
     replacements = {
         "SLIDE_NUMBER": str(slide_number),
@@ -387,12 +414,12 @@ def render_slide(card: Card, slide_number: int) -> str:
         "LAST_UPDATED": yaml_escape(card.last_updated),
         "TYPE_LABEL": yaml_escape(card.artifact_type.upper()),
     }
-    
+
     # All artifact types now use section-specific placeholders
     if card.sections:
         for key, value in card.sections.items():
             replacements[key] = yaml_escape(value)
-    
+
     rendered = template_text
     for key, value in replacements.items():
         rendered = rendered.replace(f"{{{{{key}}}}}", value)
@@ -411,13 +438,20 @@ def write_outputs(cards: list[Card], output_dir: Path) -> None:
     for index, card in enumerate(cards, start=1):
         slide_dir = output_dir / f"slide-{index:03d}"
         slide_dir.mkdir(parents=True, exist_ok=True)
-        (slide_dir / "content.yaml").write_text(render_slide(card, index), encoding="utf-8")
+        (slide_dir / "content.yaml").write_text(
+            render_slide(card, index),
+            encoding="utf-8",
+        )
 
     LOGGER.info("Generated %d slide content files in %s", len(cards), output_dir)
 
 
 def create_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate customer-card content YAML from canonical markdown.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate customer-card content YAML from canonical markdown."
+        )
+    )
     parser.add_argument("--canonical-dir", type=Path, default=_DEFAULT_CANONICAL)
     parser.add_argument("--output-dir", type=Path, default=_DEFAULT_OUTPUT)
     parser.add_argument("-v", "--verbose", action="store_true")
