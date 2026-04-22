@@ -1,0 +1,25 @@
+id: "2-5-1"
+title: "Pointer Gestures"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.5 Input Modalities"
+addedIn: "2.1"
+summary: "All functionality that uses multipoint or path-based gestures can be operated with a single pointer without a path-based gesture, unless essential."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G215"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/pointer-gestures.html"
+  - "https://www.w3.org/TR/WCAG22/"

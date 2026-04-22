@@ -1,0 +1,23 @@
+id: "2-4-5"
+title: "Multiple Ways"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "More than one way is available to locate a web page within a set of web pages, except where the page is the result of, or a step in, a process."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G125"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/multiple-ways.html"
+  - "https://www.w3.org/TR/WCAG22/"

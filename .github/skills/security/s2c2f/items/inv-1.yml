@@ -1,0 +1,30 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: inv-1
+    title: Maintain an automated inventory of all OSS used in development
+    group: inventory
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML1 practice. Continuously generate and maintain an automated inventory of OSS dependencies across all projects, typically via SBOMs or dependency graph data, to support vulnerability response and licensing review.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect SBOM or dependency-inventory generation tooling.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify projects or ecosystems missing automated inventory coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to extend automated inventory generation to all projects.
+    evidenceHints:
+      - "**/sbom.json"
+      - "**/sbom.spdx.json"
+      - "**/sbom.cdx.json"
+      - "**/bom.xml"
+      - ".github/workflows/sbom*.yml"

@@ -1,0 +1,38 @@
+id: "grid-data"
+title: "Data Grid Pattern"
+itemKind: pattern
+summary: "Two-dimensional editable grid with arrow-key cell navigation, selection, and optional sortable column headers."
+keyboardModel:
+  - "grid"
+focusManagement: "roving"
+relatedRoles:
+  - "grid"
+  - "row"
+  - "rowheader"
+  - "columnheader"
+  - "gridcell"
+requiredStates:
+  - "aria-selected"
+  - "aria-sort"
+requiredProperties:
+  - "aria-rowcount"
+  - "aria-colcount"
+  - "aria-rowindex"
+  - "aria-colindex"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/grid-data/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/grid-data/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

@@ -1,0 +1,23 @@
+id: "2-4-8"
+title: "Location"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "Information about the user's location within a set of web pages is available."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G63"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/location.html"
+  - "https://www.w3.org/TR/WCAG22/"

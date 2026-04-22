@@ -1,0 +1,17 @@
+id: context
+title: Context
+description: "Establishes the decision landscape: problem statement, constraints, and forces at play."
+template: |
+  ## Context
+
+  **Decision:** {{decision_title}}
+  **Status:** {{decision_status}}
+
+  Describe the forces at play, including technological, political, social,
+  and project-local factors. These forces are likely in tension and should be
+  called out as such.
+
+  {{context_detail}}
+inputs:
+  - name: context_detail
+    description: "Technical and business context driving the need for this decision"

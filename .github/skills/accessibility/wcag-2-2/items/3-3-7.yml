@@ -1,0 +1,25 @@
+id: "3-3-7"
+title: "Redundant Entry"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.2"
+summary: "Information previously entered by the user in the same process is auto-populated or available for selection, with exceptions for re-entry, security, and invalidation."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G218"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/redundant-entry.html"
+  - "https://www.w3.org/TR/WCAG22/"

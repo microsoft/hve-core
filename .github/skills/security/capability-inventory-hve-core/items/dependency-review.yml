@@ -1,0 +1,31 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Dependency review"
+source: https://github.com/microsoft/hve-core
+description: dependency-review.yml for PR-time dependency change analysis
+controls:
+- id: dependency-review
+  appliesTo: [cloud, web, ml, fleet]
+  title: Dependency review
+  description: dependency-review.yml for PR-time dependency change analysis
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Dependency review capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Dependency review is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/dependency-review*.yml
+  references:
+  - https://github.com/microsoft/hve-core

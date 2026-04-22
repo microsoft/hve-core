@@ -6,7 +6,7 @@ BeforeAll {
     # Stub cosign when not installed so Pester can mock it
     if (-not (Get-Command cosign -ErrorAction SilentlyContinue)) { function global:cosign { } }
 
-    $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Sign-RaiArtifacts.ps1'
+    $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Sign-PlannerArtifacts.ps1'
 
     # Extract helper functions via AST. The script has a mandatory ProjectSlug
     # parameter with script-scope execution, preventing dot-source.
@@ -212,7 +212,7 @@ Describe 'Manifest Generation' -Tag 'Unit' {
 
             $manifest = Get-Content $script:outputPath -Raw | ConvertFrom-Json
             $fields = ($manifest | Get-Member -MemberType NoteProperty).Name | Sort-Object
-            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'version') | Sort-Object
+            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'planRoot', 'projectSlug', 'scope', 'version') | Sort-Object
             $fields | Should -Be $expected
         }
     }
@@ -303,6 +303,79 @@ Describe 'Cosign Signing' -Tag 'Unit' {
             }
 
             Should -Invoke cosign -Times 1 -Exactly
+        }
+    }
+}
+
+Describe 'Scope routing' -Tag 'Unit' {
+    Context 'when -Scope sssc is supplied' {
+        It 'Writes the manifest under .copilot-tracking/sssc-plans/{slug}/' {
+            $slug = 'sssc-routing'
+            $artifactDir = Join-Path $TestDrive ".copilot-tracking/sssc-plans/$slug"
+            New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+            Set-Content -Path (Join-Path $artifactDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $slug -Scope sssc
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $manifestPath = Join-Path $artifactDir 'artifact-manifest.json'
+            Test-Path $manifestPath | Should -BeTrue
+            $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+            $manifest.scope | Should -Be 'sssc'
+            $manifest.projectSlug | Should -Be $slug
+            $manifest.planRoot | Should -Match 'sssc-plans'
+        }
+    }
+
+    Context 'when -Scope security is supplied' {
+        It 'Writes the manifest under .copilot-tracking/security-plans/{slug}/' {
+            $slug = 'security-routing'
+            $artifactDir = Join-Path $TestDrive ".copilot-tracking/security-plans/$slug"
+            New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+            Set-Content -Path (Join-Path $artifactDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $slug -Scope security
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $manifestPath = Join-Path $artifactDir 'artifact-manifest.json'
+            Test-Path $manifestPath | Should -BeTrue
+            $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+            $manifest.scope | Should -Be 'security'
+            $manifest.planRoot | Should -Match 'security-plans'
+        }
+    }
+
+    Context 'default scope' {
+        It 'Defaults to scope "rai" and writes under rai-plans/' {
+            $slug = 'rai-default'
+            $artifactDir = Join-Path $TestDrive ".copilot-tracking/rai-plans/$slug"
+            New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+            Set-Content -Path (Join-Path $artifactDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -ProjectSlug $slug
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $manifest = Get-Content (Join-Path $artifactDir 'artifact-manifest.json') -Raw | ConvertFrom-Json
+            $manifest.scope | Should -Be 'rai'
+            $manifest.planRoot | Should -Match 'rai-plans'
         }
     }
 }

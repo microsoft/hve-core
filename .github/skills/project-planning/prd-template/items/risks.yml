@@ -1,0 +1,16 @@
+id: risks
+title: Risks
+description: "Identifies known risks, their likelihood and impact, and proposed mitigations."
+template: |
+  ## Risks
+
+  Identify risks to {{product_name}} delivery and adoption.
+
+  | Risk | Likelihood | Impact | Mitigation |
+  |---|---|---|---|
+  | | | | |
+
+  {{risk_detail}}
+inputs:
+  - name: risk_detail
+    description: "Expanded risk analysis, contingency plans, or risk ownership assignments"

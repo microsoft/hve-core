@@ -1,0 +1,27 @@
+id: "1-4-11"
+title: "Non-text Contrast"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.1"
+summary: "Visual presentation of UI components and graphical objects required to understand content has a contrast ratio of at least 3:1 against adjacent colors."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "wcag-contrast"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G195"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html"
+  - "https://www.w3.org/TR/WCAG22/"

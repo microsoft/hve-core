@@ -1,0 +1,28 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: rv-1-3
+    title: Have a Vulnerability Disclosure Program and Accept Reports from External Entities
+    group: RV
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Establish a vulnerability disclosure program with documented intake, triage, and acknowledgment procedures, and publicize how external researchers and consumers can report vulnerabilities.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate the published vulnerability disclosure policy and intake mechanism.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify missing intake channels, security contacts, or response SLAs.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to publish or extend the vulnerability disclosure program.
+    evidenceHints:
+      - "SECURITY.md"
+      - ".well-known/security.txt"
+      - "docs/security/disclosure*.md"

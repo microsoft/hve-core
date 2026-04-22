@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: reb-2
+    title: Store rebuilt OSS in a private registry
+    group: rebuild
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML3 practice. Publish internally rebuilt OSS artifacts to a private registry so that downstream builds resolve from the trusted rebuild pipeline rather than the upstream prebuilt artifact.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Confirm a private registry receives rebuilt OSS artifacts.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify rebuilt OSS that is not yet published to the private registry.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to publish remaining rebuilt OSS to the private registry.
+    evidenceHints:
+      - ".github/workflows/publish*.yml"
+      - "**/registry-config.yml"
+      - "**/registry-config.yaml"

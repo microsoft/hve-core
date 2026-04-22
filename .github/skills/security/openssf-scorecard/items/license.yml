@@ -1,0 +1,30 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: license
+    title: License
+    risk: low
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies presence of a LICENSE file with an SPDX-recognized identifier. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate LICENSE file and SPDX identifier.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Flag missing or unrecognized license metadata.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or correct license metadata.
+    evidenceHints:
+      - "LICENSE"
+      - "LICENSE.md"
+      - "LICENSE.txt"
+      - "COPYING"

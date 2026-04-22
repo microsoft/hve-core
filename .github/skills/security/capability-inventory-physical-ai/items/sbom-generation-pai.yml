@@ -1,0 +1,37 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 SBOM generation"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: anchore/sbom-action producing SPDX-JSON output per release
+controls:
+- id: sbom-generation-pai
+  appliesTo: [cloud, web, ml, fleet]
+  title: SBOM generation
+  description: anchore/sbom-action producing SPDX-JSON output per release
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the SBOM generation capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of SBOM generation is verified against reference patterns.
+  mapsTo:
+    sbom:
+    - sbom-generation
+    openssf-scorecard:
+    - SBOM
+  evidenceHints:
+  - .github/workflows/sbom*.yml
+  - .github/workflows/release*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

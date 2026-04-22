@@ -43,6 +43,18 @@
       "scope": "github-skills",
       "schema": "skill-frontmatter.schema.json",
       "description": "Skill definition files in .github/skills directory"
+    },
+    {
+      "pattern": ".github/skills/**/sections/**/*.md",
+      "scope": "github-skill-sections",
+      "schema": "document-section.schema.json",
+      "description": "Document-section items in framework skills (placeholder; Phase 1.2 populates schema)"
+    },
+    {
+      "pattern": ".copilot-tracking/accessibility-plans/**/state.json",
+      "scope": "accessibility-plans-state",
+      "schema": "accessibility-state.schema.json",
+      "description": "Accessibility Planner state.json files"
     }
   ],
   "defaultSchema": "base-frontmatter.schema.json"

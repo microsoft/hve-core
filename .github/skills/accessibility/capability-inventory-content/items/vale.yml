@@ -1,0 +1,42 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - Vale prose linter"
+source: https://github.com/microsoft/hve-core
+description: "Style-aware prose linter for Markdown and reStructuredText that flags jargon passive voice tone and terminology drift via configurable styles."
+controls:
+  - id: vale
+    title: "Vale prose linter"
+    description: "Style-aware prose linter for Markdown and reStructuredText that flags jargon passive voice tone and terminology drift via configurable styles."
+    group: prose-linting
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Vale prose linter is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Vale prose linter runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-clear-language
+        - coga-plain-words
+        - coga-short-sentences
+        - coga-define-jargon
+        - coga-active-voice
+        - coga-consistent-terminology
+        - coga-meaningful-link-text
+    evidenceHints:
+      - .vale.ini
+      - "**/*.vale.ini"
+      - styles/**
+    references:
+      - https://vale.sh/
+      - https://github.com/errata-ai/vale

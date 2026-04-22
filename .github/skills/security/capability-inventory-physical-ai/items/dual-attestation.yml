@@ -1,0 +1,37 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Dual attestation"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Build provenance and SBOM attestation via actions/attest-build-provenance and actions/attest
+controls:
+- id: dual-attestation
+  appliesTo: [cloud, web, ml, fleet]
+  title: Dual attestation
+  description: Build provenance and SBOM attestation via actions/attest-build-provenance and actions/attest
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Dual attestation capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Dual attestation is verified against reference patterns.
+  mapsTo:
+    slsa:
+    - build-l3
+    openssf-scorecard:
+    - Signed-Releases
+  evidenceHints:
+  - .github/workflows/release*.yml
+  - .github/workflows/attest*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

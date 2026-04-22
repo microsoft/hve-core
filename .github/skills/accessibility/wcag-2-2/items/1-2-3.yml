@@ -1,0 +1,26 @@
+id: "1-2-3"
+title: "Audio Description or Media Alternative (Prerecorded)"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "An alternative for time-based media or audio description of prerecorded video content is provided for synchronized media."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G69"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/audio-description-or-media-alternative-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

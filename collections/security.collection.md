@@ -31,3 +31,14 @@ Skills included:
 - **OWASP Infrastructure Top 10** - OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments
 - **OWASP CI/CD Top 10** - OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments
 - **Security Reviewer Formats** - Format specifications and data contracts for the security reviewer orchestrator and its subagents
+- **OpenSSF Scorecard** - OpenSSF Scorecard checks as machine-readable framework controls for SSSC standards mapping and gap analysis
+- **SLSA** - SLSA v1.1 Build and Source track requirements for assessing supply-chain build and source integrity controls
+- **OpenSSF Best Practices Badge** - OpenSSF Best Practices Badge tier criteria (Passing, Silver, Gold) as machine-readable framework controls
+- **Sigstore** - Sigstore signing, verification, and transparency knowledge base for supply chain artifact integrity controls
+- **SBOM** - SPDX 2.3 and CycloneDX 1.5 conformance, generation pipelines, and ingestion controls for SSSC standards mapping
+- **NIST SSDF** - NIST Secure Software Development Framework (SP 800-218 v1.1) practices and tasks as framework controls
+- **S2C2F** - OSSF Secure Supply Chain Consumption Framework (v2024) practices encoded as framework controls
+- **CISA SSCM** - CISA Securing the Software Supply Chain Recommended Practices (Acquire, Develop, Deliver) as framework controls
+- **Capability Inventory: hve-core** - hve-core capability inventory consumed by the SSSC Planner during assessment, gap analysis, and backlog generation
+- **Capability Inventory: physical-ai** - physical-ai-toolchain capability inventory consumed by the SSSC Planner during assessment, gap analysis, and backlog generation
+- **Framework Skill** - Authoring guide for Framework Skills — host-agent-neutral packaging format for framework specifications

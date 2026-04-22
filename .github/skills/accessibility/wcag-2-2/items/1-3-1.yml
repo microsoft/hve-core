@@ -1,0 +1,31 @@
+id: "1-3-1"
+title: "Info and Relationships"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.3 Adaptable"
+addedIn: "2.0"
+summary: "Information, structure, and relationships conveyed through presentation can be programmatically determined or are available in text."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+  - "eslint-jsx-a11y"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H42"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H44"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA11"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html"
+  - "https://www.w3.org/TR/WCAG22/"

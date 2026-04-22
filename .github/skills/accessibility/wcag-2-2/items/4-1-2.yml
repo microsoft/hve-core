@@ -1,0 +1,30 @@
+id: "4-1-2"
+title: "Name, Role, Value"
+itemKind: criterion
+level: "A"
+principle: "4 Robust"
+guideline: "4.1 Compatible"
+addedIn: "2.0"
+summary: "For all UI components, the name and role can be programmatically determined; states, properties, and values can be programmatically set; and notification of changes is available."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+  - "eslint-jsx-a11y"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H91"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA4"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html"
+  - "https://www.w3.org/TR/WCAG22/"

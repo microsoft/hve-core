@@ -1,0 +1,45 @@
+# hve-core capability inventory roll-up for the SSSC Planner.
+# Lists per-capability items by phase; the planner MUST NOT read
+# capabilities outside the set declared for the active phase.
+framework: capability-inventory-hve-core
+version: '1.0'
+summary: 'hve-core capability inventory used by the SSSC Planner to enumerate native and shared security capabilities.'
+domain: security
+itemKind: capability
+status: published
+phaseMap:
+  assessment: &id001
+  - pip-audit
+  - action-version-consistency
+  - automated-sha-pinning-updates
+  - consolidated-weekly-security-summary
+  - get-verified-download
+  - security-workflow-orchestration
+  - dependency-pinning
+  - sha-staleness
+  - gitleaks
+  - codeql
+  - dependency-review
+  - openssf-scorecard-capability
+  - workflow-permissions
+  - copyright-headers
+  - dependabot
+  - security-md
+  - codeowners
+  gap-analysis: *id001
+  backlog-generation: *id001
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

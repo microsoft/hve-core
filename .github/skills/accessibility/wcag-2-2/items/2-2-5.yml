@@ -1,0 +1,25 @@
+id: "2-2-5"
+title: "Re-authenticating"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.2 Enough Time"
+addedIn: "2.0"
+summary: "When an authenticated session expires, the user can continue the activity without loss of data after re-authenticating."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G105"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/re-authenticating.html"
+  - "https://www.w3.org/TR/WCAG22/"

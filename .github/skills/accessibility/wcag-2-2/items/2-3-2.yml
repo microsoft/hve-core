@@ -1,0 +1,25 @@
+id: "2-3-2"
+title: "Three Flashes"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.3 Seizures and Physical Reactions"
+addedIn: "2.0"
+summary: "Web pages do not contain anything that flashes more than three times in any one second."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G19"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/three-flashes.html"
+  - "https://www.w3.org/TR/WCAG22/"

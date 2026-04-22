@@ -1,0 +1,31 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: upd-2
+    title: Enable automated OSS updates
+    group: update
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Configure automated OSS update tooling such as Dependabot or Renovate across every ecosystem in use to reduce time-to-patch and lower manual burden.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect automated update tooling and the ecosystems it covers.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems without automated OSS update coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to extend automated OSS update tooling to all ecosystems.
+    evidenceHints:
+      - ".github/dependabot.yml"
+      - ".github/dependabot.yaml"
+      - "renovate.json"
+      - ".github/renovate.json"
+      - ".renovaterc"
+      - ".renovaterc.json"

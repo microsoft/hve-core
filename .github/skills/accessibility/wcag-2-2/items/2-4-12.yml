@@ -1,0 +1,25 @@
+id: "2-4-12"
+title: "Focus Not Obscured (Enhanced)"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.2"
+summary: "When a UI component receives keyboard focus, no part of the component is hidden by author-created content."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C43"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-enhanced.html"
+  - "https://www.w3.org/TR/WCAG22/"

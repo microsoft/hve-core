@@ -1,0 +1,26 @@
+framework: openssf-best-practices-badge
+version: "1.0"
+summary: 'OpenSSF Best Practices Badge tier criteria (Passing, Silver, Gold) for open-source project hygiene.'
+domain: security
+itemKind: control
+status: published
+phaseMap:
+  standards-mapping: [passing, silver, gold]
+  gap-analysis: [passing, silver, gold]
+  backlog-generation: [passing, silver, gold]
+metadata:
+  authority: OpenSSF
+  license: CC-BY-3.0
+  licenseUrl: https://creativecommons.org/licenses/by/3.0/
+  attributionRequired: true
+  attributionText: "OpenSSF Best Practices Badge criteria — Copyright OpenSSF, licensed under CC-BY-3.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

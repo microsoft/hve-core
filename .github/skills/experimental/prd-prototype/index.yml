@@ -1,0 +1,34 @@
+framework: prd-prototype
+version: '0.1.0'
+summary: 'Prototype PRD template bundle for validating the document-section item kind'
+status: draft
+itemKind: document-section
+globals:
+  project_name:
+    description: "Product or feature name used across all sections"
+    required: true
+  author:
+    description: "Document author or team name"
+  date:
+    description: "Document creation date"
+phaseMap:
+  outline:
+    - executive-summary
+    - objectives
+  detail:
+    - stakeholders
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

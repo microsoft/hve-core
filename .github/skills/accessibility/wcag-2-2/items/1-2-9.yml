@@ -1,0 +1,26 @@
+id: "1-2-9"
+title: "Audio-only (Live)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "An alternative for time-based media that presents equivalent information is provided for live audio-only content."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G150"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/audio-only-live.html"
+  - "https://www.w3.org/TR/WCAG22/"

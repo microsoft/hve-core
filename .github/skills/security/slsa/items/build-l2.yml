@@ -1,0 +1,38 @@
+id: build-l2
+version: "1.1"
+name: SLSA Build Track Level 2
+source: https://slsa.dev/spec/v1.1/levels#build-l2
+description: Hosted build platform, signed provenance.
+controls:
+  - id: build-l2
+    title: Build L2 — Hosted build platform with signed provenance
+    description: |
+      Hosted build platform, signed provenance. Verify the build runs on a hosted
+      platform (e.g., GitHub Actions hosted runners) and that the provenance attestation
+      is cryptographically signed (e.g., Sigstore provenance signing).
+    group: build
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    gates:
+      - id: hosted-build-platform
+        phase: standards-mapping
+        default: pending
+        description: Build runs on a hosted build platform rather than a developer workstation.
+      - id: provenance-signed
+        phase: gap-analysis
+        default: pending
+        description: Provenance attestation is signed (Sigstore or equivalent).
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/*.yaml
+      - .github/workflows/release*.yml
+      - .github/workflows/publish*.yml
+    references:
+      - https://slsa.dev/spec/v1.1/levels
+      - https://slsa.dev/spec/v1.1/build-requirements
+      - https://www.sigstore.dev/

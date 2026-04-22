@@ -1,0 +1,30 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: po-1-1
+    title: Define Security Requirements for Software Development
+    group: PO
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Identify and document all security requirements for the organization's software development infrastructure, processes, and the software itself, then maintain them over time.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate documented secure development requirements and SDLC policies.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify gaps between existing policy coverage and SSDF PO.1.1 expectations.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to author or extend secure development requirement documentation.
+    evidenceHints:
+      - "SECURITY.md"
+      - "CONTRIBUTING.md"
+      - "GOVERNANCE.md"
+      - "docs/security/**"
+      - ".github/SECURITY.md"

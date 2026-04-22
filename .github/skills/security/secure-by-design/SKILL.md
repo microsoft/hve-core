@@ -61,5 +61,3 @@ secure-by-design practices across the software lifecycle.
 * **Trademark**: Use of ASD/ACSC content does not imply endorsement
 
 ---
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

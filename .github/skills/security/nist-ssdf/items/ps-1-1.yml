@@ -1,0 +1,29 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: ps-1-1
+    title: Protect All Forms of Code from Unauthorized Access and Tampering
+    group: PS
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Store all forms of code, including source code, executable code, and configuration-as-code, in repositories that enforce access control, integrity protection, and auditable history.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inventory code repositories and their access control and integrity protections.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify repositories or paths lacking branch protection, code owners, or audit history.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enforce repository protection across all code stores.
+    evidenceHints:
+      - ".github/CODEOWNERS"
+      - ".github/branch-protection.yml"
+      - ".github/settings.yml"
+      - ".gitattributes"

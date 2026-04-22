@@ -1,0 +1,25 @@
+id: "2-2-6"
+title: "Timeouts"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.2 Enough Time"
+addedIn: "2.1"
+summary: "Users are warned of the duration of any user inactivity that could cause data loss, unless the data is preserved for more than 20 hours."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G221"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/timeouts.html"
+  - "https://www.w3.org/TR/WCAG22/"

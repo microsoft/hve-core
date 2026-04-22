@@ -1,0 +1,31 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-4-4
+    title: Verify Acquired Software Components Comply with Security Requirements
+    group: PW
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Verify that each acquired commercial, open source, and other third-party software component complies with the organization's security requirements through provenance attestation, SBOM ingestion, signature verification, and vulnerability scanning.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify provenance, SBOM, signature, and vulnerability verification steps in pipelines.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify dependencies imported without provenance or vulnerability verification.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add provenance verification and dependency scanning.
+    evidenceHints:
+      - ".github/workflows/*sbom*.yml"
+      - ".github/workflows/*provenance*.yml"
+      - ".github/workflows/*scan*.yml"
+      - "*.spdx.json"
+      - "*.cdx.json"
+      - "*.intoto.jsonl"

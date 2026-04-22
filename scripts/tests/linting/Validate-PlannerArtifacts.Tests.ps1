@@ -4,7 +4,7 @@
 
 BeforeAll {
     # Dot-source the main script
-    $scriptPath = Join-Path $PSScriptRoot '../../linting/Validate-AIArtifacts.ps1'
+    $scriptPath = Join-Path $PSScriptRoot '../../linting/Validate-PlannerArtifacts.ps1'
     . $scriptPath
 
     $script:TempTestDir = Join-Path ([System.IO.Path]::GetTempPath()) "AIArtifactTests_$([guid]::NewGuid().ToString('N'))"

@@ -1,0 +1,35 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 SECURITY.md"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Security policy document with vulnerability reporting process
+controls:
+- id: security-md
+  appliesTo: [cloud, web, ml, fleet]
+  title: SECURITY.md
+  description: Security policy document with vulnerability reporting process
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the SECURITY.md capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of SECURITY.md is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - Security-Policy
+  evidenceHints:
+  - SECURITY.md
+  - .github/SECURITY.md
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

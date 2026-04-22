@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: aud-4
+    title: Validate SBOMs of consumed OSS
+    group: audit
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Where upstream OSS publishes SBOMs, validate them at consumption time to confirm declared components match what is delivered and to enable downstream vulnerability correlation.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect tooling that consumes and validates upstream SBOMs.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify OSS sources whose published SBOMs are not validated.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add SBOM validation steps to ingestion pipelines.
+    evidenceHints:
+      - ".github/workflows/sbom-validate*.yml"
+      - "**/sbom-validation.yml"
+      - "**/sbom-validation.yaml"

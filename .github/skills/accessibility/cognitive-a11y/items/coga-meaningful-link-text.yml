@@ -1,0 +1,45 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Write Meaningful Link Text"
+source: https://www.w3.org/WAI/cognitive/
+description: "Link text describes the destination on its own; phrases such as click here read more or here are avoided."
+controls:
+  - id: coga-meaningful-link-text
+    title: "Write Meaningful Link Text"
+    description: "Link text describes the destination on its own; phrases such as click here read more or here are avoided."
+    group: structure-navigation
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Write Meaningful Link Text practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Write Meaningful Link Text is verified through review or tooling."
+    mapsTo:
+      capability-inventory-content:
+        - vale
+        - alex
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    references:
+      - https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html
+      - https://www.nngroup.com/articles/writing-links/

@@ -1,0 +1,67 @@
+id: passing
+version: "1.0"
+name: OpenSSF Best Practices Badge — Passing Tier
+source: https://www.bestpractices.dev/criteria/0
+description: >-
+  Passing tier control for the OpenSSF Best Practices Badge. Focus: Basic hygiene
+  (67 criteria). Key Criteria: LICENSE, CONTRIBUTING, build system, test suite,
+  security policy, static analysis.
+controls:
+  - id: passing
+    title: OpenSSF Best Practices Badge — Passing
+    description: >-
+      Basic hygiene (67 criteria). Key Criteria: LICENSE, CONTRIBUTING, build system,
+      test suite, security policy, static analysis.
+    group: tier
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: high
+    references:
+      - https://www.bestpractices.dev/criteria/0
+    evidenceHints:
+      - README.md
+      - LICENSE
+      - CONTRIBUTING.md
+      - SECURITY.md
+      - CODEOWNERS
+      - .github/CODEOWNERS
+      - .github/workflows/*.yml
+      - .github/dependabot.yml
+    gates:
+      - id: basics
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Project basics: public website, project description, interaction
+          documentation, FLOSS LICENSE, and discoverable documentation.
+      - id: change-control
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Change control: public version-controlled source repository, unique version
+          numbering, and release notes for each release.
+      - id: reporting
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Reporting: documented bug-reporting process, vulnerability-report process,
+          and timely response to vulnerability reports.
+      - id: quality
+        phase: gap-analysis
+        default: pending
+        description: >-
+          Quality: working build system, automated test suite, new-functionality
+          testing policy, and warning-flag enforcement.
+      - id: security
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Security: documented secure-development knowledge, basic good cryptographic
+          practices, secured delivery against man-in-the-middle attacks, and timely
+          fixes for publicly known vulnerabilities.
+      - id: analysis
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Analysis: at least one static analysis tool applied to any major release,
+          plus dynamic analysis where applicable.

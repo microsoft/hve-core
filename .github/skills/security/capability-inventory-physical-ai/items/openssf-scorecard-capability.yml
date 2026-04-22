@@ -1,0 +1,34 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 OpenSSF Scorecard"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Scorecard scanning for supply chain security posture
+controls:
+- id: openssf-scorecard-capability
+  appliesTo: [cloud, web, ml, fleet]
+  title: OpenSSF Scorecard
+  description: Scorecard scanning for supply chain security posture
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the OpenSSF Scorecard capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of OpenSSF Scorecard is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - '*'
+  evidenceHints:
+  - .github/workflows/scorecard*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

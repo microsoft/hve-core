@@ -1,0 +1,33 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: signed-releases
+    title: Signed-Releases
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that release artifacts are signed via Sigstore attestations or GPG signatures.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect release signing workflows and verification of attestations.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify release artifacts missing attestations or signatures.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add Sigstore or GPG signing to release pipelines.
+    evidenceHints:
+      - ".github/workflows/release*.yml"
+      - ".github/workflows/sign*.yml"
+      - ".github/workflows/attest*.yml"
+      - "cosign.pub"
+      - "*.intoto.jsonl"
+      - "*.sigstore"
+      - "*.asc"

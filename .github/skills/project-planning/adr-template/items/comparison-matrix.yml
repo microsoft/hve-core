@@ -1,0 +1,38 @@
+id: comparison-matrix
+title: Comparison Matrix
+description: "Provides a criteria-based scoring table for systematic option comparison."
+template: |
+  ## Comparison Matrix
+
+  Score each option against weighted evaluation criteria for {{adr_title}}:
+
+  | Criteria | Weight | {{option_1_name}} | {{option_2_name}} |
+  |----------|--------|---|---|
+  | {{criterion_name}} | {{criterion_weight}} | {{option_1_score}} | {{option_2_score}} |
+
+  {{matrix_notes}}
+inputs:
+  - name: option_1_name
+    description: "Name of the first option in the comparison"
+    required: true
+  - name: option_2_name
+    description: "Name of the second option in the comparison"
+    required: true
+  - name: criterion_name
+    description: "Name of the evaluation criterion"
+  - name: criterion_weight
+    description: "Weight of the criterion: High, Medium, or Low"
+  - name: option_1_score
+    description: "Score or rating for option 1 against this criterion"
+  - name: option_2_score
+    description: "Score or rating for option 2 against this criterion"
+  - name: matrix_notes
+    description: "Additional notes on scoring methodology or column definitions"
+applicability:
+  discriminator: adr_depth
+  appliesWhen:
+    - comprehensive
+  naWhen:
+    - lightweight
+    - standard
+  naReason: "Comparison matrices are used only for comprehensive ADRs with three or more options"

@@ -1,0 +1,32 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Get-VerifiedDownload.ps1"
+source: https://github.com/microsoft/hve-core
+description: Verified download utility with SHA-256 hash validation for external tool acquisition
+controls:
+- id: get-verified-download
+  appliesTo: [cloud, web, ml, fleet]
+  title: Get-VerifiedDownload.ps1
+  description: Verified download utility with SHA-256 hash validation for external tool acquisition
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Get-VerifiedDownload.ps1 capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Get-VerifiedDownload.ps1 is verified against reference patterns.
+  evidenceHints:
+  - scripts/lib/Get-VerifiedDownload.ps1
+  - scripts/**/Get-VerifiedDownload.ps1
+  references:
+  - https://github.com/microsoft/hve-core

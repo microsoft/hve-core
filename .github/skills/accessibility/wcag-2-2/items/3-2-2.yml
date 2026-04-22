@@ -1,0 +1,25 @@
+id: "3-2-2"
+title: "On Input"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.2 Predictable"
+addedIn: "2.0"
+summary: "Changing the setting of any UI component does not automatically cause a change of context unless the user has been advised of the behavior before using the component."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G80"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/on-input.html"
+  - "https://www.w3.org/TR/WCAG22/"

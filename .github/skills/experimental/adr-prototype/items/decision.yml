@@ -1,0 +1,24 @@
+id: decision
+title: Decision
+description: "Records the chosen option and the rationale behind the decision."
+template: |
+  ## Decision
+
+  **Decision:** {{decision_title}}
+  **Date:** {{decision_date}}
+
+  State the decision as a full sentence with active voice: "We will ..."
+
+  ### Rationale
+
+  {{decision_rationale}}
+
+  ### Considered Alternatives
+
+  | Option | Pros | Cons | Verdict |
+  |--------|------|------|---------|
+  | *Option A* | *Advantage* | *Disadvantage* | *Chosen / Rejected* |
+inputs:
+  - name: decision_rationale
+    description: "Explanation of why this option was selected over alternatives"
+    required: true

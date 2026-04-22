@@ -1,0 +1,30 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-7-2
+    title: Perform Code Review and Code Analysis
+    group: PW
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Perform the determined forms of code review and code analysis, including peer review and automated static analysis, against the organization's secure coding standards.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify configured peer review and SAST workflows.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify languages or paths missing peer review enforcement or SAST coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enforce peer review and add SAST coverage.
+    evidenceHints:
+      - ".github/workflows/codeql*.yml"
+      - ".github/workflows/sast*.yml"
+      - ".github/workflows/semgrep*.yml"
+      - ".semgrep.yml"
+      - ".github/CODEOWNERS"

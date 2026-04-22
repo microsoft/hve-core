@@ -1,0 +1,30 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: ps-2-1
+    title: Provide a Mechanism for Verifying Software Release Integrity
+    group: PS
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Make software integrity verification information, such as cryptographic hashes, signatures, and provenance attestations, available to acquirers so they can verify that release artifacts have not been tampered with.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify how release artifacts publish hashes, signatures, or provenance.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify release flows that omit integrity verification material for consumers.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to publish signatures, hashes, or attestations with each release.
+    evidenceHints:
+      - ".github/workflows/*sign*.yml"
+      - ".github/workflows/*release*.yml"
+      - "*.sig"
+      - "*.intoto.jsonl"
+      - "*.sbom.json"

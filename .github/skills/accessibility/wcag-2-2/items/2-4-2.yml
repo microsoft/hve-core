@@ -1,0 +1,26 @@
+id: "2-4-2"
+title: "Page Titled"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "Web pages have titles that describe topic or purpose."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H25"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/page-titled.html"
+  - "https://www.w3.org/TR/WCAG22/"

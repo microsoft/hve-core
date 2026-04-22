@@ -1,206 +1,100 @@
 ---
-description: "Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner."
+description: "Phase 3 standards mapping contract — discovers framework skills under .github/skills/security/ and reads only the controls scoped to the active phase."
 applyTo: '**/.copilot-tracking/sssc-plans/**'
 ---
 
-# SSSC Phase 3: Standards Mapping
+# SSSC Phase 3 — Standards Mapping (Framework-Consumer Contract)
 
-Map the assessed supply chain posture against OpenSSF® standards. Use the Phase 2 assessment results as input.
+This file is a **consumer contract**. It does not encode any framework data inline. The planner discovers OpenSSF Scorecard, SLSA, OpenSSF Best Practices Badge, Sigstore, SBOM, NIST SSDF, OSSF S2C2F, and CISA SSCM controls by reading the framework skills under `.github/skills/security/`. Adding or replacing a framework requires no edits to this file.
 
-## OpenSSF Scorecard: 20 Checks
+## Framework Discovery Protocol
 
-Map each Scorecard check to the repository's current implementation and identify the available workflow or script from hve-core or physical-ai-toolchain.
+Each framework is published as a self-contained skill directory containing:
 
-| #  | Check                  | Risk     | Score Range    | Agent Mapping                                                                   |
-|----|------------------------|----------|----------------|---------------------------------------------------------------------------------|
-| 1  | Binary-Artifacts       | High     | 0–10           | Scan for committed binaries; recommend removal                                  |
-| 2  | Branch-Protection      | High     | 0–10 (5 tiers) | Verify branch rules, required reviews, status checks                            |
-| 3  | CI-Tests               | Low      | 0–10           | Map to CI workflow; verify test execution on PRs                                |
-| 4  | CII-Best-Practices     | Low      | 0–10           | Check for GOVERNANCE.md, Badge enrollment                                       |
-| 5  | Code-Review            | High     | 0–10           | Verify CODEOWNERS and required PR reviews                                       |
-| 6  | Contributors           | Low      | 0–10           | Count unique contributors (informational)                                       |
-| 7  | Dangerous-Workflow     | Critical | 0/10           | Audit for `pull_request_target` with checkout, `workflow_run`, untrusted inputs |
-| 8  | Dependency-Update-Tool | High     | 0/10           | Check for dependabot.yml or Renovate config                                     |
-| 9  | Fuzzing                | Medium   | 0/10           | Check for fuzzing config (OSS-Fuzz, ClusterFuzzLite)                            |
-| 10 | License                | Low      | 0/10           | Verify LICENSE file with SPDX-compatible identifier                             |
-| 11 | Maintained             | High     | 0–10           | Evaluate recent commit activity and issue response                              |
-| 12 | Packaging              | Medium   | 0/10           | Verify published packages via GitHub                                            |
-| 13 | Pinned-Dependencies    | Medium   | 0–10           | Scan for SHA-pinned actions and locked package files                            |
-| 14 | SAST                   | Medium   | 0–10           | Check for CodeQL, Semgrep, or other SAST tools in CI                            |
-| 15 | SBOM                   | Medium   | 0–10           | Check for SBOM generation workflow (SPDX or CycloneDX)                          |
-| 16 | Security-Policy        | Medium   | 0/10           | Verify SECURITY.md exists with reporting process                                |
-| 17 | Signed-Releases        | High     | 0–10           | Check for Sigstore attestations or GPG signatures                               |
-| 18 | Token-Permissions      | High     | 0–10           | Audit workflow permissions for least-privilege                                  |
-| 19 | Vulnerabilities        | High     | 0–10           | Check for dependency review, Dependabot alerts, pip-audit                       |
-| 20 | Webhooks               | Critical | 0/10           | Verify webhook authentication and secret configuration                          |
+* `SKILL.md` — entrypoint metadata (consumer contract description, license, attribution).
+* `index.yml` — `framework`, `version`, and `phaseMap` fields. `phaseMap.<phase>` lists the control identifiers participating in that planner phase.
+* `controls/<id>.yml` — one file per control, validated against [`scripts/linting/schemas/planner-framework-control.schema.json`](../../../scripts/linting/schemas/planner-framework-control.schema.json).
 
-For each check, record:
+The planner discovers frameworks by invoking `Get-FrameworkSkill -Domain security` (from `scripts/lib/Modules/FrameworkSkillDiscovery.psm1`), passing any `state.frameworks[].additionalRoot` values via `-AdditionalRoots` so externally authored Framework Skills are registered. Discovery filters to entries whose `phaseMap.standards-mapping` is non-empty and registers each as a `frameworkRef` in `state.json` (see [`scripts/linting/schemas/sssc-state.schema.json`](../../../scripts/linting/schemas/sssc-state.schema.json) `$defs.frameworkRef`).
 
-* **Current score** (estimated 0–10 or binary 0/10)
-* **Evidence** (file paths, workflow names, configuration details)
-* **Available implementation** (which hve-core or PAT workflow/script addresses this check)
-* **Gap** (what is missing to achieve maximum score)
+### Draft Quarantine
 
-## SLSA Build Track Levels
+Framework Skills whose `index.yml` declares `status: draft` are excluded from discovery by default. They are registered only when the corresponding `frameworkRef` opts in via `includeDrafts: true` (typically a user-imported Framework Skill still under authoring). All other `status` values (`published`, omitted) are registered normally. Discovery must log skipped drafts to `skills-loaded.log` with a `skipped: draft` annotation so the consumer can audit exclusions.
 
-Assess the repository against SLSA Build track requirements:
+### Disabled Framework Skip
 
-| Level    | Requirements                                      | Assessment Criteria                                         |
-|----------|---------------------------------------------------|-------------------------------------------------------------|
-| Build L0 | No requirements                                   | Baseline, all repositories start here                       |
-| Build L1 | Provenance exists and is distributed to consumers | Check for `actions/attest-build-provenance` or equivalent   |
-| Build L2 | Hosted build platform, signed provenance          | Verify GitHub Actions (hosted), Sigstore provenance signing |
-| Build L3 | Build runs in isolation, signing key isolation    | Verify ephemeral runners, ephemeral Sigstore keys (OIDC)    |
+Frameworks where `state.frameworks[<id>].disabled === true` are skipped entirely in this phase. The planner does not read `index.yml`, does not load any control files, and does not register gates for the framework. Each skip is logged to `skills-loaded.log` with `{skipped: "disabled", reason: <state.disabledReason>, atPhase: <state.disabledAtPhase>}` so the Phase 6 handoff appendix can render an audit trail. Disabled frameworks remain in `state.frameworks[]` so the audit trail survives compaction.
 
-Record current level and specific steps needed to reach the next level.
+## Hard Loading Contract
 
-## Best Practices Badge Criteria
+The planner reads framework data lazily and append-only:
 
-Assess readiness against OpenSSF Best Practices Badge tiers:
+1. Read `index.yml` for every registered framework whose `disabled` field is not `true`.
+2. For the active phase (`standards-mapping`), resolve `phaseMap.standards-mapping` to the matching `controls/<id>.yml` files, **excluding** any control id present in `state.frameworks[<id>].suppressedControls[].id`.
+3. Read **only** those control files; never enumerate or read controls outside the active phase scope.
+4. Append one entry per `read_file` of any skill artifact to `skills-loaded.log` (see Identity instructions for the entry schema and enforcement). For each suppressed control, emit a `{skipped: "suppressed", controlId, reason, atPhase}` entry instead of a `read_file` entry so suppressions are visible to the validator and the handoff appendix.
 
-| Level   | Focus                       | Key Criteria                                                                      |
-|---------|-----------------------------|-----------------------------------------------------------------------------------|
-| Passing | Basic hygiene (67 criteria) | LICENSE, CONTRIBUTING, build system, test suite, security policy, static analysis |
-| Silver  | Governance + quality        | GOVERNANCE.md, code coverage, reproducible builds, signed releases                |
-| Gold    | Advanced security           | Formal verification, security audits, advanced threat modeling                    |
+Reading controls scoped to a different phase is a contract violation and is rejected by `Validate-PlannerArtifacts.ps1`.
 
-Map repository files and practices to Badge criteria. Flag missing criteria as gaps.
+## Per-Control Field Usage
 
-## Sigstore Standards
+For each `controls/<id>.yml` loaded during this phase:
 
-Assess Sigstore adoption maturity:
+* `id`, `title`, `riskTier` — populate the standards mapping table row.
+* `assessmentMethod` ∈ `{binary, categorical, continuous}` — drives evidence collection prompts.
+* `categories` (categorical) or `range` (continuous) — define allowable values.
+* `gates[]` — recorded with `status: pending` until evidence is collected (per [`sssc-risk-classification.instructions.md`](sssc-risk-classification.instructions.md) gate model).
+* `evidenceHints[]` — deterministic file globs the planner inspects to suggest current posture.
+* `mapsTo[]` — cross-framework links surfaced in the mapping output.
 
-* **Not adopted**: No signing or attestation in place
-* **Basic**: Build provenance via `actions/attest-build-provenance`
-* **Intermediate**: Build provenance + SBOM attestation via `actions/attest`
-* **Advanced**: Tag signing via gitsign + build provenance + SBOM attestation + verification workflow
+The planner does **not** invent gate semantics, risk tiers, or check identifiers. All such data originates from the per-control YAML.
 
-Document current level and steps to advance.
+## Registering a New Framework
 
-## SBOM Standards
+To add a framework (for example, OWASP SAMM or CRA Annex I):
 
-Assess SBOM generation and distribution:
+1. Create `.github/skills/security/<framework-id>/` containing `SKILL.md`, `index.yml`, and `controls/<id>.yml` files.
+2. Validate with `npm run validate:skills`.
+3. Validate each control against the planner-framework-control schema.
+4. Reference the new skill in `collections/security.collection.yml` if it is to ship with the security collection.
 
-* **Format**: SPDX-JSON (preferred for GitHub ecosystem) or CycloneDX
-* **Generator**: anchore/sbom-action with syft, or Microsoft SBOM Tool
-* **Distribution**: Attached to release artifacts, published to dependency graph
-* **NTIA minimum elements**: Supplier, component name, version, unique identifier, dependency relationship, author, timestamp
+No edits to this instruction file or to `sssc-identity.instructions.md` are required. The planner picks up the new framework on next session start.
 
-Verify NTIA minimum element compliance for existing SBOM output.
+## Replacing the Default Framework Set
+
+A user may declare `replaceDefaults: true` on a `frameworkRef` registered through Phase 1 scoping. When set, the planner ignores the default framework set discovered by enumeration and uses only the user-declared frameworks for this assessment.
+
+## Verdict Ladder
+
+Standards mapping rows surface the verdict assigned in Phase 2. The legend below mirrors [`sssc-assessment.instructions.md`](sssc-assessment.instructions.md#verdict-ladder); see that file for the Evidence Exhaustion Rule that governs verdict assignment.
+
+* **verified** — Positive evidence of full coverage. Cite the specific file and line.
+* **present** — Artifact exists but full conformance is not yet confirmed; cite the artifact.
+* **partial** — Positive evidence of partial coverage. Cite both what is present and the specific gap.
+* **unknown** — Evidence Exhaustion Rule incomplete. Not a final verdict; must be resolved before this phase closes.
+* **absent** — Positive evidence the control is not implemented (Evidence Exhaustion Rule completed).
+* **n/a** — Control does not apply. Cite reason (alternative satisfied, applicability discriminator, repo-settings-only, etc.).
+
+When a framework skill declares `equivalentImplementations` for a control, presence of any listed equivalent scores as `verified`.
+
+### Phase 3 Exit Gate
+
+Phase 3 cannot close while any control row carries a `verdict` of `unknown`. Resolve every `unknown` to one of the other ladder values (or capture a user follow-up answer that does so) before advancing `state.phase` past `standards-mapping`. `Validate-PlannerArtifacts.ps1` enforces this gate.
 
 ## Researcher Subagent Delegation
 
-Supply chain security standards evolve rapidly and contain framework-specific guidance best retrieved on demand. The following standards are delegated to the Researcher Subagent at runtime:
-
-| Standard                        | Rationale for Delegation                                                      |
-|---------------------------------|-------------------------------------------------------------------------------|
-| OpenSSF Scorecard check details | Check-specific scoring criteria and remediation evolve with each release      |
-| SLSA Build Track specification  | Version-dependent build integrity requirements and verification procedures    |
-| Sigstore signing models         | Keyless signing setup varies by package manager and CI platform               |
-| SBOM format specifications      | SPDX and CycloneDX schemas evolve; NTIA minimum element guidance updates      |
-| Best Practices Badge criteria   | Tier-specific criteria and evidence requirements change across badge versions |
-| WAF / CAF                       | Cloud-specific supply chain security guidance, frequently updated             |
-
-Do NOT delegate OpenSSF Scorecard check names, SLSA level definitions, Sigstore maturity levels, SBOM standard names, or Best Practices Badge tier names. Those are embedded above.
-
-### When to Delegate
-
-* Phase 3 identifies supply chain controls that exceed embedded standards coverage.
-* Scorecard check remediation requires platform-specific or version-specific guidance.
-* SLSA level verification requires CI-platform-specific build provenance procedures.
-* Sigstore adoption requires package-manager-specific signing configuration.
-* SBOM generation requires tool-specific or language-specific format guidance.
-* Compliance requirements demand WAF or CAF supply chain pillar mapping.
-
-### Invocation Pattern
-
-Use `runSubagent` or `task` with the Researcher Subagent:
-
-```text
-Agent: Researcher Subagent
-Topic: {specific supply chain standard area to research}
-Context: Repository "{name}" with supply chain maturity "{current-level}" targeting "{target-level}"
-Output: .copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{repo-name}-{standard}.md
-```
-
-The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
-
-When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
-
-Execution constraints: Complete research within a single invocation. Do not delegate to additional subagents.
-
-### Query Templates
-
-* OpenSSF Scorecard: "OpenSSF Scorecard {check-name} check scoring criteria and remediation steps for {CI-platform}"
-* SLSA: "SLSA Build Track Level {N} requirements and verification for {CI-platform} with {build-system}"
-* Sigstore: "Sigstore keyless signing setup for {package-manager} with {CI-platform}"
-* SBOM: "{SPDX-JSON|CycloneDX} SBOM generation with {tool} for {language} project covering NTIA minimum elements"
-* Best Practices Badge: "OpenSSF Best Practices Badge {tier} criteria for {project-type} projects"
-* WAF/CAF: "Microsoft Well-Architected Framework supply chain security pillar for {technology-stack} on {cloud-platform}"
-
-Subagents can run in parallel when researching independent standard domains.
+For runtime documentation lookups not encoded as framework controls (for example, CIS Controls, Azure Well-Architected Framework Security pillar, Cloud Adoption Framework), delegate to the Researcher Subagent. Do not attempt to encode net-new external standards inline; either delegate the lookup or publish a new framework skill per the registration protocol above.
 
 ## Output
 
-Write the mapping to `.copilot-tracking/sssc-plans/{project-slug}/standards-mapping.md`.
-
-Structure the output as:
-
-```markdown
-# Standards Mapping: {project-slug}
-
-## Scorecard Summary
-- Estimated overall score: {N}/10
-- Checks at maximum: {count}/20
-- Checks with gaps: {count}/20
-
-## Scorecard Detail
-{per-check assessment table}
-
-## SLSA Assessment
-- Current level: Build L{N}
-- Target level: Build L{N}
-- Steps to advance: {list}
-
-## Best Practices Badge
-- Current readiness: {Passing|Silver|Gold|Not enrolled}
-- Missing criteria: {list}
-
-## Sigstore Maturity
-- Current level: {Not adopted|Basic|Intermediate|Advanced}
-
-## SBOM Compliance
-- Format: {SPDX-JSON|CycloneDX|None}
-- NTIA compliant: {Yes|Partial|No}
-```
+Write `standards-mapping.md` to `.copilot-tracking/sssc-plans/{project-slug}/standards-mapping.md`. Group rows by framework, then by `riskTier` descending. Cite the source skill path and control id for every row.
 
 Update `state.json`:
-* Set `phases.3-standards.status` to `✅`
-* Add `standards-mapping.md` to `phases.3-standards.artifacts`
-* Advance `currentPhase` to `4`
+
+* Append the loaded framework records to `frameworks[]`.
+* Append every `read_file` of a skill artifact to `skillsLoaded[]`.
+* Set `phase` to `gap-analysis` once mapping is complete.
 
 ## Third-Party Attribution
 
-OpenSSF® Scorecard check data derived from the OpenSSF Scorecard project, licensed under
-Apache 2.0. Source: <https://github.com/ossf/scorecard>
-
-SLSA Build Track level data derived from the SLSA specification, licensed under Community
-Specification License 1.0. Source: <https://slsa.dev/spec/>
-
-OpenSSF Best Practices Badge criteria derived from the CII Best Practices Badge project,
-licensed under MIT (criteria) and CC BY 3.0+ (documentation).
-Source: <https://www.bestpractices.dev/>
-
-Sigstore maturity data derived from the Sigstore project, licensed under Apache 2.0.
-Source: <https://www.sigstore.dev/>
-
-SPDX content derived from the SPDX specification, licensed under Community Specification
-License 1.0. Source: <https://spdx.dev/>
-
-CycloneDX content derived from the CycloneDX specification, licensed under Apache 2.0.
-Source: <https://cyclonedx.org/>
-
-NTIA Minimum Elements content is derived from a U.S. government publication. Not subject
-to copyright (17 U.S.C. § 105).
-
-OpenSSF® is a registered trademark of the Linux Foundation.
+Attribution lives in each framework skill's `SKILL.md` `metadata` block (`authors`, `content_based_on`). Do not duplicate attribution text in the mapping output; cite the skill path and let the consumer follow the link.

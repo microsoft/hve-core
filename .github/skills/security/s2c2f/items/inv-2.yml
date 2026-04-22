@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: inv-2
+    title: Maintain an OSS Incident Response Plan
+    group: inventory
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Document and rehearse a response plan for OSS-specific incidents such as malicious package releases, account takeovers, and zero-day disclosures, including triage, notification, and remediation steps.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Confirm an OSS incident response plan is documented and current.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify gaps in incident response coverage, ownership, or rehearsal cadence.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to author or update the OSS incident response plan.
+    evidenceHints:
+      - "SECURITY.md"
+      - "docs/security/oss-incident-response.md"
+      - "docs/incident-response/oss*.md"

@@ -1,0 +1,30 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: po-5-1
+    title: Separate and Protect Each Environment Involved in Software Development
+    group: PO
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Logically or physically separate development, build, test, distribution, and production environments, and apply protections appropriate to the sensitivity and risk of each environment.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify environment definitions and the controls that separate them.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify environments that share credentials, networks, or compute boundaries inappropriately.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enforce environment separation and protections.
+    evidenceHints:
+      - ".github/environments/**"
+      - "terraform/environments/**"
+      - "bicep/environments/**"
+      - "docs/architecture/**"
+      - ".github/workflows/*deploy*.yml"

@@ -1,0 +1,42 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: acquire-component-provenance
+    title: Acquired Component Provenance Verification
+    group: acquire
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Components and dependencies are obtained from authoritative sources with verifiable provenance, including signature verification and, where available, SLSA-style build provenance, before they enter the build pipeline.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Map dependency sources, registries, and provenance verification points in the pipeline.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify dependencies obtained without signature or provenance verification.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to introduce signature verification, mirroring, or pinned dependency policies.
+    evidenceHints:
+      - ".github/workflows/dependency*.yml"
+      - ".github/workflows/verify*.yml"
+      - "**/.npmrc"
+      - "**/pip.conf"
+      - "**/requirements*.txt"
+      - "**/package-lock.json"
+      - "**/yarn.lock"
+      - "**/Cargo.lock"
+      - "**/go.sum"
+      - "**/cosign-verify*.yml"
+    applicability:
+      discriminator: project-type
+      appliesWhen: [acquired-upstream]
+      naWhen: [self-published-oss]
+      naReason: self-published, no upstream supplier
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers

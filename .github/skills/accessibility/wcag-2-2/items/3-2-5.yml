@@ -1,0 +1,25 @@
+id: "3-2-5"
+title: "Change on Request"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.2 Predictable"
+addedIn: "2.0"
+summary: "Changes of context are initiated only by user request or a mechanism is available to turn off such changes."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G76"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/change-on-request.html"
+  - "https://www.w3.org/TR/WCAG22/"

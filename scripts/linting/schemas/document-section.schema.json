@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/document-section.schema.json",
+  "title": "Document-Section Item",
+  "description": "Validates per-item document-section YAML in content-generation Framework Skills. Mirrors the control-schema envelope (id, title, description, applicability, evidenceHints) and adds content-generation fields (template, inputs, selectWhen, attestation).",
+  "type": "object",
+  "required": ["id", "title", "template"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Lower-kebab section identifier"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable section title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional section description"
+    },
+    "template": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Markdown body for the section; may contain {{var}} references resolved against inputs and manifest globals"
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/input" },
+      "description": "Per-section variable declarations consumed by the template"
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discriminator": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short label for the applicability axis"
+        },
+        "appliesWhen": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Discriminator values under which this section applies"
+        },
+        "naWhen": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Discriminator values under which this section is not applicable"
+        },
+        "naReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reason text recorded when this section is skipped under naWhen"
+        }
+      },
+      "description": "Optional applicability discriminator mirroring the control schema"
+    },
+    "evidenceHints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9_./*?{}\\[\\]\\-]+$"
+      },
+      "description": "File paths or globs that provide context for this section"
+    },
+    "selectWhen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["discriminator"],
+      "properties": {
+        "discriminator": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short label for the variant axis (e.g. prd_template_variant); resolved against host project context"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Discriminator values that include this section (positive selection)"
+        },
+        "notValues": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Discriminator values that exclude this section (negation symmetry with applicability.naWhen)"
+        }
+      },
+      "anyOf": [
+        { "required": ["values"] },
+        { "required": ["notValues"] }
+      ],
+      "description": "Positive-selection predicate distinct from applicability; an item is included when discriminator value matches values (and does not match notValues). Items without selectWhen are always included."
+    },
+    "attestation": {
+      "type": "object",
+      "description": "Optional per-item attestation contract declaring which artifacts produced for this item MUST carry an attestation signature. Hosts honor the manifest-level signing block to determine method and identity; this per-item block scopes coverage. The signing-attestation consistency lint warns when 'covers' references identifiers that resolve to neither a pipeline.stages[].produces[].id nor a known item id within the same bundle.",
+      "required": ["covers"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, hosts MUST attach an attestation for each id listed in 'covers' before declaring the item complete."
+        },
+        "covers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9.-]*$"
+          },
+          "description": "Identifiers covered by the attestation. Each entry SHOULD resolve to either a pipeline.stages[].produces[].id (preferred for binary outputs) or a sibling item id within the same bundle."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "input": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Variable name referenced in {{var}} template tokens"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of the input variable"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the host must collect a value before rendering"
+        },
+        "persistence": {
+          "type": "string",
+          "enum": ["none", "session", "project", "user"],
+          "default": "session",
+          "description": "Value retention scope. 'none' = re-prompt every render; 'session' = remember within a single host session (default); 'project' = persist in the consuming project (e.g. .copilot-tracking/); 'user' = persist in user-scope storage. The persistence-sanity lint warns when 'user' is paired with sensitive: true."
+        },
+        "sensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Marks the input value as sensitive (PII, credentials, etc.). Hosts SHOULD redact in logs and SHOULD NOT persist beyond session scope. Drives the persistence-sanity lint."
+        }
+      }
+    }
+  }
+}

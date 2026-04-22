@@ -1,0 +1,32 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: dependency-update-tool
+    title: Dependency-Update-Tool
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Confirms that an automated dependency update tool such as Dependabot or Renovate is configured. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect dependabot or renovate configuration and ecosystems covered.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems missing automated update coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to extend automated update tooling to all ecosystems.
+    evidenceHints:
+      - ".github/dependabot.yml"
+      - ".github/dependabot.yaml"
+      - "renovate.json"
+      - ".github/renovate.json"
+      - ".renovaterc"
+      - ".renovaterc.json"

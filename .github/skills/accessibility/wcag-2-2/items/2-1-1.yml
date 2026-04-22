@@ -1,0 +1,29 @@
+id: "2-1-1"
+title: "Keyboard"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.1 Keyboard Accessible"
+addedIn: "2.0"
+summary: "All functionality of the content is operable through a keyboard interface without requiring specific timings for individual keystrokes, with limited exceptions."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen:
+    - "voice-only"
+  naReason: "Pure voice surfaces have no keyboard input model."
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G202"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html"
+  - "https://www.w3.org/TR/WCAG22/"

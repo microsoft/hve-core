@@ -1,0 +1,41 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Keep Navigation Consistent"
+source: https://www.w3.org/WAI/cognitive/
+description: "Navigation order labels and locations stay consistent across pages and surfaces within the product."
+controls:
+  - id: coga-consistent-navigation
+    title: "Keep Navigation Consistent"
+    description: "Navigation order labels and locations stay consistent across pages and surfaces within the product."
+    group: structure-navigation
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Keep Navigation Consistent practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Keep Navigation Consistent is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    references:
+      - https://www.w3.org/WAI/WCAG22/Understanding/consistent-navigation.html
+      - https://www.w3.org/WAI/cognitive/

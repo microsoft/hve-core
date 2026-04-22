@@ -1,0 +1,29 @@
+# SBOM framework roll-up for the SSSC Planner.
+# Lists per-control items by phase; the planner MUST NOT read controls
+# outside the set declared for the active phase.
+framework: sbom
+version: "1.0"
+summary: 'Software Bill of Materials conformance, generation, and ingestion controls covering SPDX 2.3 and CycloneDX 1.5.'
+domain: security
+itemKind: control
+status: published
+phaseMap:
+  standards-mapping: [spdx-2.3, cyclonedx-1.5, sbom-generation, sbom-ingestion]
+  gap-analysis: [spdx-2.3, cyclonedx-1.5, sbom-generation, sbom-ingestion]
+  backlog-generation: [spdx-2.3, cyclonedx-1.5, sbom-generation, sbom-ingestion]
+metadata:
+  authority: "SPDX (Linux Foundation), CycloneDX (OWASP)"
+  license: CC0-1.0
+  licenseUrl: https://creativecommons.org/publicdomain/zero/1.0/
+  attributionRequired: true
+  attributionText: "SBOM specifications — SPDX (Copyright Linux Foundation) and CycloneDX (Copyright OWASP), released under CC0-1.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

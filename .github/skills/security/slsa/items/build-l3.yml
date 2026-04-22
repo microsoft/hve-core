@@ -1,0 +1,38 @@
+id: build-l3
+version: "1.1"
+name: SLSA Build Track Level 3
+source: https://slsa.dev/spec/v1.1/levels#build-l3
+description: Build runs in isolation, signing key isolation.
+controls:
+  - id: build-l3
+    title: Build L3 — Build isolation and signing key isolation
+    description: |
+      Build runs in isolation, signing key isolation. Verify ephemeral runners (no
+      reusable build state) and ephemeral Sigstore keys via OIDC so signing material
+      cannot be exfiltrated by a tampered build step.
+    group: build
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    gates:
+      - id: build-isolation
+        phase: standards-mapping
+        default: pending
+        description: Each build runs on an ephemeral, isolated runner with no shared state.
+      - id: signing-key-isolation
+        phase: gap-analysis
+        default: pending
+        description: Signing keys are ephemeral (e.g., Sigstore OIDC) and not reusable across builds.
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/*.yaml
+      - .github/workflows/release*.yml
+      - .github/workflows/publish*.yml
+    references:
+      - https://slsa.dev/spec/v1.1/levels
+      - https://slsa.dev/spec/v1.1/build-requirements
+      - https://docs.sigstore.dev/cosign/signing/overview/

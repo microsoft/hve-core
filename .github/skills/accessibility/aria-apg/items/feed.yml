@@ -1,0 +1,32 @@
+id: "feed"
+title: "Feed Pattern"
+itemKind: pattern
+summary: "Scrollable list of dynamically loaded articles where the user scans content via PageDown/PageUp and Home/End."
+keyboardModel:
+  - "feed"
+focusManagement: "roving"
+relatedRoles:
+  - "feed"
+  - "article"
+requiredStates:
+  - "aria-busy"
+  - "aria-setsize"
+  - "aria-posinset"
+requiredProperties:
+  - "aria-label"
+  - "aria-labelledby"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/feed/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+  naWhen:
+    - "native"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/feed/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

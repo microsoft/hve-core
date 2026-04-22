@@ -1,0 +1,27 @@
+id: requirements
+title: Requirements
+description: "Captures functional and non-functional requirements organized by priority."
+template: |
+  ## Requirements
+
+  List the requirements for {{product_name}} organized by category and priority.
+
+  ### Functional Requirements
+
+  | ID | Requirement | Priority | Acceptance Criteria |
+  |---|---|---|---|
+  | | | | |
+
+  {{functional_requirements}}
+
+  ### Non-Functional Requirements
+
+  Cover performance, security, scalability, accessibility, and compliance requirements.
+
+  {{non_functional_requirements}}
+inputs:
+  - name: functional_requirements
+    description: "Detailed functional requirement descriptions beyond the summary table"
+    required: true
+  - name: non_functional_requirements
+    description: "Performance, security, scalability, accessibility, and compliance requirements"

@@ -1,0 +1,26 @@
+id: "1-2-8"
+title: "Media Alternative (Prerecorded)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "An alternative for time-based media is provided for all prerecorded synchronized and video-only media."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G69"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/media-alternative-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

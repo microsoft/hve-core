@@ -1,0 +1,16 @@
+id: open-questions
+title: Open Questions
+description: "Tracks unresolved questions that require decisions or further research before implementation."
+template: |
+  ## Open Questions
+
+  List unresolved questions for {{product_name}} that require decisions or research.
+
+  | Question | Owner | Target Date | Status |
+  |---|---|---|---|
+  | | {{team_owner}} | | Open |
+
+  {{questions_detail}}
+inputs:
+  - name: questions_detail
+    description: "Additional context for open questions, decision criteria, or research needed"

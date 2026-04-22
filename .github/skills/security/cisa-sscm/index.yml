@@ -1,0 +1,76 @@
+framework: cisa-sscm
+version: "2022.08"
+summary: 'CISA Securing the Software Supply Chain practices across the Acquire, Develop, and Deliver lifecycle phases.'
+domain: security
+itemKind: control
+status: published
+metadata:
+  authority: CISA
+  license: US-Gov-Public-Domain
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  standards-mapping:
+    - acquire-vendor-attestation
+    - acquire-sbom-required
+    - acquire-component-provenance
+    - acquire-vulnerability-history
+    - develop-secure-design
+    - develop-threat-model
+    - develop-secure-build
+    - develop-source-integrity
+    - deliver-signed-artifact
+    - deliver-update-channel
+    - deliver-vulnerability-disclosure
+    - deliver-sbom-publication
+  gap-analysis:
+    - acquire-vendor-attestation
+    - acquire-sbom-required
+    - acquire-component-provenance
+    - acquire-vulnerability-history
+    - develop-secure-design
+    - develop-threat-model
+    - develop-secure-build
+    - develop-source-integrity
+    - deliver-signed-artifact
+    - deliver-update-channel
+    - deliver-vulnerability-disclosure
+    - deliver-sbom-publication
+  backlog-generation:
+    - acquire-vendor-attestation
+    - acquire-sbom-required
+    - acquire-component-provenance
+    - acquire-vulnerability-history
+    - develop-secure-design
+    - develop-threat-model
+    - develop-secure-build
+    - develop-source-integrity
+    - deliver-signed-artifact
+    - deliver-update-channel
+    - deliver-vulnerability-disclosure
+    - deliver-sbom-publication
+phaseLifecycle:
+  acquire:
+    - acquire-vendor-attestation
+    - acquire-sbom-required
+    - acquire-component-provenance
+    - acquire-vulnerability-history
+  develop:
+    - develop-secure-design
+    - develop-threat-model
+    - develop-secure-build
+    - develop-source-integrity
+  deliver:
+    - deliver-signed-artifact
+    - deliver-update-channel
+    - deliver-vulnerability-disclosure
+    - deliver-sbom-publication
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

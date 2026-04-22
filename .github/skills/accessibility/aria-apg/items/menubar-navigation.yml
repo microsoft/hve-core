@@ -1,0 +1,33 @@
+id: "menubar-navigation"
+title: "Menubar (Navigation) Pattern"
+itemKind: pattern
+summary: "Horizontal menu bar of navigation links and submenus serving as the primary site navigation landmark."
+keyboardModel:
+  - "menubar"
+  - "menu"
+focusManagement: "roving"
+relatedRoles:
+  - "menubar"
+  - "menu"
+  - "menuitem"
+requiredStates:
+  - "aria-expanded"
+requiredProperties:
+  - "aria-haspopup"
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/menubar-navigation/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "hybrid-mobile"
+  naWhen:
+    - "mobile-web"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/menubar-navigation/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

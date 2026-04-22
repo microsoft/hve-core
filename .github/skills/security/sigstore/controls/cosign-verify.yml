@@ -1,0 +1,55 @@
+id: sigstore-cosign-verify
+version: "1.0"
+name: Sigstore cosign — verification policy
+source: https://docs.sigstore.dev/cosign/verifying/verify/
+description: >-
+  Verification policy applied at consume time. Advances Sigstore maturity
+  from Intermediate to Advanced by ensuring downstream consumers reject
+  artifacts that lack a valid Sigstore signature, expected OIDC identity,
+  and (where applicable) certificate-identity / certificate-oidc-issuer
+  pinning.
+controls:
+  - id: cosign-verify
+    title: Verification policy applied at consume time
+    description: >-
+      A verification step (cosign verify, cosign verify-attestation, or a
+      Kubernetes admission policy such as Sigstore Policy Controller)
+      gates artifact consumption. Binary assessment: a verification policy
+      is either enforced or it is not.
+    assessmentMethod: binary
+    risk: high
+    gates:
+      - id: verify-policy-defined
+        phase: standards-mapping
+        default: pending
+        description: A verification step or policy file is checked into the repo.
+      - id: verify-policy-enforced
+        phase: gap-analysis
+        default: pending
+        description: Verification failure blocks deployment or installation.
+      - id: verify-policy-backlogged
+        phase: backlog-generation
+        default: pending
+        description: Backlog item exists when verification is missing or advisory-only.
+    mapsTo:
+      openssf-scorecard: [Signed-Releases]
+      slsa: [L2, L3]
+    evidenceHints:
+      - .github/workflows/*verify*.yml
+      - policy/*.yaml
+      - policies/*.yaml
+      - .sigstore/policy/*
+      - cosign-policy.yaml
+      - clusterimagepolicy*.yaml
+    equivalentImplementations:
+      - id: gh-attestation-verify
+        tool: gh attestation verify
+        rationale: >-
+          GitHub CLI verifies the same Sigstore bundle format produced by
+          actions/attest-build-provenance. Performs Fulcio certificate
+          chain validation and Rekor inclusion proof verification using
+          the public Sigstore trust root, matching 'cosign verify-blob'
+          semantics for keyless signatures.
+    references:
+      - https://docs.sigstore.dev/cosign/verifying/verify/
+      - https://docs.sigstore.dev/policy-controller/overview/

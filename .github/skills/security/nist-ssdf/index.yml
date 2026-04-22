@@ -1,0 +1,78 @@
+framework: nist-ssdf
+version: "1.1"
+summary: 'NIST Secure Software Development Framework (SP 800-218 v1.1) practices and tasks for secure SDLC.'
+domain: security
+itemKind: control
+status: published
+metadata:
+  authority: NIST
+  license: US-Gov-Public-Domain
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  standards-mapping:
+    - po-1-1
+    - po-3-2
+    - po-5-1
+    - ps-1-1
+    - ps-2-1
+    - ps-3-1
+    - pw-1-1
+    - pw-4-1
+    - pw-4-4
+    - pw-6-1
+    - pw-7-1
+    - pw-7-2
+    - pw-8-2
+    - pw-9-1
+    - rv-1-1
+    - rv-1-3
+    - rv-2-1
+    - rv-3-3
+  gap-analysis:
+    - po-1-1
+    - po-3-2
+    - po-5-1
+    - ps-1-1
+    - ps-2-1
+    - ps-3-1
+    - pw-1-1
+    - pw-4-1
+    - pw-4-4
+    - pw-6-1
+    - pw-7-1
+    - pw-7-2
+    - pw-8-2
+    - pw-9-1
+    - rv-1-1
+    - rv-1-3
+    - rv-2-1
+    - rv-3-3
+  backlog-generation:
+    - po-1-1
+    - po-3-2
+    - po-5-1
+    - ps-1-1
+    - ps-2-1
+    - ps-3-1
+    - pw-1-1
+    - pw-4-1
+    - pw-4-4
+    - pw-6-1
+    - pw-7-1
+    - pw-7-2
+    - pw-8-2
+    - pw-9-1
+    - rv-1-1
+    - rv-1-3
+    - rv-2-1
+    - rv-3-3
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

@@ -1,0 +1,56 @@
+id: sbom
+version: "1.0"
+name: SBOM — ingestion and consumption
+source: https://www.cisa.gov/sbom
+description: >-
+  SBOM ingestion covering verification of upstream SBOMs and correlation of their
+  components with vulnerability advisories. Per sssc-standards.instructions.md
+  distribution requirements, ingested SBOMs are expected to be attached to release
+  artifacts and published to the dependency graph; consumers verify that the NTIA
+  minimum elements (supplier, component name, version, unique identifier,
+  dependency relationship, author, timestamp) are present before trusting the data.
+controls:
+  - id: sbom-ingestion
+    title: SBOM ingestion, verification, and vulnerability correlation
+    description: >-
+      The project ingests SBOMs from upstream dependencies (or from its own build
+      pipeline), verifies their signatures or attestations, and correlates the
+      declared components with vulnerability advisories (NVD, GHSA, OSV) to drive
+      remediation. NTIA minimum element compliance is checked on ingested SBOM
+      output.
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    gates:
+      - id: presence
+        phase: standards-mapping
+        default: pending
+        description: An ingestion or consumption step exists for upstream / own SBOMs.
+      - id: signing
+        phase: standards-mapping
+        default: pending
+        description: Ingested SBOM signatures or attestations are verified before use.
+      - id: distribution
+        phase: gap-analysis
+        default: pending
+        description: Verified SBOMs flow to downstream consumers (dependency graph, security tooling).
+      - id: vuln-mapping
+        phase: backlog-generation
+        default: pending
+        description: Ingested SBOM components are correlated with vulnerability advisories and remediation is tracked.
+    mapsTo:
+      openssf-scorecard: [SBOM, Vulnerabilities]
+      sigstore: [cosign-verify]
+    evidenceHints:
+      - .github/workflows/sbom*.yml
+      - .github/workflows/scan*.yml
+      - .github/workflows/dependency-review*.yml
+      - "**/sbom/*.spdx.json"
+      - "**/sbom/*.cdx.json"
+      - "**/grype*.yaml"
+      - "**/trivy*.yaml"
+    references:
+      - https://github.com/anchore/grype
+      - https://github.com/aquasecurity/trivy
+      - https://github.com/actions/dependency-review-action
+      - https://www.ntia.gov/page/software-bill-materials

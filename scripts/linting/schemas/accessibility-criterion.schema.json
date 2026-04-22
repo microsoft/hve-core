@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/accessibility-criterion.schema.json",
+  "title": "Accessibility Framework Skill Criterion",
+  "description": "Validates per-criterion YAML items authored under .github/skills/accessibility/<framework-id>/items/<id>.yml for itemKind 'criterion'. The shape captures W3C WCAG-style success criteria (id, title, conformance level, principle, guideline, summary, applicability, verification mode, technique references). Identifiers are lower-kebab with optional dotted segments to permit either '1-1-1' or '1.1.1' style ids.",
+  "type": "object",
+  "required": ["id", "title", "itemKind", "level"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Lower-kebab criterion identifier (dots permitted for hierarchical ids)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable criterion title."
+    },
+    "itemKind": {
+      "const": "criterion",
+      "description": "Discriminator marking this item as a criterion."
+    },
+    "level": {
+      "type": "string",
+      "enum": ["A", "AA", "AAA"],
+      "description": "Conformance level for WCAG-style frameworks. Hosts MAY ignore for non-WCAG accessibility frameworks."
+    },
+    "principle": {
+      "type": "string",
+      "description": "Top-level principle the criterion belongs to (for WCAG: '1 Perceivable', '2 Operable', '3 Understandable', '4 Robust')."
+    },
+    "guideline": {
+      "type": "string",
+      "description": "Parent guideline within the principle (for WCAG: '1.1 Text Alternatives', etc.)."
+    },
+    "addedIn": {
+      "type": "string",
+      "description": "Framework version that introduced the criterion (for WCAG: '2.0', '2.1', '2.2')."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Normative paraphrase of the criterion. Authors MUST NOT fabricate; paraphrase the canonical source."
+    },
+    "verificationMode": {
+      "type": "string",
+      "enum": ["automated", "hybrid", "manual"],
+      "description": "How the criterion is verified: automated (tooling alone), hybrid (tooling plus human review), manual (human only)."
+    },
+    "automatableBy": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Capability identifiers (typically referencing capability-inventory-* items) that can automate detection."
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discriminator": { "type": "string", "minLength": 1 },
+        "appliesWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naReason": { "type": "string" }
+      }
+    },
+    "techniques": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true,
+      "description": "URLs to canonical technique documents (e.g., W3C WCAG Techniques)."
+    },
+    "relatedAriaPatterns": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Cross-walk identifiers to ARIA Authoring Practices Guide patterns or sibling Framework Skills."
+    },
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true,
+      "description": "Authoritative references (canonical specification URL is required)."
+    }
+  }
+}

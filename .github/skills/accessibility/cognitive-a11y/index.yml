@@ -1,0 +1,159 @@
+framework: cognitive-a11y
+version: "1.0.0"
+summary: "Cognitive accessibility practices drawn from W3C COGA, plain-language style guidance, and Nielsen Norman cognitive-load research, encoded for the Accessibility Planner agent."
+domain: accessibility
+itemKind: control
+status: draft
+phaseMap:
+  scoping:
+    - coga-clear-language
+    - coga-plain-words
+    - coga-short-sentences
+    - coga-grade-level-target
+    - coga-define-jargon
+    - coga-active-voice
+    - coga-positive-framing
+    - coga-consistent-terminology
+    - coga-headings-hierarchy
+    - coga-meaningful-link-text
+    - coga-progress-indicators
+    - coga-error-prevention
+    - coga-error-recovery-flow
+    - coga-undo-confirm
+    - coga-time-extension
+    - coga-no-time-pressure
+    - coga-icon-with-text
+    - coga-consistent-navigation
+    - coga-predictable-interactions
+    - coga-familiar-patterns
+    - coga-personalize-content
+    - coga-distraction-control
+    - coga-help-availability
+    - coga-task-segmentation
+    - coga-summary-headers
+    - coga-visual-hierarchy
+    - coga-whitespace-density
+    - coga-color-meaning-redundancy
+    - coga-symbol-meaning-redundancy
+    - coga-feedback-confirmation
+    - coga-numeric-literacy
+    - coga-currency-clarity
+    - coga-date-format-locale
+    - coga-orientation-instructions
+    - coga-glossary-availability
+    - coga-tooltip-definitions
+    - coga-cognitive-load-budget
+    - coga-decision-fatigue-mitigation
+    - coga-content-prioritization
+    - coga-noise-removal
+    - coga-multiple-modalities
+    - coga-checkpoint-saving
+  surface-assessment:
+    - coga-headings-hierarchy
+    - coga-meaningful-link-text
+    - coga-progress-indicators
+    - coga-icon-with-text
+    - coga-consistent-navigation
+    - coga-personalize-content
+    - coga-distraction-control
+    - coga-task-segmentation
+    - coga-summary-headers
+    - coga-visual-hierarchy
+    - coga-whitespace-density
+    - coga-color-meaning-redundancy
+    - coga-symbol-meaning-redundancy
+    - coga-content-prioritization
+    - coga-noise-removal
+    - coga-multiple-modalities
+  standards-mapping:
+    - coga-clear-language
+    - coga-plain-words
+    - coga-short-sentences
+    - coga-grade-level-target
+    - coga-define-jargon
+    - coga-active-voice
+    - coga-positive-framing
+    - coga-consistent-terminology
+    - coga-headings-hierarchy
+    - coga-meaningful-link-text
+    - coga-progress-indicators
+    - coga-error-prevention
+    - coga-error-recovery-flow
+    - coga-undo-confirm
+    - coga-consistent-navigation
+    - coga-task-segmentation
+    - coga-summary-headers
+    - coga-color-meaning-redundancy
+    - coga-symbol-meaning-redundancy
+    - coga-content-prioritization
+    - coga-multiple-modalities
+    - coga-checkpoint-saving
+  gap-analysis:
+    - coga-clear-language
+    - coga-plain-words
+    - coga-short-sentences
+    - coga-grade-level-target
+    - coga-define-jargon
+    - coga-active-voice
+    - coga-positive-framing
+    - coga-consistent-terminology
+    - coga-headings-hierarchy
+    - coga-meaningful-link-text
+    - coga-error-recovery-flow
+    - coga-summary-headers
+    - coga-glossary-availability
+    - coga-content-prioritization
+    - coga-noise-removal
+  backlog-generation:
+    - coga-clear-language
+    - coga-grade-level-target
+    - coga-meaningful-link-text
+    - coga-error-recovery-flow
+    - coga-progress-indicators
+    - coga-headings-hierarchy
+    - coga-undo-confirm
+    - coga-help-availability
+    - coga-feedback-confirmation
+    - coga-time-extension
+    - coga-distraction-control
+    - coga-personalize-content
+    - coga-checkpoint-saving
+    - coga-glossary-availability
+    - coga-task-segmentation
+    - coga-cognitive-load-budget
+  review-handoff:
+    - coga-clear-language
+    - coga-grade-level-target
+    - coga-define-jargon
+    - coga-active-voice
+    - coga-consistent-terminology
+    - coga-meaningful-link-text
+    - coga-error-recovery-flow
+    - coga-help-availability
+    - coga-orientation-instructions
+    - coga-content-prioritization
+    - coga-positive-framing
+    - coga-summary-headers
+    - coga-visual-hierarchy
+    - coga-multiple-modalities
+metadata:
+  authority: "W3C / mixed"
+  license: "W3C-Document"
+  licenseUrl: "https://www.w3.org/copyright/document-license-2023/"
+  attributionRequired: true
+  attributionText: "Includes paraphrased guidance from W3C Cognitive and Learning Disabilities Accessibility (COGA) materials used under the W3C Document License (2023). Plain-language guidance paraphrased from plainlanguage.gov (US Plain Writing Act / public domain) and PLAIN guidelines. Heuristic patterns derived from Nielsen Norman Group articles cited under nominative reference; only short paraphrases are included, not verbatim text."
+  source: "https://www.w3.org/WAI/cognitive/"
+  spec_version: "1.0"
+  framework_revision: "2026-04-21"
+  last_updated: "2026-04-21"
+  imported_by: "prompt-builder"
+  imported_at: "2026-04-21T00:00:00Z"
+  review_required: true
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+governance:
+  owners: ["@microsoft/hve-core"]
+  review_cadence: "P6M"
+  last_reviewed: "2026-04-21"

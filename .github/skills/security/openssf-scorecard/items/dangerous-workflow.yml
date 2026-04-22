@@ -1,0 +1,30 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: dangerous-workflow
+    title: Dangerous-Workflow
+    risk: critical
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Audits CI for dangerous patterns such as pull_request_target with checkout, workflow_run with untrusted inputs, or script injection from untrusted user data. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Scan workflows for dangerous trigger and script patterns.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Catalog every dangerous pattern occurrence with severity.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate priority remediation work items per dangerous workflow.
+    evidenceHints:
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - ".github/actions/**/action.yml"
+      - ".github/actions/**/action.yaml"

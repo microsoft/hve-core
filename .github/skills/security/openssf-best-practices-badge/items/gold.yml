@@ -1,0 +1,65 @@
+id: gold
+version: "1.0"
+name: OpenSSF Best Practices Badge — Gold Tier
+source: https://www.bestpractices.dev/criteria/2
+description: >-
+  Gold tier control for the OpenSSF Best Practices Badge. Focus: Advanced security.
+  Key Criteria: Formal verification, security audits, advanced threat modeling.
+controls:
+  - id: gold
+    title: OpenSSF Best Practices Badge — Gold
+    description: >-
+      Advanced security. Key Criteria: Formal verification, security audits, advanced
+      threat modeling.
+    group: tier
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    references:
+      - https://www.bestpractices.dev/criteria/2
+    evidenceHints:
+      - README.md
+      - SECURITY.md
+      - GOVERNANCE.md
+      - CODEOWNERS
+      - .github/CODEOWNERS
+      - .github/workflows/*.yml
+      - docs/security/**
+      - docs/architecture/**
+    gates:
+      - id: basics
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Basics: multiple maintainers from independent organizations, succession
+          plan, and continuity-of-project documentation.
+      - id: change-control
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Change control: required two-person review on all changes, cryptographically
+          signed commits, and tamper-evident release pipeline.
+      - id: reporting
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Reporting: independent security audits performed and findings remediated,
+          with audit reports published or summarized publicly.
+      - id: quality
+        phase: gap-analysis
+        default: pending
+        description: >-
+          Quality: high code coverage, fuzz testing for parsers and untrusted input,
+          and continuous regression coverage across all supported configurations.
+      - id: security
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Security: advanced threat modeling maintained alongside the codebase, with
+          documented mitigations and traceable controls per threat.
+      - id: analysis
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Analysis: formal verification applied to security-critical components, with
+          documented proofs or model-checking results retained as evidence.

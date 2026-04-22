@@ -1,0 +1,33 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Comprehensive threat model"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Structured threat model document with STRIDE analysis
+controls:
+- id: comprehensive-threat-model
+  appliesTo: [cloud, web, ml, fleet]
+  title: Comprehensive threat model
+  description: Structured threat model document with STRIDE analysis
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Comprehensive threat model capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Comprehensive threat model is verified against reference patterns.
+  evidenceHints:
+  - docs/security/threat-model.md
+  - SECURITY.md
+  - docs/**/threat-model*.md
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

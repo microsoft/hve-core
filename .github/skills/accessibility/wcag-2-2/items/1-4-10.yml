@@ -1,0 +1,25 @@
+id: "1-4-10"
+title: "Reflow"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.1"
+summary: "Content can be presented without loss of information or functionality and without scrolling in two dimensions at 320 CSS pixels width or 256 CSS pixels height."
+verificationMode: hybrid
+automatableBy:
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C32"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C34"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/reflow.html"
+  - "https://www.w3.org/TR/WCAG22/"

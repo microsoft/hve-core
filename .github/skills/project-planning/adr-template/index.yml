@@ -1,0 +1,41 @@
+framework: adr-template
+version: "2026.1"
+summary: 'Architecture Decision Record sections with guided prompts, trade-off analysis, and phased authoring workflow.'
+domain: project-planning
+itemKind: document-section
+status: draft
+globals:
+  adr_title:
+    description: "Clear, descriptive title of the architectural decision"
+    required: true
+  adr_author:
+    description: "Author or team name responsible for the decision"
+  decision_topic:
+    description: "Kebab-case topic identifier used in file naming"
+phaseMap:
+  discover:
+    - status
+    - context
+  evaluate:
+    - decision-drivers
+    - considered-options
+    - comparison-matrix
+  document:
+    - decision
+    - consequences
+    - future-considerations
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

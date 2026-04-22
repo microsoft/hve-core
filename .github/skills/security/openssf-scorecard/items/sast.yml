@@ -1,0 +1,32 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: sast
+    title: SAST
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Confirms that a static application security testing tool such as CodeQL or Semgrep runs in CI.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect SAST workflows and the languages they cover.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify languages or paths missing SAST coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or extend SAST scanning.
+    evidenceHints:
+      - ".github/workflows/codeql*.yml"
+      - ".github/workflows/codeql*.yaml"
+      - ".github/workflows/semgrep*.yml"
+      - ".github/workflows/sast*.yml"
+      - ".semgrep.yml"
+      - ".semgrep/*.yml"

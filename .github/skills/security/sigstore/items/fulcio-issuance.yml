@@ -1,0 +1,45 @@
+id: sigstore-fulcio-issuance
+version: "1.0"
+name: Sigstore Fulcio — OIDC-based short-lived certificate issuance
+source: https://docs.sigstore.dev/certificate_authority/overview/
+description: >-
+  Keyless signing relies on Fulcio issuing short-lived X.509 certificates
+  bound to an OIDC workload identity (for example, the GitHub Actions
+  OIDC token). Underpins SLSA Build Track L3 signing-key isolation by
+  removing long-lived signing keys.
+controls:
+  - id: fulcio-issuance
+    title: OIDC-based short-lived certificate issuance via Fulcio
+    description: >-
+      The signing pipeline obtains its signing certificate from Fulcio
+      using an OIDC token (id-token write permission in GitHub Actions or
+      equivalent on other CI). Binary assessment: keyless OIDC issuance
+      is either configured or it is not.
+    assessmentMethod: binary
+    risk: high
+    gates:
+      - id: oidc-permission-granted
+        phase: standards-mapping
+        default: pending
+        description: Workflow declares id-token write or equivalent OIDC scope.
+      - id: fulcio-issuance-evidenced
+        phase: gap-analysis
+        default: pending
+        description: A signing run produced a Fulcio-issued certificate (cert.pem).
+      - id: fulcio-issuance-backlogged
+        phase: backlog-generation
+        default: pending
+        description: Backlog item exists when keyed signing is used in place of OIDC.
+    mapsTo:
+      openssf-scorecard: [Signed-Releases, Token-Permissions]
+      slsa: [L3]
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .gitlab-ci.yml
+      - dist/*.pem
+      - .sigstore/*.pem
+      - cosign-keyless.json
+    references:
+      - https://docs.sigstore.dev/certificate_authority/overview/
+      - https://docs.sigstore.dev/cosign/signing/overview/#keyless-signing
+      - https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect

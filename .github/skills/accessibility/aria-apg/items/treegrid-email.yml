@@ -1,0 +1,35 @@
+id: "treegrid-email"
+title: "Treegrid (Email Inbox) Pattern"
+itemKind: pattern
+summary: "Hierarchical grid where rows can be expanded/collapsed and cells are navigated with arrow keys; combines tree and grid semantics."
+keyboardModel:
+  - "treegrid"
+  - "grid"
+  - "tree"
+focusManagement: "roving"
+relatedRoles:
+  - "treegrid"
+  - "row"
+  - "gridcell"
+requiredStates:
+  - "aria-expanded"
+  - "aria-selected"
+  - "aria-level"
+requiredProperties:
+  - "aria-rowcount"
+  - "aria-colcount"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/treegrid-email/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+  naWhen:
+    - "mobile-web"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/treegrid-email/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

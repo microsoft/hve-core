@@ -1,0 +1,27 @@
+id: "1-4-4"
+title: "Resize Text"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "Except for captions and images of text, text can be resized without assistive technology up to 200% without loss of content or functionality."
+verificationMode: hybrid
+automatableBy:
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C12"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C13"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html"
+  - "https://www.w3.org/TR/WCAG22/"

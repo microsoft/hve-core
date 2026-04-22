@@ -1,0 +1,23 @@
+id: "4-1-1"
+title: "Parsing (Obsolete)"
+itemKind: criterion
+level: "A"
+principle: "4 Robust"
+guideline: "4.1 Compatible"
+addedIn: "2.0"
+summary: "Marked obsolete in WCAG 2.2; the criterion is always satisfied for any content that uses a markup language. Identifier retained for stability."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/parsing"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/parsing.html"
+  - "https://www.w3.org/TR/WCAG22/"

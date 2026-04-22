@@ -1,0 +1,25 @@
+id: "3-3-4"
+title: "Error Prevention (Legal, Financial, Data)"
+itemKind: criterion
+level: "AA"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.0"
+summary: "For pages causing legal commitments, financial transactions, or modifying user-controllable data, submissions are reversible, checked, or confirmed before finalizing."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G98"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/error-prevention-legal-financial-data.html"
+  - "https://www.w3.org/TR/WCAG22/"

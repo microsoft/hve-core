@@ -1,0 +1,31 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: vulnerabilities
+    title: Vulnerabilities
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Confirms that dependency vulnerability scanning is active via Dependabot alerts, dependency review, or equivalent tooling.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect vulnerability scanning workflows and alert subscriptions.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems or surfaces missing vulnerability monitoring.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enable Dependabot, dependency review, or pip-audit per ecosystem.
+    evidenceHints:
+      - ".github/dependabot.yml"
+      - ".github/workflows/dependency-review*.yml"
+      - ".github/workflows/pip-audit*.yml"
+      - ".github/workflows/cargo-audit*.yml"
+      - ".github/workflows/npm-audit*.yml"

@@ -1,0 +1,27 @@
+id: "3-1-5"
+title: "Reading Level"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "When text requires reading ability beyond lower secondary education level after removing proper names and titles, supplemental content or simpler version is available."
+verificationMode: hybrid
+automatableBy:
+  - "textstat-flesch-kincaid"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G86"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/reading-level.html"
+  - "https://www.w3.org/TR/WCAG22/"

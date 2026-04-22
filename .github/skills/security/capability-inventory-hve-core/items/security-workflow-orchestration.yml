@@ -1,0 +1,31 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Security workflow orchestration"
+source: https://github.com/microsoft/hve-core
+description: Coordinated execution of multiple security scans with unified reporting
+controls:
+- id: security-workflow-orchestration
+  appliesTo: [cloud, web, ml, fleet]
+  title: Security workflow orchestration
+  description: Coordinated execution of multiple security scans with unified reporting
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Security workflow orchestration capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Security workflow orchestration is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/security*.yml
+  references:
+  - https://github.com/microsoft/hve-core

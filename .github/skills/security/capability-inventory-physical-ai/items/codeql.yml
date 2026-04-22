@@ -1,0 +1,34 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 CodeQL"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: GitHub Code Scanning with CodeQL for SAST
+controls:
+- id: codeql
+  appliesTo: [cloud, web, ml, fleet]
+  title: CodeQL
+  description: GitHub Code Scanning with CodeQL for SAST
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the CodeQL capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of CodeQL is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - SAST
+  evidenceHints:
+  - .github/workflows/codeql*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

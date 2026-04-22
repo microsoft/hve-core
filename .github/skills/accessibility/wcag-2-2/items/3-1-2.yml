@@ -1,0 +1,27 @@
+id: "3-1-2"
+title: "Language of Parts"
+itemKind: criterion
+level: "AA"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "The human language of each passage or phrase in the content can be programmatically determined, except for proper names, technical terms, and indeterminate words."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H58"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/language-of-parts.html"
+  - "https://www.w3.org/TR/WCAG22/"

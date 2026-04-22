@@ -110,5 +110,3 @@ Follow these conventions when extending this skill:
 * Checklist items and examples must be portable across codebases. Use generic module names and describe anti-patterns by their behavior, not by specific directory or file names.
 
 ---
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

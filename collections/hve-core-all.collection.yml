@@ -1,6 +1,6 @@
 id: hve-core-all
 name: HVE Core All
-description: Full bundle of all stable HVE Core agents, prompts, instructions, and skills
+description: Full collection of all stable HVE Core agents, prompts, instructions, and skills
 tags:
 - hve
 - complete
@@ -197,6 +197,8 @@ items:
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/doc-ops-update.prompt.md
+  kind: prompt
+- path: .github/prompts/hve-core/fsi-author.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
@@ -533,6 +535,9 @@ items:
 - path: .github/instructions/security/sssc-identity.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/sssc-risk-classification.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/security/sssc-standards.instructions.md
   kind: instruction
   maturity: experimental
@@ -548,7 +553,11 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/experimental/adr-prototype
+  kind: skill
 - path: .github/skills/experimental/powerpoint
+  kind: skill
+- path: .github/skills/experimental/prd-prototype
   kind: skill
 - path: .github/skills/experimental/video-to-gif
   kind: skill
@@ -560,6 +569,30 @@ items:
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
+- path: .github/skills/project-planning/adr-template
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/prd-template
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/capability-inventory-hve-core
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/capability-inventory-physical-ai
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/cisa-sscm
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/nist-ssdf
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/openssf-best-practices-badge
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/openssf-scorecard
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
@@ -578,12 +611,26 @@ items:
 - path: .github/skills/security/owasp-top-10
   kind: skill
   maturity: experimental
+- path: .github/skills/security/s2c2f
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/sbom
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/secure-by-design
   kind: skill
   maturity: experimental
 - path: .github/skills/security/security-reviewer-formats
   kind: skill
   maturity: experimental
+- path: .github/skills/security/sigstore
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/slsa
+  kind: skill
+  maturity: experimental
+- path: .github/skills/shared/framework-skill-interface
+  kind: skill
 - path: .github/skills/shared/pr-reference
   kind: skill
 display:

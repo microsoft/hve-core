@@ -1,0 +1,29 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: rv-2-1
+    title: Analyze Each Vulnerability to Gather Sufficient Information to Plan Its Remediation
+    group: RV
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Analyze each reported or detected vulnerability to assess its risk, identify affected versions, and gather the information needed to plan its remediation, mitigation, or acceptance.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify the triage process and tooling used to analyze incoming vulnerabilities.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify gaps in triage coverage, severity scoring, or remediation planning.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to formalize triage, scoring, and remediation planning.
+    evidenceHints:
+      - "docs/security/advisories/**"
+      - ".github/SECURITY_ADVISORIES/**"
+      - ".github/workflows/*triage*.yml"
+      - ".copilot-tracking/security-plans/**"

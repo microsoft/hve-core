@@ -146,5 +146,12 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/project-planning/adr-template
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/project-planning/prd-template
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

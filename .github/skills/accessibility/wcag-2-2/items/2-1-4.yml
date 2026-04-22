@@ -1,0 +1,25 @@
+id: "2-1-4"
+title: "Character Key Shortcuts"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.1 Keyboard Accessible"
+addedIn: "2.1"
+summary: "If a keyboard shortcut uses only letter, punctuation, number, or symbol characters, then the shortcut can be turned off, remapped, or is active only on focus."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G217"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/character-key-shortcuts.html"
+  - "https://www.w3.org/TR/WCAG22/"

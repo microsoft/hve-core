@@ -41,5 +41,3 @@ that an agent can query to identify, assess, and remediate MCP security risks.
   - `01` through `10` — one document per vulnerability aligned with OWASP MCP numbering.
 
 ---
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,0 +1,25 @@
+id: technical-approach
+title: Technical Approach
+description: "Outlines the high-level technical strategy, architecture considerations, and key technology decisions."
+template: |
+  ## Technical Approach
+
+  Describe the high-level technical approach for {{product_name}}.
+
+  - **Architecture overview** — System components and their relationships.
+  - **Key technology decisions** — Languages, frameworks, services, and infrastructure choices.
+  - **Integration points** — External systems, APIs, or data sources.
+  - **Constraints** — Technical limitations, platform requirements, or compatibility needs.
+
+  {{technical_detail}}
+inputs:
+  - name: technical_detail
+    description: "Architecture diagrams, technology stack details, or integration specifications"
+applicability:
+  discriminator: prd_complexity
+  appliesWhen:
+    - standard
+    - complex
+  naWhen:
+    - lightweight
+  naReason: "Lightweight PRDs defer technical approach to implementation planning"

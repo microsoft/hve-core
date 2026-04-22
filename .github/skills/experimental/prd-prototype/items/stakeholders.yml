@@ -1,0 +1,17 @@
+id: stakeholders
+title: Stakeholders
+description: "Identifies key stakeholders, their roles, and communication expectations."
+template: |
+  ## Stakeholders
+
+  **Initiative:** {{project_name}}
+  **Prepared by:** {{author}}
+
+  | Stakeholder | Role | Interest | Communication Cadence |
+  |-------------|------|----------|-----------------------|
+  | *Name* | *Sponsor / Consumer / Contributor* | *Primary concern* | *Weekly / As-needed* |
+
+  {{stakeholder_notes}}
+inputs:
+  - name: stakeholder_notes
+    description: "Additional notes on stakeholder dynamics or escalation paths"

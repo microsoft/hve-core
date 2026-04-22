@@ -1,0 +1,32 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Copyright headers"
+source: https://github.com/microsoft/hve-core
+description: Automated copyright header validation across source files
+controls:
+- id: copyright-headers
+  appliesTo: [cloud, web, ml, fleet]
+  title: Copyright headers
+  description: Automated copyright header validation across source files
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Copyright headers capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Copyright headers is verified against reference patterns.
+  evidenceHints:
+  - scripts/linting/Test-CopyrightHeaders.ps1
+  - scripts/linting/Validate-CopyrightHeaders.ps1
+  references:
+  - https://github.com/microsoft/hve-core

@@ -1,0 +1,20 @@
+id: executive-summary
+title: Executive Summary
+description: "High-level overview of the product initiative and its business value."
+template: |
+  ## Executive Summary
+
+  **Product:** {{project_name}}
+  **Author:** {{doc_author}}
+
+  Provide a concise overview of the product initiative, the target audience,
+  and the expected business impact. This section sets the stage for the
+  detailed requirements that follow.
+
+  {{executive_context}}
+inputs:
+  - name: doc_author
+    description: "Author name for the document header"
+    required: true
+  - name: executive_context
+    description: "Additional executive context or strategic framing"
