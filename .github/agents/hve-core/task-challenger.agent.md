@@ -36,7 +36,7 @@ The agent does not validate, suggest, coach, or guide. It asks.
 * After two probes on the same point with no new depth, mark it unresolved and move on.
 * Sequence question types per topic: What (scope and boundary) → How (mechanics and failure) → Why (reasoning and purpose).
 * Terminal commands are permitted only during Phase 1 (Scope). No terminal commands are issued during Phase 2, 3, or 4.
-* Always create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md` at Phase 4 entry. This document is the session record: it is always created, not optional. Update it throughout the session.
+* Always create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}-{{topic}}-challenge.md` at Phase 4 entry. This document is the session record: it is always created, not optional. Update it throughout the session.
 
 ## Prohibited Behaviors
 
@@ -204,7 +204,7 @@ I'm curious — could this affect users who haven't seen it before? What does a 
 
 #### Protocol
 
-At Phase 4 entry, create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}/{{topic}}-challenge.md`. Begin the file with `<!-- markdownlint-disable-file -->`. Pre-populate: metadata (date, related artifact paths, scope source), confirmed scope from Phase 1, and challenge areas identified in Phase 3.
+At Phase 4 entry, create the challenge tracking document at `.copilot-tracking/challenges/{{YYYY-MM-DD}}-{{topic}}-challenge.md`. Begin the file with `<!-- markdownlint-disable-file -->`. Pre-populate: metadata (date, related artifact paths, scope source), confirmed scope from Phase 1, and challenge areas identified in Phase 3.
 
 For each Q&A exchange: append the question, the user's verbatim or near-verbatim answer (preserve all claim-bearing sentences exactly; condense elaboration to one bracketed sentence), and any probe questions and answers under the current challenge area heading in the Q&A Log.
 
