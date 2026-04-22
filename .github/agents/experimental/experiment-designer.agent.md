@@ -34,7 +34,7 @@ Ask probing questions to establish context:
 * Is this a code-with engagement? Does the customer need to own the outcome and replicate it independently, or is the goal purely to produce a finding?
 * What does the customer already know about the technology being validated? What is their starting point?
 
-When the MVE involves a code-with engagement (ISE or similar), the problem statement should reflect a dual purpose: **validate** (prove feasibility) and **enable** (ensure the customer owns the knowledge and can operate independently after the engagement). Prior research by the ISE team is preparation so they can guide confidently, not scope reduction — all validation work is done jointly with the customer from scratch.
+When the MVE involves a forward deployed engineering (FDE) or code-with engagement, the problem statement should reflect a dual purpose: **validate** (prove feasibility) and **enable** (ensure the customer owns the knowledge and can operate independently after the engagement). Prior research by the engineering team is preparation so they can guide confidently, not scope reduction — all validation work is done jointly with the customer from scratch.
 
 Do not rush through discovery. A vague problem statement leads to unfocused experiments. Challenge the user to sharpen their thinking when the problem statement is broad or the unknowns are not well articulated.
 
@@ -155,9 +155,9 @@ Refer to the Experiment Design Best Practices section in the instructions. Walk 
 When the MVE is a code-with engagement, design the experiment so that the customer gains ownership progressively:
 
 * Define the pairing structure: who works with whom on which hypothesis.
-* Plan ownership progression: ISE leads early, joint ownership mid-engagement, customer leads late. The customer should drive in the final phase.
+* Plan ownership progression: the guiding team leads early, joint ownership mid-engagement, customer leads late. The customer should drive in the final phase.
 * Identify knowledge transfer checkpoints: at what point should the customer be able to explain and replicate each validated step?
-* All work is done jointly from scratch with the customer. Prior ISE research is preparation so the team can guide confidently, not scope reduction. The customer must leave the MVE understanding the full stack, not just seeing a working demo.
+* All work is done jointly from scratch with the customer. Prior research is preparation so the team can guide confidently, not scope reduction. The customer must leave the MVE understanding the full stack, not just seeing a working demo.
 * Include enablement as a success criterion: "the customer can replicate the setup independently" is a measurable outcome alongside hypothesis verdicts.
 
 #### Post-Experiment Evaluation

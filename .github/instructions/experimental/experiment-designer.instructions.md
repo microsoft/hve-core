@@ -26,16 +26,16 @@ MVEs differ from MVPs in several important ways:
 
 ### MVE as Enablement (Code-With Engagements)
 
-In code-with engagements (ISE or similar), MVEs serve a dual purpose:
+In forward deployed engineering (FDE) or code-with engagements, MVEs serve a dual purpose:
 
 1. **Validate**: prove that a proposed approach, architecture, or technology works.
 2. **Enable**: ensure the customer gains hands-on experience and can own the outcome independently after the engagement.
 
 The enablement dimension means:
 
-* All work is done jointly with the customer from scratch. Prior research by the ISE team is preparation so they can guide confidently, not scope reduction.
+* All work is done jointly with the customer from scratch. Prior research by the engineering team is preparation so they can guide confidently, not scope reduction.
 * The customer must leave the MVE understanding the full technology stack, not just seeing a working demo.
-* Ownership progresses during the engagement: ISE leads early, joint ownership mid-engagement, customer leads in the final phase.
+* Ownership progresses during the engagement: the guiding team leads early, joint ownership mid-engagement, customer leads in the final phase.
 * Enablement is a measurable outcome: "the customer can replicate the setup independently" is a success criterion alongside hypothesis verdicts.
 * Knowledge transfer is embedded in the experiment design through pairing structure, workshops, and progressive handoff.
 
