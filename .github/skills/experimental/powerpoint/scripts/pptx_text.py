@@ -43,6 +43,8 @@ VERTICAL_ANCHOR_REVERSE = {
 
 # EMU per inch constant for margin conversions
 _EMU_PER_INCH = 914400
+_DEFAULT_LIST_MARGIN_LEFT = 228600
+_DEFAULT_LIST_INDENT = -228600
 
 # Key-mapping specifications for YAML schema differences per element type.
 # Maps canonical keys (font, size, color, bold) to the actual YAML key names.
@@ -65,6 +67,49 @@ def split_lines(text: str) -> list[str]:
     if "\n" in text or "\v" in text:
         return re.split(r"\n|\v", text)
     return [text]
+
+
+def _indent_level(prefix: str) -> int:
+    """Convert leading spaces/tabs into a paragraph level."""
+    expanded = prefix.replace("\t", "    ")
+    return max(0, len(expanded) // 2)
+
+
+def _list_paragraph_from_line(line: str, elem: dict) -> dict:
+    """Convert a flat markdown-style list line into paragraph properties."""
+    unordered = re.match(r"^(?P<indent>\s*)[-+*]\s+(?P<text>.+?)\s*$", line)
+    if unordered:
+        paragraph = {"text": unordered.group("text")}
+        paragraph["level"] = _indent_level(unordered.group("indent"))
+        paragraph["bullet_char"] = elem.get("bullet_char", "•")
+        paragraph["bullet_margin_left"] = elem.get(
+            "bullet_margin_left", _DEFAULT_LIST_MARGIN_LEFT
+        )
+        paragraph["bullet_indent"] = elem.get(
+            "bullet_indent", _DEFAULT_LIST_INDENT
+        )
+        return paragraph
+
+    ordered = re.match(
+        r"^(?P<indent>\s*)(?P<start>\d+)(?P<suffix>[.)])\s+(?P<text>.+?)\s*$",
+        line,
+    )
+    if ordered:
+        paragraph = {"text": ordered.group("text")}
+        paragraph["level"] = _indent_level(ordered.group("indent"))
+        paragraph["bullet_auto_number"] = (
+            "arabicPeriod" if ordered.group("suffix") == "." else "arabicParenR"
+        )
+        paragraph["bullet_start_at"] = int(ordered.group("start"))
+        paragraph["bullet_margin_left"] = elem.get(
+            "bullet_margin_left", _DEFAULT_LIST_MARGIN_LEFT
+        )
+        paragraph["bullet_indent"] = elem.get(
+            "bullet_indent", _DEFAULT_LIST_INDENT
+        )
+        return paragraph
+
+    return {"text": line}
 
 
 def _apply_run_formatting(run, elem: dict, keys: dict, defaults: dict, colors: dict):
@@ -183,11 +228,13 @@ def _populate_flat_text(
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         if alignment:
             p.alignment = ALIGNMENT_MAP.get(alignment, ALIGNMENT_MAP["left"])
-        apply_paragraph_properties(p, elem)
-        apply_bullet_properties(p, elem)
+        paragraph_elem = dict(elem)
+        paragraph_elem.update(_list_paragraph_from_line(line, elem))
+        apply_paragraph_properties(p, paragraph_elem)
+        apply_bullet_properties(p, paragraph_elem)
         run = p.add_run()
-        run.text = line
-        _apply_run_formatting(run, elem, keys, defaults, colors)
+        run.text = paragraph_elem.get("text", line)
+        _apply_run_formatting(run, paragraph_elem, keys, defaults, colors)
 
 
 def apply_text_properties(text_frame, elem: dict):
@@ -377,6 +424,15 @@ def extract_bullet_properties(paragraph) -> dict:
     if buChar is not None:
         props["bullet_char"] = buChar.get("char", "•")
 
+    buAutoNum = pPr.find(qn("a:buAutoNum"))
+    if buAutoNum is not None:
+        auto_type = buAutoNum.get("type")
+        if auto_type:
+            props["bullet_auto_number"] = auto_type
+        start_at = buAutoNum.get("startAt")
+        if start_at:
+            props["bullet_start_at"] = int(start_at)
+
     buFont = pPr.find(qn("a:buFont"))
     if buFont is not None:
         typeface = buFont.get("typeface")
@@ -415,6 +471,7 @@ def apply_bullet_properties(paragraph, elem: dict):
     """
     has_bullet_props = (
         "bullet_char" in elem
+        or "bullet_auto_number" in elem
         or "bullet_none" in elem
         or "bullet_margin_left" in elem
         or "bullet_indent" in elem
@@ -426,6 +483,19 @@ def apply_bullet_properties(paragraph, elem: dict):
     if pPr is None:
         pPr = etree.SubElement(paragraph._p, qn("a:pPr"))
         paragraph._p.insert(0, pPr)
+
+    # Normalize bullet nodes so repeated applications stay idempotent and
+    # switching between bullet modes does not leave conflicting XML state.
+    for node_name in (
+        "a:buNone",
+        "a:buChar",
+        "a:buAutoNum",
+        "a:buFont",
+        "a:buSzPct",
+        "a:buClr",
+    ):
+        for node in pPr.findall(qn(node_name)):
+            pPr.remove(node)
 
     # Apply margin and indent (controls bullet-to-text spacing)
     if "bullet_margin_left" in elem:
@@ -449,6 +519,12 @@ def apply_bullet_properties(paragraph, elem: dict):
         buClr = etree.SubElement(pPr, qn("a:buClr"))
         srgb = etree.SubElement(buClr, qn("a:srgbClr"))
         srgb.set("val", elem["bullet_color"].lstrip("#"))
+
+    if "bullet_auto_number" in elem:
+        buAutoNum = etree.SubElement(pPr, qn("a:buAutoNum"))
+        buAutoNum.set("type", elem["bullet_auto_number"])
+        if "bullet_start_at" in elem:
+            buAutoNum.set("startAt", str(elem["bullet_start_at"]))
 
     if "bullet_char" in elem:
         buChar = etree.SubElement(pPr, qn("a:buChar"))

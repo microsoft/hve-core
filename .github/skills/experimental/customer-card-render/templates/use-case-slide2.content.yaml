@@ -1,0 +1,108 @@
+slide: {{SLIDE_NUMBER}}
+title: "{{TITLE}}"
+section: "Use Cases"
+layout: "blank"
+
+background:
+  fill: "#0F1117"
+
+elements:
+  - type: textbox
+    left: 0.6
+    top: 0.8
+    width: 12.0
+    height: 0.5
+    text: "{{TYPE_LABEL}} (Part 2 of 4)"
+    font: "Segoe UI"
+    font_size: 10
+    font_color: "#6FD2D9"
+    font_bold: true
+
+  - type: textbox
+    left: 0.6
+    top: 1.3
+    width: 12.0
+    height: 0.8
+    text: "{{TITLE}}"
+    font: "Segoe UI"
+    font_size: 22
+    font_color: "#FFFFFF"
+    font_bold: true
+    auto_size: "shrink"
+
+  - type: textbox
+    left: 0.6
+    top: 2.2
+    width: 12.0
+    height: 0.4
+    text: "Primary & Secondary Users"
+    font: "Segoe UI"
+    font_size: 12
+    font_color: "#4DA3FF"
+    font_bold: true
+
+  - type: textbox
+    left: 0.6
+    top: 2.7
+    width: 5.8
+    height: 0.7
+    text: "Primary:\n{{UC_PRIMARY_USER}}"
+    font: "Segoe UI"
+    font_size: 10
+    font_color: "#D7DDEA"
+    auto_size: "shrink"
+
+  - type: textbox
+    left: 6.6
+    top: 2.7
+    width: 5.8
+    height: 0.7
+    text: "Secondary:\n{{UC_SECONDARY_USER}}"
+    font: "Segoe UI"
+    font_size: 10
+    font_color: "#D7DDEA"
+    auto_size: "shrink"
+
+  - type: textbox
+    left: 0.6
+    top: 3.6
+    width: 12.0
+    height: 0.4
+    text: "Preconditions & Steps"
+    font: "Segoe UI"
+    font_size: 12
+    font_color: "#4DA3FF"
+    font_bold: true
+
+  - type: textbox
+    left: 0.6
+    top: 4.1
+    width: 12.0
+    height: 0.6
+    text: "Preconditions:\n{{UC_PRECONDITIONS}}"
+    font: "Segoe UI"
+    font_size: 10
+    font_color: "#D7DDEA"
+    auto_size: "shrink"
+
+  - type: textbox
+    left: 0.6
+    top: 4.8
+    width: 12.0
+    height: 1.4
+    text: "Steps:\n{{UC_STEPS}}"
+    font: "Segoe UI"
+    font_size: 10
+    font_color: "#D7DDEA"
+    auto_size: "shrink"
+
+  - type: textbox
+    left: 0.6
+    top: 6.3
+    width: 12.0
+    height: 0.4
+    text: "Data Requirements: {{UC_DATA_REQUIREMENTS}}"
+    font: "Segoe UI"
+    font_size: 9
+    font_color: "#D7DDEA"
+    auto_size: "shrink"

@@ -51,52 +51,6 @@ Frame iteration as progress: each loop produces deeper understanding. Carry forw
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
-## Method Transition Prerequisites
-
-Canonical deck snapshots are **mandatory** when transitioning away from Methods 1-5. Do not skip. Do not defer.
-
-**When this applies:**
-- Transitioning from Method 1 → Method 2
-- Transitioning from Method 2 → Method 3
-- Transitioning from Method 3 → Method 4
-- Transitioning from Method 4 → Method 5
-- Transitioning from Method 5 → Method 6 (this is a space boundary; snapshot is extra critical here)
-
-**Required checkpoint before advancing:**
-
-1. Verify canonical artifact baseline exists in `.copilot-tracking/dt/{project-slug}/canonical/`:
-   - Vision Statement (required by Method 3)
-   - Problem Statement (required by Method 2)
-   - Scenarios (created if discovered; marked as `<insufficient knowledge>` if incomplete)
-   - Use Cases (created if available; marked as `<insufficient knowledge>` if incomplete)
-   - Personas (created if available; marked as `<insufficient knowledge>` if incomplete)
-
-2. Generate canonical deck snapshot:
-   - Invoke `/generate-canonical-deck` with `method-context: {current-method-number}`
-   - Capture generation results: `entry_count`, `candidate_count`
-
-3. Update coaching state snapshot for the completed method:
-   - `status: "generated"` (or "skipped" if generation was declined)
-   - Record `timestamp`
-   - Record `entry_count` and `candidate_count`
-   - Record `fingerprints` (SHA256 of each artifact file for staleness detection)
-
-4. Offer customer-card PowerPoint generation before advancing methods:
-   - Invoke `/dt-build-customer-cards` with `trigger-context: post-deck-refresh`.
-   - Wait for the user decision (accept, decline, defer) before switching methods.
-   - Record the result in `customer_card_render` fields in `coaching-state.md`.
-
-5. Record the transition in `coaching-state.md`:
-   - Add entry to `transition_log` with from/to methods and rationale
-   - Update `current.method` and `current.phase`
-   - Add session log entry describing transition
-
-**Why mandatory:**
-- Canonical deck is the single source of truth for customer card derivation. Snapshots at each method boundary preserve traceability and enable staleness detection.
-- Without snapshots, artifacts drift from their decision source. Changes in later methods cannot be traced back to which method introduced them.
-- Fingerprints prevent silent artifact staleness: if an artifact changes in Method 3, fingerprint comparison flags it for refresh before Method 4.
-- Method-boundary PowerPoint offers keep card generation discoverable so users do not need to request it manually.
-
 ## Method Routing
 
 | Signal                                     | Route To |

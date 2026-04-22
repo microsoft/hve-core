@@ -4,6 +4,7 @@
 
 import pytest
 from pptx.enum.text import MSO_AUTO_SIZE, MSO_VERTICAL_ANCHOR
+from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 from pptx_text import (
     AUTO_SIZE_MAP,
@@ -409,6 +410,70 @@ class TestBulletProperties:
         props = extract_bullet_properties(para)
         assert props["bullet_color"] == "#FF0000"
 
+    def test_auto_number_roundtrip(self, blank_slide):
+        txBox = _make_textbox(blank_slide)
+        para = txBox.text_frame.paragraphs[0]
+        apply_bullet_properties(
+            para,
+            {
+                "bullet_auto_number": "arabicPeriod",
+                "bullet_start_at": 3,
+            },
+        )
+        props = extract_bullet_properties(para)
+        assert props["bullet_auto_number"] == "arabicPeriod"
+        assert props["bullet_start_at"] == 3
+
+    def test_auto_number_reapply_is_idempotent(self, blank_slide):
+        txBox = _make_textbox(blank_slide)
+        para = txBox.text_frame.paragraphs[0]
+
+        apply_bullet_properties(
+            para,
+            {
+                "bullet_auto_number": "arabicPeriod",
+                "bullet_start_at": 1,
+            },
+        )
+        apply_bullet_properties(
+            para,
+            {
+                "bullet_auto_number": "arabicPeriod",
+                "bullet_start_at": 4,
+            },
+        )
+
+        pPr = para._p.find(qn("a:pPr"))
+        assert pPr is not None
+        assert len(pPr.findall(qn("a:buAutoNum"))) == 1
+
+        props = extract_bullet_properties(para)
+        assert props["bullet_auto_number"] == "arabicPeriod"
+        assert props["bullet_start_at"] == 4
+
+    def test_switch_bullet_mode_replaces_existing_nodes(self, blank_slide):
+        txBox = _make_textbox(blank_slide)
+        para = txBox.text_frame.paragraphs[0]
+
+        apply_bullet_properties(para, {"bullet_char": "*"})
+        apply_bullet_properties(
+            para,
+            {
+                "bullet_auto_number": "arabicPeriod",
+                "bullet_start_at": 2,
+            },
+        )
+
+        pPr = para._p.find(qn("a:pPr"))
+        assert pPr is not None
+        assert len(pPr.findall(qn("a:buAutoNum"))) == 1
+        assert len(pPr.findall(qn("a:buChar"))) == 0
+
+        props = extract_bullet_properties(para)
+        assert props["bullet_auto_number"] == "arabicPeriod"
+        assert props["bullet_start_at"] == 2
+        assert "bullet_char" not in props
+
     def test_bullet_margin_indent(self, blank_slide):
         txBox = _make_textbox(blank_slide)
         para = txBox.text_frame.paragraphs[0]
@@ -520,6 +585,36 @@ class TestPopulateTextFrame:
         assert len(paras) == 2
         assert paras[0].text == "First paragraph"
         assert paras[1].text == "Second paragraph"
+
+    def test_markdown_unordered_list_in_flat_text(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        populate_text_frame(
+            txBox.text_frame,
+            {"text": "Needs\n\n- First item\n- Second item"},
+            {},
+            TEXTBOX_KEYS,
+        )
+        paras = txBox.text_frame.paragraphs
+        assert paras[0].text == "Needs"
+        assert paras[2].text == "First item"
+        assert paras[3].text == "Second item"
+        assert extract_bullet_properties(paras[2])["bullet_char"] == "•"
+        assert extract_bullet_properties(paras[3])["bullet_char"] == "•"
+
+    def test_markdown_ordered_list_in_flat_text(self, blank_slide):
+        txBox = _make_textbox(blank_slide, text="")
+        populate_text_frame(
+            txBox.text_frame,
+            {"text": "Steps\n\n1. First step\n2. Second step"},
+            {},
+            TEXTBOX_KEYS,
+        )
+        paras = txBox.text_frame.paragraphs
+        assert paras[2].text == "First step"
+        assert paras[3].text == "Second step"
+        assert extract_bullet_properties(paras[2])["bullet_auto_number"] == "arabicPeriod"
+        assert extract_bullet_properties(paras[2])["bullet_start_at"] == 1
+        assert extract_bullet_properties(paras[3])["bullet_start_at"] == 2
 
     def test_no_text_noop(self, blank_slide):
         txBox = _make_textbox(blank_slide, text="Original")

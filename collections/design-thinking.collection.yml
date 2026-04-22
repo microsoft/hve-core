@@ -56,13 +56,7 @@ items:
   - path: .github/prompts/design-thinking/dt-method-06-testing.prompt.md
     kind: prompt
     maturity: preview
-  - path: .github/prompts/design-thinking/dt-canonical-deck-offer.prompt.md
-    kind: prompt
-    maturity: preview
-  - path: .github/prompts/design-thinking/dt-build-customer-cards.prompt.md
-    kind: prompt
-    maturity: preview
-  - path: .github/prompts/design-thinking/generate-canonical-deck.prompt.md
+  - path: .github/prompts/design-thinking/dt-canonical-deck.prompt.md
     kind: prompt
     maturity: preview
 

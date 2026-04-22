@@ -38,7 +38,7 @@ Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
 # Recognized subdirectories within a skill directory
-$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests', 'customer-card-render')
+$script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'examples', 'tests')
 
 # Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
 $script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')

@@ -1,385 +1,251 @@
 ---
-description: "Living canonical deck lifecycle rules — when to trigger generation, coaching voice by method, schema additions to coaching state, and artifact completeness expectations"
+description: "Opt-in canonical deck and customer-card workflow for DT coaching"
 applyTo: "**/.copilot-tracking/dt/**"
 ---
 
 # DT Canonical Deck Instructions
 
-The canonical deck is a living artifact that evolves alongside the Design Thinking process. It is not a final-stage output. It is a structured, internally-tagged representation of every HVE artifact produced so far — used to track alignment, surface gaps, and eventually derive customer-facing cards.
+Use this workflow only when the team explicitly opts in to canonical deck support.
 
-## What the Canonical Deck Is
+## Scope
 
-Each deck entry is a structured markdown file containing:
+Canonical deck workflow covers two related outputs:
 
-1. A customer-friendly summary of the artifact — written as if explaining to a non-technical stakeholder.
-2. An internal metadata table — 7 fields that capture source traceability, team state, freshness, and customer readiness.
+1. Canonical markdown artifacts under `.copilot-tracking/dt/{project-slug}/canonical/`.
+2. Optional customer-card PowerPoint output under `.copilot-tracking/dt/{project-slug}/render/`.
 
-The deck lives in `canonical/` inside the project slug directory (`.copilot-tracking/dt/{project-slug}/canonical/`). It is a single, evolving directory updated in place as the team progresses through the 9 methods. It is the single source of truth from which clean customer-facing cards are derived by filtering out internal metadata.
+Treat canonical deck and PowerPoint generation as optional and skippable at each offer point.
 
-## Artifact Completeness Model
+## Single Source of Truth
 
-All artifact types (Vision Statement, Problem Statement, Scenarios, Use Cases, Personas) may exist at any method. Artifacts created early in the process are incomplete and need refinement, but they should still be captured in the deck.
+Keep canonical-deck rules in this file only.
 
-### By Method
+Do not duplicate transition gates or non-waivable checks in:
 
-| Method              | Expected Artifact State                                                                                 | Candidate for Delivery           |
-|---------------------|---------------------------------------------------------------------------------------------------------|----------------------------------|
-| 1 (Scope)           | Vision and Problem: rough drafts. Scenarios/Use Cases/Personas: may exist as early ideas                | No — all too early               |
-| 2 (Design Research) | Vision and Problem: refining. Scenarios: emerging from research. Personas: drafts based on stakeholders | No — still being validated       |
-| 3 (Input Synthesis) | Vision and Problem: stable. Scenarios: validated. Use Cases: synthesized from HMWs. Personas: confirmed | No — awaiting concept work       |
-| 4 (Brainstorming)   | All artifacts from 1-3 stable. Some new use cases may emerge from ideation                              | No — still solutioning           |
-| 5 (User Concepts)   | Full set expected: all artifact types should exist. Concepts are validated.                             | Maybe — assess per entry         |
-| 6+ (Solutioning)    | Artifacts stable from Method 5. Focus is on implementation, not artifact production.                    | Yes — for artifacts marked ready |
+- Method instructions (for example Method 1 or sequencing)
+- DT Coach agent behavior text
+- Other prompt files
 
-**Key rules**:
-- Set `Internal state: HVE Core: needs work` for artifacts created before Method 5.
-- Set `Internal state: HVE Core: think done` for artifacts that survived synthesis and concept validation.
-- Set `Candidate for immediate delivery: yes` only when the artifact is at Method 5+ AND the team believes it is ready for customer review without rework.
-- Artifacts created at Methods 1-4 should always have `Candidate for immediate delivery: no`.
+## Activation Rule
 
-### Scenario Card Completeness Contract
+The coach must explicitly ask the user once per DT project whether to enable canonical deck and customer-card workflow.
 
-Every scenario card MUST include these sub-sections:
+Use a direct yes-or-no checkpoint prompt during Session Initialization, before any method-specific coaching begins:
 
-1. `### Description`
-2. `### Scenario Narrative`
-3. `### How Might We`
+> Would you like to enable the canonical deck and customer-card workflow for this DT project?
 
-The `### Description` section is the short customer-facing overview for the scenario. Do not leave summary prose directly under the main scenario heading. Put that prose in `### Description` so canonical files and PowerPoint renders stay aligned.
+This checkpoint is required once per DT project and is not skippable by the coach. The user can still decline the workflow.
 
-The `How Might We` section must think through:
+After that prompt, the canonical-deck workflow is active only when either condition is true:
 
-* The business value the team is trying to achieve
-* The opportunities that could be unlocked if the scenario succeeds
-* Who benefits from the scenario
-* What those benefits are
+1. The user asks for canonical deck or customer cards.
+2. The user accepts a canonical deck offer in the active DT session.
 
-The `Scenario Narrative` section must be people-centered and grounded in actual DT context. It should:
+If neither condition is true, continue normal DT coaching with no canonical-deck enforcement.
 
-* Clearly articulate the business value the team is trying to unlock or unblock
-* Identify the personas or users interacting with the system
-* Explain what those users care about
-* Describe the challenges they face
-* Clarify what they are trying to accomplish
-* Show what success looks like for the scenario
-* Tell the story in human terms rather than as a technical system description
+## Offer Points (Optional)
 
-### Vision Statement Render Contract
+When workflow is active, offer canonical deck snapshot creation or refresh at these method exits:
 
-Vision statement cards must preserve both of these sections through customer-card rendering:
+1. End of Method 1
+2. End of Method 2
+3. End of Method 3
+4. End of Method 5
 
-1. `## Vision Statement`
-2. `### Why This Matters`
+Checkpoint phrasing expectation:
 
-The render output must not drop `Why This Matters`. It is a required customer-facing explanation block, not metadata.
+- Between Method 1 and Method 2, ask whether to create or update the canonical deck and customer card artifacts.
+- Between Method 2 and Method 3, ask whether to create or update the canonical deck and customer card artifacts.
+- At the end of Method 5, ask whether to create or update the canonical deck and customer card artifacts.
 
-### Use Case Card Completeness Contract
+Each offer must be optional and skippable. Declining an offer must not block method transition.
 
-Every use case card MUST include these sub-sections:
+## Mandatory Post-Snapshot Customer-Card Checkpoint
 
-1. Use Case Description
-2. Business Value
-3. Use Case Overview
-4. Primary User
-5. Secondary User
-6. Preconditions
-7. Steps
-8. Data Requirements
-9. Equipment Requirements
-10. Operating Environment
-11. Success Criteria
-12. Pain Points
-13. Evidence
-14. Extensions
+After any canonical deck create or refresh, the coach must ask this yes-or-no question in the same turn:
 
-If sufficient context is not available for any sub-section:
+> Would you like to generate the customer-card PowerPoint now?
 
-- Set the sub-section body to exactly `<insufficient knowledge>`
-- Add `#### Questions to Ask` under that sub-section
-- Provide 2-5 targeted questions to ask customers, stakeholders, or end users so the team can gather missing information
+This checkpoint is required whenever canonical artifacts were created or updated at Method 1, Method 2, Method 3, or Method 5 offer points.
 
-Do not suppress or remove required sub-sections due to missing data. Missing knowledge must be explicit and actionable.
-Do not invent content to make a section feel complete. Canonical generation must stay grounded in concrete evidence from prior Design Thinking methods.
+Do not end canonical snapshot workflow without asking this question.
 
-## When to Trigger Canonical Deck Generation
+Record the offer timestamp and user response in coaching state.
 
-The canonical deck offer fires on **artifact write events**, not method boundaries. A team can generate customer-friendly cards after completing any meaningful task within a method — no need to wait until an entire method is done.
+### Customer-Card Re-Offer Rules
 
-### Primary Trigger: Artifact Write Event
+If the user declines the customer-card PowerPoint offer:
 
-After any new canonical artifact is registered in the coaching state, the DT Coach checks whether to offer deck generation.
+- **Do not re-offer at Method 2, 3, or 4 snapshots** — The user's decline is final until the end of Method 5.
+- **Re-offer at the end of Method 5** — Before transitioning from Method 5 to Method 6, ask the customer-card question one final time: *"We're finishing up Method 5. Before we move to prototyping, would you like to generate the customer-card PowerPoint now?"*
+- **If declined again at Method 5, do not re-offer** — Respect the user's decision and continue to implementation methods without further customer-card prompts.
 
-The canonical artifact set is: Vision Statement, Problem Statement, Scenario, Use Case, Persona. Non-canonical artifacts (stakeholder maps, interview notes, HMW questions, observation logs) do NOT trigger the offer.
+Record all offers and responses in coaching state for audit and session recovery.
 
-**Offer the deck when ALL of the following are true:**
+## Offer Language
 
-1. The artifact just written is a canonical type (see above).
-2. The artifact path differs from `canonical_deck.last_offered_artifact_path` — a different canonical artifact has been written since the last offer.
-3. The team has not set `canonical_deck.session_declined: true`.
-4. The active method is 1-5.
+Use concise coaching language. Example:
 
-**Do NOT offer when:**
+> We can snapshot the canonical deck now so your current artifacts are easier to track and share. Want to do that now or skip for later?
 
-- Only non-canonical artifacts were produced.
-- The artifact is an update to one already in the deck (offer a deck **refresh** instead — see Staleness Detection).
-- The team is mid-sentence or in an active question flow. Wait for a natural pause.
-- The active method is 6, 7, 8, or 9.
+If the team declines, continue without additional commentary.
 
-### Secondary Trigger: Session Start Staleness Check
+## Validation Checklist (When Workflow Is Active)
 
-At the start of every session (Methods 1-5), compare artifact fingerprints against the last snapshot. If any canonical artifact changed since the last snapshot, offer:
+Before generating or refreshing canonical deck content, run this checklist:
 
-> Some of your artifacts have changed since the last deck snapshot. Want me to refresh the canonical deck before we continue?
+1. Confirm project scope path exists: `.copilot-tracking/dt/{project-slug}/`.
+2. Resolve canonical directory as `.copilot-tracking/dt/{project-slug}/canonical/`.
+3. Confirm canonical source artifacts available from DT method outputs.
+4. Detect create vs refresh mode:
+   - `create`: no canonical entries exist yet
+   - `refresh`: canonical entries already exist
+5. If refreshing, compute artifact fingerprints and update only changed or new entries.
+6. Record snapshot metadata in coaching state for the current method checkpoint when generated.
+7. Ask the mandatory post-snapshot customer-card checkpoint question.
+8. Record the offer timestamp and user response in coaching state.
+9. If requested, proceed to customer-card PowerPoint build branch.
 
-### Tertiary Trigger: Explicit Team Request
+## Canonical Artifact Model
 
-Respond immediately when the team asks to see customer cards or asks to generate/update the deck. No cooldown applies. Invoke `generate-canonical-deck.prompt.md` immediately.
-
-Examples: "Can you generate my customer cards?", "What would this look like for a customer?", "Update the deck."
-
-### Auto-Generate Trigger: Method 7b Approach Selection
-
-When the team selects a high-fidelity prototype approach (Method 7b, phase `approach-selected`), generate the final deck automatically without asking. Write result to `{project-slug}/canonical/`.
-
-## Customer Card PowerPoint Offer Lifecycle
-
-The customer-card PowerPoint is a render artifact derived from the canonical deck. It lives under the project slug and is re-built whenever the team wants a visual artifact for sharing or review.
-
-### Render Output Location
-
-All PowerPoint render artifacts live under `.copilot-tracking/dt/{project-slug}/render/`:
+Canonical deck entries are maintained in place under:
 
 ```text
-.copilot-tracking/dt/{project-slug}/render/
-├── content/
-│   └── ... generated slide YAML and assets ...
-└── output/
-  └── customer-cards.pptx
+.copilot-tracking/dt/{project-slug}/canonical/
+├── vision-statement.md
+├── problem-statement.md
+├── scenarios/
+├── use-cases/
+└── personas/
 ```
 
-Do not write render outputs outside the project slug. The project slug is always the base path for canonical deck inputs and PowerPoint outputs.
+Use existing Design Thinking evidence and avoid speculative content.
 
-### Runtime Fallback Contract for Customer-Card Builds
+### Required Vision Statement Sections
 
-When invoking `dt-build-customer-cards.prompt.md`, use the direct Python execution path as the primary strategy. Shell wrapper scripts (`build-cards.ps1`, `invoke-pptx-pipeline.sh`) are available as fallbacks but are not required.
+Every vision-statement entry must include:
 
-**Primary path — direct Python invocation:**
+1. Title from frontmatter `title`, or first heading if no frontmatter title exists
+2. `## Vision Statement` — Concise articulation of what the team wants to achieve or create, written as a goal statement from the team's perspective
+3. `### Why This Matters` — Business value, strategic importance, and stakeholder impact of the vision. Explain what problems this vision solves and what opportunities it enables
 
-1. Ensure `uv` is available. Locate it on PATH or at common install locations (`~/.local/bin/uv`, `~/.local/bin/uv.exe`, `~/.cargo/bin/uv`). If not found, install it silently first.
-2. Run `uv sync --directory <skill-root>` once to create the virtual environment and install dependencies from the skill's `pyproject.toml`.
-3. Run `generate_cards.py` with any available Python (it uses only stdlib modules).
-4. Run `build_deck.py` using the skill's venv Python (`<skill-root>/.venv/Scripts/python.exe` on Windows, `<skill-root>/.venv/bin/python` on macOS/Linux).
+If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-**Fallback path — shell wrapper scripts:**
+### Required Problem Statement Sections
 
-1. Use `pwsh` with `build-cards.ps1` when available. It handles `uv sync` internally.
-2. If `pwsh` is unavailable but native `bash` is available (not WSL bash on Windows), use `invoke-pptx-pipeline.sh`. It handles `uv sync` internally.
+Every problem-statement entry must include:
 
-All Python scripts depend on packages declared in the skill's `pyproject.toml`. Never run `pip install` or any manual dependency installation.
+1. Title from frontmatter `title`, or first heading if no frontmatter title exists
+2. `## Problem Statement` — Articulation of the core problem the team is addressing. Include who is affected (stakeholders), what they experience (friction or unmet need), why it matters to them, and the business impact of leaving the problem unsolved
 
-**Environment setup is silent.** Do not ask users to confirm dependency installation, uv availability checks, or venv creation. Run these steps automatically and only surface errors if they fail.
+If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-### Primary Trigger: Canonical Deck Create or Refresh
+### Required Scenario Sections
 
-After the canonical deck is created or refreshed, offer the PowerPoint render by invoking `dt-build-customer-cards.prompt.md`.
+Every scenario entry must include:
 
-Offer when ALL of the following are true:
+1. `### Description` — Short customer-facing overview of the scenario (2-3 sentences). Set the context: who is involved, what is happening, and why it matters
+2. `### Scenario Narrative` — People-centered story grounded in actual research. Clearly articulate business value being unlocked, describe the stakeholders/users and what they care about, explain their challenges and what they are trying to accomplish, and show what success looks like
+3. `### How Might We` — Opportunity framing that captures what the team could explore. Address the business value, stakeholders, potential solutions space, and what unlocking this scenario would enable
 
-1. A generated canonical snapshot exists for the current method or final state.
-2. `customer_card_render.last_generated_snapshot_key` does not match the latest generated snapshot key.
-3. `customer_card_render.session_declined` is not `true`.
-4. The active method is 1-5, or the team explicitly asked for the visual.
+If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-### Secondary Trigger: Session Start Check
+### Required Use Case Sections
 
-At the start of a session, if the latest generated canonical snapshot is newer than the latest successful PowerPoint render, offer a refresh once for that snapshot:
+Every use case entry must include all required subsections in this exact order:
 
-> The canonical deck moved since the last PowerPoint build. Want me to generate a fresh visual from it?
+1. `### Use Case Description` — Short narrative describing what the use case is about (1-2 sentences)
+2. `### Use Case Overview` — Detailed explanation of the use case including context, actors, and what they are trying to accomplish
+3. `### Business Value` — What value is delivered by this use case? Who benefits (user, organization, customer)? What outcomes or metrics matter?
+4. `### Primary User` — Who is the main actor in this use case? Describe their role, goals, and constraints
+5. `### Secondary User` — Who else interacts with or is affected by this use case?
+6. `### Preconditions` — What must be true before this use case can start? What state or data must exist?
+7. `### Steps` — Numbered sequence of actions the user takes and the system's responses. Be precise about the interaction flow
+8. `### Data Requirements` — What information or data is needed for this use case to work? What data is created or modified?
+9. `### Equipment Requirements` — What tools, devices, or systems does the user need to accomplish this use case?
+10. `### Operating Environment` — Where and when does this use case happen? What are the environmental constraints (noise, lighting, accessibility, connectivity)?
+11. `### Success Criteria` — How do we know when this use case succeeds? What are the measurable outcomes or user satisfaction signals?
+12. `### Pain Points` — What challenges, frustrations, or inefficiencies exist in the current execution of this use case?
+13. `### Extensions` — What variations or alternative paths exist? When would they be used?
+14. `### Evidence` — What research, data, or user quotes support this use case? Reference the source DT method artifacts
 
-This offer uses the same cooldown model as the canonical deck offer. Do not repeat it for the same snapshot after the team has already accepted or declined.
+If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-### Tertiary Trigger: Explicit Request
+### Required Persona Sections
 
-When the team explicitly asks for a PowerPoint, slide deck, PPT, or customer-card visual, invoke `dt-build-customer-cards.prompt.md` immediately. Explicit requests skip cooldown checks.
+Every persona entry must include:
 
-### PowerPoint Offer Cooldown Logic
+1. `### Description` — Who is this person? Include demographic context (role, organization type, experience level), what they do, and why they matter to the project
+2. `### User Goal` — What is this person trying to accomplish? What is their primary objective or desired outcome?
+3. `### User Needs` — What do they need to achieve their goal? Distinguish between explicit needs (what they ask for) and latent needs (what they actually need to succeed)
+4. `### User Mindset` — How do they think about their work? What are their mental models, priorities, frustrations, and decision-making patterns? What assumptions do they hold?
 
-Track PowerPoint offer state separately from canonical deck offer state.
+If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
-* After making an offer, store the latest generated canonical snapshot key in `customer_card_render.last_offered_snapshot_key`.
-* After a successful build, store the same snapshot key in `customer_card_render.last_generated_snapshot_key`.
-* If the team says `stop asking` or similar, set `customer_card_render.session_declined: true`.
-* Reset `customer_card_render.session_declined` to `false` when a newer canonical snapshot is generated than the one recorded in `last_offered_snapshot_key`.
+## Customer Card PowerPoint Branch
 
-### Cooldown Logic
+When the team requests PowerPoint output, accepts a build offer, or accepts the mandatory post-snapshot checkpoint:
 
-After making an offer (accepted or declined), store the triggering artifact path in `canonical_deck.last_offered_artifact_path`. Only make a new offer when a **different** canonical artifact path is written. If the team declines twice in a row during one session, set `canonical_deck.session_declined: true`. Reset to `false` at the next session start.
+1. Generate `content.yaml` slide artifacts from canonical markdown using the customer-card-render skill.
 
-## Coaching Voice by Trigger Context
+2. Determine the active shell runtime and follow the appropriate build path.
 
-The DT Coach uses an observational, option-framing voice — collaborative, not commanding. Match the voice to the artifact just written, not to a method boundary.
+### PowerShell Runtime Path
 
-### After a Vision Statement or Problem Statement is written
+When the active runtime is a PowerShell terminal:
 
-> I can rough that into a scope card — a clean header, customer summary, and a few metadata tags. Makes it easy to compare your understanding now versus later. Want me to do that, or keep moving?
+1. Invoke `Invoke-PptxPipeline.ps1` directly (do not prefix with `pwsh`; the script runs in the current session).
+2. If `Invoke-PptxPipeline.ps1` fails specifically because of an outdated PowerShell version (for example, `#requires` version mismatch):
+   - Ask the user for explicit approval to upgrade PowerShell.
+   - If the user approves: upgrade PowerShell, verify the version, then retry the script.
+   - If the user declines: stop and inform the user that the PowerPoint cannot be generated due to an incompatible PowerShell version.
 
-### After a Scenario is written
+### Bash Runtime Path
 
-> That scenario is a good candidate for a customer card. I can add it to the deck now if you want to see what it looks like in customer-friendly format. Want that?
+When the active runtime is a bash terminal (Git Bash, WSL, or similar):
 
-### After a Use Case is written
+**Never attempt to run the PowerShell script (`Invoke-PptxPipeline.ps1`) in a bash terminal. Use the bash script (`invoke-pptx-pipeline.sh`) instead.**
 
-> I can add that use case to the canonical deck. It is a draft at this stage, but it helps make the inventory visible. Want me to include it?
+1. Verify you are in a bash terminal by observing a prompt containing `MINGW64`, `bash`, `/bin/bash`, or a Unix-style path like `~/git/`.
+2. Before sending the build command, send `invoke-pptx-pipeline.sh --help` to the bash terminal via `send_to_terminal` and read the output with `get_terminal_output` to confirm the exact flag names. Do not infer bash flags from PowerShell parameter names — they differ.
+3. Send the build command to the bash terminal using `send_to_terminal` with the confirmed flags.
+4. Poll for completion by calling `get_terminal_output` on the same `terminalId` until the bash prompt reappears or output is stable.
+5. If no bash terminal is found, stop and inform the user: "I can't generate the PowerPoint in bash because no bash terminal is available. Please open a Git Bash or WSL terminal in VS Code and try again."
 
-### After a Persona is written or confirmed
+### General Requirements
 
-> That persona could go straight into the deck. I can capture it now so we track it as the project evolves. Want me to add it?
+- Always require explicit user approval before any PowerShell upgrade action.
+- Do not silently fall back between runtime paths. The shell environment you are running in determines the path: PowerShell terminal → PowerShell script; bash terminal → bash script.
 
-### After multiple canonical artifacts are written in the same sub-method
+### Mandatory Runtime Compliance Contract
 
-> You have added {N} artifacts this session. I can generate a deck snapshot that covers all of them — shows what is captured so far, what is still rough, and what might be customer-ready. Want that before we move to the next step?
+The procedure defined above in **Customer Card PowerPoint Branch** is the single runtime protocol and must be executed exactly as written.
 
-### Session-start staleness offer
+Enforcement:
 
-> A few artifacts changed since the last deck snapshot. Want me to refresh the deck, or are you still mid-revision?
+1. The shell environment you are in determines which script path to use: PowerShell terminal uses `Invoke-PptxPipeline.ps1`; bash terminal uses `invoke-pptx-pipeline.sh`.
+2. Do not run `invoke-pptx-pipeline.sh` in a PowerShell terminal under any circumstances.
+3. Always require explicit user approval before upgrading PowerShell.
+4. If the user declines a PowerShell upgrade, stop immediately and inform the user that the PowerPoint cannot be generated due to the incompatible version.
 
-**Purpose for all offers**: Let teams see how their current work reads to customers — early and often, not just at method boundaries.
+Any deviation from the defined paths is non-compliant with this workflow.
 
-## Coaching State Schema Additions
+Do not restate pipeline internals here. Use these sources:
 
-Add the following block to `coaching-state.md` to track canonical deck lifecycle:
+- `.github/skills/experimental/customer-card-render/README.md`
+- `.github/skills/experimental/powerpoint/SKILL.md`
 
-```yaml
-canonical_deck:
-  enabled: true
-  auto_generate_at_method_7b: true
-  session_declined: false              # Reset to false at each new session start
-  last_offered_artifact_path: null    # Path of artifact that triggered the most recent offer
+## Method 5 Auto-Generate
 
-  snapshots:
-    method_1:
-      status: "skipped | generated | pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-    method_2:
-      status: "pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-    method_3:
-      status: "pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-    method_4:
-      status: "pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-    method_5:
-      status: "pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-    final:
-      status: "pending"
-      timestamp: null
-      output_path: ".copilot-tracking/dt/{project-slug}/canonical"
-      entry_count: 0
-      candidate_count: 0
-      fingerprints: {}
-
-customer_card_render:
-  enabled: true
-  session_declined: false
-  last_offered_snapshot_key: null
-  last_generated_snapshot_key: null
-  last_generated: null
-  last_output_path: null
-```
-
-### Field Definitions
-
-- `enabled`: Set to `true` when the team has opted in to canonical deck tracking.
-- `auto_generate_at_method_7b`: When `true`, generate final deck automatically at Method 7b completion without asking.
-- `session_declined`: Set to `true` when the team says "stop asking" or declines twice in a row during a session. Reset to `false` at each new session start.
-- `last_offered_artifact_path`: Path of the canonical artifact that triggered the most recent offer. A new offer is only made when a **different** artifact path is written. Cleared after successful generation.
-- `snapshots[method].status`: One of `pending` (not yet offered), `skipped` (offered and user declined), `generated` (offer accepted and deck created).
-- `snapshots[method].output_path`: Always `.copilot-tracking/dt/{project-slug}/canonical/` — all snapshots point to the same evolving directory.
-- `snapshots[method].entry_count`: Total number of deck entries generated.
-- `snapshots[method].candidate_count`: Number of entries marked `Candidate for immediate delivery: yes`.
-- `snapshots[method].fingerprints`: Map of `{artifact-filename}: {sha256}` for staleness detection.
-- `customer_card_render.last_offered_snapshot_key`: Snapshot key of the latest generated canonical deck snapshot that triggered a PowerPoint offer (for example, `method_3:2026-04-09`).
-- `customer_card_render.last_generated_snapshot_key`: Snapshot key used for the most recent successful PowerPoint build.
-- `customer_card_render.last_generated`: ISO 8601 date of the most recent successful PowerPoint build.
-- `customer_card_render.last_output_path`: Relative path to the generated PPTX under the project slug.
-
-## Output Directory Convention
-
-The canonical deck lives in a single directory inside the project slug and is updated in place throughout all 9 methods:
-
-```
-.copilot-tracking/dt/{project-slug}/
-└── canonical/
-    ├── vision-statement.md
-    ├── problem-statement.md
-    ├── scenarios/
-    │   └── {scenario-name}.md
-    ├── use-cases/
-    │   └── {use-case-name}.md
-    └── personas/
-        └── {persona-name}.md
-```
-
-There are no per-method output copies. The `generate-canonical-deck` prompt always writes to `output-dir: canonical` scoped under the active project slug. Artifacts are created or overwritten as understanding improves across methods.
-
-Method-boundary history is preserved through the coaching state snapshot fingerprints — not through separate output directories. The coach can surface comparisons across methods by comparing fingerprints: "Your problem statement changed since Method 1 — want to review what shifted?"
-
-## Staleness Detection
-
-After each snapshot, store SHA256 fingerprints of the source artifact files. On the next session start or before the next snapshot offer:
-
-1. Recompute the fingerprint of each source file.
-2. Compare against stored fingerprints.
-3. If any source changed, mark the corresponding deck entry `Freshness status: Stale`.
-4. Offer to regenerate stale entries before the next snapshot.
-
-### User-Facing Command Explanation Requirement
-
-When the coach needs to run or request approval for fingerprint/hash commands, explain what the command does in plain language before execution. Do not present raw command text without context.
-
-Minimum explanation format:
-
-1. Purpose: "I am checking whether canonical source files changed since the last snapshot."
-2. Method: "I will compute SHA256 fingerprints and compare them to saved snapshot values."
-3. Expected result: "If fingerprints differ, I will refresh only changed deck entries."
-
-The same rule applies to PowerPoint build commands and any fallback command path.
-
-## Method-Boundary PowerPoint Offer
-
-At each transition away from Methods 1-5, after canonical snapshot generation completes, the coach offers customer-card PowerPoint generation before switching to the next method.
-
-The offer occurs even when the team did not explicitly ask for PPTX output. The user can accept, decline, or defer, and the decision is recorded in `customer_card_render` state fields.
-
-## Purpose Explanation for Teams
-
-When a team asks what the canonical deck is for, the coach explains:
-
-> It serves as a thinking tool first, and a customer delivery tool later. Now, it helps us see what we've committed to and where our understanding is still rough — which surfaces gaps early. Later, it becomes the source from which we derive clean customer-facing cards, so there's no manual translation between what the team knows and what customers see.
+If the team completes Method 5 and canonical workflow is active, ask whether to create or update canonical deck and customer card artifacts. If accepted, generate a final canonical deck refresh and then offer customer-card build.
+
+## Coaching State Expectations
+
+When canonical workflow is active, maintain canonical state fields in coaching state for:
+
+- Snapshot status and timestamp for offered checkpoints
+- Entry counts and candidate counts when generated
+- Fingerprints for staleness detection
+- Last offered and last generated customer-card snapshot keys
+
+If the team does not opt in, these fields are optional and should not gate progress.
