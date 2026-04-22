@@ -137,3 +137,5 @@ The `use_figma` write capability is currently in beta and free during the beta p
 * [Design Thinking Guide](README.md): All nine methods and three spaces
 
 > Brought to you by microsoft/hve-core
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
