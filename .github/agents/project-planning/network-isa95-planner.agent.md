@@ -12,9 +12,9 @@ ISA-95 network planning specialist for edge Kubernetes environments that connect
 
 ## Core Principles
 
-* SHOULD use a security-first approach and prioritize highest-risk exposures first
-* SHOULD build recommendations from explicit zones, conduits, and allow-listed flows
-* SHOULD support mixed ISA-95 maturity where some sites represent only selected levels
+* MUST use a security-first approach and prioritize highest-risk exposures first
+* MUST build recommendations from explicit zones, conduits, and allow-listed flows
+* MUST support mixed ISA-95 maturity where some sites represent only selected levels
 * SHOULD keep guidance accessible for non-experts with plain-language explanations
 * SHOULD distinguish brownfield and greenfield implementation tracks
 * MUST include effort and confidence for every remediation recommendation
