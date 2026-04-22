@@ -14,7 +14,7 @@ metadata:
 
 ## Overview
 
-Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides `Get-CodeScanningAlerts.ps1` for all read operations.
+Code scanning alerts are produced by static analysis tools such as CodeQL and Scorecard and surfaced in the GitHub Security tab. The GitHub Security tab is not accessible through the default MCP toolset, so this skill provides scripts for all read operations.
 
 ## Prerequisites
 

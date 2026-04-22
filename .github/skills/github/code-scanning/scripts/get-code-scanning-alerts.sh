@@ -43,7 +43,7 @@ if [[ -z "$OWNER" || -z "$REPO" ]]; then
     usage
 fi
 
-if [[ ! "$OWNER" =~ ^[a-zA-Z0-9._/-]+$ ]]; then
+if [[ ! "$OWNER" =~ ^[a-zA-Z0-9._-]+$ ]]; then
     echo "Error: -o OWNER contains invalid characters." >&2; exit 1
 fi
 if [[ ! "$REPO" =~ ^[a-zA-Z0-9._-]+$ ]]; then
@@ -62,7 +62,7 @@ if ! command -v gh &>/dev/null; then
 fi
 
 if ! command -v jq &>/dev/null; then
-    echo "Error: jq not found. Install from https://stedolan.github.io/jq/" >&2
+    echo "Error: jq not found. Install from https://jqlang.github.io/jq/" >&2
     exit 1
 fi
 

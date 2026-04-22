@@ -27,7 +27,7 @@
     Output format: Table (default), Json, or GroupedJson.
     - Table: Human-readable summary table.
     - Json: Full grouped alert objects as JSON array.
-    - GroupedJson: Same as Json; alias retained for backward compatibility.
+    - GroupedJson: Alias for Json; produces the same output.
 
 .EXAMPLE
     ./Get-CodeScanningAlerts.ps1 -Owner microsoft -Repo edge-ai
@@ -38,7 +38,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidatePattern('^[a-zA-Z0-9._/-]+$', ErrorMessage = 'Owner must contain only alphanumeric characters, dots, hyphens, underscores, or slashes.')]
+    [ValidatePattern('^[a-zA-Z0-9._-]+$', ErrorMessage = 'Owner must contain only alphanumeric characters, dots, hyphens, or underscores.')]
     [string]$Owner,
 
     [Parameter(Mandatory = $true)]
@@ -54,8 +54,11 @@ param(
     [string]$OutputFormat = 'Table'
 )
 
+$ErrorActionPreference = 'Stop'
+
+#region Main Execution
+
 if ($MyInvocation.InvocationName -ne '.') {
-    $ErrorActionPreference = 'Stop'
     $env:GH_PAGER = ''
 
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
@@ -104,3 +107,5 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     exit 0
 }
+
+#endregion Main Execution
