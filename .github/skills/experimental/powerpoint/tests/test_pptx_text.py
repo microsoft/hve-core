@@ -33,7 +33,8 @@ from pptx_text import (
 
 def _make_textbox(slide, text="Test"):
     """Create a textbox on a slide with given text."""
-    txBox = slide.shapes.add_textbox(Inches(0), Inches(0), Inches(4), Inches(2))
+    txBox = slide.shapes.add_textbox(
+        Inches(0), Inches(0), Inches(4), Inches(2))
     txBox.text_frame.text = text
     return txBox
 
@@ -181,7 +182,8 @@ class TestExtractParagraphProperties:
     def test_roundtrip_spacing(self, blank_slide):
         txBox = _make_textbox(blank_slide)
         para = txBox.text_frame.paragraphs[0]
-        apply_paragraph_properties(para, {"space_before": 12, "space_after": 6})
+        apply_paragraph_properties(
+            para, {"space_before": 12, "space_after": 6})
         props = extract_paragraph_properties(para)
         assert props["space_before"] == pytest.approx(12.0, abs=0.1)
         assert props["space_after"] == pytest.approx(6.0, abs=0.1)
@@ -519,7 +521,8 @@ class TestTextConstants:
         assert set(VERTICAL_ANCHOR_MAP.keys()) == {"top", "middle", "bottom"}
 
     def test_vertical_anchor_reverse(self):
-        assert set(VERTICAL_ANCHOR_REVERSE.values()) == {"top", "middle", "bottom"}
+        assert set(VERTICAL_ANCHOR_REVERSE.values()) == {
+            "top", "middle", "bottom"}
 
 
 # ----- split_lines -----
@@ -612,7 +615,10 @@ class TestPopulateTextFrame:
         paras = txBox.text_frame.paragraphs
         assert paras[2].text == "First step"
         assert paras[3].text == "Second step"
-        assert extract_bullet_properties(paras[2])["bullet_auto_number"] == "arabicPeriod"
+        assert (
+            extract_bullet_properties(
+                paras[2])["bullet_auto_number"] == "arabicPeriod"
+        )
         assert extract_bullet_properties(paras[2])["bullet_start_at"] == 1
         assert extract_bullet_properties(paras[3])["bullet_start_at"] == 2
 

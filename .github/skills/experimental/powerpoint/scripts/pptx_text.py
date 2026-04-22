@@ -85,9 +85,7 @@ def _list_paragraph_from_line(line: str, elem: dict) -> dict:
         paragraph["bullet_margin_left"] = elem.get(
             "bullet_margin_left", _DEFAULT_LIST_MARGIN_LEFT
         )
-        paragraph["bullet_indent"] = elem.get(
-            "bullet_indent", _DEFAULT_LIST_INDENT
-        )
+        paragraph["bullet_indent"] = elem.get("bullet_indent", _DEFAULT_LIST_INDENT)
         return paragraph
 
     ordered = re.match(
@@ -104,9 +102,7 @@ def _list_paragraph_from_line(line: str, elem: dict) -> dict:
         paragraph["bullet_margin_left"] = elem.get(
             "bullet_margin_left", _DEFAULT_LIST_MARGIN_LEFT
         )
-        paragraph["bullet_indent"] = elem.get(
-            "bullet_indent", _DEFAULT_LIST_INDENT
-        )
+        paragraph["bullet_indent"] = elem.get("bullet_indent", _DEFAULT_LIST_INDENT)
         return paragraph
 
     return {"text": line}

@@ -132,9 +132,7 @@ def normalize_text(text: str) -> str:
     def flush_prose() -> None:
         if prose_lines:
             normalized_blocks.append(
-                " ".join(
-                    line.strip() for line in prose_lines if line.strip()
-                )
+                " ".join(line.strip() for line in prose_lines if line.strip())
             )
             prose_lines.clear()
 
@@ -192,9 +190,8 @@ def _vision_sections(body: str) -> dict[str, str]:
 def _problem_sections(body: str) -> dict[str, str]:
     """Extract sections for Problem Statement card."""
     return {
-        "P_PROBLEM_STATEMENT": extract_section(
-            body, "Problem Statement"
-        ) or extract_section(body, "Customer-friendly summary"),
+        "P_PROBLEM_STATEMENT": extract_section(body, "Problem Statement")
+        or extract_section(body, "Customer-friendly summary"),
     }
 
 
@@ -255,6 +252,7 @@ def _use_case_slide4(body: str) -> dict[str, str]:
         "UC_EVIDENCE": extract_section(body, "Evidence"),
     }
 
+
 def parse_card(path: Path, canonical_root: Path) -> Card | None:
     text = path.read_text(encoding="utf-8")
     frontmatter, body = parse_frontmatter(text)
@@ -274,9 +272,9 @@ def parse_card(path: Path, canonical_root: Path) -> Card | None:
         source_path = path.relative_to(canonical_root).as_posix()
 
     metadata_last_updated = frontmatter.get("last updated")
-    last_updated = metadata_last_updated or datetime.now(
-        timezone.utc
-    ).strftime("%Y-%m-%d")
+    last_updated = metadata_last_updated or datetime.now(timezone.utc).strftime(
+        "%Y-%m-%d"
+    )
 
     # Default summary (used as fallback if sections are empty)
     summary = extract_intro_block(body) or ""
@@ -402,9 +400,9 @@ def collect_cards(canonical_root: Path) -> list[Card]:
 
 
 def render_slide(card: Card, slide_number: int) -> str:
-    template_text = template_for_type(
-        card.artifact_type, card.slide_part
-    ).read_text(encoding="utf-8")
+    template_text = template_for_type(card.artifact_type, card.slide_part).read_text(
+        encoding="utf-8"
+    )
 
     # Base replacements for all slides
     replacements = {
@@ -448,9 +446,7 @@ def write_outputs(cards: list[Card], output_dir: Path) -> None:
 
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description=(
-            "Generate customer-card content YAML from canonical markdown."
-        )
+        description=("Generate customer-card content YAML from canonical markdown.")
     )
     parser.add_argument("--canonical-dir", type=Path, default=_DEFAULT_CANONICAL)
     parser.add_argument("--output-dir", type=Path, default=_DEFAULT_OUTPUT)

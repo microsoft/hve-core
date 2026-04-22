@@ -9,11 +9,8 @@ from pathlib import Path
 
 
 def _load_module():
-    script_path = (
-        Path(__file__).resolve().parents[1] / "scripts" / "generate_cards.py"
-    )
-    spec = importlib.util.spec_from_file_location(
-        "generate_cards", script_path)
+    script_path = Path(__file__).resolve().parents[1] / "scripts" / "generate_cards.py"
+    spec = importlib.util.spec_from_file_location("generate_cards", script_path)
     module = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None
     sys.modules["generate_cards"] = module
