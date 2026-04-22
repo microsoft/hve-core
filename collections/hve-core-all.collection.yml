@@ -143,6 +143,9 @@ items:
   maturity: experimental
 - path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
+- path: .github/prompts/data-science/synth-data-generate.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
   kind: prompt
   maturity: preview
@@ -239,9 +242,6 @@ items:
   kind: prompt
   maturity: experimental
 - path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/data-science/synth-data-generate.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/incident-response.prompt.md
