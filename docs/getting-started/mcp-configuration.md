@@ -95,13 +95,13 @@ GitHub repository and issue management.
 
 Figma and FigJam board creation and reading.
 
-| Property      | Value                          |
-|---------------|--------------------------------|
-| Type          | http                           |
-| URL           | `https://mcp.figma.com/mcp`    |
+| Property      | Value                             |
+|---------------|-----------------------------------|
+| Type          | http                              |
+| URL           | `https://mcp.figma.com/mcp`       |
 | Auth          | Browser-based OAuth on first call |
-| Local install | None                           |
-| Used by       | `dt-figma-export` prompt       |
+| Local install | None                              |
+| Used by       | `dt-figma-export` prompt          |
 
 The Figma MCP server requires a Figma account with a Dev or Full seat on a Professional, Organization, or Enterprise plan for sustained usage. Starter plans are limited to 6 tool calls per month. Authentication happens automatically via browser OAuth on first use.
 

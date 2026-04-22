@@ -30,11 +30,11 @@ The export is additive to Design Thinking coaching. It does not replace `.copilo
 
 ## Output Types
 
-| Type | Tool | Best For |
-|------|------|----------|
-| **FigJam** (default) | FigJam board | Collaborative whiteboarding: sticky notes, text, connectors, and diagrams. Closest to workshop facilitation. |
-| **Design** | Figma Design file | Structured frames with auto-layout for higher-fidelity visual outputs. Good for stakeholder presentations. |
-| **Both** | One of each | Teams that want both a working board and a polished summary. |
+| Type                 | Tool              | Best For                                                                                                     |
+|----------------------|-------------------|--------------------------------------------------------------------------------------------------------------|
+| **FigJam** (default) | FigJam board      | Collaborative whiteboarding: sticky notes, text, connectors, and diagrams. Closest to workshop facilitation. |
+| **Design**           | Figma Design file | Structured frames with auto-layout for higher-fidelity visual outputs. Good for stakeholder presentations.   |
+| **Both**             | One of each       | Teams that want both a working board and a polished summary.                                                 |
 
 ## Prerequisites
 
@@ -110,9 +110,9 @@ Design file exports create structured frames with:
 
 The Figma MCP server applies rate limits based on your Figma plan:
 
-| Plan | Limit |
-|------|-------|
-| Starter, View, or Collab seats | Up to 6 tool calls per month |
+| Plan                                                      | Limit                                     |
+|-----------------------------------------------------------|-------------------------------------------|
+| Starter, View, or Collab seats                            | Up to 6 tool calls per month              |
 | Dev or Full seats on Professional/Organization/Enterprise | Per-minute limits (Figma REST API Tier 1) |
 
 A typical DT export session uses 5-15 tool calls depending on the number of artifacts. Teams on Starter plans should batch their exports carefully.
@@ -123,13 +123,13 @@ The `use_figma` write capability is currently in beta and free during the beta p
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| `figma` tools not available | Add the Figma server to `.vscode/mcp.json` and restart VS Code |
-| Authentication fails | Ensure your browser can reach `mcp.figma.com` and complete the OAuth flow |
-| Rate limit exceeded | Check your Figma plan; upgrade to a Dev or Full seat for higher limits |
-| `use_figma` rejects writes | Verify you have edit access to the target Figma file or create a new one |
-| Large exports timeout | Break the export into per-method calls instead of exporting the full project at once |
+| Issue                       | Solution                                                                             |
+|-----------------------------|--------------------------------------------------------------------------------------|
+| `figma` tools not available | Add the Figma server to `.vscode/mcp.json` and restart VS Code                       |
+| Authentication fails        | Ensure your browser can reach `mcp.figma.com` and complete the OAuth flow            |
+| Rate limit exceeded         | Check your Figma plan; upgrade to a Dev or Full seat for higher limits               |
+| `use_figma` rejects writes  | Verify you have edit access to the target Figma file or create a new one             |
+| Large exports timeout       | Break the export into per-method calls instead of exporting the full project at once |
 
 ## Next Steps
 

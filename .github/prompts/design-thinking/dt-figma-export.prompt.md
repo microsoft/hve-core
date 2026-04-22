@@ -242,13 +242,13 @@ function buildProjectDetails(fields, x, y) {
 
 Pull project details from `.copilot-tracking/dt/{project-slug}/coaching-state.md` and any associated metadata. Map fields:
 
-| Source | Field Label | Notes |
-|---|---|---|
-| `customer`, `client`, `organization` | Customer | Customer or client organization name |
-| `project`, `engagement`, `title` | Project | Project or engagement name |
-| `sprint`, `milestone`, `iteration` | Sprint | Current sprint or milestone label |
-| `workstream`, `stream`, `track` | Workstream | Active workstream or focus area |
-| `prototype_url`, `demo_url`, `video` | Prototype | URL or descriptive label for prototype or video |
+| Source                               | Field Label | Notes                                           |
+|--------------------------------------|-------------|-------------------------------------------------|
+| `customer`, `client`, `organization` | Customer    | Customer or client organization name            |
+| `project`, `engagement`, `title`     | Project     | Project or engagement name                      |
+| `sprint`, `milestone`, `iteration`   | Sprint      | Current sprint or milestone label               |
+| `workstream`, `stream`, `track`      | Workstream  | Active workstream or focus area                 |
+| `prototype_url`, `demo_url`, `video` | Prototype   | URL or descriptive label for prototype or video |
 
 If the coaching state does not contain a field, check the project README or ask the user. Never invent placeholder values.
 
@@ -454,20 +454,20 @@ function buildPersona(personaName, roleTitle, bodyText, rows, offsetX) {
 
 Pull persona data from artifact files under `.copilot-tracking/dt/{project-slug}/`. Map fields:
 
-| Artifact field | Template row | Notes |
-|---|---|---|
-| `name`, first heading | Intro name (40pt bold) | Display name of the persona |
-| `role`, `title`, subheading | Intro role (22pt bold) | Job title or role label |
-| `description`, body text | Intro body (14pt regular) | Paragraphs separated by `\n\n` |
-| `tools`, `primary_tools` | Primary Tools | Each item: tool name + parenthetical use |
-| `other_tools`, `secondary_tools` | Other Tools | Each item: tool name + parenthetical use |
-| `responsibilities`, `duties` | Responsibilities | Each item: 1--2 sentence description |
-| `traits`, `behavioural_traits` | Behavioural Traits | Each item: trait + brief qualifier |
-| `desires` | What do they desire in their role? | Each item: desired outcome statement |
-| `goals`, `motivations` | What kinds of goals drive them? | Each item: goal or motivation statement |
-| `needs` | Needs | Each item: need statement |
-| `hacks`, `workarounds` | Hacks and Workarounds | Each item: current workaround description |
-| `findings`, `key_findings` | Key Findings | Each item: research finding statement |
+| Artifact field                   | Template row                       | Notes                                     |
+|----------------------------------|------------------------------------|-------------------------------------------|
+| `name`, first heading            | Intro name (40pt bold)             | Display name of the persona               |
+| `role`, `title`, subheading      | Intro role (22pt bold)             | Job title or role label                   |
+| `description`, body text         | Intro body (14pt regular)          | Paragraphs separated by `\n\n`            |
+| `tools`, `primary_tools`         | Primary Tools                      | Each item: tool name + parenthetical use  |
+| `other_tools`, `secondary_tools` | Other Tools                        | Each item: tool name + parenthetical use  |
+| `responsibilities`, `duties`     | Responsibilities                   | Each item: 1--2 sentence description      |
+| `traits`, `behavioural_traits`   | Behavioural Traits                 | Each item: trait + brief qualifier        |
+| `desires`                        | What do they desire in their role? | Each item: desired outcome statement      |
+| `goals`, `motivations`           | What kinds of goals drive them?    | Each item: goal or motivation statement   |
+| `needs`                          | Needs                              | Each item: need statement                 |
+| `hacks`, `workarounds`           | Hacks and Workarounds              | Each item: current workaround description |
+| `findings`, `key_findings`       | Key Findings                       | Each item: research finding statement     |
 
 If a field is missing from the artifact, omit that row. Do not invent placeholder data.
 
