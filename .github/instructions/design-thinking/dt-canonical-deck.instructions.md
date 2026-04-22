@@ -136,7 +136,16 @@ If information is missing, use `<insufficient knowledge>` and add `#### Question
 Every problem-statement entry must include:
 
 1. Title from frontmatter `title`, or first heading if no frontmatter title exists
-2. `## Problem Statement` — Articulation of the core problem the team is addressing. Include who is affected (stakeholders), what they experience (friction or unmet need), why it matters to them, and the business impact of leaving the problem unsolved
+2. `## Problem Statement` — Exactly one sentence using this required generator framework:
+
+   `The [root cause] is producing an [undesirable effort] for [who it impacts]. How might we do [opportunity] so that we can provide [benefits]?`
+
+   Framework enforcement requirements:
+   - Replace all bracketed placeholders with concise, evidence-grounded content from available DT artifacts
+   - Do not leave bracketed placeholders in final canonical output
+   - Keep each replacement brief and specific; avoid generic filler
+   - Preserve the sentence structure and punctuation pattern of the framework
+   - If any required component is unknown, use `<insufficient knowledge>` in that component position
 
 If information is missing, use `<insufficient knowledge>` and add `#### Questions to Ask` with 2-5 targeted questions.
 
