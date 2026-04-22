@@ -57,27 +57,27 @@ Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
 
 if ($MyInvocation.InvocationName -ne '.') {
 
-$null = Test-UvAvailability
+    $null = Test-UvAvailability
 
-if (-not $SkipVenvSetup) {
-    Initialize-PythonEnvironment -SkillRoot $SkillRoot
-}
+    if (-not $SkipVenvSetup) {
+        Initialize-PythonEnvironment -SkillRoot $SkillRoot
+    }
 
-$python = Get-VenvPythonPath -VenvDir $VenvDir
-if (-not (Test-Path $python)) {
-    throw "Python not found at $python. Run without -SkipVenvSetup to initialize."
-}
+    $python = Get-VenvPythonPath -VenvDir $VenvDir
+    if (-not (Test-Path $python)) {
+        throw "Python not found at $python. Run without -SkipVenvSetup to initialize."
+    }
 
-$script = Join-Path $ScriptDir 'embed_audio.py'
-$PythonArgs = @('--input', $InputPath)
+    $script = Join-Path $ScriptDir 'embed_audio.py'
+    $PythonArgs = @('--input', $InputPath)
 
-if ($AudioDir) { $PythonArgs += '--audio-dir', $AudioDir }
-if ($OutputPath) { $PythonArgs += '--output', $OutputPath }
+    if ($AudioDir) { $PythonArgs += '--audio-dir', $AudioDir }
+    if ($OutputPath) { $PythonArgs += '--output', $OutputPath }
 
-& $python $script @PythonArgs
-if ($LASTEXITCODE -ne 0) {
-    throw "embed_audio.py exited with code $LASTEXITCODE"
-}
+    & $python $script @PythonArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "embed_audio.py exited with code $LASTEXITCODE"
+    }
 
 }
 

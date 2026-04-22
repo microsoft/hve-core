@@ -71,6 +71,11 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
 
     Uses single-pass regex substitution to avoid corrupting
     previously-inserted SSML tags.
+
+    Note: ``text`` is expected to be XML-escaped before calling this
+    function. Acronym keys must not contain ``&``, ``<``, or ``>``
+    because those characters will have been replaced with XML entities
+    and will not match.
     """
     if not acronyms:
         return text

@@ -78,31 +78,31 @@ Import-Module (Join-Path $ScriptDir 'Modules/TtsVoiceoverHelpers.psm1') -Force
 
 if ($MyInvocation.InvocationName -ne '.') {
 
-$null = Test-UvAvailability
+    $null = Test-UvAvailability
 
-if (-not $SkipVenvSetup) {
-    Initialize-PythonEnvironment -SkillRoot $SkillRoot
-}
+    if (-not $SkipVenvSetup) {
+        Initialize-PythonEnvironment -SkillRoot $SkillRoot
+    }
 
-$python = Get-VenvPythonPath -VenvDir $VenvDir
-if (-not (Test-Path $python)) {
-    throw "Python not found at $python. Run without -SkipVenvSetup to initialize."
-}
+    $python = Get-VenvPythonPath -VenvDir $VenvDir
+    if (-not (Test-Path $python)) {
+        throw "Python not found at $python. Run without -SkipVenvSetup to initialize."
+    }
 
-$script = Join-Path $ScriptDir 'generate_voiceover.py'
-$PythonArgs = @()
+    $script = Join-Path $ScriptDir 'generate_voiceover.py'
+    $PythonArgs = @()
 
-if ($DryRun) { $PythonArgs += '--dry-run' }
-if ($Voice) { $PythonArgs += '--voice', $Voice }
-if ($Rate) { $PythonArgs += '--rate', $Rate }
-if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }
-if ($OutputDir) { $PythonArgs += '--output-dir', $OutputDir }
-if ($Lexicon) { $PythonArgs += '--lexicon', $Lexicon }
+    if ($DryRun) { $PythonArgs += '--dry-run' }
+    if ($Voice) { $PythonArgs += '--voice', $Voice }
+    if ($Rate) { $PythonArgs += '--rate', $Rate }
+    if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }
+    if ($OutputDir) { $PythonArgs += '--output-dir', $OutputDir }
+    if ($Lexicon) { $PythonArgs += '--lexicon', $Lexicon }
 
-& $python $script @PythonArgs
-if ($LASTEXITCODE -ne 0) {
-    throw "generate_voiceover.py exited with code $LASTEXITCODE"
-}
+    & $python $script @PythonArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "generate_voiceover.py exited with code $LASTEXITCODE"
+    }
 
 }
 
