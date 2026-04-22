@@ -33,6 +33,17 @@ Support both metadata naming variants:
 - `Source path` or `Source file path`
 - `Last updated` (fallback to current date)
 
+## Text Normalization Behavior
+
+The generator normalizes section content before rendering:
+
+* Hard-wrapped prose lines are unwrapped into single-line paragraphs.
+* Paragraph boundaries are preserved.
+* Markdown list item boundaries are preserved.
+
+This avoids visual line wrapping artifacts caused by canonical markdown hard wraps
+while preserving intentional list formatting.
+
 ## Field Mapping by Card Type
 
 ### Vision Statement
@@ -68,7 +79,9 @@ Required sections in order:
 
 **Generator Implementation**: `_scenario_sections()` extracts all three sections into individual placeholders: `SC_DESCRIPTION`, `SC_SCENARIO_NARRATIVE`, `SC_HOW_MIGHT_WE`.
 
-**Template Design**: Three textboxes on a single slide, each with a dedicated header and section content. Sections stack vertically without aggregation or truncation.
+**Template Design**: Three section-title textboxes plus three dedicated content
+textboxes on a single slide. "Description", "Scenario Narrative", and "How Might We"
+use the same visual section-title styling pattern as Use Case field sections.
 
 ### Use Case
 
@@ -95,6 +108,9 @@ Required sections:
 4. `### Data Requirements`
 
 **Generator Implementation**: `_use_case_slide2()` extracts these sections into the slide2 template placeholders: `UC_SECONDARY_USER`, `UC_PRECONDITIONS`, `UC_STEPS`, `UC_DATA_REQUIREMENTS`.
+
+The slide 2 template also uses `UC_PRIMARY_USER` to display the primary user alongside
+secondary user for continuity across use-case parts.
 
 #### Slide 3: Use Case Quality & Context
 

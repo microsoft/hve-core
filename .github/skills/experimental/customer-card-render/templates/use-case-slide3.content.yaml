@@ -33,9 +33,20 @@ elements:
   - type: textbox
     left: 0.6
     top: 2.2
-    width: 12.0
+    width: 5.8
     height: 0.4
-    text: "Equipment & Environment"
+    text: "Equipment Requirements"
+    font: "Segoe UI"
+    font_size: 12
+    font_color: "#4DA3FF"
+    font_bold: true
+
+  - type: textbox
+    left: 6.6
+    top: 2.2
+    width: 5.8
+    height: 0.4
+    text: "Operating Environment"
     font: "Segoe UI"
     font_size: 12
     font_color: "#4DA3FF"
@@ -46,7 +57,7 @@ elements:
     top: 2.7
     width: 5.8
     height: 0.6
-    text: "Equipment:\n{{UC_EQUIPMENT_REQUIREMENTS}}"
+    text: "{{UC_EQUIPMENT_REQUIREMENTS}}"
     font: "Segoe UI"
     font_size: 10
     font_color: "#D7DDEA"
@@ -57,7 +68,7 @@ elements:
     top: 2.7
     width: 5.8
     height: 0.6
-    text: "Operating:\n{{UC_OPERATING_ENVIRONMENT}}"
+    text: "{{UC_OPERATING_ENVIRONMENT}}"
     font: "Segoe UI"
     font_size: 10
     font_color: "#D7DDEA"

@@ -109,15 +109,55 @@ def template_for_type(artifact_type: str, slide_part: int = 0) -> Path:
 
 
 def yaml_escape(text: str) -> str:
-    # Normalize whitespace and encode line breaks as explicit \n escape sequences.
-    # Multiline quoted YAML scalars fold physical newlines to spaces, so literal
-    # \n is required to preserve list lines for the PPTX renderer.
-    lines = [line.rstrip() for line in text.strip().splitlines() if line.strip()]
-    text = "\n".join(lines)
+    # Normalize canonical prose before YAML encoding.
+    # Hard-wrapped lines are merged into single-line paragraphs while list
+    # item boundaries are preserved.
+    text = normalize_text(text)
     # Escape backslashes first to avoid double-escaping, then quotes, then
     # convert logical line breaks to explicit escape sequences.
     text = text.replace("\\", "\\\\").replace('"', '\\"')
     return text.replace("\n", "\\n")
+
+
+def normalize_text(text: str) -> str:
+    """Merge hard-wrapped prose lines while preserving list structure."""
+    if not text.strip():
+        return ""
+
+    list_pattern = re.compile(r"^\s*(?:[-*+]\s+|\d+[\.)]\s+)")
+    normalized_blocks: list[str] = []
+    prose_lines: list[str] = []
+    list_lines: list[str] = []
+
+    def flush_prose() -> None:
+        if prose_lines:
+            normalized_blocks.append(" ".join(line.strip() for line in prose_lines if line.strip()))
+            prose_lines.clear()
+
+    def flush_list() -> None:
+        if list_lines:
+            normalized_blocks.append("\n".join(line.strip() for line in list_lines if line.strip()))
+            list_lines.clear()
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            flush_prose()
+            flush_list()
+            continue
+
+        if list_pattern.match(line):
+            flush_prose()
+            list_lines.append(line)
+            continue
+
+        flush_list()
+        prose_lines.append(line)
+
+    flush_prose()
+    flush_list()
+
+    return "\n\n".join(block for block in normalized_blocks if block.strip())
 
 
 def _scenario_summary(body: str) -> str:
@@ -182,6 +222,7 @@ def _use_case_slide1(body: str) -> dict[str, str]:
 def _use_case_slide2(body: str) -> dict[str, str]:
     """Extract sections for Use Case Slide 2."""
     return {
+        "UC_PRIMARY_USER": extract_section(body, "Primary User"),
         "UC_SECONDARY_USER": extract_section(body, "Secondary User"),
         "UC_STEPS": extract_section(body, "Steps"),
         "UC_PRECONDITIONS": extract_section(body, "Preconditions"),
