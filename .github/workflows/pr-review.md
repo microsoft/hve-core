@@ -3,7 +3,6 @@ description: "Automated quality review on pull requests"
 on:
   pull_request:
     types: [opened, ready_for_review, synchronize]
-    forks: ["*"]
   skip-bots: ["dependabot[bot]", "github-actions[bot]"]
   reaction: eyes
 
@@ -62,6 +61,12 @@ Check the PR state from the event context.
 * The PR has the `skip-review` label AND the PR author's association is `MEMBER`,
   `OWNER`, or `COLLABORATOR`: call `noop` with message "Skipping: skip-review label
   set by maintainer."
+* The PR originates from a fork (`github.event.pull_request.head.repo.id` is
+  null or does not equal `github.repository_id`): call `noop` with message
+  "Skipping: fork PR, secrets unavailable."
+* The PR author (`github.event.pull_request.user.login`) is `dependabot[bot]`
+  or `github-actions[bot]`: call `noop` with message "Skipping: PR authored by
+  bot." Keep this list aligned with the `skip-bots` frontmatter entry above.
 
 **Failure to call `noop` when no review action is taken will cause workflow failure.**
 
