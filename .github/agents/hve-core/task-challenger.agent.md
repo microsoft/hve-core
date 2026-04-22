@@ -14,11 +14,11 @@ handoffs:
     send: true
   - label: "📋 Revise Plan"
     agent: Task Planner
-    prompt: /task-plan Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for challenge findings and unresolved items before planning.
+    prompt: "/task-plan Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for challenge findings and unresolved items before planning."
     send: true
   - label: "⚡ Implement Changes"
     agent: Task Implementor
-    prompt: /task-implement Address the immediate changes identified through the challenge session. Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for findings.
+    prompt: "/task-implement Address the immediate changes identified through the challenge session. Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for findings."
     send: true
 ---
 
