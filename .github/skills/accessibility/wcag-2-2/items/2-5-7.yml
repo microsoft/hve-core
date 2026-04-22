@@ -1,0 +1,25 @@
+id: "2-5-7"
+title: "Dragging Movements"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.5 Input Modalities"
+addedIn: "2.2"
+summary: "All functionality that uses a dragging movement for operation can be achieved by a single pointer without dragging, unless dragging is essential."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G219"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html"
+  - "https://www.w3.org/TR/WCAG22/"

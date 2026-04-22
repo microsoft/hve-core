@@ -1,0 +1,34 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: deliver-signed-artifact
+    title: Signed Release Artifacts
+    group: deliver
+    risk: critical
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Released artifacts are cryptographically signed (for example via Sigstore cosign attestations or GPG) and consumers are provided with public verification material, mitigating CISA SSCM artifact-tampering risks during distribution.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify release pipelines and detect signing or attestation steps.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify release artifacts lacking signatures or verification documentation.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add Sigstore attestations or GPG signing to release pipelines.
+    evidenceHints:
+      - ".github/workflows/release*.yml"
+      - ".github/workflows/sign*.yml"
+      - ".github/workflows/attest*.yml"
+      - "cosign.pub"
+      - "**/*.intoto.jsonl"
+      - "**/*.sigstore"
+      - "**/*.asc"
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers

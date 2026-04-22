@@ -1,0 +1,35 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 CODEOWNERS"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Code ownership enforcement for required reviews
+controls:
+- id: codeowners
+  appliesTo: [cloud, web, ml, fleet]
+  title: CODEOWNERS
+  description: Code ownership enforcement for required reviews
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the CODEOWNERS capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of CODEOWNERS is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - Code-Review
+  evidenceHints:
+  - .github/CODEOWNERS
+  - CODEOWNERS
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

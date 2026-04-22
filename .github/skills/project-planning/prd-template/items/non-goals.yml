@@ -1,0 +1,17 @@
+id: non-goals
+title: Non-Goals
+description: "Defines what is explicitly out of scope to prevent scope creep and set clear boundaries."
+template: |
+  ## Non-Goals
+
+  List capabilities, features, or outcomes that {{product_name}} will **not** address in this release. Non-goals set boundaries and prevent scope creep.
+
+  For each non-goal, state:
+
+  - The capability or outcome excluded.
+  - Why it is excluded (deferral, out of scope, handled elsewhere).
+
+  {{non_goals_detail}}
+inputs:
+  - name: non_goals_detail
+    description: "Additional non-goal items or context for exclusion rationale"

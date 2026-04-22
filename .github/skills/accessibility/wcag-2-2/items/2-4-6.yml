@@ -1,0 +1,26 @@
+id: "2-4-6"
+title: "Headings and Labels"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "Headings and labels describe topic or purpose."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G130"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/headings-and-labels.html"
+  - "https://www.w3.org/TR/WCAG22/"

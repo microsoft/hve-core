@@ -1,0 +1,30 @@
+id: "disclosure-faq"
+title: "Disclosure (FAQ) Pattern"
+itemKind: pattern
+summary: "Stack of collapsible question/answer regions where each question button toggles visibility of its answer."
+keyboardModel:
+  - "disclosure"
+focusManagement: "single"
+relatedRoles:
+  - "button"
+requiredStates:
+  - "aria-expanded"
+requiredProperties:
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-6"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/disclosure-faq/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/disclosure-faq/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

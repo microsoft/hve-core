@@ -1,0 +1,25 @@
+id: "3-3-8"
+title: "Accessible Authentication (Minimum)"
+itemKind: criterion
+level: "AA"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.2"
+summary: "A cognitive function test is not required for any step in an authentication process unless an alternative, mechanism, object recognition, or personal content option is available."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G218"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-minimum.html"
+  - "https://www.w3.org/TR/WCAG22/"

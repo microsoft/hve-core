@@ -68,6 +68,38 @@ items:
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/openssf-scorecard
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/slsa
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/openssf-best-practices-badge
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/sigstore
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/sbom
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/nist-ssdf
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/s2c2f
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/cisa-sscm
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/capability-inventory-hve-core
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/capability-inventory-physical-ai
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/framework-skill-interface
+    kind: skill
   - path: .github/skills/shared/pr-reference
     kind: skill
   # Security Planner Prompts
@@ -151,6 +183,9 @@ items:
     kind: instruction
     maturity: experimental
   - path: .github/instructions/security/sssc-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/security/sssc-risk-classification.instructions.md
     kind: instruction
     maturity: experimental
   # RAI Planner Instructions

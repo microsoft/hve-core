@@ -1,0 +1,45 @@
+id: sigstore-rekor-transparency
+version: "1.0"
+name: Sigstore Rekor — transparency log inclusion proof
+source: https://docs.sigstore.dev/logging/overview/
+description: >-
+  Every Sigstore signature is recorded in the Rekor transparency log;
+  consumers verify an inclusion proof to detect post-issuance tampering
+  or backdated signatures. Required for verifiable, auditable signing.
+controls:
+  - id: rekor-transparency
+    title: Inclusion proof in the Rekor transparency log
+    description: >-
+      Signatures and attestations are uploaded to Rekor (public instance
+      at rekor.sigstore.dev or a private deployment); consumers verify
+      the returned signed entry timestamp (SET) and inclusion proof
+      during verification. Binary assessment: transparency log entries
+      are either produced and verified or they are not.
+    assessmentMethod: binary
+    risk: high
+    gates:
+      - id: rekor-upload-configured
+        phase: standards-mapping
+        default: pending
+        description: Signing step uploads to Rekor (default for cosign sign).
+      - id: rekor-inclusion-verified
+        phase: gap-analysis
+        default: pending
+        description: Verification step checks the Rekor inclusion proof / SET.
+      - id: rekor-transparency-backlogged
+        phase: backlog-generation
+        default: pending
+        description: Backlog item exists when --tlog-upload=false or proof checks are skipped.
+    mapsTo:
+      openssf-scorecard: [Signed-Releases]
+      slsa: [L2, L3]
+    evidenceHints:
+      - .github/workflows/*.yml
+      - dist/*.bundle
+      - dist/*.sig
+      - .sigstore/bundle/*
+      - rekor*.json
+    references:
+      - https://docs.sigstore.dev/logging/overview/
+      - https://docs.sigstore.dev/logging/verify-release/
+      - https://github.com/sigstore/rekor

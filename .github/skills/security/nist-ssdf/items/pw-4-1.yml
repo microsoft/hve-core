@@ -1,0 +1,31 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-4-1
+    title: Acquire and Maintain Well-Secured Software Components from Third Parties
+    group: PW
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Acquire and maintain well-secured commercial, open source, and other third-party software components for use in the organization's software, including version pinning and ongoing update management.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify dependency manifests, lockfiles, and update automation in use.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems or repositories without pinned dependencies or update tooling.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add lockfiles, pin dependencies, or enable update bots.
+    evidenceHints:
+      - ".github/dependabot.yml"
+      - "renovate.json"
+      - "package-lock.json"
+      - "go.sum"
+      - "Cargo.lock"
+      - "uv.lock"

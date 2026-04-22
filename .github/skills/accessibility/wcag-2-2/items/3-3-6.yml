@@ -1,0 +1,25 @@
+id: "3-3-6"
+title: "Error Prevention (All)"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.0"
+summary: "For pages requiring users to submit information, submissions are reversible, data entry is checked, or the user can review and confirm before finalizing."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G98"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/error-prevention-all.html"
+  - "https://www.w3.org/TR/WCAG22/"

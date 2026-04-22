@@ -1,0 +1,26 @@
+id: "3-3-1"
+title: "Error Identification"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.0"
+summary: "If an input error is automatically detected, the item in error is identified and the error is described to the user in text."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G83"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/error-identification.html"
+  - "https://www.w3.org/TR/WCAG22/"

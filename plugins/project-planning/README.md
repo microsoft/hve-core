@@ -30,6 +30,11 @@ Supporting subagents included:
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
 
+Skills included:
+
+- **ADR Template** — Architecture Decision Record template Framework Skill providing guided section prompts, trade-off analysis templates, and phased authoring workflow for content-generation hosts
+- **PRD Template** — Product Requirements Document template Framework Skill providing guided section prompts and variable-driven inputs for content-generation hosts
+
 ## Install
 
 ```bash
@@ -90,15 +95,22 @@ copilot plugin install project-planning@hve-core
 | standards-mapping.instructions     | Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups - Brought to you by microsoft/hve-core                                                                                          |
 | security-model.instructions        | STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core                                                                                                          |
 | backlog-handoff.instructions       | Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates - Brought to you by microsoft/hve-core                                                                                                    |
-| sssc-identity.instructions         | Identity and orchestration instructions for the SSSC Planner agent. Contains six-phase workflow, state.json schema, session recovery, and question cadence.                                                                                                 |
-| sssc-assessment.instructions       | Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory for SSSC Planner.                                                                                                                                                      |
-| sssc-standards.instructions        | Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner.                                                                                                                                               |
-| sssc-gap-analysis.instructions     | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner.                                                                                                                                                                        |
+| sssc-identity.instructions         | Identity, six-phase orchestration, state.json contract, skill-loading log, session recovery, and question cadence for the SSSC Planner agent.                                                                                                               |
+| sssc-assessment.instructions       | Phase 2 supply chain assessment contract — discovers capability inventory skills under .github/skills/security/capability-inventory-* and populates state.capabilityInventory.                                                                              |
+| sssc-standards.instructions        | Phase 3 standards mapping contract — discovers framework skills under .github/skills/security/ and reads only the controls scoped to the active phase.                                                                                                      |
+| sssc-gap-analysis.instructions     | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner — references framework skills as the comparison source.                                                                                                                 |
 | sssc-backlog.instructions          | Phase 5 dual-format work item generation with templates and priority derivation for SSSC Planner.                                                                                                                                                           |
 | sssc-handoff.instructions          | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | disclaimer-language.instructions   | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
 | hve-core-location.instructions     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality.instructions         | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+
+## Skills
+
+| Skill        | Description                                                                                                                                                                                                                                                        |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| adr-template | Architecture Decision Record template Framework Skill providing guided section prompts, trade-off analysis templates, and phased authoring workflow as machine-readable document-section YAML for content-generation hosts - Brought to you by microsoft/hve-core. |
+| prd-template | Product Requirements Document template Framework Skill providing guided section prompts, variable-driven inputs, and phased authoring workflow as machine-readable document-section YAML for content-generation hosts - Brought to you by microsoft/hve-core.      |
 
 ---
 

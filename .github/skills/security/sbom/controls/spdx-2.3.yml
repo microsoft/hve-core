@@ -1,0 +1,58 @@
+id: sbom
+version: "1.0"
+name: SBOM — SPDX 2.3 format conformance
+source: https://spdx.github.io/spdx-spec/v2.3/
+description: >-
+  SPDX 2.3 format conformance for Software Bill of Materials documents. SPDX-JSON
+  is the preferred SBOM format for the GitHub ecosystem per
+  sssc-standards.instructions.md. Conformance requires the document to carry the
+  NTIA minimum elements (supplier, component name, version, unique identifier,
+  dependency relationship, author, timestamp).
+controls:
+  - id: spdx-2.3
+    title: SPDX 2.3 format conformance
+    description: >-
+      The repository emits SBOM documents in SPDX 2.3 (SPDX-JSON preferred). The
+      document validates against the SPDX 2.3 schema and carries the NTIA minimum
+      elements: supplier, component name, version, unique identifier, dependency
+      relationship, author, timestamp.
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    gates:
+      - id: presence
+        phase: standards-mapping
+        default: pending
+        description: An SPDX 2.3 SBOM document is produced for the project.
+      - id: signing
+        phase: standards-mapping
+        default: pending
+        description: The SPDX SBOM is signed or attested (for example via Sigstore).
+      - id: distribution
+        phase: gap-analysis
+        default: pending
+        description: The SPDX SBOM is attached to releases and published to the dependency graph.
+      - id: vuln-mapping
+        phase: backlog-generation
+        default: pending
+        description: SPDX components are correlated with vulnerability advisories (NVD, GHSA, OSV).
+    mapsTo:
+      openssf-scorecard: [SBOM]
+    evidenceHints:
+      - .github/workflows/sbom*.yml
+      - .github/workflows/release*.yml
+      - "**/sbom/*.spdx.json"
+      - "**/*.spdx.json"
+      - "**/*.spdx"
+    alternativeGroup:
+      id: sbom-format
+      rationale: >-
+        SPDX 2.3 and CycloneDX 1.5 are interchangeable SBOM formats per
+        sssc-standards.instructions.md. Emitting either format satisfies
+        the format-emission requirement; planners must score the unused
+        format n/a with reason 'alternative format selected' rather than
+        absent or partial.
+    references:
+      - https://spdx.github.io/spdx-spec/v2.3/
+      - https://spdx.dev/
+      - https://www.ntia.gov/page/software-bill-materials

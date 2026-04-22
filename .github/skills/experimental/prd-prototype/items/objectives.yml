@@ -1,0 +1,16 @@
+id: objectives
+title: Objectives
+description: "Measurable goals and success criteria for the product initiative."
+template: |
+  ## Objectives
+
+  Define the key objectives for {{project_name}}. Each objective should be
+  specific, measurable, and time-bound.
+
+  | Objective | Success Metric | Target | Timeline |
+  |-----------|---------------|--------|----------|
+  | *Objective 1* | *Metric* | *Value* | *Date* |
+
+  ### Non-Goals
+
+  Clearly state what is explicitly out of scope for this initiative.

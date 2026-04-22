@@ -1,0 +1,26 @@
+id: "3-1-3"
+title: "Unusual Words"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "A mechanism is available for identifying specific definitions of words or phrases used in an unusual or restricted way, including idioms and jargon."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G55"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/unusual-words.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,37 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 OpenSSF Best Practices badge"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Badge enrollment and criteria tracking in GOVERNANCE.md
+controls:
+- id: openssf-best-practices-badge-enrollment
+  appliesTo: [cloud, web, ml, fleet]
+  title: OpenSSF Best Practices badge
+  description: Badge enrollment and criteria tracking in GOVERNANCE.md
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the OpenSSF Best Practices badge capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of OpenSSF Best Practices badge is verified against reference patterns.
+  mapsTo:
+    openssf-best-practices-badge:
+    - passing
+    - silver
+    - gold
+  evidenceHints:
+  - GOVERNANCE.md
+  - README.md
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

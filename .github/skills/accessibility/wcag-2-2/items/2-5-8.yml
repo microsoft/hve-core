@@ -1,0 +1,27 @@
+id: "2-5-8"
+title: "Target Size (Minimum)"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.5 Input Modalities"
+addedIn: "2.2"
+summary: "Targets for pointer inputs are at least 24x24 CSS pixels, with exceptions for spacing, equivalents, inline text, user-agent control, and essential cases."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C42"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html"
+  - "https://www.w3.org/TR/WCAG22/"

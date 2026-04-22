@@ -1,6 +1,6 @@
 {
   "name": "hve-core-all",
-  "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
+  "description": "Full collection of all stable HVE Core agents, prompts, instructions, and skills",
   "version": "3.3.41",
   "agents": [
     "agents/ado/",
@@ -34,6 +34,7 @@
     "skills/gitlab/",
     "skills/installer/",
     "skills/jira/",
+    "skills/project-planning/",
     "skills/security/",
     "skills/shared/"
   ]

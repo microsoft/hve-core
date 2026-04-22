@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: ing-4
+    title: Mirror a copy of all OSS source code to an internal location
+    group: ingest
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Maintain an internal mirror of all consumed OSS source code so the organization can rebuild, audit, and respond to upstream takedowns without depending on public availability.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect internal mirror configuration and inventory of mirrored repositories.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify consumed OSS that is not mirrored internally.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to onboard missing OSS source mirrors.
+    evidenceHints:
+      - "**/mirror-manifest.yml"
+      - "**/mirror-manifest.yaml"
+      - "**/mirror-manifest.json"

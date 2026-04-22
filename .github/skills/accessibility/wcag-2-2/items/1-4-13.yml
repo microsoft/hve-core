@@ -1,0 +1,25 @@
+id: "1-4-13"
+title: "Content on Hover or Focus"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.1"
+summary: "Where additional content becomes visible on hover or keyboard focus and then hidden, the content is dismissable, hoverable, and persistent."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G194"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,26 @@
+id: "1-4-7"
+title: "Low or No Background Audio"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "For prerecorded audio-only content containing primarily speech, background audio is absent, can be turned off, or is at least 20 dB lower than the speech."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G56"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/low-or-no-background-audio.html"
+  - "https://www.w3.org/TR/WCAG22/"

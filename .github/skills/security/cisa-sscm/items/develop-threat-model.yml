@@ -1,0 +1,32 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: develop-threat-model
+    title: Threat Modeling of Software and Pipelines
+    group: develop
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Threat modeling is performed and maintained for software components, build infrastructure, and release pipelines, with documented threats, mitigations, and review cadence.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate threat model artifacts and confirm scope coverage of components and pipelines.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components or pipelines without current threat models, or models without supply-chain threats covered.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to author or refresh threat models, including supply chain attack vectors.
+    evidenceHints:
+      - "docs/security/threat-models/**"
+      - "docs/threat-modeling/**"
+      - "**/threat-model*.md"
+      - "**/threat-model*.json"
+      - "**/stride-*.md"
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers

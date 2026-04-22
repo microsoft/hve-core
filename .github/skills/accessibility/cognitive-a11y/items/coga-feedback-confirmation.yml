@@ -1,0 +1,41 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Confirm User Actions"
+source: https://www.w3.org/WAI/cognitive/
+description: "Successful actions show clear feedback; the system state after the action is visible without requiring a refresh."
+controls:
+  - id: coga-feedback-confirmation
+    title: "Confirm User Actions"
+    description: "Successful actions show clear feedback; the system state after the action is visible without requiring a refresh."
+    group: feedback
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Confirm User Actions practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Confirm User Actions is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    references:
+      - https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html
+      - https://www.w3.org/WAI/cognitive/

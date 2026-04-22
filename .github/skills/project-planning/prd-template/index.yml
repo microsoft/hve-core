@@ -1,0 +1,43 @@
+framework: prd-template
+version: "2026.1"
+summary: 'Product Requirements Document sections with guided prompts, variable-driven inputs, and phased authoring workflow.'
+domain: project-planning
+itemKind: document-section
+status: draft
+globals:
+  product_name:
+    description: "Product or feature name used across all sections"
+    required: true
+  team_owner:
+    description: "Team responsible for delivery"
+  target_release:
+    description: "Target release version or date"
+phaseMap:
+  outline:
+    - background
+    - problem-statement
+    - non-goals
+  draft:
+    - goals-and-success-metrics
+    - target-users
+    - requirements
+    - technical-approach
+  finalize:
+    - milestones
+    - risks
+    - open-questions
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

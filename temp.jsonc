@@ -1,0 +1,27 @@
+{
+  "ignores": [
+    "**/node_modules/**",
+    "**/packages/**",
+    ".copilot-tracking/**",
+    "logs/**",
+    "venv/**",
+    "scripts/tests/Fixtures/**",
+    "extension/README.md",
+    "extension/README.*.md",
+    "extension/CHANGELOG.md",
+    "collections/*.collection.md",
+    "plugins/**/agents/**",
+    "plugins/**/instructions/**",
+    "plugins/**/commands/**",
+    "plugins/**/skills/**",
+    "plugins/**/docs/**",
+    "plugins/**/scripts/**",
+    ".github/aw/logs/**",
+    ".github/agents/**",
+    ".github/prompts/**",
+    ".github/skills/**"
+  ],
+  "customRules": [
+    "markdownlint-rule-search-replace"
+  ]
+}

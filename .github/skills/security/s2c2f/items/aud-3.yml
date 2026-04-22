@@ -1,0 +1,32 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: aud-3
+    title: Validate integrity of consumed OSS
+    group: audit
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Validate the cryptographic integrity of OSS artifacts at consumption time using lockfile hashes, checksums, or signature verification to detect tampering between publish and ingest.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect lockfile hash enforcement or signature verification at install time.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems where integrity validation is not enforced.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enforce integrity validation in build and install steps.
+    evidenceHints:
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+      - "go.sum"
+      - "Cargo.lock"
+      - "Pipfile.lock"
+      - "poetry.lock"

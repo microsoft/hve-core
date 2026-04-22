@@ -1,0 +1,26 @@
+id: "1-2-7"
+title: "Extended Audio Description (Prerecorded)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "Where pauses in foreground audio are insufficient, extended audio description is provided for prerecorded synchronized media."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G8"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/extended-audio-description-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

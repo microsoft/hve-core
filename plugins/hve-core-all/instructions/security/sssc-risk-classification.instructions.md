@@ -1,0 +1,1 @@
+../../../../.github/instructions/security/sssc-risk-classification.instructions.md

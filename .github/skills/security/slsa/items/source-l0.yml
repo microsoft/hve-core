@@ -1,0 +1,23 @@
+id: source-l0
+version: "1.1"
+name: SLSA Source Track Level 0
+source: https://slsa.dev/spec/v1.1/source-requirements
+description: Baseline. SLSA defines no requirements at Source L0.
+controls:
+  - id: source-l0
+    title: Source L0 — No requirements
+    description: |
+      Baseline. SLSA Source L0 imposes no requirements; sources may be unmanaged or
+      stored without version control.
+    group: source
+    risk: info
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    evidenceHints:
+      - .git/config
+    references:
+      - https://slsa.dev/spec/v1.1/source-requirements

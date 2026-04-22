@@ -6,13 +6,15 @@
 
 <#
 .SYNOPSIS
-    Validates AI artifact footer and disclaimer presence in instruction templates.
+    Validates planner artifact compliance: footers, disclaimers, and skill-loading contracts.
 
 .DESCRIPTION
     Reads footer-with-review.yml and disclaimers.yml config files as the single source
     of truth, then scans instruction files for required footer text based on artifact
-    classification rules. Outputs results as JSON and sets CI environment variables on
-    failure.
+    classification rules. When -PlanRoot is supplied, additionally enforces the
+    skill-loading contract by parsing 'skills-loaded.log' and rejecting any entry
+    outside the declared scope for the active phase (per the skill's index.yml). Outputs
+    results as JSON and sets CI environment variables on failure.
 
 .PARAMETER Paths
     Directories to scan for instruction files. Defaults to '.github/instructions'.
@@ -32,11 +34,27 @@
 .PARAMETER OutputPath
     Path for the JSON results file. Defaults to 'logs/ai-artifact-results.json'.
 
-.EXAMPLE
-    ./Validate-AIArtifacts.ps1 -FailOnMissing
+.PARAMETER Scope
+    Planner family scope. One of 'rai', 'sssc', 'security', 'all'. Used to derive the
+    default planner tracking root and to scope skill-loading-contract enforcement.
+
+.PARAMETER PlanRoot
+    Path to a single planner instance (e.g. '.copilot-tracking/sssc-plans/{slug}').
+    When supplied, the skill-loading contract is enforced against the
+    'skills-loaded.log' adjacent to 'state.json' under this root.
+
+.PARAMETER LoadingViolationsOutputPath
+    Path for the skill-loading-contract violations JSON file.
+    Defaults to 'logs/planner-loading-violations.json'.
 
 .EXAMPLE
-    ./Validate-AIArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
+    ./Validate-PlannerArtifacts.ps1 -FailOnMissing
+
+.EXAMPLE
+    ./Validate-PlannerArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
+
+.EXAMPLE
+    ./Validate-PlannerArtifacts.ps1 -Scope sssc -PlanRoot .copilot-tracking/sssc-plans/my-project
 #>
 
 [CmdletBinding()]
@@ -57,7 +75,17 @@ param(
     [switch]$FailOnMissing,
 
     [Parameter(Mandatory = $false)]
-    [string]$OutputPath = 'logs/ai-artifact-results.json'
+    [string]$OutputPath = 'logs/ai-artifact-results.json',
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('rai', 'sssc', 'security', 'all')]
+    [string]$Scope = 'all',
+
+    [Parameter(Mandatory = $false)]
+    [string]$PlanRoot,
+
+    [Parameter(Mandatory = $false)]
+    [string]$LoadingViolationsOutputPath = 'logs/planner-loading-violations.json'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -603,6 +631,237 @@ See the uploaded artifact for complete details.
     return $summary
 }
 
+function Test-SkillLoadingContract {
+    <#
+    .SYNOPSIS
+    Validates the skill-loading contract for a planner instance.
+
+    .DESCRIPTION
+    Reads 'skills-loaded.log' (NDJSON, one entry per line) under the planner instance
+    root, then for each entry resolves the parent skill's 'index.yml' and verifies the
+    logged controlPath is in the phaseMap[phase] list. Entries with null controlPath
+    (index.yml or SKILL.md reads) are always allowed. Out-of-scope entries are recorded
+    as violations and emitted as JSON to OutputPath.
+
+    .PARAMETER PlanRoot
+    Path to the planner instance root (containing state.json and skills-loaded.log).
+
+    .PARAMETER Scope
+    Planner family scope (informational; recorded in the violations report).
+
+    .PARAMETER OutputPath
+    Path for the violations JSON file.
+
+    .OUTPUTS
+    [hashtable] Result with HasViolations and TotalViolations keys.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$PlanRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Scope = 'all',
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = 'logs/planner-loading-violations.json'
+    )
+
+    $result = @{
+        Scope           = $Scope
+        PlanRoot        = $PlanRoot
+        HasViolations   = $false
+        TotalViolations = 0
+        Violations      = @()
+    }
+
+    if (-not (Test-Path -Path $PlanRoot -PathType Container)) {
+        Write-Host "  PlanRoot not found, skipping skill-loading contract: $PlanRoot" -ForegroundColor Yellow
+        return $result
+    }
+
+    $logPath = Join-Path -Path $PlanRoot -ChildPath 'skills-loaded.log'
+    if (-not (Test-Path -Path $logPath -PathType Leaf)) {
+        Write-Host "  No skills-loaded.log under $PlanRoot — contract enforcement skipped." -ForegroundColor Yellow
+        return $result
+    }
+
+    Write-Host "Validating skill-loading contract: $logPath" -ForegroundColor Cyan
+
+    $entries = @()
+    $lineNumber = 0
+    Get-Content -LiteralPath $logPath -Encoding utf8 | ForEach-Object {
+        $lineNumber++
+        $line = $_.Trim()
+        if ([string]::IsNullOrWhiteSpace($line)) { return }
+        try {
+            $entry = $line | ConvertFrom-Json -ErrorAction Stop
+            $entries += [pscustomobject]@{
+                LineNumber  = $lineNumber
+                Phase       = $entry.phase
+                SkillPath   = $entry.skillPath
+                ControlPath = $entry.controlPath
+                LoadedAt    = $entry.loadedAt
+            }
+        }
+        catch {
+            $result.Violations += @{
+                lineNumber = $lineNumber
+                reason     = 'malformed-ndjson'
+                message    = $_.Exception.Message
+                rawLine    = $line
+            }
+        }
+    }
+
+    foreach ($entry in $entries) {
+        # Null controlPath means the read targeted the skill's index.yml or SKILL.md — always allowed.
+        if ([string]::IsNullOrWhiteSpace($entry.ControlPath)) { continue }
+
+        if ([string]::IsNullOrWhiteSpace($entry.SkillPath) -or [string]::IsNullOrWhiteSpace($entry.Phase)) {
+            $result.Violations += @{
+                lineNumber  = $entry.LineNumber
+                reason      = 'missing-required-field'
+                phase       = $entry.Phase
+                skillPath   = $entry.SkillPath
+                controlPath = $entry.ControlPath
+            }
+            continue
+        }
+
+        # Resolve parent skill directory: trim trailing 'controls/...' and 'index.yml' / 'SKILL.md'.
+        $skillDir = $entry.SkillPath
+        if ($skillDir -match '^(.*?)/controls/') {
+            $skillDir = $Matches[1]
+        }
+        elseif ($skillDir -match '^(.*?)/(index\.yml|SKILL\.md)$') {
+            $skillDir = $Matches[1]
+        }
+
+        $indexPath = Join-Path -Path $skillDir -ChildPath 'index.yml'
+        if (-not (Test-Path -Path $indexPath -PathType Leaf)) {
+            $result.Violations += @{
+                lineNumber  = $entry.LineNumber
+                reason      = 'missing-index-yml'
+                phase       = $entry.Phase
+                skillPath   = $entry.SkillPath
+                controlPath = $entry.ControlPath
+                indexPath   = $indexPath
+            }
+            continue
+        }
+
+        try {
+            $index = Get-Content -LiteralPath $indexPath -Raw -Encoding utf8 | ConvertFrom-Yaml
+        }
+        catch {
+            $result.Violations += @{
+                lineNumber  = $entry.LineNumber
+                reason      = 'index-yml-parse-failed'
+                phase       = $entry.Phase
+                skillPath   = $entry.SkillPath
+                controlPath = $entry.ControlPath
+                indexPath   = $indexPath
+                message     = $_.Exception.Message
+            }
+            continue
+        }
+
+        $phaseMap = $null
+        if ($index -is [System.Collections.IDictionary] -and $index.ContainsKey('phaseMap')) {
+            $phaseMap = $index['phaseMap']
+        }
+        elseif ($index.PSObject.Properties.Name -contains 'phaseMap') {
+            $phaseMap = $index.phaseMap
+        }
+
+        if (-not $phaseMap) {
+            $result.Violations += @{
+                lineNumber  = $entry.LineNumber
+                reason      = 'index-yml-missing-phaseMap'
+                phase       = $entry.Phase
+                skillPath   = $entry.SkillPath
+                controlPath = $entry.ControlPath
+                indexPath   = $indexPath
+            }
+            continue
+        }
+
+        $allowedControls = $null
+        if ($phaseMap -is [System.Collections.IDictionary] -and $phaseMap.ContainsKey($entry.Phase)) {
+            $allowedControls = @($phaseMap[$entry.Phase])
+        }
+        elseif ($phaseMap.PSObject.Properties.Name -contains $entry.Phase) {
+            $allowedControls = @($phaseMap.($entry.Phase))
+        }
+
+        if ($null -eq $allowedControls) {
+            $result.Violations += @{
+                lineNumber       = $entry.LineNumber
+                reason           = 'phase-not-in-phaseMap'
+                phase            = $entry.Phase
+                skillPath        = $entry.SkillPath
+                controlPath      = $entry.ControlPath
+                indexPath        = $indexPath
+                availablePhases  = @($phaseMap.Keys)
+            }
+            continue
+        }
+
+        # Derive control id: strip leading 'controls/' and trailing '.yml' from controlPath.
+        $controlId = $entry.ControlPath
+        $controlId = $controlId -replace '^controls/', ''
+        $controlId = $controlId -replace '\.yml$', ''
+
+        if ($allowedControls -notcontains $controlId) {
+            $result.Violations += @{
+                lineNumber      = $entry.LineNumber
+                reason          = 'control-out-of-scope'
+                phase           = $entry.Phase
+                skillPath       = $entry.SkillPath
+                controlPath     = $entry.ControlPath
+                controlId       = $controlId
+                allowedControls = @($allowedControls)
+            }
+        }
+    }
+
+    $result.TotalViolations = $result.Violations.Count
+    $result.HasViolations = $result.TotalViolations -gt 0
+
+    # Persist findings.
+    $outputFullPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) {
+        $OutputPath
+    }
+    else {
+        Join-Path -Path $PWD -ChildPath $OutputPath
+    }
+    $outputDir = Split-Path -Path $outputFullPath -Parent
+    if ($outputDir -and -not (Test-Path -Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+    $payload = [ordered]@{
+        scope           = $Scope
+        planRoot        = $PlanRoot
+        logPath         = $logPath
+        entriesScanned  = $entries.Count
+        totalViolations = $result.TotalViolations
+        violations      = $result.Violations
+    }
+    $payload | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $outputFullPath -Encoding utf8
+
+    if ($result.HasViolations) {
+        Write-Host "  ❌ $($result.TotalViolations) skill-loading-contract violation(s) — see $OutputPath" -ForegroundColor Red
+    }
+    else {
+        Write-Host "  ✅ Skill-loading contract clean ($($entries.Count) entries)" -ForegroundColor Green
+    }
+
+    return $result
+}
+
 #endregion Functions
 
 #region Main Execution
@@ -621,15 +880,28 @@ if ($MyInvocation.InvocationName -ne '.') {
             -FailOnMissing:$FailOnMissing `
             -OutputPath $OutputPath
 
-        if ($result.HasFailures) {
-            Write-Error "AI artifact validation failed with $($result.TotalIssues) issue(s)."
-            exit 1
+        $loadingResult = $null
+        if ($PSBoundParameters.ContainsKey('PlanRoot') -and -not [string]::IsNullOrWhiteSpace($PlanRoot)) {
+            $loadingResult = Test-SkillLoadingContract `
+                -PlanRoot $PlanRoot `
+                -Scope $Scope `
+                -OutputPath $LoadingViolationsOutputPath
         }
 
-        exit 0
+        $exitCode = 0
+        if ($result.HasFailures) {
+            Write-Error -ErrorAction Continue "AI artifact validation failed with $($result.TotalIssues) issue(s)."
+            $exitCode = 1
+        }
+        if ($loadingResult -and $loadingResult.HasViolations) {
+            Write-Error -ErrorAction Continue "Skill-loading contract validation failed with $($loadingResult.TotalViolations) violation(s)."
+            $exitCode = 1
+        }
+
+        exit $exitCode
     }
     catch {
-        Write-Error -ErrorAction Continue "Validate-AIArtifacts failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Validate-PlannerArtifacts failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

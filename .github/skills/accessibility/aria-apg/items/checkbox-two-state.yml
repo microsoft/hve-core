@@ -1,0 +1,29 @@
+id: "checkbox-two-state"
+title: "Checkbox (Two-State) Pattern"
+itemKind: pattern
+summary: "Binary checkbox toggling between checked and unchecked states; activated with Space key."
+keyboardModel:
+  - "inline"
+focusManagement: "single"
+relatedRoles:
+  - "checkbox"
+requiredStates:
+  - "aria-checked"
+requiredProperties:
+  []
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox-two-state/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/checkbox-two-state/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

@@ -1,0 +1,38 @@
+id: build-l1
+version: "1.1"
+name: SLSA Build Track Level 1
+source: https://slsa.dev/spec/v1.1/levels#build-l1
+description: Provenance exists and is distributed to consumers.
+controls:
+  - id: build-l1
+    title: Build L1 — Provenance exists and is distributed to consumers
+    description: |
+      Provenance exists and is distributed to consumers. Check for
+      `actions/attest-build-provenance` or equivalent attestation that records how the
+      package was built and is published alongside the release artifacts.
+    group: build
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    gates:
+      - id: provenance-generated
+        phase: standards-mapping
+        default: pending
+        description: Build emits a provenance attestation describing the build process.
+      - id: provenance-distributed
+        phase: gap-analysis
+        default: pending
+        description: Provenance is distributed to consumers alongside the release artifacts.
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/*.yaml
+      - .github/workflows/release*.yml
+      - .github/workflows/publish*.yml
+    references:
+      - https://slsa.dev/spec/v1.1/levels
+      - https://slsa.dev/spec/v1.1/build-requirements
+      - https://github.com/actions/attest-build-provenance

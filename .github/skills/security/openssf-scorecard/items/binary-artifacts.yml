@@ -1,0 +1,32 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: binary-artifacts
+    title: Binary-Artifacts
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Detects committed binary artifacts that bypass source review.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Scan repository for committed binaries; record evidence.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Compare detected binaries against allowlist; size the removal effort.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to remove or justify each committed binary.
+    evidenceHints:
+      - "**/*.exe"
+      - "**/*.dll"
+      - "**/*.so"
+      - "**/*.dylib"
+      - "**/*.jar"
+      - "**/*.class"

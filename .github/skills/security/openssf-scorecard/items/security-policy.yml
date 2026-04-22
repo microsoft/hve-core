@@ -1,0 +1,29 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: security-policy
+    title: Security-Policy
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies presence of a SECURITY.md describing the vulnerability reporting process. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate SECURITY.md and confirm reporting instructions.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify missing or outdated reporting contacts and SLAs.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or revise the security policy.
+    evidenceHints:
+      - "SECURITY.md"
+      - ".github/SECURITY.md"
+      - "docs/SECURITY.md"

@@ -1,0 +1,33 @@
+id: future-considerations
+title: Future Considerations
+description: "Captures monitoring plans, evolution paths, and triggers for re-evaluating the decision."
+template: |
+  ## Future Considerations
+
+  **Monitoring:**
+
+  - What to watch for after implementing {{adr_title}}.
+  - When and how to re-evaluate the decision.
+
+  **Evolution:**
+
+  - Future technology or approach changes that may affect this decision.
+  - Upcoming decisions that depend on or relate to this one.
+
+  **Triggers for Review:**
+
+  - Conditions that would trigger a formal re-evaluation of this decision.
+  - Timeline for regular periodic review.
+
+  {{future_detail}}
+inputs:
+  - name: future_detail
+    description: "Additional monitoring metrics, evolution scenarios, or review cadence details"
+applicability:
+  discriminator: adr_depth
+  appliesWhen:
+    - standard
+    - comprehensive
+  naWhen:
+    - lightweight
+  naReason: "Lightweight ADRs defer future considerations to follow-up decisions"

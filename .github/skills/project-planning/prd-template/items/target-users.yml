@@ -1,0 +1,26 @@
+id: target-users
+title: Target Users
+description: "Identifies primary and secondary user personas, their needs, and their context of use."
+template: |
+  ## Target Users
+
+  Describe the users of {{product_name}}. For each persona:
+
+  - **Role or segment** — Who they are.
+  - **Key needs** — What they need from the product.
+  - **Context of use** — Where and how they interact with the product.
+  - **Current alternatives** — What they use today.
+
+  ### Primary Users
+
+  {{primary_users}}
+
+  ### Secondary Users
+
+  {{secondary_users}}
+inputs:
+  - name: primary_users
+    description: "Primary persona descriptions including role, needs, and usage context"
+    required: true
+  - name: secondary_users
+    description: "Secondary persona descriptions or stakeholders who benefit indirectly"

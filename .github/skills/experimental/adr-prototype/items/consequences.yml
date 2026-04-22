@@ -1,0 +1,26 @@
+id: consequences
+title: Consequences
+description: "Documents the expected positive and negative outcomes of the decision."
+template: |
+  ## Consequences
+
+  **Decision:** {{decision_title}}
+
+  ### Positive
+
+  {{positive_outcomes}}
+
+  ### Negative
+
+  {{negative_outcomes}}
+
+  ### Risks and Mitigations
+
+  | Risk | Likelihood | Impact | Mitigation |
+  |------|-----------|--------|------------|
+  | *Risk description* | *Low / Medium / High* | *Low / Medium / High* | *Mitigation strategy* |
+inputs:
+  - name: positive_outcomes
+    description: "Expected benefits and improvements from this decision"
+  - name: negative_outcomes
+    description: "Known trade-offs, costs, or technical debt introduced"

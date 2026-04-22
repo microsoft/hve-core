@@ -22,3 +22,8 @@ Supporting subagents included:
 - **Phase Implementor** — Executes a single implementation phase from a plan with full codebase access and change tracking
 - **RPI Validator** — Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents
 - **Implementation Validator** — Validates implementation quality against architectural requirements, design principles, and code standards
+
+Skills included:
+
+- **ADR Template** — Architecture Decision Record template Framework Skill providing guided section prompts, trade-off analysis templates, and phased authoring workflow for content-generation hosts
+- **PRD Template** — Product Requirements Document template Framework Skill providing guided section prompts and variable-driven inputs for content-generation hosts

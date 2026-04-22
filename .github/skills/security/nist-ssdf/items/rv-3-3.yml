@@ -1,0 +1,28 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: rv-3-3
+    title: Analyze Vulnerabilities to Identify Their Root Causes
+    group: RV
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Analyze the root causes of vulnerabilities, document lessons learned, and feed findings back into the SDLC so that similar vulnerabilities can be prevented in future development.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify root-cause analysis artifacts and post-incident review processes.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify vulnerability classes resolved without documented root-cause analysis.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to apply root-cause analysis and feed lessons back into the SDLC.
+    evidenceHints:
+      - "docs/security/post-mortems/**"
+      - "docs/templates/rca-template.md"
+      - ".copilot-tracking/security-plans/**"

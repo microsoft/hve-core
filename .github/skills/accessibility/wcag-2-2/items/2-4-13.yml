@@ -1,0 +1,25 @@
+id: "2-4-13"
+title: "Focus Appearance"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.2"
+summary: "When the keyboard focus indicator is visible, the area of the indicator and contrast meet defined minimum size and contrast requirements."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G195"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html"
+  - "https://www.w3.org/TR/WCAG22/"

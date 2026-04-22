@@ -1,0 +1,26 @@
+id: "2-2-3"
+title: "No Timing"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.2 Enough Time"
+addedIn: "2.0"
+summary: "Timing is not an essential part of the event or activity presented by the content, except for non-interactive synchronized media and real-time events."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G5"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/no-timing.html"
+  - "https://www.w3.org/TR/WCAG22/"

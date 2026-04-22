@@ -1,0 +1,25 @@
+id: "3-3-3"
+title: "Error Suggestion"
+itemKind: criterion
+level: "AA"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.0"
+summary: "If an input error is automatically detected and suggestions for correction are known, the suggestions are provided, unless it would jeopardize security or purpose."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G177"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/error-suggestion.html"
+  - "https://www.w3.org/TR/WCAG22/"

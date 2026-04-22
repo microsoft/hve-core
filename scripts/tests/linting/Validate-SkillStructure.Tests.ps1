@@ -571,6 +571,38 @@ description: 'Skill with co-located tests directory'
             $result.Warnings | Should -HaveCount 0
         }
 
+        It 'Does not warn about controls/ and sections/ subdirectories' {
+            $frontmatter = @"
+---
+name: fsi-dirs-skill
+description: 'Framework skill with controls and sections directories'
+---
+
+# Framework Skill Dirs Fixture
+"@
+            $dir = New-TestSkillDirectory -SkillName 'fsi-dirs-skill' -FrontmatterContent $frontmatter -OptionalDirs @('controls', 'sections')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Does not warn about items/ subdirectory' {
+            $frontmatter = @"
+---
+name: items-dir-skill
+description: 'Framework skill with items directory'
+---
+
+# Items Dir Skill
+"@
+            $dir = New-TestSkillDirectory -SkillName 'items-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('items')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+
         It 'Does not warn about Python environment directories in Python skills' {
             $frontmatter = @"
 ---

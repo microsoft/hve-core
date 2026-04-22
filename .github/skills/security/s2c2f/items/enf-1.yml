@@ -1,0 +1,31 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: enf-1
+    title: Securely configure package source files
+    group: enforce
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML1 practice. Securely configure package source files such as nuget.config, .npmrc, pip.conf, and Maven settings.xml so that only approved feeds are resolved and credentials are not leaked into source control.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inspect package source files for approved feeds and credential hygiene.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify package source files referencing unapproved feeds or embedding secrets.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to harden package source file configuration.
+    evidenceHints:
+      - ".npmrc"
+      - "nuget.config"
+      - "NuGet.config"
+      - "pip.conf"
+      - "settings.xml"
+      - ".m2/settings.xml"

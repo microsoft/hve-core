@@ -1,0 +1,28 @@
+id: "2-1-2"
+title: "No Keyboard Trap"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.1 Keyboard Accessible"
+addedIn: "2.0"
+summary: "If keyboard focus can be moved to a component using a keyboard interface, focus can be moved away using only a keyboard interface."
+verificationMode: hybrid
+automatableBy:
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen:
+    - "voice-only"
+  naReason: "Pure voice surfaces have no keyboard input model."
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G21"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/no-keyboard-trap.html"
+  - "https://www.w3.org/TR/WCAG22/"

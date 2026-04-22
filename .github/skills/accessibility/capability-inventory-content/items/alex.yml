@@ -1,0 +1,39 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - alex inclusive language linter"
+source: https://github.com/microsoft/hve-core
+description: "Catches insensitive inconsiderate or exclusionary phrasing in Markdown and prose so authors can rewrite without harm."
+controls:
+  - id: alex
+    title: "alex inclusive language linter"
+    description: "Catches insensitive inconsiderate or exclusionary phrasing in Markdown and prose so authors can rewrite without harm."
+    group: prose-linting
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "alex inclusive language linter is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "alex inclusive language linter runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-clear-language
+        - coga-plain-words
+        - coga-active-voice
+        - coga-meaningful-link-text
+    evidenceHints:
+      - "**/.alexrc"
+      - "**/.alexrc.json"
+      - "**/.alexrc.yml"
+    references:
+      - https://alexjs.com/
+      - https://github.com/get-alex/alex

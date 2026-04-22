@@ -1,0 +1,26 @@
+id: "3-1-1"
+title: "Language of Page"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "The default human language of each web page can be programmatically determined."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H57"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/language-of-page.html"
+  - "https://www.w3.org/TR/WCAG22/"

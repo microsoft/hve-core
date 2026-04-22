@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 release-please pipeline"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Automated release management with conventional commits
+controls:
+- id: release-please-pipeline
+  appliesTo: [cloud, web, ml, fleet]
+  title: release-please pipeline
+  description: Automated release management with conventional commits
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the release-please pipeline capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of release-please pipeline is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/release-please*.yml
+  - release-please-config.json
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

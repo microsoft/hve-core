@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: ing-3
+    title: Maintain a Deny List capability for known-malicious OSS
+    group: ingest
+    risk: critical
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML1 practice. Operate a deny-list mechanism that blocks ingestion of known-malicious or revoked OSS packages from upstream feeds before they reach developer or build environments.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Confirm a deny-list mechanism exists in the repository manager or proxy.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify feeds or ecosystems lacking deny-list enforcement.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add deny-list policies and integrate malicious package feeds.
+    evidenceHints:
+      - "**/policies/*.json"
+      - "**/policies/*.yml"
+      - ".github/workflows/*.yml"

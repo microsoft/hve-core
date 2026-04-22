@@ -1,0 +1,31 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: fuzzing
+    title: Fuzzing
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Confirms that the project participates in continuous fuzzing such as OSS-Fuzz or ClusterFuzzLite. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect fuzzing configuration files and harnesses.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify language or component coverage gaps in fuzzing.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to onboard fuzzing or extend coverage.
+    evidenceHints:
+      - ".clusterfuzzlite/**"
+      - "projects/**/Dockerfile"
+      - "**/fuzz/**"
+      - "**/fuzz_targets/**"
+      - "**/fuzz_harness.py"

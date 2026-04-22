@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 SHA staleness"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: SHA staleness checks validating pinned action references are current
+controls:
+- id: sha-staleness
+  appliesTo: [cloud, web, ml, fleet]
+  title: SHA staleness
+  description: SHA staleness checks validating pinned action references are current
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the SHA staleness capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of SHA staleness is verified against reference patterns.
+  evidenceHints:
+  - scripts/security/Test-SHAStaleness.ps1
+  - .github/workflows/sha-staleness*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

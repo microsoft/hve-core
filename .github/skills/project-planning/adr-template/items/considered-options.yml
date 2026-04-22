@@ -1,0 +1,61 @@
+id: considered-options
+title: Considered Options
+description: "Evaluates each option with technical details, pros and cons, risk assessment, dependencies, and cost analysis."
+template: |
+  ## Considered Options
+
+  For each option considered in {{adr_title}}, provide a structured evaluation:
+
+  ### Option: {{option_name}}
+
+  **Description:** What this option entails.
+
+  **Technical Details:**
+
+  - Architecture approach and key components.
+  - Integration requirements and infrastructure needs.
+
+  **Pros:**
+
+  - Specific advantages with supporting evidence.
+
+  **Cons:**
+
+  - Specific disadvantages with impact assessment.
+
+  **Risks and Mitigation:**
+
+  | Risk | Probability | Impact | Mitigation |
+  |------|-------------|--------|------------|
+  | {{risk_description}} | {{risk_probability}} | {{risk_impact}} | {{risk_mitigation}} |
+
+  **Dependencies:** External dependencies and prerequisites.
+
+  **Cost Analysis:**
+
+  - *Initial:* Implementation cost and effort.
+  - *Ongoing:* Operational and maintenance cost.
+
+  {{additional_options}}
+inputs:
+  - name: option_name
+    description: "Name of the option being evaluated (e.g., Technology A, Pattern B)"
+    required: true
+  - name: risk_description
+    description: "Description of a risk associated with this option"
+  - name: risk_probability
+    description: "Risk probability: High, Medium, or Low"
+  - name: risk_impact
+    description: "Risk impact: High, Medium, or Low"
+  - name: risk_mitigation
+    description: "Strategy to mitigate the identified risk"
+  - name: additional_options
+    description: "Additional options beyond the first, following the same evaluation structure"
+applicability:
+  discriminator: adr_depth
+  appliesWhen:
+    - standard
+    - comprehensive
+  naWhen:
+    - lightweight
+  naReason: "Lightweight ADRs list alternatives briefly in the Decision section"

@@ -1,0 +1,26 @@
+id: "3-1-4"
+title: "Abbreviations"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "A mechanism for identifying the expanded form or meaning of abbreviations is available."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G62"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/abbreviations.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,28 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-1-1
+    title: Use Forms of Risk Modeling to Help Assess the Security Risk for the Software
+    group: PW
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Use risk-modeling techniques such as threat modeling, attack modeling, or attack-surface mapping during design to assess security risk and inform secure design decisions.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate threat models or risk-modeling artifacts covering current designs.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components or features that lack documented risk modeling.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to author or refresh threat models for in-scope components.
+    evidenceHints:
+      - "docs/security/threat-model*.md"
+      - "docs/architecture/**/threat-model*.md"
+      - ".copilot-tracking/security-plans/**"

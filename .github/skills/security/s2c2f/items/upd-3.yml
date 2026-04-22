@@ -1,0 +1,28 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: upd-3
+    title: Display OSS vulnerabilities as comments in pull requests
+    group: update
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML2 practice. Surface OSS vulnerability findings directly in pull request comments or checks so reviewers can assess risk before merging, typically through dependency review or SCA bot integration.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect dependency review or SCA bot configuration on pull requests.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify repositories without OSS vulnerability surfacing on pull requests.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enable dependency review or equivalent SCA on all repositories.
+    evidenceHints:
+      - ".github/workflows/dependency-review*.yml"
+      - ".github/workflows/sca*.yml"
+      - ".github/workflows/codeql*.yml"

@@ -1,0 +1,26 @@
+id: "2-5-5"
+title: "Target Size (Enhanced)"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.5 Input Modalities"
+addedIn: "2.1"
+summary: "The size of the target for pointer inputs is at least 44 by 44 CSS pixels, with documented exceptions for equivalent, inline, user-agent, and essential cases."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C42"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html"
+  - "https://www.w3.org/TR/WCAG22/"

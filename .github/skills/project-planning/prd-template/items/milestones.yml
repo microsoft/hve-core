@@ -1,0 +1,16 @@
+id: milestones
+title: Milestones
+description: "Defines delivery milestones with dates, deliverables, and dependencies."
+template: |
+  ## Milestones
+
+  Define the key milestones for {{product_name}} targeting {{target_release}}.
+
+  | Milestone | Target Date | Deliverables | Dependencies |
+  |---|---|---|---|
+  | | | | |
+
+  {{milestone_detail}}
+inputs:
+  - name: milestone_detail
+    description: "Expanded milestone descriptions, dependency chains, or risk-adjusted timelines"

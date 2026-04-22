@@ -1,0 +1,39 @@
+{
+  "slug": "demo-product",
+  "version": "1.0.0",
+  "createdAt": "2026-04-21T12:00:00Z",
+  "updatedAt": "2026-04-21T13:00:00Z",
+  "currentPhase": "reviewHandoff",
+  "disclaimerShownAt": "2026-04-21T12:00:00Z",
+  "surfaces": ["web", "native"],
+  "jurisdictions": ["US", "EU"],
+  "frameworks": [
+    { "frameworkId": "wcag-2-2", "version": "2.2", "profile": "AA" },
+    {
+      "frameworkId": "en-301-549",
+      "version": "3.2.1",
+      "disabled": true,
+      "disabledReason": "not distributed in EU",
+      "disabledAtPhase": "scoping"
+    }
+  ],
+  "suppressedControls": [
+    {
+      "controlId": "1.4.13",
+      "frameworkId": "wcag-2-2",
+      "naReason": "no hover or focus interactions present"
+    }
+  ],
+  "riskClassification": {
+    "binary": { "regulatedJurisdiction": true },
+    "categorical": { "surfaceKind": "web" },
+    "continuous": { "audienceSize": { "min": 1000, "max": 50000 } },
+    "suggestedDepthTier": "standard"
+  },
+  "scoping": { "completed": true },
+  "surfaceAssessment": { "completed": true },
+  "standardsMapping": { "completed": true },
+  "gapAnalysis": { "completed": true },
+  "backlogGeneration": { "completed": true },
+  "reviewHandoff": { "completed": false }
+}

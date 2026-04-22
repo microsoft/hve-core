@@ -1,0 +1,33 @@
+id: "grid-layout"
+title: "Layout Grid Pattern"
+itemKind: pattern
+summary: "Two-dimensional layout container with arrow-key navigation among arbitrary focusable cell contents."
+keyboardModel:
+  - "grid"
+focusManagement: "roving"
+relatedRoles:
+  - "grid"
+  - "row"
+  - "gridcell"
+requiredStates:
+  []
+requiredProperties:
+  - "aria-label"
+  - "aria-labelledby"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/grid-layout/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/grid-layout/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

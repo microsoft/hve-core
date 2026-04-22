@@ -1,0 +1,32 @@
+id: "disclosure-navigation"
+title: "Disclosure Navigation Menu Pattern"
+itemKind: pattern
+summary: "Top-level navigation bar where each item is a disclosure button revealing a submenu of related links."
+keyboardModel:
+  - "disclosure"
+focusManagement: "single"
+relatedRoles:
+  - "button"
+  - "navigation"
+requiredStates:
+  - "aria-expanded"
+requiredProperties:
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:2-4-6"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/disclosure-navigation/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/disclosure-navigation/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

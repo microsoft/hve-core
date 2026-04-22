@@ -78,6 +78,8 @@ items:
   - path: .github/prompts/hve-core/pull-request.prompt.md
     kind: prompt
   # Prompt Engineering prompts
+  - path: .github/prompts/hve-core/fsi-author.prompt.md
+    kind: prompt
   - path: .github/prompts/hve-core/prompt-analyze.prompt.md
     kind: prompt
   - path: .github/prompts/hve-core/prompt-build.prompt.md

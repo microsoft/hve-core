@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/sssc-state.schema.json",
+  "title": "SSSC Planner State Schema",
+  "description": "Schema for SSSC Planner state.json files under .copilot-tracking/sssc-plans/{project-slug}/. Reuses the RAI shared riskClassification $def via $ref to rai-state.schema.json.",
+  "type": "object",
+  "required": [
+    "projectSlug",
+    "ssscPlanFile",
+    "phase",
+    "frameworks",
+    "capabilityInventory",
+    "gates",
+    "riskClassification",
+    "skillsLoaded"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "projectSlug": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case project identifier used as the directory name"
+    },
+    "ssscPlanFile": {
+      "type": "string",
+      "description": "Relative path to the SSSC plan markdown file"
+    },
+    "version": {
+      "type": "string",
+      "description": "State document schema version (semver)"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "scoping",
+        "assessment",
+        "standards-mapping",
+        "gap-analysis",
+        "backlog-generation",
+        "handoff"
+      ],
+      "description": "Active SSSC planner phase"
+    },
+    "disclaimerShownAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when disclaimer was displayed, or null if not yet shown"
+    },
+    "frameworks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/frameworkRef" },
+      "description": "Framework skills registered for this assessment"
+    },
+    "capabilityInventory": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/capabilityEntry" },
+      "description": "Capabilities populated from the capability-inventory-* skills"
+    },
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gateResult" },
+      "description": "Gate evaluation results across phases"
+    },
+    "riskClassification": {
+      "$ref": "rai-state.schema.json#/$defs/riskClassification"
+    },
+    "skillsLoaded": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/skillLoadEntry" },
+      "description": "Hard loading-contract log: every skill artifact read by the planner is appended here"
+    },
+    "handoffGenerated": {
+      "type": "object",
+      "required": ["ado", "github"],
+      "additionalProperties": false,
+      "properties": {
+        "ado": { "type": "boolean" },
+        "github": { "type": "boolean" }
+      }
+    },
+    "signingRequested": {
+      "type": "boolean"
+    },
+    "signingManifestPath": {
+      "type": ["string", "null"]
+    }
+  },
+  "$defs": {
+    "frameworkRef": {
+      "type": "object",
+      "required": ["id", "version", "skillPath"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "version": { "type": "string", "minLength": 1 },
+        "skillPath": {
+          "type": "string",
+          "description": "Repo-relative path to the framework skill directory (e.g., .github/skills/security/openssf-scorecard)"
+        },
+        "phaseMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "description": "Phase -> [control-id] mapping copied from index.yml at registration time"
+        },
+        "replaceDefaults": {
+          "type": "boolean",
+          "description": "Whether this framework replaces the planner's default framework set"
+        },
+        "includeDrafts": {
+          "type": "boolean",
+          "description": "When true, this frameworkRef opts in to Framework Skills whose index.yml declares status: draft"
+        },
+        "additionalRoot": {
+          "type": "string",
+          "description": "Optional parent directory passed to Get-FrameworkSkill -AdditionalRoots when the Framework Skill lives outside .github/skills/<domain>/"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, the planner skips this framework in Phases 3+. Set via the Phase 1 Framework Applicability Gate or a mid-flight user request. Excluded frameworks appear only in the handoff audit appendix."
+        },
+        "disabledReason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Required when disabled is true. Free-form rationale recorded for the handoff audit appendix (e.g., 'not a federal contractor', 'doc-only repo')."
+        },
+        "disabledAtPhase": {
+          "type": "string",
+          "enum": [
+            "scoping",
+            "assessment",
+            "standards-mapping",
+            "gap-analysis",
+            "backlog-generation",
+            "handoff"
+          ],
+          "description": "Phase at which the framework was disabled. Used by the handoff audit appendix to distinguish pre-flight opt-outs from mid-flight suppressions."
+        },
+        "suppressedControls": {
+          "type": "array",
+          "description": "Per-control opt-outs scoped to this framework. Controls listed here are skipped in Phase 3+ scoring and Phase 5 work-item generation but appear in the Phase 6 audit appendix.",
+          "items": {
+            "type": "object",
+            "required": ["id", "reason", "suppressedAtPhase"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Control id matching one entry in the Framework Skill phaseMap."
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1,
+                "description": "User-supplied rationale for skipping this control (e.g., 'doc-only repo, no build artifacts')."
+              },
+              "suppressedAtPhase": {
+                "type": "string",
+                "enum": [
+                  "scoping",
+                  "assessment",
+                  "standards-mapping",
+                  "gap-analysis",
+                  "backlog-generation",
+                  "handoff"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "disabled": { "const": true } }, "required": ["disabled"] },
+          "then": { "required": ["disabledReason", "disabledAtPhase"] }
+        }
+      ]
+    },
+    "capabilityEntry": {
+      "type": "object",
+      "required": ["id", "skillPath", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "skillPath": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["absent", "partial", "present", "verified"]
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "required": ["id", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "phase": {
+          "type": "string",
+          "enum": [
+            "scoping",
+            "assessment",
+            "standards-mapping",
+            "gap-analysis",
+            "backlog-generation",
+            "handoff"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "passed", "failed"],
+          "default": "pending"
+        },
+        "sourceFrameworks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": ["string", "null"] }
+      }
+    },
+    "skillLoadEntry": {
+      "type": "object",
+      "required": ["phase", "skillPath", "loadedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": [
+            "scoping",
+            "assessment",
+            "standards-mapping",
+            "gap-analysis",
+            "backlog-generation",
+            "handoff"
+          ]
+        },
+        "skillPath": {
+          "type": "string",
+          "description": "Repo-relative path to the skill artifact that was read"
+        },
+        "controlPath": {
+          "type": ["string", "null"],
+          "description": "Repo-relative path to the specific controls/<id>.yml file when applicable"
+        },
+        "loadedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

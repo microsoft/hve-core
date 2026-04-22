@@ -1,0 +1,26 @@
+id: "1-4-2"
+title: "Audio Control"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "If any audio plays automatically for more than three seconds, a mechanism is available to pause, stop, or control its volume independently of system volume."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G60"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/audio-control.html"
+  - "https://www.w3.org/TR/WCAG22/"

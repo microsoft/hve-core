@@ -1,0 +1,30 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-8-2
+    title: Design and Perform Testing to Verify Executable Code Meets Security Requirements
+    group: PW
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Design and perform tests, including dynamic analysis, fuzzing, and security regression tests, to verify that executable code satisfies the documented security requirements and behaves as intended under adversarial conditions.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify security-focused test suites and dynamic or fuzz testing pipelines.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components without security regression, dynamic analysis, or fuzz coverage.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add security tests, fuzz harnesses, or DAST jobs.
+    evidenceHints:
+      - "tests/security/**"
+      - "fuzz/**"
+      - ".github/workflows/*fuzz*.yml"
+      - ".github/workflows/*dast*.yml"
+      - ".github/workflows/security-tests*.yml"

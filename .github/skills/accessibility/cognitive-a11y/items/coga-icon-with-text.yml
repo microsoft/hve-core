@@ -1,0 +1,41 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Pair Icons With Text Labels"
+source: https://www.w3.org/WAI/cognitive/
+description: "Functional icons carry visible text labels or persistent tooltips; icon-only controls are not used for primary navigation."
+controls:
+  - id: coga-icon-with-text
+    title: "Pair Icons With Text Labels"
+    description: "Functional icons carry visible text labels or persistent tooltips; icon-only controls are not used for primary navigation."
+    group: iconography
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Pair Icons With Text Labels practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Pair Icons With Text Labels is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    references:
+      - https://www.w3.org/WAI/cognitive/
+      - https://www.nngroup.com/articles/icon-usability/

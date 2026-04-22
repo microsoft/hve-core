@@ -18,12 +18,20 @@
     ],
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
+    ],
+    "./scripts/linting/schemas/planner-framework-control.schema.json": [
+      ".github/skills/security/*/controls/*.yml",
+      ".github/skills/security/*/controls/*.yaml"
     ]
   },
   "json.schemas": [
     {
       "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
       "url": "./scripts/linting/schemas/rai-state.schema.json"
+    },
+    {
+      "fileMatch": [".copilot-tracking/sssc-plans/*/state.json"],
+      "url": "./scripts/linting/schemas/sssc-state.schema.json"
     }
   ],
   "chat.instructionsFilesLocations": {

@@ -1,0 +1,78 @@
+framework: capability-inventory-web
+version: "1.0.0"
+summary: "hve-core web-surface capability inventory listing automated accessibility scanners static analyzers component-test addons assistive-tech manual review touchpoints and contrast-methodology checks that the Accessibility Planner agent consumes during web-surface assessment."
+domain: accessibility
+itemKind: capability
+status: draft
+phaseMap:
+  scoping: &id_all
+    - axe-core-ci
+    - lighthouse-a11y-ci
+    - pa11y-ci
+    - storybook-a11y-addon
+    - eslint-jsx-a11y
+    - ibm-equal-access
+    - accessibility-insights-fastpass
+    - accessibility-insights-assessment
+    - nvda-manual
+    - jaws-manual
+    - voiceover-manual
+    - talkback-manual
+    - wcag-contrast-2x
+    - apca-contrast
+    - nu-html-checker
+    - playwright-axe
+    - cypress-axe
+  surface-assessment:
+    - axe-core-ci
+    - lighthouse-a11y-ci
+    - pa11y-ci
+    - storybook-a11y-addon
+    - eslint-jsx-a11y
+    - ibm-equal-access
+    - accessibility-insights-fastpass
+    - playwright-axe
+    - cypress-axe
+    - nu-html-checker
+    - wcag-contrast-2x
+    - apca-contrast
+  gap-analysis: &id_auto
+    - axe-core-ci
+    - lighthouse-a11y-ci
+    - pa11y-ci
+    - eslint-jsx-a11y
+    - ibm-equal-access
+    - accessibility-insights-fastpass
+    - playwright-axe
+    - cypress-axe
+    - nu-html-checker
+    - wcag-contrast-2x
+  backlog-generation: *id_auto
+  review-handoff:
+    - accessibility-insights-assessment
+    - nvda-manual
+    - jaws-manual
+    - voiceover-manual
+    - talkback-manual
+    - wcag-contrast-2x
+    - apca-contrast
+metadata:
+  authority: "microsoft/hve-core"
+  license: "MIT"
+  licenseUrl: "https://opensource.org/licenses/MIT"
+  attributionRequired: false
+  source: "https://github.com/microsoft/hve-core"
+  spec_version: "1.0"
+  framework_revision: "2026-04-21"
+  last_updated: "2026-04-21"
+  imported_by: "prompt-builder"
+  imported_at: "2026-04-21T00:00:00Z"
+  review_required: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+governance:
+  owners: ["@microsoft/hve-core"]
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

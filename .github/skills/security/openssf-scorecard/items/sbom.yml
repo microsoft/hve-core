@@ -1,0 +1,32 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: sbom
+    title: SBOM
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that an SBOM is generated in SPDX or CycloneDX format and distributed with releases.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect SBOM generation workflows and formats.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify missing distribution channels or NTIA element gaps.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or harden SBOM generation and distribution.
+    evidenceHints:
+      - ".github/workflows/sbom*.yml"
+      - ".github/workflows/release*.yml"
+      - "**/sbom.spdx.json"
+      - "**/sbom.cdx.json"
+      - "**/bom.json"
+      - "**/bom.xml"

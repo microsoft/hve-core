@@ -1,0 +1,30 @@
+id: "breadcrumb"
+title: "Breadcrumb Pattern"
+itemKind: pattern
+summary: "Navigation landmark presenting the trail of parent pages from the site root to the current location."
+keyboardModel:
+  - "inline"
+focusManagement: "single"
+relatedRoles:
+  - "navigation"
+requiredStates:
+  []
+requiredProperties:
+  - "aria-label"
+  - "aria-current"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-4-8"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/breadcrumb/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

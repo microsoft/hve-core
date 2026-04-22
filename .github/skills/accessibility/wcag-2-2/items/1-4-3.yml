@@ -1,0 +1,30 @@
+id: "1-4-3"
+title: "Contrast (Minimum)"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "Visual presentation of text and images of text has a contrast ratio of at least 4.5:1, with documented exceptions for large text (3:1), incidental, and logotypes."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+  - "wcag-contrast"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G18"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G145"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,41 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Surface Inline Definitions"
+source: https://www.w3.org/WAI/cognitive/
+description: "Hard terms expose inline definitions on focus or activation that work with keyboard touch and screen readers."
+controls:
+  - id: coga-tooltip-definitions
+    title: "Surface Inline Definitions"
+    description: "Hard terms expose inline definitions on focus or activation that work with keyboard touch and screen readers."
+    group: support
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Surface Inline Definitions practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Surface Inline Definitions is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    references:
+      - https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/
+      - https://www.w3.org/WAI/cognitive/

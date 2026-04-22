@@ -1,0 +1,35 @@
+framework: adr-prototype
+version: '0.1.0'
+summary: 'Prototype ADR template bundle for validating the document-section item kind'
+status: draft
+itemKind: document-section
+globals:
+  decision_title:
+    description: "Clear, descriptive title of the architectural decision"
+    required: true
+  decision_date:
+    description: "Date the decision was recorded"
+  decision_status:
+    description: "Current status of the decision (proposed, accepted, deprecated, superseded)"
+phaseMap:
+  discover:
+    - context
+  evaluate:
+    - decision
+  record:
+    - consequences
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

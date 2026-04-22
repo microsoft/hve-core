@@ -1,0 +1,36 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - textstat readability - Flesch-Kincaid"
+source: https://github.com/microsoft/hve-core
+description: "Computes Flesch-Kincaid Grade Level on Markdown or HTML body text so authors can compare measured grade against a documented reading-grade target."
+controls:
+  - id: textstat-flesch-kincaid
+    title: "textstat readability - Flesch-Kincaid"
+    description: "Computes Flesch-Kincaid Grade Level on Markdown or HTML body text so authors can compare measured grade against a documented reading-grade target."
+    group: readability-metrics
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "textstat readability - Flesch-Kincaid is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "textstat readability - Flesch-Kincaid runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-grade-level-target
+        - coga-short-sentences
+    evidenceHints:
+      - scripts/**/readability*.py
+      - scripts/**/textstat*.py
+    references:
+      - https://github.com/textstat/textstat
+      - https://en.wikipedia.org/wiki/Flesch-Kincaid_readability_tests

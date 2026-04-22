@@ -1,0 +1,35 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - textstat readability - SMOG"
+source: https://github.com/microsoft/hve-core
+description: "Computes SMOG grade as a second readability lens that weights polysyllabic words; pair with Flesch-Kincaid to detect formula-specific blind spots."
+controls:
+  - id: textstat-smog
+    title: "textstat readability - SMOG"
+    description: "Computes SMOG grade as a second readability lens that weights polysyllabic words; pair with Flesch-Kincaid to detect formula-specific blind spots."
+    group: readability-metrics
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "textstat readability - SMOG is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "textstat readability - SMOG runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-grade-level-target
+    evidenceHints:
+      - scripts/**/readability*.py
+      - scripts/**/textstat*.py
+    references:
+      - https://github.com/textstat/textstat
+      - https://en.wikipedia.org/wiki/SMOG

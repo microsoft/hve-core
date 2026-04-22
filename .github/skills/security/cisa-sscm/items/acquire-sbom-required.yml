@@ -1,0 +1,39 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: acquire-sbom-required
+    title: SBOM Required From Suppliers
+    group: acquire
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Acquired software components are accompanied by a Software Bill of Materials in an industry-standard format (SPDX or CycloneDX) covering NTIA minimum elements, enabling downstream vulnerability and license analysis.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inventory acquired components and confirm SBOM intake locations.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components missing SBOMs or with incomplete NTIA elements.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to demand SBOMs, automate intake, or replace non-compliant suppliers.
+    evidenceHints:
+      - "third-party/sboms/**"
+      - "vendor/sboms/**"
+      - "**/*.spdx.json"
+      - "**/*.cdx.json"
+      - "**/bom.json"
+      - "**/bom.xml"
+    applicability:
+      discriminator: project-type
+      appliesWhen: [acquired-upstream]
+      naWhen: [self-published-oss]
+      naReason: self-published, no upstream supplier
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers
+      - https://www.cisa.gov/sbom

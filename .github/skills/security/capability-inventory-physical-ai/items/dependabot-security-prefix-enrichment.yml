@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Dependabot security prefix enrichment"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Auto-retitle security Dependabot PRs with security(deps) prefix using GHSA/CVSS metadata
+controls:
+- id: dependabot-security-prefix-enrichment
+  appliesTo: [cloud, web, ml, fleet]
+  title: Dependabot security prefix enrichment
+  description: Auto-retitle security Dependabot PRs with security(deps) prefix using GHSA/CVSS metadata
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Dependabot security prefix enrichment capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Dependabot security prefix enrichment is verified against reference
+      patterns.
+  evidenceHints:
+  - .github/workflows/dependabot*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

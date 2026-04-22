@@ -1,0 +1,31 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: ing-2
+    title: Use an OSS binary repository manager solution
+    group: ingest
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML1 practice. Route all OSS consumption through a binary repository manager such as Artifactory, Nexus, GitHub Packages, or Azure Artifacts so that builds resolve from a controlled, cacheable source.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect repository manager configuration in package source files.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify ecosystems still resolving directly from public registries.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to onboard remaining ecosystems to the binary repository manager.
+    evidenceHints:
+      - ".npmrc"
+      - "nuget.config"
+      - "pip.conf"
+      - "settings.xml"
+      - ".m2/settings.xml"
+      - ".github/workflows/*.yml"

@@ -1,0 +1,38 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - Human editor review"
+source: https://github.com/microsoft/hve-core
+description: "Documented human-editor review pass focused on content prioritization summary leads visual hierarchy and decorative-noise removal in shipped surfaces."
+controls:
+  - id: editor-review
+    title: "Human editor review"
+    description: "Documented human-editor review pass focused on content prioritization summary leads visual hierarchy and decorative-noise removal in shipped surfaces."
+    group: human-review
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Human editor review is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Human editor review runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-positive-framing
+        - coga-summary-headers
+        - coga-content-prioritization
+        - coga-noise-removal
+    evidenceHints:
+      - .github/CODEOWNERS
+      - docs/**/REVIEW*.md
+    references:
+      - https://www.plainlanguage.gov/guidelines/
+      - https://www.w3.org/WAI/cognitive/

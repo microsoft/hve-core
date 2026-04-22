@@ -1,0 +1,28 @@
+id: "1-3-4"
+title: "Orientation"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.3 Adaptable"
+addedIn: "2.1"
+summary: "Content does not restrict its view and operation to a single display orientation, such as portrait or landscape, unless a specific orientation is essential."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+  naWhen:
+    - "desktop"
+  naReason: "Orientation lock primarily applies to mobile and tablet surfaces."
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C38"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/orientation.html"
+  - "https://www.w3.org/TR/WCAG22/"

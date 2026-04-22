@@ -1,0 +1,29 @@
+id: s2c2f
+version: "1.0"
+name: OSSF Secure Supply Chain Consumption Framework
+controls:
+  - id: aud-1
+    title: Verify the provenance of consumed OSS
+    group: audit
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: S2C2F ML1 practice. Verify provenance attestations or signatures on OSS artifacts before consumption to confirm the artifact was produced by the expected source repository and build pipeline.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect provenance verification tooling such as cosign or Sigstore policy.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify OSS ecosystems consumed without provenance verification.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add provenance verification to ingestion pipelines.
+    evidenceHints:
+      - ".github/workflows/verify*.yml"
+      - "**/cosign.pub"
+      - "**/policy.yaml"
+      - "**/policy.yml"

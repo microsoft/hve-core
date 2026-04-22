@@ -1,0 +1,33 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Consolidated weekly security summary"
+source: https://github.com/microsoft/hve-core
+description: Aggregated reporting across all security scan results
+controls:
+- id: consolidated-weekly-security-summary
+  appliesTo: [cloud, web, ml, fleet]
+  title: Consolidated weekly security summary
+  description: Aggregated reporting across all security scan results
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Consolidated weekly security summary capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Consolidated weekly security summary is verified against reference
+      patterns.
+  evidenceHints:
+  - .github/workflows/security-summary*.yml
+  - .github/workflows/weekly-security*.yml
+  references:
+  - https://github.com/microsoft/hve-core

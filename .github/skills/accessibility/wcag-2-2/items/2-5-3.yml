@@ -1,0 +1,27 @@
+id: "2-5-3"
+title: "Label in Name"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.5 Input Modalities"
+addedIn: "2.1"
+summary: "For UI components with labels that include text or images of text, the accessible name contains the text that is presented visually."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G208"
+relatedAriaPatterns: []
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html"
+  - "https://www.w3.org/TR/WCAG22/"

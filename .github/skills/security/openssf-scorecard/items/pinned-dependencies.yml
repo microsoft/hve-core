@@ -1,0 +1,36 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: pinned-dependencies
+    title: Pinned-Dependencies
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that dependencies and GitHub Actions are pinned to immutable versions such as commit SHAs.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inventory action and dependency pinning state across workflows and lockfiles.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify floating tags or unlocked dependency ranges.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to pin actions to SHAs and lock dependencies.
+    evidenceHints:
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "pnpm-lock.yaml"
+      - "go.sum"
+      - "Cargo.lock"
+      - "poetry.lock"
+      - "uv.lock"
+      - "requirements*.txt"

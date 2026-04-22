@@ -1,0 +1,31 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: packaging
+    title: Packaging
+    risk: medium
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that the project publishes packages via a recognized registry workflow. Scored 0 or 10.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect publish workflows and target registries.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify missing automated publish paths per artifact.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or harden package publish workflows.
+    evidenceHints:
+      - ".github/workflows/release*.yml"
+      - ".github/workflows/publish*.yml"
+      - "package.json"
+      - "pyproject.toml"
+      - "setup.py"

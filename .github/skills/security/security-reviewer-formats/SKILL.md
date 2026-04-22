@@ -34,5 +34,3 @@ a focused area of the reporting pipeline.
   * `severity-definitions.md` — severity level table shared across all assessments.
 
 ---
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
