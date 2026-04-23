@@ -87,9 +87,8 @@ jobs:
           if ($env:HVE_PSGALLERY_SOURCE_URL) {
             Register-PSRepository -Name $repo -SourceLocation $env:HVE_PSGALLERY_SOURCE_URL -InstallationPolicy Trusted -ErrorAction SilentlyContinue
           }
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser -Repository $repo
-          Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -Repository $repo
-          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $repo
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $repo
+            Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $repo
 
       - name: Install uv package manager
         env:

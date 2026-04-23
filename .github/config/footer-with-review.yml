@@ -2,7 +2,7 @@
 # Referenced by instruction files and validated by CI
 #
 # Defines the Tier 1 AI-content note, human review checkbox, and artifact
-# classification rules. The validation script (Validate-AIArtifacts.ps1)
+# classification rules. The validation script (Validate-PlannerArtifacts.ps1)
 # reads this file as the single source of truth for footer requirements.
 
 version: "1.0"
@@ -25,7 +25,7 @@ footers:
 # planning sessions (e.g., control-surface-catalog.md, evidence-register.md).
 # They do NOT match the .github/instructions/rai-planning/*.instructions.md
 # basenames. To enforce footers in CI against generated artifacts, invoke
-# Validate-AIArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'.
+# Validate-PlannerArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'.
 # The default scan path (.github/instructions) returns 0 issues by design
 # because instruction files are templates, not generated artifacts.
 artifact-classification:

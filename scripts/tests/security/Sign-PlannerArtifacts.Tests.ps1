@@ -6,7 +6,7 @@ BeforeAll {
     # Stub cosign when not installed so Pester can mock it
     if (-not (Get-Command cosign -ErrorAction SilentlyContinue)) { function global:cosign { } }
 
-    $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Sign-RaiArtifacts.ps1'
+    $script:ScriptPath = Join-Path $PSScriptRoot '../../security/Sign-PlannerArtifacts.ps1'
 
     # Extract helper functions via AST. The script has a mandatory ProjectSlug
     # parameter with script-scope execution, preventing dot-source.

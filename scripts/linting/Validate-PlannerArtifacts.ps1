@@ -33,10 +33,10 @@
     Path for the JSON results file. Defaults to 'logs/ai-artifact-results.json'.
 
 .EXAMPLE
-    ./Validate-AIArtifacts.ps1 -FailOnMissing
+    ./Validate-PlannerArtifacts.ps1 -FailOnMissing
 
 .EXAMPLE
-    ./Validate-AIArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
+    ./Validate-PlannerArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
 #>
 
 [CmdletBinding()]
@@ -628,7 +628,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error -ErrorAction Continue "Validate-AIArtifacts failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Validate-PlannerArtifacts failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

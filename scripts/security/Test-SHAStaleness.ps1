@@ -722,6 +722,123 @@ function Get-ToolStaleness {
     return $results
 }
 
+function Get-PSModuleStaleness {
+    <#
+    .SYNOPSIS
+        Checks pinned PowerShell module versions against the PowerShell Gallery.
+
+    .DESCRIPTION
+        Reads the psModules array from tool-checksums.json and queries the
+        PowerShell Gallery OData API to detect when pinned modules have newer
+        versions available.
+
+    .PARAMETER ManifestPath
+        Path to the tool-checksums.json manifest file.
+
+    .EXAMPLE
+        $stale = Get-PSModuleStaleness
+        $stale | Where-Object { $_.IsStale } | ForEach-Object {
+            Write-Host "$($_.Module): $($_.CurrentVersion) -> $($_.LatestVersion)"
+        }
+
+    .NOTES
+        Requires network access to the PowerShell Gallery OData v2 API unless
+        HVE_PSGALLERY_REPOSITORY is set to a local mirror or test double.
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param(
+        [Parameter()]
+        [string]$ManifestPath = (Join-Path $PSScriptRoot "tool-checksums.json")
+    )
+
+    if (-not (Test-Path $ManifestPath)) {
+        Write-Warning "Tool manifest not found: $ManifestPath"
+        return @()
+    }
+
+    $manifest = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+    if (-not $manifest.psModules) {
+        return @()
+    }
+
+    $apiBase = Get-PSGalleryApiBase
+    $results = @()
+
+    foreach ($mod in $manifest.psModules) {
+        if ([string]::IsNullOrWhiteSpace($mod.name) -or [string]::IsNullOrWhiteSpace($mod.version)) {
+            $missing = @()
+            if ([string]::IsNullOrWhiteSpace($mod.name)) { $missing += 'name' }
+            if ([string]::IsNullOrWhiteSpace($mod.version)) { $missing += 'version' }
+            $errorMsg = "psModules entry missing required field(s): $($missing -join ', ')"
+            Write-Warning $errorMsg
+            $results += [PSCustomObject]@{
+                Module         = if ($mod.name) { $mod.name } else { '<unnamed>' }
+                CurrentVersion = $mod.version
+                LatestVersion  = $null
+                IsStale        = $null
+                Notes          = $mod.notes
+                Error          = $errorMsg
+            }
+            continue
+        }
+
+        $escapedName = $mod.name -replace "'", "''"
+        $uri = "$apiBase/Packages()?`$filter=Id eq '$escapedName' and IsLatestVersion"
+        try {
+            $response = Invoke-RestMethod -Uri $uri -ErrorAction Stop
+            $latestVersion = $null
+            if ($response -and $response.properties -and $response.properties.Version) {
+                $latestVersion = [string]$response.properties.Version
+            }
+            # Fallback for Atom feed-style responses (not emitted by PSGallery v2
+            # single-package queries; retained in case a mirror returns feed XML).
+            elseif ($response -and $response.entry) {
+                $entry = if ($response.entry -is [array]) { $response.entry[0] } else { $response.entry }
+                if ($entry -and $entry.properties -and $entry.properties.Version) {
+                    $latestVersion = [string]$entry.properties.Version
+                }
+            }
+
+            if (-not $latestVersion) {
+                $results += [PSCustomObject]@{
+                    Module         = $mod.name
+                    CurrentVersion = $mod.version
+                    LatestVersion  = $null
+                    IsStale        = $null
+                    Notes          = $mod.notes
+                    Error          = "PSGallery returned no version for $($mod.name)"
+                }
+                continue
+            }
+
+            $isStale = Compare-ToolVersion -Current $mod.version -Latest $latestVersion
+            $results += [PSCustomObject]@{
+                Module         = $mod.name
+                CurrentVersion = $mod.version
+                LatestVersion  = $latestVersion
+                IsStale        = $isStale
+                Notes          = $mod.notes
+                Error          = $null
+            }
+        }
+        catch {
+            $errorMsg = "Failed to check $($mod.name): $($_.Exception.Message)"
+            Write-Warning $errorMsg
+            $results += [PSCustomObject]@{
+                Module         = $mod.name
+                CurrentVersion = $mod.version
+                LatestVersion  = $null
+                IsStale        = $null
+                Notes          = $mod.notes
+                Error          = $errorMsg
+            }
+        }
+    }
+
+    return $results
+}
+
 #region Main Execution
 
 function Invoke-SHAStalenessCheck {
@@ -796,6 +913,53 @@ function Invoke-SHAStalenessCheck {
         $errorTools = @($toolResults | Where-Object { $null -ne $_.Error })
         if (@($errorTools).Count -gt 0) {
             Write-SecurityLog "Failed to check $(@($errorTools).Count) tool(s)" -Level Warning
+        }
+    }
+
+    # Run staleness check for PowerShell modules from tool-checksums.json (psModules)
+    Write-SecurityLog "Checking PowerShell module staleness from tool-checksums.json" -Level Info
+
+    $moduleResults = @(Get-PSModuleStaleness)
+    if (@($moduleResults).Count -gt 0) {
+        $staleModules = @($moduleResults | Where-Object { $_.IsStale -eq $true })
+        if (@($staleModules).Count -gt 0) {
+            Write-SecurityLog "Found $(@($staleModules).Count) stale PowerShell module(s):" -Level Warning
+            foreach ($mod in $staleModules) {
+                Write-SecurityLog "  - $($mod.Module): $($mod.CurrentVersion) -> $($mod.LatestVersion)" -Level Warning
+
+                $script:StaleDependencies.Add([PSCustomObject]@{
+                    Type           = "PowerShellModule"
+                    File           = "scripts/security/tool-checksums.json"
+                    Name           = $mod.Module
+                    CurrentVersion = $mod.CurrentVersion
+                    LatestVersion  = $mod.LatestVersion
+                    DaysOld        = $null
+                    Severity       = "Medium"
+                    Message        = "PowerShell module has newer version available: $($mod.CurrentVersion) -> $($mod.LatestVersion)"
+                })
+            }
+        }
+        else {
+            Write-SecurityLog "All PowerShell modules are up to date" -Level Info
+        }
+
+        $errorModules = @($moduleResults | Where-Object { $null -ne $_.Error -and $_.Error -notlike 'psModules entry missing*' })
+        if (@($errorModules).Count -gt 0) {
+            Write-SecurityLog "Failed to check $(@($errorModules).Count) PowerShell module(s)" -Level Warning
+        }
+
+        $malformedModules = @($moduleResults | Where-Object { $_.Error -like 'psModules entry missing*' })
+        foreach ($bad in $malformedModules) {
+            $script:StaleDependencies.Add([PSCustomObject]@{
+                Type           = "PowerShellModule"
+                File           = "scripts/security/tool-checksums.json"
+                Name           = $bad.Module
+                CurrentVersion = $bad.CurrentVersion
+                LatestVersion  = $null
+                DaysOld        = $null
+                Severity       = "High"
+                Message        = $bad.Error
+            })
         }
     }
 

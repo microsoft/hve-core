@@ -8,6 +8,14 @@
       "version": "1.7.10",
       "sha256": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
       "downloadUrlTemplate": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
+      "sha256ByArch": {
+        "linux_amd64": "f4c76b71db5755a713e6055cbb0857ed07e103e028bda117817660ebadb4386f",
+        "linux_arm64": "cd3dfe5f66887ec6b987752d8d9614e59fd22f39415c5ad9f28374623f41773a"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_amd64.tar.gz",
+        "linux_arm64": "https://github.com/rhysd/actionlint/releases/download/v{version}/actionlint_{version}_linux_arm64.tar.gz"
+      },
       "notes": "Used in devcontainer for GitHub Actions workflow linting"
     },
     {
@@ -16,23 +24,32 @@
       "version": "8.30.0",
       "sha256": "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e",
       "downloadUrlTemplate": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
-      "notes": "Used in devcontainer for secret scanning"
+      "sha256ByArch": {
+        "linux_amd64": "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e",
+        "linux_arm64": "b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f"
+      },
+      "assetTemplateByArch": {
+        "linux_amd64": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_x64.tar.gz",
+        "linux_arm64": "https://github.com/gitleaks/gitleaks/releases/download/v{version}/gitleaks_{version}_linux_arm64.tar.gz"
+      },
+      "notes": "Used in devcontainer for secret scanning. Vendor names linux amd64 asset 'linux_x64'."
+    }
+  ],
+  "psModules": [
+    {
+      "name": "PowerShell-Yaml",
+      "version": "0.4.7",
+      "notes": "YAML parser used by lint:yaml and collection metadata validation; pinned to known-good stable per ADR in docs/security/dependency-pinning.md"
     },
     {
-      "name": "cosign",
-      "repo": "sigstore/cosign",
-      "version": "3.0.5",
-      "sha256": "db15cc99e6e4837daabab023742aaddc3841ce57f193d11b7c3e06c8003642b2",
-      "downloadUrlTemplate": "https://github.com/sigstore/cosign/releases/download/v{version}/cosign-linux-amd64",
-      "notes": "Used in devcontainer and copilot-setup-steps for artifact manifest signing (linux/amd64)"
+      "name": "Pester",
+      "version": "5.7.1",
+      "notes": "PowerShell test framework; required by all *.Tests.ps1 files via #Requires -Modules @{ ModuleName='Pester'; RequiredVersion='5.7.1' }"
     },
     {
-      "name": "cosign-arm64",
-      "repo": "sigstore/cosign",
-      "version": "3.0.5",
-      "sha256": "d098f3168ae4b3aa70b4ca78947329b953272b487727d1722cb3cb098a1a20ab",
-      "downloadUrlTemplate": "https://github.com/sigstore/cosign/releases/download/v{version}/cosign-linux-arm64",
-      "notes": "Used in copilot-setup-steps for artifact manifest signing on arm64 runners"
+      "name": "PSScriptAnalyzer",
+      "version": "1.25.0",
+      "notes": "PowerShell linter used by lint:ps; pinned for reproducible analysis results across CI and devcontainer"
     }
   ]
 }

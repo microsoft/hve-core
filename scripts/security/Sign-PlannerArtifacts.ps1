@@ -34,7 +34,7 @@
     .copilot-tracking/rai-plans/contoso-ai/.
 
 .EXAMPLE
-    ./scripts/security/Sign-RaiArtifacts.ps1 -ProjectSlug "contoso-ai" -IncludeCosign
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai" -IncludeCosign
 
     Generates the manifest and signs it with cosign keyless signing.
 
@@ -192,7 +192,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
     }
     catch {
-        Write-Error "Sign-RaiArtifacts failed: $($_.Exception.Message)" -ErrorAction Continue
+        Write-Error "Sign-PlannerArtifacts failed: $($_.Exception.Message)" -ErrorAction Continue
         exit 1
     }
 }
