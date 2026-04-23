@@ -328,7 +328,7 @@ function Invoke-PluginGeneration {
                         $path = [string]$item.path
                         $artifactName = Get-CollectionArtifactKey -Kind $kind -Path $path
 
-                        $resolvedPath = Join-Path $RepoRoot ($path -replace '^\.\//', '')
+                        $resolvedPath = Join-Path $RepoRoot ($path -replace '^\./', '')
                         if ($kind -eq 'skill') {
                             $resolvedPath = Join-Path $resolvedPath 'SKILL.md'
                         }

@@ -618,8 +618,10 @@ function Split-CollectionMdByMarkers {
         markers are missing or mis-ordered.
     #>
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$Content
     )
 
