@@ -28,13 +28,13 @@
     a warning when cosign is not found.
 
 .EXAMPLE
-    ./scripts/security/Sign-RaiArtifacts.ps1 -ProjectSlug "contoso-ai"
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai"
 
     Generates a SHA-256 manifest for all artifacts under
     .copilot-tracking/rai-plans/contoso-ai/.
 
 .EXAMPLE
-    ./scripts/security/Sign-RaiArtifacts.ps1 -ProjectSlug "contoso-ai" -IncludeCosign
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai" -IncludeCosign
 
     Generates the manifest and signs it with cosign keyless signing.
 
@@ -89,7 +89,11 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         #region Artifact Generation
 
-        $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+        $repoRoot = & git rev-parse --show-toplevel 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
+            $repoRoot = $PWD.Path
+        }
+        $artifactDir = Join-Path -Path $repoRoot -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
 
         if (-not (Test-Path -Path $artifactDir -PathType Container)) {
             Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
@@ -188,7 +192,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         Write-Host "🎉 Artifact signing complete" -ForegroundColor Green
     }
     catch {
-        Write-Error "Sign-RaiArtifacts failed: $($_.Exception.Message)" -ErrorAction Continue
+        Write-Error "Sign-PlannerArtifacts failed: $($_.Exception.Message)" -ErrorAction Continue
         exit 1
     }
 }

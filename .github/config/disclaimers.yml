@@ -2,7 +2,7 @@
 # Referenced by instruction files and validated by CI
 #
 # Each planner section defines a full disclaimer and the artifacts it applies to.
-# The validation script (Validate-AIArtifacts.ps1) reads this file as the
+# The validation script (Validate-PlannerArtifacts.ps1) reads this file as the
 # single source of truth for Tier 2 disclaimer text.
 
 version: "1.0"

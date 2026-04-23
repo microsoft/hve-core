@@ -33,10 +33,10 @@
     Path for the JSON results file. Defaults to 'logs/ai-artifact-results.json'.
 
 .EXAMPLE
-    ./Validate-AIArtifacts.ps1 -FailOnMissing
+    ./Validate-PlannerArtifacts.ps1 -FailOnMissing
 
 .EXAMPLE
-    ./Validate-AIArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
+    ./Validate-PlannerArtifacts.ps1 -Paths '.github/instructions','.github/skills' -OutputPath 'logs/results.json'
 #>
 
 [CmdletBinding()]
@@ -62,6 +62,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module PowerShell-Yaml -ErrorAction Stop
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
@@ -90,7 +91,6 @@ function Import-FooterConfig {
         throw "Footer config not found: $ConfigPath"
     }
 
-    Import-Module PowerShell-Yaml -ErrorAction Stop
     $content = Get-Content -Path $ConfigPath -Raw -Encoding utf8
     $config = ConvertFrom-Yaml -Yaml $content
 
@@ -130,7 +130,6 @@ function Import-DisclaimerConfig {
         throw "Disclaimer config not found: $ConfigPath"
     }
 
-    Import-Module PowerShell-Yaml -ErrorAction Stop
     $content = Get-Content -Path $ConfigPath -Raw -Encoding utf8
     $config = ConvertFrom-Yaml -Yaml $content
 
@@ -629,7 +628,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         exit 0
     }
     catch {
-        Write-Error -ErrorAction Continue "Validate-AIArtifacts failed: $($_.Exception.Message)"
+        Write-Error -ErrorAction Continue "Validate-PlannerArtifacts failed: $($_.Exception.Message)"
         Write-CIAnnotation -Message $_.Exception.Message -Level Error
         exit 1
     }

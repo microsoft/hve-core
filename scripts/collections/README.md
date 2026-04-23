@@ -16,7 +16,7 @@ helper functions used by both collection validation and plugin generation.
 ## Prerequisites
 
 * PowerShell 7.0+
-* PowerShell-Yaml module (`Install-Module PowerShell-Yaml`)
+* PowerShell-Yaml module (`Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7`)
 
 ## Adding a New Collection
 
