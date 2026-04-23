@@ -791,6 +791,8 @@ function Get-PSModuleStaleness {
             if ($response -and $response.properties -and $response.properties.Version) {
                 $latestVersion = [string]$response.properties.Version
             }
+            # Fallback for Atom feed-style responses (not emitted by PSGallery v2
+            # single-package queries; retained in case a mirror returns feed XML).
             elseif ($response -and $response.entry) {
                 $entry = if ($response.entry -is [array]) { $response.entry[0] } else { $response.entry }
                 if ($entry -and $entry.properties -and $entry.properties.Version) {

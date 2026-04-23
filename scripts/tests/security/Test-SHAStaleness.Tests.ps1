@@ -298,6 +298,28 @@ Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
             $result | Should -BeNullOrEmpty
         }
     }
+
+    Context 'With malformed psModules entries' {
+        It 'Reports missing name field without throwing' {
+            $manifestPath = Join-Path $TestDrive 'malformed-name.json'
+            @{ psModules = @(@{ version = '1.0.0'; notes = 'missing name' }) } |
+                ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath
+            $result = @(Get-PSModuleStaleness -ManifestPath $manifestPath)
+            $result[0].Module  | Should -Be '<unnamed>'
+            $result[0].IsStale | Should -BeNullOrEmpty
+            $result[0].Error   | Should -Match 'name'
+        }
+
+        It 'Reports missing version field without throwing' {
+            $manifestPath = Join-Path $TestDrive 'malformed-ver.json'
+            @{ psModules = @(@{ name = 'SomeModule'; notes = 'missing version' }) } |
+                ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath
+            $result = @(Get-PSModuleStaleness -ManifestPath $manifestPath)
+            $result[0].Module  | Should -Be 'SomeModule'
+            $result[0].IsStale | Should -BeNullOrEmpty
+            $result[0].Error   | Should -Match 'version'
+        }
+    }
 }
 
 Describe 'Main Script Execution' {
