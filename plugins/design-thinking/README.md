@@ -27,6 +27,7 @@ This collection includes agents, prompts, and instructions for:
 - **DT Method 6: Testing** — Hypothesis-driven testing and constraint validation for Method 6c
 - **DT Canonical Deck** — Unified opt-in workflow for canonical deck offers, snapshot refresh decisions, and customer-card PowerPoint build orchestration from canonical artifacts
 - **DT Coaching Identity** — Defines the coach's interaction philosophy (Think, Speak, Empower), progressive hint engine, psychological safety patterns, and hat-switching framework for consistent behavior across all nine methods
+- **DT Figma Export** — Export Design Thinking artifacts to collaborative FigJam boards or Figma Design files using the official Figma MCP server
 - **DT Coach**: Conversational coaching agent that guides teams through all 9 methods with Think/Speak/Empower philosophy
 - **DT Coaching State** — Session persistence schema, method progress tracking, canonical deck render state, and session recovery protocol enabling the coach to resume seamlessly across conversations
 - **DT Method Sequencing** — Governs the nine-method sequence across three spaces, space boundary transition protocols with readiness signals, non-linear iteration patterns, method routing logic, and coaching state tracking
@@ -94,6 +95,7 @@ copilot plugin install design-thinking@hve-core
 | dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                                         |
 | dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                                          |
 | dt-canonical-deck               | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core |
+| dt-figma-export                 | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core  |
 
 ## Instructions
 

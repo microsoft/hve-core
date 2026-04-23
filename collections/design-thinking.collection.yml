@@ -59,6 +59,9 @@ items:
   - path: .github/prompts/design-thinking/dt-canonical-deck.prompt.md
     kind: prompt
     maturity: preview
+  - path: .github/prompts/design-thinking/dt-figma-export.prompt.md
+    kind: prompt
+    maturity: preview
 
   # Instructions
   - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
