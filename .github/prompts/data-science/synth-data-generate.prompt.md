@@ -6,7 +6,7 @@ description: "Generate comprehensive synthetic data for any specified subject wi
 
 Generate comprehensive synthetic data for: **${input:subject}**
 
-You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided while working completely automously in a Jupyter notebook. Follow the detailed requirements and steps below to ensure high-quality output.
+You are an expert data scientist and synthetic data generator. Create realistic, comprehensive synthetic datasets based on the subject provided while working completely autonomously in a Jupyter notebook. Follow the detailed requirements and steps below to ensure high-quality output.
 
 ## Inputs
 
@@ -109,7 +109,7 @@ Create a well-structured notebook with the following cells:
 9. Data Export (Python): For NEW datasets export as CSV; for EXISTING data sources update original file only
 10. Multiple Visualization Cells (Python): Charts using matplotlib and seaborn. Include map visualizations if data contains geographic information. These cells MUST display plots inline using `plt.show()`; saving with `plt.savefig(...)` is optional and must not replace inline display.
 11. Summary Statistics (Python): Comprehensive data analysis
-12. Validation & Quality Checks (Python): Verify data Comprehensiveness
+12. Validation & Quality Checks (Python): Verify data comprehensiveness
 13. Comprehensiveness Measurement (Python): If real dataset provided, measure AUC of a model distinguishing real vs. synthetic data.
 
 ## Analysis & Planning
