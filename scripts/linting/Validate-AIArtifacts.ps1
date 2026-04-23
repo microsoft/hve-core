@@ -62,6 +62,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module PowerShell-Yaml -ErrorAction Stop
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/LintingHelpers.psm1') -Force
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath '../lib/Modules/CIHelpers.psm1') -Force
 
@@ -90,7 +91,6 @@ function Import-FooterConfig {
         throw "Footer config not found: $ConfigPath"
     }
 
-    Import-Module PowerShell-Yaml -ErrorAction Stop
     $content = Get-Content -Path $ConfigPath -Raw -Encoding utf8
     $config = ConvertFrom-Yaml -Yaml $content
 
@@ -130,7 +130,6 @@ function Import-DisclaimerConfig {
         throw "Disclaimer config not found: $ConfigPath"
     }
 
-    Import-Module PowerShell-Yaml -ErrorAction Stop
     $content = Get-Content -Path $ConfigPath -Raw -Encoding utf8
     $config = ConvertFrom-Yaml -Yaml $content
 

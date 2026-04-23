@@ -89,7 +89,11 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         #region Artifact Generation
 
-        $artifactDir = Join-Path -Path $PWD -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+        $repoRoot = & git rev-parse --show-toplevel 2>$null
+        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
+            $repoRoot = $PWD.Path
+        }
+        $artifactDir = Join-Path -Path $repoRoot -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
 
         if (-not (Test-Path -Path $artifactDir -PathType Container)) {
             Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red

@@ -20,6 +20,14 @@ footers:
     label: "Human Review Checkbox"
     text: "> - [ ] Reviewed and validated by a qualified human reviewer"
 
+# Artifact names below correspond to generated planning output files
+# produced under .copilot-tracking/rai-plans/{project-slug}/ during RAI
+# planning sessions (e.g., control-surface-catalog.md, evidence-register.md).
+# They do NOT match the .github/instructions/rai-planning/*.instructions.md
+# basenames. To enforce footers in CI against generated artifacts, invoke
+# Validate-AIArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'.
+# The default scan path (.github/instructions) returns 0 issues by design
+# because instruction files are templates, not generated artifacts.
 artifact-classification:
   # Agentic artifacts: Tier 1 note only (no human review required)
   agentic:
