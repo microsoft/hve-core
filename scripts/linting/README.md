@@ -194,6 +194,11 @@ Purpose: Ensure language-agnostic URLs for better internationalization.
 * Creates CI warning annotations
 * Provides fix instructions in summary
 
+##### Parameters
+
+* `-ExcludePaths` (string array) - Paths to exclude from the check (default: `@()`)
+* `-OutputPath` (string) - Path where the JSON result file is written; the parent directory is created automatically if it does not exist (default: `logs/link-lang-check-results.json`)
+
 ##### Usage
 
 ```powershell
@@ -202,6 +207,9 @@ Purpose: Ensure language-agnostic URLs for better internationalization.
 
 # View detection details
 ./scripts/linting/Invoke-LinkLanguageCheck.ps1 -Debug
+
+# Write results to a custom location
+./scripts/linting/Invoke-LinkLanguageCheck.ps1 -OutputPath "custom/results.json"
 ```
 
 ##### GitHub Actions Integration
