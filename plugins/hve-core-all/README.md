@@ -118,6 +118,7 @@ copilot plugin install hve-core-all@hve-core
 | ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                                              |
 | code-review-full                            | Run both functional and standards code reviews on the current branch in a single pass - Brought to you by microsoft/hve-core                                     |
 | code-review-functional                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core                        |
+| synth-data-generate                         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                                        |
 | dt-figma-export                             | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core |
 | dt-handoff-implementation-space             | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                                     |
 | dt-handoff-problem-space                    | Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                                |

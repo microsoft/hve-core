@@ -10,3 +10,7 @@ This collection includes agents for:
 - **Streamlit Dashboard Generation** — Create interactive dashboards from data sources
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
 - **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
+
+This collection includes prompts for:
+
+- **Synthetic Data Generation** — Generate comprehensive synthetic datasets with realistic patterns, relationships, and statistical comparisons against optional reference data
