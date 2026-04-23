@@ -20,6 +20,7 @@
     "lint:permissions": "pwsh -NoProfile -Command \"& './scripts/security/Test-WorkflowPermissions.ps1' -FailOnViolation\"",
     "lint:dependency-pinning": "pwsh -NoProfile -Command \"& './scripts/security/Test-DependencyPinning.ps1' -FailOnUnpinned\"",
     "audit:pip": "pwsh -NoProfile -File scripts/security/Invoke-PipAudit.ps1",
+    "audit:npm": "audit-ci --config audit-ci.json",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:py && npm run validate:skills",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
@@ -41,7 +42,8 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.0",
-    "@vscode/vsce": "3.7.1",
+    "@vscode/vsce": "3.9.1",
+    "audit-ci": "7.1.0",
     "cspell": "10.0.0",
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "1.7.0",
@@ -49,6 +51,7 @@
     "markdownlint-rule-search-replace": "1.2.0"
   },
   "overrides": {
+    "basic-ftp": "5.3.0",
     "markdown-it": "14.1.1",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
