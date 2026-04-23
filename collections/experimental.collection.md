@@ -3,5 +3,6 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 This collection includes agents, skills, and instructions for:
 
 - **Experiment Designer** — Guides users through designing Minimum Viable Experiments (MVEs) with hypothesis formation, vetting, and structured experiment plans
+- **Customer Card Render** — Converts Design Thinking canonical markdown artifacts into PowerPoint skill `content.yaml` slides and supports customer-card deck builds through the PowerPoint Builder pipeline
 - **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
 - **Video to GIF** — Convert video files to animated GIF format
