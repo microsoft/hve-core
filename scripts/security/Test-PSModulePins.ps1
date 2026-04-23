@@ -108,7 +108,7 @@ function Invoke-PSModulePinScan {
         $full = Join-Path $repoRoot $relPath
         if (-not (Test-Path -LiteralPath $full)) { continue }
 
-        $lines = Get-Content -LiteralPath $full
+        $lines = @(Get-Content -LiteralPath $full)
         for ($i = 0; $i -lt $lines.Count; $i++) {
             $line = $lines[$i]
             foreach ($pattern in $patterns) {
