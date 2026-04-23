@@ -26,7 +26,7 @@ function countYamlPaths(name) {
 const collectionNames = [
   'ado', 'coding-standards', 'data-science', 'design-thinking',
   'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'rai-planning', 'security', 'hve-core-all',
+  'project-planning', 'security', 'hve-core-all',
 ];
 const collectionCounts = Object.fromEntries(
   collectionNames.map((n) => [n, countYamlPaths(n)]),
