@@ -26,6 +26,9 @@ items:
     kind: agent
   - path: .github/agents/project-planning/brd-builder.agent.md
     kind: agent
+  - path: .github/agents/project-planning/network-isa95-planner.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
     kind: agent
   - path: .github/agents/hve-core/rpi-agent.agent.md
