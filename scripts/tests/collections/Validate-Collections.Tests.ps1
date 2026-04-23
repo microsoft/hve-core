@@ -419,6 +419,17 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
         $yaml = ConvertTo-Yaml -Data $manifest
         Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
 
+        # Register hve-core as a known collection ID (mirrors real-world hve-core.collection.yml)
+        $hveCoreManifest = [ordered]@{
+            id          = 'hve-core'
+            name        = 'HVE Core'
+            description = 'HVE Core collection'
+            items       = @()
+        }
+        $hveYaml = ConvertTo-Yaml -Data $hveCoreManifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml') -Value $hveYaml
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.md') -Value '# HVE Core'
+
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
         $result.ErrorCount | Should -Be 0

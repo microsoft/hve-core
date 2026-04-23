@@ -164,6 +164,12 @@ function Invoke-CollectionValidation {
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 
+    $knownCollectionIds = @{}
+    foreach ($cf in $collectionFiles) {
+        $cfId = $cf.Name -replace '\.collection\.yml$', ''
+        $knownCollectionIds[$cfId] = $true
+    }
+
     foreach ($file in $collectionFiles) {
         $baseName = $file.Name -replace '\.collection\.yml$', ''
         $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
@@ -268,8 +274,8 @@ function Invoke-CollectionValidation {
                 # Expected pattern: .github/{type}/{collection-id}/{file-or-deeper}
                 if ($pathSegments.Count -ge 4 -and $pathSegments[0] -eq '.github') {
                     $folderName = $pathSegments[2]
-                    if ($folderName -ne 'shared' -and $folderName -ne 'hve-core' -and $folderName -ne $id) {
-                        Write-Host " WARN collection '$id' includes item from folder '$folderName': $itemPath (expected .github/$($pathSegments[1])/$id/)" -ForegroundColor Yellow
+                    if ($folderName -ne 'shared' -and -not $knownCollectionIds.ContainsKey($folderName)) {
+                        Write-Host " WARN collection '$id': item folder '$folderName' does not match any known collection ID: $itemPath" -ForegroundColor Yellow
                     }
                 }
             }
