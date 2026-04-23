@@ -75,7 +75,9 @@ jobs:
                   }
 
             - name: Generate plugins
-              run: npm run plugin:generate
+              run: |
+                  mkdir -p logs
+                  npm run plugin:generate
 
             - name: Package plugin directory
               shell: bash
