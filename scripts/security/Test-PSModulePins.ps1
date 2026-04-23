@@ -40,6 +40,7 @@ $ErrorActionPreference = 'Stop'
 #region Main Function
 function Invoke-PSModulePinScan {
     [CmdletBinding()]
+    [OutputType([int])]
     param(
         [Parameter(Mandatory = $false)]
         [string]$ConfigPath
@@ -63,12 +64,13 @@ function Invoke-PSModulePinScan {
         $canonical[$prop.Name] = $prop.Value.version
     }
 
-# Files containing intentional non-canonical version literals (test fixtures, the
+    # Files containing intentional non-canonical version literals (test fixtures, the
     # config itself, this validator). Paths are relative to repo root and use forward
     # slashes.
     $allowedFiles = @(
         'scripts/security/ps-module-versions.json',
         'scripts/security/Test-PSModulePins.ps1',
+        'scripts/tests/security/Test-PSModulePins.Tests.ps1',
         'scripts/tests/security/Test-SHAStaleness.Tests.ps1'
     )
 
