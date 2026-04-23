@@ -151,7 +151,7 @@ function Invoke-CollectionValidation {
     $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File
 
     if ($collectionFiles.Count -eq 0) {
-        Write-Warning 'No collection manifests found in collections/'
+        Write-Host ' WARN No collection manifests found in collections/' -ForegroundColor Yellow
         return @{ Success = $true; ErrorCount = 0; CollectionCount = 0 }
     }
 
@@ -164,11 +164,17 @@ function Invoke-CollectionValidation {
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 
+    $knownCollectionIds = @{}
+    foreach ($cf in $collectionFiles) {
+        $cfId = $cf.Name -replace '\.collection\.yml$', ''
+        $knownCollectionIds[$cfId] = $true
+    }
+
     foreach ($file in $collectionFiles) {
         $baseName = $file.Name -replace '\.collection\.yml$', ''
         $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
         if (-not (Test-Path -Path $companionPath)) {
-            Write-Host "  WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
+            Write-Host " WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
         }
 
         if (Test-Path -Path $companionPath) {
@@ -280,6 +286,18 @@ function Invoke-CollectionValidation {
                 }
             }
 
+            # Check 3: collection-id to folder name consistency
+            if ($id -ne 'hve-core-all') {
+                $pathSegments = $itemPath -split '[/\\]'
+                # Expected pattern: .github/{type}/{collection-id}/{file-or-deeper}
+                if ($pathSegments.Count -ge 4 -and $pathSegments[0] -eq '.github') {
+                    $folderName = $pathSegments[2]
+                    if ($folderName -ne 'shared' -and -not $knownCollectionIds.ContainsKey($folderName)) {
+                        Write-Host " WARN collection '$id': item folder '$folderName' does not match any known collection ID: $itemPath" -ForegroundColor Yellow
+                    }
+                }
+            }
+
             if (-not [string]::IsNullOrWhiteSpace($itemPath) -and -not [string]::IsNullOrWhiteSpace($kind)) {
                 $itemKey = Get-CollectionItemKey -Kind $kind -ItemPath $itemPath
                 if (-not $itemOccurrences.ContainsKey($itemKey)) {
@@ -319,7 +337,7 @@ function Invoke-CollectionValidation {
         ($_.Name -replace '\.collection\.yml$', '') -eq $canonicalCollectionId
     }).Count -gt 0
     if (-not $canonicalManifestFound) {
-        Write-Host "  WARN '$canonicalCollectionId.collection.yml' not found; skipping orphan and cross-collection coverage checks" -ForegroundColor Yellow
+        Write-Host " WARN '$canonicalCollectionId.collection.yml' not found; skipping orphan and cross-collection coverage checks" -ForegroundColor Yellow
     }
 
     # Duplicate artifact key detection across all collections
@@ -388,7 +406,7 @@ function Invoke-CollectionValidation {
                 Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
                 $errorCount++
             } elseif (-not $inThemed) {
-                Write-Host "  WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
+                Write-Host " WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
             }
         }
     }
