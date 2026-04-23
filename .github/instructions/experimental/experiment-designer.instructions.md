@@ -39,7 +39,7 @@ The enablement dimension means:
 * Enablement is a measurable outcome: "the partner team can replicate the setup independently" is a success criterion alongside hypothesis verdicts.
 * Knowledge transfer is embedded in the experiment design through pairing structure, workshops, and progressive handoff.
 
-When designing a collaborative MVE, ask: if all hypotheses are validated but the partner team cannot replicate the outcome, has the MVE succeeded? The answer is no.
+When designing a collaborative MVE, ask: if all hypotheses are validated but the outcome cannot be replicated independently, has the MVE succeeded? The answer is no.
 
 | Dimension      | MVE                                         | MVP                                |
 |----------------|---------------------------------------------|------------------------------------|
@@ -112,7 +112,7 @@ Watch for these warning patterns that indicate a proposed engagement is not a tr
 * No next steps: there is no clear path after answering the question. If nobody will act on the results, the experiment adds no value.
 * No end users: user-facing projects require user involvement. Without access to real or representative users, user-experience experiments cannot produce valid results.
 * Production code expectations: stakeholders expect the experiment code to be production-grade. MVE artifacts are disposable by design.
-* Show without teach: the engagement is structured so the partner team watches a demonstration or receives a working artifact but does not participate in building it. In collaborative engagements, if the partner team cannot replicate the outcome independently after the MVE, the enablement purpose is not served. This is a demo disguised as an experiment.
+* Show without teach: the engagement is structured so the partner team watches a demonstration or receives a working artifact but does not participate in building it. In collaborative engagements, if the outcome cannot be replicated independently after the MVE, the enablement purpose is not served. This is a demo disguised as an experiment.
 
 ## Hypothesis Format
 

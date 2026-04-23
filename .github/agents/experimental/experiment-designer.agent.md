@@ -108,7 +108,7 @@ Flag and discuss any of these patterns:
 * No next steps.
 * No end users.
 * Production code expectations.
-* Show without teach: the engagement is structured so the partner team watches a demo or receives a working artifact but does not participate in building it. If the partner team cannot replicate the outcome independently after the MVE, the enablement purpose is not served.
+* Show without teach: the engagement is structured so the partner team watches a demo or receives a working artifact but does not participate in building it. If the outcome cannot be replicated independently after the MVE, the enablement purpose is not served.
 
 Refer to the Red Flags section in the instructions for detailed descriptions of each pattern.
 
