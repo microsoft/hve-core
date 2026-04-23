@@ -70,7 +70,7 @@ A well-defined problem statement is required before formulating hypotheses. If t
 
 ### Have you considered Responsible AI?
 
-Apply RAI thinking even for attenuated experiments. MVEs may involve real user data, biased training sets, or sensitive use cases. Identify potential harms early, even when the experiment is far from production. Probe these dimensions:
+Apply RAI thinking even for attenuated experiments. MVEs may involve real user data, biased training sets, or high-risk scenarios. Identify potential harms early, even when the experiment is far from production. Probe these dimensions:
 
 * Fairness: could the experiment produce results that disadvantage particular user groups or demographics?
 * Reliability and safety: could the experiment cause harm if results are misinterpreted or the prototype is used beyond its intended scope?

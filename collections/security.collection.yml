@@ -176,6 +176,8 @@ items:
     kind: instruction
     maturity: experimental
   # Shared Instructions
+  - path: .github/instructions/shared/disclaimer-language.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:

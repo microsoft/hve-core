@@ -39,7 +39,7 @@ After the standard scoping questionnaire, assess for AI/ML components:
 * Set `raiTier` based on assessment depth needed:
   * `basic`: API consumers with no custom model training
   * `standard`: custom model deployments or fine-tuning
-  * `comprehensive`: custom training pipelines or sensitive-use scenarios
+  * `comprehensive`: custom training pipelines or high-risk scenarios
 * Populate `aiComponents` with detected component types (for example, `["llm-api", "rag-pipeline", "embedding-service"]`).
 * When `raiEnabled` is `true`, inform the user that a dedicated Responsible AI assessment is recommended. Suggest dispatching the RAI Planner after security planning completes (Sequential Model A). Record the recommendation in `nextActions`.
 

@@ -196,6 +196,14 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  ai-artifact-validation:
+    name: AI Artifact Validation
+    uses: ./.github/workflows/ai-artifact-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   msdate-freshness:
     name: ms.date Freshness Check
     uses: ./.github/workflows/msdate-freshness-check.yml
