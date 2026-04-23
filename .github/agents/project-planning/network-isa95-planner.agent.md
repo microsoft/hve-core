@@ -365,14 +365,9 @@ Delegation trigger conditions (MUST trigger delegation when applicable):
 
 Delegation topics (SHOULD include as applicable):
 
-* Azure IoT Operations layered networking guidance.
+* Platform-specific layered networking guidance for the identified edge stack.
 * Microsoft Well-Architected Framework guidance relevant to identified gaps.
 * Microsoft Cloud Adoption Framework guidance relevant to landing-zone and platform guardrails.
-
-Reference starting points for delegated lookup:
-
-* https://learn.microsoft.com/azure/iot-operations/manage-layered-network/concept-iot-operations-in-layered-network
-* https://github.com/Azure-Samples/explore-iot-operations/blob/main/samples/layered-networking/aio-layered-network.md
 
 Delegation protocol:
 
