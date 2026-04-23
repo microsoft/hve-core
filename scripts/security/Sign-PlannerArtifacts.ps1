@@ -28,7 +28,7 @@
     a warning when cosign is not found.
 
 .EXAMPLE
-    ./scripts/security/Sign-RaiArtifacts.ps1 -ProjectSlug "contoso-ai"
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai"
 
     Generates a SHA-256 manifest for all artifacts under
     .copilot-tracking/rai-plans/contoso-ai/.
