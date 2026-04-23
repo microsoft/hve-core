@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.0",
-    "@vscode/vsce": "3.9.1",
+    "@vscode/vsce": "3.7.1",
     "cspell": "10.0.0",
     "markdown-link-check": "3.14.2",
     "markdown-table-formatter": "1.7.0",

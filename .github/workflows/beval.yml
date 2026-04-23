@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   evaluate:
     runs-on: ubuntu-latest
@@ -35,6 +39,9 @@ jobs:
           echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install beval
+        # beval is hosted under a personal account (vyta) while an org-owned
+        # home is evaluated. The install is pinned to a specific commit SHA to
+        # mitigate supply-chain risk in the interim.
         run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@a2effa10cec1b06c394811587fede0070174d589#subdirectory=python"
 
       - name: Start agent (TCP)

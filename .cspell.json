@@ -25,7 +25,7 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
-    "beval/results/**"
+    "beval/**/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -63,20 +63,21 @@
     "general-technical"
   ],
   "words": [
+    "agentic",
     "atheris",
-    "beval",
     "behaviour",
+    "beval",
     "brainwriting",
     "clusterfuzzlite",
     "easyops",
     "hideable",
     "learning",
     "parseable",
+    "smol",
     "wireframes",
     "smol",
     "ˈpræksɪs",
-    "πρᾶξις",
-    "agentic"
+    "πρᾶξις"
   ],
   "reporters": [
     "default",
