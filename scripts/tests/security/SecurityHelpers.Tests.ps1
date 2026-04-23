@@ -11,6 +11,7 @@
 BeforeAll {
     $modulePath = Join-Path $PSScriptRoot '../../security/Modules/SecurityHelpers.psm1'
     Import-Module $modulePath -Force
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 }
 
 Describe 'Write-SecurityLog' -Tag 'Unit' {
@@ -143,7 +144,7 @@ Describe 'New-SecurityIssue' -Tag 'Unit' {
 
     It 'Sets Timestamp to current time' {
         $issue = New-SecurityIssue -Type 'Test' -Severity 'Low' -Title 'Test' -Description 'Test'
-        $issue.Timestamp | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+        $issue.Timestamp | Should -Match (Get-StandardTimestampPattern)
     }
 
     It 'Validates Severity parameter - Low' {

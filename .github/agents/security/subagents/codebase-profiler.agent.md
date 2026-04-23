@@ -31,7 +31,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`).
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `owasp-docker`, `secure-by-design`).
 
 ### Technology Signals
 
@@ -72,6 +72,15 @@ owasp-cicd:
   - "Jenkinsfile"
   - ".gitlab-ci.yml"
   - "azure-pipelines.yml"
+owasp-docker:
+  - "Dockerfile"
+  - "docker-compose.yml"
+  - "docker-compose.yaml"
+  - "Container manifests"
+  - ".dockerignore"
+  - ".containerignore"
+  - "Containerfile"
+  - "docker-bake.hcl"
 secure-by-design:
   - "SECURITY.md or security policy files"
   - "Threat model documents"

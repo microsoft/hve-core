@@ -16,7 +16,8 @@ BeforeAll {
     # Import the module under test
     $script:ModulePath = Join-Path $PSScriptRoot '..\..\linting\Modules\FrontmatterValidation.psm1'
     Import-Module $script:ModulePath -Force
-    
+    Import-Module (Join-Path $PSScriptRoot '..\..\lib\Modules\CIHelpers.psm1') -Force
+
     # Get module reference for class instantiation in module scope
     # This avoids parse-time caching issues with 'using module'
     $script:FVModule = Get-Module FrontmatterValidation
@@ -130,7 +131,7 @@ Describe 'FileValidationResult Class' -Tag 'Unit' {
             $result = New-FileValidationResult -FilePath 'test.md'
 
             $result.ValidatedAt | Should -Not -BeNullOrEmpty
-            $result.ValidatedAt | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+            $result.ValidatedAt | Should -Match (Get-StandardTimestampPattern)
         }
 
         It 'Initializes Issues as empty list' {
@@ -353,7 +354,7 @@ Describe 'ValidationSummary Class' -Tag 'Unit' {
             $hash = $summary.ToHashtable()
 
             $hash.ContainsKey('timestamp') | Should -BeTrue
-            $hash['timestamp'] | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$'
+            $hash['timestamp'] | Should -Match (Get-StandardTimestampPattern)
         }
     }
 }
