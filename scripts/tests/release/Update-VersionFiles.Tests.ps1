@@ -31,10 +31,10 @@ Describe 'Resolve-RepoRoot' -Tag 'Unit' {
 
     It 'Throws when auto-detection fails and no path is supplied' {
         Mock Resolve-Path { return [PSCustomObject]@{ Path = '/nonexistent/path' } } -ParameterFilter {
-            $Path -like "*../..*"
+            $Path -like "*..[\/]..*"
         }
         Mock Test-Path { return $false } -ParameterFilter {
-            $Path -like "*/.git"
+            $Path -like "*[\/].git"
         }
         { Resolve-RepoRoot -Supplied '' } | Should -Throw "*Unable to determine repository root*"
     }

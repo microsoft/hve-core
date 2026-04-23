@@ -190,6 +190,7 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 * PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
 * shellcheck for bash script validation (pre-installed on ubuntu-latest)
 * actionlint for GitHub Actions workflow validation
+* cosign for artifact manifest signing
 
 ### Using npm Scripts
 

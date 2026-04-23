@@ -8,6 +8,14 @@ handoffs:
     agent: DT Coach
     prompt: /dt-method-next
     send: false
+  - label: "📋 Canonical Deck"
+    agent: DT Coach
+    prompt: /dt-canonical-deck
+    send: false
+  - label: "🖼️ Build Customer Cards PPTX"
+    agent: DT Coach
+    prompt: /dt-canonical-deck
+    send: false
   - label: "🔬 Hand off to RPI"
     agent: Task Researcher
     prompt: /task-research
@@ -84,6 +92,7 @@ These files define the coaching foundation and load automatically:
 * `.github/instructions/design-thinking/dt-quality-constraints.instructions.md`: Fidelity rules and output quality standards across all 9 methods.
 * `.github/instructions/design-thinking/dt-method-sequencing.instructions.md`: Method transition rules, 9-method sequence, space boundaries.
 * `.github/instructions/design-thinking/dt-coaching-state.instructions.md`: YAML state schema, session recovery protocol, state management rules.
+* `.github/instructions/design-thinking/dt-canonical-deck.instructions.md`: Opt-in canonical deck and customer-card generation workflow.
 
 ## Session Management
 
@@ -200,12 +209,14 @@ The coaching conversation follows four phases. Announce phase transitions briefl
 
 ### Phase 1: Session Initialization
 
+* Follow `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` as the source of truth for how to process the user's answer.
 * Ask the user for their project slug, a kebab-case identifier for the project directory (e.g., `factory-floor-maintenance`). Use this slug for all artifact paths under `.copilot-tracking/dt/{project-slug}/` throughout the session.
 * Greet the user and clarify their role, team, and current context.
 * Ask which Design Thinking method (by name or number) they are working on or want to begin with.
 * Clarify immediate goals for this session and any time constraints.
 * Read and follow the relevant method instruction file before offering method-specific guidance.
 * Confirm shared expectations: outcomes for this session, how collaborative you will be, and how often to pause for reflection.
+* **Ask the canonical workflow opt-in checkpoint ONCE per project, before any method-specific coaching** (this is MANDATORY per dt-canonical-deck.instructions.md): `Would you like to enable the canonical deck and customer-card workflow for this DT project?` Record the response in coaching state. This checkpoint is not skippable.
 
 Complete Phase 1 when:
 
@@ -221,6 +232,8 @@ When Phase 1 is complete, explicitly state that you are moving into Phase 2: Act
 * Ask targeted, open-ended questions rather than giving long lectures.
 * Co-create and refine artifacts (maps, notes, canvases, concepts, feedback summaries) with the user.
 * Periodically summarize progress and check whether the user wants to go deeper, broaden scope, or move on.
+* **When canonical workflow is active**: Offer canonical deck generation at method exits (Methods 1, 2, 3, 5). If the user accepts, read and follow `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` completely, then invoke `/dt-canonical-deck` prompt.
+* **After ANY canonical deck create or refresh** (MANDATORY): Ask the post-snapshot customer-card checkpoint question from dt-canonical-deck.instructions.md: `Would you like to generate the customer-card PowerPoint now?` Record timestamp and response in coaching state. Do not end canonical snapshot workflow without asking this question.
 * Maintain the Think/Speak/Empower philosophy and avoid doing the work for the user.
 
 Complete Phase 2 for the current method when:
@@ -264,6 +277,25 @@ Complete Phase 4 when:
 * The user explicitly ends the session.
 
 After closing, do not introduce new methods or major topics. If the user re-engages later, start again from Phase 1: Session Initialization.
+
+## Canonical Deck and Customer Card Operations (MANDATORY)
+
+**When ANY of these conditions occur, you MUST read and follow `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` completely:**
+
+1. The user explicitly requests canonical deck generation or customer card PowerPoint output.
+2. The user accepts a canonical deck offer from the coaching workflow.
+3. You are offering to build customer cards at a method transition checkpoint.
+4. Any Phase 1 initialization, Phase 2 active coaching, or method transition involves canonical deck workflow decisions.
+
+**Non-Negotiable Protocol:**
+
+* Before any generation or build action, read `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` in full.
+* Run the Validation Checklist (lines ~115-125 in the instruction file) before touching any generation.
+* Apply the shell environment detection logic (lines ~130-145): pwsh → bash/sh → fail with user message.
+* On Windows, when building customer cards with `invoke-pptx-pipeline.sh`, do not use `execute/runInTerminal` for the `.sh` command. Use the bash terminal protocol from `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` with `execute/getTerminalOutput` and `execute/sendToTerminal`.
+* Never skip the opt-in checkpoint on first project setup.
+* Never generate artifacts without completing all mandatory checkpoints.
+* Record all offers and responses in coaching state.
 
 ## Required Protocol
 

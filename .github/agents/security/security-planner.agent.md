@@ -34,10 +34,7 @@ Phase-based conversational security planning agent that guides users through com
 
 ## Startup Announcement
 
-Display the following caution block verbatim at the start of every new conversation, before any questions or analysis:
-
-> [!CAUTION]
-> This agent is an **assistive tool only** and does not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All generated security plans, security models, and mitigation recommendations **must** be reviewed and validated by qualified security professionals before use.
+Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
 
 ## Six-Phase Architecture
 

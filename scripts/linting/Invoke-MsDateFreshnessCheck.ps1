@@ -123,7 +123,7 @@ function Get-MsDateFromFrontmatter {
             $yamlContent = $matches[1]
 
             if (-not (Get-Command ConvertFrom-Yaml -ErrorAction SilentlyContinue)) {
-                Write-Warning "PowerShell-Yaml module not found. Install with: Install-Module PowerShell-Yaml"
+                Write-Warning "PowerShell-Yaml module not found. Install with: Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7"
                 return $null
             }
 
