@@ -67,6 +67,9 @@ Check the PR state from the event context.
 * The PR author (`github.event.pull_request.user.login`) is `dependabot[bot]`
   or `github-actions[bot]`: call `noop` with message "Skipping: PR authored by
   bot." Keep this list aligned with the `skip-bots` frontmatter entry above.
+  Dependabot PRs are handed off to the `dependency-pr-review` workflow, which
+  owns automated review for dependency bumps; this guard prevents duplicate
+  review from `pr-review`.
 
 **Failure to call `noop` when no review action is taken will cause workflow failure.**
 
