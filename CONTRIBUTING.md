@@ -91,6 +91,7 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   * [Artifact Types](#artifact-types)
   * [Essential Resources](#essential-resources)
   * [Quick Reference](#quick-reference)
+* [Dependabot Pull Requests](#dependabot-pull-requests)
 * [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
   * [Active Pull Requests](#active-pull-requests)
   * [Draft Pull Requests](#draft-pull-requests)
@@ -241,6 +242,12 @@ Before contributing AI artifacts, review these resources:
 * Instructions directory: [`.github/instructions/`](./.github/instructions/)
 * Prompts directory: [`.github/prompts/`](./.github/prompts/)
 * Skills directory: [`.github/skills/`](./.github/skills/)
+
+## Dependabot Pull Requests
+
+Dependabot PRs are reviewed automatically by the `dependency-pr-review` workflow for most dependency manifests (`package.json`, `package-lock.json`, `requirements.txt`, `pyproject.toml`, and `.devcontainer/**`).
+
+PRs that bump pinned action SHAs inside `.github/workflows/*.yml` are **not** covered by the automated review because GitHub strips secrets from workflow-file PRs, which prevents the workflow from running. Maintainers must review and merge those workflow-file bumps manually, verifying SHA pinning, upstream release notes, and license compatibility before approval.
 
 ## Pull Request Inactivity Policy
 
