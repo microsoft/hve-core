@@ -1028,3 +1028,160 @@ Describe 'Invoke-CollectionValidation - new checks' {
         $result.ErrorCount | Should -Be 0
     }
 }
+
+Describe 'Invoke-CollectionValidation - marker validation' -Tag 'Unit' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'marker-validation'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        # Create artifact directories
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+        $orphanDir = Join-Path $script:repoRoot '.github/agents/orphan'
+        New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+        Set-Content -Path (Join-Path $orphanDir 'orphan.agent.md') -Value '---' -Force
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Passes when collection.md has valid matched marker pairs' {
+        $manifest = [ordered]@{
+            id = 'valid-markers'; name = 'Valid Markers'; description = 'Matched markers'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Valid Markers
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+Generated content.
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when begin marker exists without end marker' {
+        $manifest = [ordered]@{
+            id = 'begin-only'; name = 'Begin Only'; description = 'Missing end'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Begin Only
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+Content without end marker.
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when end marker exists without begin marker' {
+        $manifest = [ordered]@{
+            id = 'end-only'; name = 'End Only'; description = 'Missing begin'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# End Only
+
+Content without begin marker.
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Does not warn when collection.md has no markers (backward compat)' {
+        $manifest = [ordered]@{
+            id = 'no-markers'; name = 'No Markers'; description = 'Legacy no markers'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.md') -Value '# No Markers - legacy content without any markers'
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when markers appear in wrong order' {
+        $manifest = [ordered]@{
+            id = 'reversed'; name = 'Reversed'; description = 'Wrong order'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Reversed
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+Content.
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+}

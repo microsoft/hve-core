@@ -177,6 +177,24 @@ function Invoke-CollectionValidation {
             Write-Host " WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
         }
 
+        if (Test-Path -Path $companionPath) {
+            $mdContent = Get-Content -Path $companionPath -Raw
+            $hasBegin = $mdContent.Contains($CollectionMdBeginMarker)
+            $hasEnd = $mdContent.Contains($CollectionMdEndMarker)
+
+            if ($hasBegin -xor $hasEnd) {
+                Write-Host "  WARN $($file.Name): $baseName.collection.md has mismatched auto-generation markers" -ForegroundColor Yellow
+            }
+
+            if ($hasBegin -and $hasEnd) {
+                $beginIdx = $mdContent.IndexOf($CollectionMdBeginMarker)
+                $endIdx = $mdContent.IndexOf($CollectionMdEndMarker)
+                if ($endIdx -le $beginIdx) {
+                    Write-Host "  WARN $($file.Name): $baseName.collection.md has markers in wrong order" -ForegroundColor Yellow
+                }
+            }
+        }
+
         $manifest = Get-CollectionManifest -CollectionPath $file.FullName
         $fileErrors = @()
         $seenItemKeys = @{}
