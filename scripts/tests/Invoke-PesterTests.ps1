@@ -63,6 +63,20 @@ if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 }
 
+# Pin Pester to the canonical version from scripts/security/ps-module-versions.json.
+# This is the single enforcement point: test files use plain `#Requires -Modules Pester`
+# and rely on the runner to import the correct version before discovery/execution.
+$pinConfigPath = Join-Path $repoRoot 'scripts/security/ps-module-versions.json'
+if (-not (Test-Path $pinConfigPath)) {
+    throw "PowerShell module pin config not found: $pinConfigPath"
+}
+$pinConfig = Get-Content -Path $pinConfigPath -Raw | ConvertFrom-Json
+$pesterVersion = $pinConfig.modules.Pester.version
+if (-not $pesterVersion) {
+    throw "Pester version not defined in $pinConfigPath"
+}
+Import-Module -Name Pester -RequiredVersion $pesterVersion -ErrorAction Stop
+
 # Build config arguments
 $configArgs = @{}
 if ($CI) {
