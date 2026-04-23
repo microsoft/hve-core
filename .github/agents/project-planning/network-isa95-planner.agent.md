@@ -216,6 +216,10 @@ MUST route deterministically after Step 4 classification:
   * MUST use target-state-first planning as the default strategy
   * MUST establish policy and connectivity baseline from day one
   * MUST include a Target Architecture Profile in Output A
+* Mixed path (brownfield segments with greenfield additions):
+  * MUST treat each network segment independently, applying brownfield phased retrofit to legacy segments and greenfield target-state build to new segments
+  * MUST produce a unified remediation plan that sequences both tracks without conflicting migration steps or overlapping ownership boundaries
+  * MUST include both a Reuse Decision Register (for brownfield segments) and a Target Architecture Profile (for greenfield segments) in Output A
 
 ### Step 6: Output Security-First Remediation Plan
 
