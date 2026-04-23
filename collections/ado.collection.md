@@ -1,15 +1,17 @@
-Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies — all from within VS Code.
+# Azure DevOps Integration
+
+Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies - all from within VS Code.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                    | Description                                                                                                                                               |
 |-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **ado-backlog-manager** | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
 | **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                 |
 
-### Prompts
+## Prompts
 
 | Name                                            | Description                                                                                                                                 |
 |-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -23,7 +25,7 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 | **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
 | **ado-update-wit-items**                        | Prompt to update work items based on planning files                                                                                         |
 
-### Instructions
+## Instructions
 
 | Name                              | Description                                                                                                                                                                                                                                                 |
 |-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -37,7 +39,7 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 | **ado/ado-wit-planning**          | Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols                                                                                                                                       |
 | **shared/hve-core-location**      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
-### Skills
+## Skills
 
 | Name             | Description                                                                                                                                                                                                                                                                                                                                                                  |
 |------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

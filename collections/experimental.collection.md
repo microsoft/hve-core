@@ -1,8 +1,10 @@
+# Experimental
+
 Experimental and preview artifacts not yet promoted to stable collections. Items in this collection may change or be removed without notice.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                    | Description                                                                                                                                                       |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -10,7 +12,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 | **pptx**                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                   |
 | **pptx-subagent**       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                            |
 
-### Instructions
+## Instructions
 
 | Name                                 | Description                                                                                                                                                                                                                                                 |
 |--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -18,7 +20,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 | **experimental/pptx**                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
 | **shared/hve-core-location**         | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
-### Skills
+## Skills
 
 | Name                     | Description                                                                                                                                  |
 |--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|

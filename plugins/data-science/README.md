@@ -8,6 +8,8 @@ Data specification generation, Jupyter notebooks, and Streamlit dashboards
 
 ## Overview
 
+# Data Science
+
 Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
 
 > [!CAUTION]
@@ -15,7 +17,7 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                         | Description                                                                                                                                                                                                                                                 |
 |------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -26,7 +28,7 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 | **researcher-subagent**      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                |
 | **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                                                                               |
 
-### Prompts
+## Prompts
 
 | Name                            | Description                                                                                                                              |
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
@@ -35,7 +37,7 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 | **rai-plan-from-security-plan** | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | **synth-data-generate**         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                |
 
-### Instructions
+## Instructions
 
 | Name                                   | Description                                                                                                                                                                                                                                                 |
 |----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -1,3 +1,5 @@
+# Security
+
 Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments.
 
 > [!CAUTION]
@@ -5,7 +7,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                      | Description                                                                                                                                                                                                                                                                      |
 |---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -19,7 +21,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **skill-assessor**        | Assesses a single security knowledge skill against the codebase, reading vulnerability references and returning structured findings                                                                                                                                              |
 | **sssc-planner**          | Guides users through a six-phase assessment of their repository's supply chain security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog referencing reusable workflows from hve-core and microsoft/physical-ai-toolchain. |
 
-### Prompts
+## Prompts
 
 | Name                            | Description                                                                                                                              |
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
@@ -39,7 +41,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **sssc-from-prd**               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                        |
 | **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                             |
 
-### Instructions
+## Instructions
 
 | Name                                   | Description                                                                                                                                                                                                                                                 |
 |----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -62,7 +64,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **security/standards-mapping**         | Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                 |
 | **shared/hve-core-location**           | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
-### Skills
+## Skills
 
 | Name                          | Description                                                                                                                                                                                                                                                                                                                                                                  |
 |-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

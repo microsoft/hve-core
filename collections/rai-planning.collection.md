@@ -1,3 +1,5 @@
+# RAI Planning
+
 Assess AI systems for responsible AI risks using structured standards-aligned analysis and impact assessment.
 
 > [!CAUTION]
@@ -5,14 +7,14 @@ Assess AI systems for responsible AI risks using structured standards-aligned an
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                    | Description                                                                                                                                                                                                                                                 |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **rai-planner**         | Responsible AI assessment agent with 5-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. |
 | **researcher-subagent** | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                |
 
-### Prompts
+## Prompts
 
 | Name                            | Description                                                                                                                              |
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
@@ -20,7 +22,7 @@ Assess AI systems for responsible AI risks using structured standards-aligned an
 | **rai-plan-from-prd**           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | **rai-plan-from-security-plan** | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 
-### Instructions
+## Instructions
 
 | Name                                   | Description                                                                                                                                                                                                                                                 |
 |----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

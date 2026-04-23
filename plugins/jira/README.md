@@ -5,18 +5,20 @@ Jira backlog management, PRD issue planning, and issue operations through agents
 
 ## Overview
 
+# Jira Integration
+
 Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This collection adds dedicated Jira agents, prompts, and instructions on top of the Jira skill so discovery, triage, execution, and planning workflows use the same tracking and handoff patterns as the rest of HVE Core.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                     | Description                                                                                                               |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | **jira-backlog-manager** | Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions |
 | **jira-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira                       |
 
-### Prompts
+## Prompts
 
 | Name                     | Description                                                                                                                                 |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -25,7 +27,7 @@ Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This c
 | **jira-prd-to-wit**      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                 |
 | **jira-triage-issues**   | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                |
 
-### Instructions
+## Instructions
 
 | Name                            | Description                                                                                                                                                                                                                                                 |
 |---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -36,7 +38,7 @@ Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This c
 | **jira/jira-wit-planning**      | Reference specification for Jira PRD work item planning files, hierarchy mapping, field validation, and handoff contracts                                                                                                                                   |
 | **shared/hve-core-location**    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
-### Skills
+## Skills
 
 | Name     | Description                                                                                                                                                                                                                                                                                           |
 |----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

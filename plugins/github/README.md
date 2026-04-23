@@ -5,17 +5,19 @@ GitHub issue discovery, triage, sprint planning, and backlog execution agents an
 
 ## Overview
 
+# GitHub Backlog Management
+
 Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                       | Description                                                                                                            |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------|
 | **github-backlog-manager** | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution |
 
-### Prompts
+## Prompts
 
 | Name                       | Description                                                                                                                                      |
 |----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -26,7 +28,7 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 | **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                                                  |
 | **github-triage-issues**   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 
-### Instructions
+## Instructions
 
 | Name                                | Description                                                                                                                                                                                                                                                 |
 |-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

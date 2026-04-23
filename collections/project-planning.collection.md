@@ -1,8 +1,10 @@
-Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+# Project Planning
+
+Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                             | Description                                                                                                                                                                                                                                                                      |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -25,7 +27,7 @@ Create architecture decision records, requirements documents, and diagrams — a
 | **system-architecture-reviewer** | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment                                                                                                                                                                                 |
 | **ux-ui-designer**               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                                                                                        |
 
-### Prompts
+## Prompts
 
 | Name                            | Description                                                                                                                              |
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
@@ -41,7 +43,7 @@ Create architecture decision records, requirements documents, and diagrams — a
 | **sssc-from-prd**               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                        |
 | **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                             |
 
-### Instructions
+## Instructions
 
 | Name                                   | Description                                                                                                                                                                                                                                                 |
 |----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

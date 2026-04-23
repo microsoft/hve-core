@@ -1,8 +1,10 @@
+# Coding Standards
+
 Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
-### Chat Agents
+## Chat Agents
 
 | Name                       | Description                                                                                                               |
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------|
@@ -10,14 +12,14 @@ Enforce language-specific coding conventions and best practices across your proj
 | **code-review-functional** | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                      |
 | **code-review-standards**  | Skills-based code reviewer for local changes and PRs - applies project-defined coding standards via dynamic skill loading |
 
-### Prompts
+## Prompts
 
 | Name                       | Description                                                                                        |
 |----------------------------|----------------------------------------------------------------------------------------------------|
 | **code-review-full**       | Run both functional and standards code reviews on the current branch in a single pass              |
 | **code-review-functional** | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps |
 
-### Instructions
+## Instructions
 
 | Name                                              | Description                                                                                                                                                                                                                                                 |
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -37,7 +39,7 @@ Enforce language-specific coding conventions and best practices across your proj
 | **coding-standards/uv-projects**                  | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | **shared/hve-core-location**                      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
-### Skills
+## Skills
 
 | Name                    | Description                                                                                                                                                                                                                                                                                                                                                                  |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

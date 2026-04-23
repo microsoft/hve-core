@@ -333,6 +333,7 @@ function Invoke-PluginGeneration {
                             $resolvedPath = Join-Path $resolvedPath 'SKILL.md'
                         }
                         $artifactDesc = Get-ArtifactDescription -FilePath $resolvedPath
+                        $artifactDesc = $artifactDesc -replace '\s*—\s*', ' - '
 
                         $entry = @{ Name = $artifactName; Description = $artifactDesc }
                         switch ($kind) {
@@ -353,7 +354,7 @@ function Invoke-PluginGeneration {
                     )) {
                         if ($section.Items.Count -eq 0) { continue }
 
-                        $null = $artifactSections.AppendLine("### $($section.Title)")
+                        $null = $artifactSections.AppendLine("## $($section.Title)")
                         $null = $artifactSections.AppendLine()
                         $null = $artifactSections.AppendLine('| Name | Description |')
                         $null = $artifactSections.AppendLine('|------|-------------|')

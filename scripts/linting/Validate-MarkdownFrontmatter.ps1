@@ -33,6 +33,7 @@ param(
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',
+        # Generated collection markdown files intentionally omit frontmatter.
         'collections/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
