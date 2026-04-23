@@ -52,7 +52,7 @@ jobs:
       - name: Setup PowerShell modules
         shell: pwsh
         run: |
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Resolve effective version
         id: read-version
@@ -101,7 +101,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Download changelog artifact
         if: inputs.use-changelog

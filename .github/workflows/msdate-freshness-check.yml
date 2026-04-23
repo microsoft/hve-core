@@ -43,7 +43,7 @@ jobs:
       - name: Install PowerShell-Yaml
         shell: pwsh
         run: |
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Run ms.date freshness check
         shell: pwsh
