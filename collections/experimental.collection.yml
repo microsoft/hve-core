@@ -14,9 +14,13 @@ items:
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
   # Skills
+  - path: .github/skills/experimental/customer-card-render
+    kind: skill
   - path: .github/skills/experimental/powerpoint
     kind: skill
   - path: .github/skills/experimental/video-to-gif
+    kind: skill
+  - path: .github/skills/experimental/vscode-playwright
     kind: skill
   # Instructions
   - path: .github/instructions/experimental/experiment-designer.instructions.md
