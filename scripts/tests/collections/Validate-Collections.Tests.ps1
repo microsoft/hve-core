@@ -1185,3 +1185,64 @@ Content.
         $result.ErrorCount | Should -Be 0
     }
 }
+
+Describe 'Collection validation JSON reporting' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+        $script:repoRoot = Join-Path $TestDrive 'json-reporting-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Includes structured validation results in the return payload' {
+        $yaml = @"
+name: No ID Collection
+description: Missing id field
+items:
+  - path: .github/agents/test/a.agent.md
+    kind: agent
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.Results | Should -Not -BeNullOrEmpty
+        $result.Results[0].Collection | Should -Be 'no-id'
+        $result.Results[0].ErrorType | Should -Be 'CollectionValidationError'
+        $result.Results[0].Message | Should -Match "missing required field 'id'"
+    }
+
+    It 'Exports JSON report with expected schema' {
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $outputPath = Join-Path $TestDrive 'collection-validation-results.json'
+        Export-CollectionValidationReport -ValidationResult $result -OutputPath $outputPath
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+
+        $report.Timestamp | Should -Not -BeNullOrEmpty
+        $report.TotalCollections | Should -Be 1
+        $report.ErrorCount | Should -Be 0
+        $report.Results | Should -Not -BeNullOrEmpty
+        $report.Results[0].Collection | Should -Be 'hve-core-all'
+        $report.Results[0].ErrorType | Should -Be 'CanonicalOnlyArtifact'
+        $report.Results[0].Message | Should -Match "exists in 'hve-core-all' but is not in any themed collection"
+    }
+}
