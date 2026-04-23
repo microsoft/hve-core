@@ -349,6 +349,8 @@ Intake-gate-pending minimum YAML schema when intake is incomplete and not waived
 * intake_questions
 * intake_gate_status
 
+The intake-gate-pending schema is a transitional structure. Upon intake completion or explicit waiver, the agent MUST replace the gate-pending YAML entirely with the full schema; `intake_gate_status` and `intake_questions` MUST NOT be carried forward into the complete output.
+
 MUST include one validation check for each Priority 0 or Priority 1 remediation item.
 
 ## Microsoft Guidance Delegation
