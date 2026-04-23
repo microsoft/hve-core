@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: MIT
 using module ..\..\security\Modules\SecurityClasses.psm1
 
+BeforeAll {
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
+}
+
 Describe 'DependencyViolation' -Tag 'Unit' {
     Context 'Default constructor' {
         It 'Initializes with empty Metadata hashtable' {
@@ -192,7 +196,7 @@ Describe 'ComplianceReport' -Tag 'Unit' {
         }
 
         It 'Formats Timestamp as ISO 8601 string' {
-            $script:ht['Timestamp'] | Should -Match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3,7}Z$'
+            $script:ht['Timestamp'] | Should -Match (Get-StandardTimestampPattern)
         }
 
         It 'Preserves numeric values' {
