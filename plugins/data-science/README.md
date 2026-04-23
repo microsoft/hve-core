@@ -21,6 +21,10 @@ This collection includes agents for:
 - **Dashboard Testing** — Comprehensive test suites for Streamlit applications
 - **RAI Planner** — Responsible AI assessment with security model analysis, impact assessment, and dual-format backlog handoff
 
+This collection includes prompts for:
+
+- **Synthetic Data Generation** — Generate comprehensive synthetic datasets with realistic patterns, relationships, and statistical comparisons against optional reference data
+
 ## Install
 
 ```bash
@@ -45,6 +49,7 @@ copilot plugin install data-science@hve-core
 | rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
 | rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| synth-data-generate         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                |
 
 ## Instructions
 

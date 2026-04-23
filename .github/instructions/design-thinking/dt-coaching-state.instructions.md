@@ -52,6 +52,10 @@ artifacts: []
   # - path: ".copilot-tracking/dt/{project-slug}/stakeholder-map.md"
   #   method: 1
   #   type: "stakeholder-map"
+
+# Additional workflow-specific state blocks may be present.
+# The canonical deck workflow adds `canonical_deck` and `customer_card_render`
+# blocks as defined in dt-canonical-deck.instructions.md.
 ```
 
 ### Field Definitions
@@ -105,6 +109,13 @@ List of artifacts produced during coaching. Each entry captures:
 * `path`: relative path to the artifact from workspace root.
 * `method`: method number that produced the artifact.
 * `type`: artifact type descriptor (e.g., "stakeholder-map", "interview-notes", "synthesis-themes", "concept-sketch", "prototype-feedback").
+
+#### Workflow-Specific Extension Blocks
+
+Specialized DT workflows may extend the base state schema with additional top-level blocks. Preserve these blocks when updating coaching state files.
+
+* `canonical_deck`: snapshot history and cooldown state for canonical deck generation.
+* `customer_card_render`: cooldown state and output metadata for PowerPoint renders derived from the canonical deck.
 
 ## State Management Rules
 
