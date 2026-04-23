@@ -8,7 +8,6 @@ on:
       - 'package-lock.json'
       - '**/requirements.txt'
       - '**/pyproject.toml'
-      - '.github/workflows/*.yml'
       - '.devcontainer/**'
   bots: ["dependabot[bot]"]
   reaction: eyes
@@ -57,6 +56,7 @@ concerns that require human review.
 
 **You MUST call `noop` and stop immediately if any of these conditions are true:**
 
+* The PR originates from a fork (`github.event.pull_request.head.repo.id` is null or does not equal `github.repository_id`). Call `noop` with message "Skipping: fork PR, secrets unavailable."
 * The PR author is NOT `dependabot[bot]`. Call `noop` with message "Skipping: PR author is not Dependabot."
 * The PR is a draft. Call `noop` with message "Skipping: PR is a draft."
 * No dependency files were actually modified in the PR diff. Call `noop` with message "Skipping: no dependency changes found in diff."

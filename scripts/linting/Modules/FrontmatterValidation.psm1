@@ -847,7 +847,7 @@ function Test-SingleFileFrontmatter {
 
         # Verify ConvertFrom-Yaml is available (requires powershell-yaml module)
         if (-not (Get-Command -Name 'ConvertFrom-Yaml' -ErrorAction SilentlyContinue)) {
-            $result.AddError("ConvertFrom-Yaml cmdlet not found. Install powershell-yaml module: Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser", 'dependency')
+            $result.AddError("ConvertFrom-Yaml cmdlet not found. Install powershell-yaml module: Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser", 'dependency')
             return $result
         }
 

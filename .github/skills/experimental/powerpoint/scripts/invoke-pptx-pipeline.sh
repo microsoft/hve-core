@@ -65,7 +65,13 @@ initialize_python_environment() {
 }
 
 get_venv_python_path() {
-  echo "${VENV_DIR}/bin/python"
+  if [[ -f "${VENV_DIR}/Scripts/python.exe" ]]; then
+    echo "${VENV_DIR}/Scripts/python.exe"
+  elif [[ -f "${VENV_DIR}/bin/python" ]]; then
+    echo "${VENV_DIR}/bin/python"
+  else
+    err "Python interpreter not found in venv. Expected one of: ${VENV_DIR}/Scripts/python.exe or ${VENV_DIR}/bin/python. Re-run without --skip-venv-setup to sync dependencies or run: uv sync --directory \"${SKILL_ROOT}\""
+  fi
 }
 
 assert_build_parameters() {
