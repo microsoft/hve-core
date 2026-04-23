@@ -2,7 +2,10 @@
 name: Network ISA-95 Planner
 description: 'ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core'
 disable-model-invocation: true
-tools: ['agent', 'edit/editFiles', 'microsoft-docs/*']
+tools:
+  - agent
+  - edit/editFiles
+  - microsoft-docs/*
 agents:
   - Researcher Subagent
 ---
@@ -81,7 +84,7 @@ If the user explicitly waives unanswered items, MUST enter low-confidence assump
 MUST create or update a markdown assessment file so the result is referenceable outside chat.
 
 * MUST use the user-provided output path when one is provided
-* MUST otherwise write to `.copilot-tracking/reviews/{{YYYY-MM-DD}}-network-isa95-assessment.md`
+* MUST otherwise write to `.copilot-tracking/plans/{{YYYY-MM-DD}}-network-isa95-assessment.md`
 * MUST include both required outputs in the file:
   * Output A: Plain-Language Assessment
   * Output B: YAML Companion Artifact
