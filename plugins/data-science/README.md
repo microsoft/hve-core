@@ -74,6 +74,7 @@ copilot plugin install data-science@hve-core
 | rai-capture                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
 | rai-plan-from-prd           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | rai-plan-from-security-plan | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| synth-data-generate         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                |
 
 ## Instructions
 

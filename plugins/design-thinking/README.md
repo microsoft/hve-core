@@ -104,22 +104,23 @@ copilot plugin install design-thinking@hve-core
 
 ## Commands
 
-| Command                         | Description                                                                                                                                                      |
-|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core                     |
-| dt-resume-coaching              | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core                               |
-| dt-method-next                  | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                                              |
-| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                                     |
-| dt-handoff-problem-space        | Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                                |
-| dt-handoff-solution-space       | Solution Space exit handoff — compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                                               |
-| dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core                             |
-| dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                                         |
-| dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                                              |
-| dt-method-05-evaluation         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                                             |
-| dt-method-06-planning           | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                                              |
-| dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                                        |
-| dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                                         |
-| dt-figma-export                 | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core |
+| Command                         | Description                                                                                                                                                       |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core                      |
+| dt-resume-coaching              | Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core                                |
+| dt-method-next                  | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                                               |
+| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                                      |
+| dt-handoff-problem-space        | Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                                 |
+| dt-handoff-solution-space       | Solution Space exit handoff — compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                                                |
+| dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core                              |
+| dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                                          |
+| dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                                               |
+| dt-method-05-evaluation         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                                              |
+| dt-method-06-planning           | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                                               |
+| dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                                         |
+| dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                                          |
+| dt-canonical-deck               | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core |
+| dt-figma-export                 | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core  |
 
 ## Instructions
 
@@ -131,6 +132,7 @@ copilot plugin install design-thinking@hve-core
 | dt-method-08-testing.instructions                 | Design Thinking Method 8: User Testing - evidence-based evaluation, test protocols, and non-linear iteration support                                                                                                                                        |
 | dt-method-sequencing.instructions                 | Method transition rules, nine-method sequence, space boundaries, and non-linear iteration support for Design Thinking coaching                                                                                                                              |
 | dt-quality-constraints.instructions               | Quality constraints, fidelity rules, and output standards for Design Thinking coaching across all nine methods                                                                                                                                              |
+| dt-canonical-deck.instructions                    | Opt-in canonical deck and customer-card workflow for DT coaching                                                                                                                                                                                            |
 | dt-coaching-state.instructions                    | Coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery                                                                                                                                               |
 | dt-industry-healthcare.instructions               | Healthcare industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios                                                                                                                                               |
 | dt-rpi-handoff-contract.instructions              | DT-to-RPI handoff contract defining exit points, artifact schemas, and per-agent input requirements for lateral transitions from Design Thinking to RPI workflow                                                                                            |

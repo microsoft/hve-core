@@ -60,10 +60,12 @@ copilot plugin install experimental@hve-core
 
 ## Skills
 
-| Skill        | Description                                                                                                                                   |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| powerpoint   | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core |
-| video-to-gif | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                        |
+| Skill                | Description                                                                                                                                                                         |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| customer-card-render | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline - Brought to you by microsoft/hve-core |
+| powerpoint           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core                                       |
+| video-to-gif         | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                                                              |
+| vscode-playwright    | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core                                             |
 
 ---
 
