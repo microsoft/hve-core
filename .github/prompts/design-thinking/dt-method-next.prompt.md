@@ -80,6 +80,7 @@ Then present recommendation:
   * 3→4 (Problem→Solution): Themes validated across sources, team alignment confirmed, HMW questions formulated
   * 6→7 (Solution→Implementation): Lo-fi prototypes tested with real users, core assumptions validated, concepts narrowed to 1-2 directions
 * **User Choice:** "Does this direction make sense, or would you prefer to target a different method?"
+* **Figma Export:** At space boundaries (3→4, 6→7) or after methods that produce visual artifacts (M1, M3, M4, M5, M6), mention: "You can also export these artifacts to a FigJam board for team review using `/dt-figma-export`."
 
 ### 5. Delegate to DT Coach
 

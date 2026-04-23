@@ -145,6 +145,9 @@ items:
   maturity: experimental
 - path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
+- path: .github/prompts/design-thinking/dt-figma-export.prompt.md
+  kind: prompt
+  maturity: preview
 - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
   kind: prompt
   maturity: preview
@@ -561,6 +564,9 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/security/owasp-cicd
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/owasp-docker
   kind: skill
   maturity: experimental
 - path: .github/skills/security/owasp-infrastructure
