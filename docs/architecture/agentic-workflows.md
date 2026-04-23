@@ -176,7 +176,7 @@ It delegates to Prompt Tester, Prompt Evaluator, Prompt Updater, and Researcher 
 
 ### Security Review
 
-The [Security Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/agents/security/security-reviewer.agent.md) orchestrates OWASP-based vulnerability assessment through four subagents: Codebase Profiler, Skill Assessor, Finding Deep Verifier, and Report Generator. It supports audit, diff, and plan modes.
+The [Security Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/agents/security/security-reviewer.agent.md) orchestrates security skill assessment through four subagents: Codebase Profiler, Skill Assessor, Finding Deep Verifier, and Report Generator. It supports audit, diff, and plan modes across OWASP and Secure by Design frameworks.
 
 ### Code Review
 
