@@ -12,6 +12,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 This collection includes agents, skills, and instructions for:
 
 - **Experiment Designer** — Guides users through designing Minimum Viable Experiments (MVEs) with hypothesis formation, vetting, and structured experiment plans
+- **Customer Card Render** — Converts Design Thinking canonical markdown artifacts into PowerPoint skill `content.yaml` slides and supports customer-card deck builds through the PowerPoint Builder pipeline
 - **PowerPoint Builder** — Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx
 - **Video to GIF** — Convert video files to animated GIF format
 
@@ -39,10 +40,12 @@ copilot plugin install experimental@hve-core
 
 ## Skills
 
-| Skill        | Description                                                                                                                                   |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| powerpoint   | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core |
-| video-to-gif | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                        |
+| Skill                | Description                                                                                                                                                                         |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| customer-card-render | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline - Brought to you by microsoft/hve-core |
+| powerpoint           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core                                       |
+| video-to-gif         | Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core                                                                              |
+| vscode-playwright    | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core                                             |
 
 ---
 
