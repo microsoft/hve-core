@@ -7,36 +7,36 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Chat Agents
 
-| Name                         | Description                                                                                                                                                                                                                                                 |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **gen-data-spec**            | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                                                                              |
-| **gen-jupyter-notebook**     | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                                                                   |
-| **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                    |
-| **rai-planner**              | Responsible AI assessment agent with 5-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. |
-| **researcher-subagent**      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                |
-| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                                                                               |
+| Name | Description |
+|------|-------------|
+| **gen-data-spec** | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery |
+| **gen-jupyter-notebook** | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries |
+| **gen-streamlit-dashboard** | Develop a multi-page Streamlit dashboard |
+| **rai-planner** | Responsible AI assessment agent with 5-phase conversational workflow. Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Produces RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. |
+| **researcher-subagent** | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools |
+| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting |
 
 ### Prompts
 
-| Name                            | Description                                                                                                                              |
-|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-capture**                 | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| Name | Description |
+|------|-------------|
+| **rai-capture** | Initiate a responsible AI assessment from existing knowledge using the RAI Planner agent in capture mode |
+| **rai-plan-from-prd** | Initiate a responsible AI assessment from PRD/BRD artifacts using the RAI Planner agent in from-prd mode |
 | **rai-plan-from-security-plan** | Initiate a responsible AI assessment from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **synth-data-generate**         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                |
+| **synth-data-generate** | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships |
 
 ### Instructions
 
-| Name                                   | Description                                                                                                                                                                                                                                                 |
-|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **coding-standards/python-script**     | Instructions for Python scripting implementation                                                                                                                                                                                                            |
-| **coding-standards/uv-projects**       | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
-| **rai-planning/rai-backlog-handoff**   | RAI review and backlog handoff for Phase 6: review rubric, RAI scorecard, dual-format backlog generation                                                                                                                                                    |
-| **rai-planning/rai-capture-coaching**  | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods                                                                                                                                                 |
-| **rai-planning/rai-identity**          | RAI Planner identity, 5-phase orchestration, state management, and session recovery                                                                                                                                                                         |
-| **rai-planning/rai-impact-assessment** | RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation                                                                                                                            |
-| **rai-planning/rai-security-model**    | RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol                                                                                                                         |
-| **rai-planning/rai-standards**         | Embedded RAI standards for Phase 3: Microsoft RAI Standard v2 principles and NIST AI RMF subcategory mappings                                                                                                                                               |
-| **shared/hve-core-location**           | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Name | Description |
+|------|-------------|
+| **coding-standards/python-script** | Instructions for Python scripting implementation |
+| **coding-standards/uv-projects** | Create and manage Python virtual environments using uv commands |
+| **rai-planning/rai-backlog-handoff** | RAI review and backlog handoff for Phase 6: review rubric, RAI scorecard, dual-format backlog generation |
+| **rai-planning/rai-capture-coaching** | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods |
+| **rai-planning/rai-identity** | RAI Planner identity, 5-phase orchestration, state management, and session recovery |
+| **rai-planning/rai-impact-assessment** | RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation |
+| **rai-planning/rai-security-model** | RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol |
+| **rai-planning/rai-standards** | Embedded RAI standards for Phase 3: Microsoft RAI Standard v2 principles and NIST AI RMF subcategory mappings |
+| **shared/hve-core-location** | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

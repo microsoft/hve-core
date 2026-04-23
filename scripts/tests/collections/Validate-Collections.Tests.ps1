@@ -102,6 +102,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
             id          = 'test-reject-instr'
             name        = 'Test Reject Instruction'
             description = 'Tests repo-specific instruction rejection'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/instructions/workflows.instructions.md'
@@ -122,6 +123,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
             id          = 'test-allow-location'
             name        = 'Test Allow Location'
             description = 'Tests that subdirectory instructions are allowed'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/instructions/shared/hve-core-location.instructions.md'
@@ -141,6 +143,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
             id          = 'test-reject-agent'
             name        = 'Test Reject Agent'
             description = 'Tests repo-specific agent rejection'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/internal.agent.md'
@@ -161,6 +164,7 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
             id          = 'test-allow-agent'
             name        = 'Test Allow Agent'
             description = 'Tests that subdirectory agents pass'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/hve-core/rpi-agent.agent.md'
@@ -297,7 +301,7 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
         $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 
-    It 'Passes validation for collection with omitted maturity' {
+    It 'Fails validation for collection with omitted maturity' {
         $manifest = [ordered]@{
             id          = 'test-maturity-omitted'
             name        = 'Test'
@@ -313,7 +317,8 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
         Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-omitted.collection.yml') -Value $yaml
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
     }
 }
 
@@ -359,6 +364,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'my-collection'
             name        = 'My Collection'
             description = 'Collection with matching folder'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/my-collection/match.agent.md'
@@ -384,6 +390,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'my-collection'
             name        = 'My Collection'
             description = 'Collection with mismatched folder'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/wrong-folder/mismatch.agent.md'
@@ -409,6 +416,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'my-collection'
             name        = 'My Collection'
             description = 'Collection referencing hve-core item'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/hve-core/core.agent.md'
@@ -424,6 +432,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'hve-core'
             name        = 'HVE Core'
             description = 'HVE Core collection'
+            maturity    = 'stable'
             items       = @()
         }
         $hveYaml = ConvertTo-Yaml -Data $hveCoreManifest
@@ -445,6 +454,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'my-collection'
             name        = 'My Collection'
             description = 'Collection referencing shared item'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/instructions/shared/shared.instructions.md'
@@ -470,6 +480,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'hve-core-all'
             name        = 'HVE Core All'
             description = 'Aggregate collection'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/my-collection/match.agent.md'
@@ -508,6 +519,7 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
             id          = 'my-collection'
             name        = 'My Collection'
             description = 'Mismatch for warning output test'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/wrong-folder/mismatch.agent.md'
@@ -578,6 +590,7 @@ items:
             id          = 'INVALID_ID!'
             name        = 'Bad ID'
             description = 'Invalid id format'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -597,6 +610,7 @@ items:
             id          = 'dup-id'
             name        = 'First'
             description = 'First collection'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -617,6 +631,7 @@ items:
             id          = 'missing-path'
             name        = 'Missing'
             description = 'Item path missing'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/nonexistent.agent.md'
@@ -650,6 +665,7 @@ items:
             id          = 'bad-item-mat'
             name        = 'Bad Item Maturity'
             description = 'Item with invalid maturity'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path     = '.github/agents/test/a.agent.md'
@@ -670,6 +686,7 @@ items:
             id          = 'suffix-mismatch'
             name        = 'Suffix Mismatch'
             description = 'Agent path with wrong suffix'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/instructions/test/test.instructions.md'
@@ -689,6 +706,7 @@ items:
             id          = 'instr-suffix'
             name        = 'Instruction Suffix'
             description = 'Instruction item with agent suffix'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -713,6 +731,7 @@ items:
             id          = 'dup-artifact'
             name        = 'Dup Artifact'
             description = 'Same artifact key from different paths'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -738,6 +757,7 @@ items:
             id          = 'share-one'
             name        = 'Share One'
             description = 'First sharer'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -749,6 +769,7 @@ items:
             id          = 'share-two'
             name        = 'Share Two'
             description = 'Second sharer'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/a.agent.md'
@@ -760,6 +781,7 @@ items:
             id          = 'hve-core-all'
             name        = 'All'
             description = 'Canonical - missing a.agent.md'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path = '.github/agents/test/b.agent.md'
@@ -789,6 +811,7 @@ items:
             id          = 'hve-core-all'
             name        = 'All'
             description = 'Canonical collection'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path     = '.github/agents/test/a.agent.md'
@@ -801,6 +824,7 @@ items:
             id          = 'conflict-col'
             name        = 'Conflict'
             description = 'Conflicting maturity'
+            maturity    = 'stable'
             items       = @(
                 [ordered]@{
                     path     = '.github/agents/test/a.agent.md'
@@ -855,11 +879,13 @@ Describe 'Invoke-CollectionValidation - new checks' {
     It 'Warns but passes when .collection.md companion is missing' {
         $manifest = [ordered]@{
             id = 'no-companion'; name = 'No Companion'; description = 'Missing companion md'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'no-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -876,12 +902,14 @@ Describe 'Invoke-CollectionValidation - new checks' {
     It 'Passes cleanly when .collection.md companion is present' {
         $manifest = [ordered]@{
             id = 'has-companion'; name = 'Has Companion'; description = 'With md'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
         Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.md') -Value '# Has Companion'
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -899,6 +927,7 @@ Describe 'Invoke-CollectionValidation - new checks' {
     It 'Fails when the same item appears twice in one collection' {
         $manifest = [ordered]@{
             id = 'intra-dup'; name = 'Intra Dup'; description = 'Dup item'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
@@ -918,6 +947,7 @@ Describe 'Invoke-CollectionValidation - new checks' {
 
         $manifest = [ordered]@{
             id = 'distinct-items'; name = 'Distinct'; description = 'Distinct items'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' }
@@ -925,6 +955,7 @@ Describe 'Invoke-CollectionValidation - new checks' {
         }
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' },
@@ -945,11 +976,13 @@ Describe 'Invoke-CollectionValidation - new checks' {
     It 'Fails when a themed collection item is absent from hve-core-all' {
         $manifest = [ordered]@{
             id = 'themed-only'; name = 'Themed Only'; description = 'Item not in hve-core-all'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         # Canonical exists but does NOT include a.agent.md - only orphan - so Check 4 fires
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing themed item'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'themed-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -965,10 +998,12 @@ Describe 'Invoke-CollectionValidation - new checks' {
     It 'Passes when all themed items are present in hve-core-all' {
         $themed = [ordered]@{
             id = 'themed-covered'; name = 'Themed Covered'; description = 'Covered by canonical'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -989,10 +1024,12 @@ Describe 'Invoke-CollectionValidation - new checks' {
         # manifest and canonical cover a.agent.md but NOT orphan/orphan.agent.md
         $manifest = [ordered]@{
             id = 'partial-coverage'; name = 'Partial'; description = 'Missing orphan'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing orphan'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'partial-coverage.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -1009,10 +1046,12 @@ Describe 'Invoke-CollectionValidation - new checks' {
         # Themed covers only a.agent.md; canonical covers both - orphan is canonical-only
         $themed = [ordered]@{
             id = 'themed-partial'; name = 'Themed Partial'; description = 'Missing orphan in themed'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical - covers orphan'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -1052,6 +1091,7 @@ Describe 'Invoke-CollectionValidation - marker validation' -Tag 'Unit' {
     It 'Passes when collection.md has valid matched marker pairs' {
         $manifest = [ordered]@{
             id = 'valid-markers'; name = 'Valid Markers'; description = 'Matched markers'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -1065,6 +1105,7 @@ Generated content.
         Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.md') -Value $mdContent
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -1081,6 +1122,7 @@ Generated content.
     It 'Warns but passes when begin marker exists without end marker' {
         $manifest = [ordered]@{
             id = 'begin-only'; name = 'Begin Only'; description = 'Missing end'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -1093,6 +1135,7 @@ Content without end marker.
         Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.md') -Value $mdContent
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -1109,6 +1152,7 @@ Content without end marker.
     It 'Warns but passes when end marker exists without begin marker' {
         $manifest = [ordered]@{
             id = 'end-only'; name = 'End Only'; description = 'Missing begin'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -1121,6 +1165,7 @@ Content without begin marker.
         Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.md') -Value $mdContent
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -1137,12 +1182,14 @@ Content without begin marker.
     It 'Does not warn when collection.md has no markers (backward compat)' {
         $manifest = [ordered]@{
             id = 'no-markers'; name = 'No Markers'; description = 'Legacy no markers'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
         Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.md') -Value '# No Markers - legacy content without any markers'
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
@@ -1159,6 +1206,7 @@ Content without begin marker.
     It 'Warns but passes when markers appear in wrong order' {
         $manifest = [ordered]@{
             id = 'reversed'; name = 'Reversed'; description = 'Wrong order'
+            maturity = 'stable'
             items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
@@ -1172,6 +1220,7 @@ Content.
         Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.md') -Value $mdContent
         $canonical = [ordered]@{
             id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            maturity = 'stable'
             items = @(
                 [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
                 [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }

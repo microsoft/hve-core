@@ -1,6 +1,7 @@
 id: project-planning
 name: Project Planning
 description: PRDs, BRDs, ADRs, and architecture diagrams
+maturity: stable
 tags:
   - documentation
   - architecture

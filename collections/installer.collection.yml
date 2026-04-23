@@ -1,6 +1,7 @@
 id: installer
 name: HVE Core Installer
 description: Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations
+maturity: stable
 tags:
   - installer
   - setup

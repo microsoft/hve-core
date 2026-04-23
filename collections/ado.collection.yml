@@ -1,6 +1,7 @@
 id: ado
 name: Azure DevOps Integration
 description: Azure DevOps work item management, build monitoring, and pull request creation
+maturity: stable
 tags:
   - azure-devops
   - ado

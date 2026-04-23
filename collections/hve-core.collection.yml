@@ -1,6 +1,7 @@
 id: hve-core
 name: HVE Core Workflow
 description: HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts
+maturity: stable
 tags:
   - workflow
   - hve-core
