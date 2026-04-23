@@ -734,6 +734,16 @@ function Get-PSModuleStaleness {
 
     .PARAMETER ManifestPath
         Path to the tool-checksums.json manifest file.
+
+    .EXAMPLE
+        $stale = Get-PSModuleStaleness
+        $stale | Where-Object { $_.IsStale } | ForEach-Object {
+            Write-Host "$($_.Module): $($_.CurrentVersion) -> $($_.LatestVersion)"
+        }
+
+    .NOTES
+        Requires network access to the PowerShell Gallery OData v2 API unless
+        HVE_PSGALLERY_REPOSITORY is set to a local mirror or test double.
     #>
     [CmdletBinding()]
     [OutputType([PSCustomObject[]])]
@@ -773,7 +783,8 @@ function Get-PSModuleStaleness {
             continue
         }
 
-        $uri = "$apiBase/Packages()?`$filter=Id eq '$($mod.name)' and IsLatestVersion"
+        $escapedName = $mod.name -replace "'", "''"
+        $uri = "$apiBase/Packages()?`$filter=Id eq '$escapedName' and IsLatestVersion"
         try {
             $response = Invoke-RestMethod -Uri $uri -ErrorAction Stop
             $latestVersion = $null
