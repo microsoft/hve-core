@@ -40,6 +40,8 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
+- path: .github/agents/hve-core/council.agent.md
+  kind: agent
 - path: .github/agents/hve-core/doc-ops.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
@@ -50,7 +52,13 @@ items:
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/gemini-3-1-pro-councilor.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/gpt-5-4-councilor.agent.md
+  kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/opus-4-6-councilor.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
   kind: agent

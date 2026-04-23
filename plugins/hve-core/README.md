@@ -10,6 +10,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 This collection includes agents for:
 
 - **RPI Agent** — Autonomous orchestrator that drives the full four-phase workflow
+- **LLM Council** — Dispatches the same question to GPT-5.4, Opus 4.6, and Gemini 3.1 Pro, then synthesizes the result
 - **Task Researcher** — Gathers context, discovers patterns, and produces research documents
 - **Task Planner** — Creates detailed implementation plans from research findings
 - **Task Implementor** — Executes plans with progressive tracking and change records
@@ -27,6 +28,9 @@ Supporting subagents included:
 
 - **Codebase Researcher** — Searches workspace for code patterns, conventions, and implementations
 - **External Researcher** — Retrieves external documentation, SDK references, and code samples
+- **GPT-5.4 Councilor** — Provides one independent frontier-model answer for council synthesis
+- **Opus 4.6 Councilor** — Provides one independent frontier-model answer for council synthesis
+- **Gemini 3.1 Pro Councilor** — Provides one independent frontier-model answer for council synthesis
 - **Phase Implementor** — Executes single implementation phases with change tracking
 - **Artifact Validator** — Validates implementation work against plans and conventions
 - **Prompt Tester** — Tests prompt files by following them literally in a sandbox
@@ -50,6 +54,7 @@ copilot plugin install hve-core@hve-core
 | task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                        |
 | memory                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                     |
 | doc-ops                  | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                 |
+| council                  | LLM council that asks GPT-5.4, Opus 4.6, and Gemini 3.1 Pro the same question, then synthesizes a recommendation - Brought to you by microsoft/hve-core                                           |
 | prompt-builder           | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                 |
 | task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                |
 | task-implementor         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core                                                    |
@@ -59,6 +64,9 @@ copilot plugin install hve-core@hve-core
 | implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                   |
 | plan-validator           | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                 |
 | phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                           |
+| gpt-5-4-councilor        | Subagent councilor that answers a shared question independently using GPT-5.4 for the LLM Council agent - Brought to you by microsoft/hve-core                                                    |
+| opus-4-6-councilor       | Subagent councilor that answers a shared question independently using Opus 4.6 for the LLM Council agent - Brought to you by microsoft/hve-core                                                   |
+| gemini-3-1-pro-councilor | Subagent councilor that answers a shared question independently using Gemini 3.1 Pro for the LLM Council agent - Brought to you by microsoft/hve-core                                             |
 | prompt-evaluator         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance                                                             |
 | prompt-tester            | Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value   |
 | prompt-updater           | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research                                 |
