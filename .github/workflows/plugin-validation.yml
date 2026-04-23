@@ -46,6 +46,9 @@ jobs:
       - name: Validate marketplace manifest
         run: npm run lint:marketplace
 
+      - name: Create logs directory
+        run: mkdir -p logs
+
       - name: Check plugin freshness
         run: |
           npm run plugin:generate
