@@ -16,6 +16,7 @@ Use this template when creating or updating a slide's `content.yaml` file. Each 
 * The `layout` field is informational and helps describe the slide structure; it does not auto-apply a PowerPoint layout.
 * The `background` block sets a per-slide background fill. When omitted, no background fill is applied.
 * The `rotation` field (degrees, 0–360) is supported on `shape`, `textbox`, and `image` elements. Omit or set to 0 for no rotation.
+* Markdown-like list lines in `text` fields are interpreted as PowerPoint lists during rendering.
 
 ## Template
 
@@ -367,6 +368,27 @@ These optional fields apply to `shape`, `textbox`, and `image` element types:
 | `auto_size`       | `string` | —          | Auto-size behavior: `none`, `fit` (shape to fit text), `shrink` (text to fit shape) |
 | `vertical_anchor` | `string` | —          | Vertical text alignment within frame: `top`, `middle`, `bottom`                     |
 
+### Markdown List Interpretation Contract
+
+For `textbox.text` values, markdown-like list lines are always interpreted as PowerPoint list paragraphs.
+
+* Unordered list markers: `-`, `+`, `*`
+* Ordered list markers: `1.`, `2.`, `3.` and `1)`, `2)`, `3)`
+* Leading indentation controls PowerPoint paragraph level
+* Lines that do not match list markers are rendered as normal text paragraphs
+
+Example:
+
+```yaml
+text: |
+  Outcomes
+
+  - Improve cycle time
+  - Reduce rework
+  1. Identify bottlenecks
+  2) Validate fixes
+```
+
 ## Shape Text Fields
 
 When a shape contains inline text, use these prefixed fields:
@@ -378,6 +400,8 @@ When a shape contains inline text, use these prefixed fields:
 | `text_size`  | `int`    | `16`       | Font size in points for shape text       |
 | `text_color` | `string` | —          | Text color as `#RRGGBB` or `@theme_name` |
 | `text_bold`  | `bool`   | `false`    | Bold text weight for shape text          |
+
+For `shape.text`, the same markdown list interpretation contract applies as `textbox.text`.
 
 ## Color Syntax
 
