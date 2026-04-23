@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const collectionsDir =
   process.env.COLLECTIONS_DIR ??
-  path.resolve(process.cwd(), '../../collections');
+  path.resolve(__dirname, '../../../../../collections');
 
 function countYamlPaths(collectionName: string): number {
   const yamlPath = path.join(

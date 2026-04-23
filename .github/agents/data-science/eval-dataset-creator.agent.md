@@ -1,6 +1,7 @@
 ---
 name: Evaluation Dataset Creator
 description: 'Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation'
+argument-hint: "create an evaluation dataset for [agent name or description]"
 tools:
   - read
   - edit/editFiles
@@ -109,7 +110,10 @@ Generate evaluation datasets following these specifications.
       "hard": 0,
       "negative": 0,
       "safety": 0
-    }
+    },
+    "persona": "citizen-developer|pro-code",
+    "evaluation_mode": ["manual|batch"],
+    "recommended_tool": "copilot-studio|azure-ai-foundry"
   },
   "evaluation_pairs": [
     {
@@ -215,6 +219,12 @@ Generate the three supporting documents in `data/evaluation/docs/`, then present
 - Hard scenarios: {count}
 - Negative/error conditions: {count}
 - Safety scenarios: {count}
+
+## Maintenance Schedule
+
+- [ ] Review and update dataset after major agent changes
+- [ ] Re-evaluate Q&A pairs quarterly
+- [ ] Version dataset on significant updates
 
 ```
 <!-- </curation-notes-template> -->
