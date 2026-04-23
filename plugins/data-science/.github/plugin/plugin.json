@@ -8,6 +8,7 @@
     "agents/rai-planning/"
   ],
   "commands": [
+    "commands/data-science/",
     "commands/rai-planning/"
   ]
 }
