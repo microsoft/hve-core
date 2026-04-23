@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path logs | Out-Null
-          & scripts/linting/Validate-AIArtifacts.ps1 -FailOnMissing
+          & scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing
         continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload results
