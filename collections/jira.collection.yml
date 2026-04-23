@@ -1,6 +1,7 @@
 id: jira
 name: Jira Integration
 description: Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill
+maturity: experimental
 tags:
   - jira
   - issue-tracking

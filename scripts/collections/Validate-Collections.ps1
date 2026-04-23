@@ -231,12 +231,12 @@ function Invoke-CollectionValidation {
             $seenIds[$id] = $file.Name
         }
 
-        # Validate collection-level maturity if present
-        if ($manifest.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$manifest.maturity)) {
-            $collMaturity = [string]$manifest.maturity
-            if ($allowedMaturities -notcontains $collMaturity) {
-                $fileErrors += "invalid collection maturity '$collMaturity' (allowed: $($allowedMaturities -join ', '))"
-            }
+        # Validate collection-level maturity (required)
+        if (-not $manifest.ContainsKey('maturity') -or [string]::IsNullOrWhiteSpace([string]$manifest.maturity)) {
+            $fileErrors += "missing required field 'maturity'"
+        }
+        elseif ($allowedMaturities -notcontains ([string]$manifest.maturity)) {
+            $fileErrors += "invalid collection maturity '$([string]$manifest.maturity)' (allowed: $($allowedMaturities -join ', '))"
         }
 
         # Validate each item

@@ -1,6 +1,7 @@
 id: gitlab
 name: GitLab Integration
 description: GitLab merge request and pipeline workflows through a Python skill
+maturity: experimental
 tags:
   - gitlab
   - merge-requests

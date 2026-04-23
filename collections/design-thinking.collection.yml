@@ -1,12 +1,12 @@
 id: design-thinking
 name: Design Thinking
 description: Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
+maturity: preview
 tags:
   - design-thinking
   - coaching
   - methodology
   - ux
-maturity: preview
 items:
   # Agents
   - path: .github/agents/design-thinking/dt-coach.agent.md
