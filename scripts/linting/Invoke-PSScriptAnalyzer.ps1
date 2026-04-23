@@ -51,13 +51,13 @@ function Invoke-PSScriptAnalyzerCore {
 
     Write-Host "🔍 Running PSScriptAnalyzer..." -ForegroundColor Cyan
 
-    # Ensure PSScriptAnalyzer is available
-    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer)) {
-        Write-Host "Installing PSScriptAnalyzer module..." -ForegroundColor Yellow
+    # Ensure PSScriptAnalyzer 1.25.0 is available (presence-only check would allow a different installed version to bypass the pin)
+    if (-not (Get-Module -ListAvailable -Name PSScriptAnalyzer | Where-Object { $_.Version -eq [version]'1.25.0' })) {
+        Write-Host "Installing PSScriptAnalyzer 1.25.0..." -ForegroundColor Yellow
         Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository PSGallery
     }
 
-    Import-Module PSScriptAnalyzer
+    Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
 
     # Get files to analyze
     $filesToAnalyze = @()

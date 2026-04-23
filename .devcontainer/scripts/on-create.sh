@@ -48,7 +48,7 @@ main() {
     PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
       pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
   fi
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
+  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
   PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
   PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
 
