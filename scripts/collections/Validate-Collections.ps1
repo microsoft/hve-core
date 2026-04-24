@@ -373,8 +373,11 @@ function Invoke-CollectionValidation {
         $themedMatches    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId })
 
         # Check 4: item in one or more themed collections but absent from hve-core-all
-        if ($canonicalManifestFound -and $themedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
-            $themedCollections = ($themedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
+        # Skip when all themed occurrences are marked maturity:'removed' (intentional tombstone
+        # excluded from hve-core-all by Update-HveCoreAllCollection).
+        $activeThemedMatches = @($themedMatches | Where-Object { $_.Maturity -ne 'removed' })
+        if ($canonicalManifestFound -and $activeThemedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
+            $themedCollections = ($activeThemedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
             Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
             $errorCount++
             continue
@@ -403,8 +406,15 @@ function Invoke-CollectionValidation {
             $inThemed    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId }).Count -gt 0
 
             if (-not $inCanonical) {
-                Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
-                $errorCount++
+                # Skip orphan failure when all themed occurrences are tombstoned (maturity:'removed').
+                $themedActive  = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -ne 'removed' }).Count -gt 0
+                $themedRemoved = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -eq 'removed' }).Count -gt 0
+                if ($themedRemoved -and -not $themedActive) {
+                    Write-Verbose "Skipping orphan check for tombstoned item '$diskKey'"
+                } else {
+                    Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
+                    $errorCount++
+                }
             } elseif (-not $inThemed) {
                 Write-Host " WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
             }
