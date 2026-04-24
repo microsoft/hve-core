@@ -160,7 +160,7 @@ function Invoke-CollectionValidation {
     $errorCount = 0
     $seenIds = @{}
     $validatedCount = 0
-    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated')
+    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated', 'removed')
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 

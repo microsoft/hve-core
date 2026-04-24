@@ -1004,7 +1004,6 @@ function Get-DiscoveredAgents {
 
     $agentFiles = Get-ChildItem -Path $AgentsDir -Filter "*.agent.md" -Recurse | Sort-Object Name
     $agentFiles = $agentFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
-    $agentFiles = $agentFiles | Where-Object { -not (Test-ArtifactRemoved -Path $_.FullName) }
 
     foreach ($agentFile in $agentFiles) {
         $agentRelPath = [System.IO.Path]::GetRelativePath($AgentsDir, $agentFile.FullName) -replace '\\', '/'
@@ -1078,7 +1077,6 @@ function Get-DiscoveredPrompts {
 
     $promptFiles = Get-ChildItem -Path $PromptsDir -Filter "*.prompt.md" -Recurse | Sort-Object Name
     $promptFiles = $promptFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
-    $promptFiles = $promptFiles | Where-Object { -not (Test-ArtifactRemoved -Path $_.FullName) }
 
     foreach ($promptFile in $promptFiles) {
         $promptName = $promptFile.BaseName -replace '\.prompt$', ''
@@ -1148,7 +1146,6 @@ function Get-DiscoveredInstructions {
 
     $instructionFiles = Get-ChildItem -Path $InstructionsDir -Filter "*.instructions.md" -Recurse | Sort-Object Name
     $instructionFiles = $instructionFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
-    $instructionFiles = $instructionFiles | Where-Object { -not (Test-ArtifactRemoved -Path $_.FullName) }
 
     foreach ($instrFile in $instructionFiles) {
         $instrRelPath = [System.IO.Path]::GetRelativePath($InstructionsDir, $instrFile.FullName) -replace '\\', '/'
@@ -1214,7 +1211,6 @@ function Get-DiscoveredSkills {
 
     $skillFiles = Get-ChildItem -Path $SkillsDir -Filter "SKILL.md" -File -Recurse | Sort-Object { $_.Directory.FullName }
     $skillFiles = $skillFiles | Where-Object { -not (Test-DeprecatedPath -Path $_.FullName) }
-    $skillFiles = $skillFiles | Where-Object { -not (Test-ArtifactRemoved -Path $_.Directory.FullName) }
 
     foreach ($skillFile in $skillFiles) {
         $skillDir = $skillFile.Directory

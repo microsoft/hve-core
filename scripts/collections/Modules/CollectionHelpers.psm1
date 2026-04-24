@@ -89,87 +89,6 @@ function Test-DeprecatedPath {
     return ($Path -match '[/\\]deprecated[/\\]')
 }
 
-function Get-ArtifactSourceMaturity {
-    <#
-    .SYNOPSIS
-    Reads the maturity value from an artifact's source frontmatter.
-
-    .DESCRIPTION
-    Returns the maturity field declared in the YAML frontmatter of the artifact
-    file. When the path is a directory, SKILL.md is appended. Returns $null when
-    the file is missing, has no frontmatter, or the maturity field is absent.
-
-    .PARAMETER Path
-    Absolute or repo-relative path to the artifact file or skill directory.
-
-    .OUTPUTS
-    [string] Maturity value, or $null when not declared.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$Path
-    )
-
-    $target = $Path
-    if (Test-Path -LiteralPath $target -PathType Container) {
-        $target = Join-Path -Path $target -ChildPath 'SKILL.md'
-    }
-    if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
-        return $null
-    }
-
-    $raw = Get-Content -LiteralPath $target -Raw -Encoding utf8
-    if ($raw -notmatch '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-        return $null
-    }
-
-    try {
-        $fm = ConvertFrom-Yaml -Yaml $Matches[1]
-    }
-    catch {
-        return $null
-    }
-
-    if ($fm -is [hashtable] -and $fm.ContainsKey('maturity')) {
-        $value = [string]$fm['maturity']
-        if (-not [string]::IsNullOrWhiteSpace($value)) {
-            return $value
-        }
-    }
-
-    return $null
-}
-
-function Test-ArtifactRemoved {
-    <#
-    .SYNOPSIS
-    Checks whether an artifact's source frontmatter declares maturity removed.
-
-    .DESCRIPTION
-    Returns $true when the artifact's source frontmatter declares maturity as
-    removed. Removed artifacts are excluded from all distribution channels and
-    auto-discovery, regardless of collection metadata.
-
-    .PARAMETER Path
-    Absolute or repo-relative path to the artifact file or skill directory.
-
-    .OUTPUTS
-    [bool] True when the source frontmatter declares maturity removed.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [string]$Path
-    )
-
-    return ((Get-ArtifactSourceMaturity -Path $Path) -eq 'removed')
-}
-
 function Test-HveCoreRepoSpecificPath {
     <#
     .SYNOPSIS
@@ -485,9 +404,6 @@ function Get-ArtifactFiles {
             if (Test-DeprecatedPath -Path $relativePath) {
                 continue
             }
-            if (Test-ArtifactRemoved -Path $file.FullName) {
-                continue
-            }
             $items += @{ path = $relativePath; kind = $kind }
         }
     }
@@ -504,9 +420,6 @@ function Get-ArtifactFiles {
                 continue
             }
             if (Test-HveCoreRepoRelativePath -Path $relativePath) {
-                continue
-            }
-            if (Test-ArtifactRemoved -Path $skillFile.FullName) {
                 continue
             }
 
@@ -586,9 +499,6 @@ function Update-HveCoreAllCollection {
     # Exclude deprecated items by path (independent of maturity metadata)
     $allItems = @($allItems | Where-Object { -not (Test-DeprecatedPath -Path $_.path) })
 
-    # Exclude items whose source frontmatter declares maturity removed
-    $allItems = @($allItems | Where-Object { -not (Test-ArtifactRemoved -Path (Join-Path -Path $RepoRoot -ChildPath $_.path)) })
-
     # Filter deprecated based on existing collection item maturity metadata
     $existingItemMaturities = @{}
     foreach ($existingItem in $existing.items) {
@@ -603,6 +513,11 @@ function Update-HveCoreAllCollection {
         $itemMaturity = 'stable'
         if ($existingItemMaturities.ContainsKey($itemKey)) {
             $itemMaturity = $existingItemMaturities[$itemKey]
+        }
+
+        if ($itemMaturity -eq 'removed') {
+            Write-Verbose "Excluding removed: $($item.path)"
+            continue
         }
 
         if (Test-ArtifactDeprecated -Maturity $itemMaturity) {
@@ -789,14 +704,12 @@ Export-ModuleMember -Function @(
     'Get-ArtifactDescription',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
-    'Get-ArtifactSourceMaturity',
     'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
     'Resolve-CollectionItemMaturity',
     'Set-ContentIfChanged',
     'Split-CollectionMdByMarkers',
     'Test-ArtifactDeprecated',
-    'Test-ArtifactRemoved',
     'Test-DeprecatedPath',
     'Test-HveCoreRepoRelativePath',
     'Test-HveCoreRepoSpecificPath',
