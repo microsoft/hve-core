@@ -14,7 +14,7 @@
     in source values.
 
 .EXAMPLE
-    ./Validate-Marketplace.ps1
+    ./Validate-Marketplace.ps1 -OutputPath 'logs/marketplace-validation-results.json'
 #>
 
 [CmdletBinding()]
@@ -45,6 +45,12 @@ function Write-MarketplaceValidationReport {
 
     .PARAMETER Results
         Validation results grouped by plugin or manifest scope.
+
+    .OUTPUTS
+        [void]
+
+    .EXAMPLE
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath 'logs/marketplace-validation-results.json' -ErrorCount 0 -Results @()
     #>
     [CmdletBinding()]
     param(
