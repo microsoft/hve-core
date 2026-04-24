@@ -325,3 +325,4 @@ jobs:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
+

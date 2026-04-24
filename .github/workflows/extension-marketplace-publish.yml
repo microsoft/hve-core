@@ -106,3 +106,4 @@ jobs:
             fi
             echo "View on [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.${COLLECTION_NAME})"
           } >> "$GITHUB_STEP_SUMMARY"
+
