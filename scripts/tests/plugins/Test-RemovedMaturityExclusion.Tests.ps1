@@ -75,8 +75,8 @@ Describe 'Removed maturity exclusion from plugins' {
         foreach ($removed in $script:RemovedItems) {
             $patterns = @($removed.Path, $removed.Leaf) | Sort-Object -Unique
             foreach ($pattern in $patterns) {
-                $matches = $script:PluginFiles | Select-String -SimpleMatch -Pattern $pattern -ErrorAction SilentlyContinue
-                foreach ($match in $matches) {
+                $patternMatches = $script:PluginFiles | Select-String -SimpleMatch -Pattern $pattern -ErrorAction SilentlyContinue
+                foreach ($match in $patternMatches) {
                     $relative = $match.Path.Substring($script:RepoRoot.Length).TrimStart('\', '/')
                     $leaks += "[$($removed.Collection)] removed '$($removed.Path)' leaks into ${relative}:$($match.LineNumber) (matched '$pattern')"
                 }
@@ -102,8 +102,8 @@ Describe 'Removed maturity exclusion from plugins' {
         $allEntries = Get-ChildItem -Path $script:PluginsRoot -Recurse -ErrorAction SilentlyContinue
         $leaks = @()
         foreach ($removed in $script:RemovedItems) {
-            $matches = $allEntries | Where-Object { $_.Name -eq $removed.Leaf }
-            foreach ($match in $matches) {
+            $entryMatches = $allEntries | Where-Object { $_.Name -eq $removed.Leaf }
+            foreach ($match in $entryMatches) {
                 $relative = $match.FullName.Substring($script:RepoRoot.Length).TrimStart('\', '/')
                 $leaks += "[$($removed.Collection)] removed '$($removed.Path)' leaks as path: $relative"
             }

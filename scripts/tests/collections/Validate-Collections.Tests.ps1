@@ -514,6 +514,10 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
                     kind = 'instruction'
                 },
                 [ordered]@{
+                    path = '.github/instructions/rai-planning/rai.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
                     path = '.github/agents/hve-core/core.agent.md'
                     kind = 'agent'
                 }
