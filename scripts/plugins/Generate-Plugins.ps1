@@ -129,6 +129,10 @@ function Select-CollectionItemsByChannel {
 
     foreach ($item in $Collection.items) {
         $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+        if ($effectiveMaturity -eq 'removed') {
+            Write-Verbose "Skipping removed item: $($item.path)"
+            continue
+        }
         if ($allowedMaturities -contains $effectiveMaturity) {
             $filteredItems += $item
         }

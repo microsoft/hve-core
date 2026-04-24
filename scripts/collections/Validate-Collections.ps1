@@ -170,6 +170,13 @@ function Invoke-CollectionValidation {
         $knownCollectionIds[$cfId] = $true
     }
 
+    # Sub-domain folders that group artifacts shared across multiple themed collections
+    # but are intentionally not collections themselves.
+    $sharedSubdomainFolders = @{
+        'shared'       = $true
+        'rai-planning' = $true
+    }
+
     foreach ($file in $collectionFiles) {
         $baseName = $file.Name -replace '\.collection\.yml$', ''
         $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
@@ -292,7 +299,7 @@ function Invoke-CollectionValidation {
                 # Expected pattern: .github/{type}/{collection-id}/{file-or-deeper}
                 if ($pathSegments.Count -ge 4 -and $pathSegments[0] -eq '.github') {
                     $folderName = $pathSegments[2]
-                    if ($folderName -ne 'shared' -and -not $knownCollectionIds.ContainsKey($folderName)) {
+                    if (-not $sharedSubdomainFolders.ContainsKey($folderName) -and -not $knownCollectionIds.ContainsKey($folderName)) {
                         Write-Host " WARN collection '$id': item folder '$folderName' does not match any known collection ID: $itemPath" -ForegroundColor Yellow
                     }
                 }
