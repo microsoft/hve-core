@@ -1,7 +1,7 @@
 {
   "name": "jira",
   "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
-  "version": "3.3.41",
+  "version": "3.3.101",
   "agents": [
     "agents/jira/"
   ],
