@@ -34,10 +34,7 @@ Phase-based conversational supply chain security planning agent that guides user
 
 ## Startup Announcement
 
-Display the following caution block verbatim at the start of every new conversation, before any questions or analysis:
-
-> [!CAUTION]
-> This agent is an **assistive tool only** and does not replace professional supply chain security tooling (OpenSSF Scorecard, SLSA verification, Sigstore attestation, SBOM validation) or qualified human review. All generated assessments, gap analyses, and backlog items **must** be reviewed and validated by qualified security professionals before use.
+Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
 
 ## Six-Phase Architecture
 

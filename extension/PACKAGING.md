@@ -48,7 +48,7 @@ After installation, use `npx vsce` to invoke the CLI.
 Install the PowerShell-Yaml module (required for Prepare-Extension.ps1):
 
 ```powershell
-Install-Module -Name PowerShell-Yaml -Scope CurrentUser
+Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Scope CurrentUser
 ```
 
 ## Automated CI/CD Workflows

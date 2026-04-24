@@ -1,0 +1,28 @@
+# Disclaimer text configurations for AI-generated artifacts
+# Referenced by instruction files and validated by CI
+#
+# Each planner section defines a full disclaimer and the artifacts it applies to.
+# The validation script (Validate-PlannerArtifacts.ps1) reads this file as the
+# single source of truth for Tier 2 disclaimer text.
+
+version: "1.0"
+
+disclaimers:
+  rai-planner:
+    id: rai-full-disclaimer
+    label: "RAI Planner Full Disclaimer"
+    applies-to:
+      - handoff-summary
+      - compact-handoff-summary
+    text: >-
+      > **Disclaimer** — This agent is an assistive tool only. It does not
+      provide legal, regulatory, or compliance advice and does not replace
+      Responsible AI review boards, ethics committees, legal counsel,
+      compliance teams, or other qualified human reviewers. The output consists
+      of suggested actions and considerations to support a user's own internal
+      review and decision‑making. All RAI assessments, risk classification
+      screenings, security models, and mitigation recommendations generated
+      by this tool must be independently reviewed and validated by appropriate
+      legal and compliance reviewers before use. Outputs from this tool do not
+      constitute legal approval, compliance certification, or regulatory
+      sign‑off.

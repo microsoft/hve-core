@@ -88,6 +88,9 @@ items:
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
   kind: agent
+- path: .github/agents/project-planning/network-isa95-planner.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
@@ -509,6 +512,9 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
@@ -548,6 +554,8 @@ items:
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/shared/disclaimer-language.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
