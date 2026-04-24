@@ -622,3 +622,156 @@ Describe 'Set-ContentIfChanged' {
         $text | Should -Be 'test content'
     }
 }
+
+Describe 'Get-ArtifactSourceMaturity' {
+    BeforeAll {
+        $script:rootDir = Join-Path $TestDrive 'src-maturity'
+        New-Item -ItemType Directory -Path $script:rootDir -Force | Out-Null
+    }
+
+    It 'Returns the maturity value for a file with maturity removed' {
+        $file = Join-Path $script:rootDir 'removed.md'
+        Set-Content -Path $file -Value "---`nmaturity: removed`ndescription: x`n---`nBody"
+        Get-ArtifactSourceMaturity -Path $file | Should -Be 'removed'
+    }
+
+    It 'Returns the maturity value for a file with maturity stable' {
+        $file = Join-Path $script:rootDir 'stable.md'
+        Set-Content -Path $file -Value "---`nmaturity: stable`ndescription: x`n---`nBody"
+        Get-ArtifactSourceMaturity -Path $file | Should -Be 'stable'
+    }
+
+    It 'Resolves SKILL.md when given a directory containing SKILL.md' {
+        $skillDir = Join-Path $script:rootDir 'skill-removed'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nmaturity: removed`ndescription: x`n---`nBody"
+        Get-ArtifactSourceMaturity -Path $skillDir | Should -Be 'removed'
+    }
+
+    It 'Returns null when frontmatter has no maturity key' {
+        $file = Join-Path $script:rootDir 'no-maturity.md'
+        Set-Content -Path $file -Value "---`ndescription: x`n---`nBody"
+        Get-ArtifactSourceMaturity -Path $file | Should -BeNullOrEmpty
+    }
+
+    It 'Returns null when file has no frontmatter' {
+        $file = Join-Path $script:rootDir 'no-frontmatter.md'
+        Set-Content -Path $file -Value 'Body only'
+        Get-ArtifactSourceMaturity -Path $file | Should -BeNullOrEmpty
+    }
+
+    It 'Returns null for a non-existent path' {
+        $file = Join-Path $script:rootDir 'does-not-exist.md'
+        Get-ArtifactSourceMaturity -Path $file | Should -BeNullOrEmpty
+    }
+
+    It 'Returns null for malformed YAML frontmatter' {
+        $file = Join-Path $script:rootDir 'bad-yaml.md'
+        Set-Content -Path $file -Value "---`n`t: [invalid: yaml`n---`nBody"
+        Get-ArtifactSourceMaturity -Path $file | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Test-ArtifactRemoved' {
+    BeforeAll {
+        $script:rootDir = Join-Path $TestDrive 'is-removed'
+        New-Item -ItemType Directory -Path $script:rootDir -Force | Out-Null
+    }
+
+    It 'Returns true for a file with maturity removed' {
+        $file = Join-Path $script:rootDir 'r.md'
+        Set-Content -Path $file -Value "---`nmaturity: removed`n---`nBody"
+        Test-ArtifactRemoved -Path $file | Should -BeTrue
+    }
+
+    It 'Returns false for a file with maturity stable' {
+        $file = Join-Path $script:rootDir 's.md'
+        Set-Content -Path $file -Value "---`nmaturity: stable`n---`nBody"
+        Test-ArtifactRemoved -Path $file | Should -BeFalse
+    }
+
+    It 'Returns false when no frontmatter is present' {
+        $file = Join-Path $script:rootDir 'plain.md'
+        Set-Content -Path $file -Value 'Body only'
+        Test-ArtifactRemoved -Path $file | Should -BeFalse
+    }
+
+    It 'Returns false for a non-existent path' {
+        Test-ArtifactRemoved -Path (Join-Path $script:rootDir 'missing.md') | Should -BeFalse
+    }
+
+    It 'Returns true for a directory containing SKILL.md with maturity removed' {
+        $skillDir = Join-Path $script:rootDir 'removed-skill'
+        New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $skillDir 'SKILL.md') -Value "---`nmaturity: removed`n---`nBody"
+        Test-ArtifactRemoved -Path $skillDir | Should -BeTrue
+    }
+}
+
+Describe 'Get-ArtifactFiles - source-removed skill exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-source-removed'
+        $skillsDir = Join-Path $script:repoRoot '.github/skills/security'
+
+        $removedSkillDir = Join-Path $skillsDir 'removed-skill'
+        New-Item -ItemType Directory -Path $removedSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $removedSkillDir 'SKILL.md') -Value "---`nmaturity: removed`ndescription: gone`n---`nBody"
+
+        $activeSkillDir = Join-Path $skillsDir 'active-skill'
+        New-Item -ItemType Directory -Path $activeSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $activeSkillDir 'SKILL.md') -Value "---`ndescription: active`n---`nBody"
+    }
+
+    It 'Excludes skill directories whose SKILL.md declares maturity removed' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/skills/security/removed-skill'
+    }
+
+    It 'Includes sibling skill directories that are not removed' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Contain '.github/skills/security/active-skill'
+    }
+}
+
+Describe 'Update-HveCoreAllCollection - source-removed item exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-source-removed-update'
+        $skillsDir = Join-Path $script:repoRoot '.github/skills/security'
+
+        $removedSkillDir = Join-Path $skillsDir 'removed-skill'
+        New-Item -ItemType Directory -Path $removedSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $removedSkillDir 'SKILL.md') -Value "---`nmaturity: removed`ndescription: gone`n---`nBody"
+
+        $activeSkillDir = Join-Path $skillsDir 'active-skill'
+        New-Item -ItemType Directory -Path $activeSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $activeSkillDir 'SKILL.md') -Value "---`ndescription: active`n---`nBody"
+
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+    }
+
+    It 'Excludes items whose source SKILL.md declares maturity removed' {
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/skills/security/active-skill
+  kind: skill
+- path: .github/skills/security/removed-skill
+  kind: skill
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Not -Match 'removed-skill'
+        $output | Should -Match 'active-skill'
+    }
+}

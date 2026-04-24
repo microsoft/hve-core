@@ -53,9 +53,6 @@ items:
   - path: .github/skills/security/owasp-agentic
     kind: skill
     maturity: experimental
-  - path: .github/skills/security/owasp-docker
-    kind: skill
-    maturity: experimental
   - path: .github/skills/security/owasp-mcp
     kind: skill
     maturity: experimental

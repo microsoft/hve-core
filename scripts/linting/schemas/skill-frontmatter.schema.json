@@ -43,6 +43,11 @@
       "maxLength": 128,
       "description": "SPDX license identifier for the skill content (e.g. MIT, CC-BY-SA-4.0). Defaults to the repository license when omitted."
     },
+    "maturity": {
+      "type": "string",
+      "enum": ["stable", "preview", "experimental", "deprecated", "removed"],
+      "description": "Optional source-level maturity for this skill. When set to 'removed', the skill is excluded from every channel and skipped by collection auto-discovery, overriding any maturity declared in collection manifests."
+    },
     "compatibility": {
       "type": "string",
       "maxLength": 256,

@@ -74,6 +74,13 @@ function Find-CollectionManifestsCore {
         $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
         $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
 
+        # Always skip removed
+        if ($maturity -eq 'removed') {
+            $skipped += [PSCustomObject]@{ Id = $id; Name = $name; Reason = 'removed' }
+            Write-Verbose "Skipping removed collection: $name ($id)"
+            continue
+        }
+
         # Always skip deprecated
         if ($maturity -eq 'deprecated') {
             $skipped += [PSCustomObject]@{ Id = $id; Name = $name; Reason = 'deprecated' }
