@@ -18,6 +18,8 @@ items:
 - path: .github/agents/coding-standards/code-review-standards.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/data-science/eval-dataset-creator.agent.md
+  kind: agent
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-jupyter-notebook.agent.md

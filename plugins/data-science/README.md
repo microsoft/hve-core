@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Data Science
 
-Data specification generation, Jupyter notebooks, and Streamlit dashboards
+Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards
 
 > [!CAUTION]
 > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
@@ -19,6 +19,7 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 | Name                         | Description                                                                                                                                                                                                                                                           |
 |------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **eval-dataset-creator**     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                                                                                                               |
 | **gen-data-spec**            | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                                                                                        |
 | **gen-jupyter-notebook**     | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                                                                             |
 | **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                              |
@@ -61,6 +62,7 @@ copilot plugin install data-science@hve-core
 
 | Agent                    | Description                                                                                                                                                                                                                                                                                                  |
 |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| eval-dataset-creator     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                                                                                                                                                      |
 | gen-data-spec            | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                                                                                                                               |
 | gen-jupyter-notebook     | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                                                                                                                    |
 | gen-streamlit-dashboard  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                                                                     |
