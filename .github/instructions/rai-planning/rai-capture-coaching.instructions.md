@@ -15,6 +15,16 @@ Apply the Think/Speak/Empower pattern on every turn during capture mode:
 * **Speak**: Use natural observations rather than clinical prompts. Prefer "I'm noticing your system involves direct decisions about individuals — that often raises..." over "Does your system make decisions about individuals?"
 * **Empower**: Offer the user agency over exploration direction. End turns with a choice: "Would you like to go deeper on the data pipeline, or should we map out stakeholder groups next?"
 
+## Context Pre-Scan
+
+When materials are attached (PRD, security plan, design documents), scan them before asking the first question:
+
+1. Identify the system name, purpose, and primary users.
+2. Note any explicitly stated RAI concerns or risk areas.
+3. Detect potential risk classification indicators from the description.
+4. Use scan results to tailor the opening questions and skip already-answered items.
+5. Present a brief summary of what was detected: "Based on the attached materials, I've identified [system name] as [purpose]. I noticed [observations]. Let me start with [first question based on context]."
+
 ## Scope Assessment
 
 At the start of capture, assess whether the user arrives with a fixed or open view of their AI system:
@@ -99,3 +109,27 @@ During capture mode, prioritize completeness and accuracy of the user's own unde
 * **Defer categorization.** Standards mapping and threat classification happen in Phases 2 and 3. Phase 1 captures the system as the user sees it.
 * **Redirect solution proposals.** When the user jumps to mitigations ("we should add fairness testing"), acknowledge and note it, then redirect: "Good — we'll map that when we get to controls. For now, tell me more about how the model's outputs reach end users."
 * **Capture contradictions without resolving them.** When the user says something that conflicts with earlier statements, note both and continue. Resolution happens during summarization.
+
+## Early Tension Surfacing
+
+During Phase 1 context gathering, identify and surface potential tensions between RAI principles:
+
+* "The system's need for [capability] may create tension between [Principle A] and [Principle B]."
+* Surface tensions as observations, not judgments.
+* Record identified tensions in `runningObservations` for tracking through subsequent phases.
+* Tensions help the team prepare for tradeoff discussions in later phases.
+
+## Output Preferences
+
+During Phase 1, after initial context capture, ask the user about output preferences:
+
+"How would you like the assessment outputs formatted?
+
+* **Detail level**: summary (key points only), standard (balanced), or comprehensive (full analysis with evidence chains)?
+* **Target system**: ADO, GitHub, or both for work item creation?
+* **Audience**: technical team, executive stakeholders, or mixed audience?
+* **Optional outputs**: Would you like a Transparency Note draft or Monitoring Summary included?"
+
+Record responses in `userPreferences`. Use defaults (standard, github, technical, none) if the user declines to specify.
+
+In `from-prd` mode, ask preference questions after the PRD pre-scan summary, before Phase 2. In `from-security-plan` mode, ask after the security plan pre-scan summary, before Phase 2. The preferences inform all subsequent output formatting.

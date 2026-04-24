@@ -88,7 +88,8 @@ jobs:
             Register-PSRepository -Name $repo -SourceLocation $env:HVE_PSGALLERY_SOURCE_URL -InstallationPolicy Trusted -ErrorAction SilentlyContinue
           }
           Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $repo
-            Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $repo
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $repo
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $repo
 
       - name: Install uv package manager
         env:
@@ -129,6 +130,33 @@ jobs:
             exit 1
           fi
 
+      - name: Install cosign
+        env:
+          COSIGN_VERSION: '3.0.5'
+          COSIGN_AMD64_SHA256: 'db15cc99e6e4837daabab023742aaddc3841ce57f193d11b7c3e06c8003642b2'
+          COSIGN_ARM64_SHA256: 'd098f3168ae4b3aa70b4ca78947329b953272b487727d1722cb3cb098a1a20ab'
+          GITHUB_RELEASES_URL: ${{ vars.HVE_GITHUB_RELEASES_URL || 'https://github.com' }}
+        run: |
+          ARCH=$(uname -m)
+          if [[ "${ARCH}" == "x86_64" ]]; then
+            COSIGN_ARCH="amd64"
+            COSIGN_SHA256="${COSIGN_AMD64_SHA256}"
+          elif [[ "${ARCH}" == "aarch64" ]]; then
+            COSIGN_ARCH="arm64"
+            COSIGN_SHA256="${COSIGN_ARM64_SHA256}"
+          else
+            echo "ERROR: Unsupported architecture for cosign: ${ARCH}" >&2
+            exit 1
+          fi
+          curl -sSfL "${GITHUB_RELEASES_URL}/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-${COSIGN_ARCH}" -o /tmp/cosign
+          if ! echo "${COSIGN_SHA256}  /tmp/cosign" | sha256sum -c --quiet -; then
+            echo "ERROR: cosign checksum verification failed" >&2
+            exit 1
+          fi
+          sudo install /tmp/cosign /usr/local/bin/cosign
+          rm /tmp/cosign
+          cosign version
+
       - name: Verify tool availability
         run: |
           echo "=== Tool Versions ==="
@@ -140,6 +168,8 @@ jobs:
           actionlint --version
           uv --version
           uvx --version
+          cosign version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list
+

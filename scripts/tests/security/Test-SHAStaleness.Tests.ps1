@@ -364,6 +364,7 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
@@ -434,6 +435,7 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
@@ -479,6 +481,7 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')

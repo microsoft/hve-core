@@ -552,7 +552,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                                      |
 |-------------------|----------------------------------------------------------------------------|
-| **Category**      | Fairness (Microsoft RAI Standard)                                          |
+| **Category**      | Fairness (Responsible AI)                                                  |
 | **Asset**         | Generated code quality across contexts                                     |
 | **Threat**        | Prompts inadvertently favor certain coding styles or exclude accessibility |
 | **Likelihood**    | Medium                                                                     |
@@ -565,7 +565,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                       |
 |-------------------|-------------------------------------------------------------|
-| **Category**      | Reliability & Safety (Microsoft RAI Standard)               |
+| **Category**      | Reliability & Safety (Responsible AI)                       |
 | **Asset**         | Prompt consistency                                          |
 | **Threat**        | Same prompt produces significantly different outputs        |
 | **Likelihood**    | Medium (inherent to LLMs)                                   |
@@ -578,7 +578,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                         |
 |-------------------|---------------------------------------------------------------|
-| **Category**      | Privacy & Security (Microsoft RAI Standard)                   |
+| **Category**      | Privacy & Security (Responsible AI)                           |
 | **Asset**         | Developer context, code patterns                              |
 | **Threat**        | Prompts cause Copilot to surface or infer private information |
 | **Likelihood**    | Low                                                           |
@@ -591,7 +591,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                                                                                                                                                                                                                                                        |
 |-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Category**      | Privacy & Security (Microsoft RAI Standard)                                                                                                                                                                                                                                                  |
+| **Category**      | Privacy & Security (Responsible AI)                                                                                                                                                                                                                                                          |
 | **Asset**         | Meeting transcripts, customer confidential data, PII                                                                                                                                                                                                                                         |
 | **Threat**        | The meeting-analyst agent retrieves M365 transcripts containing sensitive data and writes them to local files in `.copilot-tracking/`. Data may be exposed through accidental commits (`git add -f`), gitignore misconfiguration, shared Codespaces, CI/CD logs, or unencrypted disk access. |
 | **Likelihood**    | Medium (users may not recognize transcript sensitivity; gitignore is the only barrier)                                                                                                                                                                                                       |
@@ -604,7 +604,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                    |
 |-------------------|----------------------------------------------------------|
-| **Category**      | Inclusiveness (Microsoft RAI Standard)                   |
+| **Category**      | Inclusiveness (Responsible AI)                           |
 | **Asset**         | Prompt artifacts, documentation                          |
 | **Threat**        | Language in prompts excludes or marginalizes user groups |
 | **Likelihood**    | Low (writing style guidelines address this)              |
@@ -617,7 +617,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                            |
 |-------------------|------------------------------------------------------------------|
-| **Category**      | Transparency (Microsoft RAI Standard)                            |
+| **Category**      | Transparency (Responsible AI)                                    |
 | **Asset**         | User understanding of system behavior                            |
 | **Threat**        | Prompts cause unexpected Copilot behavior not explained to users |
 | **Likelihood**    | Medium                                                           |
@@ -630,7 +630,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                                |
 |-------------------|----------------------------------------------------------------------|
-| **Category**      | Accountability (Microsoft RAI Standard)                              |
+| **Category**      | Accountability (Responsible AI)                                      |
 | **Asset**         | Liability and responsibility clarity                                 |
 | **Threat**        | Ambiguity about who is responsible for Copilot-generated code issues |
 | **Likelihood**    | Medium (common confusion)                                            |
@@ -643,7 +643,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                          |
 |-------------------|----------------------------------------------------------------|
-| **Category**      | Human Oversight (Microsoft RAI Standard)                       |
+| **Category**      | Human Oversight (Responsible AI)                               |
 | **Asset**         | Code quality, security                                         |
 | **Threat**        | Prompts encourage accepting Copilot suggestions without review |
 | **Likelihood**    | Low (prompts emphasize review)                                 |
@@ -656,7 +656,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                         |
 |-------------------|---------------------------------------------------------------|
-| **Category**      | Value Alignment (Microsoft RAI Standard)                      |
+| **Category**      | Value Alignment (Responsible AI)                              |
 | **Asset**         | Organizational trust                                          |
 | **Threat**        | Prompt artifacts conflict with consumer organization's values |
 | **Likelihood**    | Low                                                           |
@@ -669,7 +669,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                                    |
 |-------------------|--------------------------------------------------------------------------|
-| **Category**      | Proportionality (Microsoft RAI Standard)                                 |
+| **Category**      | Proportionality (Responsible AI)                                         |
 | **Asset**         | Developer autonomy                                                       |
 | **Threat**        | Prompts push Copilot toward excessive automation reducing human judgment |
 | **Likelihood**    | Low                                                                      |
@@ -682,7 +682,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                                    |
 |-------------------|--------------------------------------------------------------------------|
-| **Category**      | Contestability (Microsoft RAI Standard)                                  |
+| **Category**      | Contestability (Responsible AI)                                          |
 | **Asset**         | User agency                                                              |
 | **Threat**        | Users cannot override or question Copilot behavior influenced by prompts |
 | **Likelihood**    | Low (Copilot suggestions are optional)                                   |
@@ -695,7 +695,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                         |
 |-------------------|---------------------------------------------------------------|
-| **Category**      | Societal Impact (Microsoft RAI Standard)                      |
+| **Category**      | Societal Impact (Responsible AI)                              |
 | **Asset**         | Developer skill development                                   |
 | **Threat**        | Over-reliance on AI-assisted coding reduces skill development |
 | **Likelihood**    | Medium (industry-wide concern)                                |
@@ -708,7 +708,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                   |
 |-------------------|---------------------------------------------------------|
-| **Category**      | Environmental Impact (Microsoft RAI Standard)           |
+| **Category**      | Environmental Impact (Responsible AI)                   |
 | **Asset**         | Compute resources                                       |
 | **Threat**        | Inefficient prompts cause unnecessary model computation |
 | **Likelihood**    | Low                                                     |
@@ -721,7 +721,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 | Field             | Value                                                             |
 |-------------------|-------------------------------------------------------------------|
-| **Category**      | Misinformation (Microsoft RAI Standard)                           |
+| **Category**      | Misinformation (Responsible AI)                                   |
 | **Asset**         | Documentation and code accuracy                                   |
 | **Threat**        | Prompts cause Copilot to generate plausible but incorrect content |
 | **Likelihood**    | Medium (LLM hallucination is known issue)                         |

@@ -512,6 +512,9 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
@@ -551,6 +554,8 @@ items:
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/shared/disclaimer-language.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
