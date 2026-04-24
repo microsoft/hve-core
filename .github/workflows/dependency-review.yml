@@ -64,3 +64,4 @@ jobs:
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
+

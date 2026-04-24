@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/ai-artifact-config.schema.json",
+  "title": "Footer Configuration Schema",
+  "description": "Validates footer-with-review.yml and disclaimers.yml config files",
+  "type": "object",
+  "definitions": {
+    "footerConfig": {
+      "type": "object",
+      "required": ["version", "footers", "artifact-classification"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "footers": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "label", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "artifact-classification": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["required-footers", "artifacts"],
+            "additionalProperties": false,
+            "properties": {
+              "scope": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "description": "Glob patterns limiting which files this tier applies to"
+              },
+              "required-footers": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "artifacts": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "requires-disclaimer": { "type": "boolean" },
+              "disclaimer-ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "disclaimerConfig": {
+      "type": "object",
+      "required": ["version", "disclaimers"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "disclaimers": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "label", "applies-to", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "applies-to": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1
+              },
+              "text": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/footerConfig" },
+    { "$ref": "#/definitions/disclaimerConfig" }
+  ]
+}

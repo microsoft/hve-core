@@ -35,3 +35,4 @@ jobs:
           config-file: .github/labels.yml
           delete-other-labels: false
           token: ${{ secrets.GITHUB_TOKEN }}
+

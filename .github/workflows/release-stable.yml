@@ -301,8 +301,8 @@ jobs:
       - name: Install PowerShell-Yaml
         shell: pwsh
         run: |
-          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-            Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+            Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
           }
 
       - name: Reset pre-release branch

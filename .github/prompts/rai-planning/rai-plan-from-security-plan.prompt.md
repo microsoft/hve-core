@@ -1,8 +1,8 @@
 ---
 description: >-
-  Initiate a responsible AI assessment from a completed Security Plan using
+  Initiate responsible AI assessment planning from a completed Security Plan using
   the RAI Planner agent in from-security-plan mode (recommended)
-agent: rai-planner
+agent: "RAI Planner"
 ---
 
 # RAI Plan from Security Plan
@@ -10,6 +10,12 @@ agent: rai-planner
 Activate the RAI Planner in **from-security-plan mode**, the recommended workflow for projects that have already completed a security assessment.
 
 Use project slug `${input:project-slug}`.
+
+## Startup
+
+Before any phase work, check `state.json` for `disclaimerShownAt`. If `disclaimerShownAt` is `null` or `state.json` does not yet exist, display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+
+After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.framework.name` in `state.json`.
 
 ## Requirements
 
@@ -64,3 +70,5 @@ Highlight what the security plan already covers and identify AI-specific context
 - Vulnerable populations and downstream effects
 
 Ask 3 to 5 clarifying questions targeting these AI-specific gaps.
+
+Also ask whether the user has evaluation standards, risk indicator categories, prohibited use frameworks, or output format requirements to supply for storage in `.copilot-tracking/rai-plans/references/`.
