@@ -26,6 +26,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **researcher-subagent**      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                    |
 | **rpi-agent**                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them                                      |
 | **rpi-validator**            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                         |
+| **task-challenger**          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading                                                               |
 | **task-implementor**         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                         |
 | **task-planner**             | Implementation planner for creating actionable implementation plans                                                                                                                             |
 | **task-researcher**          | Task research specialist for comprehensive project analysis                                                                                                                                     |
@@ -46,6 +47,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **prompt-refactor**    | Refactors and cleans up prompt engineering artifacts through iterative improvement                                       |
 | **pull-request**       | Generates pull request descriptions from branch diffs                                                                    |
 | **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                         |
+| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                                             |
 | **task-implement**     | Locates and executes implementation plans using Task Implementor                                                         |
 | **task-plan**          | Initiates implementation planning based on user context or research documents                                            |
 | **task-research**      | Initiates research for implementation planning based on user requirements                                                |
