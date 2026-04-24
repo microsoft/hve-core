@@ -16,7 +16,10 @@
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [Parameter()]
+    [string]$OutputPath = (Join-Path $PSScriptRoot '../../logs/collection-validation-results.json')
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -137,7 +140,7 @@ function Invoke-CollectionValidation {
         Absolute path to the repository root directory.
 
     .OUTPUTS
-        Hashtable with Success bool, ErrorCount int, and CollectionCount int.
+        Hashtable with Success bool, ErrorCount int, CollectionCount int, and Results array.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -147,12 +150,39 @@ function Invoke-CollectionValidation {
         [string]$RepoRoot
     )
 
+    $validationResults = [System.Collections.Generic.List[hashtable]]::new()
+
+    function Add-ValidationResult {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Collection,
+
+            [Parameter(Mandatory = $true)]
+            [string]$ErrorType,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Message,
+
+            [Parameter()]
+            [ValidateSet('Error', 'Warning')]
+            [string]$Severity = 'Error'
+        )
+
+        $validationResults.Add(@{
+            Collection = $Collection
+            Severity   = $Severity
+            ErrorType  = $ErrorType
+            Message    = $Message
+        })
+    }
+
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File
 
     if ($collectionFiles.Count -eq 0) {
         Write-Host ' WARN No collection manifests found in collections/' -ForegroundColor Yellow
-        return @{ Success = $true; ErrorCount = 0; CollectionCount = 0 }
+        Add-ValidationResult -Collection 'collections' -ErrorType 'NoCollectionManifests' -Message 'No collection manifests found in collections/' -Severity 'Warning'
+        return @{ Success = $true; ErrorCount = 0; CollectionCount = 0; Results = @($validationResults) }
     }
 
     Write-Host 'Validating collections...'
@@ -172,9 +202,11 @@ function Invoke-CollectionValidation {
 
     foreach ($file in $collectionFiles) {
         $baseName = $file.Name -replace '\.collection\.yml$', ''
+        $collectionLabel = $baseName
         $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
         if (-not (Test-Path -Path $companionPath)) {
             Write-Host " WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
+            Add-ValidationResult -Collection $collectionLabel -ErrorType 'MissingCompanionCollectionMd' -Message "missing companion '$baseName.collection.md'" -Severity 'Warning'
         }
 
         if (Test-Path -Path $companionPath) {
@@ -184,6 +216,7 @@ function Invoke-CollectionValidation {
 
             if ($hasBegin -xor $hasEnd) {
                 Write-Host "  WARN $($file.Name): $baseName.collection.md has mismatched auto-generation markers" -ForegroundColor Yellow
+                Add-ValidationResult -Collection $collectionLabel -ErrorType 'MismatchedAutoGenerationMarkers' -Message "$baseName.collection.md has mismatched auto-generation markers" -Severity 'Warning'
             }
 
             if ($hasBegin -and $hasEnd) {
@@ -191,6 +224,7 @@ function Invoke-CollectionValidation {
                 $endIdx = $mdContent.IndexOf($CollectionMdEndMarker)
                 if ($endIdx -le $beginIdx) {
                     Write-Host "  WARN $($file.Name): $baseName.collection.md has markers in wrong order" -ForegroundColor Yellow
+                    Add-ValidationResult -Collection $collectionLabel -ErrorType 'CollectionMarkersWrongOrder' -Message "$baseName.collection.md has markers in wrong order" -Severity 'Warning'
                 }
             }
         }
@@ -211,12 +245,14 @@ function Invoke-CollectionValidation {
         if ($fileErrors.Count -gt 0) {
             foreach ($err in $fileErrors) {
                 Write-Host "    x $($file.Name): $err" -ForegroundColor Red
+                Add-ValidationResult -Collection $collectionLabel -ErrorType 'CollectionValidationError' -Message $err
             }
             $errorCount += $fileErrors.Count
             continue
         }
 
         $id = $manifest.id
+        $collectionLabel = $id
 
         # Id format
         if ($id -notmatch '^[a-z0-9-]+$') {
@@ -294,6 +330,7 @@ function Invoke-CollectionValidation {
                     $folderName = $pathSegments[2]
                     if ($folderName -ne 'shared' -and -not $knownCollectionIds.ContainsKey($folderName)) {
                         Write-Host " WARN collection '$id': item folder '$folderName' does not match any known collection ID: $itemPath" -ForegroundColor Yellow
+                        Add-ValidationResult -Collection $collectionLabel -ErrorType 'UnknownCollectionFolderReference' -Message "item folder '$folderName' does not match any known collection ID: $itemPath" -Severity 'Warning'
                     }
                 }
             }
@@ -323,6 +360,7 @@ function Invoke-CollectionValidation {
             Write-Host "  FAIL $id ($itemCount items) - $($fileErrors.Count) error(s)" -ForegroundColor Red
             foreach ($err in $fileErrors) {
                 Write-Host "      $err" -ForegroundColor Red
+                Add-ValidationResult -Collection $collectionLabel -ErrorType 'CollectionValidationError' -Message $err
             }
             $errorCount += $fileErrors.Count
         }
@@ -338,6 +376,7 @@ function Invoke-CollectionValidation {
     }).Count -gt 0
     if (-not $canonicalManifestFound) {
         Write-Host " WARN '$canonicalCollectionId.collection.yml' not found; skipping orphan and cross-collection coverage checks" -ForegroundColor Yellow
+        Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'CanonicalCollectionMissing' -Message "'$canonicalCollectionId.collection.yml' not found; skipping orphan and cross-collection coverage checks" -Severity 'Warning'
     }
 
     # Duplicate artifact key detection across all collections
@@ -363,6 +402,7 @@ function Invoke-CollectionValidation {
             $nameLabel = ($compositeKey -split '\|')[1]
             $pathList = ($paths | Sort-Object) -join ', '
             Write-Host "  FAIL duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList" -ForegroundColor Red
+            Add-ValidationResult -Collection 'all-collections' -ErrorType 'DuplicateArtifactKey' -Message "duplicate $kindLabel artifact key '$nameLabel' found at distinct paths: $pathList"
             $errorCount++
         }
     }
@@ -376,6 +416,7 @@ function Invoke-CollectionValidation {
         if ($canonicalManifestFound -and $themedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
             $themedCollections = ($themedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
             Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
+            Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'ThemedItemMissingFromCanonical' -Message "item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'"
             $errorCount++
             continue
         }
@@ -386,6 +427,7 @@ function Invoke-CollectionValidation {
             foreach ($occurrence in $themedMatches) {
                 if ($occurrence.Maturity -ne $canonical.Maturity) {
                     Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+                    Add-ValidationResult -Collection $occurrence.CollectionId -ErrorType 'MaturityConflict' -Message "maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'"
                     $errorCount++
                 }
             }
@@ -404,9 +446,11 @@ function Invoke-CollectionValidation {
 
             if (-not $inCanonical) {
                 Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
+                Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'OrphanArtifact' -Message "'$diskKey' is on disk but absent from '$canonicalCollectionId'"
                 $errorCount++
             } elseif (-not $inThemed) {
                 Write-Host " WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
+                Add-ValidationResult -Collection $canonicalCollectionId -ErrorType 'CanonicalOnlyArtifact' -Message "'$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -Severity 'Warning'
             }
         }
     }
@@ -418,7 +462,33 @@ function Invoke-CollectionValidation {
         Success         = ($errorCount -eq 0)
         ErrorCount      = $errorCount
         CollectionCount = $validatedCount
+        Results         = @($validationResults)
     }
+}
+
+function Export-CollectionValidationReport {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ValidationResult,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath
+    )
+
+    $logsDir = Split-Path -Path $OutputPath -Parent
+    if (-not [string]::IsNullOrWhiteSpace($logsDir) -and -not (Test-Path -Path $logsDir)) {
+        New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
+    }
+
+    $report = @{
+        Timestamp        = (Get-Date).ToUniversalTime().ToString('o')
+        TotalCollections = $ValidationResult.CollectionCount
+        ErrorCount       = $ValidationResult.ErrorCount
+        Results          = @($ValidationResult.Results)
+    }
+
+    $report | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding utf8
 }
 
 #endregion Orchestration
@@ -437,6 +507,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
 
         $result = Invoke-CollectionValidation -RepoRoot $RepoRoot
+        Export-CollectionValidationReport -ValidationResult $result -OutputPath $OutputPath
 
         if (-not $result.Success) {
             throw "Validation failed with $($result.ErrorCount) error(s)."
