@@ -75,12 +75,6 @@ export const collectionCardDefinitions: CollectionCardDefinition[] = [
     href: '/docs/getting-started/collections',
   },
   {
-    name: 'rai-planning',
-    description: 'Responsible AI assessment, impact analysis, and risk review',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/collections',
-  },
-  {
     name: 'security',
     description: 'Security review, planning, incident response, and risk assessment',
     maturity: 'Experimental',

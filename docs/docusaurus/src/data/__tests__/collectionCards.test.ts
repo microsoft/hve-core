@@ -36,7 +36,6 @@ describe('collectionCards', () => {
     'hve-core',
     'jira',
     'project-planning',
-    'rai-planning',
     'security',
   ];
 

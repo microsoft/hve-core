@@ -1,11 +1,11 @@
 ---
 title: Handoff Pipeline
-description: How the RAI Planner generates scorecard results, produces backlog items, and connects to the Security Planner through the from-security-plan entry mode
+description: How the RAI Planner generates review summaries, produces backlog items, and connects to the Security Planner through the from-security-plan entry mode
 sidebar_position: 6
 sidebar_label: Handoff Pipeline
 keywords:
   - RAI handoff
-  - RAI scorecard
+  - RAI review summary
   - backlog generation
   - security planner integration
 tags:
@@ -37,8 +37,8 @@ flowchart LR
 
   subgraph RP ["RAI Planner"]
     RP1["Phase 1\nAI System\nScoping"]
-    RP5["Phase 5\nReview &<br/>Handoff"]
-    RP1 --> RP5
+    RP6["Phase 6\nReview &<br/>Handoff"]
+    RP1 --> RP6
   end
   SP6 -->|"recommends entry"| ST
   ST -->|"pre-populates"| RP1
@@ -48,51 +48,53 @@ flowchart LR
 
 When entering via `from-security-plan` mode, the RAI Planner reads the security plan's `state.json` and inherits:
 
-| Data                    | Source field         | How it is used                                     |
-|-------------------------|----------------------|----------------------------------------------------|
-| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog           |
-| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                 |
-| RAI depth tier          | `raiTier`            | Determines assessment depth (`standard` or `deep`) |
-| Threat count            | threat catalog size  | Starting sequence for `RAI-T-{CATEGORY}-{NNN}` IDs |
-| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing  |
+| Data                    | Source field         | How it is used                                                        |
+|-------------------------|----------------------|-----------------------------------------------------------------------|
+| AI component inventory  | `aiComponents` array | Pre-populates Phase 1 AI element catalog                              |
+| RAI assessment scope    | `raiScope`           | Sets initial assessment boundaries                                    |
+| RAI depth tier          | `raiTier`            | Determines assessment depth (`Basic`, `Standard`, or `Comprehensive`) |
+| Threat count            | threat catalog size  | Starting sequence for `T-RAI-{NNN}` IDs                               |
+| Security plan reference | state.json path      | Stored in `securityPlanRef` for cross-referencing                     |
 
 > [!NOTE]
 > The RAI Planner reads security plan artifacts as read-only. It never modifies files under `.copilot-tracking/security-plans/`.
 
-## Scorecard Generation
+## Review Summary Generation
 
-Phase 6 produces a scorecard that quantifies assessment quality across five dimensions. Each dimension receives a score from 1 to 5, producing a maximum total of 25.
+Phase 6 produces a review summary covering observations across six dimensions. The review summary presents maturity indicators rather than numeric scores, supporting handoff decisions and backlog prioritization.
 
 ```mermaid
 flowchart TD
-  P1["Phase 1\nAI System Scoping"] --> D1["Scope Boundary\nClarity"]
-  P3["Phase 3\nSecurity Model"] --> D2["Risk Identification\nQuality"]
-  P4["Phase 4\nImpact Assessment"] --> D3["Control Surface\nAdequacy"]
-  P4 --> D4["Evidence\nSufficiency"]
-  P4 --> D5["Future Work\nGovernance"]
+  P1["Phase 1\nAI System Scoping"] --> D1["Standards\nAlignment"]
+  P2["Phase 2\nRisk Classification"] --> D6["Risk\nClassification"]
+  P3["Phase 3\nStandards Mapping"] --> D1
+  P4["Phase 4\nSecurity Model"] --> D2["Threat\nCompleteness"]
+  P5["Phase 5\nImpact Assessment"] --> D3["Control\nEffectiveness"]
+  P5 --> D4["Evidence\nQuality"]
+  P5 --> D5["Tradeoff\nResolution"]
 
-  D1 --> SC["Scorecard Total\n(max 25)"]
-  D2 --> SC
-  D3 --> SC
-  D4 --> SC
-  D5 --> SC
-
-  SC -->|"20-25"| A["Approved"]
-  SC -->|"15-19"| C["Conditional"]
-  SC -->|"< 15"| R["Remediation\nRequired"]
+  D1 --> RS["Review Summary"]
+  D2 --> RS
+  D3 --> RS
+  D4 --> RS
+  D5 --> RS
+  D6 --> RS
 ```
 
-### Outcome Definitions
+### Review Dimensions
 
-| Outcome              | Score range | Meaning                                                          |
-|----------------------|-------------|------------------------------------------------------------------|
-| Approved             | 20-25       | Assessment is comprehensive; proceed with identified mitigations |
-| Conditional          | 15-19       | Gaps exist; proceed with conditions and a remediation timeline   |
-| Remediation Required | Below 15    | Significant gaps; address findings before proceeding             |
+| Dimension             | What it covers                                                                          |
+|-----------------------|-----------------------------------------------------------------------------------------|
+| Standards Alignment   | How well AI components map to trustworthiness characteristics and regulatory frameworks |
+| Threat Completeness   | Completeness and accuracy of AI-specific threat identification                          |
+| Control Effectiveness | Coverage and effectiveness of controls for identified threats                           |
+| Evidence Quality      | Quality and availability of evidence supporting control effectiveness                   |
+| Tradeoff Resolution   | Clarity of characteristic tradeoff analysis and resolution rationale                    |
+| Risk Classification   | Whether risk indicators were evaluated with documented mitigations                      |
 
 ## Backlog Generation
 
-Gaps identified during Phases 2 through 4 are converted to work items using the same dual-platform format as the Security Planner.
+Gaps identified during Phases 3 through 5 are converted to work items using the same dual-platform format as the Security Planner.
 
 ### Dual-Platform Support
 
@@ -115,23 +117,72 @@ Each generated work item receives an autonomy tier based on the severity and com
 
 All generated backlog content is sanitized before handoff:
 
-* No secrets, credentials, or API keys
-* No internal URLs or infrastructure details
-* No PII or personally identifiable information
-* No proprietary model weights or training data references
+1. Replace `.copilot-tracking/` paths with descriptive text
+2. Replace full file system paths with relative references
+3. Remove state JSON content or references
+4. Remove internal tracking IDs that are not work item IDs
+5. Preserve standards references in all cases
 
 ## Pipeline Artifacts
 
-| Artifact                    | Path                                                                | Generated during |
-|-----------------------------|---------------------------------------------------------------------|------------------|
-| System definition pack      | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`      | Phase 1          |
-| Stakeholder impact map      | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`      | Phase 1          |
-| RAI standards mapping       | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`       | Phase 2          |
-| RAI security model addendum | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md` | Phase 3          |
-| Control surface catalog     | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`     | Phase 4          |
-| Evidence register           | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`           | Phase 4          |
-| RAI tradeoffs               | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`               | Phase 4          |
-| RAI scorecard               | `.copilot-tracking/rai-plans/{slug}/rai-scorecard.md`               | Phase 5          |
+| Artifact                              | Path                                                                      | Generated during |
+|---------------------------------------|---------------------------------------------------------------------------|------------------|
+| System definition pack                | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md`            | Phase 1          |
+| Stakeholder impact map                | `.copilot-tracking/rai-plans/{slug}/stakeholder-impact-map.md`            | Phase 1          |
+| Risk classification screening summary | `.copilot-tracking/rai-plans/{slug}/system-definition-pack.md` (appended) | Phase 2          |
+| RAI standards mapping                 | `.copilot-tracking/rai-plans/{slug}/rai-standards-mapping.md`             | Phase 3          |
+| RAI security model addendum           | `.copilot-tracking/rai-plans/{slug}/rai-security-model-addendum.md`       | Phase 4          |
+| Control surface catalog               | `.copilot-tracking/rai-plans/{slug}/control-surface-catalog.md`           | Phase 5          |
+| Evidence register                     | `.copilot-tracking/rai-plans/{slug}/evidence-register.md`                 | Phase 5          |
+| RAI tradeoffs                         | `.copilot-tracking/rai-plans/{slug}/rai-tradeoffs.md`                     | Phase 5          |
+| RAI review summary                    | `.copilot-tracking/rai-plans/{slug}/rai-review-summary.md`                | Phase 6          |
+| Handoff summary                       | `.copilot-tracking/rai-plans/{slug}/rai-backlog-handoff-summary.md`       | Phase 6          |
+
+## Artifact Attribution and Review
+
+Persisted RAI artifacts include transparency footers that communicate AI involvement and establish expectations for human review. Footer composition varies based on whether an artifact is consumed by subsequent agent phases or delivered to human reviewers for validation and decision-making.
+
+### AI-Content Note
+
+Every Phase 5 and Phase 6 artifact includes a transparency note at the end of the file:
+
+<!-- markdownlint-disable search-replace -->
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+<!-- markdownlint-enable search-replace -->
+
+### Human Review Checkbox
+
+Artifacts delivered to human reviewers include a review validation checkbox beneath the AI-content note:
+
+<!-- markdownlint-disable MD004 -->
+> - [ ] Reviewed and validated by a qualified human reviewer
+<!-- markdownlint-enable MD004 -->
+
+Reviewers check this box upon completing their assessment to signal that the content has been validated.
+
+### Full Disclaimer
+
+The Handoff Summary and Compact Handoff Summary append the full RAI Planner disclaimer after the review checkbox. This disclaimer establishes that the agent is an assistive tool only and that all outputs require independent review by appropriate legal and compliance reviewers before use.
+
+### Footer Classification
+
+The following table shows which footer components appear on each Phase 5 and Phase 6 artifact. Agentic artifacts are consumed by subsequent agent phases, while human-facing artifacts are delivered to reviewers.
+
+| Artifact                  | Phase | Category     | AI-content note | Review checkbox | Full disclaimer |
+|---------------------------|-------|--------------|:---------------:|:---------------:|:---------------:|
+| Control surface catalog   | 5     | Agentic      |        ✓        |                 |                 |
+| Evidence register         | 5     | Agentic      |        ✓        |                 |                 |
+| RAI tradeoffs             | 5     | Human-facing |        ✓        |        ✓        |                 |
+| RAI review summary        | 6     | Human-facing |        ✓        |        ✓        |                 |
+| ADO work items            | 6     | Human-facing |        ✓        |        ✓        |                 |
+| GitHub issues             | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Transparency note outline | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Monitoring summary        | 6     | Human-facing |        ✓        |        ✓        |                 |
+| Handoff summary           | 6     | Human-facing |        ✓        |        ✓        |        ✓        |
+| Compact handoff summary   | 6     | Human-facing |        ✓        |        ✓        |        ✓        |
+
+> [!NOTE]
+> Transparency note outline and monitoring summary are optional artifacts generated only when the user opts in during Phase 6.
 
 <details>
 <summary>End-to-end assessment flow</summary>
@@ -139,8 +190,8 @@ All generated backlog content is sanitized before handoff:
 1. Security Planner completes Phase 6 with `raiEnabled: true` and AI component data in state
 2. User starts RAI Planner with `from-security-plan` prompt, providing the security plan project slug
 3. RAI Planner reads security plan state and pre-populates Phase 1 with AI components and threat count
-4. Phases 1-4 proceed with focused assessment of AI-specific risks, building on the security plan's foundation
-5. Phase 5 produces the RAI scorecard with scored dimensions and outcome determination
+4. Phases 1-5 proceed with focused assessment of AI-specific risks, building on the security plan's foundation
+5. Phase 6 produces the review summary with observations across six dimensions
 6. Backlog items are generated for identified gaps using the user's preferred platform format
 7. Assessment artifacts persist under `.copilot-tracking/rai-plans/{project-slug}/` for future reference and updates
 
