@@ -1,13 +1,19 @@
 ---
 description: >-
-  Initiate a responsible AI assessment from PRD/BRD artifacts using the
+  Initiate responsible AI assessment planning from PRD/BRD artifacts using the
   RAI Planner agent in from-prd mode
-agent: rai-planner
+agent: "RAI Planner"
 ---
 
 # RAI Plan from PRD/BRD
 
-Activate the RAI Planner in **from-prd mode** to assess AI-specific risks for project slug `${input:project-slug}`.
+Activate the RAI Planner in **from-prd mode** to plan for AI-specific risk assessment for project slug `${input:project-slug}`.
+
+## Startup
+
+Before any phase work, check `state.json` for `disclaimerShownAt`. If `disclaimerShownAt` is `null` or `state.json` does not yet exist, display the RAI Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+
+After the disclaimer, display the framework attribution following the Session Start Display protocol in #file:../../instructions/rai-planning/rai-identity.instructions.md. When `replaceDefaultFramework` is `false` or `state.json` does not yet exist, announce the default NIST AI RMF 1.0 framework. When `replaceDefaultFramework` is `true`, announce the custom framework by its name from `riskClassification.framework.name` in `state.json`.
 
 ## Requirements
 
@@ -60,3 +66,5 @@ Present the extracted AI system scope as a checklist with markers:
 - ❓ Items that need clarification or are missing
 
 Ask 3 to 5 clarifying questions that target AI-specific gaps not covered by the requirements documents, such as model selection rationale, training data provenance, fairness considerations, and unintended use scenarios.
+
+Also ask whether the user has evaluation standards, risk indicator categories, prohibited use frameworks, or output format requirements to supply for storage in `.copilot-tracking/rai-plans/references/`.

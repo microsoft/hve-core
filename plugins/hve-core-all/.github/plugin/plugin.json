@@ -21,6 +21,7 @@
   "commands": [
     "commands/ado/",
     "commands/coding-standards/",
+    "commands/data-science/",
     "commands/design-thinking/",
     "commands/github/",
     "commands/hve-core/",

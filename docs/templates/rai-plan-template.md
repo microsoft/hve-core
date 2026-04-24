@@ -16,7 +16,7 @@ This template defines the standard structure for Responsible AI assessment docum
 
 ## Preamble
 
-_Important to note:_ This Responsible AI assessment cannot certify or attest to the complete safety or fairness of an AI system. This document is intended to help produce RAI-focused backlog items, evaluate against Microsoft RAI Standard v2 and NIST AI RMF 1.0, and document assessment findings including security model analysis, impact assessment, and tradeoff decisions.
+_Important to note:_ This Responsible AI assessment cannot certify or attest to the complete safety or fairness of an AI system. This document is intended to help produce RAI-focused backlog items, evaluate against the Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF 1.0, and document assessment findings including security model analysis, impact assessment, and tradeoff decisions.
 
 ## System Definition
 
@@ -53,7 +53,7 @@ _Important to note:_ This Responsible AI assessment cannot certify or attest to 
 
 ## RAI Standards Mapping
 
-### Microsoft RAI Standard v2
+### Microsoft Responsible AI Impact Assessment Guide
 
 | Principle              | Applicable Components | Assessment Criteria                                       | Tooling                                      | Compliance Status  |
 |------------------------|-----------------------|-----------------------------------------------------------|----------------------------------------------|--------------------|

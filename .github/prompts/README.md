@@ -79,6 +79,10 @@ Jira workflow support is available through dedicated prompts in this directory. 
 * **[Incident Response](./security/incident-response.prompt.md)** - Incident response workflow for Azure operations with triage, diagnostics, mitigation, and RCA phases
 * **[Risk Register](./security/risk-register.prompt.md)** - Generate qualitative risk assessment with P×I matrix and mitigation plans
 
+### Data Science
+
+* **[Synthetic Data Generation](./data-science/synth-data-generate.prompt.md)** - Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships
+
 ### Documentation & Process
 
 * **[Pull Request](./hve-core/pull-request.prompt.md)** - PR description and review assistance

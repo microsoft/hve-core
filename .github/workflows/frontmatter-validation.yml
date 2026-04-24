@@ -53,7 +53,7 @@ jobs:
       - name: Install PowerShell-Yaml
         shell: pwsh
         run: |
-          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
 
       - name: Run Frontmatter Validation
         shell: pwsh
@@ -81,7 +81,7 @@ jobs:
 
       - name: Upload frontmatter validation results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: frontmatter-validation-results
           path: logs/frontmatter-validation-results.json

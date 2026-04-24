@@ -20,6 +20,12 @@
       "docs/**/*.md"
     ]
   },
+  "json.schemas": [
+    {
+      "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
+      "url": "./scripts/linting/schemas/rai-state.schema.json"
+    }
+  ],
   "chat.instructionsFilesLocations": {
     ".github/instructions/ado": true,
     ".github/instructions/coding-standards": true,

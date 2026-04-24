@@ -1,0 +1,68 @@
+# Footer text configurations for AI-generated artifacts
+# Referenced by instruction files and validated by CI
+#
+# Defines the Tier 1 AI-content note, human review checkbox, and artifact
+# classification rules. The validation script (Validate-PlannerArtifacts.ps1)
+# reads this file as the single source of truth for footer requirements.
+
+version: "1.0"
+
+footers:
+  ai-content-note:
+    id: tier1-ai-content-note
+    label: "AI-Content Note (Tier 1)"
+    text: >-
+      > **Note** — The author created this content with assistance from AI.
+      All outputs should be reviewed and validated by a qualified human reviewer before use.
+
+  human-review-checkbox:
+    id: human-review-checkbox
+    label: "Human Review Checkbox"
+    text: "> - [ ] Reviewed and validated by a qualified human reviewer"
+
+# Artifact names below correspond to generated planning output files
+# produced under .copilot-tracking/rai-plans/{project-slug}/ during RAI
+# planning sessions (e.g., control-surface-catalog.md, evidence-register.md).
+# They do NOT match the .github/instructions/rai-planning/*.instructions.md
+# basenames. To enforce footers in CI against generated artifacts, invoke
+# Validate-PlannerArtifacts.ps1 with -Paths '.copilot-tracking/rai-plans/<slug>'.
+# The default scan path (.github/instructions) returns 0 issues by design
+# because instruction files are templates, not generated artifacts.
+artifact-classification:
+  # Agentic artifacts: Tier 1 note only (no human review required)
+  agentic:
+    scope:
+      - .github/instructions/rai-planning/**
+    required-footers:
+      - ai-content-note
+    artifacts:
+      - control-surface-catalog
+      - evidence-register
+
+  # Human-facing artifacts: Tier 1 note + human review checkbox
+  human-facing:
+    scope:
+      - .github/instructions/rai-planning/**
+    required-footers:
+      - ai-content-note
+      - human-review-checkbox
+    artifacts:
+      - rai-tradeoffs
+      - ado-work-items
+      - github-issues
+      - rai-review-summary
+      - transparency-note
+      - monitoring-summary
+
+  # Human-facing with disclaimer: Tier 1 + checkbox + Tier 2 disclaimer
+  human-facing-with-disclaimer:
+    scope:
+      - .github/instructions/rai-planning/**
+    required-footers:
+      - ai-content-note
+      - human-review-checkbox
+    requires-disclaimer: true
+    disclaimer-ref: rai-full-disclaimer
+    artifacts:
+      - handoff-summary
+      - compact-handoff-summary

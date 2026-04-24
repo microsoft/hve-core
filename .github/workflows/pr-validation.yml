@@ -196,6 +196,14 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  ai-artifact-validation:
+    name: AI Artifact Validation
+    uses: ./.github/workflows/ai-artifact-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   msdate-freshness:
     name: ms.date Freshness Check
     uses: ./.github/workflows/msdate-freshness-check.yml
@@ -305,8 +313,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Uses audit-ci with an allowlist for advisories that have no upstream
+      # fix available. See audit-ci.json for the current allowlist and rationale.
       - name: Run security audit
-        run: npm audit --audit-level=moderate
+        run: npm run audit:npm
 
   codeql:
     name: CodeQL Security Analysis
@@ -315,3 +325,4 @@ jobs:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
+
