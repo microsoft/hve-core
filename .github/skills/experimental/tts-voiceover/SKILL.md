@@ -1,6 +1,7 @@
 ---
 name: tts-voiceover
 description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control - Brought to you by microsoft/hve-core'
+compatibility: 'Requires Python 3.11+, uv, and an Azure Speech resource (key or Entra ID auth)'
 ---
 
 # TTS Voice Over Skill
@@ -36,7 +37,7 @@ export SPEECH_REGION="eastus"
 Install dependencies:
 
 ```bash
-cd .github/skills/experimental/tts-voiceover
+# run from this skill folder
 uv sync
 ```
 
@@ -64,42 +65,22 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### generate_voiceover.py
 
-| Parameter       | Type   | Default                             | Description                                   |
-|:----------------|:-------|:------------------------------------|:----------------------------------------------|
-| `--dry-run`     | flag   | `false`                             | Print SSML templates without generating audio |
-| `--voice`       | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
-| `--rate`        | string | `+10%`                              | Speech prosody rate                           |
-| `--content-dir` | path   | `content`                           | Path to slide content directory               |
-| `--output-dir`  | path   | `voice-over`                        | Path to WAV output directory                  |
-| `--lexicon`     | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
+| Parameter       | Type   | Default                              | Description                                    |
+|:----------------|:-------|:-------------------------------------|:-----------------------------------------------|
+| `--dry-run`     | flag   | `false`                              | Print SSML templates without generating audio  |
+| `--voice`       | string | `en-US-Andrew:DragonHDLatestNeural`  | Azure TTS voice name                           |
+| `--rate`        | string | `+10%`                               | Speech prosody rate                            |
+| `--content-dir` | path   | `content`                            | Path to slide content directory                |
+| `--output-dir`  | path   | `voice-over`                         | Path to WAV output directory                   |
+| `--lexicon`     | path   | *(auto-detect)*                      | Custom acronyms.yaml path                      |
 
 ### embed_audio.py
 
-| Parameter     | Type | Default           | Description                  |
-|:--------------|:-----|:------------------|:-----------------------------|
-| `--input`     | path | *(required)*      | Source PPTX file path        |
-| `--audio-dir` | path | `voice-over`      | Directory with slide-NNN.wav |
-| `--output`    | path | `*-narrated.pptx` | Output PPTX file path        |
-
-## Cross-Platform Wrappers
-
-Bash and PowerShell wrappers handle virtual environment setup and delegate to the Python scripts.
-
-### Bash
-
-```bash
-./scripts/generate-voiceover.sh --dry-run --content-dir content
-./scripts/embed-audio.sh --input deck.pptx --audio-dir voice-over
-```
-
-### PowerShell
-
-```powershell
-./scripts/Invoke-GenerateVoiceover.ps1 -DryRun -ContentDir content
-./scripts/Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over
-```
-
-Both wrappers accept a `--skip-venv-setup` / `-SkipVenvSetup` flag to skip `uv sync` when the environment is already initialized.
+| Parameter      | Type | Default              | Description                      |
+|:---------------|:-----|:---------------------|:---------------------------------|
+| `--input`      | path | *(required)*         | Source PPTX file path            |
+| `--audio-dir`  | path | `voice-over`         | Directory with slide-NNN.wav     |
+| `--output`     | path | `*-narrated.pptx`   | Output PPTX file path            |
 
 ## Script Reference
 
@@ -181,15 +162,13 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                       |
-|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
-| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+| Issue | Solution |
+|:------|:---------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID` | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`. |
+| 401 with Entra ID auth | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
+| Empty WAV files or skipped slides | Verify `speaker_notes:` is present and non-empty in `content.yaml`. |
+| Mispronounced acronyms | Add entries to `acronyms.yaml` with phonetic aliases. |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory. |
+| Audio icon visible in PPTX | Reposition or resize the audio object in PowerPoint after embedding. |
 
 > Brought to you by microsoft/hve-core

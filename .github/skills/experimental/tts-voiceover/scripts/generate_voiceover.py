@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import re
 import sys
 import time
 import xml.sax.saxutils
@@ -69,37 +68,25 @@ def load_acronyms(path: Path) -> dict[str, str]:
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """Replace acronyms with SSML ``<sub alias>`` elements.
 
-    Uses single-pass regex substitution to avoid corrupting
-    previously-inserted SSML tags.
-
-    Note: ``text`` is expected to be XML-escaped before calling this
-    function. Acronym keys must not contain ``&``, ``<``, or ``>``
-    because those characters will have been replaced with XML entities
-    and will not match.
+    Processes longest acronyms first to avoid partial matches.
     """
-    if not acronyms:
-        return text
-    sorted_acronyms = sorted(acronyms.items(), key=lambda x: -len(x[0]))
-    pattern = re.compile("|".join(re.escape(a) for a, _ in sorted_acronyms))
-
-    def _replace(m: re.Match) -> str:
-        acronym = m.group(0)
-        alias = acronyms[acronym]
-        alias_escaped = xml.sax.saxutils.escape(alias, {'"': "&quot;"})
-        return f'<sub alias="{alias_escaped}">{xml.sax.saxutils.escape(acronym)}</sub>'
-
-    return pattern.sub(_replace, text)
+    for acronym, alias in sorted(acronyms.items(), key=lambda x: -len(x[0])):
+        if acronym in text:
+            replacement = (
+                f'<sub alias="{xml.sax.saxutils.escape(alias)}">'
+                f"{xml.sax.saxutils.escape(acronym)}</sub>"
+            )
+            text = text.replace(acronym, replacement)
+    return text
 
 
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
     """Wrap processed text in a full SSML document."""
-    safe_voice = xml.sax.saxutils.quoteattr(voice)
-    safe_rate = xml.sax.saxutils.quoteattr(rate)
     return (
         '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"'
         ' xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">\n'
-        f"  <voice name={safe_voice}>\n"
-        f"    <prosody rate={safe_rate}>\n"
+        f'  <voice name="{voice}">\n'
+        f'    <prosody rate="{rate}">\n'
         f"      {text}\n"
         "    </prosody>\n"
         "  </voice>\n"
@@ -107,7 +94,9 @@ def wrap_ssml(text: str, voice: str, rate: str) -> str:
     )
 
 
-def generate_audio(ssml: str, output_path: Path, speech_config: object) -> float | None:
+def generate_audio(
+    ssml: str, output_path: Path, speech_config: object
+) -> float | None:
     """Generate a WAV file from SSML. Returns duration in seconds or ``None``."""
     import azure.cognitiveservices.speech as speechsdk
 
@@ -135,7 +124,9 @@ def _make_entra_config(
 
     Returns (config, expires_at).
     """
-    token_obj = credential.get_token("https://cognitiveservices.azure.com/.default")
+    token_obj = credential.get_token(
+        "https://cognitiveservices.azure.com/.default"
+    )
     auth_token = f"aad#{resource_id}#{token_obj.token}"
     config = speechsdk.SpeechConfig(auth_token=auth_token, region=region)
     config.set_speech_synthesis_output_format(
@@ -195,8 +186,9 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run() -> int:
-    """Core logic for TTS voice-over generation."""
+def main() -> int:
+    """Entry point for TTS voice-over generation."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
 
@@ -215,9 +207,6 @@ def _run() -> int:
     speech_config = None
     credential = None
     token_expires_at = 0
-    speech_key: str | None = None
-    speech_region: str = "eastus"
-    speech_resource_id: str | None = None
     if not args.dry_run:
         try:
             import azure.cognitiveservices.speech as speechsdk
@@ -243,7 +232,9 @@ def _run() -> int:
             try:
                 from azure.identity import DefaultAzureCredential
             except ImportError:
-                logger.error("azure-identity package is required for Entra ID auth")
+                logger.error(
+                    "azure-identity package is required for Entra ID auth"
+                )
                 return EXIT_FAILURE
             credential = DefaultAzureCredential()
             speech_config, token_expires_at = _make_entra_config(
@@ -264,7 +255,16 @@ def _run() -> int:
         if not content_file.is_file():
             continue
 
-        data = yaml.safe_load(content_file.read_text(encoding="utf-8"))
+        try:
+            data = yaml.safe_load(content_file.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            logger.warning("SKIP %s: invalid YAML — %s", slide_dir.name, exc)
+            continue
+
+        if not isinstance(data, dict):
+            logger.warning("SKIP %s: content.yaml is empty or not a mapping", slide_dir.name)
+            continue
+
         notes = data.get("speaker_notes", "").strip()
         title = data.get("title", slide_dir.name)
 
@@ -295,7 +295,7 @@ def _run() -> int:
 
         wav_path = output_dir / f"{slide_dir.name}.wav"
         logger.info("Generating %s: %s ...", slide_dir.name, title)
-        duration = generate_audio(ssml, wav_path, speech_config)
+        duration = generate_audio(ssml, wav_path, speech_config, speechsdk)
         if duration is not None:
             total_duration += duration
             logger.info("  %s — %.1fs", wav_path.name, duration)
@@ -313,19 +313,6 @@ def _run() -> int:
         )
 
     return EXIT_SUCCESS
-
-
-def main() -> int:
-    """Entry point for TTS voice-over generation."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    try:
-        return _run()
-    except KeyboardInterrupt:
-        print("\nInterrupted by user", file=sys.stderr)
-        return 130
-    except BrokenPipeError:
-        sys.stderr.close()
-        return EXIT_FAILURE
 
 
 if __name__ == "__main__":

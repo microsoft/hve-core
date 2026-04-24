@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "azure-cognitiveservices-speech>=1.41",
     "azure-identity>=1.19",
-    "lxml>=6.1.0",
+    "lxml>=6.1.0",  # pinned explicitly: transitive dep of python-pptx; ensures CVE patches
     "python-pptx>=1.0",
     "pyyaml>=6.0",
 ]
