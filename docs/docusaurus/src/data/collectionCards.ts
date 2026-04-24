@@ -98,5 +98,7 @@ export function resolveCollectionCards(
 export function resolveMetaCollections(
   counts: Record<string, number>,
 ): MetaCollections {
-  return { 'hve-core-all': counts['hve-core-all'] ?? 0 };
+  return {
+    'hve-core-all': counts['hve-core-all'] ?? 0,
+  };
 }
