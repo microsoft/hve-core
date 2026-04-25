@@ -21,11 +21,11 @@ This skill reads `content.yaml` files produced by the PowerPoint skill, extracts
 
 ## Prerequisites
 
-| Requirement | Details |
-|:------------|:--------|
-| Azure Speech resource | Free tier provides 500K characters per month |
-| Python 3.11+ | With [uv](https://docs.astral.sh/uv/) for environment management |
-| Authentication | Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`) |
+| Requirement           | Details                                                               |
+|:----------------------|:----------------------------------------------------------------------|
+| Azure Speech resource | Free tier provides 500K characters per month                          |
+| Python 3.11+          | With [uv](https://docs.astral.sh/uv/) for environment management      |
+| Authentication        | Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`) |
 
 ## Setup
 
