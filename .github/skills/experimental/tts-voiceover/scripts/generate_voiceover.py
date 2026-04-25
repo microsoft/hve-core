@@ -262,7 +262,10 @@ def main() -> int:
             continue
 
         if not isinstance(data, dict):
-            logger.warning("SKIP %s: content.yaml is empty or not a mapping", slide_dir.name)
+            logger.warning(
+                "SKIP %s: content.yaml is empty or not a mapping",
+                slide_dir.name,
+            )
             continue
 
         notes = data.get("speaker_notes", "").strip()
@@ -295,7 +298,7 @@ def main() -> int:
 
         wav_path = output_dir / f"{slide_dir.name}.wav"
         logger.info("Generating %s: %s ...", slide_dir.name, title)
-        duration = generate_audio(ssml, wav_path, speech_config, speechsdk)
+        duration = generate_audio(ssml, wav_path, speech_config)
         if duration is not None:
             total_duration += duration
             logger.info("  %s — %.1fs", wav_path.name, duration)

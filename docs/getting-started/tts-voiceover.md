@@ -21,9 +21,11 @@ This skill reads `content.yaml` files produced by the PowerPoint skill, extracts
 
 ## Prerequisites
 
-* **Azure Speech resource** — Free tier provides 500K characters per month
-* **Python 3.11+** with [uv](https://docs.astral.sh/uv/) for environment management
-* **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`)
+| Requirement | Details |
+|:------------|:--------|
+| Azure Speech resource | Free tier provides 500K characters per month |
+| Python 3.11+ | With [uv](https://docs.astral.sh/uv/) for environment management |
+| Authentication | Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`) |
 
 ## Setup
 
@@ -124,12 +126,12 @@ content/
 
 ## Troubleshooting
 
-| Issue | Solution |
-|:------|:---------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID` | Export authentication environment variables |
-| 401 with Entra ID auth | Verify custom domain and `Cognitive Services Speech User` role assignment |
-| Empty WAV files | Verify `speaker_notes:` is present and non-empty in `content.yaml` |
-| Mispronounced acronyms | Add entries to `acronyms.yaml` with phonetic aliases |
+| Issue                                      | Solution                                                                  |
+|:-------------------------------------------|:--------------------------------------------------------------------------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID` | Export authentication environment variables                               |
+| 401 with Entra ID auth                     | Verify custom domain and `Cognitive Services Speech User` role assignment |
+| Empty WAV files                            | Verify `speaker_notes:` is present and non-empty in `content.yaml`        |
+| Mispronounced acronyms                     | Add entries to `acronyms.yaml` with phonetic aliases                      |
 
 ## Related Resources
 
