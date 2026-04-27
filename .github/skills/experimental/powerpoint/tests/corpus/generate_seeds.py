@@ -1,13 +1,15 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 """Generate corpus seeds for fuzz targets."""
+
 import os
 
 CORPUS_DIR = os.path.dirname(__file__)
 
+
 def write_seed(name, data: bytes):
     """Write raw bytes to corpus file."""
-    with open(os.path.join(CORPUS_DIR, name), 'wb') as f:
+    with open(os.path.join(CORPUS_DIR, name), "wb") as f:
         f.write(data)
     print(f"Created: {name} ({len(data)} bytes)")
 

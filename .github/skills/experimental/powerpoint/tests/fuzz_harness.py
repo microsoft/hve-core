@@ -5,6 +5,7 @@
 Runs as a pytest test when Atheris is not installed (CI default).
 Runs as an Atheris coverage-guided fuzz target when executed directly.
 """
+
 from __future__ import annotations
 
 import sys
@@ -211,12 +212,23 @@ class TestFuzzMaxSeverity:
 # ---------------------------------------------------------------------------
 
 
-def _make_dict_run(font="Arial", bold=False, italic=False, underline=False,
-                   size=None, color_rgb=None):
+class _Color:
+    """Minimal stand-in for python-pptx RGBColor used by _make_dict_run."""
+
+    def __init__(self, rgb):
+        self.rgb = rgb
+
+    def __eq__(self, other):
+        return isinstance(other, _Color) and self.rgb == other.rgb
+
+    def __hash__(self):
+        return hash(self.rgb)
+
+
+def _make_dict_run(
+    font="Arial", bold=False, italic=False, underline=False, size=None, color_rgb=None
+):
     """Create a plain dict matching the dict-style branch in get_props."""
-    class _Color:
-        def __init__(self, rgb):
-            self.rgb = rgb
     return {
         "font": font,
         "bold": bold,
