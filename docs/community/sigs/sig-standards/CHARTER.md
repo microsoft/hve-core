@@ -101,7 +101,7 @@ Initial Membership Suggestions:
 
 ## Membership and Onboarding
 
-Joining is open to any contributor in good standing under the [Code of Conduct](../../../../CODE_OF_CONDUCT.md). Prospective members introduce themselves in the SIG: Standards discussion category and indicate the standards area they want to work on (a language, the prompt-builder surface, IA, or templates). Reviewer and approver privileges accrue through demonstrated contribution as described in [GOVERNANCE.md](../../../../GOVERNANCE.md).
+Joining is open to any contributor in good standing under the [Code of Conduct](https://github.com/microsoft/hve-core/blob/main/CODE_OF_CONDUCT.md). Prospective members introduce themselves in the SIG: Standards discussion category and indicate the standards area they want to work on (a language, the prompt-builder surface, IA, or templates). Reviewer and approver privileges accrue through demonstrated contribution as described in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 New-contributor starting points:
 
@@ -120,13 +120,13 @@ New-contributor starting points:
 * **Lazy consensus** on routine clarifications and template additions: 72-hour open window without objection.
 * **Chair tie-break** when reviewers disagree on a style or IA call within seven days.
 * **Escalation** to the maintainer set for repository-wide breaking changes (e.g., directory restructures, schema migrations affecting every collection).
-* All deliberation occurs in public channels per the Public Activity rule in [GOVERNANCE.md](../../../../GOVERNANCE.md).
+* All deliberation occurs in public channels per the Public Activity rule in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ## Escalation Path
 
 1. Open a discussion in SIG: Standards and tag chairs.
 2. Chairs attempt resolution within seven days, consulting affected SIGs as needed.
-3. If unresolved, chairs file a decision request to the maintainer set per [GOVERNANCE.md](../../../../GOVERNANCE.md).
+3. If unresolved, chairs file a decision request to the maintainer set per [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ## Health and Success Metrics
 
@@ -138,7 +138,7 @@ New-contributor starting points:
 
 ## Lifecycle and Review
 
-The SIG conducts an annual self-review on or before **Next Review** above. The review reaffirms scope, refreshes goals, updates membership, and either renews or proposes retirement. Retirement requires a maintainer vote per [GOVERNANCE.md](../../../../GOVERNANCE.md) and reassignment of all owned directories.
+The SIG conducts an annual self-review on or before **Next Review** above. The review reaffirms scope, refreshes goals, updates membership, and either renews or proposes retirement. Retirement requires a maintainer vote per [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md) and reassignment of all owned directories.
 
 ## Amendment Process
 
@@ -146,7 +146,7 @@ Charter amendments are proposed via pull request. Material changes (scope, role 
 
 ## Code of Conduct
 
-All participants follow the Microsoft Open Source [Code of Conduct](../../../../CODE_OF_CONDUCT.md). Concerns are reported per [SECURITY.md](../../../../SECURITY.md) for security issues and to maintainers for conduct issues.
+All participants follow the Microsoft Open Source [Code of Conduct](https://github.com/microsoft/hve-core/blob/main/CODE_OF_CONDUCT.md). Concerns are reported per [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) for security issues and to maintainers for conduct issues.
 
 ---
 

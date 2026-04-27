@@ -108,7 +108,7 @@ Initial Membership Suggestions:
 
 ## Membership and Onboarding
 
-Joining is open to any contributor in good standing under the [Code of Conduct](../../../../CODE_OF_CONDUCT.md). Prospective members open a discussion in the SIG: Engineering category introducing themselves and the area they want to work on. Reviewer and approver privileges accrue through demonstrated contribution as described in [GOVERNANCE.md](../../../../GOVERNANCE.md).
+Joining is open to any contributor in good standing under the [Code of Conduct](https://github.com/microsoft/hve-core/blob/main/CODE_OF_CONDUCT.md). Prospective members open a discussion in the SIG: Engineering category introducing themselves and the area they want to work on. Reviewer and approver privileges accrue through demonstrated contribution as described in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 New-contributor starting points:
 
@@ -127,13 +127,13 @@ New-contributor starting points:
 * **Lazy consensus** on routine work: a proposal stands if no objections are raised within 72 hours on an open PR or discussion thread.
 * **Chair tie-break** when reviewers disagree and consensus is not reachable within seven days.
 * **Escalation** to the maintainer set if a decision is contested across SIGs or affects governance.
-* All deliberation occurs in public channels per the Public Activity rule in [GOVERNANCE.md](../../../../GOVERNANCE.md).
+* All deliberation occurs in public channels per the Public Activity rule in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ## Escalation Path
 
 1. Open a discussion in SIG: Engineering and tag chairs.
 2. Chairs attempt resolution within seven days.
-3. If unresolved, chairs file a decision request to the maintainer set per [GOVERNANCE.md](../../../../GOVERNANCE.md).
+3. If unresolved, chairs file a decision request to the maintainer set per [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ## Health and Success Metrics
 
@@ -145,7 +145,7 @@ New-contributor starting points:
 
 ## Lifecycle and Review
 
-The SIG conducts an annual self-review on or before **Next Review** above. The review confirms scope, refreshes goals, updates membership, and either renews or proposes retirement. Retirement requires a maintainer vote per [GOVERNANCE.md](../../../../GOVERNANCE.md) and reassignment of all owned directories.
+The SIG conducts an annual self-review on or before **Next Review** above. The review confirms scope, refreshes goals, updates membership, and either renews or proposes retirement. Retirement requires a maintainer vote per [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md) and reassignment of all owned directories.
 
 ## Amendment Process
 
@@ -153,7 +153,7 @@ Charter amendments are proposed via pull request. Material changes (scope, role 
 
 ## Code of Conduct
 
-All participants follow the Microsoft Open Source [Code of Conduct](../../../../CODE_OF_CONDUCT.md). Concerns are reported per [SECURITY.md](../../../../SECURITY.md) for security issues and to maintainers for conduct issues.
+All participants follow the Microsoft Open Source [Code of Conduct](https://github.com/microsoft/hve-core/blob/main/CODE_OF_CONDUCT.md). Concerns are reported per [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md) for security issues and to maintainers for conduct issues.
 
 ---
 

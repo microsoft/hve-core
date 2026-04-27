@@ -6,7 +6,7 @@ ms.date: 2026-04-25
 author: HVE Core Maintainers
 ---
 
-A Special Interest Group (SIG) is an artifact-owning team in microsoft/hve-core that takes responsibility for a defined surface of the repository (directories, collections, and instructional content). Each SIG operates under a charter, will be attached to [.github/CODEOWNERS](../../../.github/CODEOWNERS) once its GitHub Team is provisioned, and is led by chairs recruited under the Chair Recruitment Plan defined in [GOVERNANCE.md](../../../GOVERNANCE.md).
+A Special Interest Group (SIG) is an artifact-owning team in microsoft/hve-core that takes responsibility for a defined surface of the repository (directories, collections, and instructional content). Each SIG operates under a charter, will be attached to [.github/CODEOWNERS](https://github.com/microsoft/hve-core/blob/main/.github/CODEOWNERS) once its GitHub Team is provisioned, and is led by chairs recruited under the Chair Recruitment Plan defined in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ## SIGs
 
@@ -21,7 +21,7 @@ A Special Interest Group (SIG) is an artifact-owning team in microsoft/hve-core 
 
 ## Working Groups
 
-Working Groups (WGs) are deferred. A future amendment will introduce WGs; see the forward-reference in [GOVERNANCE.md](../../../GOVERNANCE.md).
+Working Groups (WGs) are deferred. A future amendment will introduce WGs; see the forward-reference in [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md).
 
 ---
 
