@@ -506,6 +506,27 @@ function Update-HveCoreAllCollection {
         $existingItemMaturities[$existingKey] = Resolve-CollectionItemMaturity -Maturity $existingItem.maturity
     }
 
+    # Propagate authoritative maturities from source collections so tombstones
+    # (maturity: removed) and deprecations declared in any source manifest
+    # carry into the aggregated hve-core-all collection. Strictest maturity
+    # wins: removed > deprecated > preview > stable.
+    $maturityRank = @{ 'stable' = 0; 'preview' = 1; 'deprecated' = 2; 'removed' = 3 }
+    $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
+    $sourceCollections = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -ne 'hve-core-all.collection.yml' }
+    foreach ($sourceFile in $sourceCollections) {
+        $sourceManifest = Get-CollectionManifest -CollectionPath $sourceFile.FullName
+        if ($null -eq $sourceManifest -or $null -eq $sourceManifest.items) { continue }
+        foreach ($sourceItem in $sourceManifest.items) {
+            $sourceKey = "$($sourceItem.kind)|$($sourceItem.path)"
+            $sourceMaturity = Resolve-CollectionItemMaturity -Maturity $sourceItem.maturity
+            $currentMaturity = if ($existingItemMaturities.ContainsKey($sourceKey)) { $existingItemMaturities[$sourceKey] } else { 'stable' }
+            if ($maturityRank[$sourceMaturity] -gt $maturityRank[$currentMaturity]) {
+                $existingItemMaturities[$sourceKey] = $sourceMaturity
+            }
+        }
+    }
+
     $deprecatedCount = 0
     $filteredItems = @()
     foreach ($item in $allItems) {
@@ -513,6 +534,11 @@ function Update-HveCoreAllCollection {
         $itemMaturity = 'stable'
         if ($existingItemMaturities.ContainsKey($itemKey)) {
             $itemMaturity = $existingItemMaturities[$itemKey]
+        }
+
+        if ($itemMaturity -eq 'removed') {
+            Write-Verbose "Excluding removed: $($item.path)"
+            continue
         }
 
         if (Test-ArtifactDeprecated -Maturity $itemMaturity) {

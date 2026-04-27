@@ -45,6 +45,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
 | **task-reviewer**    | Validates implementation against research and plan specifications | Requires research/plan artifacts               |
+| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
 
 ### Documentation and Planning Agents
 
@@ -356,7 +357,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
 
-**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `owasp-docker`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
+**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
 
 ### code-review-functional
 

@@ -558,6 +558,12 @@ function Test-CollectionMaturityEligible {
     }
 
     switch ($maturity) {
+        'removed' {
+            return @{
+                IsEligible = $false
+                Reason     = "Collection '$($CollectionManifest.id)' is removed and excluded from all channels"
+            }
+        }
         'deprecated' {
             return @{
                 IsEligible = $false
