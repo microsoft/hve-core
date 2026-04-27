@@ -150,12 +150,13 @@ The VS Code extension is published to two channels with different stability expe
 
 Each prompt, instruction, agent, and skill can set `maturity` in `collections/*.collection.yml` under `items[]`:
 
-| Level          | Description                                     | Included In         |
-|----------------|-------------------------------------------------|---------------------|
-| `stable`       | Production-ready, fully tested                  | Stable, Pre-release |
-| `preview`      | Feature-complete but may have rough edges       | Pre-release only    |
-| `experimental` | Early development, may change significantly     | Pre-release only    |
-| `deprecated`   | Scheduled for removal, excluded from all builds | Neither             |
+| Level          | Description                                                                                       | Included In         |
+|----------------|---------------------------------------------------------------------------------------------------|---------------------|
+| `stable`       | Production-ready, fully tested                                                                    | Stable, Pre-release |
+| `preview`      | Feature-complete but may have rough edges                                                         | Pre-release only    |
+| `experimental` | Early development, may change significantly                                                       | Pre-release only    |
+| `deprecated`   | Scheduled for removal, excluded from all builds                                                   | Neither             |
+| `removed`      | Source retained for traceability; excluded from all generated plugins and extension distributions | Neither             |
 
 ### Maturity Lifecycle
 
@@ -165,18 +166,28 @@ stateDiagram-v2
     experimental --> preview : Core features complete
     preview --> stable : Production tested
     stable --> deprecated : Superseded or obsolete
-    deprecated --> [*] : Removed
+    deprecated --> removed : Withdrawn from distribution
+    removed --> [*] : Source eventually deleted
 ```
+
+The `removed` level is a collection-YAML-only marker. The artifact file remains in its
+source location (for example, under `.github/skills/{collection-id}/`) so history and
+references stay intact, but every downstream surface (collection validation, plugin
+generation, and extension packaging) excludes it. Use `removed` when you want to retire
+an artifact from distribution without moving it to `.github/deprecated/` or deleting it
+outright. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts)
+for the architectural contract.
 
 ### Contributor Guidelines
 
-| Guideline          | Action                                                                                                                                                                                                                                                                                                                                    |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| New contributions  | Set `stable` on collection items unless explicitly targeting early adopters                                                                                                                                                                                                                                                               |
-| Experimental work  | Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts                                                                                                                                                                                                                                                 |
-| Preview promotions | Set `preview` on collection items when core functionality is complete                                                                                                                                                                                                                                                                     |
-| Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                              |
-| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy. |
+| Guideline          | Action                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| New contributions  | Set `stable` on collection items unless explicitly targeting early adopters                                                                                                                                                                                                                                                                                                                                                      |
+| Experimental work  | Set `experimental` on collection items for proof-of-concept or rapidly evolving artifacts                                                                                                                                                                                                                                                                                                                                        |
+| Preview promotions | Set `preview` on collection items when core functionality is complete                                                                                                                                                                                                                                                                                                                                                            |
+| Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                                                                                                                     |
+| Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy.                                                                                        |
+| Removal            | Set `removed` on collection items when the artifact should no longer ship in any plugin or extension build but its source should remain in place for history, references, or future reinstatement. The collection YAML is the single source of truth - no per-artifact frontmatter or file move is required. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts) for details. |
 
 ---
 
