@@ -316,6 +316,7 @@ Collections carry their own maturity level, independent of artifact-level maturi
 | `preview`           | Included           | Included       |
 | `experimental`      | Included           | Excluded       |
 | `deprecated`        | Excluded           | Excluded       |
+| `removed`           | Excluded           | Excluded       |
 
 New collections should start as `experimental` until validated, then graduate through `preview` to `stable` by changing a single field. The `maturity` field is optional and defaults to `stable` when omitted.
 
@@ -356,6 +357,7 @@ These paths reflect the conventional directory structure. Artifact inclusion is 
 | `preview`      | Excluded       | Included            |
 | `experimental` | Excluded       | Included            |
 | `deprecated`   | Excluded       | Excluded            |
+| `removed`      | Excluded       | Excluded            |
 
 The maturity table above applies to individual artifacts. Collections also carry a `maturity` field that gates the entire package at the channel level (see [Collection Maturity](#collection-maturity)).
 
@@ -429,6 +431,48 @@ Move an artifact to `.github/deprecated/{type}/` when:
 * A newer artifact fully replaces its functionality
 * The artifact is no longer maintained or tested
 * The artifact targets a retired platform or workflow
+
+## Removed Artifacts
+
+The `removed` maturity is a collection-manifest-only marker that retires an artifact from every generated distribution while leaving its source file in place. Unlike deprecation, no file move is required and no per-artifact frontmatter field is involved - the collection YAML is the single source of truth.
+
+### Collection-YAML Marker
+
+Mark an item as removed by setting `maturity: removed` on the collection entry:
+
+```yaml
+items:
+  - path: .github/skills/security/owasp-docker/SKILL.md
+    kind: skill
+    maturity: removed
+```
+
+Every collection that references the artifact must carry the same marker. The artifact file itself stays under its original `.github/{type}/{collection-id}/` location, preserving git history, cross-references, and the option to reinstate it by changing a single field.
+
+### Automatic Exclusion
+
+The collection-level `removed` marker is honored at every build stage:
+
+| Surface               | Exclusion Mechanism                                                                                      |
+|-----------------------|----------------------------------------------------------------------------------------------------------|
+| Collection manifests  | `Update-HveCoreAllCollection` and `Get-ArtifactFiles` skip items where `maturity` equals `removed`       |
+| Plugin generation     | `npm run plugin:generate` produces no plugin entry for removed items                                     |
+| Extension packaging   | `Get-AllowedMaturities` (in `Prepare-Extension.ps1`) excludes `removed` from PreRelease and Stable alike |
+| Collection validation | `Validate-Collections.ps1` accepts `removed` as a valid `maturity` value but never emits the artifact    |
+
+No runtime code reads a per-artifact `maturity` field; the schema for `SKILL.md` and other artifact frontmatter intentionally does not define one. This keeps the collection YAML as the unambiguous source of truth for distribution decisions.
+
+### Removed vs. Deprecated vs. `.github/deprecated/`
+
+Three distinct mechanisms govern artifact retirement, each chosen for a different intent:
+
+| Mechanism                           | What it signals                                          | Source file location | When to use                                                                                                          |
+|-------------------------------------|----------------------------------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------|
+| `maturity: deprecated` (collection) | Sunset in progress; transition time for downstream users | Original location    | A replacement exists or removal is planned; users need a release window to migrate                                   |
+| `maturity: removed` (collection)    | Withdrawn from distribution; source retained             | Original location    | Distribution must stop now, but the file should stay for history, cross-references, or possible future reinstatement |
+| `.github/deprecated/{type}/` (path) | Long-term archival; replacement documented in-file       | Moved subtree        | The artifact is fully superseded and should be visibly archived; path-based filter prevents silent reintroduction    |
+
+Use `maturity: removed` when the artifact should disappear from generated outputs without any source-tree disruption. Move to `.github/deprecated/` when archival visibility and a path-based safety net matter more than keeping the original location.
 
 ## Related Documentation
 

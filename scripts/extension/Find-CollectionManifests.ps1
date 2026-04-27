@@ -8,7 +8,7 @@
 # Author: HVE Core Team
 
 #Requires -Version 7.0
-#Requires -Modules PowerShell-Yaml
+#Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 [CmdletBinding()]
 param(
@@ -73,6 +73,13 @@ function Find-CollectionManifestsCore {
         $id = [string]$manifest.id
         $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
         $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
+
+        # Always skip removed
+        if ($maturity -eq 'removed') {
+            $skipped += [PSCustomObject]@{ Id = $id; Name = $name; Reason = 'removed' }
+            Write-Verbose "Skipping removed collection: $name ($id)"
+            continue
+        }
 
         # Always skip deprecated
         if ($maturity -eq 'deprecated') {

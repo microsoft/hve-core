@@ -18,6 +18,8 @@ items:
 - path: .github/agents/coding-standards/code-review-standards.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/data-science/eval-dataset-creator.agent.md
+  kind: agent
 - path: .github/agents/data-science/gen-data-spec.agent.md
   kind: agent
 - path: .github/agents/data-science/gen-jupyter-notebook.agent.md
@@ -88,6 +90,9 @@ items:
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
   kind: agent
+- path: .github/agents/project-planning/network-isa95-planner.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
@@ -143,6 +148,15 @@ items:
   maturity: experimental
 - path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
+- path: .github/prompts/data-science/synth-data-generate.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/design-thinking/dt-canonical-deck.prompt.md
+  kind: prompt
+  maturity: preview
+- path: .github/prompts/design-thinking/dt-figma-export.prompt.md
+  kind: prompt
+  maturity: preview
 - path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
   kind: prompt
   maturity: preview
@@ -323,6 +337,9 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/uv-projects.instructions.md
   kind: instruction
+- path: .github/instructions/design-thinking/dt-canonical-deck.instructions.md
+  kind: instruction
+  maturity: preview
 - path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
   kind: instruction
   maturity: preview
@@ -497,6 +514,9 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/rai-planning/rai-security-model.instructions.md
   kind: instruction
   maturity: experimental
@@ -536,6 +556,8 @@ items:
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/shared/disclaimer-language.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
@@ -543,6 +565,8 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/experimental/customer-card-render
+  kind: skill
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/video-to-gif

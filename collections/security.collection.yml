@@ -62,6 +62,9 @@ items:
   - path: .github/skills/security/owasp-cicd
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/owasp-docker
+    kind: skill
+    maturity: removed
   - path: .github/skills/security/secure-by-design
     kind: skill
     maturity: experimental
@@ -160,6 +163,9 @@ items:
   - path: .github/instructions/rai-planning/rai-standards.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/rai-planning/rai-security-model.instructions.md
     kind: instruction
     maturity: experimental
@@ -173,6 +179,8 @@ items:
     kind: instruction
     maturity: experimental
   # Shared Instructions
+  - path: .github/instructions/shared/disclaimer-language.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:

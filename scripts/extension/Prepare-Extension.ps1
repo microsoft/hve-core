@@ -224,6 +224,8 @@ function Invoke-ExtensionCollectionsGeneration {
         files are removed.
     .PARAMETER RepoRoot
         Repository root path containing collections/ and extension/templates/.
+    .PARAMETER Channel
+        Release channel controlling maturity filtering for README generation.
     .OUTPUTS
         [string[]] Array of generated file paths.
     #>
@@ -231,11 +233,16 @@ function Invoke-ExtensionCollectionsGeneration {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'Stable'
     )
 
     $collectionsDir = Join-Path $RepoRoot 'collections'
     $templatesDir = Join-Path $RepoRoot 'extension/templates'
+
+    $allowedMaturities = Get-AllowedMaturities -Channel $Channel
 
     $packageTemplatePath = Join-Path $templatesDir 'package.template.json'
 
@@ -317,55 +324,10 @@ function Invoke-ExtensionCollectionsGeneration {
             default        { Join-Path $RepoRoot "extension/README.$collectionId.md" }
         }
 
-        New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath
+        New-CollectionReadme -Collection $collection -CollectionMdPath $collectionMdPath -TemplatePath $readmeTemplatePath -RepoRoot $RepoRoot -OutputPath $readmePath -AllowedMaturities $allowedMaturities
     }
 
     return $expectedFiles
-}
-
-function Get-ArtifactDescription {
-    <#
-    .SYNOPSIS
-        Reads the description from an artifact file's YAML frontmatter.
-    .DESCRIPTION
-        Parses the YAML frontmatter block at the top of a markdown file and
-        returns the description field value. Returns an empty string when the
-        file is missing, has no frontmatter, or lacks a description field.
-        Strips the common " - Brought to you by microsoft/hve-core" suffix.
-    .PARAMETER FilePath
-        Absolute path to the artifact markdown file.
-    .OUTPUTS
-        [string] Description text, or empty string if unavailable.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$FilePath
-    )
-
-    if (-not (Test-Path $FilePath)) {
-        return ''
-    }
-
-    $content = Get-Content -Path $FilePath -Raw
-    if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
-        $yamlBlock = $Matches[1]
-        try {
-            $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
-            if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
-                $desc = [string]$frontmatter.description
-                # Strip the common branding suffix
-                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
-                return $desc.Trim()
-            }
-        }
-        catch {
-            Write-Verbose "Failed to parse frontmatter from $FilePath`: $_"
-        }
-    }
-
-    return ''
 }
 
 function New-CollectionReadme {
@@ -378,16 +340,22 @@ function New-CollectionReadme {
         with descriptions read from each artifact's YAML frontmatter.
         Tokens: {{DISPLAY_NAME}}, {{DESCRIPTION}}, {{BODY}}, {{ARTIFACTS}},
         {{FULL_EDITION}}.
+        When the collection markdown file contains BEGIN/END markers, the
+        generated artifact section is written back into the source file via
+        Set-ContentIfChanged so the collection.md stays in sync.
     .PARAMETER Collection
         Parsed collection manifest hashtable.
     .PARAMETER CollectionMdPath
-        Path to the collection markdown body file.
+        Path to the collection markdown body file. When markers are present,
+        this file is updated in place with the generated artifact section.
     .PARAMETER TemplatePath
         Path to the README template file containing placeholder tokens.
     .PARAMETER RepoRoot
         Repository root path for resolving artifact file paths.
     .PARAMETER OutputPath
         Destination path for the generated README.
+    .PARAMETER AllowedMaturities
+        Maturity levels to include in artifact tables. Defaults to stable only.
     #>
     [CmdletBinding()]
     param(
@@ -404,7 +372,10 @@ function New-CollectionReadme {
         [string]$RepoRoot,
 
         [Parameter(Mandatory = $true)]
-        [string]$OutputPath
+        [string]$OutputPath,
+
+        [ValidateNotNullOrEmpty()]
+        [string[]]$AllowedMaturities = @('stable')
     )
 
     $collectionId = [string]$Collection.id
@@ -423,7 +394,17 @@ function New-CollectionReadme {
         '> **⚠️ Experimental** — This collection is experimental and available only in the Pre-Release channel. Contents may change or be removed without notice.'
     } else { '' }
 
-    $bodyContent = (Get-Content -Path $CollectionMdPath -Raw).Trim()
+    $bodyContent = Get-Content -Path $CollectionMdPath -Raw
+    $parsed = Split-CollectionMdByMarkers -Content $bodyContent
+
+    if ($parsed.HasMarkers) {
+        $bodyForTemplate = $parsed.Intro
+        if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+            $bodyForTemplate = $bodyForTemplate + "`n`n" + $parsed.Footer.TrimEnd()
+        }
+    } else {
+        $bodyForTemplate = $bodyContent.Trim()
+    }
 
     # Collect artifacts with descriptions grouped by kind
     $agents = @()
@@ -434,6 +415,10 @@ function New-CollectionReadme {
     if ($Collection.ContainsKey('items')) {
         foreach ($item in $Collection.items) {
             if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                continue
+            }
+            $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+            if ($AllowedMaturities -and $AllowedMaturities -notcontains $maturity) {
                 continue
             }
             $kind = [string]$item.kind
@@ -478,6 +463,17 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
+    # Write back updated artifact section into collection.md when markers are present
+    if ($parsed.HasMarkers) {
+        $generatedBlock = $artifactSections.ToString().TrimEnd()
+        $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+        if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+            $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
+        }
+        $updatedCollectionMd += "`n"
+        Set-ContentIfChanged -Path $CollectionMdPath -Value $updatedCollectionMd
+    }
+
     $fullEdition = if ($collectionId -notin @('hve-core', 'hve-core-all')) {
         "## Full Edition`n`nLooking for more agents covering additional domains? Check out the full [HVE Core](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) extension."
     }
@@ -491,7 +487,7 @@ function New-CollectionReadme {
         -replace '\{\{DISPLAY_NAME\}\}', $displayName `
         -replace '\{\{DESCRIPTION\}\}', $description `
         -replace '\{\{MATURITY_NOTICE\}\}', $maturityNotice `
-        -replace '\{\{BODY\}\}', $bodyContent `
+        -replace '\{\{BODY\}\}', $bodyForTemplate `
         -replace '\{\{ARTIFACTS\}\}', $artifactSections.ToString().TrimEnd() `
         -replace '\{\{FULL_EDITION\}\}', $fullEdition
 
@@ -562,6 +558,12 @@ function Test-CollectionMaturityEligible {
     }
 
     switch ($maturity) {
+        'removed' {
+            return @{
+                IsEligible = $false
+                Reason     = "Collection '$($CollectionManifest.id)' is removed and excluded from all channels"
+            }
+        }
         'deprecated' {
             return @{
                 IsEligible = $false
@@ -1521,7 +1523,7 @@ function Invoke-PrepareExtension {
     # This ensures extension/package.json and extension/package.*.json exist
     # with the correct version from the template before any reads occur.
     try {
-        $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot
+        $generated = Invoke-ExtensionCollectionsGeneration -RepoRoot $RepoRoot -Channel $Channel
         Write-Host "Generated $($generated.Count) collection package file(s)" -ForegroundColor Green
     }
     catch {

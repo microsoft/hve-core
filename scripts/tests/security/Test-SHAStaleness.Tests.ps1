@@ -231,6 +231,97 @@ Describe 'Get-ToolStaleness' -Tag 'Integration', 'RequiresNetwork' {
     }
 }
 
+Describe 'Get-PSModuleStaleness' -Tag 'Unit' {
+    Context 'With mock manifest and mocked PSGallery' {
+        BeforeEach {
+            $script:TempManifest = Join-Path $TestDrive 'tool-checksums.json'
+            $manifestContent = @{
+                psModules = @(
+                    @{ name = 'PowerShell-Yaml'; version = '0.4.7'; notes = 'YAML parser' }
+                    @{ name = 'Pester'; version = '5.7.1'; notes = 'Test framework' }
+                )
+            } | ConvertTo-Json -Depth 10
+            Set-Content -Path $script:TempManifest -Value $manifestContent
+
+            Mock Invoke-RestMethod {
+                if ($Uri -match "Id eq '([^']+)'") {
+                    $name = $Matches[1]
+                    $latest = switch ($name) {
+                        'PowerShell-Yaml' { '0.4.12' }
+                        'Pester'          { '5.7.1' }
+                        default           { '0.0.0' }
+                    }
+                    return @{ properties = @{ Version = $latest } }
+                }
+                return @{}
+            }
+        }
+
+        It 'Returns one result per pinned module' {
+            $result = @(Get-PSModuleStaleness -ManifestPath $script:TempManifest)
+            $result.Count | Should -Be 2
+        }
+
+        It 'Flags modules with newer versions as stale' {
+            $result = @(Get-PSModuleStaleness -ManifestPath $script:TempManifest)
+            $yaml = $result | Where-Object { $_.Module -eq 'PowerShell-Yaml' }
+            $yaml.IsStale | Should -BeTrue
+            $yaml.LatestVersion | Should -Be '0.4.12'
+        }
+
+        It 'Marks modules at the latest version as not stale' {
+            $result = @(Get-PSModuleStaleness -ManifestPath $script:TempManifest)
+            $pester = $result | Where-Object { $_.Module -eq 'Pester' }
+            $pester.IsStale | Should -BeFalse
+        }
+
+        It 'Captures errors when PSGallery throws' {
+            Mock Invoke-RestMethod { throw 'network down' }
+            $result = @(Get-PSModuleStaleness -ManifestPath $script:TempManifest)
+            $result[0].Error | Should -Match 'network down'
+            $result[0].LatestVersion | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Manifest without psModules' {
+        It 'Returns empty when psModules array is absent' {
+            $manifestPath = Join-Path $TestDrive 'tools-only.json'
+            @{ tools = @() } | ConvertTo-Json | Set-Content -Path $manifestPath
+            $result = Get-PSModuleStaleness -ManifestPath $manifestPath
+            $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'Missing manifest' {
+        It 'Handles missing manifest gracefully' {
+            $result = Get-PSModuleStaleness -ManifestPath 'TestDrive:/nonexistent/manifest.json'
+            $result | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'With malformed psModules entries' {
+        It 'Reports missing name field without throwing' {
+            $manifestPath = Join-Path $TestDrive 'malformed-name.json'
+            @{ psModules = @(@{ version = '1.0.0'; notes = 'missing name' }) } |
+                ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath
+            $result = @(Get-PSModuleStaleness -ManifestPath $manifestPath)
+            $result[0].Module  | Should -Be '<unnamed>'
+            $result[0].IsStale | Should -BeNullOrEmpty
+            $result[0].Error   | Should -Match 'name'
+        }
+
+        It 'Reports missing version field without throwing' {
+            $manifestPath = Join-Path $TestDrive 'malformed-ver.json'
+            @{ psModules = @(@{ name = 'SomeModule'; notes = 'missing version' }) } |
+                ConvertTo-Json -Depth 10 | Set-Content -Path $manifestPath
+            $result = @(Get-PSModuleStaleness -ManifestPath $manifestPath)
+            $result[0].Module  | Should -Be 'SomeModule'
+            $result[0].IsStale | Should -BeNullOrEmpty
+            $result[0].Error   | Should -Match 'version'
+        }
+    }
+}
+
 Describe 'Main Script Execution' {
     BeforeAll {
         # Create test repo structure (script expects .github/workflows from current directory)
@@ -256,6 +347,9 @@ Describe 'Main Script Execution' {
                     notes   = 'PowerShell'
                 }
             )
+            psModules = @(
+                @{ name = 'Pester'; version = '5.7.1'; notes = 'Test framework' }
+            )
         } | ConvertTo-Json -Depth 10 | Set-Content -Path $script:ManifestPath
         
         # Save current directory
@@ -270,10 +364,23 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
                 }
+            }
+            elseif ($Uri -match "Id eq '([^']+)'") {
+                # PowerShell Gallery OData lookup for pinned modules. Per-module versions
+                # matching the manifest pins so module checks do not produce false stale entries.
+                $modName = $Matches[1]
+                $modVersion = switch ($modName) {
+                    'PowerShell-Yaml'  { '0.4.7' }
+                    'Pester'           { '5.7.1' }
+                    'PSScriptAnalyzer' { '1.25.0' }
+                    default            { '0.0.0' }
+                }
+                return @{ properties = @{ Version = $modVersion } }
             }
             elseif ($Uri -like '*/repos/*/branches/*') {
                 return @{ commit = @{ sha = '9999999999999999999999999999999999999999' } }
@@ -328,6 +435,7 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
@@ -373,6 +481,7 @@ Describe 'Main Script Execution' {
                     tag_name = switch ($repoName) {
                         'actionlint' { 'v1.7.10' }
                         'gitleaks'   { 'v8.30.0' }
+                        'cosign'     { 'v3.0.5' }
                         default      { 'v1.0.0' }
                     }
                     published_at = (Get-Date).AddMonths(-1).ToString('o')
@@ -1136,6 +1245,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 )
             }
             Mock Get-ToolStaleness { }
+            Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |
@@ -1150,6 +1260,7 @@ Describe 'Invoke-SHAStalenessCheck' -Tag 'Unit' {
                 $script:StaleDependencies = @()
             }
             Mock Get-ToolStaleness { }
+            Mock Get-PSModuleStaleness { }
             Mock Write-SecurityOutput { }
 
             { Invoke-SHAStalenessCheck -OutputFormat 'console' -FailOnStale } |

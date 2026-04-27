@@ -116,6 +116,39 @@ maturity: deprecated
         }
     }
 
+    Context 'Removed collections always skipped' {
+        BeforeEach {
+            $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
+            New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
+
+            @"
+id: gone-collection
+name: Gone Collection
+maturity: removed
+"@ | Set-Content -Path (Join-Path $script:TempDir 'gone.collection.yml')
+        }
+
+        AfterEach {
+            Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        It 'Excludes removed from matrix on Stable channel' {
+            $result = Find-CollectionManifestsCore -CollectionsDir $script:TempDir -Channel 'Stable'
+            $result.MatrixItems | Should -HaveCount 0
+        }
+
+        It 'Excludes removed from matrix on Preview channel' {
+            $result = Find-CollectionManifestsCore -CollectionsDir $script:TempDir -Channel 'Preview'
+            $result.MatrixItems | Should -HaveCount 0
+        }
+
+        It 'Tracks removed in Skipped with reason removed' {
+            $result = Find-CollectionManifestsCore -CollectionsDir $script:TempDir
+            $result.Skipped | Should -HaveCount 1
+            $result.Skipped[0].Reason | Should -Be 'removed'
+        }
+    }
+
     Context 'Experimental skipped for Stable channel' {
         BeforeEach {
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"

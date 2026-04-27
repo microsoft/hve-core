@@ -317,6 +317,251 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
     }
 }
 
+Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'folder-consistency-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Matching folder structure
+        $matchDir = Join-Path $script:repoRoot '.github/agents/my-collection'
+        New-Item -ItemType Directory -Path $matchDir -Force | Out-Null
+        Set-Content -Path (Join-Path $matchDir 'match.agent.md') -Value '---\ndescription: matching agent\n---'
+
+        # Mismatched folder structure
+        $mismatchDir = Join-Path $script:repoRoot '.github/agents/wrong-folder'
+        New-Item -ItemType Directory -Path $mismatchDir -Force | Out-Null
+        Set-Content -Path (Join-Path $mismatchDir 'mismatch.agent.md') -Value '---\ndescription: mismatched agent\n---'
+
+        # Shared folder structure
+        $sharedDir = Join-Path $script:repoRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $sharedDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedDir 'shared.instructions.md') -Value '---\ndescription: shared instruction\n---'
+
+        # rai-planning sub-domain folder structure (shared across themed collections)
+        $raiPlanningDir = Join-Path $script:repoRoot '.github/instructions/rai-planning'
+        New-Item -ItemType Directory -Path $raiPlanningDir -Force | Out-Null
+        Set-Content -Path (Join-Path $raiPlanningDir 'rai.instructions.md') -Value '---\ndescription: rai-planning instruction\n---'
+
+        # hve-core folder structure (cross-collection reference allowed without warning)
+        $hveCoreDir = Join-Path $script:repoRoot '.github/agents/hve-core'
+        New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
+        Set-Content -Path (Join-Path $hveCoreDir 'core.agent.md') -Value '---\ndescription: hve-core agent\n---'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Passes when collection-id matches folder name' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection with matching folder'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/my-collection/match.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*my-collection'
+        }
+    }
+
+    It 'Warns but does not fail when collection-id does not match folder name' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection with mismatched folder'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*wrong-folder'
+        }
+    }
+
+    It 'Allows items from hve-core/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing hve-core item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/hve-core/core.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        # Register hve-core as a known collection ID (mirrors real-world hve-core.collection.yml)
+        $hveCoreManifest = [ordered]@{
+            id          = 'hve-core'
+            name        = 'HVE Core'
+            description = 'HVE Core collection'
+            items       = @()
+        }
+        $hveYaml = ConvertTo-Yaml -Data $hveCoreManifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml') -Value $hveYaml
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.md') -Value '# HVE Core'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Allows items from shared/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing shared item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/instructions/shared/shared.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Allows items from rai-planning/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing rai-planning item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/instructions/rai-planning/rai.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Allows hve-core-all to reference items from any folder' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'HVE Core All'
+            description = 'Aggregate collection'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/my-collection/match.agent.md'
+                    kind = 'agent'
+                },
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                },
+                [ordered]@{
+                    path = '.github/instructions/shared/shared.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
+                    path = '.github/instructions/rai-planning/rai.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
+                    path = '.github/agents/hve-core/core.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
+    It 'Emits warning output for mismatched folder name without failing' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Mismatch for warning output test'
+            items       = @(
+                [ordered]@{
+                    path = '.github/agents/wrong-folder/mismatch.agent.md'
+                    kind = 'agent'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        # Advisory warning uses Write-Host WARN; validation still passes
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection.*wrong-folder'
+        }
+    }
+}
+
 Describe 'Invoke-CollectionValidation - error paths' {
     BeforeAll {
         Import-Module PowerShell-Yaml -ErrorAction Stop
@@ -809,6 +1054,163 @@ Describe 'Invoke-CollectionValidation - new checks' {
         }
         Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
         Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.md') -Value '# Themed Partial'
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+}
+
+Describe 'Invoke-CollectionValidation - marker validation' -Tag 'Unit' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'marker-validation'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        # Create artifact directories
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+        $orphanDir = Join-Path $script:repoRoot '.github/agents/orphan'
+        New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+        Set-Content -Path (Join-Path $orphanDir 'orphan.agent.md') -Value '---' -Force
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Passes when collection.md has valid matched marker pairs' {
+        $manifest = [ordered]@{
+            id = 'valid-markers'; name = 'Valid Markers'; description = 'Matched markers'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Valid Markers
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+Generated content.
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when begin marker exists without end marker' {
+        $manifest = [ordered]@{
+            id = 'begin-only'; name = 'Begin Only'; description = 'Missing end'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Begin Only
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+Content without end marker.
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when end marker exists without begin marker' {
+        $manifest = [ordered]@{
+            id = 'end-only'; name = 'End Only'; description = 'Missing begin'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# End Only
+
+Content without begin marker.
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Does not warn when collection.md has no markers (backward compat)' {
+        $manifest = [ordered]@{
+            id = 'no-markers'; name = 'No Markers'; description = 'Legacy no markers'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.md') -Value '# No Markers - legacy content without any markers'
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'Warns but passes when markers appear in wrong order' {
+        $manifest = [ordered]@{
+            id = 'reversed'; name = 'Reversed'; description = 'Wrong order'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        $mdContent = @"
+# Reversed
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+Content.
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.md') -Value $mdContent
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @(
+                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
+                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
+            )
+        }
         Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
         Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
 
