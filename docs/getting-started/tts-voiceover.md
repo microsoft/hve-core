@@ -70,9 +70,14 @@ uv run scripts/generate_voiceover.py --content-dir path/to/content --output-dir 
 
 ### 3. Embed Audio into PPTX
 
+Embedding adds WAV files as media objects and injects narration timing XML so
+PowerPoint recognizes the audio for video export.
+
 ```bash
 uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over
 ```
+
+After embedding, use **File > Export > Create a Video > Use Recorded Timings and Narrations** in PowerPoint to produce an MP4 with synchronized audio.
 
 ## Cross-Platform Wrappers
 
@@ -132,6 +137,7 @@ content/
 | 401 with Entra ID auth                     | Verify custom domain and `Cognitive Services Speech User` role assignment |
 | Empty WAV files                            | Verify `speaker_notes:` is present and non-empty in `content.yaml`        |
 | Mispronounced acronyms                     | Add entries to `acronyms.yaml` with phonetic aliases                      |
+| Video export shows "No timings recorded"   | Re-embed audio with the latest `embed_audio.py`                          |
 
 ## Related Resources
 

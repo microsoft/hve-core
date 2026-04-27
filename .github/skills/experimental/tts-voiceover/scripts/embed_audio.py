@@ -4,16 +4,14 @@
 """Embed per-slide WAV voice-over files into a PowerPoint deck.
 
 Reads slide-NNN.wav files from an audio directory and adds them as embedded
-media objects in the corresponding slides of a PPTX file.
+media objects in the corresponding slides of a PPTX file. Adds animation
+timing XML so PowerPoint recognizes the audio as narrations, enabling
+'Use Recorded Timings and Narrations' in File > Export > Create a Video.
 
 Usage:
     python embed_audio.py --input deck.pptx --audio-dir voice-over
     python embed_audio.py --input deck.pptx --audio-dir voice-over \
         --output deck-narrated.pptx
-
-Note: python-pptx has limited audio embedding support. The audio is added via
-``add_movie()`` with a small off-screen icon. Manual PowerPoint audio
-configuration may produce better auto-play results.
 """
 
 from __future__ import annotations
@@ -21,10 +19,12 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import wave
 from pathlib import Path
 
+from lxml import etree
 from pptx import Presentation
-from pptx.slide import Slide
+from pptx.oxml.ns import qn
 from pptx.util import Inches
 
 logger = logging.getLogger(__name__)
@@ -35,10 +35,101 @@ EXIT_ERROR = 2
 
 AUDIO_MIME_TYPE = "audio/wav"
 ICON_SIZE = Inches(0.1)
+TIMING_BUFFER_MS = 1500
 
 
-def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
-    """Embed a WAV file into a PowerPoint slide.
+def get_wav_duration_ms(wav_path: Path) -> int:
+    """Return WAV file duration in milliseconds with buffer."""
+    with wave.open(str(wav_path), "rb") as wf:
+        frames = wf.getnframes()
+        rate = wf.getframerate()
+        return int((frames / float(rate)) * 1000) + TIMING_BUFFER_MS
+
+
+def _add_narration_timing(slide: object, shape_id: int, duration_ms: int) -> None:
+    """Add auto-play narration timing XML to a slide.
+
+    Creates the p:timing element structure that PowerPoint generates
+    when using Record Slide Show, enabling 'Use Recorded Timings and
+    Narrations' in video export.
+    """
+    existing = slide._element.find(qn("p:timing"))
+    if existing is not None:
+        slide._element.remove(existing)
+
+    timing_xml = (
+        '<p:timing xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"'
+        ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+        "<p:tnLst><p:par>"
+        '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+        "<p:childTnLst>"
+        '<p:seq concurrent="1" nextAc="seek">'
+        f'<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+        "<p:childTnLst><p:par>"
+        '<p:cTn id="3" fill="hold">'
+        '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+        "<p:childTnLst><p:par>"
+        '<p:cTn id="4" fill="hold">'
+        '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+        "<p:childTnLst>"
+        '<p:cmd type="call" cmd="playFrom(0)"><p:cBhvr>'
+        f'<p:cTn id="5" dur="{duration_ms}" fill="hold"/>'
+        f'<p:tgtEl><p:spTgt spid="{shape_id}"/></p:tgtEl>'
+        "</p:cBhvr></p:cmd>"
+        "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>"
+        "</p:childTnLst></p:cTn>"
+        "<p:prevCondLst>"
+        '<p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
+        "</p:prevCondLst>"
+        "<p:nextCondLst>"
+        '<p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
+        "</p:nextCondLst>"
+        "</p:seq></p:childTnLst></p:cTn>"
+        "</p:par></p:tnLst></p:timing>"
+    )
+    slide._element.append(etree.fromstring(timing_xml))
+
+
+def _set_slide_transition(slide: object, duration_ms: int) -> None:
+    """Set slide auto-advance timing after audio duration."""
+    existing = slide._element.find(qn("p:transition"))
+    if existing is not None:
+        slide._element.remove(existing)
+
+    transition = slide._element.makeelement(
+        qn("p:transition"),
+        {"advClick": "1", "advTm": str(duration_ms)},
+    )
+    timing = slide._element.find(qn("p:timing"))
+    if timing is not None:
+        timing.addprevious(transition)
+    else:
+        slide._element.append(transition)
+
+
+def _find_audio_shape_id(slide: object) -> int | None:
+    """Find the shape ID of the audio/movie shape on a slide."""
+    for shape in slide.shapes:
+        sp = shape._element
+        for tag_suffix in ("nvPicPr", "nvSpPr"):
+            nv = sp.find(qn(f"p:{tag_suffix}"))
+            if nv is None:
+                continue
+            nvPr = nv.find(qn("p:nvPr"))
+            if nvPr is None:
+                continue
+            if nvPr.find(qn("a:audioFile")) is not None:
+                return shape.shape_id
+            if nvPr.find(qn("a:videoFile")) is not None:
+                return shape.shape_id
+    return None
+
+
+def embed_slide_audio(slide: object, wav_path: Path) -> bool:
+    """Embed a WAV file into a slide as a media object.
+
+    Adds narration timing XML and slide auto-advance so PowerPoint
+    recognizes the audio for video export.
 
     Returns True on success, False on failure.
     """
@@ -51,6 +142,11 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
             height=ICON_SIZE,
             mime_type=AUDIO_MIME_TYPE,
         )
+        shape_id = _find_audio_shape_id(slide)
+        if shape_id is not None:
+            duration_ms = get_wav_duration_ms(wav_path)
+            _add_narration_timing(slide, shape_id, duration_ms)
+            _set_slide_transition(slide, duration_ms)
         return True
     except Exception:
         logger.exception("Failed to embed audio %s", wav_path.name)
@@ -83,8 +179,9 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run() -> int:
-    """Core logic for audio embedding."""
+def main() -> int:
+    """Entry point for audio embedding."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
 
@@ -105,7 +202,6 @@ def _run() -> int:
 
     prs = Presentation(str(input_path))
     embedded_count = 0
-    failed_count = 0
 
     for idx, slide in enumerate(prs.slides, start=1):
         wav_name = f"slide-{idx:03d}.wav"
@@ -118,32 +214,15 @@ def _run() -> int:
             embedded_count += 1
             logger.info("Embedded %s into slide %d", wav_name, idx)
         else:
-            failed_count += 1
             logger.error("FAILED to embed %s into slide %d", wav_name, idx)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
     logger.info(
-        "Saved %s with %d embedded audio files (%d failed)",
-        output_path,
-        embedded_count,
-        failed_count,
+        "Saved %s with %d embedded audio files", output_path, embedded_count
     )
 
-    return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
-
-
-def main() -> int:
-    """Entry point for audio embedding."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    try:
-        return _run()
-    except KeyboardInterrupt:
-        print("\nInterrupted by user", file=sys.stderr)
-        return 130
-    except BrokenPipeError:
-        sys.stderr.close()
-        return EXIT_FAILURE
+    return EXIT_SUCCESS
 
 
 if __name__ == "__main__":

@@ -76,6 +76,10 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### embed_audio.py
 
+Embeds WAV files into corresponding PPTX slides and adds narration timing
+XML so PowerPoint recognizes the audio for video export via
+**File > Export > Create a Video > Use Recorded Timings and Narrations**.
+
 | Parameter      | Type | Default              | Description                      |
 |:---------------|:-----|:---------------------|:---------------------------------|
 | `--input`      | path | *(required)*         | Source PPTX file path            |
@@ -170,5 +174,6 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Mispronounced acronyms | Add entries to `acronyms.yaml` with phonetic aliases. |
 | `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory. |
 | Audio icon visible in PPTX | Reposition or resize the audio object in PowerPoint after embedding. |
+| Video export shows "No timings recorded" | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically. |
 
 > Brought to you by microsoft/hve-core
