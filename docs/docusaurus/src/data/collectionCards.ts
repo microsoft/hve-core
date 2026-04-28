@@ -75,12 +75,6 @@ export const collectionCardDefinitions: CollectionCardDefinition[] = [
     href: '/docs/getting-started/collections',
   },
   {
-    name: 'rai-planning',
-    description: 'Responsible AI assessment, impact analysis, and risk review',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/collections',
-  },
-  {
     name: 'security',
     description: 'Security review, planning, incident response, and risk assessment',
     maturity: 'Experimental',
@@ -104,5 +98,7 @@ export function resolveCollectionCards(
 export function resolveMetaCollections(
   counts: Record<string, number>,
 ): MetaCollections {
-  return { 'hve-core-all': counts['hve-core-all'] ?? 0 };
+  return {
+    'hve-core-all': counts['hve-core-all'] ?? 0,
+  };
 }

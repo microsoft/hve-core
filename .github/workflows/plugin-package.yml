@@ -70,12 +70,14 @@ jobs:
             - name: Install PowerShell-Yaml
               shell: pwsh
               run: |
-                  if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-                    Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+                  if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+                    Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
                   }
 
             - name: Generate plugins
-              run: npm run plugin:generate
+              run: |
+                  mkdir -p logs
+                  npm run plugin:generate
 
             - name: Package plugin directory
               shell: bash
@@ -90,7 +92,7 @@ jobs:
                   zip -r "dist/plugins/${{ matrix.id }}.zip" "$plugin_dir"
 
             - name: Upload plugin artifact
-              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: plugin-package-${{ matrix.id }}
                   path: dist/plugins/${{ matrix.id }}.zip

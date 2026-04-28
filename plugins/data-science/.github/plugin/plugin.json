@@ -1,13 +1,14 @@
 {
   "name": "data-science",
-  "description": "Data specification generation, Jupyter notebooks, and Streamlit dashboards",
-  "version": "3.3.41",
+  "description": "Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards",
+  "version": "3.3.101",
   "agents": [
     "agents/data-science/",
     "agents/hve-core/subagents/",
     "agents/rai-planning/"
   ],
   "commands": [
+    "commands/data-science/",
     "commands/rai-planning/"
   ]
 }

@@ -31,9 +31,10 @@
         "stable",
         "preview",
         "experimental",
-        "deprecated"
+        "deprecated",
+        "removed"
       ],
-      "description": "Optional release channel eligibility. Defaults to stable when omitted. Experimental collections are excluded from Stable (Release) channel."
+      "description": "Optional release channel eligibility. Defaults to stable when omitted. Experimental collections are excluded from Stable (Release) channel. Removed collections are excluded from every channel and from auto-discovery."
     },
     "tags": {
       "type": "array",
@@ -77,9 +78,10 @@
               "stable",
               "preview",
               "experimental",
-              "deprecated"
+              "deprecated",
+              "removed"
             ],
-            "description": "Optional release maturity for this item. Defaults to stable when omitted."
+            "description": "Optional release maturity for this item. Defaults to stable when omitted. Items marked removed are excluded from every channel and skipped by collection auto-discovery."
           }
         },
         "additionalProperties": false

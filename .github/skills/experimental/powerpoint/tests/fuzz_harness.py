@@ -207,18 +207,70 @@ class TestFuzzMaxSeverity:
         assert max_severity({"slides": []}) == "none"
 
 
+# ---------------------------------------------------------------------------
+# Dict-style run helpers — exercise the dict branch of _has_formatting_variation
+# ---------------------------------------------------------------------------
+
+
+class _Color:
+    """Minimal stand-in for python-pptx RGBColor used by _make_dict_run."""
+
+    def __init__(self, rgb):
+        self.rgb = rgb
+
+    def __eq__(self, other):
+        return isinstance(other, _Color) and self.rgb == other.rgb
+
+    def __hash__(self):
+        return hash(self.rgb)
+
+
+def _make_dict_run(
+    font="Arial", bold=False, italic=False, underline=False, size=None, color_rgb=None
+):
+    """Create a plain dict matching the dict-style branch in get_props."""
+    return {
+        "font": font,
+        "bold": bold,
+        "italic": italic,
+        "underline": underline,
+        "size": size,
+        "color": _Color(color_rgb),
+    }
+
+
 class TestFuzzHasFormattingVariation:
-    """Property tests for _has_formatting_variation."""
+    """Tests for _has_formatting_variation covering all 6 formatting properties."""
 
     def test_single_run(self):
-        assert _has_formatting_variation([{"font": "Arial"}]) is False
+        assert _has_formatting_variation([_make_dict_run()]) is False
 
     def test_identical_runs(self):
-        runs = [{"font": "Arial", "bold": True}, {"font": "Arial", "bold": True}]
+        runs = [_make_dict_run(), _make_dict_run()]
         assert _has_formatting_variation(runs) is False
 
     def test_different_fonts(self):
-        runs = [{"font": "Arial"}, {"font": "Calibri"}]
+        runs = [_make_dict_run(font="Arial"), _make_dict_run(font="Calibri")]
+        assert _has_formatting_variation(runs) is True
+
+    def test_bold_variation(self):
+        runs = [_make_dict_run(bold=True), _make_dict_run(bold=False)]
+        assert _has_formatting_variation(runs) is True
+
+    def test_italic_variation(self):
+        runs = [_make_dict_run(italic=True), _make_dict_run(italic=False)]
+        assert _has_formatting_variation(runs) is True
+
+    def test_underline_variation(self):
+        runs = [_make_dict_run(underline=True), _make_dict_run(underline=False)]
+        assert _has_formatting_variation(runs) is True
+
+    def test_size_variation(self):
+        runs = [_make_dict_run(size=100_000), _make_dict_run(size=200_000)]
+        assert _has_formatting_variation(runs) is True
+
+    def test_color_rgb_variation(self):
+        runs = [_make_dict_run(color_rgb=0xFF0000), _make_dict_run(color_rgb=0x00FF00)]
         assert _has_formatting_variation(runs) is True
 
     def test_empty_list(self):

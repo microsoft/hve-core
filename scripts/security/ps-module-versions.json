@@ -1,0 +1,26 @@
+{
+  "_comment": "Canonical pinned versions for PowerShell modules used across this repository. Single source of truth consumed by the test runner and Test-PSModulePins.ps1 validator. Update versions here; CI enforces consistency.",
+  "modules": {
+    "Pester": {
+      "version": "5.7.1",
+      "purpose": "Test framework",
+      "enforcedBy": [
+        "scripts/tests/Invoke-PesterTests.ps1"
+      ]
+    },
+    "PowerShell-Yaml": {
+      "version": "0.4.7",
+      "purpose": "YAML parser used by linting and validation scripts",
+      "enforcedBy": [
+        "scripts/security/Test-PSModulePins.ps1"
+      ]
+    },
+    "PSScriptAnalyzer": {
+      "version": "1.25.0",
+      "purpose": "PowerShell static analysis",
+      "enforcedBy": [
+        "scripts/security/Test-PSModulePins.ps1"
+      ]
+    }
+  }
+}

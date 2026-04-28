@@ -31,6 +31,9 @@ items:
     kind: agent
   - path: .github/agents/hve-core/task-reviewer.agent.md
     kind: agent
+  - path: .github/agents/hve-core/task-challenger.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/hve-core/pr-review.agent.md
     kind: agent
 
@@ -62,6 +65,9 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/task-review.prompt.md
     kind: prompt
+  - path: .github/prompts/hve-core/task-challenge.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/hve-core/checkpoint.prompt.md
     kind: prompt
   - path: .github/prompts/hve-core/doc-ops-update.prompt.md

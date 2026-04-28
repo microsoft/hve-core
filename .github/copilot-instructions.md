@@ -102,6 +102,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
 * Doc Ops (`.copilot-tracking/doc-ops/`) - Documentation operations session tracking.
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
+* Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
 
 All tracking files use markdown format with frontmatter and follow patterns from `.github/instructions/ado/ado-*.instructions.md`.
 
@@ -190,6 +191,7 @@ Copilot Coding Agent uses a cloud-based GitHub Actions environment, separate fro
 * PowerShell 7 with PSScriptAnalyzer, PowerShell-Yaml, and Pester 5.7.1 modules
 * shellcheck for bash script validation (pre-installed on ubuntu-latest)
 * actionlint for GitHub Actions workflow validation
+* cosign for artifact manifest signing
 
 ### Using npm Scripts
 

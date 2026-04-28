@@ -622,3 +622,40 @@ Describe 'Set-ContentIfChanged' {
         $text | Should -Be 'test content'
     }
 }
+
+Describe 'Update-HveCoreAllCollection - removed maturity exclusion' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-removed-maturity'
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'keep.agent.md') -Value "---`ndescription: keep`n---`nBody"
+        Set-Content -Path (Join-Path $agentsDir 'drop.agent.md') -Value "---`ndescription: drop`n---`nBody"
+        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'collections') -Force | Out-Null
+    }
+
+    It 'Excludes items with maturity: removed from generated hve-core-all manifest' {
+        $yaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/keep.agent.md
+  kind: agent
+- path: .github/agents/test-collection/drop.agent.md
+  kind: agent
+  maturity: removed
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'keep\.agent\.md'
+        $output | Should -Not -Match 'drop\.agent\.md'
+    }
+}
+
+
