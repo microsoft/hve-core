@@ -232,6 +232,16 @@ Describe 'Ruff Lint Fix Execution' -Tag 'Unit' {
             Invoke-PythonLintFix -RepoRoot $TestDrive
             Should -Invoke ruff -ParameterFilter { $args -contains 'check' }
         }
+
+        It 'Invokes ruff with format subcommand' {
+            Invoke-PythonLintFix -RepoRoot $TestDrive
+            Should -Invoke ruff -ParameterFilter { $args -contains 'format' }
+        }
+
+        It 'Records formatExitCode in skill detail' {
+            $result = Invoke-PythonLintFix -RepoRoot $TestDrive
+            $result.details[0].formatExitCode | Should -Be 0
+        }
     }
 
     Context 'Unfixable issues remain' {

@@ -4,7 +4,10 @@
 #
 # Invoke-PythonLintFix.ps1
 #
-# Purpose: Dynamically discovers Python skills and applies ruff autofixes
+# Purpose: Mutating Python lint runner. Discovers Python skills via
+#          pyproject.toml and applies `ruff check --fix` followed by
+#          `ruff format` to each skill. Modifies source files in place;
+#          intended for local developer use, not CI gating.
 # Author: HVE Core Team
 
 #Requires -Version 7.0
@@ -20,10 +23,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot 'Modules/PythonLintHelpers.psm1') -Force
+
 #region Functions
 
 function Invoke-PythonLintFix {
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
@@ -34,10 +40,7 @@ function Invoke-PythonLintFix {
 
     Push-Location $RepoRoot
     try {
-        # Find all directories with pyproject.toml
-        $pythonSkills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
-            ForEach-Object { $_.Directory.FullName }
+        $pythonSkills = Get-PythonSkill -RepoRoot $RepoRoot
 
         if (-not $pythonSkills) {
             Write-Host 'No Python skills found (no pyproject.toml files detected)' -ForegroundColor Yellow
@@ -47,8 +50,7 @@ function Invoke-PythonLintFix {
         Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
         $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 
-        # Check if ruff is globally available (used as fallback when skill has no venv)
-        $globalRuff = Get-Command ruff -ErrorAction SilentlyContinue
+        $globalRuffAvailable = [bool](Get-Command ruff -ErrorAction SilentlyContinue)
 
         $results = @{
             success = $true
@@ -58,23 +60,11 @@ function Invoke-PythonLintFix {
         }
 
         foreach ($skillPath in $pythonSkills) {
-            Write-Host "`nRunning ruff --fix in $skillPath..." -ForegroundColor Cyan
+            Write-Host "`nRunning ruff --fix and ruff format in $skillPath..." -ForegroundColor Cyan
 
             Push-Location $skillPath
             try {
-                # Resolve ruff: prefer skill venv, fall back to global
-                $ruffCmd = $null
-                $venvRuff = Join-Path $skillPath '.venv/bin/ruff'
-                $venvRuffWin = Join-Path $skillPath '.venv/Scripts/ruff.exe'
-                if (Test-Path $venvRuff) {
-                    $ruffCmd = $venvRuff
-                    Write-Host '  Using venv ruff' -ForegroundColor Gray
-                } elseif (Test-Path $venvRuffWin) {
-                    $ruffCmd = $venvRuffWin
-                    Write-Host '  Using venv ruff' -ForegroundColor Gray
-                } elseif ($globalRuff) {
-                    $ruffCmd = 'ruff'
-                }
+                $ruffCmd = Resolve-RuffCommand -SkillPath $skillPath -GlobalRuffAvailable $globalRuffAvailable
 
                 if (-not $ruffCmd) {
                     Write-Host '❌ ruff not available (no .venv and not installed globally)' -ForegroundColor Red
@@ -83,28 +73,43 @@ function Invoke-PythonLintFix {
                     continue
                 }
 
-                $output = & $ruffCmd check . --fix 2>&1
-                $exitCode = $LASTEXITCODE
+                # Step 1: autofix lint rules
+                $fixOutput = & $ruffCmd check . --fix 2>&1
+                $fixExit = $LASTEXITCODE
+
+                # Step 2: apply formatter (issue #886 acceptance criterion)
+                $formatOutput = & $ruffCmd format . 2>&1
+                $formatExit = $LASTEXITCODE
+
+                $combinedOutput = (@($fixOutput) + @($formatOutput)) | Out-String
+                $passed = ($fixExit -eq 0 -and $formatExit -eq 0)
 
                 $result = @{
                     path = $skillPath
-                    passed = ($exitCode -eq 0)
-                    output = $output | Out-String
+                    passed = $passed
+                    output = $combinedOutput
+                    fixExitCode = $fixExit
+                    formatExitCode = $formatExit
                 }
 
                 $results.details += $result
                 $results.skillsChecked++
 
-                if ($exitCode -ne 0) {
-                    Write-Host "$output" -ForegroundColor Red
-                    Write-Host '❌ Unfixable linting issues remain' -ForegroundColor Red
+                if (-not $passed) {
+                    Write-Host "$combinedOutput" -ForegroundColor Red
+                    if ($fixExit -ne 0) {
+                        Write-Host '❌ Unfixable linting issues remain' -ForegroundColor Red
+                    }
+                    if ($formatExit -ne 0) {
+                        Write-Host '❌ ruff format failed' -ForegroundColor Red
+                    }
                     $results.success = $false
                     $results.errors += $skillPath
                 } else {
-                    if ($output) {
-                        Write-Host "$output"
+                    if ($combinedOutput.Trim()) {
+                        Write-Host "$combinedOutput"
                     }
-                    Write-Host '✓ Autofix complete' -ForegroundColor Green
+                    Write-Host '✓ Autofix and format complete' -ForegroundColor Green
                 }
             } catch {
                 Write-Host "Error running ruff: $_" -ForegroundColor Red
@@ -115,16 +120,8 @@ function Invoke-PythonLintFix {
             }
         }
 
-        # Default to logs directory when no OutputPath specified
-        if (-not $OutputPath) {
-            $logsDir = Join-Path -Path $RepoRoot -ChildPath 'logs'
-            if (-not (Test-Path $logsDir)) {
-                New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-            }
-            $OutputPath = Join-Path -Path $logsDir -ChildPath 'python-lint-fix-results.json'
-        }
-        $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
-        Write-Host "📊 Results written to: $OutputPath" -ForegroundColor Cyan
+        $resolvedPath = Write-PythonLintResults -Results $results -RepoRoot $RepoRoot -OutputPath $OutputPath -DefaultFileName 'python-lint-fix-results.json'
+        Write-Host "📊 Results written to: $resolvedPath" -ForegroundColor Cyan
 
         return $results
     } finally {

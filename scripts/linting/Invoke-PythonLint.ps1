@@ -4,7 +4,9 @@
 #
 # Invoke-PythonLint.ps1
 #
-# Purpose: Dynamically discovers and lints Python skills using ruff
+# Purpose: Read-only Python lint runner. Discovers Python skills via
+#          pyproject.toml and invokes `ruff check` against each. Does not
+#          modify source files; intended for CI gating.
 # Author: HVE Core Team
 
 #Requires -Version 7.0
@@ -20,10 +22,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+Import-Module (Join-Path $PSScriptRoot 'Modules/PythonLintHelpers.psm1') -Force
+
 #region Functions
 
 function Invoke-PythonLint {
     [CmdletBinding()]
+    [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
@@ -34,10 +39,7 @@ function Invoke-PythonLint {
 
     Push-Location $RepoRoot
     try {
-        # Find all directories with pyproject.toml
-        $pythonSkills = Get-ChildItem -Path . -Filter 'pyproject.toml' -Recurse -Force -File |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
-            ForEach-Object { $_.Directory.FullName }
+        $pythonSkills = Get-PythonSkill -RepoRoot $RepoRoot
 
         if (-not $pythonSkills) {
             Write-Host 'No Python skills found (no pyproject.toml files detected)' -ForegroundColor Yellow
@@ -47,8 +49,7 @@ function Invoke-PythonLint {
         Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
         $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 
-        # Check if ruff is globally available (used as fallback when skill has no venv)
-        $globalRuff = Get-Command ruff -ErrorAction SilentlyContinue
+        $globalRuffAvailable = [bool](Get-Command ruff -ErrorAction SilentlyContinue)
 
         $results = @{
             success = $true
@@ -59,22 +60,10 @@ function Invoke-PythonLint {
 
         foreach ($skillPath in $pythonSkills) {
             Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
-            
+
             Push-Location $skillPath
             try {
-                # Resolve ruff: prefer skill venv, fall back to global
-                $ruffCmd = $null
-                $venvRuff = Join-Path $skillPath '.venv/bin/ruff'
-                $venvRuffWin = Join-Path $skillPath '.venv/Scripts/ruff.exe'
-                if (Test-Path $venvRuff) {
-                    $ruffCmd = $venvRuff
-                    Write-Host '  Using venv ruff' -ForegroundColor Gray
-                } elseif (Test-Path $venvRuffWin) {
-                    $ruffCmd = $venvRuffWin
-                    Write-Host '  Using venv ruff' -ForegroundColor Gray
-                } elseif ($globalRuff) {
-                    $ruffCmd = 'ruff'
-                }
+                $ruffCmd = Resolve-RuffCommand -SkillPath $skillPath -GlobalRuffAvailable $globalRuffAvailable
 
                 if (-not $ruffCmd) {
                     Write-Host '❌ ruff not available (no .venv and not installed globally)' -ForegroundColor Red
@@ -85,16 +74,16 @@ function Invoke-PythonLint {
 
                 $output = & $ruffCmd check . 2>&1
                 $exitCode = $LASTEXITCODE
-                
+
                 $result = @{
                     path = $skillPath
                     passed = ($exitCode -eq 0)
                     output = $output | Out-String
                 }
-                
+
                 $results.details += $result
                 $results.skillsChecked++
-                
+
                 if ($exitCode -ne 0) {
                     Write-Host "$output" -ForegroundColor Red
                     Write-Host '❌ Linting issues found' -ForegroundColor Red
@@ -115,16 +104,8 @@ function Invoke-PythonLint {
             }
         }
 
-        # Default to logs directory when no OutputPath specified
-        if (-not $OutputPath) {
-            $logsDir = Join-Path -Path $RepoRoot -ChildPath 'logs'
-            if (-not (Test-Path $logsDir)) {
-                New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
-            }
-            $OutputPath = Join-Path -Path $logsDir -ChildPath 'python-lint-results.json'
-        }
-        $results | ConvertTo-Json -Depth 3 | Out-File $OutputPath -Encoding UTF8
-        Write-Host "📊 Results written to: $OutputPath" -ForegroundColor Cyan
+        $resolvedPath = Write-PythonLintResults -Results $results -RepoRoot $RepoRoot -OutputPath $OutputPath -DefaultFileName 'python-lint-results.json'
+        Write-Host "📊 Results written to: $resolvedPath" -ForegroundColor Cyan
 
         return $results
     } finally {
