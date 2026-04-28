@@ -21,17 +21,18 @@ import sys
 import tempfile
 from pathlib import Path
 
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-EXIT_ERROR = 2
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    configure_logging,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity level."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+class LibreOfficeError(RuntimeError):
+    """Raised when LibreOffice is missing or conversion fails."""
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -101,12 +102,12 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
     """
     soffice = find_libreoffice()
     if not soffice:
-        logger.error("LibreOffice is required for PPTX-to-PDF conversion.")
-        logger.error("Install via:")
-        logger.error("  macOS:   brew install --cask libreoffice")
-        logger.error("  Linux:   sudo apt-get install libreoffice")
-        logger.error("  Windows: winget install TheDocumentFoundation.LibreOffice")
-        sys.exit(EXIT_FAILURE)
+        raise LibreOfficeError(
+            "LibreOffice is required for PPTX-to-PDF conversion. "
+            "Install via: brew install --cask libreoffice (macOS), "
+            "sudo apt-get install libreoffice (Linux), "
+            "winget install TheDocumentFoundation.LibreOffice (Windows)"
+        )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Converting %s to PDF via LibreOffice", pptx_path.name)
@@ -128,17 +129,18 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
         )
         logger.debug("LibreOffice stdout: %s", result.stdout)
     except subprocess.CalledProcessError as e:
-        logger.error("LibreOffice conversion failed: %s", e.stderr)
-        sys.exit(EXIT_FAILURE)
-    except FileNotFoundError:
-        logger.error("LibreOffice executable not found: %s", soffice)
-        sys.exit(EXIT_FAILURE)
+        raise LibreOfficeError(
+            f"LibreOffice conversion failed: {e.stderr}"
+        ) from e
+    except FileNotFoundError as e:
+        raise LibreOfficeError(
+            f"LibreOffice executable not found: {soffice}"
+        ) from e
 
     pdf_name = pptx_path.stem + ".pdf"
     pdf_path = output_dir / pdf_name
     if not pdf_path.exists():
-        logger.error("Expected PDF not found: %s", pdf_path)
-        sys.exit(EXIT_FAILURE)
+        raise LibreOfficeError(f"Expected PDF not found: {pdf_path}")
 
     return pdf_path
 
@@ -170,11 +172,10 @@ def export_pdf_to_svg(
     """
     try:
         import fitz  # noqa: PLC0415 — PyMuPDF
-    except ImportError:
-        logger.error(
+    except ImportError as e:
+        raise LibreOfficeError(
             "PyMuPDF is required for SVG export. Install via: pip install pymupdf"
-        )
-        sys.exit(EXIT_FAILURE)
+        ) from e
 
     doc = fitz.open(str(pdf_path))
     total_pages = len(doc)
@@ -221,8 +222,12 @@ def run(args: argparse.Namespace) -> int:
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
-        pdf_path = convert_pptx_to_pdf(pptx_path, tmp_path)
-        exported = export_pdf_to_svg(pdf_path, output_dir, slides)
+        try:
+            pdf_path = convert_pptx_to_pdf(pptx_path, tmp_path)
+            exported = export_pdf_to_svg(pdf_path, output_dir, slides)
+        except LibreOfficeError as e:
+            logger.error("%s", e)
+            return EXIT_FAILURE
 
     logger.info("SVG export complete: %d slide(s) → %s", len(exported), output_dir)
     return EXIT_SUCCESS

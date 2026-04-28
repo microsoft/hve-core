@@ -20,18 +20,14 @@ import sys
 from pathlib import Path
 
 import yaml
-
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-EXIT_ERROR = 2
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    configure_logging,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity level."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -80,20 +76,21 @@ def load_themes(themes_path: Path) -> dict:
 def remap_hex_in_text(text: str, color_map: dict[str, str]) -> str:
     """Replace ``#RRGGBB`` hex color values using *color_map*.
 
+    Uses a single-pass regex callback to avoid chain remapping where
+    one substitution's output feeds the next (e.g., A→B then B→C
+    would incorrectly produce C instead of the intended B).
+
     Keys and values in *color_map* must include the leading ``#``.
     Matching is case-insensitive.
     """
-    result = text
-    for old_hex, new_hex in color_map.items():
-        old_bare = old_hex.lstrip("#")
-        new_bare = new_hex.lstrip("#")
-        result = re.sub(
-            rf"#{re.escape(old_bare)}",
-            f"#{new_bare}",
-            result,
-            flags=re.IGNORECASE,
-        )
-    return result
+    bare_map = {k.lstrip("#").lower(): v.lstrip("#") for k, v in color_map.items()}
+    if not bare_map:
+        return text
+    pattern = re.compile(
+        r"#(" + "|".join(re.escape(k) for k in bare_map) + r")",
+        re.IGNORECASE,
+    )
+    return pattern.sub(lambda m: f"#{bare_map[m.group(1).lower()]}", text)
 
 
 def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
@@ -158,32 +155,35 @@ def process_directory(src_dir: Path, dest_dir: Path, color_map: dict[str, str]) 
 
 
 def update_style_metadata(style_path: Path, theme_id: str, label: str) -> None:
-    """Patch theme name and append label to title in style.yaml."""
+    """Patch theme name and append label to title in style.yaml.
+
+    Uses yaml.safe_load round-trip to avoid brittle regex patching.
+    Note: this normalizes YAML formatting (key ordering, quoting style).
+    """
     if not style_path.exists():
         return
-    text = style_path.read_text(encoding="utf-8")
-    # Update theme name field
-    text = re.sub(
-        r'(name:\s*")[^"]*(")',
-        rf"\g<1>{theme_id}\2",
-        text,
-        count=1,
-    )
+    data = yaml.safe_load(style_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return
 
-    # Append theme label to title when not already present
-    def _append_label(m: re.Match) -> str:
-        prefix, title, suffix = m.group(1), m.group(2), m.group(3)
-        if label in title:
-            return m.group(0)
-        return f"{prefix}{title} ({label}){suffix}"
+    # Update theme name in the themes list
+    themes = data.get("themes", [])
+    if isinstance(themes, list) and themes:
+        first = themes[0]
+        if isinstance(first, dict):
+            first["name"] = theme_id
 
-    text = re.sub(
-        r'(title:\s*")([^"]*?)(")',
-        _append_label,
-        text,
-        count=1,
+    # Append theme label to metadata title
+    metadata = data.get("metadata", {})
+    if isinstance(metadata, dict):
+        title = metadata.get("title", "")
+        if label not in title:
+            metadata["title"] = f"{title} ({label})" if title else label
+
+    style_path.write_text(
+        yaml.dump(data, allow_unicode=True, default_flow_style=False),
+        encoding="utf-8",
     )
-    style_path.write_text(text, encoding="utf-8")
 
 
 def generate_theme(

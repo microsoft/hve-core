@@ -4,7 +4,6 @@
 
 from unittest.mock import patch
 
-import pytest
 from export_svg import (
     create_parser,
     find_libreoffice,
@@ -95,8 +94,8 @@ class TestRun:
                 str(tmp_path / "out"),
             ]
         )
-        with pytest.raises(SystemExit):
-            run(args)
+        rc = run(args)
+        assert rc == 1
 
 
 class TestMain:

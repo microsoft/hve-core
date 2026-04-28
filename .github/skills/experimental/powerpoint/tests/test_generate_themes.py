@@ -99,6 +99,18 @@ class TestRemapHexInText:
         assert "#FFFFFF" in result
         assert "#0F6CBD" in result
 
+    def test_chain_remapping_avoided(self):
+        """Ensure A->B and B->C produces B, not C (single-pass)."""
+        text = "#AAAAAA"
+        result = remap_hex_in_text(
+            text, {"#AAAAAA": "#BBBBBB", "#BBBBBB": "#CCCCCC"}
+        )
+        assert result == "#BBBBBB"
+
+    def test_empty_map(self):
+        text = "#1B1B1F"
+        assert remap_hex_in_text(text, {}) == text
+
 
 class TestRemapRgbInPython:
     """Tests for remap_rgb_in_python."""

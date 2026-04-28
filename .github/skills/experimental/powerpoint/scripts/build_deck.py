@@ -18,6 +18,7 @@ import argparse
 import ast
 import builtins
 import importlib.util
+import logging
 import re
 import sys
 from pathlib import Path
@@ -40,7 +41,14 @@ from pptx_text import (
     apply_text_properties,
     populate_text_frame,
 )
-from pptx_utils import load_yaml
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    load_yaml,
+)
+
+logger = logging.getLogger(__name__)
 
 CONNECTOR_TYPE_MAP = {
     "straight": MSO_CONNECTOR_TYPE.STRAIGHT,
@@ -1118,8 +1126,8 @@ def main():
     if args.dry_run:
         slides_data = discover_slides(content_dir)
         if not slides_data:
-            print("No slide content found in", content_dir)
-            sys.exit(1)
+            logger.error("No slide content found in %s", content_dir)
+            return EXIT_ERROR
         errors = 0
         for num, slide_dir in slides_data:
             content_yaml = slide_dir / "content.yaml"
@@ -1150,16 +1158,23 @@ def main():
                     else 0
                 )
                 img_status = f" | {img_count} images" if img_count else ""
-                status_line = (
-                    f"  Slide {num:03d}: {title}"
-                    f" [{notes_status}{extra_status}{img_status}]"
+                logger.info(
+                    "  Slide %03d: %s [%s%s%s]",
+                    num,
+                    title,
+                    notes_status,
+                    extra_status,
+                    img_status,
                 )
-                print(status_line)
             except Exception as exc:
-                print(f"  Slide {num:03d}: ❌ YAML parse error: {exc}")
+                logger.error("  Slide %03d: ❌ YAML parse error: %s", num, exc)
                 errors += 1
-        print(f"\nDry-run complete: {len(slides_data)} slides, {errors} error(s)")
-        sys.exit(1 if errors else 0)
+        logger.info(
+            "Dry-run complete: %d slides, %d error(s)",
+            len(slides_data),
+            errors,
+        )
+        return EXIT_FAILURE if errors else EXIT_SUCCESS
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
