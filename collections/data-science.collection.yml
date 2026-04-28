@@ -1,6 +1,6 @@
 id: data-science
 name: Data Science
-description: Data specification generation, Jupyter notebooks, and Streamlit dashboards
+description: Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards
 notice: |
   > [!CAUTION]
   > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
@@ -15,6 +15,8 @@ tags:
   - responsible-ai
 items:
   # Agents
+  - path: .github/agents/data-science/eval-dataset-creator.agent.md
+    kind: agent
   - path: .github/agents/data-science/gen-data-spec.agent.md
     kind: agent
   - path: .github/agents/data-science/gen-jupyter-notebook.agent.md
@@ -40,6 +42,9 @@ items:
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/rai-planning/rai-security-model.instructions.md

@@ -339,6 +339,11 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
         New-Item -ItemType Directory -Path $sharedDir -Force | Out-Null
         Set-Content -Path (Join-Path $sharedDir 'shared.instructions.md') -Value '---\ndescription: shared instruction\n---'
 
+        # rai-planning sub-domain folder structure (shared across themed collections)
+        $raiPlanningDir = Join-Path $script:repoRoot '.github/instructions/rai-planning'
+        New-Item -ItemType Directory -Path $raiPlanningDir -Force | Out-Null
+        Set-Content -Path (Join-Path $raiPlanningDir 'rai.instructions.md') -Value '---\ndescription: rai-planning instruction\n---'
+
         # hve-core folder structure (cross-collection reference allowed without warning)
         $hveCoreDir = Join-Path $script:repoRoot '.github/agents/hve-core'
         New-Item -ItemType Directory -Path $hveCoreDir -Force | Out-Null
@@ -463,6 +468,31 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
         }
     }
 
+    It 'Allows items from rai-planning/ folder in any collection' {
+        Mock Write-Host {}
+
+        $manifest = [ordered]@{
+            id          = 'my-collection'
+            name        = 'My Collection'
+            description = 'Collection referencing rai-planning item'
+            items       = @(
+                [ordered]@{
+                    path = '.github/instructions/rai-planning/rai.instructions.md'
+                    kind = 'instruction'
+                }
+            )
+        }
+        $yaml = ConvertTo-Yaml -Data $manifest
+        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+        Should -Not -Invoke Write-Host -ParameterFilter {
+            $Object -match 'WARN collection'
+        }
+    }
+
     It 'Allows hve-core-all to reference items from any folder' {
         Mock Write-Host {}
 
@@ -481,6 +511,10 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
                 },
                 [ordered]@{
                     path = '.github/instructions/shared/shared.instructions.md'
+                    kind = 'instruction'
+                },
+                [ordered]@{
+                    path = '.github/instructions/rai-planning/rai.instructions.md'
                     kind = 'instruction'
                 },
                 [ordered]@{

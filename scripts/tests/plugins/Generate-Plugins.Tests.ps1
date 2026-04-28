@@ -28,6 +28,13 @@ Describe 'Get-AllowedCollectionMaturities' {
         $stable | Should -Not -Contain 'deprecated'
         $preRelease | Should -Not -Contain 'deprecated'
     }
+
+    It 'Does not include removed for either channel' {
+        $stable = Get-AllowedCollectionMaturities -Channel 'Stable'
+        $preRelease = Get-AllowedCollectionMaturities -Channel 'PreRelease'
+        $stable | Should -Not -Contain 'removed'
+        $preRelease | Should -Not -Contain 'removed'
+    }
 }
 
 Describe 'Select-CollectionItemsByChannel' {
@@ -73,6 +80,30 @@ Describe 'Select-CollectionItemsByChannel' {
             items = @(
                 @{ kind = 'agent'; path = '.github/agents/a.agent.md'; maturity = 'stable' },
                 @{ kind = 'agent'; path = '.github/agents/old.agent.md'; maturity = 'deprecated' }
+            )
+        }
+        $result = Select-CollectionItemsByChannel -Collection $collection -Channel 'PreRelease'
+        $result.items.Count | Should -Be 1
+    }
+
+    It 'Excludes removed items on Stable channel' {
+        $collection = @{
+            id    = 'test'
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/a.agent.md'; maturity = 'stable' },
+                @{ kind = 'agent'; path = '.github/agents/gone.agent.md'; maturity = 'removed' }
+            )
+        }
+        $result = Select-CollectionItemsByChannel -Collection $collection -Channel 'Stable'
+        $result.items.Count | Should -Be 1
+    }
+
+    It 'Excludes removed items on PreRelease channel' {
+        $collection = @{
+            id    = 'test'
+            items = @(
+                @{ kind = 'agent'; path = '.github/agents/a.agent.md'; maturity = 'stable' },
+                @{ kind = 'agent'; path = '.github/agents/gone.agent.md'; maturity = 'removed' }
             )
         }
         $result = Select-CollectionItemsByChannel -Collection $collection -Channel 'PreRelease'

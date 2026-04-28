@@ -175,7 +175,7 @@ When contributing a new artifact:
 
 1. Create the artifact file in the appropriate directory
 2. Add a matching `items[]` entry in one or more `collections/*.collection.yml` files
-3. Set `maturity` when the artifact should be `preview`, `experimental`, or `deprecated`
+3. Set `maturity` when the artifact should be `preview`, `experimental`, `deprecated`, or `removed`. Use `removed` to exclude an artifact from all generated plugins and extension distributions while leaving the source file in place; this is the preferred way to retire a single artifact when the file should remain in the repository (see [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts))
 4. Update the collection's `tags` array if your artifact introduces a new technology or domain not yet represented
 5. Run `npm run lint:yaml` to validate manifest syntax and schema compliance
 6. Run `npm run plugin:validate` to validate collection manifests

@@ -27,7 +27,7 @@
 .PARAMETER Channel
     Optional. Release channel controlling eligible item maturities.
     Stable includes only stable items. PreRelease includes stable, preview,
-    and experimental. Deprecated is excluded from both channels.
+    and experimental. Deprecated and removed are excluded from both channels.
 
 .EXAMPLE
     ./Generate-Plugins.ps1
@@ -129,6 +129,10 @@ function Select-CollectionItemsByChannel {
 
     foreach ($item in $Collection.items) {
         $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+        if ($effectiveMaturity -eq 'removed') {
+            Write-Verbose "Skipping removed item: $($item.path)"
+            continue
+        }
         if ($allowedMaturities -contains $effectiveMaturity) {
             $filteredItems += $item
         }
@@ -252,6 +256,11 @@ function Invoke-PluginGeneration {
 
         if ($collectionMaturity -eq 'deprecated') {
             Write-Verbose "Skipping deprecated collection: $id"
+            continue
+        }
+
+        if ($collectionMaturity -eq 'removed') {
+            Write-Verbose "Skipping removed collection: $id"
             continue
         }
 
