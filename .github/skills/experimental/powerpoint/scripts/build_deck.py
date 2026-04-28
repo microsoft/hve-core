@@ -959,6 +959,15 @@ def build_slide(
     colors = {}
     typography = {}
 
+    # Populate colors from the first theme's color map in style.yaml so
+    # content-extra.py scripts can reference theme colors programmatically
+    # via style["colors"]["accent_blue"] instead of hardcoding hex values.
+    themes = style.get("themes", [])
+    if themes and isinstance(themes, list) and isinstance(themes[0], dict):
+        style_colors = themes[0].get("colors", {})
+        if style_colors:
+            style["colors"] = style_colors
+
     if existing_slide is not None:
         slide = existing_slide
         clear_slide_shapes(slide)
@@ -1092,10 +1101,55 @@ def main():
         action="store_true",
         help="Skip AST validation of content-extra.py (trusted content only)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate content without building PPTX (parse YAML, check images, validate scripts)",
+    )
     args = parser.parse_args()
 
     content_dir = Path(args.content_dir)
     style = load_yaml(Path(args.style))
+
+    # Dry-run mode: validate content files without producing a PPTX
+    if args.dry_run:
+        slides_data = discover_slides(content_dir)
+        if not slides_data:
+            print("No slide content found in", content_dir)
+            sys.exit(1)
+        errors = 0
+        for num, slide_dir in slides_data:
+            content_yaml = slide_dir / "content.yaml"
+            try:
+                slide_content = load_yaml(content_yaml)
+                title = slide_content.get("title", "Untitled")
+                # Check for speaker notes
+                notes = slide_content.get("speaker_notes")
+                notes_status = "✅" if notes else "⚠️ no notes"
+                # Validate content-extra.py if present
+                extra = slide_dir / "content-extra.py"
+                extra_status = ""
+                if extra.exists():
+                    if not args.allow_scripts:
+                        try:
+                            _validate_content_extra(extra)
+                            extra_status = " | extra: ✅"
+                        except ContentExtraError as exc:
+                            extra_status = f" | extra: ❌ {exc}"
+                            errors += 1
+                    else:
+                        extra_status = " | extra: skipped"
+                # Check image references
+                images = slide_dir / "images"
+                img_count = len(list(images.glob("*.png"))) + len(list(images.glob("*.jpg"))) if images.exists() else 0
+                img_status = f" | {img_count} images" if img_count else ""
+                print(f"  Slide {num:03d}: {title} [{notes_status}{extra_status}{img_status}]")
+            except Exception as exc:
+                print(f"  Slide {num:03d}: ❌ YAML parse error: {exc}")
+                errors += 1
+        print(f"\nDry-run complete: {len(slides_data)} slides, {errors} error(s)")
+        sys.exit(1 if errors else 0)
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
