@@ -45,6 +45,7 @@ from pptx_utils import (
     EXIT_ERROR,
     EXIT_FAILURE,
     EXIT_SUCCESS,
+    configure_logging,
     load_yaml,
 )
 
@@ -967,14 +968,26 @@ def build_slide(
     colors = {}
     typography = {}
 
-    # Populate colors from the first theme's color map in style.yaml so
+    # Populate colors from the matching theme's color map in style.yaml so
     # content-extra.py scripts can reference theme colors programmatically
     # via style["colors"]["accent_blue"] instead of hardcoding hex values.
+    # Uses a per-slide lookup based on the themes[].slides list and falls
+    # back to themes[0] when no explicit assignment exists.
+    slide_num = slide_content.get("slide", 0)
     themes = style.get("themes", [])
-    if themes and isinstance(themes, list) and isinstance(themes[0], dict):
-        style_colors = themes[0].get("colors", {})
-        if style_colors:
-            style["colors"] = style_colors
+    if themes and isinstance(themes, list):
+        matched_theme = next(
+            (
+                t
+                for t in themes
+                if isinstance(t, dict) and slide_num in t.get("slides", [])
+            ),
+            themes[0] if isinstance(themes[0], dict) else None,
+        )
+        if matched_theme:
+            style_colors = matched_theme.get("colors", {})
+            if style_colors:
+                style = {**style, "colors": style_colors}
 
     if existing_slide is not None:
         slide = existing_slide
@@ -1117,7 +1130,14 @@ def main():
             " (parse YAML, check images, validate scripts)"
         ),
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging output",
+    )
     args = parser.parse_args()
+    configure_logging(getattr(args, "verbose", False))
 
     content_dir = Path(args.content_dir)
     style = load_yaml(Path(args.style))

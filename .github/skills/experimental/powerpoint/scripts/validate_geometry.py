@@ -77,7 +77,30 @@ def check_boundary_overflow(
     right = left + width
     bottom = top + height
     label = _shape_label(shape)
-
+    if left < -0.01:
+        issues.append(
+            {
+                "check_type": "boundary_overflow",
+                "severity": "error",
+                "description": (
+                    f"Shape '{label}' left edge ({left:.2f}\") extends "
+                    "off the left boundary of the slide"
+                ),
+                "location": shape.name or "shape",
+            }
+        )
+    if top < -0.01:
+        issues.append(
+            {
+                "check_type": "boundary_overflow",
+                "severity": "error",
+                "description": (
+                    f"Shape '{label}' top edge ({top:.2f}\") extends "
+                    "off the top boundary of the slide"
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     if right > slide_w_in + 0.01:
         issues.append(
             {

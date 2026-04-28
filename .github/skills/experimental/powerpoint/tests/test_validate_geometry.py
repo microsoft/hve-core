@@ -206,6 +206,34 @@ class TestCheckBoundaryOverflow:
         assert len(issues) == 1
         assert "bottom" in issues[0]["description"].lower()
 
+    def test_left_overflow(self, blank_slide):
+        """Shape with negative left position is detected."""
+        from pptx.util import Emu
+
+        shape = blank_slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Emu(-91440),  # -0.1 inches
+            Inches(1),
+            Inches(2),
+            Inches(1),
+        )
+        issues = check_boundary_overflow(shape, 13.333, 7.5)
+        assert any("left" in i["description"].lower() for i in issues)
+
+    def test_top_overflow(self, blank_slide):
+        """Shape with negative top position is detected."""
+        from pptx.util import Emu
+
+        shape = blank_slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            Inches(1),
+            Emu(-91440),  # -0.1 inches
+            Inches(2),
+            Inches(1),
+        )
+        issues = check_boundary_overflow(shape, 13.333, 7.5)
+        assert any("top" in i["description"].lower() for i in issues)
+
 
 class TestCheckEdgeMargins:
     """Tests for check_edge_margins."""

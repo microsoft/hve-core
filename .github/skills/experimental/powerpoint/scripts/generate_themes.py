@@ -96,36 +96,50 @@ def remap_hex_in_text(text: str, color_map: dict[str, str]) -> str:
 def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
     """Replace ``RGBColor(0xRR, 0xGG, 0xBB)`` and ``"#RRGGBB"`` patterns.
 
+    Uses a single-pass regex callback to avoid chain remapping where
+    one substitution's output feeds the next.
+
     Keys and values in *color_map* must include the leading ``#``.
     """
-    result = text
+    bare_map: dict[str, str] = {}
     for old_hex, new_hex in color_map.items():
-        old_bare = old_hex.lstrip("#")
-        new_bare = new_hex.lstrip("#")
+        old_bare = old_hex.lstrip("#").upper()
+        bare_map[old_bare] = new_hex.lstrip("#").upper()
 
-        old_r = int(old_bare[0:2], 16)
-        old_g = int(old_bare[2:4], 16)
-        old_b = int(old_bare[4:6], 16)
-        new_r = int(new_bare[0:2], 16)
-        new_g = int(new_bare[2:4], 16)
-        new_b = int(new_bare[4:6], 16)
+    if not bare_map:
+        return text
 
-        # RGBColor(0xRR, 0xGG, 0xBB)
-        old_pattern = (
-            rf"RGBColor\(\s*0x{old_r:02X}\s*,\s*0x{old_g:02X}\s*,"
-            rf"\s*0x{old_b:02X}\s*\)"
-        )
-        new_value = f"RGBColor(0x{new_r:02X}, 0x{new_g:02X}, 0x{new_b:02X})"
-        result = re.sub(old_pattern, new_value, result, flags=re.IGNORECASE)
+    def _rgb_pattern(hex6: str) -> str:
+        r = int(hex6[0:2], 16)
+        g = int(hex6[2:4], 16)
+        b = int(hex6[4:6], 16)
+        return rf"RGBColor\(\s*0x{r:02X}\s*,\s*0x{g:02X}\s*,\s*0x{b:02X}\s*\)"
 
-        # "#RRGGBB" string literals
-        result = re.sub(
-            rf'"#{re.escape(old_bare)}"',
-            f'"#{new_bare}"',
-            result,
-            flags=re.IGNORECASE,
-        )
-    return result
+    def _hex_pattern(hex6: str) -> str:
+        return rf'"#{re.escape(hex6)}"'
+
+    # Build combined pattern matching all RGBColor(...) and "#RRGGBB" forms
+    rgb_parts = [f"({_rgb_pattern(k)})" for k in bare_map]
+    hex_parts = [f"({_hex_pattern(k)})" for k in bare_map]
+    combined = re.compile("|".join(rgb_parts + hex_parts), re.IGNORECASE)
+
+    keys = list(bare_map.keys())
+    n = len(keys)
+
+    def _replace(m: re.Match) -> str:
+        for i, k in enumerate(keys):
+            # Groups 1..n are RGBColor patterns, n+1..2n are hex patterns
+            if m.group(i + 1) is not None:
+                v = bare_map[k]
+                r = int(v[0:2], 16)
+                g = int(v[2:4], 16)
+                b = int(v[4:6], 16)
+                return f"RGBColor(0x{r:02X}, 0x{g:02X}, 0x{b:02X})"
+            if m.group(n + i + 1) is not None:
+                return f'"#{bare_map[k]}"'
+        return m.group(0)
+
+    return combined.sub(_replace, text)
 
 
 def process_file(src: Path, dest: Path, color_map: dict[str, str]) -> None:

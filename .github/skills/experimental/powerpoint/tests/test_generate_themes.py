@@ -129,6 +129,16 @@ class TestRemapRgbInPython:
         assert "x = 42" in result
         assert "z = 99" in result
 
+    def test_chain_remapping_avoided(self):
+        """Ensure A->B and B->C produces B, not C (single-pass)."""
+        text = "RGBColor(0xAA, 0xAA, 0xAA)"
+        result = remap_rgb_in_python(text, {"#AAAAAA": "#BBBBBB", "#BBBBBB": "#CCCCCC"})
+        assert "RGBColor(0xBB, 0xBB, 0xBB)" in result
+
+    def test_empty_map(self):
+        text = "RGBColor(0x1B, 0x1B, 0x1F)"
+        assert remap_rgb_in_python(text, {}) == text
+
 
 class TestLoadThemes:
     """Tests for load_themes."""
