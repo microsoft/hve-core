@@ -1,0 +1,16 @@
+id: cs-sr-detective
+title: "Control Surface: Secure and Resilient — Detective"
+itemKind: criterion
+summary: "Detective controls for the Secure and Resilient characteristic: intrusion and anomaly detection, adversarial-input monitoring, and model-extraction telemetry."
+characteristic: secureResilient
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe AI-system traffic and pipelines for compromise
+  signals. Examples include intrusion and anomaly detection at inference endpoints,
+  adversarial-input monitoring for evasion or poisoning patterns, and
+  model-extraction telemetry that surfaces query patterns indicative of stealing
+  the model.

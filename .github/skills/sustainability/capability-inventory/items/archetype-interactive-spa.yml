@@ -1,0 +1,24 @@
+id: archetype-interactive-spa
+version: "1.0"
+name: Archetype — Interactive SPA
+source: hve-core authored
+description: Interactive single-page application backed by API services; sensitive to bundle size, runtime JS energy, and API chattiness.
+controls:
+  - id: archetype-interactive-spa
+    title: Interactive SPA — bundle size, runtime JS energy, and API chattiness
+    description: |
+      Interactive single-page application backed by API services.
+      Sustainability levers: code splitting, lazy loading, tree shaking,
+      response caching, batched API calls, low-data alternative views.
+    group: archetype
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

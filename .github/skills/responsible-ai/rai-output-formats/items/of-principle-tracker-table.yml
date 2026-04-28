@@ -1,0 +1,19 @@
+id: of-principle-tracker-table
+title: "Principle Tracker"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-5-impact-assessment
+summary: "Phase 5 maturity tracker recording per-characteristic posture, observations, and follow-up actions."
+tokens:
+  - system_name
+  - tracker_rows
+template: |
+  ## RAI Principle Tracker — {{system_name}}
+
+  | Characteristic | Maturity | Observations | Follow-up Actions |
+  |----------------|----------|--------------|-------------------|
+  {{tracker_rows}}
+description: |
+  Maturity values use the qualitative ladder Foundational → Developing → Managed
+  → Optimized. Observations cite evidence-register entries by id.

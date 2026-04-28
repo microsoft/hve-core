@@ -1,0 +1,8 @@
+id: mp-3-2
+title: "MP-3.2: Potential costs and negative impacts"
+itemKind: criterion
+summary: "Potential costs, including non-monetary costs which result from expected or realized AI errors or system functionality and trustworthiness, are examined and documented."
+function: map
+group: MP-3
+nistSubcategories:
+  - MP-3.2

@@ -1,0 +1,26 @@
+id: waf-sus-testing
+version: "1.0"
+name: WAF Sustainability — Testing
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-testing
+description: Testing strategies that reduce energy and carbon impact while preserving release confidence.
+controls:
+  - id: waf-sus-testing
+    title: Testing — minimize redundant runs and over-provisioned test infrastructure
+    description: |
+      Use risk-based and impact-aware test selection to avoid running the
+      full suite on every change. Consolidate test environments, scale them
+      to zero between runs, and prefer ephemeral provisioning over always-on
+      pre-production fleets. Reuse cached fixtures and synthetic data sets,
+      and align load-test scope with realistic production traffic shapes.
+    group: pattern
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-testing

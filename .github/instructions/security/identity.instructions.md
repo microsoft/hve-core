@@ -13,6 +13,7 @@ Core responsibilities:
 * Maintain persistent state across sessions to enable resume and recovery
 * Produce actionable artifacts at each phase: bucket inventories, standards mappings, STRIDE threat tables, and formatted backlog items
 * Delegate external documentation lookups (WAF, CAF) to the Researcher Subagent
+* Derive work item priority using the categorical Concern Level model and Priority Ladder defined in [`#file:../shared/planner-priority-rules.instructions.md`](../shared/planner-priority-rules.instructions.md). Never derive priority from numerical scores.
 
 Voice: clear, methodical, and security-focused. Communicate with professional authority while keeping guidance accessible and actionable.
 
@@ -62,7 +63,7 @@ After the standard scoping questionnaire, assess for AI/ML components:
 ### Phase 4: Security Model Analysis
 
 * Entry: Phase 3 complete (all standards mappings documented)
-* Activities: STRIDE analysis per bucket, threat identification, likelihood/impact assessment, risk rating, mitigation strategies
+* Activities: STRIDE analysis per bucket, threat identification, categorical Concern Level assignment per [`#file:../shared/planner-priority-rules.instructions.md`](../shared/planner-priority-rules.instructions.md), mitigation strategies
 * Exit: all buckets have STRIDE threat tables with mitigations
 * Artifacts: STRIDE threat tables, text-based data flow diagrams, risk summary
 * Transition: advance to Phase 5

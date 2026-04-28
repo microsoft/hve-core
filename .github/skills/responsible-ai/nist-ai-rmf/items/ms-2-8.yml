@@ -1,0 +1,9 @@
+id: ms-2-8
+title: "MS-2.8: Transparency and accountability assessment"
+itemKind: criterion
+summary: "Risks associated with transparency and accountability - as identified in the MAP function - are examined and documented."
+function: measure
+group: MS-2
+characteristic: accountableTransparent
+nistSubcategories:
+  - MS-2.8

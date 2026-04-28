@@ -1,15 +1,24 @@
 ---
-description: 'RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation'
+description: 'RAI review and backlog handoff for Phase 6: review rubric, dual-format backlog generation, autonomy tiers, and Security Planner cross-references'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 
 # RAI Review and Backlog Handoff
 
-Instructions for generating the review rubric, RAI review summary, and formatted backlog items from RAI assessment findings. Phase 6 produces dual-format work items (ADO and GitHub) compatible with the Security Planner backlog handoff for cross-referencing.
+Phase 6 mechanics for the RAI Planner. Templates for the review summary, ADO work items, GitHub issues, transparency note, monitoring summary, and handoff summary are owned by the `rai-output-formats` framework skill (`phaseMap.phase-6-handoff`). This file defines only the planner mechanics: review rubric scoring, work item categorization, autonomy tier selection, priority derivation, cross-reference protocol, content sanitization, and audience adaptation.
+
+Source-of-truth resolution:
+
+* Review summary, ADO work item, GitHub issue, transparency note outline, monitoring summary, and handoff summary templates → `rai-output-formats` items keyed under `phaseMap.phase-6-handoff`.
+* Trustworthiness characteristics referenced in tags and the per-characteristic summary → resolved through `frameworkSkillsActive` (default: `nist-ai-rmf`); never inlined here.
+* Priority ladder, Concern Level model, and tie-break rules → `.github/instructions/shared/planner-priority-rules.instructions.md`.
+* Disclaimer block appended to every external artifact → `.github/instructions/shared/disclaimer-language.instructions.md`.
+
+When a required Phase 6 template is absent from the active framework skills, halt and ask the user to add it. Do not improvise.
 
 ## Review Rubric
 
-A review checkpoint and six quality dimensions evaluate the completeness and quality of the RAI assessment before backlog generation proceeds.
+A review checkpoint plus six quality dimensions evaluate completeness before backlog generation proceeds.
 
 ### Review Checkpoints
 
@@ -17,254 +26,90 @@ A review checkpoint and six quality dimensions evaluate the completeness and qua
 |-----------------|----------------------------------------------------------------------|-------------------|
 | Threat Coverage | Every RAI threat has at least one control surface and evidence entry | ☐ Met / ☐ Not Met |
 
-Review checkpoints are binary verification steps. A checkpoint marked "Not Met" indicates the relevant phase should be revisited before proceeding with handoff.
+A checkpoint marked "Not Met" indicates the relevant phase should be revisited before handoff.
 
 ### Review Quality Checklist
 
-| Dimension             | Description                                                                    | Status      |
-|-----------------------|--------------------------------------------------------------------------------|-------------|
-| Standards Alignment   | Coverage of NIST AI RMF trustworthiness characteristics and subcategories      | ☐ Addressed |
-| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion    | ☐ Addressed |
-| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond for each characteristic | ☐ Addressed |
-| Evidence Quality      | Evidence register completeness, confidence levels, gap identification          | ☐ Addressed |
-| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority         | ☐ Addressed |
-| Risk Classification   | Risk classification coverage, depth tier justification, downstream alignment   | ☐ Addressed |
+| Dimension             | Description                                                                  | Status      |
+|-----------------------|------------------------------------------------------------------------------|-------------|
+| Standards Alignment   | Coverage of activated framework skills' principles/controls                  | ☐ Addressed |
+| Threat Completeness   | AI STRIDE coverage, dual threat ID consistency, ML STRIDE matrix completion  | ☐ Addressed |
+| Control Effectiveness | Control surface coverage across Prevent/Detect/Respond per principle         | ☐ Addressed |
+| Evidence Quality      | Evidence register completeness, confidence levels, gap identification        | ☐ Addressed |
+| Tradeoff Resolution   | Tradeoff documentation quality, stakeholder impact, decision authority       | ☐ Addressed |
+| Risk Classification   | Risk classification coverage, depth tier justification, downstream alignment | ☐ Addressed |
 
 Review status derivation:
 
 * **Ready for stakeholder review** — All dimensions addressed with supporting evidence.
-* **Additional attention suggested** — Most dimensions addressed; one or more areas flagged for further consideration.
+* **Additional attention suggested** — Most dimensions addressed; one or more areas flagged.
 * **Significant areas need further consideration** — Multiple dimensions have limited coverage or missing evidence.
 
-Before presenting review quality results, explain the checklist dimensions and what each status means in plain language. Frame all assessments as suggested observations based on session findings.
+Before presenting results, explain the dimensions in plain language and frame all assessments as suggested observations. When presenting, cite specific session observations for each dimension.
 
-When presenting review quality results, explain each dimension's status by citing specific session observations. For example: "Standards Alignment is addressed — the assessment mapped all seven NIST AI RMF trustworthiness characteristics to system components with subcategory cross-references."
+## Per-Principle Maturity Summary
 
-## RAI Review Summary
+The review summary template (`rai-output-formats` Phase 6) renders one row per active principle. Populate from `principleTracker`:
 
-Template for the review summary produced at the end of Phase 6.
+* Maturity level — from the Phase 5 assessment value (`Foundational | Developing | Established | Advanced`).
+* Key observations — the most significant entries from `openObservations` and `resolvedObservations`.
+* Open item count — `openObservations.length`.
 
-```markdown
-# RAI Review Summary
-
-## System: {system-name}
-## Assessment Date: {YYYY-MM-DD}
-## Depth Tier: {Basic/Standard/Comprehensive}
-
-### Review Checkpoint Results
-
-| Checkpoint      | Status        | Notes   |
-|-----------------|---------------|---------|
-| Threat Coverage | {Met/Not Met} | {notes} |
-
-### Per-Characteristic Summary
-
-| Characteristic                 | Maturity Level                                 | Key Observations | Open Items |
-|--------------------------------|------------------------------------------------|------------------|------------|
-| Valid and Reliable             | {Foundational/Developing/Established/Advanced} | {summary}        | {count}    |
-| Safe                           | {level}                                        | {summary}        | {count}    |
-| Secure and Resilient           | {level}                                        | {summary}        | {count}    |
-| Accountable and Transparent    | {level}                                        | {summary}        | {count}    |
-| Explainable and Interpretable  | {level}                                        | {summary}        | {count}    |
-| Privacy-Enhanced               | {level}                                        | {summary}        | {count}    |
-| Fair with Harmful Bias Managed | {level}                                        | {summary}        | {count}    |
-
-### Key Findings
-
-{Bulleted list of most significant findings from the assessment}
-
-### Review Quality Summary
-
-| Dimension             | Status                      | Notes   |
-|-----------------------|-----------------------------|---------|
-| Standards Alignment   | {Addressed/Needs Attention} | {notes} |
-| Threat Completeness   | {Addressed/Needs Attention} | {notes} |
-| Control Effectiveness | {Addressed/Needs Attention} | {notes} |
-| Evidence Quality      | {Addressed/Needs Attention} | {notes} |
-| Tradeoff Resolution   | {Addressed/Needs Attention} | {notes} |
-| Risk Classification   | {Addressed/Needs Attention} | {notes} |
-
-### Suggested Remediation Horizon Summary
-
-| Horizon            | Work Item Count | Key Items   |
-|--------------------|-----------------|-------------|
-| Pre-Production     | {count}         | {top items} |
-| Early Operations   | {count}         | {top items} |
-| Ongoing Governance | {count}         | {top items} |
-
-### Suggested Review Status: {Ready for stakeholder review / Additional attention suggested / Significant areas need further consideration}
-### Remediation Suggested: {Yes/No}
-### Work Items Generated: {count}
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
-```
-
-Populate the Per-Characteristic Summary table from `principleTracker`: maturity level from the Phase 5 assessment, key observations from the most significant `openObservations` and `resolvedObservations`, open item count from `openObservations.length`.
-
-When `principleTracker` data is incomplete for a characteristic, note the gap in the Key Observations column and suggest revisiting the relevant phase.
+When `principleTracker` data is incomplete for a principle, note the gap in the Key Observations column and suggest revisiting the relevant phase.
 
 ## Work Item Categories
 
 Five categories classify RAI work items by purpose and urgency.
 
-| Category               | Description                                                | Suggested Horizon  | Priority Range      | Source                                                        |
-|------------------------|------------------------------------------------------------|--------------------|---------------------|---------------------------------------------------------------|
-| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | Immediate–Near-term | Evidence gaps, characteristics with limited coverage          |
-| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Near-term–Planned   | Control surface gaps                                          |
-| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Planned             | Detect controls without implementation                        |
-| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Planned–Backlog     | Documentation gaps, tradeoff records                          |
-| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Backlog             | Characteristics at Developing or Established seeking Advanced |
+| Category               | Description                                                | Suggested Horizon  | Concern Level | Source                                                |
+|------------------------|------------------------------------------------------------|--------------------|---------------|-------------------------------------------------------|
+| Remediation            | Address identified RAI gaps or areas of concern            | Pre-Production     | High–Critical | Evidence gaps, principles with limited coverage       |
+| Control Implementation | Implement new Prevent/Detect/Respond controls              | Pre-Production     | Moderate–High | Control surface gaps                                  |
+| Monitoring Setup       | Deploy detection and monitoring capabilities               | Early Operations   | Moderate      | Detect controls without implementation                |
+| Documentation          | Create or update transparency and accountability artifacts | Ongoing Governance | Low–Moderate  | Documentation gaps, tradeoff records                  |
+| Enhancement            | Improve existing controls toward higher maturity           | Ongoing Governance | Low           | Principles at Developing/Established seeking Advanced |
+
+Concern Level → priority mapping is defined in `planner-priority-rules.instructions.md`.
 
 ## RAI Tags
 
-Tags applied to work items for tracking and filtering across backlog systems.
+Tags applied to work items for tracking and filtering. Principle-scoped tags are derived dynamically from the active framework skills using the pattern `rai:<principle-id>` (slugified principle id from each `items/*.yml`). The cross-cutting tags below are emitted by every RAI session regardless of activated frameworks.
 
-| Tag                             | Purpose                                     | Applied When                                                                |
-|---------------------------------|---------------------------------------------|-----------------------------------------------------------------------------|
-| `rai:valid-reliable`            | Valid and Reliable related work             | Control or finding relates to Valid and Reliable characteristic             |
-| `rai:safe`                      | Safe related work                           | Control or finding relates to Safe characteristic                           |
-| `rai:secure-resilient`          | Secure and Resilient related work           | Control or finding relates to Secure and Resilient characteristic           |
-| `rai:accountable-transparent`   | Accountable and Transparent related work    | Control or finding relates to Accountable and Transparent characteristic    |
-| `rai:explainable-interpretable` | Explainable and Interpretable related work  | Control or finding relates to Explainable and Interpretable characteristic  |
-| `rai:privacy-enhanced`          | Privacy-Enhanced related work               | Control or finding relates to Privacy-Enhanced characteristic               |
-| `rai:fair-bias-managed`         | Fair with Harmful Bias Managed related work | Control or finding relates to Fair with Harmful Bias Managed characteristic |
-| `rai:tradeoff`                  | Tradeoff resolution item                    | Originates from tradeoff documentation                                      |
-| `rai:cross-ref-security`        | Cross-references Security Planner item      | Overlaps with or extends a Security Planner work item                       |
+| Tag                       | Purpose                                | Applied When                                                |
+|---------------------------|----------------------------------------|-------------------------------------------------------------|
+| `rai:tradeoff`            | Tradeoff resolution item               | Originates from tradeoff documentation                      |
+| `rai:cross-ref-security`  | Cross-references Security Planner item | Overlaps with or extends a Security Planner work item       |
+| `rai:depth-{tier}`        | Records selected depth tier            | Always; `{tier}` is `basic`, `standard`, or `comprehensive` |
+| `rai:framework-{skillId}` | Records activated framework skill      | One tag per entry in `frameworkSkillsActive`                |
+
+For GitHub labels, strip the `rai:` prefix.
 
 ## Target System Selection
 
-When generating work items, select the template based on `userPreferences.targetSystem`:
+Select the template based on `userPreferences.targetSystem`:
 
-* **ado** — Use the ADO Work Item Template with HTML description format.
-* **github** — Use the GitHub Issue Template with YAML metadata and markdown body.
-* **both** — Generate both ADO and GitHub templates for dual-system environments.
+* **ado** — Use the ADO work item template from `rai-output-formats` (`phaseMap.phase-6-handoff`).
+* **github** — Use the GitHub issue template from `rai-output-formats`.
+* **both** — Generate both formats for dual-system environments.
 
 Default to the format specified in user preferences. If no preference was set, ask the user which system(s) to target.
 
-## Dual-Format Backlog Templates
+## Work Item ID Conventions
 
-Both ADO and GitHub formats can be generated simultaneously based on `userPreferences.targetSystem`. Both formats are compatible with the Security Planner backlog handoff for cross-referencing.
+Assign sequential IDs within the RAI plan distinct from Security Planner IDs to prevent collisions:
 
-### ADO Work Item Template
-
-Assign sequential IDs within the RAI plan using the format `WI-RAI-{NNN}` (for example, WI-RAI-001, WI-RAI-002). This convention is distinct from the Security Planner `WI-SEC-{NNN}` format to prevent ID collisions.
-
-Required fields per work item:
-
-* ID: `WI-RAI-{NNN}`
-* Type: User Story / Task / Bug
-* Title: `[RAI] {concise description}`
-* Description: HTML-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
-* Priority: Immediate / Near-term / Planned / Backlog
-* Suggested Remediation Horizon: Pre-Production / Early Operations / Ongoing Governance
-* Tags: From the RAI Tags table.
-* Parent: Reference to epic or feature when applicable.
-* Security Cross-Reference: `T-{BUCKET}-{NNN}` when overlapping with Security Planner.
-* RAI Owner: (Optional) Role accountable for this item (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement." Supports traceability required by ISO 42001 and NIST AI RMF Govern 1.1.
-
-HTML template for description fields:
-
-```html
-<div>
-  <h3>RAI Control: {control_name}</h3>
-  <p><strong>NIST Characteristic:</strong> {characteristic}</p>
-  <p><strong>Threat:</strong> {threat_id} - {threat_description}</p>
-  <p><strong>Control Surface:</strong> {prevent|detect|respond} - {control_details}</p>
-  <p><strong>Evidence:</strong> {evidence_status}</p>
-  <p><strong>Suggested Remediation Horizon:</strong> {horizon}</p>
-  <h4>Implementation</h4>
-  <p>{implementation_details}</p>
-  <h4>Acceptance Criteria</h4>
-  <ul>
-    <li>{criterion_1}</li>
-    <li>{criterion_2}</li>
-  </ul>
-  <blockquote>
-  <p><strong>Note</strong> — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.</p>
-  <ul><li><input type="checkbox" disabled /> Reviewed and validated by a qualified human reviewer</li></ul>
-  </blockquote>
-</div>
-```
+* ADO: `WI-RAI-{NNN}` (vs. Security Planner `WI-SEC-{NNN}`).
+* GitHub temporary IDs: `{{RAI-TEMP-N}}` (vs. Security Planner `{{SEC-TEMP-N}}`), replaced with real issue numbers on creation.
 
 Work item hierarchy maps from the RAI assessment structure:
 
-* Epic: NIST Characteristic (one per characteristic with findings).
-* Feature: Control Category (Prevent, Detect, Respond per characteristic).
-* User Story: Specific control or mitigation.
-* Task: Implementation steps for a user story.
-* Bug: Suggested RAI area requiring attention.
+* Epic — Active framework principle (one per principle with findings).
+* Feature — Control category (Prevent, Detect, Respond per principle).
+* User Story — Specific control or mitigation.
+* Task — Implementation steps for a user story.
+* Bug — Suggested RAI area requiring attention.
 
-Execution follows `ado-update-wit-items.instructions.md`.
-
-### GitHub Issue Template
-
-Assign temporary IDs using the format `{{RAI-TEMP-N}}`, replaced with real issue numbers on creation. This convention is distinct from the Security Planner `{{SEC-TEMP-N}}` format.
-
-Required fields per issue:
-
-* Title: `[RAI-{Characteristic}] {concise description}`
-* Labels: From the RAI Tags table (without `rai:` prefix for GitHub labels).
-* Milestone: Linked to assessment phase.
-* Body: Markdown-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
-* Security Cross-Reference: Link to Security Planner issue when overlapping.
-* RAI Owner: (Optional) Role accountable for this issue (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement."
-
-Include a YAML metadata block at the top of the issue body:
-
-```yaml
----
-rai_characteristic: {characteristic}
-threat_id: T-RAI-{NNN}
-suggested_priority: {Immediate|Near-term|Planned|Backlog}
-suggested_horizon: {Pre-Production|Early Operations|Ongoing Governance}
-category: {Remediation|Control Implementation|Monitoring Setup|Documentation|Enhancement}
-depth_tier: {Basic|Standard|Comprehensive}
-security_cross_ref: {WI-SEC-{NNN} or empty}
----
-```
-
-Markdown template for issue body:
-
-```markdown
-## RAI Control: {control_name}
-
-**NIST Characteristic:** {characteristic}
-**Threat:** {threat_id} - {threat_description}
-**Control Surface:** {prevent|detect|respond} - {control_details}
-**Suggested Priority:** {priority_level}
-**Suggested Remediation Horizon:** {horizon}
-
-### Implementation
-
-{implementation_details}
-
-### Acceptance Criteria
-
-* [ ] {criterion_1}
-* [ ] {criterion_2}
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
-```
-
-Execution follows `github-backlog-update.instructions.md`.
-
-## Content Sanitization Protocol
-
-Strip internal tracking paths and sensitive assessment details from work item output before handoff to external systems.
-
-Sanitization rules:
-
-1. Replace `.copilot-tracking/` paths with descriptive text (for example, "RAI plan artifacts").
-2. Replace full file system paths with relative references.
-3. Remove state JSON content or references.
-4. Remove internal tracking IDs that are not work item IDs.
-5. Preserve standards references (NIST AI RMF trustworthiness characteristics, NIST AI RMF IDs) in all cases.
-
-After generating each work item, scan the output for `.copilot-tracking/`. If found, strip the path and log the sanitization action.
-
-Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` output only. Paths never appear in external-facing work items.
+ADO execution follows `ado-update-wit-items.instructions.md`. GitHub execution follows `github-backlog-update.instructions.md`.
 
 ## Three-Tier Autonomy Model
 
@@ -276,189 +121,97 @@ Three tiers control how RAI work items reach the target backlog system.
 | Partial | Agent drafts work items for human review before creation | Control implementation (Planned–Near-term), monitoring setup |
 | Manual  | Agent provides recommendations; human creates items      | Remediation (Immediate–Near-term), tradeoff decisions        |
 
-Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Store the selected preference in the session state JSON under `userPreferences.autonomyTier`.
+Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Persist the selection in `state.userPreferences.autonomyTier`.
 
 ## Suggested Priority Derivation
 
-Derive suggested work item priority and autonomy tier from assessment observations and principleTracker data.
+Derive Concern Level from assessment observations, then map to priority via `planner-priority-rules.instructions.md`. Autonomy tier and horizon follow from category and Concern Level.
 
-| Assessment Observation                                     | Suggested Priority | Autonomy Tier | Suggested Horizon  |
-|------------------------------------------------------------|--------------------|---------------|--------------------|
-| Characteristic at Foundational maturity with critical gaps | Immediate          | Manual        | Pre-Production     |
-| Characteristic at Foundational maturity                    | Near-term          | Manual        | Pre-Production     |
-| Multiple open observations for a characteristic            | Near-term          | Partial       | Pre-Production     |
-| Tradeoff requiring implementation                          | Planned            | Partial       | Early Operations   |
-| Control surface gap (Prevent)                              | Near-term          | Partial       | Pre-Production     |
-| Control surface gap (Detect)                               | Planned            | Partial       | Early Operations   |
-| Control surface gap (Respond)                              | Planned            | Partial       | Early Operations   |
-| Documentation gap                                          | Backlog            | Full          | Ongoing Governance |
-| Enhancement recommendation                                 | Backlog            | Full          | Ongoing Governance |
+| Assessment Observation                                | Concern Level | Autonomy Tier | Suggested Horizon  |
+|-------------------------------------------------------|---------------|---------------|--------------------|
+| Principle at Foundational maturity with critical gaps | Critical      | Manual        | Pre-Production     |
+| Principle at Foundational maturity                    | High          | Manual        | Pre-Production     |
+| Multiple open observations for a principle            | High          | Partial       | Pre-Production     |
+| Tradeoff requiring implementation                     | Moderate      | Partial       | Early Operations   |
+| Control surface gap (Prevent)                         | High          | Partial       | Pre-Production     |
+| Control surface gap (Detect)                          | Moderate      | Partial       | Early Operations   |
+| Control surface gap (Respond)                         | Moderate      | Partial       | Early Operations   |
+| Documentation gap                                     | Low           | Full          | Ongoing Governance |
+| Enhancement recommendation                            | Low           | Full          | Ongoing Governance |
 
-Within the same priority level, order remediation items before control implementation items. Consider Fair with Harmful Bias Managed and Valid and Reliable findings for earlier attention due to direct impact potential.
+Tie-break rules:
 
-When multiple observations apply to a single work item, use the highest suggested priority among them.
-
-When work item A depends on work item B, note the dependency in both work item bodies and place B earlier in the handoff sequence.
+* Within a Concern Level, order Remediation before Control Implementation.
+* When multiple observations apply to a single work item, use the highest Concern Level.
+* When work item A depends on work item B, note the dependency in both bodies and place B earlier in the handoff sequence.
 
 ## Cross-Reference Protocol for Security Planner Interop
 
-RAI work items relate to Security Planner work items when threats overlap across both assessments.
+RAI work items relate to Security Planner work items when threats overlap.
 
 Rules:
 
-* When an RAI threat overlaps with a Security Planner threat (identified by dual `T-{BUCKET}-AI-{NNN}` IDs), the RAI work item includes a cross-reference field.
-* Security Planner work items are not duplicated. RAI items extend or complement them instead.
+* When an RAI threat overlaps with a Security Planner threat (identified by dual `T-{BUCKET}-AI-{NNN}` IDs from Phase 4), the RAI work item includes a cross-reference field.
+* Security Planner work items are not duplicated; RAI items extend or complement them instead.
 * Cross-reference format: `Security-Ref: WI-SEC-{NNN}` in ADO, `Security: #{NNN}` in GitHub.
 * The handoff summary includes a cross-reference table listing all overlapping items.
 * Before creating new work items, search for existing Security Planner items with matching threat IDs or control surfaces. Link rather than duplicate.
 
-Cross-reference table template:
+Relationship types recorded in the cross-reference table:
 
-| RAI Work Item | Security Work Item | Relationship                    | Notes         |
-|---------------|--------------------|---------------------------------|---------------|
-| WI-RAI-{NNN}  | WI-SEC-{NNN}       | Extends / Complements / Depends | {description} |
+* **Extends** — RAI item adds RAI-specific requirements to an existing security control.
+* **Complements** — RAI item addresses a different aspect of the same threat.
+* **Depends** — RAI item requires the security control to be implemented first.
 
-Relationship types:
+The cross-reference table template lives in `rai-output-formats` (`phaseMap.phase-6-handoff`).
 
-* Extends: RAI item adds RAI-specific requirements to an existing security control.
-* Complements: RAI item addresses a different aspect of the same threat.
-* Depends: RAI item requires the security control to be implemented first.
+## Content Sanitization Protocol
 
-## Handoff Summary Format
+Strip internal tracking paths and sensitive assessment details from work item output before handoff to external systems.
 
-After generating all work items, produce a handoff summary covering totals, cross-references, and outstanding decisions.
+Sanitization rules:
 
-```markdown
-# RAI Backlog Handoff Summary
+1. Replace `.copilot-tracking/` paths with descriptive text (for example, "RAI plan artifacts").
+2. Replace full file system paths with relative references.
+3. Remove state JSON content or references.
+4. Remove internal tracking IDs that are not work item IDs.
+5. Preserve standards references resolved through active framework skills (principle ids, subcategory references) in all cases.
 
-## System: {system-name}
-## Date: {YYYY-MM-DD}
-## Suggested Review Status: {Ready for stakeholder review / Additional attention suggested / Significant areas need further consideration}
+After generating each work item, scan the output for `.copilot-tracking/`. If found, strip the path and log the sanitization action.
 
-### Work Item Summary
-
-| Category               | Count   | Immediate | Near-term | Planned | Backlog |
-|------------------------|---------|-----------|-----------|---------|---------|
-| Remediation            | {n}     | {n}       | {n}       | {n}     | {n}     |
-| Control Implementation | {n}     | {n}       | {n}       | {n}     | {n}     |
-| Monitoring Setup       | {n}     | {n}       | {n}       | {n}     | {n}     |
-| Documentation          | {n}     | {n}       | {n}       | {n}     | {n}     |
-| Enhancement            | {n}     | {n}       | {n}       | {n}     | {n}     |
-| **Total**              | **{n}** | **{n}**   | **{n}**   | **{n}** | **{n}** |
-
-### Suggested Remediation Horizon Breakdown
-
-| Horizon            | Count | Key Items |
-|--------------------|-------|-----------|
-| Pre-Production     | {n}   | {items}   |
-| Early Operations   | {n}   | {items}   |
-| Ongoing Governance | {n}   | {items}   |
-
-### Security Planner Cross-References
-
-| RAI Item     | Security Item | Relationship   |
-|--------------|---------------|----------------|
-| WI-RAI-{NNN} | WI-SEC-{NNN}  | {relationship} |
-
-### Outstanding Tradeoffs
-
-{list of tradeoffs requiring stakeholder decisions}
-
-### Next Steps
-
-{recommended follow-up actions}
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
->
-> **Disclaimer** — This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice and does not replace Responsible AI review boards, ethics committees, legal counsel, compliance teams, or other qualified human reviewers. The output consists of suggested actions and considerations to support a user's own internal review and decision‑making. All RAI assessments, risk classification screenings, security models, and mitigation recommendations generated by this tool must be independently reviewed and validated by appropriate legal and compliance reviewers before use. Outputs from this tool do not constitute legal approval, compliance certification, or regulatory sign‑off.
-```
-
-Log all generation decisions (create, update, skip, link) in the handoff summary. Items that could not be generated include the reason for each failure.
+Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` output only. Paths never appear in external-facing work items.
 
 ## Optional Artifacts
 
 During Phase 6, offer each optional artifact independently. Generate only those the user opts into. Each accepted artifact produces a corresponding "Documentation" category work item for completion.
 
-### Transparency Note Outline
+| Artifact           | Prompt                                                                      | Template Source        | Generated Follow-Up Work Item                                              |
+|--------------------|-----------------------------------------------------------------------------|------------------------|----------------------------------------------------------------------------|
+| Transparency Note  | "Would you like a transparency note outline included in the handoff?"       | `rai-output-formats`   | `[RAI] Complete transparency note from Phase 6 outline` (Planned–Backlog)  |
+| Monitoring Summary | "Would you like a consolidated monitoring summary included in the handoff?" | `rai-output-formats`   | `[RAI] Validate and operationalize monitoring summary` (Planned)           |
+| Artifact Signing   | "Would you like cryptographic signing of all session artifacts?"            | n/a (script execution) | `[RAI] Verify artifact manifest integrity and configure signing` (Planned) |
 
-Ask: "Would you like a transparency note outline included in the handoff?"
+When the monitoring summary is accepted, auto-populate from "Monitoring Setup" category work items generated during the assessment.
 
-When accepted, generate a skeleton transparency note appended to the handoff summary:
+When artifact signing is accepted, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` via terminal execution. The script generates a SHA-256 manifest (`artifact-manifest.json`) covering all files in the project directory and optionally signs it with cosign when available. After execution completes, update `state.json` fields `signingRequested` to `true` and `signingManifestPath` to the manifest output path. If the user also requests cosign signing, append `-IncludeCosign` to the command. Cosign uses keyless signing via Sigstore; it requires `cosign` in PATH and an OIDC identity provider.
 
-```markdown
-## Transparency Note Outline (Draft)
+## Handoff Summary
 
-### System Purpose
+After generating all work items, produce a handoff summary using the template in `rai-output-formats` (`phaseMap.phase-6-handoff`). The template renders work item totals, horizon breakdown, Security Planner cross-references, outstanding tradeoffs, next steps, and the standard disclaimer.
 
-{What the system does, target users, and intended deployment context}
+Log all generation decisions (create, update, skip, link) in the handoff summary. Items that could not be generated include the reason for each failure.
 
-### Capabilities
+## Evidence Citation Format
 
-{What the system can do within its designed scope}
-
-### Limitations
-
-{Known boundaries, failure modes, and conditions where accuracy degrades}
-
-### Data Usage
-
-{Training data sources, inference inputs, data retention, and privacy considerations}
-
-### Decision Process
-
-{How the system produces outputs, confidence indicators, and key algorithmic choices}
-
-### Human Oversight
-
-{Human-in-the-loop checkpoints, escalation paths, and override mechanisms}
-
-### Contact and Feedback
-
-{How users report issues, request explanations, or provide input on system behavior}
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
-```
-
-Generate a "Documentation" category work item: `[RAI] Complete transparency note from Phase 6 outline`. Assign priority Planned–Backlog and tag `rai:accountable-transparent`.
-
-### Monitoring Summary
-
-Ask: "Would you like a consolidated monitoring summary included in the handoff?"
-
-When accepted, auto-populate from "Monitoring Setup" category work items generated during the assessment. This unified view prevents individual monitoring work items from becoming disconnected.
-
-```markdown
-## Monitoring Summary
-
-| Work Item    | Metric        | Threshold/Criteria | Alert Mechanism   | Review Cadence |
-|--------------|---------------|--------------------|-------------------|----------------|
-| WI-RAI-{NNN} | {metric_name} | {threshold}        | {alert_mechanism} | {cadence}      |
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
-```
-
-Generate a "Documentation" category work item: `[RAI] Validate and operationalize monitoring summary`. Assign priority Planned and tag `rai:accountable-transparent`.
-
-### Artifact Signing
-
-Ask: "Would you like cryptographic signing of all session artifacts?"
-
-When accepted, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` via `execute/runInTerminal`. The script generates a SHA-256 manifest (`artifact-manifest.json`) covering all files in the project directory and optionally signs it with cosign when available. After execution completes, update `state.json` fields `signingRequested` to `true` and `signingManifestPath` to the manifest output path.
-
-If the user also requests cosign signing, append `-IncludeCosign` to the command. Cosign uses keyless signing via Sigstore; it requires `cosign` in PATH and an OIDC identity provider.
-
-Generate a "Documentation" category work item: `[RAI] Verify artifact manifest integrity and configure signing in CI pipeline`. Assign priority Planned-Backlog and tag `rai:accountable-transparent`.
+All evidence references emitted by handoff artifacts (review-rubric citations, work-item bodies, cross-reference protocol entries, optional artifacts) follow the canonical evidence row format defined in #file:../shared/evidence-citation.instructions.md. Use that format for every `path (Lines start-end)` reference; apply `kind:` qualifiers (`file-presence`, `live-endpoint`, `external-doc`) when a citation is not a line-spanned in-repo reference.
 
 ## Audience Adaptation
 
 Adjust handoff output formatting based on `userPreferences.audienceProfile`:
 
 * **technical** — Full implementation detail with control specifications, threat IDs, and suggested monitoring thresholds.
-* **executive** — High-level summary with business impact, characteristic maturity overview, and key action items.
+* **executive** — High-level summary with business impact, principle maturity overview, and key action items.
 * **compliance** — Full detail with regulatory mapping, standards traceability, and audit trail references.
 * **mixed** — Balanced format with executive summary followed by technical detail sections.
 
-Default to **technical** when no preference is set. The audience profile affects the RAI Review Summary, work item descriptions, and handoff summary formatting.
+Default to **technical** when no preference is set. The audience profile affects the review summary, work item descriptions, and handoff summary formatting; it does not change which templates are loaded.

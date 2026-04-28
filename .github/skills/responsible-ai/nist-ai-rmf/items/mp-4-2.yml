@@ -1,0 +1,8 @@
+id: mp-4-2
+title: "MP-4.2: Internal risk controls for third-party dependencies"
+itemKind: criterion
+summary: "Internal risk controls for components of the AI system, including third-party AI technologies, are identified and documented."
+function: map
+group: MP-4
+nistSubcategories:
+  - MP-4.2

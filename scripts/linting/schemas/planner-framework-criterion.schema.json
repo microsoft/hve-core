@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/planner-framework-criterion.schema.json",
+  "title": "Planner Framework Criterion (Flat Per-Item)",
+  "description": "Validates flat per-item YAML for itemKind 'criterion' authored under planner Framework Skills (e.g., Responsible AI threat-catalog, control-surface, tradeoffs, default-risk-indicators, output-formats). Items are open-shaped: required keys are id/title/itemKind/summary; assessmentMethod/risk/gates and other planner conventions are optional and validated only when present. additionalProperties is true so framework-specific fields (function, characteristic, controlType, dataFlows, strideMatrix, levels, body, nistSubcategories, indicatorType, etc.) pass through.",
+  "type": "object",
+  "required": ["id", "title", "itemKind", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Lower-kebab criterion identifier; dots permitted for hierarchical ids."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "itemKind": {
+      "const": "criterion",
+      "description": "Discriminator marking this item as a criterion."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Normative paraphrase of the criterion. Authors MUST NOT fabricate; paraphrase the canonical source."
+    },
+    "description": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string",
+      "description": "Optional long-form normative body (e.g., output-format prose)."
+    },
+    "function": {
+      "type": "string",
+      "description": "Optional NIST AI RMF function (govern|map|measure|manage)."
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional framework category."
+    },
+    "characteristic": {
+      "type": "string",
+      "description": "Single trustworthiness characteristic (e.g., NIST AI RMF)."
+    },
+    "characteristics": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Multiple trustworthiness characteristics."
+    },
+    "controlType": {
+      "type": "string",
+      "enum": ["preventive", "detective", "corrective"],
+      "description": "Optional control-surface taxonomy."
+    },
+    "dataFlows": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "strideMatrix": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "levels": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Optional level enumeration (e.g., autonomy-tier labels)."
+    },
+    "indicatorType": {
+      "type": "string",
+      "enum": ["binary", "categorical", "continuous"],
+      "description": "Optional risk-indicator data type."
+    },
+    "assessmentMethod": {
+      "type": "string",
+      "enum": ["binary", "categorical", "continuous"]
+    },
+    "risk": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "phase", "default"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "phase": { "type": "string", "minLength": 1 },
+          "default": {
+            "type": "string",
+            "enum": ["pending", "satisfied", "blocked", "n-a"]
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "nistSubcategories": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidenceHints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9_./*?{}\\[\\]\\-]+$"
+      }
+    },
+    "crossReferences": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Cross-walk identifiers to sibling items or other Framework Skills."
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discriminator": { "type": "string", "minLength": 1 },
+        "appliesWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naReason": { "type": "string" }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true
+    }
+  }
+}

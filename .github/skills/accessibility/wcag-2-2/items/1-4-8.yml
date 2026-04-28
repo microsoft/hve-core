@@ -1,0 +1,29 @@
+id: "1-4-8"
+title: "Visual Presentation"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "Mechanisms allow user color selection, width up to 80 characters, no full justification, line spacing >=1.5, and resize to 200% without horizontal scrolling."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G148"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/visual-presentation.html"
+  - "https://www.w3.org/TR/WCAG22/"

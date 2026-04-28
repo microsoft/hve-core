@@ -1,0 +1,26 @@
+id: waf-sus-platform-services
+version: "1.0"
+name: WAF Sustainability — Platform Services
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-platform
+description: Prefer managed and serverless platform services that share infrastructure efficiently across tenants.
+controls:
+  - id: waf-sus-platform-services
+    title: Platform Services — prefer managed and serverless multi-tenant services
+    description: |
+      Managed services (App Service, Azure SQL, Cosmos DB) and serverless
+      services (Functions, Container Apps) share infrastructure across
+      tenants and amortize embodied carbon (the SCI M variable) across
+      many workloads. Prefer them over IaaS where workload tolerates
+      managed-platform constraints.
+    group: pattern
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-platform

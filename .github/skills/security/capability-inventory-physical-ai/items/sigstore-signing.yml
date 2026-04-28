@@ -1,0 +1,37 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Sigstore signing"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: gitsign-based keyless signing for release tags and commits
+controls:
+- id: sigstore-signing
+  appliesTo: [cloud, web, ml, fleet]
+  title: Sigstore signing
+  description: gitsign-based keyless signing for release tags and commits
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Sigstore signing capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Sigstore signing is verified against reference patterns.
+  mapsTo:
+    sigstore:
+    - cosign
+    - fulcio
+  evidenceHints:
+  - .github/workflows/release*.yml
+  - .gitsign
+  - .github/workflows/sign*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

@@ -1,0 +1,11 @@
+{
+  "workloadId": "low-risk-baseline",
+  "surface": "web",
+  "trafficProfile": {
+    "monthlyActiveUsers": 5000,
+    "peakRequestsPerSecond": 5,
+    "geographicDistribution": ["us-east"]
+  },
+  "expectedRiskClassification": "low",
+  "rationale": "Modest traffic and single-region serving keep aggregate SCI well within heuristic budget; baseline efficiency controls are sufficient."
+}

@@ -1,0 +1,30 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: ci-tests
+    title: CI-Tests
+    risk: low
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that automated tests run on pull requests via a CI workflow.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify CI workflows that execute tests on pull requests.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Determine PR coverage ratio for test execution.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to extend CI test coverage to all PR triggers.
+    evidenceHints:
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - "azure-pipelines.yml"
+      - ".gitlab-ci.yml"

@@ -1,0 +1,25 @@
+id: wsg-ux-design
+version: "1.0"
+name: WSG — UX Design
+source: https://w3c.github.io/sustyweb/
+description: Sustainable UX design success criteria from W3C WSG 1.0.
+controls:
+  - id: wsg-ux-design
+    title: Sustainable UX Design — minimize wasteful interactions and content
+    description: |
+      Design user flows to complete tasks with the fewest interactions, page
+      loads, and data transfers. Avoid auto-playing media, infinite scroll
+      patterns that load unbounded content, and heavy decorative assets.
+      Provide low-data and dark-mode alternatives.
+    group: criterion
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - implemented
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

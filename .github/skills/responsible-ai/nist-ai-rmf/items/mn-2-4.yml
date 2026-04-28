@@ -1,0 +1,8 @@
+id: mn-2-4
+title: "MN-2.4: Supersede, disengage, or deactivate mechanisms"
+itemKind: criterion
+summary: "Mechanisms are in place and applied, and responsibilities are assigned and understood, to supersede, disengage, or deactivate AI systems that demonstrate performance or outcomes inconsistent with intended use."
+function: manage
+group: MN-2
+nistSubcategories:
+  - MN-2.4

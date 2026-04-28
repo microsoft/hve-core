@@ -1,0 +1,26 @@
+id: tc-elem-orchestration-layer
+title: "AI Element: Orchestration Layer"
+itemKind: criterion
+summary: "Agent or pipeline orchestration. Primary RAI concerns are decision routing and failure handling."
+elementType: orchestrationLayer
+kind: element
+characteristics:
+  - accountableTransparent
+  - validReliable
+nistSubcategories:
+  - MS-2.8
+  - MS-2.5
+dataFlows:
+  - inference-pipeline
+strideMatrix:
+  componentRef: model-serving
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Coordinates multi-step or multi-agent workflows around the model, including
+  tool use, routing, retries, and fallback paths. Threats include unauthorized
+  capability access, opaque decision routing, unattributable agent actions,
+  and unsafe failure handling. Typically maps to the INFRA, IDENTITY, and
+  WEBUI security buckets.

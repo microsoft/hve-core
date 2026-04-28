@@ -1,0 +1,1 @@
+../../../../.github/prompts/sustainability/sustainability-from-security-plan.prompt.md

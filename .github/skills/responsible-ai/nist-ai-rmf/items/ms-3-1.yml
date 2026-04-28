@@ -1,0 +1,8 @@
+id: ms-3-1
+title: "MS-3.1: Risk identification and tracking approaches"
+itemKind: criterion
+summary: "Approaches, personnel, and documentation are in place to regularly identify and track existing, unanticipated, and emergent AI risks based on factors such as intended and actual performance in deployed contexts."
+function: measure
+group: MS-3
+nistSubcategories:
+  - MS-3.1

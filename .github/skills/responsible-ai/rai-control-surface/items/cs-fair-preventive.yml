@@ -1,0 +1,16 @@
+id: cs-fair-preventive
+title: "Control Surface: Fair with Harmful Bias Managed — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Fair characteristic: balanced sampling, fairness constraints in training, and bias-aware feature selection."
+characteristic: fairBiasManaged
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls reduce the introduction of harmful bias before
+  deployment. Examples include balanced or stratified sampling across protected
+  groups, fairness constraints applied during training (demographic parity,
+  equalized odds, equal opportunity), and bias-aware feature selection that
+  drops or transforms features acting as proxies for protected attributes.

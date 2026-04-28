@@ -1,0 +1,7 @@
+
+> hve-core@3.3.41 lint:md
+> markdownlint-cli2 "**/*.md"
+
+markdownlint-cli2 v0.22.0 (markdownlint v0.40.0)
+Finding: **/*.md !**/node_modules/** !**/packages/** !.copilot-tracking/** !logs/** !venv/** !scripts/tests/Fixtures/** !extension/README.md !extension/README.*.md !extension/CHANGELOG.md !collections/*.collection.md !plugins/**/agents/** !plugins/**/instructions/** !plugins/**/commands/** !plugins/**/skills/** !plugins/**/docs/** !plugins/**/scripts/** !.github/instructions/** !.github/aw/logs/** !.github/agents/** !.github/prompts/** !.github/skills/**
+Linting: 210 file(s)

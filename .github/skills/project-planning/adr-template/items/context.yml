@@ -1,0 +1,25 @@
+id: context
+title: Context
+description: "Establishes the decision landscape: business scenario, problem statement, constraints, and success criteria."
+template: |
+  ## Context
+
+  **Scenario Context:** Describe the business scenario or use case that drives the need for {{adr_title}}.
+
+  **Problem Statement:** Articulate the specific problem being solved. What architectural challenge requires a decision?
+
+  **Constraints and Requirements:**
+
+  - *Technical* — Platform limitations, integration requirements, performance targets.
+  - *Business* — Budget constraints, timeline requirements, regulatory compliance.
+  - *Organizational* — Team expertise, operational capabilities, strategic direction.
+
+  **Success Criteria:**
+
+  - *Quantitative* — Measurable performance, cost, or timeline targets.
+  - *Qualitative* — Maintainability, security posture, developer experience goals.
+
+  {{context_detail}}
+inputs:
+  - name: context_detail
+    description: "Additional background, stakeholder analysis, or environmental factors relevant to the decision"

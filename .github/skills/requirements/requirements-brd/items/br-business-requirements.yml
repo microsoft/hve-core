@@ -1,0 +1,12 @@
+id: br-business-requirements
+title: "Business Requirements"
+description: "Business requirements with stable BR-IDs rendered as Section 7 of docs/templates/brd-template.md. BR-IDs are the traceability anchor that downstream PRD/RAI/security/SSSC/sustainability/accessibility/ADO/Jira artifacts cite; never renumber once published."
+templatePath: docs/templates/brd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [business, sponsor, exec]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]
+disclaimer: "Each row in the Business Requirements table must carry a stable BR-ID (e.g. BR-001). Downstream artifacts cite these IDs; they must not be renumbered once a BRD is shared."

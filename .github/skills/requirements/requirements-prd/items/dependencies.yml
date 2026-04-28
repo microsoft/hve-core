@@ -1,0 +1,11 @@
+id: dependencies
+title: "Dependencies"
+description: "Dependencies rendered as Section 9 of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]

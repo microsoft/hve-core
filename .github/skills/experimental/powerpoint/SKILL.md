@@ -464,6 +464,23 @@ This recreates the virtual environment from scratch using `pyproject.toml` as th
 
 When `uv` itself is not available, install it first (see Installing uv above), then retry. When Python 3.11+ is not available, run `uv python install 3.11` to have uv fetch and manage the interpreter.
 
-> Brought to you by microsoft/hve-core
+## Sustainability overlay
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+When the host agent (PowerPoint Builder) detects a sustainability plan at `.copilot-tracking/sustainability-plans/{slug}/active-controls.json`, two scriptable hooks are available for rendering directional SCI numerics with the required disclaimer.
+
+### Slide-template variable: `disclaimer_footer`
+
+A per-slide string variable resolved by the renderer when the slide carries any numeric SCI callout. The PowerPoint Builder agent sets `disclaimer_footer: "Directional estimate. Not an audited disclosure."` and the renderer emits a footer text frame on the slide. When no plan exists, the variable is unset and no footer is emitted.
+
+### Content macro: `sustainability_callout`
+
+A `content.yaml` macro that expands into a callout shape carrying an SCI value, its unit, the source id, and the measurement class. Schema additions per callout:
+
+* `sci_value` — numeric value (for example, `0.42`).
+* `sci_unit` — unit string (for example, `gCO2eq/request`).
+* `measurement_class` — one of `deterministic`, `estimated`, `heuristic`, `user-declared`.
+* `source_id` — the originating control id (for example, `gsf-sci:E`).
+
+All four fields are optional in the base schema and collectively required when `sustainability_callout` appears. When no sustainability plan exists, the macro is not emitted by the host agent and the schema additions remain unused.
+
+> Brought to you by microsoft/hve-core

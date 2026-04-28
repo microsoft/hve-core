@@ -1,0 +1,8 @@
+id: gv-1-3
+title: "GV-1.3: Risk tolerance determined and documented"
+itemKind: criterion
+summary: "Processes, procedures, and practices are in place to determine the needed level of risk management activities based on organizational risk tolerance."
+function: govern
+group: GV-1
+nistSubcategories:
+  - GV-1.3

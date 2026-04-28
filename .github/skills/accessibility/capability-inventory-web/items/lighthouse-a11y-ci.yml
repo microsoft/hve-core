@@ -1,0 +1,39 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - Lighthouse accessibility audit in CI"
+source: https://github.com/microsoft/hve-core
+description: "Lighthouse CI run with the accessibility category enabled producing a per-build a11y score and per-audit failures gated by score thresholds."
+controls:
+  - id: lighthouse-a11y-ci
+    title: "Lighthouse accessibility audit in CI"
+    description: "Lighthouse CI run with the accessibility category enabled producing a per-build a11y score and per-audit failures gated by score thresholds."
+    group: automated-testing
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: high
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Lighthouse accessibility audit in CI is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Lighthouse accessibility audit in CI runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-1-1
+        - 1-3-1
+        - 1-4-3
+        - 2-4-4
+        - 4-1-2
+    evidenceHints:
+      - "**/lighthouserc.*"
+      - "**/.lighthouseci/**"
+    references:
+      - https://github.com/GoogleChrome/lighthouse-ci
+      - https://developer.chrome.com/docs/lighthouse/accessibility/

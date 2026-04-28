@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/requirements-state.schema.json",
+  "title": "Requirements Builder State Schema",
+  "description": "Schema for Requirements Builder state.json files under .copilot-tracking/requirements-sessions/{slug}/. Couples to the disclaimer source-of-truth in .github/instructions/shared/disclaimer-language.instructions.md and the FSI Pack under .github/skills/requirements/.",
+  "type": "object",
+  "required": [
+    "meta",
+    "disclaimerShownAt",
+    "phase",
+    "frameworks",
+    "skillsLoaded",
+    "intake",
+    "drafts",
+    "handoff"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schemaVersion", "slug", "createdAt", "lastUpdatedAt", "disclaimerVersion", "agentVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdatedAt": { "type": "string", "format": "date-time" },
+        "disclaimerVersion": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 of the verbatim '## Requirements Planning' [!CAUTION] block from disclaimer-language.instructions.md (or the planner-shared disclaimer if no requirements-specific block is published)."
+        },
+        "agentVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version string of the requirements-builder agent that produced this state."
+        }
+      }
+    },
+    "disclaimerShownAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "ISO-8601 timestamp when the planner disclaimer was first rendered to the user."
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "1.identity",
+        "2.intake",
+        "3.template-selection",
+        "4.drafting",
+        "5.review",
+        "6.handoff"
+      ],
+      "description": "Current builder phase. Values map 1:1 to the six-phase table in requirements-identity.instructions.md."
+    },
+    "frameworks": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "version", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "source": {
+            "type": "string",
+            "enum": ["builtin", "host", "discovered"],
+            "description": "Provenance of the framework skill registration."
+          },
+          "selected": {
+            "type": "boolean",
+            "default": false,
+            "description": "True when the user opted in to drafting an output for this framework in the current session."
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "True when the user opted out of this framework. When true, disabledReason and disabledAtPhase are required (atomic triple)."
+          },
+          "disabledReason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "User-supplied or system-recorded rationale for skipping this framework."
+          },
+          "disabledAtPhase": {
+            "type": "string",
+            "enum": [
+              "1.identity",
+              "2.intake",
+              "3.template-selection",
+              "4.drafting",
+              "5.review",
+              "6.handoff"
+            ],
+            "description": "Phase at which the framework was disabled."
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "disabled": { "const": true } }, "required": ["disabled"] },
+            "then": { "required": ["disabled", "disabledReason", "disabledAtPhase"] }
+          }
+        ]
+      }
+    },
+    "skillsLoaded": {
+      "type": "array",
+      "description": "Append-only audit log of FSI skills loaded during the session.",
+      "items": {
+        "type": "object",
+        "required": ["skillId", "version", "loadedAt", "phase", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "skillId": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "loadedAt": { "type": "string", "format": "date-time" },
+          "phase": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+        }
+      }
+    },
+    "intake": {
+      "type": "object",
+      "required": ["entryMode", "capturedAt", "openQuestions", "answeredQuestions", "rejectedQuestions"],
+      "additionalProperties": false,
+      "properties": {
+        "entryMode": {
+          "type": "string",
+          "enum": ["ad-hoc", "meeting-handoff", "product-manager-advisor"],
+          "description": "How the session was initiated."
+        },
+        "capturedAt": { "type": "string", "format": "date-time" },
+        "openQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 },
+              "askedAtPhase": { "type": "string", "minLength": 1 },
+              "frameworkId": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "answeredQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "answer"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 },
+              "answer": { "type": "string" },
+              "answeredAt": { "type": "string", "format": "date-time" },
+              "source": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "rejectedQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "text": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "drafts": {
+      "type": "object",
+      "required": ["outputs"],
+      "additionalProperties": false,
+      "properties": {
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["frameworkId", "slug", "path", "format", "sectionsCompleted", "sectionsPending"],
+            "additionalProperties": false,
+            "properties": {
+              "frameworkId": { "type": "string", "minLength": 1 },
+              "slug": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+              },
+              "path": { "type": "string", "minLength": 1 },
+              "format": {
+                "type": "string",
+                "enum": ["markdown", "docx", "pptx"]
+              },
+              "sectionsCompleted": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "sectionsPending": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "required": ["activeRequirementsPath", "coverageDisclosurePath", "downstreamRecommendations"],
+      "additionalProperties": false,
+      "properties": {
+        "activeRequirementsPath": {
+          "type": "string",
+          "description": "Repo-relative path to the primary requirements artifact (e.g. docs/prds/<slug>.md)."
+        },
+        "coverageDisclosurePath": {
+          "type": "string",
+          "description": "Repo-relative path to the rendered coverage disclosure summarizing assessed vs skipped sections."
+        },
+        "downstreamRecommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["target", "rationale"],
+            "additionalProperties": false,
+            "properties": {
+              "target": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Downstream agent or prompt id (e.g. ado-prd-to-wit, jira-prd-to-wit, security-planner)."
+              },
+              "rationale": { "type": "string", "minLength": 1 },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high"],
+                "default": "medium"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

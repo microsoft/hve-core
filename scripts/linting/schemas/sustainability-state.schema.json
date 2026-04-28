@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/sustainability-state.schema.json",
+  "title": "Sustainability Planner State Schema",
+  "description": "Schema for Sustainability Planner state.json files under .copilot-tracking/sustainability-plans/{slug}/. Couples to the disclaimer source-of-truth in .github/instructions/shared/disclaimer-language.instructions.md and the FSI Pack under .github/skills/sustainability/.",
+  "type": "object",
+  "required": [
+    "meta",
+    "disclaimerShownAt",
+    "phase",
+    "entryMode",
+    "surfaces",
+    "workloadAssessment",
+    "standardsMapping",
+    "gapAnalysis",
+    "backlog",
+    "licenseRegister",
+    "skillsLoadedLogPath"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["schemaVersion", "slug", "createdAt", "lastUpdatedAt", "disclaimerVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": { "type": "string", "minLength": 1 },
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastUpdatedAt": { "type": "string", "format": "date-time" },
+        "disclaimerVersion": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 of the verbatim '## Sustainability Planning' [!CAUTION] block from disclaimer-language.instructions.md"
+        }
+      }
+    },
+    "disclaimerShownAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "ISO-8601 timestamp when the Sustainability Planning disclaimer was first rendered to the user. Required by DD-08 and the SSSC L17-parity rule in sustainability-identity.instructions.md."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Current planner phase. Values map 1:1 to the six-phase table in sustainability-identity.instructions.md (Phase 1 = Scoping & Framework Applicability Gate, Phase 2 = Workload Assessment, Phase 3 = Standards Mapping, Phase 4 = Gap Analysis, Phase 5 = Backlog, Phase 6 = Handoff). Identity Session Recovery requires this value to validate on every turn including the first, so the enum must include the scoping phase.",
+      "enum": [
+        "1.scoping",
+        "2.workload-assessment",
+        "3.standards-mapping",
+        "4.gap-analysis",
+        "5.backlog",
+        "6.handoff"
+      ]
+    },
+    "entryMode": {
+      "type": "string",
+      "enum": ["capture", "from-prd", "from-brd", "from-security-plan"]
+    },
+    "surfaces": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["cloud", "web", "ml", "fleet"] },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "workloadAssessment": {
+      "type": "object",
+      "required": ["capabilities", "scope", "confidence"],
+      "additionalProperties": true,
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["capabilityId", "appliesTo"],
+            "additionalProperties": true,
+            "properties": {
+              "capabilityId": { "type": "string", "minLength": 1 },
+              "appliesTo": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["cloud", "web", "ml", "fleet"] }
+              }
+            }
+          }
+        },
+        "scope": { "type": "string" },
+        "confidence": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    },
+    "standardsMapping": {
+      "type": "object",
+      "required": ["activeFrameworks", "activeControls", "skipped"],
+      "additionalProperties": true,
+      "properties": {
+        "activeFrameworks": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "activeControls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["frameworkId", "controlId"],
+            "additionalProperties": true,
+            "properties": {
+              "frameworkId": { "type": "string", "minLength": 1 },
+              "controlId": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "skipped": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["frameworkId", "reason"],
+            "additionalProperties": true,
+            "properties": {
+              "frameworkId": { "type": "string", "minLength": 1 },
+              "controlId": { "type": "string" },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "gapAnalysis": {
+      "type": "object",
+      "required": ["verified", "partial", "absent", "manual", "measurementInputs"],
+      "additionalProperties": true,
+      "properties": {
+        "verified": { "type": "array" },
+        "partial": { "type": "array" },
+        "absent": { "type": "array" },
+        "manual": { "type": "array" },
+        "measurementInputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["sciVariable", "measurementClass"],
+            "additionalProperties": true,
+            "properties": {
+              "sciVariable": {
+                "type": "string",
+                "enum": ["E", "I", "M", "R"]
+              },
+              "measurementClass": {
+                "type": "string",
+                "enum": ["deterministic", "estimated", "heuristic", "user-declared"]
+              },
+              "value": {},
+              "units": { "type": "string" },
+              "source": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "backlog": {
+      "type": "object",
+      "required": ["items", "sciBudgets"],
+      "additionalProperties": true,
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "title", "priority"],
+            "additionalProperties": true,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "title": { "type": "string", "minLength": 1 },
+              "priority": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        },
+        "sciBudgets": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "controlTracker": {
+      "type": "array",
+      "description": "Per-control coverage tracker recording which framework controls were mapped in Phase 2 standards-mapping and the suggested status from Phase 3 gap-analysis. Renders the Phase 5 Coverage Disclosure (assessed vs skipped).",
+      "items": {
+        "type": "object",
+        "required": ["controlId", "mappedInPhase3", "suggestedStatus"],
+        "additionalProperties": false,
+        "properties": {
+          "controlId": { "type": "string", "minLength": 1 },
+          "frameworkId": { "type": "string", "minLength": 1 },
+          "mappedInPhase3": { "type": "boolean" },
+          "suggestedStatus": {
+            "type": "string",
+            "enum": ["addressed", "partial", "not-addressed", "deferred", "not-applicable"]
+          },
+          "notes": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "licenseRegister": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bundleId", "version", "license", "attributionRequired", "loadedAt"],
+        "additionalProperties": false,
+        "properties": {
+          "bundleId": { "type": "string", "minLength": 1 },
+          "version": { "type": "string", "minLength": 1 },
+          "license": {
+            "type": "string",
+            "enum": [
+              "CSL-1.0",
+              "Apache-2.0",
+              "CC-BY-4.0",
+              "W3C-CFSA",
+              "MIT",
+              "Apache-2.0+CC-BY-4.0",
+              "CC-BY-4.0+MIT"
+            ]
+          },
+          "attributionRequired": { "type": "boolean" },
+          "loadedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "skillsLoadedLogPath": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path to append-only skills-loaded.log under the planner working directory"
+    },
+    "refusalLog": {
+      "type": "array",
+      "default": [],
+      "description": "Out-of-band-disclosure refusal log per Step 5.11 / DR-12.",
+      "items": {
+        "type": "object",
+        "required": ["turnId", "intentSignal", "atPhase"],
+        "additionalProperties": false,
+        "properties": {
+          "turnId": { "type": "string", "minLength": 1 },
+          "intentSignal": { "type": "string", "minLength": 1 },
+          "atPhase": {
+            "type": "string",
+            "description": "Phase active when the refusal occurred. Mirrors the top-level `phase` enum so refusals captured during Phase 1 scoping are representable.",
+            "enum": [
+              "1.scoping",
+              "2.workload-assessment",
+              "3.standards-mapping",
+              "4.gap-analysis",
+              "5.backlog",
+              "6.handoff"
+            ]
+          },
+          "atTime": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

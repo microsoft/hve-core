@@ -1,0 +1,11 @@
+id: br-benefits
+title: "Benefits & Cost Considerations"
+description: "Expected benefits and cost considerations rendered as Section 12 of docs/templates/brd-template.md."
+templatePath: docs/templates/brd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [business, sponsor, exec]
+selectWhen:
+  discriminator: depth_tier
+  values: [deep]

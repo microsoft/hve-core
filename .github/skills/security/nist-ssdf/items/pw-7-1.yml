@@ -1,0 +1,29 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: pw-7-1
+    title: Determine Whether Code Review or Code Analysis Should Be Performed
+    group: PW
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Determine which forms of code review and code analysis should be performed for which software, and document the expectations, criteria, and tooling required.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate documented code review and analysis expectations.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components or repositories lacking documented review expectations.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to document review and analysis expectations.
+    evidenceHints:
+      - "CONTRIBUTING.md"
+      - "docs/contributing/code-review*.md"
+      - ".github/CODEOWNERS"
+      - ".github/pull_request_template.md"

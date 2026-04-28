@@ -1,0 +1,2 @@
+docs/security/sssc-planner-opt-out.md:20:The validation and signing scripts for planner artifacts have been renamed to reflect their cross-planner scope. `Validate-AIArtifacts` is now `Validate-PlannerArtifacts`, and `Sign-RaiArtifacts` (formerly `Sign-RAI`) is now `Sign-PlannerArtifacts`. See [planner-artifact-signing](planner-artifact-signing) for the current verification and signing workflow.
+docs/security/planner-artifact-signing.md:84:| `Validate-AIArtifacts.ps1`   | `Validate-PlannerArtifacts.ps1`  |

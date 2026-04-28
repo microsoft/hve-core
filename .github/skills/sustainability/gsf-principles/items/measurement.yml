@@ -1,0 +1,33 @@
+id: measurement
+version: "1.0"
+name: Measurement
+source: https://learn.greensoftware.foundation/
+description: What you cannot measure, you cannot improve.
+controls:
+  - id: measurement
+    title: Measurement — declare and quantify SCI inputs
+    description: |
+      Measurement underpins every other principle. Practitioners declare a
+      functional unit R, quantify E (energy), I (intensity), and M (embodied),
+      and report SCI per R. Measurement maturity progresses from heuristic
+      (utilization proxies) to estimated (vendor models) to deterministic
+      (direct telemetry).
+    group: principle
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/measurement/

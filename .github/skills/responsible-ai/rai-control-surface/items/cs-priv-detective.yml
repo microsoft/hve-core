@@ -1,0 +1,16 @@
+id: cs-priv-detective
+title: "Control Surface: Privacy-Enhanced — Detective"
+itemKind: criterion
+summary: "Detective controls for the Privacy-Enhanced characteristic: privacy budget tracking, re-identification testing, and data-leakage scanning."
+characteristic: privacyEnhanced
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe whether privacy guarantees hold in operation.
+  Examples include differential privacy budget tracking with alarms before
+  exhaustion, periodic re-identification testing on released artifacts and
+  outputs, and data-leakage scanning of model outputs and embeddings for
+  memorized personal data.

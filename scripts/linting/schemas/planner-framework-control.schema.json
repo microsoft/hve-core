@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/planner-framework-control.schema.json",
+  "title": "Planner Framework Control Bundle",
+  "description": "Validates per-control YAML Framework Skills authored under any framework or capability skill at .github/skills/<collection>/<framework-id>/controls/*.yml. Authoring contract RI-1..RI-5: assessmentMethod enum is closed; gates default to pending; $id is required and must be a URL; evidenceHints are paths/globs; identifiers are lower-kebab.",
+  "type": "object",
+  "required": ["id", "version", "name", "controls"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Lower-kebab framework or capability Framework Skill identifier (RI-5)"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Bundle version (semver or framework-native version string)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable framework or capability name"
+    },
+    "source": {
+      "type": "string",
+      "format": "uri",
+      "description": "Authoritative URL for the framework or capability definition"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional Framework Skill description"
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional SPDX license identifier overriding the bundle's metadata.license for the content of this item file. Use when an individual item redistributes upstream material under a license that differs from the bundle declaration (for example, an SBOM bundle declared CC0-1.0 that contains one item paraphrasing CycloneDX Apache-2.0 spec text)."
+    },
+    "licenseUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical URL to the license text referenced by the per-item 'license' override. Required by validators when 'license' is set and is not a public-domain sentinel."
+    },
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/control" },
+      "description": "Per-control entries"
+    }
+  },
+  "$defs": {
+    "control": {
+      "type": "object",
+      "required": ["id", "title", "assessmentMethod", "risk"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "description": "Lower-kebab control identifier; dots permitted for hierarchical IDs (e.g., pw.4.1)"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string",
+          "description": "Optional group or family identifier within the framework (e.g., PO, PS, PW, RV for SSDF)"
+        },
+        "assessmentMethod": {
+          "type": "string",
+          "enum": ["binary", "categorical", "continuous"],
+          "description": "How adoption is assessed (RI-1; closed enum)"
+        },
+        "categories": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "description": "Required when assessmentMethod is categorical; lower-kebab labels (RI-5)"
+        },
+        "scoreRange": {
+          "type": "object",
+          "required": ["min", "max"],
+          "additionalProperties": false,
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" }
+          },
+          "description": "Required when assessmentMethod is continuous"
+        },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "criteria"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+              "criteria": { "type": "string", "minLength": 1 }
+            }
+          },
+          "description": "Optional tier breakdown (e.g., Branch-Protection tier-1/tier-2)"
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low", "info"]
+        },
+        "gates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/gate" },
+          "description": "Phase gates that depend on this control"
+        },
+        "mapsTo": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "description": "Cross-framework mapping; keys are framework IDs, values are lists of control IDs in that framework"
+        },
+        "evidenceHints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_./*?{}\\[\\]\\-]+$"
+          },
+          "description": "File paths or globs that typically provide evidence for this control (RI-4; no prose)"
+        },
+        "equivalentImplementations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "tool", "rationale"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9.-]*$",
+                "description": "Lower-kebab identifier for the equivalent implementation"
+              },
+              "tool": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Concrete tool, action, or artifact name (e.g., 'actions/attest-build-provenance')"
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Why this implementation is functionally equivalent (shared trust roots, primitives, or interfaces)"
+              }
+            }
+          },
+          "description": "Optional list of functional equivalents. Planners must score presence of any listed equivalent as full credit (verified) for this control rather than partial."
+        },
+        "applicability": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "discriminator": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Short label for the applicability axis (e.g., 'project-type', 'role')"
+            },
+            "appliesWhen": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Values of the discriminator under which this control applies"
+            },
+            "naWhen": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Values of the discriminator under which this control should be scored n/a"
+            },
+            "naReason": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Reason text the planner must record when scoring this control n/a under naWhen"
+            }
+          },
+          "description": "Optional applicability discriminator. Planners use this to decide whether the control is in scope for the current project (e.g., self-published OSS vs. acquired upstream supplier)."
+        },
+        "alternativeGroup": {
+          "type": "object",
+          "required": ["id"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Lower-kebab identifier shared across mutually-substitutable controls"
+            },
+            "rationale": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Why these alternatives are mutually substitutable (e.g., 'SPDX 2.3 and CycloneDX 1.5 are interchangeable SBOM formats')"
+            }
+          },
+          "description": "Optional grouping that marks this control as one of several mutually substitutable alternatives. When any control in the group is verified, planners must score the unused members n/a with reason 'alternative format selected' (or equivalent)."
+        },
+        "appliesTo": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["cloud", "web", "ml", "fleet"] },
+          "uniqueItems": true,
+          "description": "FSI v1.0 sustainability surface tags. Subset of the per-framework surfaceFilter. Planners filter controls by the active workload mix at runtime."
+        },
+        "measurementClass": {
+          "type": "string",
+          "enum": ["deterministic", "estimated", "heuristic", "user-declared"],
+          "description": "FSI v1.0 sustainability extension. Declares the epistemic class of any numeric output the control produces (e.g., SCI energy term as 'estimated')."
+        },
+        "sciVariable": {
+          "type": "string",
+          "enum": ["E", "I", "M", "R"],
+          "description": "FSI v1.0 sustainability extension. Maps the control to one of the four SCI=(E*I+M)/R variables when applicable."
+        },
+        "appliesToPrinciples": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^gsf-principles:[a-z0-9-]+$" },
+          "uniqueItems": true,
+          "description": "FSI v1.0 sustainability extension. Cross-walk to gsf-principles bundle item ids (validator emits a warning when the bundle is loaded but a referenced item is missing)."
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "Authoritative reference URLs"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "assessmentMethod": { "const": "categorical" } }, "required": ["assessmentMethod"] },
+          "then": { "required": ["categories"] }
+        },
+        {
+          "if": { "properties": { "assessmentMethod": { "const": "continuous" } }, "required": ["assessmentMethod"] },
+          "then": { "required": ["scoreRange"] }
+        }
+      ]
+    },
+    "gate": {
+      "type": "object",
+      "required": ["id", "default"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "phase": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "default": {
+          "const": "pending",
+          "description": "All gates start as pending (RI-2)"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

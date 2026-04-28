@@ -1,0 +1,58 @@
+framework: gsf-principles
+version: "1.0"
+domain: sustainability
+sustainabilityScope: primary
+status: published
+summary: Green Software Foundation Principles of Green Software (eight principles) for sustainability-aware planning.
+evidenceFormat: shared
+surfaceFilter:
+  - cloud
+  - web
+  - ml
+  - fleet
+phaseMap:
+  standards-mapping:
+    - carbon-efficiency
+    - energy-efficiency
+    - hardware-efficiency
+    - carbon-awareness
+    - measurement
+    - climate-commitments
+    - fair-allocation
+    - transparency
+  gap-analysis:
+    - carbon-efficiency
+    - energy-efficiency
+    - hardware-efficiency
+    - carbon-awareness
+    - measurement
+  backlog-generation:
+    - carbon-efficiency
+    - energy-efficiency
+    - hardware-efficiency
+    - carbon-awareness
+    - measurement
+metadata:
+  authority: Green Software Foundation
+  license: CC-BY-4.0
+  licenseUrl: https://creativecommons.org/licenses/by/4.0/
+  source: https://learn.greensoftware.foundation/
+  attributionRequired: true
+  attributionText: |
+    Principles content adapted from the Green Software Foundation
+    "Principles of Green Software" (https://learn.greensoftware.foundation/) under
+    Creative Commons Attribution 4.0 International (CC-BY-4.0).
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://learn.greensoftware.foundation/"
+    sha256: "a9cfc1fc0fa836c01fbf07833423b737d6e20f8295cb316ddd2bd7894be1f88c"
+    declaredLicense: "CC-BY-4.0"
+    status: verified
+governance:
+  owner: "@microsoft/hve-core"
+  reviewCadence: P180D
+  last_reviewed: "2026-04-21"

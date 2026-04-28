@@ -1,0 +1,35 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - Readability budget enforced in CI"
+source: https://github.com/microsoft/hve-core
+description: "CI job that fails when changed Markdown raises Flesch-Kincaid grade above a documented budget so reading difficulty cannot regress unnoticed."
+controls:
+  - id: readability-budget-ci
+    title: "Readability budget enforced in CI"
+    description: "CI job that fails when changed Markdown raises Flesch-Kincaid grade above a documented budget so reading difficulty cannot regress unnoticed."
+    group: automation-pipeline
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Readability budget enforced in CI is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Readability budget enforced in CI runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-grade-level-target
+    evidenceHints:
+      - .github/workflows/**
+      - scripts/**/readability*
+    references:
+      - https://github.com/textstat/textstat
+      - https://www.plainlanguage.gov/guidelines/

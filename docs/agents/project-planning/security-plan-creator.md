@@ -200,7 +200,7 @@ Output using the template at docs/templates/security-plan-template.md.
 2. See [Project Planning Agents](README.md) for the full agent catalog
 
 > [!TIP]
-> Run the security assessment after completing your [BRD or PRD](brd-prd-builders.md) to align threat analysis with documented requirements and system boundaries.
+> Run the security assessment after completing your [BRD or PRD](requirements-builder.md) to align threat analysis with documented requirements and system boundaries.
 
 ---
 

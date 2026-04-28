@@ -1,0 +1,29 @@
+id: "2-4-11"
+title: "Focus Not Obscured (Minimum)"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.2"
+summary: "When a UI component receives keyboard focus, the component is not entirely hidden due to author-created content."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C43"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html"
+  - "https://www.w3.org/TR/WCAG22/"

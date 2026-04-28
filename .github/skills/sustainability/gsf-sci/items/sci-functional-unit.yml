@@ -1,0 +1,44 @@
+id: gsf-sci-functional-unit
+version: "1.0"
+name: SCI Variable R — Functional Unit
+source: https://sci.greensoftware.foundation/
+description: The functional unit declared by the user; SCI is always reported per R.
+controls:
+  - id: sci-functional-unit
+    title: Functional Unit (R) — user-declared denominator
+    description: |
+      R is the functional unit by which the SCI score is normalised. It is **declared
+      by the user**, not derived; without a declared R, SCI cannot be computed or
+      compared.
+
+      Valid functional units include (non-exhaustive):
+        - per API request
+        - per user session
+        - per device per day
+        - per training run (for ML systems)
+        - per inference (for ML systems)
+        - per kilometre travelled (for fleet systems)
+
+      The user MUST document R alongside any reported SCI score; comparing SCI scores
+      across different R values is meaningless.
+    group: variable
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    measurementClass: user-declared
+    sciVariable: R
+    appliesToPrinciples:
+      - gsf-principles:measurement
+      - gsf-principles:transparency
+    references:
+      - https://sci.greensoftware.foundation/
+      - https://github.com/Green-Software-Foundation/sci/blob/main/Software_Carbon_Intensity/Software_Carbon_Intensity_Specification.md

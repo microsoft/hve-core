@@ -1,0 +1,8 @@
+id: ms-4-3
+title: "MS-4.3: Performance improvement and decline tracking"
+itemKind: criterion
+summary: "Measurable performance improvements or declines based on consultations with relevant AI actors, including affected communities, and field data about context-relevant risks and trustworthiness characteristics are identified and documented."
+function: measure
+group: MS-4
+nistSubcategories:
+  - MS-4.3

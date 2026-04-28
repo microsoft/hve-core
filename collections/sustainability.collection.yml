@@ -1,0 +1,89 @@
+id: sustainability
+name: Sustainability
+description: Sustainability planning, workload assessment, standards mapping, gap analysis, and backlog generation against Green Software Foundation SCI/Patterns/Principles, Sustainable Web Design, Web Sustainability Guidelines, and the Azure Well-Architected Sustainability pillar
+notice: |
+  > [!CAUTION]
+  > The sustainability agents and instructions in this collection are **assistive tools only**. They produce directional sustainability estimates, not audited disclosures. They do not provide legal, regulatory, or compliance advice and do not replace qualified sustainability professionals or applicable disclosure-framework counsel (CSRD/ESRS, SEC climate rules, GHG Protocol, TCFD, ISO 14064/14067). Requests to generate text for CSRD or ESRS disclosures, SEC climate filings, GHG Protocol corporate inventories, TCFD reports, or ISO 14064/ISO 14067 attestations fall outside this planner's scope. All AI-generated sustainability artifacts **must** be reviewed by a qualified sustainability professional before external use.
+tags:
+  - sustainability
+  - green-software
+  - sci
+  - gsf
+  - planning
+  - carbon
+  - energy
+items:
+  # Agents
+  - path: .github/agents/sustainability/sustainability-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/sustainability/subagents/sustainability-researcher-subagent.agent.md
+    kind: agent
+    maturity: experimental
+  # Framework Skills
+  - path: .github/skills/sustainability/azure-waf-sustainability
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/sustainability/capability-inventory
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/sustainability/gsf-principles
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/sustainability/gsf-sci
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/sustainability/swd
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/sustainability/wsg
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/framework-skill-interface
+    kind: skill
+  # Sustainability Planner Instructions
+  - path: .github/instructions/sustainability/sustainability-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-risk-classification.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-workload-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-gap-analysis.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-backlog.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/sustainability/sustainability-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  # Shared Instructions
+  - path: .github/instructions/shared/disclaimer-language.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/evidence-citation.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/planner-priority-rules.instructions.md
+    kind: instruction
+  # Entry-mode Prompts
+  - path: .github/prompts/sustainability/sustainability-capture.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/sustainability/sustainability-from-brd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/sustainability/sustainability-from-prd.prompt.md
+    kind: prompt
+    maturity: experimental
+  - path: .github/prompts/sustainability/sustainability-from-security-plan.prompt.md
+    kind: prompt
+    maturity: experimental
+display:
+  ordering: manual

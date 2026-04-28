@@ -300,3 +300,9 @@ After closing, do not introduce new methods or major topics. If the user re-enga
 ## Required Protocol
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
+
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project and the active plan flags a high-traffic surface in `state.workloadAssessment.capabilities[]`, surface a Method 5 (User Concepts) sub-prompt encouraging at least one concept variant that meets the SCI budget without functional regression. Cite control ids inline (for example, `gsf-sci:E`, `gsf-patterns:<id>`). When no plan exists, run Method 5 as today.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

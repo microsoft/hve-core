@@ -1,0 +1,15 @@
+id: cs-sr-preventive
+title: "Control Surface: Secure and Resilient — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Secure and Resilient characteristic: input validation, prompt injection defenses, model isolation, and access control."
+characteristic: secureResilient
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls reduce the attack surface and likelihood of compromise.
+  Examples include input validation and sanitization, prompt injection defenses,
+  model and weight isolation in dedicated execution boundaries, and access control
+  on inference endpoints, training pipelines, and feature stores.

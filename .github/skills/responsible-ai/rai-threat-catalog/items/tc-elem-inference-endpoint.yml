@@ -1,0 +1,25 @@
+id: tc-elem-inference-endpoint
+title: "AI Element: Inference Endpoint"
+itemKind: criterion
+summary: "API or service serving predictions. Primary RAI concerns are availability (Valid and Reliable) and query privacy."
+elementType: inferenceEndpoint
+kind: element
+characteristics:
+  - validReliable
+  - privacyEnhanced
+nistSubcategories:
+  - MS-2.5
+  - MS-2.10
+dataFlows:
+  - inference-pipeline
+strideMatrix:
+  componentRef: inference-api
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  API or service exposing model inference to clients. Threats concentrate on
+  adversarial inputs, prompt injection, denial-of-service via crafted queries,
+  membership inference, and embedding leakage. Typically maps to the WEBUI
+  and INFRA security buckets.

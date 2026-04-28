@@ -1,0 +1,8 @@
+id: mp-1-5
+title: "MP-1.5: Risk tolerances for the specific AI system"
+itemKind: criterion
+summary: "Organizational risk tolerances are determined and documented for the specific AI system in scope."
+function: map
+group: MP-1
+nistSubcategories:
+  - MP-1.5

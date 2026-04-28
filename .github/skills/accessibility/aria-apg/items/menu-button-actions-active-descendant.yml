@@ -1,0 +1,39 @@
+id: "menu-button-actions-active-descendant"
+title: "Menu Button (Actions, Active Descendant) Pattern"
+itemKind: pattern
+summary: "Menu button variant using aria-activedescendant to indicate the focused menu item without moving DOM focus."
+keyboardModel:
+  - "menu"
+focusManagement: "single"
+relatedRoles:
+  - "button"
+  - "menu"
+  - "menuitem"
+requiredStates:
+  - "aria-expanded"
+  - "aria-activedescendant"
+requiredProperties:
+  - "aria-haspopup"
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-1-2"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button-actions-active-descendant/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button-actions-active-descendant/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

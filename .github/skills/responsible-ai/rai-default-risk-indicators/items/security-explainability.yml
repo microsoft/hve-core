@@ -1,0 +1,36 @@
+id: security-explainability
+title: Security and Explainability Risk Indicator
+itemKind: criterion
+summary: "Continuous indicator (0.0-1.0) combining attack surface exposure, data sensitivity, and decision explainability gap. Mean score >= 0.5 counts as activated."
+indicatorType: continuous
+assessmentMethod: continuous
+nistSubcategories:
+  - MS-2.7
+  - MS-2.9
+characteristics:
+  - secureResilient
+  - explainableInterpretable
+gates:
+  - id: risk-classification
+    phase: phase-2-risk-classification
+    default: pending
+    description: Score continuous mean during Phase 2 Risk Classification.
+description: |
+  Source: rai-risk-classification.instructions.md (security_explainability indicator).
+
+  Type: continuous score on the closed interval [0.0, 1.0]. Score is the arithmetic
+  mean of three component dimensions, each scored on [0.0, 1.0]:
+
+    1. Attack surface exposure: how exposed inputs, prompts, and model endpoints are
+       to untrusted callers (0.0 fully isolated; 1.0 anonymous public access).
+    2. Data sensitivity level: classification of training data, prompts, and outputs
+       (0.0 public-only; 1.0 regulated personal or proprietary).
+    3. Decision explainability gap: distance between model rationale and stakeholder
+       comprehensibility (0.0 fully interpretable; 1.0 opaque deep model with no
+       attribution surface).
+
+  Activation rule: Mean of the three dimensions >= 0.5 counts as activated for the
+  Phase 2 indicator count.
+
+  NIST AI RMF cross-walk: MS-2.7 (security and resilience), MS-2.9 (explainability and
+  interpretability).

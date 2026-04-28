@@ -1,0 +1,25 @@
+id: archetype-ml-training-job
+version: "1.0"
+name: Archetype — ML Training Job
+source: hve-core authored
+description: ML model training workload (pre-training, fine-tuning, RLHF). High-energy, deferrable, accelerator-bound.
+controls:
+  - id: archetype-ml-training-job
+    title: ML Training Job — high-energy, accelerator-bound, deferrable
+    description: |
+      ML model training workload. High-energy and accelerator-bound;
+      deferrable nature makes it a strong fit for carbon-aware
+      scheduling. Embodied carbon (SCI variable M) of accelerators
+      is significant — amortize via shared/reserved capacity.
+    group: archetype
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - ml
+    references:
+      - https://patterns.greensoftware.foundation/

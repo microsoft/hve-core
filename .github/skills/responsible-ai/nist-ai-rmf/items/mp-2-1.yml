@@ -1,0 +1,8 @@
+id: mp-2-1
+title: "MP-2.1: Tasks and methods defined"
+itemKind: criterion
+summary: "The specific tasks and methods used to implement the tasks that the AI system will support are defined (e.g., classifiers, generative models, recommenders)."
+function: map
+group: MP-2
+nistSubcategories:
+  - MP-2.1

@@ -1,0 +1,25 @@
+id: tc-elem-feedback-loop
+title: "AI Element: Feedback Loop"
+itemKind: criterion
+summary: "User feedback incorporated back into the model. Primary RAI concerns are feedback bias and model drift."
+elementType: feedbackLoop
+kind: element
+characteristics:
+  - fairBiasManaged
+  - validReliable
+nistSubcategories:
+  - MS-2.11
+  - MS-2.5
+dataFlows:
+  - feedback-loop
+strideMatrix:
+  componentRef: feedback-loop
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Mechanism for capturing user feedback and recycling it into model updates.
+  Threats include feedback manipulation, sampling bias in respondents, drift
+  injection, and bias amplification across retraining cycles. Typically maps
+  to the DATA and WEBUI security buckets.

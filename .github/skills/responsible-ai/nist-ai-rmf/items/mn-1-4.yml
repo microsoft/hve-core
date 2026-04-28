@@ -1,0 +1,8 @@
+id: mn-1-4
+title: "MN-1.4: Residual risk documentation"
+itemKind: criterion
+summary: "Negative residual risks (defined as the sum of all unmitigated risks) to both downstream acquirers of AI systems and end users are documented."
+function: manage
+group: MN-1
+nistSubcategories:
+  - MN-1.4

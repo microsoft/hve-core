@@ -1,0 +1,32 @@
+id: hardware-efficiency
+version: "1.0"
+name: Hardware Efficiency
+source: https://learn.greensoftware.foundation/
+description: Build applications that are hardware efficient, using the least embodied carbon per unit of work.
+controls:
+  - id: hardware-efficiency
+    title: Hardware Efficiency — minimize embodied carbon per unit of work
+    description: |
+      Hardware efficiency reduces the SCI variable M. Improvements include
+      extending hardware lifespan, increasing utilization (bin-packing,
+      consolidation), choosing efficient instance families, and avoiding
+      over-provisioning.
+    group: principle
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/hardware-efficiency/

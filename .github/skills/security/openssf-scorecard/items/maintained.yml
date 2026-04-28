@@ -1,0 +1,30 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: maintained
+    title: Maintained
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Evaluates recent commit activity and issue response cadence as an indicator of ongoing maintenance.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Record commit and issue activity over the most recent 90 days.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify maintenance or response cadence gaps.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to restore maintenance signals or document succession.
+    evidenceHints:
+      - "CHANGELOG.md"
+      - "MAINTAINERS.md"
+      - ".github/SUPPORT.md"
+      - "SUPPORT.md"

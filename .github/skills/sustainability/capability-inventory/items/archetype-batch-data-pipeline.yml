@@ -1,0 +1,24 @@
+id: archetype-batch-data-pipeline
+version: "1.0"
+name: Archetype — Batch Data Pipeline
+source: hve-core authored
+description: Scheduled or event-triggered batch data pipeline (ETL, ELT, report generation, backups). Deferrable, time-shiftable.
+controls:
+  - id: archetype-batch-data-pipeline
+    title: Batch Data Pipeline — deferrable, time-shiftable workload
+    description: |
+      Scheduled or event-triggered batch data pipeline. Deferrable
+      execution makes it a strong fit for carbon-aware time-shifting
+      and low-cost spot capacity.
+    group: archetype
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://patterns.greensoftware.foundation/

@@ -1,0 +1,450 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/framework-skill-manifest.schema.json",
+  "title": "Framework Skill Manifest",
+  "description": "Validates the index.yml manifest at the root of a Framework Skill located under .github/skills/<domain>/<framework-id>/index.yml. The FSI pattern is host-agent-neutral: any agent (planner, reviewer, importer, generator, etc.) may consume Framework Skills by enumerating manifests under a domain root and resolving phaseMap entries to per-item files. The host agent owns the semantics of phase labels and item kinds; this schema validates only structural shape and identifier hygiene.",
+  "type": "object",
+  "required": ["framework", "version", "summary", "phaseMap", "metadata", "governance"],
+  "additionalProperties": false,
+  "properties": {
+    "framework": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Lower-kebab framework identifier; SHOULD match the Framework Skill directory name."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Bundle version string (semver, framework-native version, or revision tag)."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Plain-English one-sentence description (<=120 chars) used by host agents in user-facing enumeration prompts (for example, the SSSC Phase 1 Framework Applicability Gate). Avoid acronyms without expansion; write for an audience that may not recognize the framework id."
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Optional lower-kebab domain label scoping this Framework Skill to a host-agent contract (for example security-supply-chain, responsible-ai, code-review, coding-standards). When omitted, hosts MAY infer the domain from the Framework Skill's parent directory under .github/skills/<domain>/."
+    },
+    "itemKind": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "default": "control",
+      "description": "Open hint describing the per-item file shape (for example control, criterion, rule, principle, check, capability). Hosts use this to choose a per-domain item validation schema. Defaults to control when omitted (back-compat)."
+    },
+    "surfaceFilter": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["cloud", "web", "ml", "fleet"] },
+      "uniqueItems": true,
+      "description": "FSI v1.0 sustainability extension. When present, every per-item file in this Framework Skill MUST declare appliesTo whose values are a subset of this set. Planners use the filter to subset the bundle to the active workload mix at runtime. Omit on bundles that intentionally apply across all surfaces (for example capability inventories)."
+    },
+    "evidenceFormat": {
+      "type": "string",
+      "enum": ["shared"],
+      "description": "FSI v1.0 evidence-citation contract declaration. When set to 'shared', every per-item evidenceHints entry in this bundle MUST conform to the shared evidence-citation format defined in .github/instructions/shared/evidence-citation.instructions.md (path-with-line-range tokens consumable by FSI-aware planners). Manifest-level only in v1; per-item overrides are reserved for future versions. Omit on bundles whose evidence model has not been audited against the shared contract."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "published"],
+      "default": "published",
+      "description": "Lifecycle status. Hosts MUST skip Framework Skills with status=draft unless the consuming reference opts in (for example frameworkRef.includeDrafts=true). Framework Skills produced by an unattended import workflow SHOULD start as draft until reviewed."
+    },
+    "phaseMap": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Map of host-defined phase labels to ordered lists of item identifiers. Phase labels are opaque strings owned by the consuming host agent (for example a planner uses standards-mapping/gap-analysis/backlog-generation; a reviewer might use intake/triage/report). The schema does not enumerate phase names.",
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*$": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9.-]*$",
+            "description": "Item identifier (lower-kebab; dots permitted for hierarchical IDs). Hosts resolve each id to a file under the Framework Skill (typically items/<id>.yml)."
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Provenance, licensing, and authoring metadata. Validators enforce the licensing fields; other keys are advisory and importers MAY populate them.",
+      "required": ["authority", "license", "attributionRequired"],
+      "properties": {
+        "spec_version": { "type": "string" },
+        "framework_revision": { "type": "string" },
+        "last_updated": { "type": "string" },
+        "source": { "type": "string", "format": "uri" },
+        "imported_by": { "type": "string" },
+        "imported_at": { "type": "string", "format": "date-time" },
+        "review_required": { "type": "boolean" },
+        "authority": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Publishing authority that owns the upstream framework (for example 'OpenSSF', 'NIST', 'CISA', 'W3C', 'microsoft/hve-core'). Used by THIRD-PARTY-NOTICES aggregation and audit reporting."
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX license identifier (for example 'MIT', 'Apache-2.0', 'CC-BY-4.0', 'CC-BY-3.0', 'CC0-1.0') or one of the public-domain sentinels 'public-domain' or 'US-Gov-Public-Domain' for works not subject to copyright."
+        },
+        "licenseUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical URL to the license text. Required by validator when 'license' is not a public-domain sentinel."
+        },
+        "attributionRequired": {
+          "type": "boolean",
+          "description": "Whether redistribution requires an attribution notice. Drives THIRD-PARTY-NOTICES inclusion."
+        },
+        "attributionText": {
+          "type": "string",
+          "description": "Verbatim attribution snippet aggregated into THIRD-PARTY-NOTICES. Required (non-empty) when attributionRequired is true."
+        },
+        "redistribution": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-skill redistribution flags. Items MAY further constrain but MUST NOT relax these flags.",
+          "properties": {
+            "textVerbatim": {
+              "type": "boolean",
+              "description": "Whether per-item files MAY contain verbatim copies of the upstream text."
+            },
+            "idsAndUrlsOnly": {
+              "type": "boolean",
+              "description": "When true, items SHOULD ship only identifiers and source URLs (no body/text/description longer than the validator threshold)."
+            },
+            "derivedSummariesPermitted": {
+              "type": "boolean",
+              "description": "Whether items MAY include derived summaries (paraphrased or transformed restatements)."
+            }
+          }
+        },
+        "disclaimer": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["text"],
+              "properties": {
+                "text": { "type": "string", "minLength": 1 },
+                "severity": { "type": "string", "enum": ["info", "caution", "warning"], "default": "caution" },
+                "reviewer": { "type": "string", "minLength": 1, "description": "Required reviewer role (for example 'legal counsel', 'WCAG auditor', 'security architect')." }
+              }
+            }
+          ],
+          "description": "Optional advisory disclaimer surfaced by host agents when presenting framework content. Per-item disclaimers (document-section.disclaimer) override this manifest-level value. Cross-link: .github/instructions/shared/disclaimer-language.instructions.md for canonical planner phrasing."
+        },
+        "licenseVerification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verifiedAt", "verifiedUrl", "sha256", "declaredLicense", "status"],
+          "description": "Provenance record for the most recent human-confirmed inspection of the upstream license text. Hosts treat this block as the authoritative back-fill for the bundle's license declaration. The FSI-LV-05 lint rule is a hard error when 'status' is 'published' (manifest-level) and licenseVerification.status is 'discrepancy'. Initially optional during back-fill rollout; becomes required once every published bundle carries the block.",
+          "properties": {
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp (UTC) of the verification event."
+            },
+            "verifiedUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "Canonical URL whose body was fetched and hashed during verification (SHOULD be the same canonical license source recorded in metadata.licenseUrl)."
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "Lowercase 64-character hex sha256 of the verified body."
+            },
+            "declaredLicense": {
+              "type": "string",
+              "minLength": 1,
+              "description": "License identifier observed at the verified URL. SHOULD match metadata.license; when it does not, status MUST be 'discrepancy' and discrepancyNotes MUST explain."
+            },
+            "status": {
+              "type": "string",
+              "enum": ["verified", "discrepancy"],
+              "description": "'verified' when declaredLicense matches metadata.license; 'discrepancy' otherwise (requires discrepancyNotes and triggers FSI-LV-05 when paired with manifest status=published)."
+            },
+            "discrepancyNotes": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Required when status is 'discrepancy'. Plain-English description of the mismatch and remediation plan."
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "required": ["status"],
+                "properties": { "status": { "const": "discrepancy" } }
+              },
+              "then": { "required": ["discrepancyNotes"] }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["attributionRequired"],
+            "properties": { "attributionRequired": { "const": true } }
+          },
+          "then": {
+            "required": ["attributionText"],
+            "properties": { "attributionText": { "minLength": 1 } }
+          }
+        },
+        {
+          "if": {
+            "required": ["license"],
+            "properties": {
+              "license": {
+                "not": { "pattern": "^(US-Gov-Public-Domain|public-domain)$" }
+              }
+            }
+          },
+          "then": {
+            "required": ["licenseUrl"]
+          }
+        }
+      ],
+      "additionalProperties": true
+    },
+    "sustainabilityScope": {
+      "type": "string",
+      "enum": ["primary", "adjacent", "out-of-scope"],
+      "description": "Sustainability bundle classification. 'primary' bundles directly encode Green Software / sustainability controls. 'adjacent' bundles address overlapping concerns (for example efficiency, FinOps, observability) without being primary sustainability frameworks. 'out-of-scope' marks bundles that should not be enumerated by sustainability hosts. Optional on non-sustainability bundles; hosts ignore when absent."
+    },
+    "globals": {
+      "type": "object",
+      "description": "Shared variables collected once and reused across all items. Keys are variable names; values are scalars or objects providing defaults. Hosts resolve {{var}} references in document-section templates against this map (item-local inputs take precedence on collision).",
+      "additionalProperties": true
+    },
+    "pipeline": {
+      "type": "object",
+      "description": "Optional ordered pipeline of stages describing how a host produces and consumes artifacts when running the Framework Skill end-to-end. Hosts iterate stages in array order. Each stage declares an id, a kind label, the artifact ids it consumes from prior stages, and the artifact descriptors it produces. The schema validates structural shape; downstream lints enforce id-uniqueness and consumer/producer kind compatibility.",
+      "required": ["stages"],
+      "additionalProperties": false,
+      "properties": {
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "description": "Lower-kebab stage identifier; unique within pipeline.stages."
+              },
+              "kind": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "description": "Stage role label (for example gather, render, export). Open vocabulary; hosts interpret semantics."
+              },
+              "consumes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Identifier of an artifact produced by a prior stage (matches a produces[].id), or a host-sourced input prefixed with 'host:' (treated as warning by the compatibility lint)."
+                }
+              },
+              "produces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "kind"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Lower-kebab artifact identifier; unique across the entire pipeline."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Artifact kind label (for example yaml/manifest, markdown/section, binary/docx). Open vocabulary. The 'binary/' prefix marks host-rendered binary outputs (binary/docx, binary/pdf, binary/png, binary/zip) and triggers the binary-artifact cleanup lint."
+                    },
+                    "cleanup": {
+                      "type": "string",
+                      "enum": ["ephemeral", "retained"],
+                      "description": "Optional disposal hint for host-managed working artifacts. 'ephemeral' indicates the host SHOULD delete the artifact after the run completes; 'retained' indicates the host SHOULD preserve it (for user delivery, audit, or later stages). The binary-artifact lint warns when this field is missing on a 'binary/*' output."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "description": "Required ownership and review-lifecycle metadata. Hosts use this block to surface bundle stewardship in audit reports and to drive the governance-review-currency lint. Required on every FSI manifest (DN-03).",
+      "required": ["owners", "review_cadence", "last_reviewed"],
+      "additionalProperties": false,
+      "properties": {
+        "owners": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Owning team(s), GitHub handles (e.g. @org/team), or org identifiers responsible for keeping the bundle current."
+        },
+        "review_cadence": {
+          "type": "string",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+S)?)?$",
+          "description": "ISO 8601 duration (for example P90D, P6M, P1Y) bounding the maximum interval between reviews."
+        },
+        "last_reviewed": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date (YYYY-MM-DD) of the most recent governance review. The governance-review-currency lint warns when last_reviewed + review_cadence is older than today."
+        },
+        "deprecation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["active", "deprecated", "sunset"],
+              "description": "Lifecycle status of the bundle."
+            },
+            "replacement": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Identifier or path to the recommended replacement bundle."
+            },
+            "sunset_date": {
+              "type": "string",
+              "format": "date",
+              "description": "ISO 8601 date after which the bundle MUST NOT be consumed by hosts."
+            }
+          }
+        },
+        "style_guide": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to the authoring style guide governing item content for this bundle."
+        }
+      }
+    },
+    "signing": {
+      "type": "object",
+      "description": "Optional manifest-level signing contract describing how host-rendered output artifacts (notably pipeline.stages[].produces[] entries with binary/* kinds) MUST be signed and verified. Mirrors Sigstore-aligned conventions documented in .github/skills/security/sigstore. Hosts MAY allow operator override via an --insecure-skip-signing flag; the signing-attestation consistency lint warns when 'required: true' is paired with 'method: none'.",
+      "required": ["method"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, hosts MUST produce a signature for every covered output artifact unless the operator opts out via --insecure-skip-signing."
+        },
+        "method": {
+          "type": "string",
+          "enum": ["cosign", "gpg", "none"],
+          "description": "Signing tool family. 'cosign' aligns with Sigstore keyless or key-based flows; 'gpg' uses a long-lived OpenPGP key; 'none' disables signing (lint warns when paired with required: true)."
+        },
+        "identity": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Signer identity. For cosign keyless flows this is typically an OIDC issuer subject (for example 'https://github.com/microsoft/hve-core/.github/workflows/release.yml@refs/heads/main'); for gpg this is the key fingerprint or email."
+        },
+        "transparency_log": {
+          "oneOf": [
+            { "type": "string", "format": "uri" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["url"],
+              "properties": {
+                "url": { "type": "string", "format": "uri" },
+                "public_key": { "type": "string", "minLength": 1 }
+              }
+            }
+          ],
+          "description": "Transparency log endpoint or descriptor (for example a Rekor URL). Either a string URL or an object containing url and optional public_key for self-hosted logs."
+        },
+        "verify": {
+          "type": "object",
+          "description": "Optional verification recipe a host MAY execute to confirm a signature. Use either a single-line command string or a structured invocation; downstream lints do not execute the recipe.",
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Single-line shell-equivalent verification command (for example 'cosign verify-blob --bundle <bundle> <artifact>')."
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "description": "Optional argument vector when 'command' references the executable only."
+            },
+            "script": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Repo-relative path to a verification script (for example 'scripts/security/Verify-Cosign.ps1')."
+            }
+          },
+          "anyOf": [
+            { "required": ["command"] },
+            { "required": ["script"] }
+          ]
+        }
+      }
+    },
+    "requiredSkills": {
+      "type": "array",
+      "description": "Optional list of other skills that this Framework Skill calls or depends on. Hosts use this list to discover and pre-load companion skills (for example a planner FSI declaring it calls shared/pii-redaction at a particular stage). The skill-reference lint resolves each ref against .github/skills/<ref>/SKILL.md.",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["ref"],
+        "additionalProperties": false,
+        "properties": {
+          "ref": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$",
+            "description": "Lower-kebab skill slug in '<domain>/<name>' form, resolving to .github/skills/<domain>/<name>/SKILL.md."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["required", "optional"],
+            "default": "required",
+            "description": "Whether the host MUST load the referenced skill (required) or MAY load it on demand (optional)."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Plain-English rationale describing why this skill is referenced (for example 'redacts PII from gathered evidence before render')."
+          },
+          "usedByStages": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Stage id (matches pipeline.stages[].id) that invokes the referenced skill. The skill-reference lint errors when an entry does not match a known stage id."
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -55,3 +55,9 @@ Place findings using the comment type that best matches their scope. Use inline 
 * Focus on semantic review; do not duplicate vulnerability scanning done by Dependabot or CodeQL.
 * Keep review comments actionable and specific.
 * Limit to 10 inline comments per review.
+
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project under review, flag dependency choices when a lighter-weight alternative is documented in `gsf-patterns/v1` (for example, heavyweight server-side rendering vs static generation for static content). Cite the pattern id inline (for example, `gsf-patterns:<id>`) and suffix the comment with: `Estimates are directional; not an audited carbon disclosure.` When no plan exists, review dependencies as today.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

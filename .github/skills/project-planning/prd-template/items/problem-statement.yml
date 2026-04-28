@@ -1,0 +1,18 @@
+id: problem-statement
+title: Problem Statement
+description: "Articulates the core problem in a single, testable statement tied to user impact."
+template: |
+  ## Problem Statement
+
+  State the core problem that {{product_name}} addresses in one or two sentences.
+
+  A strong problem statement includes:
+
+  - **Who** is affected (specific user segment or persona).
+  - **What** they cannot do or what friction they experience.
+  - **Why** it matters (business impact, user pain, operational cost).
+
+  {{problem_detail}}
+inputs:
+  - name: problem_detail
+    description: "Expanded problem context including quantitative impact when available"

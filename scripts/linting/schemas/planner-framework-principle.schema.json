@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/planner-framework-principle.schema.json",
+  "title": "Planner Framework Principle (Flat Per-Item)",
+  "description": "Validates flat per-item YAML for itemKind 'principle' authored under planner Framework Skills (e.g., Responsible AI prohibited-use frameworks). Items are open-shaped: required keys are id/title/itemKind/summary; articleRef/prohibitionType/applicability/gates and other planner conventions are optional and validated only when present. additionalProperties is true so framework-specific fields pass through.",
+  "type": "object",
+  "required": ["id", "title", "itemKind", "summary"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Lower-kebab principle identifier; dots permitted for hierarchical ids."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "itemKind": {
+      "const": "principle",
+      "description": "Discriminator marking this item as a principle."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Normative paraphrase of the principle. Authors MUST NOT fabricate or reproduce verbatim text from copyrighted sources; paraphrase the canonical source."
+    },
+    "description": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string",
+      "description": "Optional long-form normative body."
+    },
+    "articleRef": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Citation pointer to the canonical source clause (e.g., 'Article 5(1)(a)')."
+    },
+    "prohibitionType": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional taxonomy slug categorizing the prohibition or principle (e.g., 'manipulation', 'social-scoring')."
+    },
+    "characteristic": {
+      "type": "string",
+      "description": "Optional single trustworthiness characteristic the principle anchors to."
+    },
+    "characteristics": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Optional multiple trustworthiness characteristics."
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "phase", "default"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "phase": { "type": "string", "minLength": 1 },
+          "default": {
+            "type": "string",
+            "enum": ["pending", "satisfied", "blocked", "n-a"]
+          },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "evidenceHints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9_./*?{}\\[\\]\\-]+$"
+      }
+    },
+    "crossReferences": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Cross-walk identifiers to sibling items or other Framework Skills."
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discriminator": { "type": "string", "minLength": 1 },
+        "appliesWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naReason": { "type": "string" }
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true
+    }
+  }
+}

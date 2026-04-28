@@ -1,0 +1,8 @@
+id: ms-2-2
+title: "MS-2.2: Human subject evaluations"
+itemKind: criterion
+summary: "Evaluations involving human subjects meet applicable requirements (including human subject protection) and are representative of the relevant population."
+function: measure
+group: MS-2
+nistSubcategories:
+  - MS-2.2

@@ -1,0 +1,88 @@
+framework: s2c2f
+version: "2024.06"
+summary: 'OSSF Secure Supply Chain Consumption Framework (S2C2F) practices for ingesting open-source dependencies.'
+evidenceFormat: shared
+domain: security
+itemKind: control
+status: published
+metadata:
+  authority: "OpenSSF, Microsoft"
+  license: CC-BY-4.0
+  licenseUrl: https://creativecommons.org/licenses/by/4.0/
+  source: https://github.com/ossf/s2c2f
+  attributionRequired: true
+  attributionText: "S2C2F — Copyright OpenSSF / Microsoft, licensed under CC-BY-4.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/ossf/s2c2f/main/LICENSE.md"
+    sha256: "26bebf1f70ff34aa9dcb6b4f9eeedc7be187b3184bb89e25f6a8c94feff5081b"
+    declaredLicense: "CC-BY-4.0"
+    status: verified
+phaseMap:
+  standards-mapping:
+    - ing-1
+    - ing-2
+    - ing-3
+    - ing-4
+    - inv-1
+    - inv-2
+    - upd-1
+    - upd-2
+    - upd-3
+    - aud-1
+    - aud-2
+    - aud-3
+    - aud-4
+    - enf-1
+    - enf-2
+    - reb-1
+    - reb-2
+    - fix-1
+  gap-analysis:
+    - ing-1
+    - ing-2
+    - ing-3
+    - ing-4
+    - inv-1
+    - inv-2
+    - upd-1
+    - upd-2
+    - upd-3
+    - aud-1
+    - aud-2
+    - aud-3
+    - aud-4
+    - enf-1
+    - enf-2
+    - reb-1
+    - reb-2
+    - fix-1
+  backlog-generation:
+    - ing-1
+    - ing-2
+    - ing-3
+    - ing-4
+    - inv-1
+    - inv-2
+    - upd-1
+    - upd-2
+    - upd-3
+    - aud-1
+    - aud-2
+    - aud-3
+    - aud-4
+    - enf-1
+    - enf-2
+    - reb-1
+    - reb-2
+    - fix-1
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

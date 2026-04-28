@@ -1,0 +1,11 @@
+{
+  "workloadId": "large-fleet-edge",
+  "surface": "fleet",
+  "fleetProfile": {
+    "deviceCount": 250000,
+    "averageDeviceLifespanYears": 4,
+    "expectedRefreshCycleYears": 3
+  },
+  "expectedRiskClassification": "high",
+  "rationale": "Large device count combined with refresh cycle shorter than usable lifespan inflates M (embodied carbon) at fleet scale; warrants lifespan-extension and right-sizing controls."
+}

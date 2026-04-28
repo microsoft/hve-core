@@ -1,0 +1,8 @@
+id: mn-2-2
+title: "MN-2.2: Sustaining deployed value"
+itemKind: criterion
+summary: "Mechanisms are in place and applied to sustain the value of deployed AI systems."
+function: manage
+group: MN-2
+nistSubcategories:
+  - MN-2.2

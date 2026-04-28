@@ -42,5 +42,3 @@ infrastructure security risks.
   * `01` through `10` — one document per vulnerability aligned with OWASP Infrastructure Security numbering.
 
 ---
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

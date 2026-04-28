@@ -1,0 +1,8 @@
+id: ms-2-3
+title: "MS-2.3: Performance evaluation in deployment conditions"
+itemKind: criterion
+summary: "AI system performance or assurance criteria are measured qualitatively or quantitatively and demonstrated for conditions similar to deployment setting(s)."
+function: measure
+group: MS-2
+nistSubcategories:
+  - MS-2.3

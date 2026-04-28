@@ -1,0 +1,29 @@
+id: nist-ssdf
+version: "1.1"
+name: NIST Secure Software Development Framework
+controls:
+  - id: ps-3-1
+    title: Securely Archive the Necessary Files and Supporting Data for Each Release
+    group: PS
+    risk: medium
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Securely archive the source, build inputs, build outputs, provenance, and supporting data for each release so the release can be re-examined or reproduced for the duration the software is supported.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify how release artifacts and supporting data are archived and retained.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify releases without retained build inputs, provenance, or supporting data.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to extend release archival to cover all required artifacts.
+    evidenceHints:
+      - ".github/workflows/*release*.yml"
+      - "CHANGELOG.md"
+      - "release-please-config.json"
+      - "docs/security/release-archival*.md"

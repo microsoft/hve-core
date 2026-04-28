@@ -1,0 +1,30 @@
+id: swd-carbon-intensity-runtime
+version: "1.0"
+name: SWD — Carbon Intensity (Runtime Fetch)
+source: https://sustainablewebdesign.org/estimating-digital-emissions/
+description: Apply grid carbon intensity (gCO2eq per kWh) fetched at runtime from Electricity Maps, WattTime, or Ember; never embed literals.
+controls:
+  - id: swd-carbon-intensity-runtime
+    title: Carbon Intensity — runtime fetch from authoritative sources
+    description: |
+      Translate kWh into gCO2eq via grid carbon intensity (gCO2eq per kWh).
+      Carbon-intensity values MUST be fetched at runtime from authoritative
+      sources (Electricity Maps API, WattTime API, Ember). This skill does
+      NOT embed any carbon-intensity numeric literals (planning log DD-03;
+      ODbL contagion guard for Electricity Maps; commercial-license guard
+      for WattTime).
+    group: methodology
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - web
+    references:
+      - https://sustainablewebdesign.org/estimating-digital-emissions/
+      - https://api.electricitymap.org/
+      - https://www.watttime.org/api-documentation/
+      - https://ember-climate.org/data/

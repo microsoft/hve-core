@@ -33,6 +33,7 @@ artifact-classification:
   agentic:
     scope:
       - .github/instructions/rai-planning/**
+      - .copilot-tracking/sssc-plans/internal/**
     required-footers:
       - ai-content-note
     artifacts:
@@ -58,6 +59,8 @@ artifact-classification:
   human-facing-with-disclaimer:
     scope:
       - .github/instructions/rai-planning/**
+      - .copilot-tracking/sssc-plans/backlog/**
+      - .copilot-tracking/sssc-plans/handoff/**
     required-footers:
       - ai-content-note
       - human-review-checkbox

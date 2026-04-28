@@ -1,0 +1,26 @@
+id: tc-elem-feature-pipeline
+title: "AI Element: Feature Pipeline"
+itemKind: criterion
+summary: "Data transformation for model input. Primary RAI concerns are feature bias and privacy across the data flow."
+elementType: featurePipeline
+kind: element
+characteristics:
+  - fairBiasManaged
+  - privacyEnhanced
+nistSubcategories:
+  - MS-2.11
+  - MS-2.10
+dataFlows:
+  - training-pipeline
+  - inference-pipeline
+strideMatrix:
+  componentRef: feature-pipeline
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Transformation logic that converts raw inputs into model features for both
+  training and inference. Threats include feature-selection bias, proxy-
+  variable introduction, and PII flowing through normalization or encoding
+  steps. Typically maps to the DATA and BUILD security buckets.

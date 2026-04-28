@@ -1,0 +1,30 @@
+id: "1-2-5"
+title: "Audio Description (Prerecorded)"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "Audio description is provided for all prerecorded video content in synchronized media."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G78"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/audio-description-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

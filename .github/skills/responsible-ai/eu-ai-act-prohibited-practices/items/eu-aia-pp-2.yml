@@ -1,0 +1,11 @@
+id: eu-aia-pp-2
+title: "Exploitation of vulnerabilities of specific persons or groups"
+itemKind: principle
+summary: "Placing on the market, putting into service, or using an AI system that exploits any of the vulnerabilities of a person or a specific group of persons due to their age, disability, or a specific social or economic situation, with the objective or effect of materially distorting their behaviour in a manner that causes or is reasonably likely to cause significant harm, is prohibited."
+articleRef: "Article 5(1)(b)"
+prohibitionType: exploitation-of-vulnerability
+characteristic: "Fair – With Harmful Bias Managed"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+crossReferences:
+  - eu-aia-pp-1

@@ -1,0 +1,38 @@
+framework: rai-output-formats
+version: "1.0.0"
+summary: "Output-format library: 12 document-section templates spanning RAI Planner phases 2 through 6."
+domain: responsible-ai
+itemKind: document-section
+status: draft
+metadata:
+  authority: microsoft/hve-core
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  phase-2-risk-classification:
+    - of-risk-classification-screening
+  phase-3-standards-mapping:
+    - of-characteristic-coverage-table
+  phase-4-security-model:
+    - of-extended-threat-table
+    - of-stride-matrix-table
+  phase-5-impact-assessment:
+    - of-principle-tracker-table
+    - of-tradeoff-table
+    - of-evidence-register-table
+  phase-6-handoff:
+    - of-review-rubric
+    - of-rai-review-summary
+    - of-ado-work-item-template
+    - of-github-issue-template
+    - of-handoff-summary
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"

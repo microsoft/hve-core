@@ -1,0 +1,20 @@
+id: of-evidence-register-table
+title: "Evidence Register"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-5-impact-assessment
+summary: "Phase 5 register listing evidence artifacts that substantiate control coverage and characteristic claims."
+tokens:
+  - system_name
+  - evidence_rows
+template: |
+  ## Evidence Register — {{system_name}}
+
+  | Evidence ID | Characteristic | Source | Type | Status |
+  |-------------|----------------|--------|------|--------|
+  {{evidence_rows}}
+description: |
+  Evidence types include: documentation, test-result, monitoring-export,
+  policy-attestation, third-party-report. Status is one of: present, partial,
+  missing.

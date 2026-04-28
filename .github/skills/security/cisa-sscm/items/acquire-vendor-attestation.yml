@@ -1,0 +1,38 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: acquire-vendor-attestation
+    title: Vendor Secure Development Attestation
+    group: acquire
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Acquiring organizations require suppliers to provide secure software development attestations covering secure-by-design and secure-by-default practices, aligned with NIST SSDF and EO 14028 / OMB M-22-18 expectations.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Identify which acquired components require supplier attestations.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Compare collected attestations against required SSDF practices and flag missing or stale items.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to request, renew, or remediate supplier attestations.
+    evidenceHints:
+      - "docs/supply-chain/attestations/**"
+      - "docs/security/attestations/**"
+      - "third-party/attestations/**"
+      - "**/ssdf-attestation*.json"
+      - "**/ssdf-attestation*.pdf"
+    applicability:
+      discriminator: project-type
+      appliesWhen: [acquired-upstream]
+      naWhen: [self-published-oss]
+      naReason: self-published, no upstream supplier
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers
+      - https://www.cisa.gov/resources-tools/resources/secure-software-development-attestation-form

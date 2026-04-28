@@ -1,0 +1,32 @@
+id: carbon-efficiency
+version: "1.0"
+name: Carbon Efficiency
+source: https://learn.greensoftware.foundation/
+description: Build applications that are carbon efficient, emitting the least amount of carbon per unit of work.
+controls:
+  - id: carbon-efficiency
+    title: Carbon Efficiency — emit the least carbon per unit of work
+    description: |
+      Carbon efficiency is the overarching goal of green software. Every other
+      principle (energy-, hardware-, carbon-aware) is a means of improving carbon
+      efficiency. Measure carbon efficiency using the SCI specification:
+      lower SCI per declared functional unit R = more carbon-efficient.
+    group: principle
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/carbon/

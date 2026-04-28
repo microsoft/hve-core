@@ -1,0 +1,30 @@
+id: "2-4-9"
+title: "Link Purpose (Link Only)"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "A mechanism is available to allow the purpose of each link to be identified from link text alone, except where the purpose would be ambiguous to all users."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G91"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-link-only.html"
+  - "https://www.w3.org/TR/WCAG22/"

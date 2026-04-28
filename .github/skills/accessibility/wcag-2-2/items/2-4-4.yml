@@ -1,0 +1,32 @@
+id: "2-4-4"
+title: "Link Purpose (In Context)"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "The purpose of each link can be determined from the link text alone or from the link text together with its programmatically determined link context."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G91"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H30"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html"
+  - "https://www.w3.org/TR/WCAG22/"

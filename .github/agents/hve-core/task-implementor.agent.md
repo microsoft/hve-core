@@ -313,3 +313,9 @@ Decisions recorded from Implementation Decision prompts.
 * ID-01: {{decision_title}} — Option {{X}} selected
   * Rationale: {{user_rationale_or_recommendation_accepted}}
 ```
+
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project being implemented, surface the SCI budget for the affected workload at implementation start. Cite control ids inline (for example, `gsf-sci:E`, `gsf-patterns:<id>`). Flag projected overruns in the changes log but do not block implementation. When no plan exists, implement as today.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

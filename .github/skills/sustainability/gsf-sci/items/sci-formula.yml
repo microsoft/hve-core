@@ -1,0 +1,42 @@
+id: gsf-sci
+version: "1.0"
+name: SCI Formula
+source: https://sci.greensoftware.foundation/
+description: The Software Carbon Intensity formula defines a rate of carbon emissions per functional unit.
+controls:
+  - id: sci-formula
+    title: SCI = (E * I + M) / R
+    description: |
+      The SCI score for a software system is calculated as:
+
+          SCI = (E * I + M) / R
+
+      Where:
+        E — Energy consumed by the software system, in kWh.
+        I — Carbon intensity of the energy consumed, in gCO2eq/kWh (location-based or market-based).
+        M — Embodied emissions of the hardware running the software, in gCO2eq, amortized.
+        R — Functional unit declared by the user (e.g., per request, per user, per device).
+
+      The result SCI is expressed in grams of CO2 equivalent per functional unit (gCO2eq/R).
+      SCI is a rate, not a total: it does not double-count offsets, and it excludes neutralizations.
+    group: formula
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    appliesToPrinciples:
+      - gsf-principles:carbon-efficiency
+      - gsf-principles:energy-efficiency
+      - gsf-principles:hardware-efficiency
+      - gsf-principles:measurement
+    references:
+      - https://sci.greensoftware.foundation/
+      - https://github.com/Green-Software-Foundation/sci

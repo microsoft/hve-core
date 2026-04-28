@@ -1,0 +1,8 @@
+id: mp-2-2
+title: "MP-2.2: Knowledge limits and human oversight requirements"
+itemKind: criterion
+summary: "Information about the AI system's knowledge limits and how system output may be utilized and overseen by humans is documented."
+function: map
+group: MP-2
+nistSubcategories:
+  - MP-2.2

@@ -1,0 +1,28 @@
+id: tc-elem-training-data-store
+title: "AI Element: Training Data Store"
+itemKind: criterion
+summary: "Datasets used for model training. Primary RAI concerns are bias in source data, PII exposure, and provenance gaps."
+elementType: trainingDataStore
+kind: element
+characteristics:
+  - fairBiasManaged
+  - privacyEnhanced
+  - accountableTransparent
+nistSubcategories:
+  - MS-2.11
+  - MS-2.10
+  - MS-2.8
+dataFlows:
+  - training-pipeline
+strideMatrix:
+  componentRef: training-data
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Datasets used for model training. RAI threat surface concentrates on bias
+  injection and poisoning during ingestion, PII exposure during storage and
+  feature extraction, and provenance gaps that prevent attribution of training
+  decisions. Threats here typically map to the DATA security bucket and warrant
+  dual T-RAI / T-DATA-AI ids.

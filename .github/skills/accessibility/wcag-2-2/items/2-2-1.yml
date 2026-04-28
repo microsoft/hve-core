@@ -1,0 +1,30 @@
+id: "2-2-1"
+title: "Timing Adjustable"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.2 Enough Time"
+addedIn: "2.0"
+summary: "For each time limit set by content, users can turn off, adjust, or extend the time limit, with documented exceptions for real-time, essential, and 20-hour cases."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G133"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable.html"
+  - "https://www.w3.org/TR/WCAG22/"

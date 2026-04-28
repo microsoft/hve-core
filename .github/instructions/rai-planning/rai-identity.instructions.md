@@ -163,7 +163,9 @@ The formal JSON Schema definition is at `scripts/linting/schemas/rai-state.schem
       "type": "standard | risk-indicator-category | prohibited-use-framework | output-format | code-of-conduct",
       "sourceDescription": "",
       "processedInPhase": null,
-      "status": "pending | processed | error"
+      "status": "pending | processed | error",
+      "skillId": null,
+      "skillVersion": null
     }
   ],
   "nextActions": [],
@@ -292,7 +294,7 @@ If the user supplies content, display this disclaimer before processing:
 
 1. Delegate to Researcher Subagent to process the user-supplied content into a structured summary.
 2. The Researcher Subagent writes the processed content to `.copilot-tracking/rai-plans/references/{descriptive-filename}.md`.
-3. Update `referencesProcessed` in `state.json` with the file path, type, source description, processing phase, and status.
+3. Update `referencesProcessed` in `state.json` with the file path, type, source description, processing phase, and status. When the processed content has been promoted to a framework skill (under `.github/skills/responsible-ai/<skill-id>/`), also record `skillId` (the skill folder name) and `skillVersion` (the `version` field from the skill's `index.yml`); leave both as `null` when the reference remains an ad-hoc markdown summary.
 4. Content types and their downstream effects:
    * **standard**: Incorporated during Phase 3 (Standards Mapping) alongside the active framework. Agents check `.copilot-tracking/rai-plans/references/` for user-supplied standards before completing standards mapping.
    * **risk-indicator-category**: Incorporated during Phase 2 (Risk Classification) as additional evaluation criteria alongside the active framework's risk indicators.

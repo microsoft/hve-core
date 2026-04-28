@@ -1,0 +1,37 @@
+# Sigstore framework roll-up for the SSSC Planner.
+# Lists per-control items by phase; the planner MUST NOT read controls
+# outside the set declared for the active phase (research Decision 5c-final).
+framework: sigstore
+version: "1.0"
+summary: 'Sigstore signing, verification, and transparency log controls (cosign, Fulcio, Rekor) for artifact integrity.'
+evidenceFormat: shared
+domain: security
+itemKind: control
+status: published
+phaseMap:
+  standards-mapping: [cosign-sign, cosign-verify, fulcio-issuance, rekor-transparency]
+  gap-analysis: [cosign-sign, cosign-verify, fulcio-issuance, rekor-transparency]
+  backlog-generation: [cosign-sign, cosign-verify, fulcio-issuance, rekor-transparency]
+metadata:
+  authority: "Sigstore project (OpenSSF)"
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  source: https://www.sigstore.dev/
+  attributionRequired: true
+  attributionText: "Sigstore — Copyright the Sigstore Authors / OpenSSF, licensed under Apache-2.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/sigstore/sigstore/main/LICENSE"
+    sha256: "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    declaredLicense: "Apache-2.0"
+    status: verified
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

@@ -1,0 +1,25 @@
+id: to-001
+title: "Tradeoff: Privacy-Enhanced vs. Valid and Reliable"
+itemKind: criterion
+summary: "Differential privacy noise and data minimization can reduce model accuracy; document the privacy-budget vs accuracy operating point."
+characteristics:
+  - privacyEnhanced
+  - validReliable
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+    description: Record the chosen operating point and rationale during Phase 5.
+description: |
+  Source: rai-impact-assessment.instructions.md (tradeoffs section, to-001).
+
+  Tradeoff: Privacy-Enhanced characteristic versus Valid and Reliable characteristic.
+
+  Mechanism: Differential privacy noise injection, k-anonymity grouping, and aggressive
+  data minimization reduce per-record signal available to the model and therefore reduce
+  measured accuracy on validation data. Conversely, accuracy-maximizing data retention
+  and feature richness can erode privacy guarantees and increase re-identification risk.
+
+  Required documentation: Record the chosen privacy budget (epsilon or k value), the
+  measured accuracy delta versus the no-noise baseline, and the rationale for the chosen
+  operating point.

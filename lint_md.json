@@ -1,0 +1,47 @@
+
+> hve-core@3.3.41 lint:md
+> markdownlint-cli2 "**/*.md" --reporter=json
+
+markdownlint-cli2 v0.22.0 (markdownlint v0.40.0)
+Finding: **/*.md --reporter=json !**/node_modules/** !**/packages/** !.copilot-tracking/** !logs/** !venv/** !scripts/tests/Fixtures/** !extension/README.md !extension/README.*.md !extension/CHANGELOG.md !collections/*.collection.md !plugins/**/agents/** !plugins/**/instructions/** !plugins/**/commands/** !plugins/**/skills/** !plugins/**/docs/** !plugins/**/scripts/** !.github/instructions/** !.github/aw/logs/** !.github/agents/** !.github/prompts/** !.github/skills/**
+Linting: 210 file(s)
+Summary: 17 error(s)
+AggregateError: Unable to import module 'markdownlint-cli2-formatter-json'.
+    at importModule (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:90:11)
+    at async Promise.all (index 1)
+    at async outputResults (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:837:9)
+    at async main (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:1028:5)
+    at async file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs:14:22 {
+  [errors]: [
+    Error: Cannot find module 'markdownlint-cli2-formatter-json'
+    Require stack:
+    - /home/wberryadmin/src/hve-core/node_modules/markdownlint/lib/resolve-module.cjs
+        at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+        at resolve (node:internal/modules/helpers:157:19)
+        at resolveModuleCustomResolve (/home/wberryadmin/src/hve-core/node_modules/markdownlint/lib/resolve-module.cjs:35:10)
+        at resolveModule (/home/wberryadmin/src/hve-core/node_modules/markdownlint/lib/resolve-module.cjs:46:3)
+        at importModule (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:75:34)
+        at file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:110:24
+        at Array.map (<anonymous>)
+        at importModuleIdsAndParams (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:109:18)
+        at outputResults (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:837:15)
+        at main (file:///home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs:1028:11) {
+      code: 'MODULE_NOT_FOUND',
+      requireStack: [Array]
+    },
+    Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/wberryadmin/src/hve-core/markdownlint-cli2-formatter-json' imported from /home/wberryadmin/src/hve-core/node_modules/markdownlint-cli2/markdownlint-cli2.mjs
+        at finalizeResolution (node:internal/modules/esm/resolve:274:11)
+        at moduleResolve (node:internal/modules/esm/resolve:859:10)
+        at defaultResolve (node:internal/modules/esm/resolve:983:11)
+        at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+        at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+        at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+        at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:664:36)
+        at TracingChannel.tracePromise (node:diagnostics_channel:350:14)
+        at ModuleLoader.import (node:internal/modules/esm/loader:663:21)
+        at defaultImportModuleDynamicallyForModule (node:internal/modules/esm/utils:222:31) {
+      code: 'ERR_MODULE_NOT_FOUND',
+      url: 'file:///home/wberryadmin/src/hve-core/markdownlint-cli2-formatter-json'
+    }
+  ]
+}

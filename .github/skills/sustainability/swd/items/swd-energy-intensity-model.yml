@@ -1,0 +1,27 @@
+id: swd-energy-intensity-model
+version: "1.0"
+name: SWD — Energy Intensity Model
+source: https://sustainablewebdesign.org/estimating-digital-emissions/
+description: Apply the SWD v4 energy-per-byte model to translate measured data transfer (GB) into energy (kWh) for the SCI variable E.
+controls:
+  - id: swd-energy-intensity-model
+    title: Energy Intensity Model — translate GB transferred to kWh
+    description: |
+      The SWD v4 model converts measured data transfer (GB) into energy
+      consumption (kWh) across data centers, network, and end-user devices.
+      The numeric coefficients are NOT embedded in this skill (planning log
+      DD-03); the consumer agent fetches the current published coefficient
+      table at runtime from sustainablewebdesign.org or its referenced
+      sources.
+    group: methodology
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - web
+    references:
+      - https://sustainablewebdesign.org/estimating-digital-emissions/

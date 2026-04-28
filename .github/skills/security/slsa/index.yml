@@ -1,0 +1,58 @@
+framework: slsa
+version: "1.1"
+summary: 'SLSA v1.1 Build and Source track requirements for supply-chain build and source integrity.'
+evidenceFormat: shared
+domain: security
+itemKind: control
+status: published
+metadata:
+  authority: "OpenSSF, Linux Foundation"
+  license: CC-BY-4.0
+  licenseUrl: https://creativecommons.org/licenses/by/4.0/
+  source: https://slsa.dev/spec/v1.1/
+  attributionRequired: true
+  attributionText: "SLSA — Copyright OpenSSF / Linux Foundation, licensed under CC-BY-4.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/slsa-framework/slsa/main/LICENSE.md"
+    sha256: "f40b1d00369c21b963293189b4617b5de439a11858541c07c620984634fb63b7"
+    declaredLicense: "CC-BY-4.0"
+    status: verified
+phaseMap:
+  standards-mapping:
+    - build-l0
+    - build-l1
+    - build-l2
+    - build-l3
+    - source-l0
+    - source-l1
+    - source-l2
+    - source-l3
+  gap-analysis:
+    - build-l0
+    - build-l1
+    - build-l2
+    - build-l3
+    - source-l0
+    - source-l1
+    - source-l2
+    - source-l3
+  backlog-generation:
+    - build-l0
+    - build-l1
+    - build-l2
+    - build-l3
+    - source-l0
+    - source-l1
+    - source-l2
+    - source-l3
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

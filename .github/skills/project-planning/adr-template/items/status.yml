@@ -1,0 +1,17 @@
+id: status
+title: Status
+description: "Records the current lifecycle state of the decision: Draft, Proposed, Accepted, or Deprecated."
+template: |
+  ## Status
+
+  Mark the current status of this decision for {{adr_title}}:
+
+  - [ ] Draft
+  - [ ] Proposed
+  - [ ] Accepted
+  - [ ] Deprecated
+
+  {{status_notes}}
+inputs:
+  - name: status_notes
+    description: "Optional notes on status transitions, such as date accepted or reason for deprecation"

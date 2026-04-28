@@ -1,0 +1,27 @@
+id: "3-2-6"
+title: "Consistent Help"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.2 Predictable"
+addedIn: "2.2"
+summary: "If a web page contains help mechanisms, they occur in the same relative order to other page content unless a change is initiated by the user."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G220"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/consistent-help.html"
+  - "https://www.w3.org/TR/WCAG22/"

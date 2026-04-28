@@ -1,0 +1,8 @@
+id: mp-1-6
+title: "MP-1.6: System requirements including socio-technical factors"
+itemKind: criterion
+summary: "System requirements (e.g., 'the system shall respect the privacy of training data subjects') are elicited from and understood by relevant AI actors, including socio-technical implications."
+function: map
+group: MP-1
+nistSubcategories:
+  - MP-1.6

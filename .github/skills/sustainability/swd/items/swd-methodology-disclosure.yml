@@ -1,0 +1,26 @@
+id: swd-methodology-disclosure
+version: "1.0"
+name: SWD — Methodology Disclosure
+source: https://sustainablewebdesign.org/estimating-digital-emissions/
+description: Disclose the SWD v4 methodology version, model coefficients used, carbon-intensity source(s), cache-hit assumptions, and known limitations alongside reported numbers.
+controls:
+  - id: swd-methodology-disclosure
+    title: Methodology Disclosure — publish assumptions and uncertainty
+    description: |
+      Every reported SWD-derived emissions number must be accompanied by a
+      disclosure block: SWD methodology version (v4), coefficient table
+      version, carbon-intensity source (Electricity Maps / WattTime / Ember),
+      cache-hit-ratio assumption, page-weight measurement window, and
+      known limitations. Without disclosure, numbers are not comparable.
+    group: methodology
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - reported
+    appliesTo:
+      - web
+    references:
+      - https://sustainablewebdesign.org/estimating-digital-emissions/

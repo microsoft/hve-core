@@ -1,0 +1,43 @@
+id: gsf-sci-carbon-intensity
+version: "1.0"
+name: SCI Variable I — Carbon Intensity
+source: https://sci.greensoftware.foundation/
+description: The carbon intensity of the energy consumed, in grams of CO2 equivalent per kWh.
+controls:
+  - id: sci-carbon-intensity
+    title: Carbon Intensity (I) — gCO2eq per kWh
+    description: |
+      I represents the carbon intensity of the energy consumed by the software system,
+      expressed in grams of CO2 equivalent per kilowatt-hour (gCO2eq/kWh).
+
+      Two accounting methods are recognised by the SCI specification:
+        - location-based — uses the average grid mix where the energy is consumed.
+        - market-based — uses contractual instruments (RECs, GOs, PPAs) to allocate
+          specific generation sources to consumption.
+
+      Datasets used to obtain I (Electricity Maps, WattTime, Ember) are referenced
+      from the bundle's references/ directory and fetched at runtime; their values
+      are not embedded in this Framework Skill.
+    group: variable
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    measurementClass: estimated
+    sciVariable: I
+    appliesToPrinciples:
+      - gsf-principles:carbon-awareness
+      - gsf-principles:carbon-efficiency
+    references:
+      - https://sci.greensoftware.foundation/
+      - https://app.electricitymaps.com/
+      - https://www.watttime.org/
+      - https://ember-energy.org/

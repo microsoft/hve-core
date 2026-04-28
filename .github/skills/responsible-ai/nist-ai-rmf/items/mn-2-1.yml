@@ -1,0 +1,8 @@
+id: mn-2-1
+title: "MN-2.1: Resource management with non-AI alternatives considered"
+itemKind: criterion
+summary: "Resources required to manage AI risks are taken into account, along with viable non-AI alternative systems, approaches, or methods - to reduce the magnitude or likelihood of potential impacts."
+function: manage
+group: MN-2
+nistSubcategories:
+  - MN-2.1

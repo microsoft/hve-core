@@ -1,0 +1,25 @@
+framework: rai-default-risk-indicators
+version: "1.0.0"
+summary: "Default RAI risk indicators (safety, rights/fairness/privacy, security/explainability) for Phase 2 risk classification."
+domain: responsible-ai
+itemKind: criterion
+status: draft
+metadata:
+  authority: microsoft/hve-core
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  phase-2-risk-classification:
+    - safety-reliability
+    - rights-fairness-privacy
+    - security-explainability
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"

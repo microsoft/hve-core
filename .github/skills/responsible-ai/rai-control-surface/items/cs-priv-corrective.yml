@@ -1,0 +1,16 @@
+id: cs-priv-corrective
+title: "Control Surface: Privacy-Enhanced — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Privacy-Enhanced characteristic: data deletion (right to erasure), revocation, and breach notification."
+characteristic: privacyEnhanced
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls restore the privacy posture after a detected violation
+  or upon data-subject request. Examples include enforced data deletion
+  pipelines for right-to-erasure requests, revocation of derived artifacts and
+  caches that contain the affected records, and breach notification routing to
+  data subjects, regulators, and internal stakeholders within required windows.

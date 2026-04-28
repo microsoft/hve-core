@@ -1,0 +1,31 @@
+id: "1-2-1"
+title: "Audio-only and Video-only (Prerecorded)"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "Provide an alternative for prerecorded audio-only and video-only media unless the media is itself an alternative for text."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G158"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G159"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/audio-only-and-video-only-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

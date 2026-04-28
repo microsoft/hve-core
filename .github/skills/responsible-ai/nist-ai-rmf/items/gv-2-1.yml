@@ -1,0 +1,8 @@
+id: gv-2-1
+title: "GV-2.1: Roles, responsibilities, and communication channels defined"
+itemKind: criterion
+summary: "Roles, responsibilities, and lines of communication related to mapping, measuring, and managing AI risks are documented and clear."
+function: govern
+group: GV-2
+nistSubcategories:
+  - GV-2.1

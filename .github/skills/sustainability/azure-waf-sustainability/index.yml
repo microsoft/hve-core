@@ -1,0 +1,53 @@
+framework: azure-waf-sustainability
+version: "1.0"
+domain: sustainability
+sustainabilityScope: primary
+status: published
+summary: Azure Well-Architected Framework Sustainability checklist controls. Status draft pending VERIFY-FETCH (WI-01).
+surfaceFilter:
+  - cloud
+phaseMap:
+  standards-mapping:
+    - waf-sus-application-design
+    - waf-sus-data-design
+    - waf-sus-platform-services
+    - waf-sus-operations-monitoring
+    - waf-sus-deployment-cicd
+    - waf-sus-testing
+    - waf-sus-networking
+  gap-analysis:
+    - waf-sus-application-design
+    - waf-sus-data-design
+    - waf-sus-platform-services
+    - waf-sus-operations-monitoring
+    - waf-sus-testing
+    - waf-sus-networking
+  backlog-generation:
+    - waf-sus-application-design
+    - waf-sus-platform-services
+    - waf-sus-operations-monitoring
+    - waf-sus-testing
+metadata:
+  authority: Microsoft Azure Well-Architected
+  license: CC-BY-4.0+MIT
+  licenseUrl: https://learn.microsoft.com/legal/termsofuse
+  source: https://learn.microsoft.com/azure/well-architected/sustainability/
+  attributionRequired: true
+  attributionText: |
+    Checklist content adapted from Microsoft Learn "Azure Well-Architected
+    Framework — Sustainability" under CC-BY-4.0; reference code samples under
+    MIT. Status draft pending VERIFY-FETCH of upstream LICENSE (WI-01).
+  redistribution:
+    textVerbatim: false
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://learn.microsoft.com/legal/termsofuse"
+    sha256: "0ffde40cdd625328933875761855ff54d6811834e8abee381b11268c565983bd"
+    declaredLicense: "CC-BY-4.0+MIT"
+    status: verified
+governance:
+  owner: "@microsoft/hve-core"
+  reviewCadence: P180D
+  last_reviewed: "2026-04-21"

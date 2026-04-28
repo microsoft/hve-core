@@ -1,0 +1,33 @@
+id: "3-3-2"
+title: "Labels or Instructions"
+itemKind: criterion
+level: "A"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.0"
+summary: "Labels or instructions are provided when content requires user input."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+  - "eslint-jsx-a11y"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G131"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html"
+  - "https://www.w3.org/TR/WCAG22/"

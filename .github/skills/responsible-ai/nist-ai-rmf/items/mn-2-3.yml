@@ -1,0 +1,8 @@
+id: mn-2-3
+title: "MN-2.3: Unknown risk response procedures"
+itemKind: criterion
+summary: "Procedures are followed to respond to and recover from a previously unknown risk when it is identified."
+function: manage
+group: MN-2
+nistSubcategories:
+  - MN-2.3

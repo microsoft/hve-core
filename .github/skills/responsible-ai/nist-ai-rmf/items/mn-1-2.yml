@@ -1,0 +1,8 @@
+id: mn-1-2
+title: "MN-1.2: Risk treatment prioritization by impact and likelihood"
+itemKind: criterion
+summary: "Treatment of documented AI risks is prioritized based on impact, likelihood, and available resources or methods."
+function: manage
+group: MN-1
+nistSubcategories:
+  - MN-1.2

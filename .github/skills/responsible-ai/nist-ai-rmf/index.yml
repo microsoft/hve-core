@@ -1,0 +1,102 @@
+framework: nist-ai-rmf
+version: "1.0.0"
+summary: "NIST AI Risk Management Framework 1.0 core functions and 72 subcategories for RAI Planner phases 1-6."
+domain: responsible-ai
+itemKind: criterion
+status: draft
+metadata:
+  authority: "National Institute of Standards and Technology (NIST)"
+  license: US-Gov-Public-Domain
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    source: "NIST AI 100-1, Artificial Intelligence Risk Management Framework (AI RMF 1.0), January 2023"
+    rationale: "U.S. Government work, not subject to copyright in the United States (17 U.S.C. Section 105)."
+    verifiedOn: "2026-04-23"
+phaseMap:
+  phase-1-scoping:
+    - mp-1-1
+    - mp-1-2
+    - mp-1-3
+    - mp-1-4
+    - mp-1-5
+    - mp-1-6
+    - mp-2-1
+    - mp-2-2
+    - mp-2-3
+    - mp-3-1
+    - mp-3-2
+    - mp-3-3
+    - mp-3-4
+    - mp-3-5
+    - mp-4-1
+    - mp-4-2
+    - mp-5-1
+    - mp-5-2
+  phase-2-risk-classification:
+    - gv-1-1
+    - gv-1-2
+    - gv-1-3
+    - gv-3-1
+    - gv-3-2
+    - gv-5-1
+    - gv-5-2
+  phase-3-standards-mapping:
+    - gv-1-4
+    - gv-1-5
+    - gv-1-6
+    - gv-1-7
+    - gv-2-1
+    - gv-2-2
+    - gv-2-3
+    - gv-4-1
+    - gv-4-2
+    - gv-4-3
+    - gv-6-1
+    - gv-6-2
+    - ms-1-1
+    - ms-1-2
+    - ms-1-3
+  phase-4-security-model:
+    - ms-2-1
+    - ms-2-2
+    - ms-2-3
+    - ms-2-4
+    - ms-2-5
+    - ms-2-6
+    - ms-2-7
+    - ms-2-8
+    - ms-2-9
+    - ms-2-10
+    - ms-2-11
+    - ms-2-12
+    - ms-2-13
+  phase-5-impact-assessment:
+    - ms-3-1
+    - ms-3-2
+    - ms-3-3
+    - ms-4-1
+    - ms-4-2
+    - ms-4-3
+    - mn-1-1
+    - mn-1-2
+    - mn-1-3
+    - mn-1-4
+    - mn-2-1
+    - mn-2-2
+    - mn-2-3
+    - mn-2-4
+    - mn-4-1
+    - mn-4-2
+  phase-6-handoff:
+    - mn-3-1
+    - mn-3-2
+    - mn-4-3
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"

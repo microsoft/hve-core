@@ -1,0 +1,27 @@
+id: to-002
+title: "Tradeoff: Explainable and Interpretable vs. Valid and Reliable"
+itemKind: criterion
+summary: "Inherently interpretable models often underperform opaque high-capacity models; document the interpretability vs accuracy operating point."
+characteristics:
+  - explainableInterpretable
+  - validReliable
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+    description: Record the chosen operating point and rationale during Phase 5.
+description: |
+  Source: rai-impact-assessment.instructions.md (tradeoffs section, to-002).
+
+  Tradeoff: Explainable and Interpretable characteristic versus Valid and Reliable
+  characteristic.
+
+  Mechanism: Inherently interpretable model families (linear models, shallow decision
+  trees, rule lists) typically underperform opaque high-capacity model families
+  (deep networks, large gradient-boosted ensembles, foundation models) on accuracy
+  metrics. Post-hoc explanation methods recover some interpretability but do not
+  guarantee faithfulness to the underlying model.
+
+  Required documentation: Record the model family selected, the measured accuracy
+  delta versus the next-best alternative on the interpretability axis, the explanation
+  method (intrinsic or post-hoc), and the rationale for the chosen operating point.

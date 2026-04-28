@@ -1,0 +1,30 @@
+id: "3-1-6"
+title: "Pronunciation"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.1 Readable"
+addedIn: "2.0"
+summary: "A mechanism is available for identifying specific pronunciation of words where meaning is ambiguous without knowing the pronunciation."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G62"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/pronunciation.html"
+  - "https://www.w3.org/TR/WCAG22/"

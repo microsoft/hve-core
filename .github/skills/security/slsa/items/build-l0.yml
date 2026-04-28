@@ -1,0 +1,25 @@
+id: build-l0
+version: "1.1"
+name: SLSA Build Track Level 0
+source: https://slsa.dev/spec/v1.1/levels#build-l0
+description: Baseline. All repositories start at Build L0; SLSA defines no requirements at this level.
+controls:
+  - id: build-l0
+    title: Build L0 — No requirements
+    description: |
+      Baseline, all repositories start here. SLSA Build L0 imposes no requirements; it
+      represents the absence of any provenance or build integrity guarantees.
+    group: build
+    risk: info
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/*.yaml
+    references:
+      - https://slsa.dev/spec/v1.1/levels
+      - https://slsa.dev/spec/v1.1/build-requirements

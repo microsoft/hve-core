@@ -1,0 +1,56 @@
+id: of-github-issue-template
+title: "GitHub Issue Template"
+itemKind: document-section
+audience: github
+format: markdown
+phaseHint: phase-6-handoff
+summary: "GitHub issue body template with YAML metadata block and markdown sections used by the RAI Planner."
+tokens:
+  - control_name
+  - characteristic
+  - threat_id
+  - threat_description
+  - control_surface
+  - control_details
+  - priority_level
+  - horizon
+  - category
+  - depth_tier
+  - security_cross_ref
+  - implementation_details
+  - criterion_1
+  - criterion_2
+template: |
+  ---
+  rai_characteristic: {{characteristic}}
+  threat_id: {{threat_id}}
+  suggested_priority: {{priority_level}}
+  suggested_horizon: {{horizon}}
+  category: {{category}}
+  depth_tier: {{depth_tier}}
+  security_cross_ref: {{security_cross_ref}}
+  ---
+
+  ## RAI Control: {{control_name}}
+
+  **NIST Characteristic:** {{characteristic}}
+  **Threat:** {{threat_id}} - {{threat_description}}
+  **Control Surface:** {{control_surface}} - {{control_details}}
+  **Suggested Priority:** {{priority_level}}
+  **Suggested Remediation Horizon:** {{horizon}}
+
+  ### Implementation
+
+  {{implementation_details}}
+
+  ### Acceptance Criteria
+
+  * [ ] {{criterion_1}}
+  * [ ] {{criterion_2}}
+
+  > **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
+  > - [ ] Reviewed and validated by a qualified human reviewer
+description: |
+  Title prefix is `[RAI-{Characteristic}] `. Temporary ids use the form
+  `{{RAI-TEMP-N}}` and are replaced on creation. Execution follows
+  `github-backlog-update.instructions.md`.

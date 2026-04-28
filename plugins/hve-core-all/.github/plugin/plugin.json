@@ -1,8 +1,10 @@
 {
   "name": "hve-core-all",
-  "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
+  "description": "Full collection of all stable HVE Core agents, prompts, instructions, and skills",
   "version": "3.3.41",
   "agents": [
+    "agents/accessibility/",
+    "agents/accessibility/subagents/",
     "agents/ado/",
     "agents/coding-standards/",
     "agents/data-science/",
@@ -16,7 +18,9 @@
     "agents/project-planning/",
     "agents/rai-planning/",
     "agents/security/",
-    "agents/security/subagents/"
+    "agents/security/subagents/",
+    "agents/sustainability/",
+    "agents/sustainability/subagents/"
   ],
   "commands": [
     "commands/ado/",
@@ -27,15 +31,22 @@
     "commands/hve-core/",
     "commands/jira/",
     "commands/rai-planning/",
-    "commands/security/"
+    "commands/security/",
+    "commands/sustainability/"
   ],
   "skills": [
+    "skills/accessibility/",
     "skills/coding-standards/",
     "skills/experimental/",
     "skills/gitlab/",
     "skills/installer/",
     "skills/jira/",
+    "skills/mural/",
+    "skills/project-planning/",
+    "skills/requirements/",
+    "skills/responsible-ai/",
     "skills/security/",
-    "skills/shared/"
+    "skills/shared/",
+    "skills/sustainability/"
   ]
 }

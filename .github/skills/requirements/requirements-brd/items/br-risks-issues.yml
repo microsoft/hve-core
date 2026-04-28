@@ -1,0 +1,11 @@
+id: br-risks-issues
+title: "Risks & Issues"
+description: "Risks and known issues rendered as Section 10 of docs/templates/brd-template.md."
+templatePath: docs/templates/brd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [business, sponsor, exec]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]

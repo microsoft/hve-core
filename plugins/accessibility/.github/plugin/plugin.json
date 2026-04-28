@@ -1,0 +1,13 @@
+{
+  "name": "accessibility",
+  "description": "Accessibility planning, surface assessment, conformance mapping, and backlog generation against WCAG, ARIA APG, and cognitive accessibility standards",
+  "version": "3.3.41",
+  "agents": [
+    "agents/accessibility/",
+    "agents/accessibility/subagents/"
+  ],
+  "skills": [
+    "skills/accessibility/",
+    "skills/shared/"
+  ]
+}

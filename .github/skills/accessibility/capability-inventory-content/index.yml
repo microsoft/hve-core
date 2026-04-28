@@ -1,0 +1,49 @@
+framework: capability-inventory-content
+version: "1.0.0"
+summary: "hve-core content capability inventory listing prose linters readability metrics structural linters and human-review touchpoints that the Accessibility Planner agent consumes during cognitive-accessibility assessment."
+evidenceFormat: shared
+domain: accessibility
+itemKind: capability
+status: published
+phaseMap:
+  assessment: &id001
+    - vale
+    - textstat-flesch-kincaid
+    - textstat-smog
+    - textstat-coleman-liau
+    - textstat-ari
+    - alex
+    - markdownlint-prose-rules
+    - editor-review
+    - plain-language-checklist
+    - error-recovery-flow-review
+    - readability-budget-ci
+    - terminology-glossary-check
+  gap-analysis: *id001
+  backlog-generation: *id001
+metadata:
+  authority: "microsoft/hve-core"
+  license: "MIT"
+  licenseUrl: "https://opensource.org/license/mit/"
+  attributionRequired: false
+  source: "https://github.com/microsoft/hve-core"
+  spec_version: "1.0"
+  framework_revision: "2026-04-21"
+  last_updated: "2026-04-21"
+  imported_by: "prompt-builder"
+  imported_at: "2026-04-21T00:00:00Z"
+  review_required: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/microsoft/hve-core/main/LICENSE"
+    sha256: "c7eb8fb4cf893534af823d4aa0fe6fa83a961320375772915fd9b6a21d890d87"
+    declaredLicense: "MIT"
+    status: verified
+governance:
+  owners: ["@microsoft/hve-core"]
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

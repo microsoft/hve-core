@@ -1,0 +1,36 @@
+id: "1-1-1"
+title: "Non-text Content"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.1 Text Alternatives"
+addedIn: "2.0"
+summary: "All non-text content has a text alternative serving the equivalent purpose, with documented exceptions for controls, time-based media, tests, sensory, CAPTCHA, and decoration."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen:
+    - "voice-only"
+  naReason: "Voice-only surfaces present audio-first content; image alt requirements do not apply."
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H37"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G94"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html"
+  - "https://www.w3.org/TR/WCAG22/"

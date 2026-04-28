@@ -1,0 +1,19 @@
+id: of-tradeoff-table
+title: "Tradeoff Decision Table"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-5-impact-assessment
+summary: "Phase 5 tradeoff catalog capturing competing characteristics, decision posture, and stakeholder signoff state."
+tokens:
+  - system_name
+  - tradeoff_rows
+template: |
+  ## Tradeoff Decisions — {{system_name}}
+
+  | Tradeoff | Characteristics in Tension | Posture | Stakeholders | Status |
+  |----------|----------------------------|---------|--------------|--------|
+  {{tradeoff_rows}}
+description: |
+  Each row references a tradeoff id from the `rai-tradeoffs` skill. Status uses
+  one of: open, accepted, deferred, escalated.

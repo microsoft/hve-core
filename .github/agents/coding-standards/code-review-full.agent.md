@@ -242,6 +242,12 @@ Follow the Report Skeleton and Persist and Present sections from the output form
 * If artifact persistence in the Persist and Present step fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
 * If both subagents return only clarifying questions after two invocations each, stop and surface all outstanding questions to the user.
 
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project under review, anchor every sustainability comment to a `gsf-sci:*` or `gsf-patterns:*` control id and suffix the comment with: `Estimates are directional; not an audited carbon disclosure.` When no plan exists, omit sustainability commentary and operate as today.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.
+
 ---
 
 Brought to you by microsoft/hve-core

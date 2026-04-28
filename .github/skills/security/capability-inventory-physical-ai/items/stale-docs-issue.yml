@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Stale docs to issue"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Automated issue creation when documentation drifts from code
+controls:
+- id: stale-docs-issue
+  appliesTo: [cloud, web, ml, fleet]
+  title: Stale docs to issue
+  description: Automated issue creation when documentation drifts from code
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Stale docs to issue capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Stale docs to issue is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/stale-docs*.yml
+  - .github/workflows/docs*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

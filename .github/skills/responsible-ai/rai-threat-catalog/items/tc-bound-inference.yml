@@ -1,0 +1,25 @@
+id: tc-bound-inference
+title: "AI Trust Boundary: Inference"
+itemKind: criterion
+summary: "Separation between client requests and model processing. Key threats: adversarial inputs, prompt injection, resource exhaustion."
+boundaryType: inference
+kind: boundary
+characteristics:
+  - validReliable
+  - privacyEnhanced
+  - secureResilient
+nistSubcategories:
+  - MS-2.5
+  - MS-2.10
+  - MS-2.7
+dataFlows:
+  - inference-pipeline
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Boundary where untrusted client requests cross into model processing.
+  Concentrates threats of adversarial inputs, prompt injection bypassing
+  safety filters, jailbreaking, and resource exhaustion via crafted queries.
+  Typically maps to the WEBUI and INFRA security buckets.

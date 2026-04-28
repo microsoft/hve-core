@@ -1,0 +1,26 @@
+id: wsg-web-development
+version: "1.0"
+name: WSG — Web Development
+source: https://w3c.github.io/sustyweb/
+description: Sustainable web development success criteria from W3C WSG 1.0.
+controls:
+  - id: wsg-web-development
+    title: Sustainable Web Development — efficient code, assets, and delivery
+    description: |
+      Minimize page weight (HTML, CSS, JS, fonts, images, video). Use modern
+      image formats (AVIF, WebP), responsive images, lazy loading, code
+      splitting, tree shaking, HTTP caching, and brotli compression. Prefer
+      static rendering and CDN delivery over per-request server compute when
+      content is cacheable.
+    group: criterion
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - implemented
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

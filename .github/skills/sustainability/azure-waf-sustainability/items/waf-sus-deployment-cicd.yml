@@ -1,0 +1,25 @@
+id: waf-sus-deployment-cicd
+version: "1.0"
+name: WAF Sustainability — Deployment and CI/CD
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-deployment
+description: Deployment and CI/CD patterns that avoid wasted runner-minutes, ephemeral environment sprawl, and unnecessary cross-region build artifacts.
+controls:
+  - id: waf-sus-deployment-cicd
+    title: Deployment and CI/CD — minimize pipeline waste
+    description: |
+      Cache build artifacts, dependencies, and container layers. Use
+      conditional triggers to skip unchanged paths. Auto-expire ephemeral
+      preview environments. Co-locate build agents and artifact registries
+      to avoid cross-region egress. Decommission stale environments.
+    group: pattern
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-deployment

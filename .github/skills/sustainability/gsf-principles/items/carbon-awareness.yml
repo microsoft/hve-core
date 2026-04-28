@@ -1,0 +1,32 @@
+id: carbon-awareness
+version: "1.0"
+name: Carbon Awareness
+source: https://learn.greensoftware.foundation/
+description: Do more when the electricity is clean and less when it is dirty.
+controls:
+  - id: carbon-awareness
+    title: Carbon Awareness — shift work in time and space toward cleaner energy
+    description: |
+      Carbon-aware computing reduces the SCI variable I by shifting workloads
+      to times (temporal shifting) or regions (spatial shifting) with lower
+      grid carbon intensity. Implementations consume marginal-emissions data
+      from sources like WattTime or Electricity Maps at runtime.
+    group: principle
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/carbon-awareness/

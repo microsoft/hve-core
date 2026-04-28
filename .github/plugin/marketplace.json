@@ -10,6 +10,12 @@
   },
   "plugins": [
     {
+      "name": "accessibility",
+      "source": "accessibility",
+      "description": "Accessibility planning, surface assessment, conformance mapping, and backlog generation against WCAG, ARIA APG, and cognitive accessibility standards",
+      "version": "3.3.41"
+    },
+    {
       "name": "ado",
       "source": "ado",
       "description": "Azure DevOps work item management, build monitoring, and pull request creation",
@@ -60,7 +66,7 @@
     {
       "name": "hve-core-all",
       "source": "hve-core-all",
-      "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
+      "description": "Full collection of all stable HVE Core agents, prompts, instructions, and skills",
       "version": "3.3.41"
     },
     {
@@ -76,6 +82,12 @@
       "version": "3.3.41"
     },
     {
+      "name": "mural",
+      "source": "mural",
+      "description": "Mural workspace, room, mural, and widget workflows through a Python skill exposed via CLI and stdio MCP server",
+      "version": "3.3.41"
+    },
+    {
       "name": "project-planning",
       "source": "project-planning",
       "description": "PRDs, BRDs, ADRs, and architecture diagrams",
@@ -85,6 +97,12 @@
       "name": "security",
       "source": "security",
       "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
+      "version": "3.3.41"
+    },
+    {
+      "name": "sustainability",
+      "source": "sustainability",
+      "description": "Sustainability planning, workload assessment, standards mapping, gap analysis, and backlog generation against Green Software Foundation SCI/Patterns/Principles, Sustainable Web Design, Web Sustainability Guidelines, and the Azure Well-Architected Sustainability pillar",
       "version": "3.3.41"
     }
   ]

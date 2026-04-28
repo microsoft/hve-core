@@ -67,6 +67,24 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 | `rai-backlog-handoff.instructions.md`     | Dual-format backlog handoff, content sanitization, autonomy tiers                                       |
 | `rai-capture-coaching.instructions.md`    | Exploration-first questioning techniques for capture mode                                               |
 
+## Framework Skill Discovery
+
+Standards content lives in Framework Skills under `.github/skills/responsible-ai/` rather than being inlined in instruction files. Skills cover NIST AI RMF subcategories, RAI threat catalogs, control surfaces, tradeoff patterns, risk indicators, output templates, and prohibited-practice principles.
+
+The agent discovers available skills at session start by enumerating that directory and reading each `SKILL.md` manifest. Manifests conform to the [Framework Skill Interface (FSI)](../../customization/authoring-framework-skills) contract.
+
+Each skill manifest declares its `defaultSelected` posture and a `phaseMap` that tells the agent which items apply to each phase. The agent loads the items scoped to the active phase and records the selection in `state.frameworkSkills` for audit. Opt-in skills surface as questions during Phase 1 and persist `{disabled: true, reason, atPhase}` in state when declined.
+
+| Skill                            | Type           | Default | Purpose                                                                 |
+|----------------------------------|----------------|---------|-------------------------------------------------------------------------|
+| `nist-ai-rmf`                    | Controls (72)  | DEFAULT | NIST AI RMF 1.0 trustworthiness characteristics and subcategories       |
+| `rai-threat-catalog`             | Criteria (14)  | DEFAULT | AI-specific threat taxonomy used during Phase 4 security model analysis |
+| `rai-control-surface`            | Criteria (21)  | DEFAULT | Control surface evaluation criteria used during Phase 5                 |
+| `rai-tradeoffs`                  | Criteria (5)   | DEFAULT | Characteristic tradeoff patterns documented during Phase 5              |
+| `rai-default-risk-indicators`    | Criteria (3)   | DEFAULT | Risk indicators evaluated during Phase 2 risk classification            |
+| `rai-output-formats`             | Templates (12) | DEFAULT | Document-section templates for artifacts and review summaries           |
+| `eu-ai-act-prohibited-practices` | Principles (8) | OPT-IN  | EU AI Act Article 5 prohibited-practice screen (enabled by user opt-in) |
+
 ## State Management
 
 All assessment state persists under `.copilot-tracking/rai-plans/{project-slug}/`. The `state.json` file tracks phase progress, entry mode, and assessment metadata.
@@ -152,8 +170,8 @@ When conversation context is compacted, a five-step recovery process reconstruct
 
 * All files are created under `.copilot-tracking/rai-plans/{project-slug}/`
 * The agent never modifies application source code
-* Embedded standards (NIST AI RMF 1.0) are referenced from the rai-standards instruction file
-* Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) are delegated to the Researcher Subagent
+* Standards content is loaded from Framework Skills under `.github/skills/responsible-ai/` via the FSI manifest contract; the rai-standards instruction file describes the loading protocol rather than embedding standards text
+* Additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details beyond the prohibited-practices skill) are delegated to the Researcher Subagent
 * In `from-security-plan` mode, security plan artifacts are read-only
 
 ## Related Files

@@ -1,0 +1,50 @@
+framework: wsg
+version: "1.0"
+domain: sustainability
+sustainabilityScope: adjacent
+status: published
+summary: W3C Web Sustainability Guidelines (WSG) 1.0 success criteria for sustainable web design.
+surfaceFilter:
+  - web
+phaseMap:
+  standards-mapping:
+    - wsg-ux-design
+    - wsg-web-development
+    - wsg-content-strategy
+    - wsg-hosting-infrastructure
+    - wsg-business-strategy
+  gap-analysis:
+    - wsg-ux-design
+    - wsg-web-development
+    - wsg-content-strategy
+    - wsg-hosting-infrastructure
+  backlog-generation:
+    - wsg-ux-design
+    - wsg-web-development
+    - wsg-content-strategy
+    - wsg-hosting-infrastructure
+metadata:
+  authority: W3C Sustainable Web Design Community Group
+  license: W3C-CFSA
+  licenseUrl: https://www.w3.org/community/about/agreements/cla/
+  source: https://w3c.github.io/sustyweb/
+  attributionRequired: true
+  attributionText: |
+    Web Sustainability Guidelines (WSG) 1.0 by the W3C Sustainable Web
+    Design Community Group, used under the W3C Community Final
+    Specification Agreement (W3C-CFSA). All items are informative.
+  normativeStatus: informative
+  redistribution:
+    textVerbatim: false
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://www.w3.org/community/about/agreements/cla/"
+    sha256: "200b8f41f56c46fec7e1638361d02ef61d013dc9cc77eb2ee66ff8d65bf25f0d"
+    declaredLicense: "W3C-CFSA"
+    status: verified
+governance:
+  owner: "@microsoft/hve-core"
+  reviewCadence: P180D
+  last_reviewed: "2026-04-21"

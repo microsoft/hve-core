@@ -124,3 +124,9 @@ See Arrow Types above. Additional symbols: `====` primary boundary, `:---:` seco
 * Announce the current workflow stage when transitioning between discovery, parsing, and generation.
 * Present diagram drafts with a summary of resources included and ask if adjustments are needed.
 * Share notable parsing decisions (for example, inferred dependencies) before finalizing the diagram.
+
+## Sustainability overlay
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project under diagram, badge components whose capability id appears in `state.workloadAssessment.capabilities[]` with a 🌱 marker and add an inline footnote naming the controlling SCI variable (`E`, `I`, `M`, or `R` per `gsf-sci:*`). When no plan exists, render diagrams as today with no sustainability annotations.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

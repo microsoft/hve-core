@@ -1,0 +1,17 @@
+id: mural
+name: Mural Integration
+description: Mural workspace, room, mural, and widget workflows through a Python skill exposed via CLI and stdio MCP server
+tags:
+  - mural
+  - mcp
+  - collaboration
+  - whiteboard
+items:
+  # Skills
+  - path: .github/skills/mural/mural
+    kind: skill
+  # Instructions
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+display:
+  ordering: alpha

@@ -1,0 +1,5 @@
+
+> hve-core@3.3.41 lint:md-links
+> pwsh -File scripts/linting/Markdown-Link-Check.ps1
+
+Checking .github/agents/agentic-workflows.agent.md

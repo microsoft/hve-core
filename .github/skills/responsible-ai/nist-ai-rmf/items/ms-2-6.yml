@@ -1,0 +1,9 @@
+id: ms-2-6
+title: "MS-2.6: Safety evaluation"
+itemKind: criterion
+summary: "AI system is evaluated regularly for safety risks - as identified in the MAP function. The AI system to be deployed is demonstrated to be safe, its residual negative risk does not exceed the risk tolerance, and it can fail safely."
+function: measure
+group: MS-2
+characteristic: safe
+nistSubcategories:
+  - MS-2.6

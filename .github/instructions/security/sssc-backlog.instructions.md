@@ -7,6 +7,19 @@ applyTo: '**/.copilot-tracking/sssc-plans/**'
 
 Generate actionable work items from the gap analysis in dual format (ADO + GitHub). Each work item maps a supply chain security gap to concrete adoption steps.
 
+Attach the SSSC Planning disclaimer block from [`#file:../shared/disclaimer-language.instructions.md`](../shared/disclaimer-language.instructions.md) at the top of every backlog artifact written by this phase.
+
+Framework references in work items (control IDs, risk tiers, evidence hints) must be sourced from the per-control YAML under `state.frameworks[i].skillPath`. Do not inline framework-specific check tables in this instruction file.
+
+## Exclusion Filter
+
+Before generating any work items, filter the gap-analysis input against `state.frameworks[]`:
+
+1. Skip every gap whose source framework has `disabled === true`. These frameworks were never loaded in Phase 3 and produce no gaps in a well-formed pipeline; the filter is a defense-in-depth check.
+2. Skip every gap whose `controlId` appears in the parent framework's `suppressedControls[].id`.
+
+Excluded gaps must not produce work items, must not appear in priority counts, and must not be referenced from any other work item's `Source References`. The Phase 6 handoff renders the audit trail of what was excluded; this phase is silent about exclusions in the backlog itself.
+
 ## Work Item Template
 
 Each generated work item follows this structure:
@@ -26,9 +39,10 @@ Each generated work item follows this structure:
 2. {Next step}
 
 ### Source References
-- Workflow: {repo}/path/to/workflow.yml
-- Script: {repo}/path/to/script.ps1
-- Documentation: {URL or path}
+<!-- Each entry is the canonical Evidence row defined in #file:../shared/evidence-citation.instructions.md -->
+- Evidence: `{repo}/path/to/workflow.yml` (Lines N-M) — workflow that implements the adoption.
+- Evidence: `{repo}/path/to/script.ps1` (Lines N-M) — supporting script.
+- Evidence: `{URL or path}` — kind: external-doc — supporting documentation.
 
 ### Acceptance Criteria
 - [ ] {Verifiable criterion}
@@ -44,6 +58,8 @@ Each generated work item follows this structure:
 ```
 
 ## Priority Derivation
+
+Priority derivation across all planners follows the shared rules in [`#file:../shared/planner-priority-rules.instructions.md`](../shared/planner-priority-rules.instructions.md). Never derive priority from numerical scores.
 
 Derive work item priority from the Scorecard risk level:
 
@@ -120,8 +136,9 @@ Markdown template for GitHub issue body:
 
 ### Source References
 
-- Workflow: `{repo}/path/to/workflow.yml`
-- Script: `{repo}/path/to/script.ps1`
+<!-- Each entry is the canonical Evidence row defined in #file:../shared/evidence-citation.instructions.md -->
+- Evidence: `{repo}/path/to/workflow.yml` (Lines N-M) — workflow that implements the adoption.
+- Evidence: `{repo}/path/to/script.ps1` (Lines N-M) — supporting script.
 
 ### Acceptance Criteria
 
@@ -153,6 +170,6 @@ Ask the user which tier they prefer. Default to partial autonomy on first use.
 Write the neutral intermediate backlog to `.copilot-tracking/sssc-plans/{project-slug}/sssc-backlog.md`.
 
 Update `state.json`:
-* Set `phases.5-backlog.status` to `✅`
-* Add `sssc-backlog.md` to `phases.5-backlog.artifacts`
-* Advance `currentPhase` to `6`
+
+* Append every `read_file` of a skill artifact to `skillsLoaded[]`.
+* Set `phase` to `review-and-handoff` once the user confirms the backlog draft.

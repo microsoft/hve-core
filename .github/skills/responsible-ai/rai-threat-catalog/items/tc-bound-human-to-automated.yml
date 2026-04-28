@@ -1,0 +1,27 @@
+id: tc-bound-human-to-automated
+title: "AI Trust Boundary: Human Review to Automated Decision"
+itemKind: criterion
+summary: "Accountability boundary between human judgement and automated execution. Key threats: accountability transfer, decision attribution, override governance."
+boundaryType: humanToAutomated
+kind: boundary
+boundaryClass: accountability
+characteristics:
+  - accountableTransparent
+  - explainableInterpretable
+nistSubcategories:
+  - MS-2.8
+  - MS-2.9
+dataFlows:
+  - inference-pipeline
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Accountability boundary capturing the transfer of responsibility when
+  automated systems act on or extend a human review decision. Distinct from
+  the broader Human Oversight boundary because it focuses on attribution and
+  override governance once the human decision is in motion. Concentrates
+  threats of accountability transfer, decision attribution loss, and weak
+  override governance. Typically maps to the IDENTITY and INFRA security
+  buckets.

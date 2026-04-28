@@ -1,0 +1,30 @@
+id: decision-drivers
+title: Decision Drivers
+description: "Lists the key factors that influenced the architectural decision, weighted by priority."
+template: |
+  ## Decision Drivers
+
+  List the key factors that influenced the decision for {{adr_title}}. For each driver, state its priority (High, Medium, or Low) and why it matters.
+
+  | Driver | Description | Weight |
+  |--------|-------------|--------|
+  | {{driver_name}} | {{driver_rationale}} | {{driver_weight}} |
+
+  {{additional_drivers}}
+inputs:
+  - name: driver_name
+    description: "Name of the decision driver (e.g., Performance Requirements, Cost Optimization)"
+  - name: driver_rationale
+    description: "Why this factor influenced the decision"
+  - name: driver_weight
+    description: "Priority weight: High, Medium, or Low"
+  - name: additional_drivers
+    description: "Additional decision drivers beyond the primary ones"
+applicability:
+  discriminator: adr_depth
+  appliesWhen:
+    - standard
+    - comprehensive
+  naWhen:
+    - lightweight
+  naReason: "Lightweight ADRs embed decision drivers inline within the Context section"

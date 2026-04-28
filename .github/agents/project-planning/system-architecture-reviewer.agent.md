@@ -167,6 +167,12 @@ An architecture review is complete when:
 * ADRs are created for each significant architectural decision.
 * Escalation points are identified for decisions requiring human judgment.
 
+## Sustainability overlay
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the system under review, read it and overlay sustainability deltas onto the architecture-review checklist. Treat `state.gapAnalysis.absent[]` as deterministic-absent inputs and `state.gapAnalysis.partial[]` as missing patterns. Cite control ids inline (for example, `gsf-sci:E`, `gsf-patterns:<id>`). When no plan exists, fall back to current behavior and emit no sustainability commentary.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.
+
 ---
 
 Brought to you by microsoft/hve-core

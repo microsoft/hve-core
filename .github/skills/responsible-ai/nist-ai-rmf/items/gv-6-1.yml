@@ -1,0 +1,8 @@
+id: gv-6-1
+title: "GV-6.1: Third-party IP and rights risks assessed"
+itemKind: criterion
+summary: "Policies and procedures are in place that address AI risks associated with third-party entities, including risks of infringement of a third party's intellectual property or other rights."
+function: govern
+group: GV-6
+nistSubcategories:
+  - GV-6.1

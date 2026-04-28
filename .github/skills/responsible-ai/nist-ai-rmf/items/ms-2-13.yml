@@ -1,0 +1,8 @@
+id: ms-2-13
+title: "MS-2.13: TEVV process effectiveness review"
+itemKind: criterion
+summary: "Effectiveness of the employed TEVV metrics and processes in the MEASURE function are evaluated and documented."
+function: measure
+group: MS-2
+nistSubcategories:
+  - MS-2.13

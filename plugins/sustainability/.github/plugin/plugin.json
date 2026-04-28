@@ -1,0 +1,16 @@
+{
+  "name": "sustainability",
+  "description": "Sustainability planning, workload assessment, standards mapping, gap analysis, and backlog generation against Green Software Foundation SCI/Patterns/Principles, Sustainable Web Design, Web Sustainability Guidelines, and the Azure Well-Architected Sustainability pillar",
+  "version": "3.3.41",
+  "agents": [
+    "agents/sustainability/",
+    "agents/sustainability/subagents/"
+  ],
+  "commands": [
+    "commands/sustainability/"
+  ],
+  "skills": [
+    "skills/shared/",
+    "skills/sustainability/"
+  ]
+}

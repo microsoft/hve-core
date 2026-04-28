@@ -1,0 +1,8 @@
+id: ms-2-1
+title: "MS-2.1: TEVV tools and documentation"
+itemKind: criterion
+summary: "Test sets, metrics, and details about the tools used during test, evaluation, validation, and verification (TEVV) are documented."
+function: measure
+group: MS-2
+nistSubcategories:
+  - MS-2.1

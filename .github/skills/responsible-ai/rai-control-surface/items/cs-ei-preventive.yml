@@ -1,0 +1,16 @@
+id: cs-ei-preventive
+title: "Control Surface: Explainable and Interpretable — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Explainable and Interpretable characteristic: prefer interpretable architectures where viable; attach explanation methods at design time."
+characteristic: explainableInterpretable
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls bake explainability into the design before deployment.
+  Examples include preferring inherently interpretable model families when
+  performance allows, attaching explanation methods (SHAP, LIME, attention
+  attribution, intrinsic feature importance) at design time, and documenting
+  the audience-tiered explanation surface for each decision type.

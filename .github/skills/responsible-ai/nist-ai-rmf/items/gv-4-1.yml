@@ -1,0 +1,8 @@
+id: gv-4-1
+title: "GV-4.1: Safety-first mindset in AI development"
+itemKind: criterion
+summary: "Organizational policies and practices foster a critical thinking and safety-first mindset in the design, development, deployment, and use of AI systems."
+function: govern
+group: GV-4
+nistSubcategories:
+  - GV-4.1

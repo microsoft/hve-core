@@ -1,0 +1,38 @@
+id: "menu-button-links"
+title: "Menu Button (Links) Pattern"
+itemKind: pattern
+summary: "Button revealing a popup menu of hyperlinks; items navigate to new resources rather than firing actions."
+keyboardModel:
+  - "menu"
+focusManagement: "roving"
+relatedRoles:
+  - "button"
+  - "menu"
+  - "menuitem"
+requiredStates:
+  - "aria-expanded"
+requiredProperties:
+  - "aria-haspopup"
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-4"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button-links/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/menu-button-links/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

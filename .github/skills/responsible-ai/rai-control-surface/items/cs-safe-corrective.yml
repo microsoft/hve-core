@@ -1,0 +1,16 @@
+id: cs-safe-corrective
+title: "Control Surface: Safe — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Safe characteristic: kill switches, action reversal, and post-incident remediation playbooks."
+characteristic: safe
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls stop or reverse unsafe behavior after a detected incident.
+  Examples include kill switches that halt automated action, reversal procedures
+  for completed unsafe actions where physically possible, and post-incident
+  remediation playbooks that route to engineering, legal, and affected-stakeholder
+  notification paths.

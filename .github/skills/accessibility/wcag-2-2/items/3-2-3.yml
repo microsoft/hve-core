@@ -1,0 +1,27 @@
+id: "3-2-3"
+title: "Consistent Navigation"
+itemKind: criterion
+level: "AA"
+principle: "3 Understandable"
+guideline: "3.2 Predictable"
+addedIn: "2.0"
+summary: "Navigational mechanisms repeated on multiple web pages within a set of web pages occur in the same relative order each time they are repeated."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G61"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/consistent-navigation.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,8 @@
+id: gv-4-3
+title: "GV-4.3: Testing and incident sharing protocols"
+itemKind: criterion
+summary: "Organizational practices are in place to enable AI testing, identification of incidents, and information sharing."
+function: govern
+group: GV-4
+nistSubcategories:
+  - GV-4.3

@@ -1,0 +1,26 @@
+id: archetype-iot-fleet
+version: "1.0"
+name: Archetype — IoT Fleet
+source: hve-core authored
+description: Fleet of distributed devices (sensors, gateways, vehicles) emitting telemetry to a cloud backend. Backhaul bandwidth and embodied device carbon dominate.
+controls:
+  - id: archetype-iot-fleet
+    title: IoT Fleet — edge filter, backhaul efficiency, device lifetime
+    description: |
+      Fleet of distributed devices emitting telemetry. Sustainability
+      levers: edge filtering and aggregation, efficient binary
+      encoding, batched backhaul, device-lifetime extension via OTA
+      updates and modular hardware to amortize embodied carbon
+      (SCI variable M).
+    group: archetype
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - fleet
+    references:
+      - https://patterns.greensoftware.foundation/

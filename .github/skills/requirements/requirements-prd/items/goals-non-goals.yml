@@ -1,0 +1,11 @@
+id: goals-non-goals
+title: "Goals & Non-Goals"
+description: "Goals (Section 1.3) and explicit non-goals (rendered into Goals + Out of Scope tables) of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]

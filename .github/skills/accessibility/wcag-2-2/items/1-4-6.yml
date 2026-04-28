@@ -1,0 +1,31 @@
+id: "1-4-6"
+title: "Contrast (Enhanced)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "Visual presentation of text and images of text has a contrast ratio of at least 7:1, with documented exceptions for large text (4.5:1), incidental, and logotypes."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "wcag-contrast"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G17"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/contrast-enhanced.html"
+  - "https://www.w3.org/TR/WCAG22/"

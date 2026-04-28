@@ -1,0 +1,27 @@
+id: tc-elem-model-artifact
+title: "AI Element: Model Artifact"
+itemKind: criterion
+summary: "Trained model files and weights. Primary RAI concerns are model integrity (Valid and Reliable) and explainability of behavior."
+elementType: modelArtifact
+kind: element
+characteristics:
+  - validReliable
+  - explainableInterpretable
+nistSubcategories:
+  - MS-2.5
+  - MS-2.9
+dataFlows:
+  - training-pipeline
+  - inference-pipeline
+strideMatrix:
+  componentRef: model-serving
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Trained model files and weights produced by the training pipeline and
+  consumed by serving infrastructure. Threats include weight tampering,
+  model extraction, intellectual-property leakage, and loss of explainability
+  when artifacts are modified outside change control. Typically maps to the
+  BUILD and INFRA security buckets.

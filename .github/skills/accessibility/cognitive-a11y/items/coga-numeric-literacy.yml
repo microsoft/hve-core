@@ -1,0 +1,45 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Lower Numeric Literacy Demands"
+source: https://www.w3.org/WAI/cognitive/
+description: "Numbers percentages and ratios appear with context examples or visual analogues for users with low numeracy."
+controls:
+  - id: coga-numeric-literacy
+    title: "Lower Numeric Literacy Demands"
+    description: "Numbers percentages and ratios appear with context examples or visual analogues for users with low numeracy."
+    group: numeracy-locale
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Lower Numeric Literacy Demands practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Lower Numeric Literacy Demands is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.w3.org/WAI/cognitive/
+      - https://www.w3.org/TR/coga-usable/

@@ -1,0 +1,29 @@
+id: cat-manifesto
+version: "1.0"
+name: Climate Action Tech (CAT) Manifesto — link-only reference
+source: https://climateaction.tech/manifesto/
+description: Link-only reference stub. No text reproduced pending CAT licensing outreach (WI-03).
+controls:
+  - id: cat-manifesto-reference
+    title: CAT Manifesto — link-only reference
+    description: |
+      Reference-by-identifier-only pointer to the Climate Action Tech (CAT)
+      manifesto. This Framework Skill does not reproduce CAT manifesto text;
+      consumers MUST access the manifesto from the upstream URL.
+
+      Per planning log WI-03, licensing outreach to CAT is pending; once
+      explicit licensing is in place this stub will be promoted to a full
+      principle item.
+    group: reference
+    risk: info
+    assessmentMethod: categorical
+    categories:
+      - referenced
+      - cited
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    references:
+      - https://climateaction.tech/manifesto/

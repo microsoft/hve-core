@@ -1,0 +1,31 @@
+id: energy-efficiency
+version: "1.0"
+name: Energy Efficiency
+source: https://learn.greensoftware.foundation/
+description: Build applications that are energy efficient, consuming the least electricity per unit of work.
+controls:
+  - id: energy-efficiency
+    title: Energy Efficiency — minimize kWh per unit of work
+    description: |
+      Energy efficiency reduces the SCI variable E. Improvements include
+      algorithmic efficiency, reduced data transfer, right-sizing, autoscale-to-zero,
+      caching, batching, and avoiding wasteful polling.
+    group: principle
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/energy-efficiency/

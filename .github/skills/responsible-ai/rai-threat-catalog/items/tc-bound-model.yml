@@ -1,0 +1,25 @@
+id: tc-bound-model
+title: "AI Trust Boundary: Model"
+itemKind: criterion
+summary: "Separation between model internals and serving infrastructure. Key threats: model extraction, weight tampering, IP leakage."
+boundaryType: model
+kind: boundary
+characteristics:
+  - validReliable
+  - privacyEnhanced
+nistSubcategories:
+  - MS-2.5
+  - MS-2.10
+dataFlows:
+  - training-pipeline
+  - inference-pipeline
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Boundary that protects model artifacts and internals from the surrounding
+  serving infrastructure and tenants. Concentrates threats of model
+  extraction via inference probing, weight tampering, and intellectual-
+  property leakage through metadata or side channels. Typically maps to the
+  BUILD and INFRA security buckets.

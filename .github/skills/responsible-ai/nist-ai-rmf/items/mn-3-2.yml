@@ -1,0 +1,8 @@
+id: mn-3-2
+title: "MN-3.2: Pre-trained model monitoring"
+itemKind: criterion
+summary: "Pre-trained models which are used for development are monitored as part of AI system regular monitoring and maintenance."
+function: manage
+group: MN-3
+nistSubcategories:
+  - MN-3.2

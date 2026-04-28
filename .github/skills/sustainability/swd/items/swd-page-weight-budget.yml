@@ -1,0 +1,26 @@
+id: swd-page-weight-budget
+version: "1.0"
+name: SWD — Page Weight Budget
+source: https://sustainablewebdesign.org/estimating-digital-emissions/
+description: Declare and enforce a per-page weight budget (HTML, CSS, JS, fonts, images, video) as the upstream input to data-transfer accounting.
+controls:
+  - id: swd-page-weight-budget
+    title: Page Weight Budget — declare and enforce per-page transfer ceiling
+    description: |
+      A page-weight budget is the upstream input to data-transfer accounting.
+      Declare a budget per page archetype (landing, article, app shell,
+      checkout). Enforce in CI via Lighthouse, WebPageTest, or sitespeed.io.
+      Budget overruns escalate to the SCI variable E via the SWD energy
+      intensity model.
+    group: methodology
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - enforced
+      - reported
+    appliesTo:
+      - web
+    references:
+      - https://sustainablewebdesign.org/estimating-digital-emissions/

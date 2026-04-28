@@ -1,0 +1,74 @@
+id: accessibility
+name: Accessibility
+description: Accessibility planning, surface assessment, conformance mapping, and backlog generation against WCAG, ARIA APG, and cognitive accessibility standards
+notice: |
+  > [!CAUTION]
+  > The accessibility agents and instructions in this collection are **assistive tools only**. They do not provide legal, regulatory, or compliance advice and do not replace professional accessibility review boards, WCAG conformance auditors, certified accessibility specialists, legal counsel, or other qualified human reviewers. All AI-generated accessibility artifacts **must** be reviewed and validated by qualified accessibility professionals before use. AI outputs may contain inaccuracies, miss critical conformance gaps, or produce recommendations that are incomplete or inappropriate for your environment.
+tags:
+  - accessibility
+  - a11y
+  - wcag
+  - aria
+  - cognitive
+  - planning
+  - conformance
+  - vpat
+items:
+  # Agents
+  - path: .github/agents/accessibility/accessibility-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/accessibility/subagents/accessibility-researcher-subagent.agent.md
+    kind: agent
+    maturity: experimental
+  # Framework Skills (Wave 1)
+  - path: .github/skills/accessibility/wcag-2-2
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/aria-apg
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/cognitive-a11y
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/capability-inventory-web
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/capability-inventory-content
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/framework-skill-interface
+    kind: skill
+  # Accessibility Planner Instructions
+  - path: .github/instructions/accessibility/accessibility-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-risk-classification.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-surface-assessment.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-standards.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-gap-analysis.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-backlog.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/accessibility/accessibility-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  # Shared Instructions
+  - path: .github/instructions/shared/disclaimer-language.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/evidence-citation.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/hve-core-location.instructions.md
+    kind: instruction
+  - path: .github/instructions/shared/planner-priority-rules.instructions.md
+    kind: instruction
+display:
+  ordering: manual

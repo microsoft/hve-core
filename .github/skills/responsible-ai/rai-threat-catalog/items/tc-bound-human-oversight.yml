@@ -1,0 +1,24 @@
+id: tc-bound-human-oversight
+title: "AI Trust Boundary: Human Oversight"
+itemKind: criterion
+summary: "Separation between automated decisions and human review. Key threats: accountability gaps, automation bias, review bypass."
+boundaryType: humanOversight
+kind: boundary
+characteristics:
+  - accountableTransparent
+  - explainableInterpretable
+nistSubcategories:
+  - MS-2.8
+  - MS-2.9
+dataFlows:
+  - inference-pipeline
+  - feedback-loop
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Boundary at which automated decisions are routed to human reviewers for
+  oversight. Concentrates threats of accountability gaps when reviewers lack
+  context, automation bias degrading reviewer judgement, and operational
+  review-bypass. Typically maps to the IDENTITY and WEBUI security buckets.

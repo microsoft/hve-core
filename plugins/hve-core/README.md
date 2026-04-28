@@ -37,6 +37,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 |------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | **checkpoint**         | Save or restore conversation context using memory files                                                                  |
 | **doc-ops-update**     | Invoke doc-ops agent for documentation quality assurance and updates                                                     |
+| **fsi-author**         | Author or extend a Framework Skill with manifest, per-item YAML, and SKILL.md registration                               |
 | **git-commit**         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit |
 | **git-commit-message** | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch         |
 | **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                             |
@@ -101,23 +102,24 @@ copilot plugin install hve-core@hve-core
 
 ## Commands
 
-| Command            | Description                                                                                                                  |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------|
-| rpi                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core      |
-| task-research      | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core             |
-| task-plan          | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core         |
-| task-implement     | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                      |
-| task-review        | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core |
-| checkpoint         | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                               |
-| doc-ops-update     | Invoke doc-ops agent for documentation quality assurance and updates                                                         |
-| git-commit-message | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch             |
-| git-commit         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit     |
-| git-merge          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                 |
-| git-setup          | Interactive, verification-first Git configuration assistant (non-destructive)                                                |
-| pull-request       | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                 |
-| prompt-analyze     | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core  |
-| prompt-build       | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core              |
-| prompt-refactor    | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core    |
+| Command            | Description                                                                                                                       |
+|--------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| rpi                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core           |
+| task-research      | Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core                  |
+| task-plan          | Initiates implementation planning based on user context or research documents - Brought to you by microsoft/hve-core              |
+| task-implement     | Locates and executes implementation plans using Task Implementor - Brought to you by microsoft/hve-core                           |
+| task-review        | Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core      |
+| checkpoint         | Save or restore conversation context using memory files - Brought to you by microsoft/hve-core                                    |
+| doc-ops-update     | Invoke doc-ops agent for documentation quality assurance and updates                                                              |
+| git-commit-message | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                  |
+| git-commit         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit          |
+| git-merge          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                      |
+| git-setup          | Interactive, verification-first Git configuration assistant (non-destructive)                                                     |
+| pull-request       | Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core                                      |
+| fsi-author         | Author or extend a Framework Skill with manifest, per-item YAML, and SKILL.md registration - Brought to you by microsoft/hve-core |
+| prompt-analyze     | Evaluates prompt engineering artifacts against quality criteria and reports findings - Brought to you by microsoft/hve-core       |
+| prompt-build       | Build or improve prompt engineering artifacts following quality criteria - Brought to you by microsoft/hve-core                   |
+| prompt-refactor    | Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core         |
 
 ## Instructions
 

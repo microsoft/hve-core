@@ -3,7 +3,7 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-07
+ms.date: 2026-04-23
 ms.topic: concept
 ---
 
@@ -24,22 +24,25 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                           | Sub-Category | Workflow         | Persistence    | Key Output                     |
-|-------------------------------------------------|--------------|------------------|----------------|--------------------------------|
-| [BRD Builder](brd-prd-builders.md)              | Requirements | 7-phase Q&A      | JSON state     | Business requirements document |
-| [PRD Builder](brd-prd-builders.md)              | Requirements | 7-phase Q&A      | JSON state     | Product requirements document  |
-| [ADR Creation Coach](adr-creation.md)           | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record   |
-| [Arch Diagram Builder](arch-diagram-builder.md) | Architecture | 4-stage analysis | None           | ASCII architecture diagram     |
-| [Security Planner](../security/README.md)       | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog     |
+| Agent                                           | Sub-Category | Workflow         | Persistence    | Key Output                            |
+|-------------------------------------------------|--------------|------------------|----------------|---------------------------------------|
+| [Requirements Builder](requirements-builder.md) | Requirements | 6-phase FSI      | JSON state     | PRDs, BRDs, and future MRDs/FRDs/SRSs |
+| [ADR Creation Coach](adr-creation.md)           | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record          |
+| [Arch Diagram Builder](arch-diagram-builder.md) | Architecture | 4-stage analysis | None           | ASCII architecture diagram            |
+| [Security Planner](../security/README.md)       | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog            |
+
+> [!NOTE]
+> The legacy `brd-builder` and `prd-builder` agents are deprecated and now stub-redirect to Requirements Builder. Existing sessions under `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` remain readable; new work writes to `.copilot-tracking/requirements-sessions/`.
 
 ## Requirements
 
-The BRD Builder and PRD Builder share a 7-phase workflow that guides users through structured question-and-answer sessions to produce comprehensive requirements documents. Both agents persist session state as JSON files, supporting pause-and-resume workflows across conversations. Their twin architecture means 80% of concepts transfer between them. Learn one, and the other follows naturally.
+The [Requirements Builder](requirements-builder.md) is a single, unified agent for authoring PRDs, BRDs, and future requirements documents (MRD, FRD, SRS, custom org templates).
+It runs a six-phase pipeline (identity → intake → template-selection → drafting → review → handoff) and loads document styles as [Framework Skill Interface (FSI)](../../announcements/framework-skill-interfaces.md) framework skills under `.github/skills/requirements/`. Pick one or more document styles at the framework gate and draft them in a single session.
 
-> [!NOTE]
-> BRD and PRD builders share the same underlying workflow engine. Switching between them mid-project requires only a scope adjustment, not a restart.
+> [!TIP]
+> To add a new document style (MRD, FRD, internal template), author a new FSI framework skill rather than modifying the agent. See [Authoring Framework Skills with Prompt Builder](../../customization/authoring-framework-skills.md).
 
-See the [BRD & PRD Builders](brd-prd-builders.md) guide for the shared workflow, feature comparison, and invocation details.
+See the [Requirements Builder](requirements-builder.md) guide for the six-phase workflow, framework gate, entry modes, and invocation details.
 
 ## Architecture
 
@@ -72,18 +75,18 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 
 Select any agent using the agent picker in the Copilot Chat pane. Each agent starts its guided workflow automatically.
 
-| Scenario               | Agent                      | Purpose                                                                    |
-|------------------------|----------------------------|----------------------------------------------------------------------------|
-| New project kickoff    | BRD Builder or PRD Builder | Capture requirements before making architecture decisions                  |
-| Architecture decisions | ADR Creation Coach         | Evaluate technology choices, design patterns, or infrastructure approaches |
-| Visual documentation   | Arch Diagram Builder       | Generate architecture diagrams for onboarding or reviews                   |
-| Security review        | Security Planner           | Assess threats and plan mitigations after architecture decisions stabilize |
+| Scenario               | Agent                | Purpose                                                                    |
+|------------------------|----------------------|----------------------------------------------------------------------------|
+| New project kickoff    | Requirements Builder | Capture business and/or product requirements before architecture decisions |
+| Architecture decisions | ADR Creation Coach   | Evaluate technology choices, design patterns, or infrastructure approaches |
+| Visual documentation   | Arch Diagram Builder | Generate architecture diagrams for onboarding or reviews                   |
+| Security review        | Security Planner     | Assess threats and plan mitigations after architecture decisions stabilize |
 
 ### Recommended Sequencing
 
 For greenfield projects, follow this order to build artifacts that feed into each subsequent step:
 
-1. Start with the BRD Builder to capture business context, then the PRD Builder for product-level details.
+1. Start with the Requirements Builder; select `requirements-brd` for business context and `requirements-prd` for product-level details (single session or sequential).
 2. Use the ADR Creation Coach to document key design decisions, then the Arch Diagram Builder to visualize the resulting architecture.
 3. Run the Security Planner once the architecture is stable to identify threats and plan mitigations.
 

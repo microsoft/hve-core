@@ -1,0 +1,25 @@
+id: waf-sus-application-design
+version: "1.0"
+name: WAF Sustainability — Application Design
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-application-design
+description: Application design patterns that minimize compute, storage, and network demand on Azure cloud workloads.
+controls:
+  - id: waf-sus-application-design
+    title: Application Design — minimize compute, storage, and network demand
+    description: |
+      Choose efficient application architectures: event-driven over polling,
+      stateless over stateful where viable, asynchronous batch over chatty
+      synchronous calls. Right-size SKUs and instance counts; enable
+      autoscale and scale-to-zero where workload tolerates cold start.
+    group: pattern
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-application-design

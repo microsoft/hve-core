@@ -87,3 +87,13 @@ ntia
 DSPM
 dspm
 prds
+BYOF
+byof
+BYOR
+SSDF
+ssdf
+SSCM
+sscm
+CSRD
+ESRS
+TCFD

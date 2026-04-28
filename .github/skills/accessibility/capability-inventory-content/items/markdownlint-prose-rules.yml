@@ -1,0 +1,36 @@
+id: capability-inventory-content
+version: "1.0"
+name: "Content Capability Inventory - markdownlint prose-aware rules"
+source: https://github.com/microsoft/hve-core
+description: "Enforces single H1 strict heading hierarchy and structural conventions in Markdown that many cognitive-accessibility checks rely on for navigation."
+controls:
+  - id: markdownlint-prose-rules
+    title: "markdownlint prose-aware rules"
+    description: "Enforces single H1 strict heading hierarchy and structural conventions in Markdown that many cognitive-accessibility checks rely on for navigation."
+    group: structural-linting
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "markdownlint prose-aware rules is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "markdownlint prose-aware rules runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      cognitive-a11y:
+        - coga-headings-hierarchy
+    evidenceHints:
+      - .markdownlint.json
+      - .markdownlint.yaml
+      - .markdownlint-cli2.jsonc
+    references:
+      - https://github.com/DavidAnson/markdownlint
+      - https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md

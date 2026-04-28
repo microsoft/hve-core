@@ -1,0 +1,8 @@
+id: mn-4-2
+title: "MN-4.2: Continual improvement activities"
+itemKind: criterion
+summary: "Measurable activities for continual improvements are integrated into AI system updates and include regular engagement with interested parties, including relevant AI actors."
+function: manage
+group: MN-4
+nistSubcategories:
+  - MN-4.2

@@ -1,0 +1,8 @@
+id: gv-1-2
+title: "GV-1.2: Trustworthy AI characteristics integrated into policies"
+itemKind: criterion
+summary: "Characteristics of trustworthy AI are integrated into organizational policies, processes, procedures, and practices."
+function: govern
+group: GV-1
+nistSubcategories:
+  - GV-1.2

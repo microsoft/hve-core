@@ -1,0 +1,31 @@
+id: capability-inventory-hve-core
+version: '1.0'
+name: "hve-core \u2014 Automated SHA pinning updates"
+source: https://github.com/microsoft/hve-core
+description: Update-ActionSHAPinning.ps1 automates SHA pin refresh when actions publish new versions
+controls:
+- id: automated-sha-pinning-updates
+  appliesTo: [cloud, web, ml, fleet]
+  title: Automated SHA pinning updates
+  description: Update-ActionSHAPinning.ps1 automates SHA pin refresh when actions publish new versions
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Automated SHA pinning updates capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Automated SHA pinning updates is verified against reference patterns.
+  evidenceHints:
+  - scripts/security/Update-ActionSHAPinning.ps1
+  references:
+  - https://github.com/microsoft/hve-core

@@ -1,0 +1,29 @@
+id: "1-3-6"
+title: "Identify Purpose"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.3 Adaptable"
+addedIn: "2.1"
+summary: "In content implemented using markup languages, the purpose of UI components, icons, and regions can be programmatically determined."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/aria/ARIA11"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/identify-purpose.html"
+  - "https://www.w3.org/TR/WCAG22/"

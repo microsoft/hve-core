@@ -1,0 +1,25 @@
+id: archetype-static-web-frontend
+version: "1.0"
+name: Archetype — Static Web Frontend
+source: hve-core authored
+description: Static-rendered web frontend delivered via CDN with no per-request server compute (e.g., Hugo, Jekyll, Astro static export).
+controls:
+  - id: archetype-static-web-frontend
+    title: Static Web Frontend — CDN-delivered, zero per-request compute
+    description: |
+      Static-rendered web frontend delivered via CDN. No per-request
+      server compute. Sustainability levers concentrate on page-weight
+      budget, asset compression, and CDN cache hit rate.
+    group: archetype
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/
+      - https://sustainablewebdesign.org/estimating-digital-emissions/

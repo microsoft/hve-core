@@ -1,0 +1,16 @@
+id: cs-at-corrective
+title: "Control Surface: Accountable and Transparent — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Accountable and Transparent characteristic: incident attribution, ownership reassignment, and transparency-note correction."
+characteristic: accountableTransparent
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls re-establish accountability and transparency after a
+  failure. Examples include post-incident attribution that traces a harmful
+  decision to a specific model version and policy state, ownership reassignment
+  when an accountable role is unstaffed, and corrections or addenda to published
+  transparency notes when documented behavior diverges from observed behavior.

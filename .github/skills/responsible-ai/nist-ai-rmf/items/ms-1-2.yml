@@ -1,0 +1,8 @@
+id: ms-1-2
+title: "MS-1.2: Metric appropriateness assessment"
+itemKind: criterion
+summary: "Appropriateness of metrics and effectiveness of existing controls are regularly assessed and updated, including reports of errors and impacts on affected communities."
+function: measure
+group: MS-1
+nistSubcategories:
+  - MS-1.2

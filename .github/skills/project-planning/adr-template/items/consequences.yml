@@ -1,0 +1,22 @@
+id: consequences
+title: Consequences
+description: "Documents the positive, negative, and neutral outcomes of the decision."
+template: |
+  ## Consequences
+
+  **Positive Consequences:**
+
+  - Benefits and positive outcomes resulting from {{adr_title}}.
+
+  **Negative Consequences:**
+
+  - Risks and negative impacts that the team accepts.
+
+  **Neutral Consequences:**
+
+  - Other changes or considerations that are neither strictly positive nor negative.
+
+  {{consequence_detail}}
+inputs:
+  - name: consequence_detail
+    description: "Additional consequence analysis, risk acceptance statements, or monitoring requirements"

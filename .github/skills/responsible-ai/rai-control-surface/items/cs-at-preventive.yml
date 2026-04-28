@@ -1,0 +1,16 @@
+id: cs-at-preventive
+title: "Control Surface: Accountable and Transparent — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Accountable and Transparent characteristic: documented ownership, design records, transparency notes, and change approval."
+characteristic: accountableTransparent
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls establish accountability and transparency before the system
+  ships. Examples include documented ownership for the model and its decisions,
+  design records that capture intended use and known limitations, published
+  transparency notes for affected stakeholders, and change-approval workflows for
+  model and policy updates.

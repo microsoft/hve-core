@@ -1,0 +1,8 @@
+id: ms-4-1
+title: "MS-4.1: Deployment context connection to measurements"
+itemKind: criterion
+summary: "Measurement approaches for identifying AI risks are connected to deployment context(s) and informed through consultation with domain experts and other end users. Approaches are documented."
+function: measure
+group: MS-4
+nistSubcategories:
+  - MS-4.1

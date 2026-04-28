@@ -1,0 +1,8 @@
+id: mp-1-1
+title: "MP-1.1: Intended purposes, laws, and settings documented"
+itemKind: criterion
+summary: "Intended purposes, potentially beneficial uses, context-specific laws, norms and expectations, and prospective settings in which the AI system will be deployed are understood and documented."
+function: map
+group: MP-1
+nistSubcategories:
+  - MP-1.1

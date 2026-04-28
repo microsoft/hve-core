@@ -1,0 +1,39 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - WCAG 2.x contrast ratio check"
+source: https://github.com/microsoft/hve-core
+description: "Automated or scripted contrast ratio check that enforces the WCAG 2.x 4.5:1 normal-text and 3:1 large-text and non-text thresholds against design tokens or rendered pixels."
+controls:
+  - id: wcag-contrast-2x
+    title: "WCAG 2.x contrast ratio check"
+    description: "Automated or scripted contrast ratio check that enforces the WCAG 2.x 4.5:1 normal-text and 3:1 large-text and non-text thresholds against design tokens or rendered pixels."
+    group: visual-checks
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: high
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "WCAG 2.x contrast ratio check is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "WCAG 2.x contrast ratio check runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-4-3
+        - 1-4-11
+    evidenceHints:
+      - "**/contrast-report*.json"
+      - docs/**/contrast*.md
+    alternativeGroup:
+      id: contrast-methodology
+      rationale: "WCAG 2.x ratio-based contrast and APCA perceptual contrast are alternative methodologies for measuring text legibility; either fully satisfies the contrast capability."
+    references:
+      - https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html
+      - https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html

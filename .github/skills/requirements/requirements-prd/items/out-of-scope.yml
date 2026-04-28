@@ -1,0 +1,11 @@
+id: out-of-scope
+title: "Out of Scope"
+description: "Out-of-scope items rendered into Section 4 (Scope - Out of Scope) of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]

@@ -1,0 +1,27 @@
+id: to-003
+title: "Tradeoff: Fair with Harmful Bias Managed vs. Valid and Reliable"
+itemKind: criterion
+summary: "Fairness constraints (demographic parity, equalized odds) typically reduce overall accuracy; document the fairness-metric vs accuracy operating point."
+characteristics:
+  - fairBiasManaged
+  - validReliable
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+    description: Record the chosen operating point and rationale during Phase 5.
+description: |
+  Source: rai-impact-assessment.instructions.md (tradeoffs section, to-003).
+
+  Tradeoff: Fair with Harmful Bias Managed characteristic versus Valid and Reliable
+  characteristic.
+
+  Mechanism: Imposing group-fairness constraints (demographic parity, equalized odds,
+  equal opportunity) during training or post-processing typically reduces aggregate
+  accuracy because the unconstrained classifier was exploiting features correlated
+  with the protected attribute. Tighter fairness tolerances generally produce larger
+  accuracy drops.
+
+  Required documentation: Record the chosen fairness metric and tolerance, the measured
+  accuracy delta versus the unconstrained baseline, the impacted protected groups, and
+  the rationale for the chosen operating point.

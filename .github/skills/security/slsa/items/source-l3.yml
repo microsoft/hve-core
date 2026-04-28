@@ -1,0 +1,37 @@
+id: source-l3
+version: "1.1"
+name: SLSA Source Track Level 3
+source: https://slsa.dev/spec/v1.1/source-requirements
+description: Source is retained indefinitely and changes are independently reviewed.
+controls:
+  - id: source-l3
+    title: Source L3 — Retained and independently reviewed
+    description: |
+      Source revisions are retained indefinitely so they can be inspected after the
+      fact, and changes are reviewed by an independent party (e.g., two-person review)
+      before they enter the protected branch.
+    group: source
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    gates:
+      - id: retained-indefinitely
+        phase: standards-mapping
+        default: pending
+        description: Source revisions are retained indefinitely for post-hoc inspection.
+      - id: two-person-reviewed
+        phase: gap-analysis
+        default: pending
+        description: Changes to protected branches require independent review by a second party.
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/*.yaml
+      - .github/settings.yml
+      - CODEOWNERS
+      - .github/branch-protection*.yml
+    references:
+      - https://slsa.dev/spec/v1.1/source-requirements

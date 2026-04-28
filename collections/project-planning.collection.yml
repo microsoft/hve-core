@@ -35,6 +35,8 @@ items:
     kind: agent
   - path: .github/agents/project-planning/prd-builder.agent.md
     kind: agent
+  - path: .github/agents/project-planning/requirements-builder.agent.md
+    kind: agent
   - path: .github/agents/project-planning/meeting-analyst.agent.md
     kind: agent
   - path: .github/agents/rai-planning/rai-planner.agent.md
@@ -145,9 +147,57 @@ items:
     maturity: experimental
   - path: .github/instructions/shared/disclaimer-language.instructions.md
     kind: instruction
+  - path: .github/instructions/shared/evidence-citation.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  - path: .github/instructions/project-planning/requirements-identity.instructions.md
+    kind: instruction
+  - path: .github/instructions/project-planning/requirements-intake.instructions.md
+    kind: instruction
+  - path: .github/instructions/project-planning/requirements-template-selection.instructions.md
+    kind: instruction
+  - path: .github/instructions/project-planning/requirements-drafting.instructions.md
+    kind: instruction
+  - path: .github/instructions/project-planning/requirements-review.instructions.md
+    kind: instruction
+  - path: .github/instructions/project-planning/requirements-handoff.instructions.md
+    kind: instruction
+  # Skills
+  - path: .github/skills/project-planning/adr-template
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/project-planning/prd-template
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/requirements/requirements-prd
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/requirements/requirements-brd
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/nist-ai-rmf
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/eu-ai-act-prohibited-practices
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/rai-default-risk-indicators
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/rai-threat-catalog
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/rai-control-surface
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/rai-tradeoffs
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/responsible-ai/rai-output-formats
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

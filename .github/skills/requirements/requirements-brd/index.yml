@@ -1,0 +1,145 @@
+framework: requirements-brd
+version: "1.0.0"
+summary: 'Business Requirements Document section roster mapped to docs/templates/brd-template.md with BR-ID traceability discipline.'
+domain: requirements
+itemKind: document-section
+status: published
+phaseMap:
+  identity: []
+  intake:
+    - br-business-context
+    - br-stakeholders
+    - br-problem-statement
+    - br-objectives
+  template-selection: []
+  drafting:
+    - br-scope
+    - br-business-processes
+    - br-business-requirements
+    - br-data-reporting
+    - br-assumptions-dependencies
+    - br-implementation
+    - br-benefits
+  review:
+    - br-risks-issues
+    - br-open-questions
+  handoff:
+    - br-references-appendices
+globals:
+  initiativeName:
+    description: "Business initiative name."
+    required: true
+  briefDescription:
+    description: "One-sentence initiative description used in frontmatter."
+  authorName:
+    description: "Document author."
+  version:
+    description: "Document version (e.g. 0.1, 1.0)."
+  status:
+    description: "Document status (Draft, Review, Approved)."
+  docOwner:
+    description: "Owning individual."
+  businessSponsor:
+    description: "Executive sponsor."
+  docDate:
+    description: "Document date (ISO 8601)."
+  businessUnit:
+    description: "Sponsoring business unit."
+  phaseContextComplete: { description: "Progress tracker: Business Context done indicator." }
+  phaseContextGaps: { description: "Progress tracker: Business Context gaps." }
+  phaseContextUpdated: { description: "Progress tracker: Business Context last updated." }
+  phaseProblemComplete: { description: "Progress tracker: Problem & Drivers done indicator." }
+  phaseProblemGaps: { description: "Progress tracker: Problem & Drivers gaps." }
+  phaseProblemUpdated: { description: "Progress tracker: Problem & Drivers last updated." }
+  phaseObjectivesComplete: { description: "Progress tracker: Objectives & Metrics done indicator." }
+  phaseObjectivesGaps: { description: "Progress tracker: Objectives & Metrics gaps." }
+  phaseObjectivesUpdated: { description: "Progress tracker: Objectives & Metrics last updated." }
+  phaseStakeholdersComplete: { description: "Progress tracker: Stakeholders done indicator." }
+  phaseStakeholdersGaps: { description: "Progress tracker: Stakeholders gaps." }
+  phaseStakeholdersUpdated: { description: "Progress tracker: Stakeholders last updated." }
+  phaseScopeComplete: { description: "Progress tracker: Scope done indicator." }
+  phaseScopeGaps: { description: "Progress tracker: Scope gaps." }
+  phaseScopeUpdated: { description: "Progress tracker: Scope last updated." }
+  phaseProcessesComplete: { description: "Progress tracker: Processes done indicator." }
+  phaseProcessesGaps: { description: "Progress tracker: Processes gaps." }
+  phaseProcessesUpdated: { description: "Progress tracker: Processes last updated." }
+  phaseReqsComplete: { description: "Progress tracker: Requirements done indicator." }
+  phaseReqsGaps: { description: "Progress tracker: Requirements gaps." }
+  phaseReqsUpdated: { description: "Progress tracker: Requirements last updated." }
+  phaseDataComplete: { description: "Progress tracker: Data & Reporting done indicator." }
+  phaseDataGaps: { description: "Progress tracker: Data & Reporting gaps." }
+  phaseDataUpdated: { description: "Progress tracker: Data & Reporting last updated." }
+  phaseRisksComplete: { description: "Progress tracker: Risks & Dependencies done indicator." }
+  phaseRisksGaps: { description: "Progress tracker: Risks & Dependencies gaps." }
+  phaseRisksUpdated: { description: "Progress tracker: Risks & Dependencies last updated." }
+  phaseImplComplete: { description: "Progress tracker: Implementation done indicator." }
+  phaseImplGaps: { description: "Progress tracker: Implementation gaps." }
+  phaseImplUpdated: { description: "Progress tracker: Implementation last updated." }
+  unresolvedCriticalQuestionsCount: { description: "Count of unresolved critical questions." }
+  tbdCount: { description: "Count of TBD markers in document." }
+  documentControlTable: { description: "Markdown table rows for document control history." }
+  businessOverview: { description: "Business context overview paragraph." }
+  strategicAlignment: { description: "Strategic alignment paragraph." }
+  driver1: { description: "First business driver bullet." }
+  driver2: { description: "Second business driver bullet." }
+  driver3: { description: "Third business driver bullet." }
+  currentSituation: { description: "Current situation (As-Is) paragraph." }
+  problemStatement: { description: "Problem statement paragraph." }
+  problemImpactTable: { description: "Markdown table rows for problem impact." }
+  objectivesTable: { description: "Markdown table rows for business objectives." }
+  kpiTable: { description: "Markdown table rows for KPIs." }
+  qualitativeSuccessCriteria: { description: "Non-quantitative success criteria text." }
+  stakeholdersTable: { description: "Markdown table rows for stakeholder summary." }
+  actorsTable: { description: "Markdown table rows for users/actors." }
+  inScopeItem1: { description: "First in-scope item bullet." }
+  inScopeItem2: { description: "Second in-scope item bullet." }
+  outOfScopeItem1: { description: "First out-of-scope item bullet." }
+  outOfScopeItem2: { description: "Second out-of-scope item bullet." }
+  scopeBoundaries: { description: "Scope boundaries & interfaces paragraph." }
+  asIsProcessSummary: { description: "As-Is process overview paragraph." }
+  asIsStepsTable: { description: "Markdown table rows for As-Is steps." }
+  toBeProcessSummary: { description: "To-Be process overview paragraph." }
+  toBeStepsTable: { description: "Markdown table rows for To-Be steps." }
+  businessRules: { description: "Business rules text." }
+  businessRequirementsTable: { description: "Markdown table rows for BR-ID requirements." }
+  dataNeedsTable: { description: "Markdown table rows for data needs." }
+  reportingTable: { description: "Markdown table rows for reporting & analytics." }
+  assumptionsTable: { description: "Markdown table rows for assumptions." }
+  dependenciesTable: { description: "Markdown table rows for dependencies." }
+  constraintsTable: { description: "Markdown table rows for constraints." }
+  risksTable: { description: "Markdown table rows for risks." }
+  issuesTable: { description: "Markdown table rows for known issues." }
+  implementationApproach: { description: "Implementation approach paragraph." }
+  phasingTable: { description: "Markdown table rows for phasing & milestones." }
+  changeManagementTable: { description: "Markdown table rows for change management." }
+  benefitsTable: { description: "Markdown table rows for expected benefits." }
+  costConsiderations: { description: "Cost considerations paragraph." }
+  openQuestionsTable: { description: "Markdown table rows for open questions." }
+  decisionsTable: { description: "Markdown table rows for key decisions." }
+  referencesTable: { description: "Markdown table rows for references." }
+  glossaryTable: { description: "Markdown table rows for glossary." }
+  additionalNotes: { description: "Additional appendix notes." }
+  generationTimestamp: { description: "ISO 8601 timestamp set by host renderer." }
+  generatorName: { description: "Renderer name (e.g. requirements-builder)." }
+  generationMode: { description: "Renderer mode (e.g. full, partial)." }
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  source: https://github.com/microsoft/hve-core
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/microsoft/hve-core/main/LICENSE"
+    sha256: "c7eb8fb4cf893534af823d4aa0fe6fa83a961320375772915fd9b6a21d890d87"
+    declaredLicense: "MIT"
+    status: verified
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-22"

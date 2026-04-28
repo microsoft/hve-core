@@ -1,0 +1,49 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Prefer Plain Words"
+source: https://www.w3.org/WAI/cognitive/
+description: "Authors prefer common everyday words over uncommon or technical terms when an equivalent plain word exists."
+controls:
+  - id: coga-plain-words
+    title: "Prefer Plain Words"
+    description: "Authors prefer common everyday words over uncommon or technical terms when an equivalent plain word exists."
+    group: language-clarity
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Prefer Plain Words practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Prefer Plain Words is verified through review or tooling."
+    mapsTo:
+      capability-inventory-content:
+        - vale
+        - plain-language-checklist
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.plainlanguage.gov/guidelines/words/
+      - https://www.w3.org/WAI/cognitive/

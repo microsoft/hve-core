@@ -1,0 +1,142 @@
+framework: rai-threat-catalog
+version: "1.0.0"
+summary: "AI threat catalog: 8 element types, 6 trust boundaries, ML STRIDE matrix, and dual threat IDs for Phase 4."
+domain: responsible-ai
+itemKind: criterion
+status: draft
+metadata:
+  authority: microsoft/hve-core
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  phase-4-security-model:
+    - tc-elem-training-data-store
+    - tc-elem-model-artifact
+    - tc-elem-inference-endpoint
+    - tc-elem-feature-pipeline
+    - tc-elem-feedback-loop
+    - tc-elem-human-review-queue
+    - tc-elem-monitoring-dashboard
+    - tc-elem-orchestration-layer
+    - tc-bound-training-data
+    - tc-bound-model
+    - tc-bound-inference
+    - tc-bound-feedback
+    - tc-bound-human-oversight
+    - tc-bound-human-to-automated
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"
+globals:
+  threatIdConvention:
+    raiId: "T-RAI-{NNN}"
+    securityCrossRefId: "T-{BUCKET}-AI-{NNN}"
+    buckets: [DATA, BUILD, WEBUI, IDENTITY, INFRA]
+    rules:
+      - "All RAI threats receive a sequential T-RAI-{NNN} id starting at T-RAI-001."
+      - "When a threat overlaps with a Security Planner bucket, also assign T-{BUCKET}-AI-{NNN}."
+      - "Cross-reference both ids in extended threat tables for traceability."
+      - "Bucket and RAI sequences are independent."
+  dataFlows:
+    - id: training-pipeline
+      stages:
+        - "Data source ingestion: bias in source data, PII exposure, provenance gaps."
+        - "Feature extraction: feature selection bias, proxy variable introduction."
+        - "Training: overfitting to biased patterns, memorization of sensitive data."
+        - "Model store: weight integrity, access control, version lineage."
+        - "Validation: evaluation fairness across demographic groups, holdout contamination."
+      concentrationPoints:
+        - "Data source ingestion (poisoning, bias)."
+        - "Training (memorization, bias amplification)."
+        - "Validation (evaluation fairness gaps)."
+    - id: inference-pipeline
+      stages:
+        - "Client request: adversarial input detection, prompt injection screening."
+        - "Pre-processing: input sanitization, feature normalization integrity."
+        - "Model inference: output correctness, confidence calibration, latency stability."
+        - "Post-processing: content filtering, output explanation generation."
+        - "Response: attribution metadata, audit logging, response integrity."
+      concentrationPoints:
+        - "Client request (adversarial inputs, prompt injection)."
+        - "Model inference (output manipulation)."
+        - "Post-processing (filter bypass)."
+    - id: feedback-loop
+      stages:
+        - "User interaction: feedback authenticity, sampling bias in respondents."
+        - "Feedback collection: consent and privacy compliance, feedback representation."
+        - "Aggregation: statistical bias in aggregation methods, outlier handling."
+        - "Model update trigger: drift detection, update authorization."
+        - "Retraining: bias amplification across cycles, catastrophic forgetting."
+      concentrationPoints:
+        - "Feedback collection (manipulation, bias)."
+        - "Aggregation (statistical bias)."
+        - "Retraining (bias amplification, drift injection)."
+  strideMatrix:
+    legend:
+      applicability: [High, Medium, Low, "N/A"]
+      cellFormat: "applicability / nistCharacteristic"
+    columns: [Spoofing, Tampering, Repudiation, InfoDisclosure, DoS, EoP]
+    components:
+      training-data:
+        Spoofing: { applicability: Medium, nistCharacteristic: validReliable }
+        Tampering: { applicability: High, nistCharacteristic: fairBiasManaged }
+        Repudiation: { applicability: Medium, nistCharacteristic: accountableTransparent }
+        InfoDisclosure: { applicability: High, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: Low, nistCharacteristic: validReliable }
+        EoP: { applicability: Low, nistCharacteristic: privacyEnhanced }
+      feature-pipeline:
+        Spoofing: { applicability: Low, nistCharacteristic: explainableInterpretable }
+        Tampering: { applicability: High, nistCharacteristic: fairBiasManaged }
+        Repudiation: { applicability: Medium, nistCharacteristic: accountableTransparent }
+        InfoDisclosure: { applicability: Medium, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: Low, nistCharacteristic: validReliable }
+        EoP: { applicability: Low, nistCharacteristic: fairBiasManaged }
+      model-training:
+        Spoofing: { applicability: Medium, nistCharacteristic: validReliable }
+        Tampering: { applicability: High, nistCharacteristic: fairBiasManaged }
+        Repudiation: { applicability: High, nistCharacteristic: accountableTransparent }
+        InfoDisclosure: { applicability: High, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: Medium, nistCharacteristic: validReliable }
+        EoP: { applicability: Medium, nistCharacteristic: validReliable }
+      model-serving:
+        Spoofing: { applicability: High, nistCharacteristic: validReliable }
+        Tampering: { applicability: Medium, nistCharacteristic: validReliable }
+        Repudiation: { applicability: Medium, nistCharacteristic: explainableInterpretable }
+        InfoDisclosure: { applicability: High, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: High, nistCharacteristic: validReliable }
+        EoP: { applicability: High, nistCharacteristic: validReliable }
+      inference-api:
+        Spoofing: { applicability: High, nistCharacteristic: validReliable }
+        Tampering: { applicability: High, nistCharacteristic: validReliable }
+        Repudiation: { applicability: Medium, nistCharacteristic: explainableInterpretable }
+        InfoDisclosure: { applicability: Medium, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: High, nistCharacteristic: validReliable }
+        EoP: { applicability: High, nistCharacteristic: privacyEnhanced }
+      feedback-loop:
+        Spoofing: { applicability: Medium, nistCharacteristic: fairBiasManaged }
+        Tampering: { applicability: High, nistCharacteristic: fairBiasManaged }
+        Repudiation: { applicability: High, nistCharacteristic: accountableTransparent }
+        InfoDisclosure: { applicability: Medium, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: Low, nistCharacteristic: validReliable }
+        EoP: { applicability: Medium, nistCharacteristic: fairBiasManaged }
+      human-review:
+        Spoofing: { applicability: Low, nistCharacteristic: accountableTransparent }
+        Tampering: { applicability: Medium, nistCharacteristic: accountableTransparent }
+        Repudiation: { applicability: High, nistCharacteristic: accountableTransparent }
+        InfoDisclosure: { applicability: Low, nistCharacteristic: privacyEnhanced }
+        DoS: { applicability: "N/A", nistCharacteristic: validReliable }
+        EoP: { applicability: Medium, nistCharacteristic: accountableTransparent }
+      model-monitoring:
+        Spoofing: { applicability: Low, nistCharacteristic: explainableInterpretable }
+        Tampering: { applicability: Medium, nistCharacteristic: validReliable }
+        Repudiation: { applicability: High, nistCharacteristic: explainableInterpretable }
+        InfoDisclosure: { applicability: Medium, nistCharacteristic: explainableInterpretable }
+        DoS: { applicability: Medium, nistCharacteristic: validReliable }
+        EoP: { applicability: Low, nistCharacteristic: validReliable }

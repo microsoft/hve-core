@@ -1,0 +1,35 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Dependency pinning"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: dependency-pinning-scan.yml with Test-DependencyPinning.ps1
+controls:
+- id: dependency-pinning
+  appliesTo: [cloud, web, ml, fleet]
+  title: Dependency pinning
+  description: dependency-pinning-scan.yml with Test-DependencyPinning.ps1
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Dependency pinning capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Dependency pinning is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - Pinned-Dependencies
+  evidenceHints:
+  - .github/workflows/dependency-pinning*.yml
+  - scripts/security/Test-DependencyPinning.ps1
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

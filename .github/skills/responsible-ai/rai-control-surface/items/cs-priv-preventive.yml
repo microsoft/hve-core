@@ -1,0 +1,16 @@
+id: cs-priv-preventive
+title: "Control Surface: Privacy-Enhanced — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Privacy-Enhanced characteristic: data minimization, differential privacy, anonymization, and consent gating."
+characteristic: privacyEnhanced
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls reduce privacy risk before data enters the pipeline.
+  Examples include strict data minimization (collect only what is required),
+  differential privacy noise injection during training or aggregation,
+  k-anonymity and l-diversity treatments, and explicit consent gating with
+  per-purpose tracking before personal data is used.

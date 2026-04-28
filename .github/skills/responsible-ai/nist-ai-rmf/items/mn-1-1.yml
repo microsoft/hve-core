@@ -1,0 +1,8 @@
+id: mn-1-1
+title: "MN-1.1: Go/no-go determination based on risk assessment"
+itemKind: criterion
+summary: "A determination is made as to whether the AI system achieves its intended purposes and stated objectives and whether its development or deployment should proceed."
+function: manage
+group: MN-1
+nistSubcategories:
+  - MN-1.1

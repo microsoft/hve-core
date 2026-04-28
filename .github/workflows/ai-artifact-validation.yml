@@ -39,6 +39,14 @@ jobs:
           & scripts/linting/Validate-PlannerArtifacts.ps1 -FailOnMissing
         continue-on-error: ${{ inputs.soft-fail }}
 
+      - name: Validate evidence citations
+        id: evidence-citation
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          & scripts/linting/Validate-PlannerArtifacts.ps1 -EvidenceCitationCheck
+        continue-on-error: ${{ inputs.soft-fail }}
+
       - name: Upload results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -49,8 +57,18 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
+      - name: Upload evidence-citation results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: evidence-citation-results
+          path: |
+            logs/evidence-citation-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
       - name: Check results
-        if: always() && steps.validate.outcome == 'failure' && !inputs.soft-fail
+        if: always() && (steps.validate.outcome == 'failure' || steps.evidence-citation.outcome == 'failure') && !inputs.soft-fail
         shell: pwsh
         run: |
           Write-Error "AI artifact validation found violations — check uploaded results for details"

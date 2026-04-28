@@ -1,0 +1,16 @@
+id: cs-sr-corrective
+title: "Control Surface: Secure and Resilient — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Secure and Resilient characteristic: model retraining after compromise, credential rotation, and AI-aware incident response."
+characteristic: secureResilient
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls restore a trustworthy state after a detected compromise.
+  Examples include model retraining or rollback after data poisoning is detected,
+  credential and key rotation for affected pipelines, and AI-aware incident
+  response runbooks that cover model-specific recovery (clean training data
+  reseed, weight re-derivation, signature re-issuance).

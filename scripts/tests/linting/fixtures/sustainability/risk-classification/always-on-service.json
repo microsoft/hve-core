@@ -1,0 +1,11 @@
+{
+  "workloadId": "always-on-service",
+  "surface": "cloud",
+  "operationalProfile": {
+    "uptimeTargetPercent": 99.99,
+    "scaleToZeroSupported": false,
+    "idleHoursPerDay": 0
+  },
+  "expectedRiskClassification": "high",
+  "rationale": "Continuous compute with no scale-to-zero window inflates E (operational energy) and reduces opportunity for region/time shifting; high priority for efficiency and demand-shaping interventions."
+}

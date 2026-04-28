@@ -1,0 +1,27 @@
+id: safety-reliability
+title: Safety and Reliability Risk Indicator
+itemKind: criterion
+summary: "Could failures in this AI system's safety, accuracy, or reliability cause physical harm, psychological injury, or significant operational disruption? Activated when answer is yes."
+indicatorType: binary
+nistSubcategories:
+  - MS-2.5
+  - MS-2.6
+characteristics:
+  - validReliable
+  - safe
+gates:
+  - id: risk-classification
+    phase: phase-2-risk-classification
+    default: pending
+    description: Score binary activation during Phase 2 Risk Classification.
+description: |
+  Source: rai-risk-classification.instructions.md (safety_reliability indicator).
+
+  Type: binary (yes/no).
+
+  Activation question: Could failures in this AI system's safety, accuracy, or reliability
+  cause physical harm, psychological injury, or significant operational disruption?
+
+  Activation rule: Activated when the answer is yes.
+
+  NIST AI RMF cross-walk: MS-2.5 (validity and reliability), MS-2.6 (safety).

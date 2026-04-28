@@ -1,0 +1,9 @@
+id: eu-aia-pp-5
+title: "Untargeted scraping of facial images to build or expand facial recognition databases"
+itemKind: principle
+summary: "Placing on the market, putting into service for this specific purpose, or using AI systems that create or expand facial recognition databases through the untargeted scraping of facial images from the internet or CCTV footage is prohibited."
+articleRef: "Article 5(1)(e)"
+prohibitionType: biometric-database-scraping
+characteristic: "Privacy-enhanced"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

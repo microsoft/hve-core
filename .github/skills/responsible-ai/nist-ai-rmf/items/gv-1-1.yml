@@ -1,0 +1,8 @@
+id: gv-1-1
+title: "GV-1.1: Legal and regulatory requirements identified and integrated"
+itemKind: criterion
+summary: "Legal and regulatory requirements involving AI are understood, managed, and documented."
+function: govern
+group: GV-1
+nistSubcategories:
+  - GV-1.1

@@ -1,0 +1,34 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: deliver-sbom-publication
+    title: SBOM Published With Releases
+    group: deliver
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: SBOMs in industry-standard format (SPDX or CycloneDX) covering NTIA minimum elements are generated for each release and published alongside artifacts so downstream consumers can perform vulnerability and license analysis.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Detect SBOM generation workflows and release-asset attachment of SBOMs.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify releases missing SBOM publication or lacking required NTIA elements.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to add or harden SBOM generation, signing, and publication.
+    evidenceHints:
+      - ".github/workflows/sbom*.yml"
+      - ".github/workflows/release*.yml"
+      - "**/sbom.spdx.json"
+      - "**/sbom.cdx.json"
+      - "**/bom.json"
+      - "**/bom.xml"
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers
+      - https://www.cisa.gov/sbom

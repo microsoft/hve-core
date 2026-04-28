@@ -1,0 +1,1 @@
+../../../../.github/prompts/hve-core/fsi-author.prompt.md

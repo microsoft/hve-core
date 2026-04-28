@@ -1,0 +1,41 @@
+id: "carousel-tabbed-manual"
+title: "Carousel (Tabbed, Manual) Pattern"
+itemKind: pattern
+summary: "Tabbed slideshow where users manually advance between slides via previous/next controls or tab indicators."
+keyboardModel:
+  - "carousel"
+  - "tabs"
+focusManagement: "roving"
+relatedRoles:
+  - "region"
+  - "tablist"
+  - "tab"
+  - "tabpanel"
+requiredStates:
+  - "aria-selected"
+requiredProperties:
+  - "aria-label"
+  - "aria-roledescription"
+  - "aria-controls"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/carousel-tabbed-manual/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/carousel-tabbed-manual/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

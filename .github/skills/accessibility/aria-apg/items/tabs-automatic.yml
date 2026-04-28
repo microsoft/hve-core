@@ -1,0 +1,38 @@
+id: "tabs-automatic"
+title: "Tabs (Automatic Activation) Pattern"
+itemKind: pattern
+summary: "Tab strip where arrow-key navigation immediately activates the focused tab and reveals its panel."
+keyboardModel:
+  - "tabs"
+focusManagement: "roving"
+relatedRoles:
+  - "tablist"
+  - "tab"
+  - "tabpanel"
+requiredStates:
+  - "aria-selected"
+requiredProperties:
+  - "aria-controls"
+  - "aria-labelledby"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/tabs-automatic/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/tabs-automatic/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

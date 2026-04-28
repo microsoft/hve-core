@@ -1,0 +1,39 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - VoiceOver screen reader manual review"
+source: https://github.com/microsoft/hve-core
+description: "Documented manual VoiceOver screen reader pass on macOS or iOS that exercises rotor navigation landmarks forms and live regions to validate name role value and reading order."
+controls:
+  - id: voiceover-manual
+    title: "VoiceOver screen reader manual review"
+    description: "Documented manual VoiceOver screen reader pass on macOS or iOS that exercises rotor navigation landmarks forms and live regions to validate name role value and reading order."
+    group: assistive-tech-manual
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "VoiceOver screen reader manual review is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "VoiceOver screen reader manual review runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-1-1
+        - 1-3-1
+        - 2-1-1
+        - 2-4-3
+        - 2-4-7
+        - 4-1-2
+    evidenceHints:
+      - docs/**/voiceover*.md
+    references:
+      - https://www.apple.com/accessibility/vision/
+      - https://www.w3.org/WAI/test-evaluate/

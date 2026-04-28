@@ -1,0 +1,10 @@
+{
+  "slug": "demo-product",
+  "createdAt": "2026-04-21T12:00:00Z",
+  "updatedAt": "2026-04-21T12:00:00Z",
+  "currentPhase": "scoping",
+  "disclaimerShownAt": "April 21, 2026",
+  "surfaces": ["web"],
+  "jurisdictions": ["US"],
+  "frameworks": []
+}

@@ -1,0 +1,44 @@
+id: gsf-sci-energy
+version: "1.0"
+name: SCI Variable E — Energy
+source: https://sci.greensoftware.foundation/
+description: The energy consumed by the software system, in kilowatt-hours (kWh).
+controls:
+  - id: sci-energy
+    title: Energy (E) — kWh consumed by the software system
+    description: |
+      E represents the total electrical energy consumed by the software system over the
+      time period scoped to the functional unit R. Energy must be quantified for all
+      hardware components attributable to the software, including compute, storage,
+      networking, and (where applicable) end-user devices.
+
+      Measurement approaches (in decreasing order of confidence):
+        1. deterministic — direct meter readings (PDU, RAPL, on-device power telemetry).
+        2. estimated — vendor power models (cloud provider energy APIs, NVIDIA SMI).
+        3. heuristic — utilization-based proxies (CPU/GPU %, request count scaling).
+
+      E excludes embodied energy (covered by M) and excludes energy not attributable to
+      the software being measured.
+    group: variable
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    measurementClass: estimated
+    sciVariable: E
+    appliesToPrinciples:
+      - gsf-principles:energy-efficiency
+    evidenceHints:
+      - "**/energy-report.json"
+      - "**/power-telemetry.csv"
+    references:
+      - https://sci.greensoftware.foundation/
+      - https://github.com/Green-Software-Foundation/sci/blob/main/Software_Carbon_Intensity/Software_Carbon_Intensity_Specification.md

@@ -1,0 +1,11 @@
+id: success-metrics
+title: "Success Metrics"
+description: "Success metrics rendered as Section 8.4 (Metrics & Success Criteria) of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [standard, deep]

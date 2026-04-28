@@ -1,0 +1,8 @@
+id: mp-1-4
+title: "MP-1.4: Business value assessment"
+itemKind: criterion
+summary: "The business value or context of business use has been clearly defined or, in the case of assessing existing AI systems, re-evaluated."
+function: map
+group: MP-1
+nistSubcategories:
+  - MP-1.4

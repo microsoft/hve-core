@@ -1,0 +1,9 @@
+id: ms-2-11
+title: "MS-2.11: Fairness and bias evaluation"
+itemKind: criterion
+summary: "Fairness and bias - as identified in the MAP function - are evaluated and results are documented."
+function: measure
+group: MS-2
+characteristic: fairBiasManaged
+nistSubcategories:
+  - MS-2.11

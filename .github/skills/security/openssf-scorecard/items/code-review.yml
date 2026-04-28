@@ -1,0 +1,29 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: code-review
+    title: Code-Review
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies that changes go through human code review via CODEOWNERS and required PR reviews.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Confirm CODEOWNERS coverage and required-review enforcement.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify paths without code owners or unreviewed merge patterns.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to expand CODEOWNERS and tighten review policy.
+    evidenceHints:
+      - ".github/CODEOWNERS"
+      - "CODEOWNERS"
+      - "docs/CODEOWNERS"

@@ -1,0 +1,11 @@
+id: requirements-functional
+title: "Functional Requirements"
+description: "Functional requirements (FR IDs) rendered as Section 6 of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [light, standard, deep]

@@ -33,6 +33,26 @@ For each changed file:
 4. Focus on factual accuracy: file paths, command names, configuration options, behavior descriptions.
 5. Skip style, formatting, or editorial concerns.
 
+## Cognitive Accessibility Readability Check
+
+This check is gated on a consumer-handoff artifact emitted by the Accessibility Planner agent. Both branches below are mandatory: pick exactly one per run based on file presence and framework activation.
+
+**Plan-present branch** — when the file `.copilot-tracking/accessibility-plans/{project-slug}/active-rules.json` exists AND the string `cognitive-a11y` appears in its top-level `frameworks[]` array:
+
+1. Load the active rules and identify every rule whose `frameworkId` is `cognitive-a11y` and whose `status` is `active`.
+2. Run the prose-linters described by the `capability-inventory-content/v1` detection hints in `.github/skills/accessibility/capability-inventory-content/` against documentation files affected by the change set (`.md` files matched via the [Documentation Mapping](#documentation-mapping) table or directly modified).
+3. Score each documentation file against the active target ranges:
+   * Flesch-Kincaid grade level ≤ 8.
+   * Average sentence length ≤ 25 words.
+   * Jargon density ≤ 5%.
+4. When a documentation file exceeds any target range, attach a `cognitive-a11y` readability finding to the issue created for that file. Cite the failing control id (for example, `cognitive-a11y:readability-fk`). Findings are advisory: report them but do not block, and do not raise a separate issue solely for readability.
+
+**Plan-absent branch** — when `active-rules.json` does not exist for the affected project, OR `cognitive-a11y` is not present in `frameworks[]`, OR no `cognitive-a11y` rule has `status: active`:
+
+1. Skip readability scoring entirely.
+2. Continue with the standard checking procedure unchanged.
+3. Do not block, warn, or create issues about the missing accessibility plan.
+
 ## Issue Creation
 
 When documentation no longer accurately describes the implementation:

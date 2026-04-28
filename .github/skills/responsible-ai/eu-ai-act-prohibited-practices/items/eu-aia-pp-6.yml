@@ -1,0 +1,9 @@
+id: eu-aia-pp-6
+title: "Emotion inference in workplaces and educational institutions"
+itemKind: principle
+summary: "Placing on the market, putting into service for this specific purpose, or using AI systems to infer emotions of a natural person in the areas of workplace and education institutions is prohibited, except where the use of the AI system is intended to be put in place or into the market for medical or safety reasons."
+articleRef: "Article 5(1)(f)"
+prohibitionType: emotion-recognition
+characteristic: "Privacy-enhanced"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

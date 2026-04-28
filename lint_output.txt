@@ -1,0 +1,4 @@
+
+> hve-core@3.3.41 lint:evidence-citation
+> pwsh -NoProfile -File scripts/linting/Validate-PlannerArtifacts.ps1 -EvidenceCitationCheck
+

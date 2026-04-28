@@ -1,0 +1,8 @@
+id: mp-3-4
+title: "MP-3.4: Operator proficiency requirements"
+itemKind: criterion
+summary: "Processes for operator and practitioner proficiency with AI system performance and trustworthiness are defined, assessed, and documented."
+function: map
+group: MP-3
+nistSubcategories:
+  - MP-3.4

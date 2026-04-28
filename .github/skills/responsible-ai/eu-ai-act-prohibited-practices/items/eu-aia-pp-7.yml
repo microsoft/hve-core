@@ -1,0 +1,9 @@
+id: eu-aia-pp-7
+title: "Biometric categorisation inferring sensitive or protected attributes"
+itemKind: principle
+summary: "Placing on the market, putting into service for this specific purpose, or using biometric categorisation systems that categorise individually natural persons based on their biometric data to deduce or infer their race, political opinions, trade union membership, religious or philosophical beliefs, sex life, or sexual orientation is prohibited. This prohibition does not cover any labelling or filtering of lawfully acquired biometric datasets — such as images — based on biometric data, or the categorisation of biometric data in the area of law enforcement."
+articleRef: "Article 5(1)(g)"
+prohibitionType: biometric-categorization
+characteristic: "Fair – With Harmful Bias Managed"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

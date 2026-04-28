@@ -1,0 +1,8 @@
+id: mn-4-1
+title: "MN-4.1: Post-deployment monitoring, incident response, and decommissioning"
+itemKind: criterion
+summary: "Post-deployment AI system monitoring plans are implemented, including mechanisms for capturing and evaluating input from users and other relevant AI actors, appeal and override, decommissioning, incident response, recovery, and change management."
+function: manage
+group: MN-4
+nistSubcategories:
+  - MN-4.1

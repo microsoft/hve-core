@@ -1,0 +1,35 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 Workflow permissions"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Test-WorkflowPermissions.ps1 enforcing least-privilege token permissions
+controls:
+- id: workflow-permissions
+  appliesTo: [cloud, web, ml, fleet]
+  title: Workflow permissions
+  description: Test-WorkflowPermissions.ps1 enforcing least-privilege token permissions
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the Workflow permissions capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of Workflow permissions is verified against reference patterns.
+  mapsTo:
+    openssf-scorecard:
+    - Token-Permissions
+  evidenceHints:
+  - scripts/security/Test-WorkflowPermissions.ps1
+  - .github/workflows/*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

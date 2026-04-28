@@ -1,0 +1,55 @@
+id: sbom
+version: "1.0"
+name: SBOM — generation pipeline
+source: https://www.cisa.gov/sbom
+description: >-
+  SBOM generation pipeline covering when SBOMs are produced, which generator is
+  used, and how the resulting document is signed. Per sssc-standards.instructions.md
+  the recommended generators are anchore/sbom-action with syft, or the Microsoft
+  SBOM Tool, with NTIA minimum elements (supplier, component name, version, unique
+  identifier, dependency relationship, author, timestamp) verified on output.
+controls:
+  - id: sbom-generation
+    title: SBOM generation pipeline (when, how, signing)
+    description: >-
+      A CI workflow generates an SBOM on every release (and ideally on every build)
+      using a recognised generator (anchore/sbom-action with syft, or Microsoft SBOM
+      Tool). The generated SBOM contains the NTIA minimum elements and is signed or
+      attested (for example via actions/attest-sbom or cosign attest) before it
+      leaves the build environment.
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    gates:
+      - id: presence
+        phase: standards-mapping
+        default: pending
+        description: A generation step exists in CI (anchore/sbom-action, syft, or Microsoft SBOM Tool).
+      - id: signing
+        phase: standards-mapping
+        default: pending
+        description: The generated SBOM is signed or attested before publication.
+      - id: distribution
+        phase: gap-analysis
+        default: pending
+        description: Generated SBOMs are uploaded as release assets and to the dependency graph.
+      - id: vuln-mapping
+        phase: backlog-generation
+        default: pending
+        description: Generation output feeds a vulnerability scanner (Grype, Trivy, GH Dependency Review).
+    mapsTo:
+      openssf-scorecard: [SBOM, Signed-Releases]
+      sigstore: [cosign-sign]
+    evidenceHints:
+      - .github/workflows/sbom*.yml
+      - .github/workflows/release*.yml
+      - .github/workflows/*sbom*
+      - "**/sbom/*.spdx.json"
+      - "**/sbom/*.cdx.json"
+      - "**/*.spdx.json"
+      - "**/*.cdx.json"
+    references:
+      - https://github.com/anchore/sbom-action
+      - https://github.com/microsoft/sbom-tool
+      - https://github.com/actions/attest-sbom
+      - https://www.ntia.gov/page/software-bill-materials

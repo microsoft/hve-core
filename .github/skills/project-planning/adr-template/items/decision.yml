@@ -1,0 +1,16 @@
+id: decision
+title: Decision
+description: "States the chosen approach with a clear rationale and implementation outline."
+template: |
+  ## Decision
+
+  **Decision Statement:** State the decision for {{adr_title}} in one clear sentence.
+
+  **Decision Rationale:** Explain the reasoning behind the decision. Connect the rationale to the decision drivers and trade-off analysis.
+
+  **Implementation Approach:** Outline the high-level approach to implementing this decision, including key milestones and resource requirements.
+
+  {{decision_detail}}
+inputs:
+  - name: decision_detail
+    description: "Additional decision context, implementation phases, or timeline details"

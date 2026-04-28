@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "schemaVersion": "1.0.0",
+    "slug": "demo-product",
+    "createdAt": "2026-04-21T12:00:00Z",
+    "lastUpdatedAt": "2026-04-21T12:00:00Z",
+    "disclaimerVersion": "e32764641fd2751b9cdff76b326440817b21f5c6132236dc95a66dc4f99f055a"
+  },
+  "disclaimerShownAt": "2026-04-21T12:00:00Z",
+  "phase": "2.workload-assessment",
+  "entryMode": "capture",
+  "surfaces": ["web"],
+  "workloadAssessment": {
+    "capabilities": [],
+    "scope": "demo",
+    "confidence": "low"
+  },
+  "standardsMapping": {
+    "activeFrameworks": [],
+    "activeControls": [],
+    "skipped": []
+  },
+  "gapAnalysis": {
+    "verified": [],
+    "partial": [],
+    "absent": [],
+    "manual": [],
+    "measurementInputs": []
+  },
+  "backlog": {
+    "items": [],
+    "sciBudgets": {}
+  },
+  "licenseRegister": [],
+  "skillsLoadedLogPath": ".copilot-tracking/sustainability-plans/demo-product/skills-loaded.log"
+}

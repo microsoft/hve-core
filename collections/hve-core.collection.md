@@ -30,6 +30,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 |------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | **checkpoint**         | Save or restore conversation context using memory files                                                                  |
 | **doc-ops-update**     | Invoke doc-ops agent for documentation quality assurance and updates                                                     |
+| **fsi-author**         | Author or extend a Framework Skill with manifest, per-item YAML, and SKILL.md registration                               |
 | **git-commit**         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit |
 | **git-commit-message** | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch         |
 | **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                             |

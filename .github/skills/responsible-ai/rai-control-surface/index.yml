@@ -1,0 +1,43 @@
+framework: rai-control-surface
+version: "1.0.0"
+summary: "RAI control surface taxonomy: 7 NIST trustworthiness characteristics by 3 control types for Phase 5."
+domain: responsible-ai
+itemKind: criterion
+status: draft
+metadata:
+  authority: microsoft/hve-core
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  phase-5-impact-assessment:
+    - cs-vr-preventive
+    - cs-vr-detective
+    - cs-vr-corrective
+    - cs-safe-preventive
+    - cs-safe-detective
+    - cs-safe-corrective
+    - cs-sr-preventive
+    - cs-sr-detective
+    - cs-sr-corrective
+    - cs-at-preventive
+    - cs-at-detective
+    - cs-at-corrective
+    - cs-ei-preventive
+    - cs-ei-detective
+    - cs-ei-corrective
+    - cs-priv-preventive
+    - cs-priv-detective
+    - cs-priv-corrective
+    - cs-fair-preventive
+    - cs-fair-detective
+    - cs-fair-corrective
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"

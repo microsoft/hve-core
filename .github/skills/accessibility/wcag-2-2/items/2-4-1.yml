@@ -1,0 +1,29 @@
+id: "2-4-1"
+title: "Bypass Blocks"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "A mechanism is available to bypass blocks of content that are repeated on multiple web pages, such as via a skip-link or proper landmark structure."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G1"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/bypass-blocks.html"
+  - "https://www.w3.org/TR/WCAG22/"

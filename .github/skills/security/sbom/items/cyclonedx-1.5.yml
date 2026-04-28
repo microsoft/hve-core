@@ -1,0 +1,61 @@
+id: sbom
+version: "1.0"
+name: SBOM — CycloneDX 1.5 format conformance
+source: https://cyclonedx.org/specification/overview/
+license: Apache-2.0
+licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+description: >-
+  CycloneDX 1.5 format conformance for Software Bill of Materials documents.
+  CycloneDX is the alternate accepted format per sssc-standards.instructions.md
+  ("SPDX-JSON (preferred for GitHub ecosystem) or CycloneDX"). Conformance
+  requires the document to carry the NTIA minimum elements (supplier, component
+  name, version, unique identifier, dependency relationship, author, timestamp).
+controls:
+  - id: cyclonedx-1.5
+    title: CycloneDX 1.5 format conformance
+    description: >-
+      The repository emits SBOM documents in CycloneDX 1.5 (JSON or XML). The
+      document validates against the CycloneDX 1.5 schema and carries the NTIA
+      minimum elements: supplier, component name, version, unique identifier,
+      dependency relationship, author, timestamp.
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    gates:
+      - id: presence
+        phase: standards-mapping
+        default: pending
+        description: A CycloneDX 1.5 SBOM document is produced for the project.
+      - id: signing
+        phase: standards-mapping
+        default: pending
+        description: The CycloneDX SBOM is signed or attested (for example via Sigstore).
+      - id: distribution
+        phase: gap-analysis
+        default: pending
+        description: The CycloneDX SBOM is attached to releases and published to consumers.
+      - id: vuln-mapping
+        phase: backlog-generation
+        default: pending
+        description: CycloneDX components are correlated with vulnerability advisories (NVD, GHSA, OSV).
+    mapsTo:
+      openssf-scorecard: [SBOM]
+    evidenceHints:
+      - .github/workflows/sbom*.yml
+      - .github/workflows/release*.yml
+      - "**/sbom/*.cdx.json"
+      - "**/*.cdx.json"
+      - "**/bom.json"
+      - "**/bom.xml"
+    alternativeGroup:
+      id: sbom-format
+      rationale: >-
+        SPDX 2.3 and CycloneDX 1.5 are interchangeable SBOM formats per
+        sssc-standards.instructions.md. Emitting either format satisfies
+        the format-emission requirement; planners must score the unused
+        format n/a with reason 'alternative format selected' rather than
+        absent or partial.
+    references:
+      - https://cyclonedx.org/specification/overview/
+      - https://cyclonedx.org/docs/1.5/json/
+      - https://www.ntia.gov/page/software-bill-materials

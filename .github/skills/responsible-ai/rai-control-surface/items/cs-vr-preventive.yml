@@ -1,0 +1,16 @@
+id: cs-vr-preventive
+title: "Control Surface: Valid and Reliable — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Valid and Reliable characteristic: data quality controls, validation harnesses, holdout discipline, and pre-deployment evaluation gates."
+characteristic: validReliable
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls reduce the likelihood that the system enters production with
+  inadequate accuracy or generalization. Examples include training-data quality
+  contracts, automated validation harnesses, strict train/validation/test holdout
+  discipline, and pre-deployment evaluation gates that block release when target
+  metrics are not met.

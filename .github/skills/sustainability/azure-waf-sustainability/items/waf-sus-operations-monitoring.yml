@@ -1,0 +1,26 @@
+id: waf-sus-operations-monitoring
+version: "1.0"
+name: WAF Sustainability — Operations and Monitoring
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-operations
+description: Continuously monitor workload utilization, identify waste, and act on Azure Carbon Optimization or Microsoft Sustainability Manager signals.
+controls:
+  - id: waf-sus-operations-monitoring
+    title: Operations and Monitoring — measure carbon and act on signals
+    description: |
+      Enable Azure Carbon Optimization for the subscription. Subscribe to
+      Microsoft Sustainability Manager where the workload's emissions feed
+      enterprise reporting. Continuously monitor utilization and identify
+      idle or underutilized resources for downsizing or decommissioning.
+    group: pattern
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+      - reported
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-operations

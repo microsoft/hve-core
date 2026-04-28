@@ -1,0 +1,8 @@
+id: mn-1-3
+title: "MN-1.3: High-priority risk response plans"
+itemKind: criterion
+summary: "Responses to the AI risks deemed high priority, as identified by the MAP function, are developed, planned, and documented. Risk response options can include mitigating, transferring, avoiding, or accepting."
+function: manage
+group: MN-1
+nistSubcategories:
+  - MN-1.3

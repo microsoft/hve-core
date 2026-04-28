@@ -1,0 +1,8 @@
+id: mp-5-1
+title: "MP-5.1: Likelihood and magnitude of impacts assessed"
+itemKind: criterion
+summary: "Likelihood and magnitude of each identified impact (both potentially beneficial and harmful) based on expected use, past uses of AI systems in similar contexts, public incident reports, feedback from those external to the team, or other data are identified and documented."
+function: map
+group: MP-5
+nistSubcategories:
+  - MP-5.1

@@ -1,0 +1,8 @@
+id: gv-4-2
+title: "GV-4.2: Risk documentation and communication practices"
+itemKind: criterion
+summary: "Organizational teams document the risks and potential impacts of AI technology and communicate them broadly."
+function: govern
+group: GV-4
+nistSubcategories:
+  - GV-4.2

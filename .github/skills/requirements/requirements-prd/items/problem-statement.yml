@@ -1,0 +1,11 @@
+id: problem-statement
+title: "Problem Statement"
+description: "Problem definition rendered as Section 2 (Problem Definition) of docs/templates/prd-template.md."
+templatePath: docs/templates/prd-template.md
+templateFormat: markdown
+applicability:
+  discriminator: audience
+  appliesWhen: [product, engineering]
+selectWhen:
+  discriminator: depth_tier
+  values: [light, standard, deep]

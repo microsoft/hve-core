@@ -1,0 +1,29 @@
+id: "3-3-9"
+title: "Accessible Authentication (Enhanced)"
+itemKind: criterion
+level: "AAA"
+principle: "3 Understandable"
+guideline: "3.3 Input Assistance"
+addedIn: "2.2"
+summary: "A cognitive function test is not required for any step in an authentication process unless an alternative or a mechanism to assist is available."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G218"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/accessible-authentication-enhanced.html"
+  - "https://www.w3.org/TR/WCAG22/"

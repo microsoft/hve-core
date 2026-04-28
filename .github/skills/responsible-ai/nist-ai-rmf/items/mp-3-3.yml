@@ -1,0 +1,8 @@
+id: mp-3-3
+title: "MP-3.3: Targeted scope of deployment"
+itemKind: criterion
+summary: "Targeted application scope is specified and documented based on the system's capability, established context, and AI system categorization."
+function: map
+group: MP-3
+nistSubcategories:
+  - MP-3.3

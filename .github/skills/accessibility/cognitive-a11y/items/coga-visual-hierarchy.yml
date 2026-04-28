@@ -1,0 +1,45 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Establish a Clear Visual Hierarchy"
+source: https://www.w3.org/WAI/cognitive/
+description: "Type scale weight and spacing encode importance so users can scan content without reading every word."
+controls:
+  - id: coga-visual-hierarchy
+    title: "Establish a Clear Visual Hierarchy"
+    description: "Type scale weight and spacing encode importance so users can scan content without reading every word."
+    group: visual-design
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Establish a Clear Visual Hierarchy practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Establish a Clear Visual Hierarchy is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.nngroup.com/articles/visual-hierarchy-ux-definition/
+      - https://www.w3.org/WAI/cognitive/

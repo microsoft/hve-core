@@ -58,6 +58,27 @@ Release-please determines the version bump from commit prefixes:
 > [!NOTE]
 > Stable releases must have an even minor version number (e.g., `1.0`, `1.2`). Odd minor versions (e.g., `1.1`, `1.3`) are reserved for pre-release or unstable versions. This convention is enforced by CI (`release-stable.yml`).
 
+## Upcoming Release Notes (Draft)
+
+Contributors append entries here while preparing changes for the next release. Release-please consumes the merged conventional commits and rolls these notes into `CHANGELOG.md` when the Release PR is merged. Use this section to flag rename, schema, or shared-config changes that downstream consumers must adopt.
+
+### Planner script renames
+
+* `Validate-AIArtifacts` is now `Validate-PlannerArtifacts`.
+* `Sign-RaiArtifacts` and `Sign-RAI` are consolidated as `Sign-PlannerArtifacts`.
+* See [planner artifact signing](../security/planner-artifact-signing) for invocation details.
+
+### New schemas
+
+* `rai-state.schema.json`
+* `ai-artifact-config.schema.json`
+* `framework-skill-manifest.schema.json`
+
+### New shared configs
+
+* `.github/config/disclaimers.yml`
+* `.github/config/footer-with-review.yml`
+
 ## For Contributors
 
 Write commits using conventional commit format. This enables automated changelog generation and version bumping.

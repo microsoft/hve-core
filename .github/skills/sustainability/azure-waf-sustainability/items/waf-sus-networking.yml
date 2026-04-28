@@ -1,0 +1,26 @@
+id: waf-sus-networking
+version: "1.0"
+name: WAF Sustainability — Networking and Connectivity
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-networking
+description: Networking and connectivity patterns that reduce data transfer volume, latency-driven retries, and cross-region egress.
+controls:
+  - id: waf-sus-networking
+    title: Networking and Connectivity — minimize data transfer and routing overhead
+    description: |
+      Co-locate compute, storage, and clients in the same region to avoid
+      cross-region egress. Compress payloads in transit and prefer binary
+      protocols where appropriate. Use caching and CDN tiers to absorb
+      repeat reads at the edge. Right-size connectivity SKUs and shut down
+      idle private links, gateways, and ExpressRoute circuits.
+    group: pattern
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-networking

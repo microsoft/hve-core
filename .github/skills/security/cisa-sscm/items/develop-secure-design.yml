@@ -1,0 +1,33 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: develop-secure-design
+    title: Secure-by-Design Practices
+    group: develop
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Software is designed using secure-by-design principles including least privilege, defense in depth, secure defaults, and minimization of attack surface, with documented design reviews capturing security decisions.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Locate design documentation and security review artifacts for in-scope components.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify components lacking documented secure-design reviews or missing core principles.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to introduce or refresh secure-design reviews and design records.
+    evidenceHints:
+      - "docs/architecture/**"
+      - "docs/design/**"
+      - "docs/security/design-reviews/**"
+      - "**/adr-*.md"
+      - "**/design-review*.md"
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers
+      - https://www.cisa.gov/secure-by-design

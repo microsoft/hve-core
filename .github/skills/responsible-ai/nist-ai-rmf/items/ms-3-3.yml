@@ -1,0 +1,8 @@
+id: ms-3-3
+title: "MS-3.3: End user feedback and appeal mechanisms"
+itemKind: criterion
+summary: "Feedback processes for end users and impacted communities to report problems and appeal system outcomes are established and integrated into AI system evaluation metrics."
+function: measure
+group: MS-3
+nistSubcategories:
+  - MS-3.3

@@ -1,0 +1,27 @@
+framework: rai-tradeoffs
+version: "1.0.0"
+summary: "Documented Responsible AI characteristic tradeoffs for Phase 5 Impact Assessment."
+domain: responsible-ai
+itemKind: criterion
+status: draft
+metadata:
+  authority: microsoft/hve-core
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+phaseMap:
+  phase-5-impact-assessment:
+    - to-001
+    - to-002
+    - to-003
+    - to-004
+    - to-005
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-23"

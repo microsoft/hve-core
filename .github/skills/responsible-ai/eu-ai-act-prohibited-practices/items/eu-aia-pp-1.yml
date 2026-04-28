@@ -1,0 +1,11 @@
+id: eu-aia-pp-1
+title: "Subliminal, manipulative, or deceptive techniques causing significant harm"
+itemKind: principle
+summary: "Placing on the market, putting into service, or using an AI system that deploys subliminal techniques beyond a person's awareness, or purposefully manipulative or deceptive techniques, with the objective or effect of materially distorting a person's or group's behaviour by appreciably impairing their ability to make an informed decision and thereby causing or being reasonably likely to cause significant harm, is prohibited."
+articleRef: "Article 5(1)(a)"
+prohibitionType: manipulation
+characteristic: "Safe"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
+crossReferences:
+  - eu-aia-pp-2

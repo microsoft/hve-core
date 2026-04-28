@@ -1595,3 +1595,8 @@ LASTEXITCODE
 scriptblock
 DSSE
 intoto
+cyclonedx
+pscustomobject
+rulebook
+reconstructable
+rescope

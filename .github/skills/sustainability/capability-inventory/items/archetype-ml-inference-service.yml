@@ -1,0 +1,25 @@
+id: archetype-ml-inference-service
+version: "1.0"
+name: Archetype — ML Inference Service
+source: hve-core authored
+description: Online or batch ML inference service. Latency-sensitive (online) or batch-throughput-sensitive (batch). Strong fit for quantization and batching.
+controls:
+  - id: archetype-ml-inference-service
+    title: ML Inference Service — quantize, batch, right-size accelerators
+    description: |
+      Online or batch ML inference service. Sustainability levers:
+      quantization (FP16/INT8/INT4), request batching, accelerator
+      right-sizing, model distillation, caching of frequent
+      inferences.
+    group: archetype
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - ml
+    references:
+      - https://patterns.greensoftware.foundation/

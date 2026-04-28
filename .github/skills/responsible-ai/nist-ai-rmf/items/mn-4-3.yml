@@ -1,0 +1,8 @@
+id: mn-4-3
+title: "MN-4.3: Incident/error communication and recovery"
+itemKind: criterion
+summary: "Incidents and errors are communicated to relevant AI actors, including affected communities. Processes for tracking, responding to, and recovering from incidents and errors are followed and documented."
+function: manage
+group: MN-4
+nistSubcategories:
+  - MN-4.3

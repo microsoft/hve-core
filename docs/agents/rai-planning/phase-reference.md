@@ -29,6 +29,21 @@ estimated_reading_time: 8
 | 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`        | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
 | 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                          | `handoffGenerated`                                      |
 
+## PhaseMap Key Conventions
+
+Framework Skills under `.github/skills/responsible-ai/` declare a `phaseMap` in their `SKILL.md` manifests that scopes individual items (controls, criteria, principles, or templates) to one or more RAI Planner phases. The agent reads only the items keyed to the active phase, keeping each phase's working set focused.
+
+| PhaseMap key                  | Phase | Skill items typically scoped here                                                |
+|-------------------------------|-------|----------------------------------------------------------------------------------|
+| `phase-1-scoping`             | 1     | Output templates for the system definition pack and stakeholder impact map       |
+| `phase-2-risk-classification` | 2     | Risk indicators, prohibited-practice principles, depth-tier guidance             |
+| `phase-3-standards-mapping`   | 3     | NIST AI RMF subcategories, characteristic-level mapping criteria                 |
+| `phase-4-security-model`      | 4     | RAI threat catalog entries and threat-categorization criteria                    |
+| `phase-5-impact-assessment`   | 5     | Control surface criteria, tradeoff patterns, evidence-register templates         |
+| `phase-6-handoff`             | 6     | Review-summary templates, backlog work-item templates, handoff-summary templates |
+
+A single item can appear under multiple keys when it applies to more than one phase. Items omitted from `phaseMap` are not loaded by the agent. The active per-phase selection is recorded in `state.frameworkSkills` for audit and session recovery.
+
 ## Phase 1: AI System Scoping
 
 > NIST AI RMF alignment: Govern + Map

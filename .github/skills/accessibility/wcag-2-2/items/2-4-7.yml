@@ -1,0 +1,30 @@
+id: "2-4-7"
+title: "Focus Visible"
+itemKind: criterion
+level: "AA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "Any keyboard operable user interface has a mode of operation where the keyboard focus indicator is visible."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G149"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html"
+  - "https://www.w3.org/TR/WCAG22/"

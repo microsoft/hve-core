@@ -638,3 +638,9 @@ When planning files are complete, provide the structured handoff:
 ## Resumption
 
 When resuming planning work, assess existing artifacts in `.copilot-tracking/` and continue from where work stopped. Preserve completed work, fill gaps, update line number references, and verify cross-references remain accurate.
+
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project being planned, surface the SCI budget for the affected workload at plan-creation time. Cite control ids inline (for example, `gsf-sci:E`, `gsf-patterns:<id>`). Flag projected overruns in the Planning Log but do not block plan delivery. When no plan exists, plan as today.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

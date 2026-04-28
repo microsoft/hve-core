@@ -1,0 +1,9 @@
+id: eu-aia-pp-8
+title: "Real-time remote biometric identification in publicly accessible spaces for law enforcement"
+itemKind: principle
+summary: "Use of real-time remote biometric identification systems in publicly accessible spaces for the purposes of law enforcement is prohibited, unless and only insofar as such use is strictly necessary for one of a narrow set of objectives identified in the Regulation — such as the targeted search for specific victims of certain serious crimes, the prevention of a specific, substantial, and imminent threat to the life or physical safety of natural persons or of a genuine and present terrorist attack, or the localisation or identification of a person suspected of having committed a serious criminal offence listed in the Regulation — and only subject to the safeguards, prior authorisation, and oversight conditions set out in the Regulation."
+articleRef: "Article 5(1)(h)"
+prohibitionType: remote-biometric-identification
+characteristic: "Privacy-enhanced"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

@@ -1,0 +1,22 @@
+id: of-stride-matrix-table
+title: "STRIDE Applicability Matrix"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-4-security-model
+summary: "Phase 4 STRIDE-by-component matrix recording applicability and the linked NIST AI RMF characteristic per cell."
+tokens:
+  - system_name
+  - matrix_rows
+template: |
+  ## STRIDE Applicability Matrix — {{system_name}}
+
+  Cell format: `applicability / nistCharacteristic` (applicability ∈ {High, Medium, Low, N/A}).
+
+  | Component | Spoofing | Tampering | Repudiation | InfoDisclosure | DoS | EoP |
+  |-----------|----------|-----------|-------------|----------------|-----|-----|
+  {{matrix_rows}}
+description: |
+  Components and the column legend are defined by the `rai-threat-catalog`
+  globals.strideMatrix block. Out-of-scope components are omitted; the rest
+  render one row each.

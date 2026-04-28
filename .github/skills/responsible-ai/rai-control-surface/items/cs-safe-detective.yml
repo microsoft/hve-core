@@ -1,0 +1,15 @@
+id: cs-safe-detective
+title: "Control Surface: Safe — Detective"
+itemKind: criterion
+summary: "Detective controls for the Safe characteristic: anomaly and incident detection, hazardous-output monitoring, and near-miss logging."
+characteristic: safe
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe deployed system behavior for unsafe events. Examples
+  include anomaly and incident detection on outputs and downstream actions,
+  hazardous-output classifiers monitoring inference traffic, and near-miss logging
+  that captures cases where a guardrail or human reviewer prevented harm.

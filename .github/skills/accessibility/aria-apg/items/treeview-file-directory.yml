@@ -1,0 +1,38 @@
+id: "treeview-file-directory"
+title: "Treeview (File Directory) Pattern"
+itemKind: pattern
+summary: "Hierarchical tree of expandable nodes navigated with arrow keys; Right/Left expand/collapse, Up/Down move between nodes."
+keyboardModel:
+  - "tree"
+focusManagement: "roving"
+relatedRoles:
+  - "tree"
+  - "treeitem"
+  - "group"
+requiredStates:
+  - "aria-expanded"
+  - "aria-selected"
+  - "aria-level"
+requiredProperties:
+  - "aria-labelledby"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/treeview-file-directory/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "hybrid-mobile"
+  naWhen:
+    - "mobile-web"
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/treeview-file-directory/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

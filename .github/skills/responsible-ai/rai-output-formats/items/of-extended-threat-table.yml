@@ -1,0 +1,20 @@
+id: of-extended-threat-table
+title: "Extended RAI Threat Table"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-4-security-model
+summary: "Phase 4 threat enumeration with dual RAI/security identifiers, characteristic mapping, data-flow stage, and STRIDE classification."
+tokens:
+  - system_name
+  - threat_rows
+template: |
+  ## Extended Threat Table — {{system_name}}
+
+  | RAI ID | Security Cross-Ref | Characteristic | Data Flow | STRIDE | Description |
+  |--------|--------------------|----------------|-----------|--------|-------------|
+  {{threat_rows}}
+description: |
+  Threats follow the conventions in `rai-threat-catalog`: `T-RAI-{NNN}` for the
+  RAI identifier and `T-{BUCKET}-AI-{NNN}` when overlapping with the Security
+  Planner backlog.

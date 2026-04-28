@@ -89,7 +89,22 @@ Use the user journey template at `docs/templates/user-journey-template.md` as th
 
 ### Step 4: Accessibility Requirements
 
-Define accessibility requirements that apply to the journey's interaction patterns.
+Define accessibility requirements that apply to the journey's interaction patterns. Source the rule set from the Accessibility Planner handoff when available, otherwise fall back to the inline checklist below.
+
+**Plan-present branch.** When `.copilot-tracking/accessibility-plans/{project-slug}/active-rules.json` exists for the current project, read it and treat its `rules[]` array as the authoritative requirement set. The manifest shape is:
+
+```json
+{
+  "frameworks": ["wcag-2-2", "aria-apg"],
+  "rules": [
+    { "frameworkId": "wcag-2-2", "controlId": "1.1.1", "level": "A", "surfaceScope": ["web", "content"], "status": "active" }
+  ]
+}
+```
+
+Suppressed entries are omitted from the manifest, so every listed rule is in scope. For each journey stage, emit the applicable requirements anchored to `<frameworkId>:<controlId>` identifiers (for example `wcag-2-2:2.1.1` for keyboard operability, or `aria-apg:combobox` when the journey involves a custom widget). Cite each rule's `level` (A, AA, AAA) and only apply rules whose `surfaceScope` matches the journey surface (for example `web` or `mobile`); skip rules whose scope does not intersect the surface under design.
+
+**Plan-absent branch.** When the manifest is missing, fall back to the inline checklist:
 
 Keyboard navigation: ensure all interactive elements are reachable via Tab, follow a logical order, and have visible focus indicators.
 

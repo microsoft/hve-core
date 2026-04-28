@@ -1,0 +1,8 @@
+id: mp-4-1
+title: "MP-4.1: Legal and IP risk mapping for third-party components"
+itemKind: criterion
+summary: "Approaches for mapping AI technology and legal risks of its components - including the use of third-party data or software - are in place, followed, and documented, as are risks of infringement of a third-party's intellectual property or other rights."
+function: map
+group: MP-4
+nistSubcategories:
+  - MP-4.1

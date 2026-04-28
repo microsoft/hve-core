@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 gitleaks"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Secret scanning via gitleaks in CI pipelines
+controls:
+- id: gitleaks
+  appliesTo: [cloud, web, ml, fleet]
+  title: gitleaks
+  description: Secret scanning via gitleaks in CI pipelines
+  group: shared
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the gitleaks capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of gitleaks is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/gitleaks*.yml
+  - .gitleaks.toml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

@@ -1,0 +1,38 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - APCA perceptual contrast check"
+source: https://github.com/microsoft/hve-core
+description: "Alternative perceptual contrast methodology proposed for WCAG 3 that scores foreground and background pairs by lightness contrast Lc; informational alongside WCAG 2.x ratios."
+controls:
+  - id: apca-contrast
+    title: "APCA perceptual contrast check"
+    description: "Alternative perceptual contrast methodology proposed for WCAG 3 that scores foreground and background pairs by lightness contrast Lc; informational alongside WCAG 2.x ratios."
+    group: visual-checks
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: low
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "APCA perceptual contrast check is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "APCA perceptual contrast check runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-4-3
+    evidenceHints:
+      - "**/apca-report*.json"
+      - docs/**/apca*.md
+    alternativeGroup:
+      id: contrast-methodology
+      rationale: "WCAG 2.x ratio-based contrast and APCA perceptual contrast are alternative methodologies for measuring text legibility; either fully satisfies the contrast capability."
+    references:
+      - https://github.com/Myndex/apca-w3
+      - https://www.myndex.com/APCA/

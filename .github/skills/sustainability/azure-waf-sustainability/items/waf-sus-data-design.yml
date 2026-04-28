@@ -1,0 +1,26 @@
+id: waf-sus-data-design
+version: "1.0"
+name: WAF Sustainability — Data Design
+source: https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-data
+description: Data tier patterns that reduce storage footprint, replication overhead, and unnecessary egress.
+controls:
+  - id: waf-sus-data-design
+    title: Data Design — right-size storage tiers and lifecycle
+    description: |
+      Match storage tier to access frequency (hot, cool, archive). Enable
+      lifecycle policies to age data automatically. Compress and deduplicate.
+      Choose replication levels (LRS, ZRS, GRS) based on actual durability
+      needs rather than defaults. Avoid cross-region replication when not
+      required.
+    group: pattern
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://learn.microsoft.com/azure/well-architected/sustainability/sustainability-data

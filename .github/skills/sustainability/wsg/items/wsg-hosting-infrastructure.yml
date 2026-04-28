@@ -1,0 +1,25 @@
+id: wsg-hosting-infrastructure
+version: "1.0"
+name: WSG — Hosting and Infrastructure
+source: https://w3c.github.io/sustyweb/
+description: Sustainable hosting and infrastructure success criteria from W3C WSG 1.0.
+controls:
+  - id: wsg-hosting-infrastructure
+    title: Sustainable Hosting and Infrastructure — choose low-carbon hosts and regions
+    description: |
+      Choose hosting providers with public renewable-energy commitments and
+      transparent carbon reporting. Prefer regions with lower grid-carbon
+      intensity. Use CDNs to shorten data-transfer paths. Enable autoscaling
+      and scale-to-zero for non-production environments.
+    group: criterion
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - implemented
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

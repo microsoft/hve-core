@@ -1,0 +1,17 @@
+{
+  "slug": "demo-product",
+  "createdAt": "2026-04-21T12:00:00Z",
+  "updatedAt": "2026-04-21T12:00:00Z",
+  "currentPhase": "scoping",
+  "disclaimerShownAt": "2026-04-21T12:00:00Z",
+  "surfaces": ["web"],
+  "jurisdictions": ["US"],
+  "frameworks": [
+    {
+      "frameworkId": "wcag-2-2",
+      "version": "2.2",
+      "disabled": true,
+      "disabledAtPhase": "scoping"
+    }
+  ]
+}

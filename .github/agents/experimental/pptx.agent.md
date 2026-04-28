@@ -175,3 +175,9 @@ Phase 1 Step 2: Extract everything (text, styling, notes, images, structure). Ph
 ### Cleaning Up an Existing Slide Deck (`cleanup`)
 
 Phase 1 Step 2: Extract everything. Phase 1 Step 3: Focus on problem detection. Phase 2: Organize content with corrections applied and regenerate. Phase 3: Validate fixes.
+
+## Sustainability overlay
+
+Detect the dual mode at Phase 1: when `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project the deck represents, render numeric callouts derived from `state.gapAnalysis.measurementInputs[]` with their `gsf-sci:*` source id attached, and emit a slide-footer text frame containing `Directional estimate. Not an audited disclosure.` on every slide that displays a numeric SCI value. When no plan exists, generate the deck as today and emit no sustainability footer or callouts (graceful degradation).
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

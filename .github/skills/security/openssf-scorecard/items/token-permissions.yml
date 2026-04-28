@@ -1,0 +1,29 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: token-permissions
+    title: Token-Permissions
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Audits GitHub Actions workflow token permissions for least-privilege scoping.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inspect each workflow for explicit minimum-scope permissions.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify workflows or jobs lacking explicit least-privilege permissions.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to set workflow-level and job-level permissions to least-privilege.
+    evidenceHints:
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+      - ".github/actions/**/action.yml"

@@ -1,0 +1,29 @@
+id: fair-allocation
+version: "1.0"
+name: Fair Allocation
+source: https://learn.greensoftware.foundation/
+description: Allocate emissions fairly to the workload that caused them.
+controls:
+  - id: fair-allocation
+    title: Fair Allocation — apportion shared infrastructure emissions
+    description: |
+      Where infrastructure (cloud regions, shared clusters, multi-tenant
+      services) supports multiple workloads, emissions must be allocated
+      proportionally — typically by reserved resources (RR) and reserved
+      time (TR) per the SCI embodied formula.
+    group: principle
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+    appliesTo:
+      - cloud
+      - ml
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/

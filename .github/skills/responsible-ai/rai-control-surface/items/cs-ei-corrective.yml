@@ -1,0 +1,16 @@
+id: cs-ei-corrective
+title: "Control Surface: Explainable and Interpretable — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Explainable and Interpretable characteristic: explanation method swap, model simplification, and human-readable rationale generation."
+characteristic: explainableInterpretable
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls restore explainability when monitoring shows it has
+  degraded. Examples include swapping a low-faithfulness explanation method for
+  a higher-faithfulness one, simplifying the deployed model to a more
+  interpretable architecture when downstream comprehension fails, and adding a
+  human-readable rationale generator that supplements opaque outputs.

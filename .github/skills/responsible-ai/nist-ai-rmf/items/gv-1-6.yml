@@ -1,0 +1,8 @@
+id: gv-1-6
+title: "GV-1.6: AI system inventory maintained"
+itemKind: criterion
+summary: "Mechanisms are in place to inventory AI systems and resourced commensurate with organizational risk priorities."
+function: govern
+group: GV-1
+nistSubcategories:
+  - GV-1.6

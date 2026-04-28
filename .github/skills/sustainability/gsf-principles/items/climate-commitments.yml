@@ -1,0 +1,31 @@
+id: climate-commitments
+version: "1.0"
+name: Climate Commitments
+source: https://learn.greensoftware.foundation/
+description: Understand the exact mechanism of carbon reduction commitments and how they apply to software.
+controls:
+  - id: climate-commitments
+    title: Climate Commitments — distinguish reductions, neutralization, and elimination
+    description: |
+      Practitioners must understand the distinction between carbon reductions
+      (decreased emissions), carbon neutralizations (offsets that remove or
+      avoid emissions), and carbon eliminations (zero emissions at source).
+      SCI scores reflect reductions only; offsets are out of scope.
+    group: principle
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/principles/commitments/

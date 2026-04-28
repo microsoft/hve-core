@@ -1,0 +1,16 @@
+id: cs-at-detective
+title: "Control Surface: Accountable and Transparent — Detective"
+itemKind: criterion
+summary: "Detective controls for the Accountable and Transparent characteristic: audit log review, access trails, and decision-record sampling."
+characteristic: accountableTransparent
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe whether accountability and transparency obligations
+  are being met in operation. Examples include scheduled audit log review,
+  end-to-end access trails on training and inference pipelines, and sampling
+  of decision records to verify that documented rationale and reviewer identity
+  are captured.

@@ -1,0 +1,31 @@
+id: "1-3-2"
+title: "Meaningful Sequence"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.3 Adaptable"
+addedIn: "2.0"
+summary: "When the sequence in which content is presented affects its meaning, a correct reading sequence can be programmatically determined."
+verificationMode: hybrid
+automatableBy:
+  - "axe-core-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G57"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/meaningful-sequence.html"
+  - "https://www.w3.org/TR/WCAG22/"

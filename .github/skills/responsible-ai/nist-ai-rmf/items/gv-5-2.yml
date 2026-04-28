@@ -1,0 +1,8 @@
+id: gv-5-2
+title: "GV-5.2: Adjudicated feedback integration into risk management"
+itemKind: criterion
+summary: "Mechanisms are established to enable AI actors to regularly incorporate adjudicated feedback from relevant AI actors into system design and implementation."
+function: govern
+group: GV-5
+nistSubcategories:
+  - GV-5.2

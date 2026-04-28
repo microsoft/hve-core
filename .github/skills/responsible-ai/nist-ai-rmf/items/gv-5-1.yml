@@ -1,0 +1,8 @@
+id: gv-5-1
+title: "GV-5.1: External feedback mechanisms established"
+itemKind: criterion
+summary: "Organizational policies and practices are in place to collect, consider, prioritize, and integrate feedback from those external to the team that developed or deployed the AI system."
+function: govern
+group: GV-5
+nistSubcategories:
+  - GV-5.1

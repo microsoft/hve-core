@@ -1,0 +1,27 @@
+id: to-005
+title: "Tradeoff: Accountable and Transparent vs. Secure and Resilient"
+itemKind: criterion
+summary: "Detailed model explanations and audit trails can expose proprietary logic or create adversarial attack vectors; document the information boundary and approved explanation granularity."
+characteristics:
+  - accountableTransparent
+  - secureResilient
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+    description: Record the chosen information boundary and rationale during Phase 5.
+description: |
+  Source: rai-impact-assessment.instructions.md (tradeoffs section, to-005).
+
+  Tradeoff: Accountable and Transparent characteristic versus Secure and Resilient
+  characteristic.
+
+  Mechanism (verbatim from source): Detailed model explanations and audit trails can
+  expose proprietary logic or create adversarial attack vectors. When accountability
+  depth conflicts with security requirements, document the information boundary and
+  the approved level of explanation granularity.
+
+  Required documentation: Record the audience-tiered explanation granularity (internal
+  audit, regulator, end user, public), the redaction or aggregation rules that protect
+  against model extraction and membership inference, and the rationale for the chosen
+  information boundary.

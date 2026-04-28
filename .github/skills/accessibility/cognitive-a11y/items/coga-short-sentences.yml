@@ -1,0 +1,49 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Use Short Sentences"
+source: https://www.w3.org/WAI/cognitive/
+description: "Sentences stay short and direct; long compound sentences are split when they raise reading difficulty."
+controls:
+  - id: coga-short-sentences
+    title: "Use Short Sentences"
+    description: "Sentences stay short and direct; long compound sentences are split when they raise reading difficulty."
+    group: language-clarity
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Use Short Sentences practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Use Short Sentences is verified through review or tooling."
+    mapsTo:
+      capability-inventory-content:
+        - textstat-flesch-kincaid
+        - vale
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.plainlanguage.gov/guidelines/concise/
+      - https://www.w3.org/WAI/cognitive/

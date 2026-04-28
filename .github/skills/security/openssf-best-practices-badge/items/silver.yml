@@ -1,0 +1,66 @@
+id: silver
+version: "1.0"
+name: OpenSSF Best Practices Badge — Silver Tier
+source: https://www.bestpractices.dev/criteria/1
+description: >-
+  Silver tier control for the OpenSSF Best Practices Badge. Focus: Governance + quality.
+  Key Criteria: GOVERNANCE.md, code coverage, reproducible builds, signed releases.
+controls:
+  - id: silver
+    title: OpenSSF Best Practices Badge — Silver
+    description: >-
+      Governance + quality. Key Criteria: GOVERNANCE.md, code coverage, reproducible
+      builds, signed releases.
+    group: tier
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    risk: medium
+    references:
+      - https://www.bestpractices.dev/criteria/1
+    evidenceHints:
+      - README.md
+      - LICENSE
+      - CONTRIBUTING.md
+      - GOVERNANCE.md
+      - SECURITY.md
+      - CODEOWNERS
+      - .github/CODEOWNERS
+      - .github/workflows/*.yml
+      - codecov.yml
+    gates:
+      - id: basics
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Basics: documented governance (GOVERNANCE.md), roles and responsibilities,
+          code of conduct, and project-maintained contributor list.
+      - id: change-control
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Change control: signed releases (e.g., GPG or Sigstore), reproducible builds
+          for released artifacts, and documented release process.
+      - id: reporting
+        phase: standards-mapping
+        default: pending
+        description: >-
+          Reporting: vulnerability disclosure policy with coordinated reporting and
+          documented response timelines.
+      - id: quality
+        phase: gap-analysis
+        default: pending
+        description: >-
+          Quality: measured code coverage with documented thresholds, continuous
+          integration on supported platforms, and regression-test policy.
+      - id: security
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Security: hardened build and release pipeline, secrets management, and
+          adoption of cryptographic best practices beyond passing baseline.
+      - id: analysis
+        phase: backlog-generation
+        default: pending
+        description: >-
+          Analysis: regular static and dynamic analysis with triage of findings, and
+          dependency analysis (e.g., SBOM or vulnerability scanning).

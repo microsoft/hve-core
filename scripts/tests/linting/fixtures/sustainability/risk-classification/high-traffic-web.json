@@ -1,0 +1,11 @@
+{
+  "workloadId": "high-traffic-web",
+  "surface": "web",
+  "trafficProfile": {
+    "monthlyActiveUsers": 5000000,
+    "peakRequestsPerSecond": 12000,
+    "geographicDistribution": ["us-east", "eu-west", "ap-southeast"]
+  },
+  "expectedRiskClassification": "high",
+  "rationale": "Sustained high request volume with multi-region serving footprint amplifies M (embodied) and E (operational) SCI variables; warrants prioritized backlog treatment and SCI budget."
+}

@@ -1,0 +1,29 @@
+id: "1-4-9"
+title: "Images of Text (No Exception)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.4 Distinguishable"
+addedIn: "2.0"
+summary: "Images of text are only used for pure decoration or where a particular presentation of text is essential to the information being conveyed."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/css/C22"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/images-of-text-no-exception.html"
+  - "https://www.w3.org/TR/WCAG22/"

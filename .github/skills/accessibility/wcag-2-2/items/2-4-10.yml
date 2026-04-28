@@ -1,0 +1,30 @@
+id: "2-4-10"
+title: "Section Headings"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.4 Navigable"
+addedIn: "2.0"
+summary: "Section headings are used to organize the content."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G141"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/section-headings.html"
+  - "https://www.w3.org/TR/WCAG22/"

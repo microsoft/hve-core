@@ -1,0 +1,25 @@
+id: tc-bound-feedback
+title: "AI Trust Boundary: Feedback"
+itemKind: criterion
+summary: "Separation between user feedback and model updates. Key threats: feedback manipulation, drift injection, bias amplification."
+boundaryType: feedback
+kind: boundary
+characteristics:
+  - fairBiasManaged
+  - validReliable
+  - accountableTransparent
+nistSubcategories:
+  - MS-2.11
+  - MS-2.5
+  - MS-2.8
+dataFlows:
+  - feedback-loop
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Boundary where user feedback signals are admitted into model improvement
+  pipelines. Concentrates threats of coordinated feedback manipulation, drift
+  injection through targeted feedback patterns, and bias amplification across
+  retraining cycles. Typically maps to the DATA and WEBUI security buckets.

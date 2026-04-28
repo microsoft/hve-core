@@ -1,0 +1,33 @@
+id: cisa-sscm
+version: "1.0"
+name: CISA Securing the Software Supply Chain
+controls:
+  - id: develop-source-integrity
+    title: Source Code Integrity Controls
+    group: develop
+    risk: high
+    assessmentMethod: categorical
+    categories: [absent, partial, present, verified]
+    description: Source code repositories enforce integrity controls including branch protection, mandatory code review, signed commits, and access-controlled write permissions to prevent unauthorized changes from entering the supply chain.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inventory repositories and capture branch-protection, review, and commit-signing configuration.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify repositories with weak protection, missing required reviews, or unsigned commits.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items to enable branch protection, CODEOWNERS review, and commit signing.
+    evidenceHints:
+      - ".github/CODEOWNERS"
+      - "CODEOWNERS"
+      - ".github/branch-protection*.yml"
+      - ".github/settings.yml"
+      - ".gitsign"
+      - ".gitattributes"
+    references:
+      - https://www.cisa.gov/resources-tools/resources/securing-software-supply-chain-recommended-practices-guide-developers

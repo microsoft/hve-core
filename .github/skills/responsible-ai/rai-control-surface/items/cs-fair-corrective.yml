@@ -1,0 +1,16 @@
+id: cs-fair-corrective
+title: "Control Surface: Fair with Harmful Bias Managed — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Fair characteristic: model retraining with fairness constraints, post-processing calibration, and decision review."
+characteristic: fairBiasManaged
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls reduce harmful bias once it has been detected. Examples
+  include model retraining with explicit fairness constraints, post-processing
+  calibration (group-specific thresholds or score adjustment), and human
+  decision review for affected groups while the underlying model is being
+  remediated.

@@ -1,0 +1,16 @@
+id: cs-vr-detective
+title: "Control Surface: Valid and Reliable — Detective"
+itemKind: criterion
+summary: "Detective controls for the Valid and Reliable characteristic: drift monitoring, accuracy regression alerts, calibration checks, and slice-level performance dashboards."
+characteristic: validReliable
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe deployed model behavior and surface deviations from
+  expected accuracy and reliability. Examples include data-drift and concept-drift
+  monitors, accuracy regression alerts against a reference baseline, calibration
+  checks, and slice-level performance dashboards that catch silent failures on
+  important sub-populations.

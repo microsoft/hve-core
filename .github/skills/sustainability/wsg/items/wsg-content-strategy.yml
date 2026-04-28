@@ -1,0 +1,24 @@
+id: wsg-content-strategy
+version: "1.0"
+name: WSG — Content Strategy
+source: https://w3c.github.io/sustyweb/
+description: Sustainable content strategy success criteria from W3C WSG 1.0.
+controls:
+  - id: wsg-content-strategy
+    title: Sustainable Content Strategy — right-size and prune content
+    description: |
+      Audit content regularly; archive or remove low-value pages. Compress
+      and right-size media (images, video, audio). Provide text alternatives
+      to video where suitable. Avoid duplicate content and orphaned pages.
+    group: criterion
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - implemented
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

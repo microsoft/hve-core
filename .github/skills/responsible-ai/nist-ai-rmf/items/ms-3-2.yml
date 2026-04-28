@@ -1,0 +1,8 @@
+id: ms-3-2
+title: "MS-3.2: Difficult-to-assess risk tracking"
+itemKind: criterion
+summary: "Risk tracking approaches are considered for settings where AI risks are difficult to assess using currently available measurement techniques or where metrics are not yet available."
+function: measure
+group: MS-3
+nistSubcategories:
+  - MS-3.2

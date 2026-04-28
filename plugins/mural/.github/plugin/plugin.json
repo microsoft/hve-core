@@ -1,0 +1,8 @@
+{
+  "name": "mural",
+  "description": "Mural workspace, room, mural, and widget workflows through a Python skill exposed via CLI and stdio MCP server",
+  "version": "3.3.41",
+  "skills": [
+    "skills/mural/"
+  ]
+}

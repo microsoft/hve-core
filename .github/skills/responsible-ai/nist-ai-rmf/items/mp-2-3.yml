@@ -1,0 +1,8 @@
+id: mp-2-3
+title: "MP-2.3: Scientific integrity and TEVV planning"
+itemKind: criterion
+summary: "Scientific integrity and test, evaluation, validation, and verification (TEVV) considerations are identified and documented for the AI system."
+function: map
+group: MP-2
+nistSubcategories:
+  - MP-2.3

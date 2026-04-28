@@ -1,0 +1,8 @@
+id: ms-1-1
+title: "MS-1.1: Risk-based metric selection"
+itemKind: criterion
+summary: "Approaches and metrics for measurement of identified AI risks are selected for implementation, starting with the most significant AI risks."
+function: measure
+group: MS-1
+nistSubcategories:
+  - MS-1.1

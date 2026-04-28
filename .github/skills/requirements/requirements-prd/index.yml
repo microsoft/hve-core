@@ -1,0 +1,144 @@
+framework: requirements-prd
+version: "1.0.0"
+summary: 'Product Requirements Document section roster mapped to docs/templates/prd-template.md for the requirements-builder six-phase pipeline.'
+domain: requirements
+itemKind: document-section
+status: published
+phaseMap:
+  identity: []
+  intake:
+    - vision
+    - personas
+    - problem-statement
+    - success-metrics
+  template-selection: []
+  drafting:
+    - goals-non-goals
+    - scope
+    - out-of-scope
+    - user-stories
+    - requirements-functional
+    - requirements-non-functional
+    - dependencies
+    - risks-mitigations
+    - assumptions
+    - instrumentation
+  review:
+    - open-questions
+    - release-criteria
+  handoff:
+    - appendix
+globals:
+  productName:
+    description: "Product or feature name."
+    required: true
+  briefDescription:
+    description: "One-sentence product description used in frontmatter."
+  authorName:
+    description: "Document author."
+  version:
+    description: "Document version (e.g. 0.1, 1.0)."
+  status:
+    description: "Document status (Draft, Review, Approved)."
+  docOwner:
+    description: "Owning individual."
+  owningTeam:
+    description: "Owning team."
+  targetRelease:
+    description: "Target release identifier or date."
+  lifecycleStage:
+    description: "Lifecycle stage (Discovery, Planning, Build, Launch, Sustain)."
+  phaseContextComplete: { description: "Progress tracker: Context phase done indicator." }
+  phaseContextGaps: { description: "Progress tracker: Context phase gaps." }
+  phaseContextUpdated: { description: "Progress tracker: Context phase last updated." }
+  phaseProblemComplete: { description: "Progress tracker: Problem & Users done indicator." }
+  phaseProblemGaps: { description: "Progress tracker: Problem & Users gaps." }
+  phaseProblemUpdated: { description: "Progress tracker: Problem & Users last updated." }
+  phaseScopeComplete: { description: "Progress tracker: Scope done indicator." }
+  phaseScopeGaps: { description: "Progress tracker: Scope gaps." }
+  phaseScopeUpdated: { description: "Progress tracker: Scope last updated." }
+  phaseReqsComplete: { description: "Progress tracker: Requirements done indicator." }
+  phaseReqsGaps: { description: "Progress tracker: Requirements gaps." }
+  phaseReqsUpdated: { description: "Progress tracker: Requirements last updated." }
+  phaseMetricsComplete: { description: "Progress tracker: Metrics & Risks done indicator." }
+  phaseMetricsGaps: { description: "Progress tracker: Metrics & Risks gaps." }
+  phaseMetricsUpdated: { description: "Progress tracker: Metrics & Risks last updated." }
+  phaseOpsComplete: { description: "Progress tracker: Operationalization done indicator." }
+  phaseOpsGaps: { description: "Progress tracker: Operationalization gaps." }
+  phaseOpsUpdated: { description: "Progress tracker: Operationalization last updated." }
+  phaseFinalComplete: { description: "Progress tracker: Finalization done indicator." }
+  phaseFinalGaps: { description: "Progress tracker: Finalization gaps." }
+  phaseFinalUpdated: { description: "Progress tracker: Finalization last updated." }
+  unresolvedCriticalQuestionsCount: { description: "Count of unresolved critical questions." }
+  tbdCount: { description: "Count of TBD markers in document." }
+  executiveContext: { description: "Executive summary context paragraph." }
+  coreOpportunity: { description: "Executive summary core opportunity paragraph." }
+  goalsTable: { description: "Markdown table rows for the Goals table." }
+  objectivesTable: { description: "Markdown table rows for the Objectives table." }
+  currentSituation: { description: "Problem definition: current situation paragraph." }
+  problemStatement: { description: "Problem definition: problem statement." }
+  rootCause1: { description: "First root cause bullet." }
+  rootCause2: { description: "Second root cause bullet." }
+  impactOfInaction: { description: "Impact of inaction paragraph." }
+  personasTable: { description: "Markdown table rows for personas." }
+  userJourneysSummary: { description: "User journeys summary text." }
+  inScopeItem1: { description: "First in-scope item bullet." }
+  outOfScopeItem1: { description: "First out-of-scope item bullet." }
+  assumption1: { description: "First assumption bullet." }
+  constraint1: { description: "First constraint bullet." }
+  valueProposition: { description: "Product overview value proposition." }
+  differentiator1: { description: "First differentiator bullet." }
+  uxConsiderations: { description: "UX/UI considerations paragraph." }
+  uxStatus: { description: "UX/UI status indicator." }
+  functionalRequirementsTable: { description: "Markdown table rows for functional requirements (FR IDs)." }
+  featureHierarchySkeleton: { description: "Plain-text feature hierarchy outline." }
+  nfrTable: { description: "Markdown table rows for non-functional requirements (NFR IDs)." }
+  dataInputs: { description: "Data inputs description." }
+  dataOutputs: { description: "Data outputs / events description." }
+  instrumentationTable: { description: "Markdown table rows for instrumentation events." }
+  metricsTable: { description: "Markdown table rows for metrics & success criteria." }
+  dependenciesTable: { description: "Markdown table rows for dependencies." }
+  risksTable: { description: "Markdown table rows for risks & mitigations." }
+  dataClassification: { description: "Data classification statement." }
+  piiHandling: { description: "PII handling statement." }
+  threatSummary: { description: "Threat considerations summary." }
+  complianceTable: { description: "Markdown table rows for regulatory/compliance items." }
+  deploymentNotes: { description: "Operational deployment notes." }
+  rollbackPlan: { description: "Operational rollback plan." }
+  monitoringPlan: { description: "Operational monitoring plan." }
+  alertingPlan: { description: "Operational alerting plan." }
+  supportModel: { description: "Operational support model." }
+  capacityPlanning: { description: "Operational capacity planning." }
+  phasesTable: { description: "Markdown table rows for rollout phases/milestones." }
+  featureFlagsTable: { description: "Markdown table rows for feature flags." }
+  communicationPlan: { description: "Communication plan paragraph." }
+  openQuestionsTable: { description: "Markdown table rows for open questions." }
+  changelogTable: { description: "Markdown table rows for changelog." }
+  referenceCatalogTable: { description: "Markdown table rows for references catalog." }
+  citationUsageNotes: { description: "Citation usage notes." }
+  glossaryTable: { description: "Markdown table rows for glossary." }
+  additionalNotes: { description: "Additional appendix notes." }
+  generationTimestamp: { description: "ISO 8601 timestamp set by host renderer." }
+  generatorName: { description: "Renderer name (e.g. requirements-builder)." }
+  generationMode: { description: "Renderer mode (e.g. full, partial)." }
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  source: https://github.com/microsoft/hve-core
+  attributionRequired: false
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/microsoft/hve-core/main/LICENSE"
+    sha256: "c7eb8fb4cf893534af823d4aa0fe6fa83a961320375772915fd9b6a21d890d87"
+    declaredLicense: "MIT"
+    status: verified
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-22"

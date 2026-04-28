@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/planner-framework-document-section.schema.json",
+  "title": "Planner Framework Document Section (Flat Per-Item)",
+  "description": "Validates flat per-item YAML for itemKind 'document-section' authored under planner Framework Skills that emit handoff or work-item content (e.g., Responsible AI output formats). Distinct from the content-generation document-section schema used by template Framework Skills: identifies audience (ado|github|review|both), output format, inline template body, and optional token list. additionalProperties is true so framework-specific render hints pass through.",
+  "type": "object",
+  "required": ["id", "title", "itemKind", "audience", "format", "template"],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Lower-kebab section identifier; dots permitted."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "itemKind": {
+      "const": "document-section",
+      "description": "Discriminator marking this item as a document-section."
+    },
+    "audience": {
+      "type": "string",
+      "enum": ["ado", "github", "review", "both"],
+      "description": "Downstream consumer audience for the rendered section."
+    },
+    "format": {
+      "type": "string",
+      "enum": ["markdown", "yaml", "json"],
+      "description": "Output format of the rendered section."
+    },
+    "template": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Inline template body. May contain {{token}} references resolved by the host agent at render time."
+    },
+    "tokens": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Token names referenced by the template; the host agent supplies values at render time."
+    },
+    "phaseHint": {
+      "type": "string",
+      "description": "Optional phase identifier indicating when the section is rendered (e.g., 'phase-5-impact-assessment')."
+    },
+    "summary": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}

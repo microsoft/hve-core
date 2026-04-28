@@ -1,0 +1,12 @@
+{
+  "workloadId": "ml-training-scale",
+  "surface": "ml",
+  "trainingProfile": {
+    "acceleratorClass": "H100",
+    "acceleratorCount": 1024,
+    "trainingDurationHours": 720,
+    "retrainingCadenceWeeks": 4
+  },
+  "expectedRiskClassification": "high",
+  "rationale": "Large accelerator count with frequent retraining cadence inflates E (operational energy) and M (embodied accelerator carbon); requires SCI budget, region selection, and retraining-frequency review."
+}

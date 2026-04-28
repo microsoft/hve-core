@@ -1,0 +1,29 @@
+id: iso-21031-reference
+version: "1.0"
+name: ISO/IEC 21031:2024 — Software Carbon Intensity (reference)
+source: https://www.iso.org/standard/86612.html
+description: Reference-by-identifier-only pointer to ISO/IEC 21031:2024. No specification text is reproduced.
+controls:
+  - id: iso-21031-reference
+    title: ISO/IEC 21031:2024 — reference-by-identifier
+    description: |
+      ISO/IEC 21031:2024 is the international standard form of the GSF SCI
+      specification. This Framework Skill **does not reproduce ISO/IEC 21031 text**;
+      consumers requiring the normative ISO text must obtain it from the ISO catalog
+      under ISO licensing terms.
+
+      Use this control as the canonical pointer when the planner needs to cite the
+      ISO standard form rather than the GSF community form.
+    group: reference
+    risk: info
+    assessmentMethod: categorical
+    categories:
+      - referenced
+      - cited
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    references:
+      - https://www.iso.org/standard/86612.html

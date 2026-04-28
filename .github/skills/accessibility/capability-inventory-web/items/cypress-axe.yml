@@ -1,0 +1,39 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - Cypress with axe-core accessibility tests"
+source: https://github.com/microsoft/hve-core
+description: "Cypress end-to-end test suite that injects axe-core via cypress-axe on routed pages asserting zero or budgeted violations as part of the e2e gate."
+controls:
+  - id: cypress-axe
+    title: "Cypress with axe-core accessibility tests"
+    description: "Cypress end-to-end test suite that injects axe-core via cypress-axe on routed pages asserting zero or budgeted violations as part of the e2e gate."
+    group: automated-testing
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Cypress with axe-core accessibility tests is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Cypress with axe-core accessibility tests runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-1-1
+        - 1-3-1
+        - 1-4-3
+        - 2-1-1
+        - 4-1-2
+    evidenceHints:
+      - "**/cypress.config.*"
+      - cypress/**
+    references:
+      - https://github.com/component-driven/cypress-axe
+      - https://www.cypress.io/

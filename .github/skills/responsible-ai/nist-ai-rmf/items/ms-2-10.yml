@@ -1,0 +1,9 @@
+id: ms-2-10
+title: "MS-2.10: Privacy risk assessment"
+itemKind: criterion
+summary: "Privacy risk of the AI system - as identified in the MAP function - is examined and documented."
+function: measure
+group: MS-2
+characteristic: privacyEnhanced
+nistSubcategories:
+  - MS-2.10

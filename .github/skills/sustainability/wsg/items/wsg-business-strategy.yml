@@ -1,0 +1,25 @@
+id: wsg-business-strategy
+version: "1.0"
+name: WSG — Business Strategy
+source: https://w3c.github.io/sustyweb/
+description: Sustainable business strategy success criteria from W3C WSG 1.0.
+controls:
+  - id: wsg-business-strategy
+    title: Sustainable Business Strategy — set goals, measure, report
+    description: |
+      Set explicit sustainability goals (carbon, energy, transfer-volume
+      budgets). Measure outcomes against goals. Report progress publicly.
+      Tie sustainability outcomes to product, engineering, and procurement
+      decisions.
+    group: criterion
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - implemented
+    appliesTo:
+      - web
+    references:
+      - https://w3c.github.io/sustyweb/

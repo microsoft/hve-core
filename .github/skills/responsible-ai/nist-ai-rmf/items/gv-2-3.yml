@@ -1,0 +1,8 @@
+id: gv-2-3
+title: "GV-2.3: Executive leadership responsibility for AI risk"
+itemKind: criterion
+summary: "Executive leadership of the organization takes responsibility for decisions about risks associated with AI system development and deployment."
+function: govern
+group: GV-2
+nistSubcategories:
+  - GV-2.3

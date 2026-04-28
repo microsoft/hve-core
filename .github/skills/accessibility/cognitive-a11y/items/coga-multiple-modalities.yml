@@ -1,0 +1,45 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Offer Multiple Modalities"
+source: https://www.w3.org/WAI/cognitive/
+description: "Critical instructions are available in at least two of text audio video or illustration so users pick the easiest modality."
+controls:
+  - id: coga-multiple-modalities
+    title: "Offer Multiple Modalities"
+    description: "Critical instructions are available in at least two of text audio video or illustration so users pick the easiest modality."
+    group: redundant-encoding
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Offer Multiple Modalities practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Offer Multiple Modalities is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.w3.org/WAI/cognitive/
+      - https://www.w3.org/TR/coga-usable/

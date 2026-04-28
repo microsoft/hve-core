@@ -1,0 +1,32 @@
+id: capability-inventory-physical-ai
+version: '1.0'
+name: "physical-ai-toolchain \u2014 DAST/ZAP"
+source: https://github.com/microsoft/physical-ai-toolchain
+description: Dynamic application security testing via OWASP ZAP
+controls:
+- id: dast-zap
+  appliesTo: [cloud, web, ml, fleet]
+  title: DAST/ZAP
+  description: Dynamic application security testing via OWASP ZAP
+  group: native
+  assessmentMethod: categorical
+  categories:
+  - absent
+  - partial
+  - present
+  - verified
+  risk: medium
+  gates:
+  - id: presence
+    phase: assessment
+    default: pending
+    description: Repository implements the DAST/ZAP capability.
+  - id: verification
+    phase: gap-analysis
+    default: pending
+    description: Implementation of DAST/ZAP is verified against reference patterns.
+  evidenceHints:
+  - .github/workflows/zap*.yml
+  - .github/workflows/dast*.yml
+  references:
+  - https://github.com/microsoft/physical-ai-toolchain

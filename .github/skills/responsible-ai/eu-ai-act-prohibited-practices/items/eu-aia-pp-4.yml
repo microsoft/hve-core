@@ -1,0 +1,9 @@
+id: eu-aia-pp-4
+title: "Predictive policing based solely on profiling or personality assessment"
+itemKind: principle
+summary: "Placing on the market, putting into service for this specific purpose, or using an AI system to make risk assessments of natural persons in order to assess or predict the likelihood that a natural person will commit a criminal offence based solely on the profiling of that person or on assessing their personality traits and characteristics is prohibited. This prohibition does not apply to AI systems that support human assessment of the involvement of a person in a criminal activity which is already based on objective and verifiable facts directly linked to a criminal activity."
+articleRef: "Article 5(1)(d)"
+prohibitionType: predictive-policing
+characteristic: "Fair – With Harmful Bias Managed"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

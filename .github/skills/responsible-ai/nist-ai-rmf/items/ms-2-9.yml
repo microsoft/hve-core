@@ -1,0 +1,9 @@
+id: ms-2-9
+title: "MS-2.9: Explainability and interpretability evaluation"
+itemKind: criterion
+summary: "The AI model is explained, validated, and documented, and AI system output is interpreted within its context to inform responsible use and governance."
+function: measure
+group: MS-2
+characteristic: explainableInterpretable
+nistSubcategories:
+  - MS-2.9

@@ -1,0 +1,8 @@
+id: gv-3-2
+title: "GV-3.2: Human-AI oversight mechanisms defined"
+itemKind: criterion
+summary: "Policies and procedures define and differentiate roles and responsibilities for human-AI configurations and oversight."
+function: govern
+group: GV-3
+nistSubcategories:
+  - GV-3.2

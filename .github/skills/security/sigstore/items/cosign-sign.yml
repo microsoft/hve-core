@@ -1,0 +1,63 @@
+id: sigstore-cosign-sign
+version: "1.0"
+name: Sigstore cosign — artifact signing
+source: https://docs.sigstore.dev/cosign/signing/overview/
+description: >-
+  Artifact signing via cosign (keyless OIDC or keyed). Advances Sigstore
+  maturity from Not adopted to Basic by producing build provenance via
+  actions/attest-build-provenance or an equivalent cosign sign step.
+controls:
+  - id: cosign-sign
+    title: Artifact signing via cosign (keyless or keyed)
+    description: >-
+      Generated artifacts (container images, release binaries, SBOMs) are
+      signed with cosign. Keyless signing uses Fulcio-issued short-lived
+      certificates bound to an OIDC identity; keyed signing uses a managed
+      KMS key. Binary assessment: signing is either configured in CI or it
+      is not.
+    assessmentMethod: binary
+    risk: high
+    gates:
+      - id: signing-configured
+        phase: standards-mapping
+        default: pending
+        description: A cosign sign or attest step exists in the release pipeline.
+      - id: signing-evidenced
+        phase: gap-analysis
+        default: pending
+        description: At least one published artifact carries a cosign signature.
+      - id: signing-backlogged
+        phase: backlog-generation
+        default: pending
+        description: Backlog item exists when signing is absent or partial.
+    mapsTo:
+      openssf-scorecard: [Signed-Releases]
+      slsa: [L2, L3]
+    evidenceHints:
+      - .github/workflows/*.yml
+      - .github/workflows/release*.yml
+      - .github/workflows/sign*.yml
+      - cosign.pub
+      - cosign.key
+      - .sigstore/*
+      - dist/*.sig
+      - dist/*.pem
+    equivalentImplementations:
+      - id: actions-attest-build-provenance
+        tool: actions/attest-build-provenance
+        rationale: >-
+          Produces a Sigstore bundle signed with a Fulcio-issued short-lived
+          certificate bound to the workflow's OIDC identity, with a Rekor
+          inclusion proof. Identical trust roots and primitives to
+          'cosign sign-blob' / 'cosign attest'; satisfies the same signing
+          and provenance gates.
+      - id: actions-attest-sbom
+        tool: actions/attest-sbom
+        rationale: >-
+          Same Sigstore primitives (Fulcio plus Rekor) scoped to SBOM
+          attestations. Equivalent to a 'cosign attest --type spdxjson'
+          (or cyclonedx) step over the published SBOM.
+    references:
+      - https://docs.sigstore.dev/cosign/signing/overview/
+      - https://github.com/actions/attest-build-provenance
+      - https://slsa.dev/spec/v1.0/levels

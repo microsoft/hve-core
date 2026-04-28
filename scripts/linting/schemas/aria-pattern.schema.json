@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/microsoft/hve-core/main/scripts/linting/schemas/aria-pattern.schema.json",
+  "title": "Accessibility Framework Skill ARIA Pattern",
+  "description": "Validates per-pattern YAML items authored under .github/skills/accessibility/<framework-id>/items/<id>.yml for itemKind 'pattern'. The shape captures W3C ARIA Authoring Practices Guide composite-widget patterns: identifier, human-readable name, paraphrased summary, keyboard model taxonomy, focus-management strategy, related ARIA roles/states/properties, cross-walk to sibling Framework Skills (typically wcag-2-2 success criteria), and authoritative reference URLs. Identifiers are lower-kebab with hyphenated slugs matching the canonical APG pattern URL slug.",
+  "type": "object",
+  "required": ["id", "title", "itemKind", "summary", "references"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9.-]*$",
+      "description": "Lower-kebab pattern identifier matching the canonical W3C APG URL slug (for example 'combobox-autocomplete-list', 'dialog-modal', 'treeview-file-directory')."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable pattern name as it appears in the W3C APG table of contents."
+    },
+    "itemKind": {
+      "const": "pattern",
+      "description": "Discriminator marking this item as an ARIA APG pattern."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Paraphrased one-sentence description of the pattern (<=200 chars). Authors MUST NOT fabricate; paraphrase the canonical APG pattern page."
+    },
+    "keyboardModel": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Coarse-grained taxonomy labels describing the dominant keyboard interaction model (for example 'menu', 'listbox', 'grid', 'modal', 'inline', 'tabs', 'tree', 'spinbutton', 'slider', 'toolbar')."
+    },
+    "focusManagement": {
+      "type": "string",
+      "enum": ["trap", "roving", "single", "none"],
+      "description": "Focus-management strategy: 'trap' (focus is trapped within the widget, e.g. modal dialog), 'roving' (single tab stop with arrow-key navigation among descendants), 'single' (widget is a single tab stop with no descendant focus), 'none' (no special focus handling beyond browser defaults)."
+    },
+    "relatedRoles": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "ARIA role identifiers participating in the pattern (for example 'combobox', 'listbox', 'option')."
+    },
+    "requiredStates": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "ARIA state attributes the pattern requires authors to manage (for example 'aria-expanded', 'aria-selected', 'aria-checked')."
+    },
+    "requiredProperties": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "ARIA property attributes the pattern requires authors to declare (for example 'aria-controls', 'aria-haspopup', 'aria-labelledby')."
+    },
+    "relatedSuccessCriteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9.-]*$"
+      },
+      "uniqueItems": true,
+      "description": "Cross-walk identifiers to sibling Framework Skill items, formatted as '<framework>:<item-id>' (for example 'wcag-2-2:2-1-1', 'wcag-2-2:4-1-2')."
+    },
+    "referenceImplementationUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical W3C APG pattern page URL containing the normative description and reference example."
+    },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discriminator": { "type": "string", "minLength": 1 },
+        "appliesWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naWhen": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "naReason": { "type": "string" }
+      }
+    },
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "format": "uri" },
+      "uniqueItems": true,
+      "description": "Authoritative references (canonical APG pattern URL is required; additional links MAY include WAI-ARIA spec sections or technique pages)."
+    },
+    "evidenceHints": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9_./*?{}\\[\\]\\-]+$"
+      },
+      "uniqueItems": true,
+      "description": "FSI v1.0 shared evidence-citation hints (relative glob paths) consumed by FSI-aware planners when the parent manifest declares 'evidenceFormat: shared'. Each token MUST satisfy EF-02 lexical sanity (no leading '/', no '..', no whitespace)."
+    }
+  }
+}

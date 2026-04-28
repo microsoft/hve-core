@@ -1,0 +1,9 @@
+id: ms-2-5
+title: "MS-2.5: Validity and reliability demonstration"
+itemKind: criterion
+summary: "The AI system to be deployed is demonstrated to be valid and reliable. Limitations of the generalizability beyond the conditions under which the technology was developed are documented."
+function: measure
+group: MS-2
+characteristic: validReliable
+nistSubcategories:
+  - MS-2.5

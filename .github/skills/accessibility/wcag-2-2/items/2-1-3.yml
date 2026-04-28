@@ -1,0 +1,31 @@
+id: "2-1-3"
+title: "Keyboard (No Exception)"
+itemKind: criterion
+level: "AAA"
+principle: "2 Operable"
+guideline: "2.1 Keyboard Accessible"
+addedIn: "2.0"
+summary: "All functionality of the content is operable through a keyboard interface without requiring specific timings for individual keystrokes, with no exceptions."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen:
+    - "voice-only"
+  naReason: "Pure voice surfaces have no keyboard input model."
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G202"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/keyboard-no-exception.html"
+  - "https://www.w3.org/TR/WCAG22/"

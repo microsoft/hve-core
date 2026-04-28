@@ -6,21 +6,29 @@
 
 <#
 .SYNOPSIS
-    Generates a SHA-256 manifest for RAI planning artifacts and optionally signs it with cosign.
+    Generates a SHA-256 manifest for planner artifacts and optionally signs it with cosign.
 
 .DESCRIPTION
-    Enumerates all files under the RAI planning artifact directory for a given project slug,
-    computes SHA-256 hashes for each artifact, and writes a JSON manifest file. When cosign
-    is available and requested, the manifest is signed using Sigstore keyless signing to
-    provide cryptographic provenance.
+    Enumerates all files under a planner artifact directory, computes SHA-256 hashes for
+    each artifact, and writes a JSON manifest file. The artifact directory is resolved
+    from -PlanRoot when supplied, otherwise from the legacy -ProjectSlug + -Scope rai
+    convention. When cosign is available and requested, the manifest is signed using
+    Sigstore keyless signing to provide cryptographic provenance.
+
+.PARAMETER Scope
+    Planner family scope. One of 'rai', 'sssc', 'security', 'all'. Used to derive the
+    default planner tracking root when -ProjectSlug is supplied without -PlanRoot.
+
+.PARAMETER PlanRoot
+    Path to a single planner instance (e.g. '.copilot-tracking/sssc-plans/{slug}').
+    Takes precedence over -ProjectSlug when supplied.
 
 .PARAMETER ProjectSlug
-    The project slug identifying the RAI planning session. Corresponds to the subdirectory
-    under .copilot-tracking/rai-plans/.
+    Legacy. The project slug identifying the planner session. Combined with -Scope to
+    derive the artifact directory when -PlanRoot is not supplied.
 
 .PARAMETER OutputPath
-    Path for the generated manifest file. Defaults to
-    .copilot-tracking/rai-plans/{ProjectSlug}/artifact-manifest.json.
+    Path for the generated manifest file. Defaults to '{PlanRoot}/artifact-manifest.json'.
 
 .PARAMETER IncludeCosign
     When specified, attempts to sign the manifest with cosign keyless signing after
@@ -28,29 +36,29 @@
     a warning when cosign is not found.
 
 .EXAMPLE
-    ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai"
-
-    Generates a SHA-256 manifest for all artifacts under
-    .copilot-tracking/rai-plans/contoso-ai/.
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -Scope sssc -PlanRoot .copilot-tracking/sssc-plans/contoso-sssc
 
 .EXAMPLE
     ./scripts/security/Sign-PlannerArtifacts.ps1 -ProjectSlug "contoso-ai" -IncludeCosign
 
-    Generates the manifest and signs it with cosign keyless signing.
-
 .EXAMPLE
-    npm run rai:sign -- -ProjectSlug "contoso-ai" -IncludeCosign
-
-    Invokes the script through the npm wrapper with cosign signing enabled.
+    npm run sign:planner -- -Scope sssc -PlanRoot .copilot-tracking/sssc-plans/contoso-sssc -IncludeCosign
 
 .NOTES
     The manifest excludes its own file (artifact-manifest.json) and any cosign signature
     files (.sig, .bundle) from the hash inventory to avoid circular references.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'PlanRoot')]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('rai', 'sssc', 'security', 'all')]
+    [string]$Scope = 'rai',
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'PlanRoot')]
+    [string]$PlanRoot,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'ProjectSlug')]
     [ValidateNotNullOrEmpty()]
     [string]$ProjectSlug,
 
@@ -89,11 +97,34 @@ if ($MyInvocation.InvocationName -ne '.') {
     try {
         #region Artifact Generation
 
-        $repoRoot = & git rev-parse --show-toplevel 2>$null
-        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
-            $repoRoot = $PWD.Path
+        $scopeRootMap = @{
+            rai      = '.copilot-tracking/rai-plans'
+            sssc     = '.copilot-tracking/sssc-plans'
+            security = '.copilot-tracking/security-plans'
         }
-        $artifactDir = Join-Path -Path $repoRoot -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+
+        if ($PSBoundParameters.ContainsKey('PlanRoot') -and -not [string]::IsNullOrWhiteSpace($PlanRoot)) {
+            $artifactDir = if ([System.IO.Path]::IsPathRooted($PlanRoot)) {
+                $PlanRoot
+            }
+            else {
+                Join-Path -Path $PWD -ChildPath $PlanRoot
+            }
+            if (-not $ProjectSlug) {
+                $ProjectSlug = Split-Path -Path $PlanRoot -Leaf
+            }
+        }
+        elseif ($ProjectSlug) {
+            if ($Scope -eq 'all' -or -not $scopeRootMap.ContainsKey($Scope)) {
+                Write-Host "❌ -ProjectSlug requires -Scope to be one of: $($scopeRootMap.Keys -join ', ')" -ForegroundColor Red
+                exit 1
+            }
+            $artifactDir = Join-Path -Path $PWD -ChildPath "$($scopeRootMap[$Scope])/$ProjectSlug"
+        }
+        else {
+            Write-Host '❌ Either -PlanRoot or -ProjectSlug must be supplied.' -ForegroundColor Red
+            exit 1
+        }
 
         if (-not (Test-Path -Path $artifactDir -PathType Container)) {
             Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
@@ -111,7 +142,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             '*.bundle'
         )
 
-        Write-Host "🔐 Generating artifact manifest for project: $ProjectSlug" -ForegroundColor Cyan
+        Write-Host "🔐 Generating artifact manifest for project: $ProjectSlug (scope=$Scope)" -ForegroundColor Cyan
 
         $artifacts = Get-ChildItem -Path $artifactDir -File -Recurse |
             Where-Object {
@@ -142,7 +173,9 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         $manifest = [ordered]@{
             version     = '1.0'
+            scope       = $Scope
             projectSlug = $ProjectSlug
+            planRoot    = $artifactDir
             generatedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ")
             algorithm   = 'SHA256'
             fileCount   = $fileEntries.Count

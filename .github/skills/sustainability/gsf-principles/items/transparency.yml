@@ -1,0 +1,32 @@
+id: transparency
+version: "1.0"
+name: Transparency
+source: https://learn.greensoftware.foundation/
+description: Disclose methodology, assumptions, and uncertainty alongside reported numbers.
+controls:
+  - id: transparency
+    title: Transparency — disclose methodology, assumptions, and uncertainty
+    description: |
+      Reported SCI scores must be accompanied by methodology disclosures:
+      functional unit R, measurement class for each input (E, I, M),
+      data sources, accounting boundaries, and known limitations.
+      Without transparency, scores are not comparable.
+    group: principle
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - documented
+      - reported
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    evidenceHints:
+      - "**/sci-report.json"
+      - "**/carbon-budget.md"
+      - "**/energy-report.json"
+    references:
+      - https://learn.greensoftware.foundation/

@@ -1,0 +1,25 @@
+id: tc-bound-training-data
+title: "AI Trust Boundary: Training Data"
+itemKind: criterion
+summary: "Separation between raw data sources and the training pipeline. Key threats: data poisoning, bias injection, privacy violations."
+boundaryType: trainingData
+kind: boundary
+characteristics:
+  - fairBiasManaged
+  - privacyEnhanced
+  - validReliable
+nistSubcategories:
+  - MS-2.11
+  - MS-2.10
+  - MS-2.5
+dataFlows:
+  - training-pipeline
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Boundary where untrusted or partially-trusted data sources transition into
+  the controlled training pipeline. Concentrates threats of data poisoning,
+  bias injection from upstream collection practices, and privacy violations
+  when source data carries PII. Typically maps to the DATA security bucket.

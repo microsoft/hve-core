@@ -1,0 +1,16 @@
+id: cs-fair-detective
+title: "Control Surface: Fair with Harmful Bias Managed — Detective"
+itemKind: criterion
+summary: "Detective controls for the Fair characteristic: fairness-metric monitoring, disparate-impact testing, and slice-based evaluation."
+characteristic: fairBiasManaged
+controlType: detective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Detective controls observe deployed system behavior for harmful bias.
+  Examples include fairness-metric monitoring (selection rate, true and false
+  positive rate parity) tracked over time, disparate-impact testing on routine
+  evaluation batches, and slice-based evaluation that surfaces accuracy or
+  outcome gaps across protected groups before aggregate metrics mask them.

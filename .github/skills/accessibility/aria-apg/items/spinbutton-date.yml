@@ -1,0 +1,40 @@
+id: "spinbutton-date"
+title: "Date Picker Spin Button Pattern"
+itemKind: pattern
+summary: "Composite spin button with day, month, and year fields adjustable via arrow keys."
+keyboardModel:
+  - "spinbutton"
+focusManagement: "roving"
+relatedRoles:
+  - "spinbutton"
+  - "group"
+requiredStates:
+  []
+requiredProperties:
+  - "aria-valuenow"
+  - "aria-valuemin"
+  - "aria-valuemax"
+  - "aria-valuetext"
+  - "aria-label"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:3-3-2"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton-date/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/spinbutton-date/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

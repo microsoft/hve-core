@@ -1,0 +1,23 @@
+id: of-review-rubric
+title: "Phase 6 Review Rubric"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-6-handoff
+summary: "Binary checkpoint rubric verifying readiness across phases 1 through 5 before backlog handoff."
+tokens:
+  - system_name
+  - checkpoint_rows
+template: |
+  ## RAI Review Rubric — {{system_name}}
+
+  Mark each checkpoint Met or Not Met. Any "Not Met" indicates the relevant
+  phase should be revisited before proceeding.
+
+  | Phase | Checkpoint | Status |
+  |-------|------------|--------|
+  {{checkpoint_rows}}
+description: |
+  Checkpoints are binary verification steps sourced from
+  `rai-backlog-handoff.instructions.md`. The rubric gates whether the planner
+  can render the dual-format backlog.

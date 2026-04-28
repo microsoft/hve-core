@@ -1,0 +1,8 @@
+id: ms-2-12
+title: "MS-2.12: Environmental impact assessment"
+itemKind: criterion
+summary: "Environmental impact and sustainability of AI model training and management activities - as identified in the MAP function - are assessed and documented."
+function: measure
+group: MS-2
+nistSubcategories:
+  - MS-2.12

@@ -1,0 +1,9 @@
+id: ms-2-7
+title: "MS-2.7: Security and resilience evaluation"
+itemKind: criterion
+summary: "AI system security and resilience - as identified in the MAP function - are evaluated and documented."
+function: measure
+group: MS-2
+characteristic: secureResilient
+nistSubcategories:
+  - MS-2.7

@@ -1,0 +1,25 @@
+id: archetype-containerized-cloud-service
+version: "1.0"
+name: Archetype — Containerized Cloud Service
+source: hve-core authored
+description: Long-running containerized service deployed to a managed container platform (AKS, ACA, ECS, GKE, Cloud Run).
+controls:
+  - id: archetype-containerized-cloud-service
+    title: Containerized Cloud Service — long-running stateless or stateful service
+    description: |
+      Long-running containerized service deployed to a managed container
+      platform. Scales horizontally; may scale-to-zero on serverless
+      container runtimes. Sustainability levers: region selection,
+      right-sizing, scale-to-zero, caching, payload compression.
+    group: archetype
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - declared
+      - implemented
+      - measured
+    appliesTo:
+      - cloud
+    references:
+      - https://patterns.greensoftware.foundation/

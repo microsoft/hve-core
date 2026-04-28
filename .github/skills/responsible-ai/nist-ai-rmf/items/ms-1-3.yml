@@ -1,0 +1,8 @@
+id: ms-1-3
+title: "MS-1.3: Independent assessors engaged"
+itemKind: criterion
+summary: "Internal experts who did not serve as front-line developers for the system and/or independent assessors are involved in regular assessments and updates."
+function: measure
+group: MS-1
+nistSubcategories:
+  - MS-1.3

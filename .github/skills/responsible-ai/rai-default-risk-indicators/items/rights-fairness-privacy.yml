@@ -1,0 +1,39 @@
+id: rights-fairness-privacy
+title: Rights, Fairness, and Privacy Risk Indicator
+itemKind: criterion
+summary: "Could this AI system produce biased or discriminatory outcomes, infringe on individual rights, or process personal data in ways that violate privacy expectations? Activated when impact is direct or primary."
+indicatorType: categorical
+assessmentMethod: categorical
+nistSubcategories:
+  - MS-2.8
+  - MS-2.10
+  - MS-2.11
+characteristics:
+  - accountableTransparent
+  - privacyEnhanced
+  - fairBiasManaged
+levels:
+  - none
+  - indirect
+  - direct
+  - primary
+gates:
+  - id: risk-classification
+    phase: phase-2-risk-classification
+    default: pending
+    description: Score categorical impact during Phase 2 Risk Classification.
+description: |
+  Source: rai-risk-classification.instructions.md (rights_fairness_privacy indicator).
+
+  Type: categorical with four ordered levels: none, indirect, direct, primary.
+
+  Activation question: Could this AI system produce biased or discriminatory outcomes,
+  infringe on individual rights, or process personal data in ways that violate privacy
+  expectations?
+
+  Activation rule: Levels 'direct' and 'primary' count as activated for the Phase 2
+  count toward depth-tier selection. Levels 'none' and 'indirect' do not count toward
+  activation.
+
+  NIST AI RMF cross-walk: MS-2.8 (accountability and transparency), MS-2.10 (privacy),
+  MS-2.11 (fairness with harmful bias managed).

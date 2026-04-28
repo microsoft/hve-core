@@ -1,0 +1,45 @@
+id: gsf-sci-embodied
+version: "1.0"
+name: SCI Variable M — Embodied Emissions
+source: https://sci.greensoftware.foundation/
+description: The embodied emissions of the hardware running the software, amortized over its expected lifespan and the share attributable to the software.
+controls:
+  - id: sci-embodied
+    title: Embodied (M) — amortized gCO2eq from hardware manufacturing
+    description: |
+      M represents the share of the hardware's embodied carbon emissions allocated to
+      the software system being measured. Embodied emissions cover manufacturing,
+      transport, and end-of-life of the physical hardware.
+
+      Calculation per the SCI specification:
+
+          M = TE * (TR / EL) * (RR / TR)
+
+      Where:
+        TE — total embodied emissions of the hardware (gCO2eq).
+        TR — time reserved by the software (seconds).
+        EL — expected lifespan of the hardware (seconds).
+        RR — resources reserved by the software (e.g., vCPUs, GB RAM).
+
+      Source data typically comes from manufacturer Life Cycle Assessment (LCA)
+      disclosures or cloud provider sustainability reports.
+    group: variable
+    risk: medium
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - cloud
+      - web
+      - ml
+      - fleet
+    measurementClass: estimated
+    sciVariable: M
+    appliesToPrinciples:
+      - gsf-principles:hardware-efficiency
+    references:
+      - https://sci.greensoftware.foundation/
+      - https://github.com/Green-Software-Foundation/sci/blob/main/Software_Carbon_Intensity/Software_Carbon_Intensity_Specification.md

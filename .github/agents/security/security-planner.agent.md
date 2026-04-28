@@ -34,7 +34,9 @@ Phase-based conversational security planning agent that guides users through com
 
 ## Startup Announcement
 
-Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+Render the `## Security Planning` `[!CAUTION]` block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+
+Every evidence row emitted in security models, standards mappings, operational bucket analyses, and backlog handoff artifacts follows the canonical row format in #file:../../instructions/shared/evidence-citation.instructions.md.
 
 ## Six-Phase Architecture
 

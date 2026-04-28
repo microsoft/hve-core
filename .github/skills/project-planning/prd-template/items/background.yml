@@ -1,0 +1,17 @@
+id: background
+title: Background
+description: "Establishes context by describing the current state, the user problem, and the cost of inaction."
+template: |
+  ## Background
+
+  Describe the current state relevant to {{product_name}}. Cover:
+
+  - The business or user problem that motivates this initiative.
+  - The population affected and the scale of the problem.
+  - The cost of the status quo if nothing changes.
+  - Any prior attempts to address the problem and their outcomes.
+
+  {{background_context}}
+inputs:
+  - name: background_context
+    description: "Additional context, prior art, or market research relevant to the background"

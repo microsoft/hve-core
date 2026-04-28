@@ -1,0 +1,8 @@
+id: gv-1-7
+title: "GV-1.7: Decommissioning processes defined"
+itemKind: criterion
+summary: "Processes and procedures are in place for decommissioning and phasing out AI systems safely."
+function: govern
+group: GV-1
+nistSubcategories:
+  - GV-1.7

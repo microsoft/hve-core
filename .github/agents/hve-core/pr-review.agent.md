@@ -33,6 +33,33 @@ For every PR, consciously assess and document these dimensions:
 
 Follow the Required Phases to manage review phases, update the tracking workspace defined in Tracking Directory Structure, and apply the Markdown Requirements for every generated artifact.
 
+## Accessibility Review Anchoring
+
+Operate in one of two modes based on whether an Accessibility Planner consumer-handoff artifact exists for the PR's target project at `.copilot-tracking/accessibility-plans/{{project_slug}}/active-rules.json`. Detect the mode at the start of Phase 2 (or whenever accessibility-relevant diffs surface) and document the selected mode in the tracking file.
+
+### 🔍 Plan-present branch (active-rules.json exists)
+
+* Load `active-rules.json` and treat its `rules[]` array as the authoritative scope for accessibility comments.
+* Filter the rule set by `surfaceScope` to match the diff's surface (`web`, `mobile`, `content`, `desktop`); ignore rules whose scope does not intersect the change.
+* Every accessibility-related review comment must cite the framework + control id and, where applicable, a CI signal. Use this comment template:
+
+  ```text
+  fails `<frameworkId>:<controlId>` (<short rule name>); CI signal: <linter rule id>
+  ```
+
+  Examples:
+
+  * "fails `wcag-2-2:2.1.1` (Keyboard); CI signal: axe `keyboard` rule failed"
+  * "fails `aria-apg:combobox`; CI signal: axe `aria-required-attr` rule failed"
+
+* ❌ Do not cite suppressed or disabled criteria — by contract they are absent from `active-rules.json`. If a concern falls outside the active set, note it as out-of-scope rather than as a failing rule.
+
+### ⚠️ Plan-absent branch (active-rules.json missing)
+
+* Fall back to generic accessibility callouts: WCAG 2.2 AA contrast, keyboard reach, focus indicators, screen-reader labels, and equivalent platform guidance for non-web surfaces.
+* 💡 Recommend invoking the Accessibility Planner agent in the handoff document so future PRs on this project benefit from anchored citations.
+* ✅ Do not block the PR review on the missing plan; surface the recommendation as an advisory action item.
+
 ## Tracking Directory Structure
 
 All PR review tracking artifacts reside in `.copilot-tracking/pr/review/{{normalized_branch_name}}`.
@@ -368,3 +395,20 @@ Submission checklist:
 * Resume at the earliest phase with outstanding tasks, maintaining the same documentation patterns.
 * Reconfirm instruction matches if file lists changed, updating cached metadata accordingly.
 * When work restarts, summarize the prior findings to re-align with the user before proceeding.
+
+## Sustainability comment anchoring
+
+Mirror the Accessibility Review Anchoring two-branch pattern for sustainability. Detect the mode at the start of Phase 2 (or whenever sustainability-relevant diffs surface) and document the selected mode in the tracking file.
+
+### 🔍 Plan-present branch (active-controls.json exists)
+
+* Load `.copilot-tracking/sustainability-plans/{{project_slug}}/active-controls.json` and treat `controls[]` as the authoritative scope for sustainability comments.
+* Anchor every sustainability comment to a `gsf-sci:*` or `gsf-patterns:*` control id and suffix the comment with: `Estimates are directional; not an audited carbon disclosure.`
+* Do not cite suppressed or disabled controls — by contract they are absent from `active-controls.json`.
+
+### ⚠️ Plan-absent branch (active-controls.json missing)
+
+* Omit sustainability commentary entirely.
+* Recommend invoking the Sustainability Planner agent in the handoff document so future PRs on this project benefit from anchored citations.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

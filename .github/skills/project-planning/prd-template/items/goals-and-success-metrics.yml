@@ -1,0 +1,22 @@
+id: goals-and-success-metrics
+title: Goals and Success Metrics
+description: "Defines measurable objectives and the metrics used to evaluate whether the product succeeds."
+template: |
+  ## Goals and Success Metrics
+
+  Define the primary goals for {{product_name}} and the metrics that indicate success.
+
+  For each goal:
+
+  - State the objective clearly and concisely.
+  - Define at least one measurable success metric with a target value and measurement method.
+  - Link the goal to the problem statement or a business outcome.
+
+  | Goal | Metric | Target | Measurement Method |
+  |---|---|---|---|
+  | | | | |
+
+  {{goals_detail}}
+inputs:
+  - name: goals_detail
+    description: "Expanded goal descriptions, baseline measurements, or metric definitions"

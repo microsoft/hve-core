@@ -1,0 +1,16 @@
+id: cs-safe-preventive
+title: "Control Surface: Safe — Preventive"
+itemKind: criterion
+summary: "Preventive controls for the Safe characteristic: safety guardrails, refusal policies, and mandatory human-in-the-loop checkpoints for high-risk actions."
+characteristic: safe
+controlType: preventive
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Preventive controls reduce the likelihood that the system takes a harmful or
+  hazardous action. Examples include hard-coded safety guardrails, content and
+  action refusal policies for out-of-policy requests, mandatory human-in-the-loop
+  approval checkpoints for high-risk actions, and capability scoping that prevents
+  the agent from invoking dangerous tools.

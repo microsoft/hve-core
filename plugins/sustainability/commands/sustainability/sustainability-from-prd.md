@@ -1,0 +1,1 @@
+../../../../.github/prompts/sustainability/sustainability-from-prd.prompt.md

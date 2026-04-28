@@ -1,0 +1,16 @@
+id: cs-vr-corrective
+title: "Control Surface: Valid and Reliable — Corrective"
+itemKind: criterion
+summary: "Corrective controls for the Valid and Reliable characteristic: rollback to last known-good model, retraining triggers, and hotfix routing for accuracy regressions."
+characteristic: validReliable
+controlType: corrective
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+description: |
+  Corrective controls return the system to an acceptable accuracy and reliability
+  state after a detected regression. Examples include automated rollback to the
+  last known-good model version, retraining triggers wired to drift signals, and
+  hotfix routing that swaps in a fallback rule-based path while a corrected model
+  is rebuilt.

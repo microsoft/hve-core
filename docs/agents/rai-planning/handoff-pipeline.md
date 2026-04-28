@@ -63,6 +63,8 @@ When entering via `from-security-plan` mode, the RAI Planner reads the security 
 
 Phase 6 produces a review summary covering observations across six dimensions. The review summary presents maturity indicators rather than numeric scores, supporting handoff decisions and backlog prioritization.
 
+The structure of the review summary, the dual-platform backlog work-item bodies, and the handoff-summary deliverables are sourced from the `responsible-ai/rai-output-formats` Framework Skill (`.github/skills/responsible-ai/rai-output-formats/`). The agent reads templates keyed to `phase-6-handoff` from that skill's `phaseMap` and renders them with values collected during Phases 1-5. See [Agent Architecture: Framework Skill Discovery](agent-overview#framework-skill-discovery) for the discovery model.
+
 ```mermaid
 flowchart TD
   P1["Phase 1\nAI System Scoping"] --> D1["Standards\nAlignment"]

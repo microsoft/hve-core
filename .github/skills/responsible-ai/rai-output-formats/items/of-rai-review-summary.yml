@@ -1,0 +1,35 @@
+id: of-rai-review-summary
+title: "RAI Review Summary"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-6-handoff
+summary: "Phase 6 narrative summary describing assessment outcomes, characteristic posture, and outstanding decisions."
+tokens:
+  - system_name
+  - assessment_date
+  - depth_tier
+  - characteristic_summary
+  - outstanding_decisions
+  - reviewer_notes
+template: |
+  # RAI Review Summary — {{system_name}}
+
+  **Date:** {{assessment_date}}
+  **Depth Tier:** {{depth_tier}}
+
+  ## Characteristic Posture
+
+  {{characteristic_summary}}
+
+  ## Outstanding Decisions
+
+  {{outstanding_decisions}}
+
+  ## Reviewer Notes
+
+  {{reviewer_notes}}
+description: |
+  Audience profile (technical, executive, compliance, mixed) governs the depth
+  of the characteristic_summary token. Default profile is technical when not
+  specified by user preferences.

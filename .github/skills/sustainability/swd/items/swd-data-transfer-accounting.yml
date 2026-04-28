@@ -1,0 +1,26 @@
+id: swd-data-transfer-accounting
+version: "1.0"
+name: SWD — Data Transfer Accounting
+source: https://sustainablewebdesign.org/estimating-digital-emissions/
+description: Quantify per-visit data transfer across first-visit (uncached) and return-visit (cached) scenarios; feeds the SCI variable E.
+controls:
+  - id: swd-data-transfer-accounting
+    title: Data Transfer Accounting — first-visit and return-visit volumes
+    description: |
+      Measure per-visit data transfer for the first-visit (cold cache) and
+      return-visit (warm cache) scenarios. SWD v4 weights the two scenarios
+      according to declared cache-hit ratios. The output (GB transferred per
+      functional unit R) feeds the SCI variable E via the energy intensity
+      model.
+    group: methodology
+    risk: high
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - heuristic
+      - estimated
+      - deterministic
+    appliesTo:
+      - web
+    references:
+      - https://sustainablewebdesign.org/estimating-digital-emissions/

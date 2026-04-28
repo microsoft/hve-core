@@ -1,0 +1,8 @@
+id: gv-6-2
+title: "GV-6.2: Contingency plans for third-party failures"
+itemKind: criterion
+summary: "Contingency processes are in place to handle failures or incidents in third-party data or AI systems deemed to be high-risk."
+function: govern
+group: GV-6
+nistSubcategories:
+  - GV-6.2

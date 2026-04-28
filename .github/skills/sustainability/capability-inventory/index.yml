@@ -1,0 +1,44 @@
+framework: capability-inventory
+version: "1.0"
+domain: sustainability
+sustainabilityScope: primary
+status: published
+summary: Workload-archetype capability inventory cross-walking sustainability framework controls.
+surfaceFilter:
+  - cloud
+  - web
+  - ml
+  - fleet
+phaseMap:
+  workload-assessment:
+    - archetype-containerized-cloud-service
+    - archetype-static-web-frontend
+    - archetype-interactive-spa
+    - archetype-batch-data-pipeline
+    - archetype-ml-training-job
+    - archetype-ml-inference-service
+    - archetype-iot-fleet
+  standards-mapping:
+    - archetype-containerized-cloud-service
+    - archetype-static-web-frontend
+    - archetype-interactive-spa
+    - archetype-batch-data-pipeline
+    - archetype-ml-training-job
+    - archetype-ml-inference-service
+    - archetype-iot-fleet
+metadata:
+  authority: microsoft/hve-core
+  license: MIT
+  licenseUrl: https://opensource.org/licenses/MIT
+  source: https://github.com/microsoft/hve-core
+  attributionRequired: false
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/microsoft/hve-core/main/LICENSE"
+    sha256: "c7eb8fb4cf893534af823d4aa0fe6fa83a961320375772915fd9b6a21d890d87"
+    declaredLicense: "MIT"
+    status: verified
+governance:
+  owner: "@microsoft/hve-core"
+  reviewCadence: P180D
+  last_reviewed: "2026-04-21"

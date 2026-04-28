@@ -1,0 +1,20 @@
+id: of-characteristic-coverage-table
+title: "NIST Characteristic Coverage Table"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-3-standards-mapping
+summary: "Phase 3 coverage matrix mapping each NIST AI RMF trustworthiness characteristic to applicable subcategories and depth-tier scope."
+tokens:
+  - system_name
+  - coverage_rows
+template: |
+  ## NIST AI RMF Characteristic Coverage — {{system_name}}
+
+  | Characteristic | NIST Subcategories | In Scope | Notes |
+  |----------------|--------------------|----------|-------|
+  {{coverage_rows}}
+description: |
+  Each row maps one of the seven NIST trustworthiness characteristics to the
+  subcategory ids selected for the active depth tier. Out-of-scope rows include
+  the deferral rationale.

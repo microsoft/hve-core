@@ -1,0 +1,30 @@
+id: "2-3-1"
+title: "Three Flashes or Below Threshold"
+itemKind: criterion
+level: "A"
+principle: "2 Operable"
+guideline: "2.3 Seizures and Physical Reactions"
+addedIn: "2.0"
+summary: "Web pages do not contain anything that flashes more than three times in any one second, or the flash is below the general flash and red flash thresholds."
+verificationMode: hybrid
+automatableBy:
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G19"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html"
+  - "https://www.w3.org/TR/WCAG22/"

@@ -1,0 +1,8 @@
+id: ms-4-2
+title: "MS-4.2: Domain expert validation of measurements"
+itemKind: criterion
+summary: "Measurement results regarding AI system trustworthiness in deployment context(s) and across the AI lifecycle are informed by input from domain experts and relevant AI actors to validate whether the system is performing consistently as intended. Results are documented."
+function: measure
+group: MS-4
+nistSubcategories:
+  - MS-4.2

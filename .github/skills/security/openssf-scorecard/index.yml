@@ -1,0 +1,94 @@
+framework: openssf-scorecard
+version: "5"
+summary: 'OpenSSF Scorecard 20 supply-chain security checks scoring repository risk on a 0-10 scale per check.'
+evidenceFormat: shared
+domain: security
+itemKind: control
+status: published
+metadata:
+  authority: OpenSSF
+  license: Apache-2.0
+  licenseUrl: https://www.apache.org/licenses/LICENSE-2.0
+  source: https://github.com/ossf/scorecard
+  attributionRequired: true
+  attributionText: "OpenSSF Scorecard — Copyright OpenSSF, licensed under Apache-2.0."
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/ossf/scorecard/main/LICENSE"
+    sha256: "61324beb8841ff62645c758ff5b121164592ec163056dda34d76a0526a0b3b5e"
+    declaredLicense: "Apache-2.0"
+    status: verified
+phaseMap:
+  standards-mapping:
+    - binary-artifacts
+    - branch-protection
+    - ci-tests
+    - cii-best-practices
+    - code-review
+    - contributors
+    - dangerous-workflow
+    - dependency-update-tool
+    - fuzzing
+    - license
+    - maintained
+    - packaging
+    - pinned-dependencies
+    - sast
+    - sbom
+    - security-policy
+    - signed-releases
+    - token-permissions
+    - vulnerabilities
+    - webhooks
+  gap-analysis:
+    - binary-artifacts
+    - branch-protection
+    - ci-tests
+    - cii-best-practices
+    - code-review
+    - contributors
+    - dangerous-workflow
+    - dependency-update-tool
+    - fuzzing
+    - license
+    - maintained
+    - packaging
+    - pinned-dependencies
+    - sast
+    - sbom
+    - security-policy
+    - signed-releases
+    - token-permissions
+    - vulnerabilities
+    - webhooks
+  backlog-generation:
+    - binary-artifacts
+    - branch-protection
+    - ci-tests
+    - cii-best-practices
+    - code-review
+    - contributors
+    - dangerous-workflow
+    - dependency-update-tool
+    - fuzzing
+    - license
+    - maintained
+    - packaging
+    - pinned-dependencies
+    - sast
+    - sbom
+    - security-policy
+    - signed-releases
+    - token-permissions
+    - vulnerabilities
+    - webhooks
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

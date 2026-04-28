@@ -1,0 +1,40 @@
+id: openssf-scorecard
+version: "1.0"
+name: OpenSSF Scorecard
+controls:
+  - id: branch-protection
+    title: Branch-Protection
+    risk: high
+    assessmentMethod: continuous
+    scoreRange:
+      min: 0
+      max: 10
+    description: Verifies branch protection rules, required reviews, and required status checks. Scorecard scores this check across five tiers.
+    tiers:
+      - id: tier-1
+        criteria: Branch protection enabled on the default branch.
+      - id: tier-2
+        criteria: Force-push and branch deletion blocked on the default branch.
+      - id: tier-3
+        criteria: Required pull request reviews enforced before merge.
+      - id: tier-4
+        criteria: Required status checks enforced; stale review approvals dismissed on new commits.
+      - id: tier-5
+        criteria: Code owner reviews required and protections also applied to release branches.
+    gates:
+      - id: standards-mapping
+        phase: standards-mapping
+        default: pending
+        description: Inspect branch protection settings against each Scorecard tier.
+      - id: gap-analysis
+        phase: gap-analysis
+        default: pending
+        description: Identify the highest unmet tier and document remediation steps.
+      - id: backlog-generation
+        phase: backlog-generation
+        default: pending
+        description: Generate work items per missing tier-level protection.
+    evidenceHints:
+      - ".github/branch-protection.yml"
+      - ".github/CODEOWNERS"
+      - ".github/settings.yml"

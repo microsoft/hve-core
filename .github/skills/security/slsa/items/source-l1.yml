@@ -1,0 +1,30 @@
+id: source-l1
+version: "1.1"
+name: SLSA Source Track Level 1
+source: https://slsa.dev/spec/v1.1/source-requirements
+description: Source is stored in a modern version control system.
+controls:
+  - id: source-l1
+    title: Source L1 — Version controlled
+    description: |
+      Source is stored and tracked in a modern version control system that records
+      revision history and identifies contributors for each change.
+    group: source
+    risk: low
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    gates:
+      - id: version-controlled
+        phase: standards-mapping
+        default: pending
+        description: Source resides in a version control system with full revision history.
+    evidenceHints:
+      - .git/config
+      - .gitattributes
+      - CODEOWNERS
+    references:
+      - https://slsa.dev/spec/v1.1/source-requirements

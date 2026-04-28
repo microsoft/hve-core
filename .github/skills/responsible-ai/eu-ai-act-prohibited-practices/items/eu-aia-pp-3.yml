@@ -1,0 +1,9 @@
+id: eu-aia-pp-3
+title: "Social scoring leading to detrimental or unjustified treatment"
+itemKind: principle
+summary: "Placing on the market, putting into service, or using AI systems for the evaluation or classification of natural persons or groups over a period of time based on their social behaviour or known, inferred, or predicted personal or personality characteristics — where the resulting social score leads to detrimental or unfavourable treatment in social contexts unrelated to the contexts in which the data were originally generated, or to treatment that is unjustified or disproportionate to the social behaviour or its gravity — is prohibited."
+articleRef: "Article 5(1)(c)"
+prohibitionType: social-scoring
+characteristic: "Fair – With Harmful Bias Managed"
+references:
+  - "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"

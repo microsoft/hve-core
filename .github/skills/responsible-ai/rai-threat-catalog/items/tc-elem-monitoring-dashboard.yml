@@ -1,0 +1,27 @@
+id: tc-elem-monitoring-dashboard
+title: "AI Element: Monitoring Dashboard"
+itemKind: criterion
+summary: "Model performance and behavior tracking. Primary RAI concerns are observability and alerting."
+elementType: monitoringDashboard
+kind: element
+characteristics:
+  - explainableInterpretable
+  - validReliable
+nistSubcategories:
+  - MS-2.9
+  - MS-2.5
+dataFlows:
+  - inference-pipeline
+  - feedback-loop
+strideMatrix:
+  componentRef: model-monitoring
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Surfaces telemetry, drift detection, fairness metrics, and alerting for
+  model behavior in production. Threats include silent log gaps, alert
+  suppression or tampering, observability blind spots, and disclosure of
+  sensitive aggregates. Typically maps to the INFRA and BUILD security
+  buckets.

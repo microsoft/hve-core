@@ -1,0 +1,8 @@
+id: mn-3-1
+title: "MN-3.1: Third-party monitoring and controls"
+itemKind: criterion
+summary: "AI risks and benefits from third-party resources are regularly monitored, and risk controls are applied and documented."
+function: manage
+group: MN-3
+nistSubcategories:
+  - MN-3.1

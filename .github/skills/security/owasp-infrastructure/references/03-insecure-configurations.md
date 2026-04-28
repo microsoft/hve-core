@@ -81,3 +81,12 @@ potentially endangering patient care.
 ---
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+
+---
+
+Content derived from works by the OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Modifications: Restructured into agent-consumable reference format with added
+detection and remediation guidance.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

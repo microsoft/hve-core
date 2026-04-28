@@ -1,0 +1,30 @@
+id: "1-2-6"
+title: "Sign Language (Prerecorded)"
+itemKind: criterion
+level: "AAA"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "Sign language interpretation is provided for all prerecorded audio content in synchronized media."
+verificationMode: manual
+automatableBy: []
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G54"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/sign-language-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

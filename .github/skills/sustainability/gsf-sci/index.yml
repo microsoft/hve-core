@@ -1,0 +1,58 @@
+framework: gsf-sci
+version: "1.0"
+summary: 'Green Software Foundation Software Carbon Intensity (SCI) v1.0 anchor bundle.'
+evidenceFormat: shared
+domain: sustainability
+sustainabilityScope: primary
+itemKind: control
+status: published
+surfaceFilter:
+  - cloud
+  - web
+  - ml
+  - fleet
+metadata:
+  authority: "Green Software Foundation"
+  license: CSL-1.0
+  licenseUrl: https://github.com/CommunitySpecification/1.0/blob/main/1._Community_Specification_License-v1.md
+  attributionRequired: true
+  attributionText: "Software Carbon Intensity (SCI) Specification v1.0 — Copyright Green Software Foundation, licensed under the Community Specification License 1.0."
+  source: https://sci.greensoftware.foundation/
+  spec_version: "1.0"
+  framework_revision: "1.0"
+  last_updated: "2026-04-21"
+  redistribution:
+    textVerbatim: true
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://raw.githubusercontent.com/Green-Software-Foundation/sci/main/LICENCE.md"
+    sha256: "886045978307002f71112aa24170fdb5121b5f0722c9c96d846dc0dba1b9d1a8"
+    declaredLicense: "CSL-1.0"
+    status: verified
+phaseMap:
+  standards-mapping:
+    - sci-formula
+    - sci-energy
+    - sci-carbon-intensity
+    - sci-embodied
+    - sci-functional-unit
+    - iso-21031-reference
+  gap-analysis:
+    - sci-formula
+    - sci-energy
+    - sci-carbon-intensity
+    - sci-embodied
+    - sci-functional-unit
+  backlog-generation:
+    - sci-energy
+    - sci-carbon-intensity
+    - sci-embodied
+    - sci-functional-unit
+
+governance:
+  owners:
+    - "@microsoft/hve-core"
+  review_cadence: "P180D"
+  last_reviewed: "2026-04-21"

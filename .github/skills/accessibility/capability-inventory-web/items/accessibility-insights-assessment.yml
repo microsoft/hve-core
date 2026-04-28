@@ -1,0 +1,41 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - Accessibility Insights guided assessment"
+source: https://github.com/microsoft/hve-core
+description: "Microsoft Accessibility Insights guided WCAG 2.x assessment workflow that walks a reviewer through manual checks producing an exportable report."
+controls:
+  - id: accessibility-insights-assessment
+    title: "Accessibility Insights guided assessment"
+    description: "Microsoft Accessibility Insights guided WCAG 2.x assessment workflow that walks a reviewer through manual checks producing an exportable report."
+    group: manual-assessment
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Accessibility Insights guided assessment is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Accessibility Insights guided assessment runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 1-1-1
+        - 1-3-1
+        - 1-4-3
+        - 2-1-1
+        - 2-4-3
+        - 2-4-7
+        - 3-3-1
+        - 4-1-2
+    evidenceHints:
+      - docs/**/assessment*.md
+      - "**/accessibility-insights-assessment*.json"
+    references:
+      - https://accessibilityinsights.io/docs/web/getstarted/assessment/

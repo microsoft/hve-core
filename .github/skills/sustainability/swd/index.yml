@@ -1,0 +1,47 @@
+framework: swd
+version: "4.0"
+domain: sustainability
+sustainabilityScope: adjacent
+status: published
+summary: Sustainable Web Design (SWD) v4 estimating-digital-emissions methodology controls.
+surfaceFilter:
+  - web
+phaseMap:
+  standards-mapping:
+    - swd-page-weight-budget
+    - swd-data-transfer-accounting
+    - swd-energy-intensity-model
+    - swd-carbon-intensity-runtime
+    - swd-methodology-disclosure
+  gap-analysis:
+    - swd-page-weight-budget
+    - swd-data-transfer-accounting
+    - swd-carbon-intensity-runtime
+  backlog-generation:
+    - swd-page-weight-budget
+    - swd-data-transfer-accounting
+metadata:
+  authority: Sustainable Web Design Community
+  license: CC-BY-4.0
+  licenseUrl: https://creativecommons.org/licenses/by/4.0/
+  source: https://sustainablewebdesign.org/digital-carbon-ratings/
+  attributionRequired: true
+  attributionText: |
+    Estimating-digital-emissions methodology adapted from the Sustainable Web
+    Design Community v4 specification under Creative Commons Attribution 4.0
+    International (CC-BY-4.0).
+  redistribution:
+    textVerbatim: false
+    idsAndUrlsOnly: false
+    derivedSummariesPermitted: true
+    embeddedNumericLiterals: false
+  licenseVerification:
+    verifiedAt: "2026-04-23T00:00:00Z"
+    verifiedUrl: "https://sustainablewebdesign.org/"
+    sha256: "cdaac671c4c194a6063e6365f0cdc7a2abebaf8f3548f7d8c132961a769054ee"
+    declaredLicense: "CC-BY-4.0"
+    status: verified
+governance:
+  owner: "@microsoft/hve-core"
+  reviewCadence: P180D
+  last_reviewed: "2026-04-21"

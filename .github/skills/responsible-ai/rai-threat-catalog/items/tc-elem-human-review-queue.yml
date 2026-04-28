@@ -1,0 +1,27 @@
+id: tc-elem-human-review-queue
+title: "AI Element: Human Review Queue"
+itemKind: criterion
+summary: "Human oversight checkpoints. Primary RAI concerns are review coverage and decision documentation."
+elementType: humanReviewQueue
+kind: element
+characteristics:
+  - accountableTransparent
+  - explainableInterpretable
+nistSubcategories:
+  - MS-2.8
+  - MS-2.9
+dataFlows:
+  - inference-pipeline
+  - feedback-loop
+strideMatrix:
+  componentRef: human-review
+gates:
+  - id: security-model
+    phase: phase-4-security-model
+    default: pending
+description: |
+  Queue of automated decisions or outputs routed to human reviewers for
+  oversight, escalation, or override. Threats include review bypass,
+  automation bias degrading reviewer judgement, accountability gaps, and
+  insufficient documentation of human decisions. Typically maps to the
+  IDENTITY and WEBUI security buckets.

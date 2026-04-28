@@ -1,0 +1,31 @@
+id: of-risk-classification-screening
+title: "Risk Classification Screening Output"
+itemKind: document-section
+audience: review
+format: markdown
+phaseHint: phase-2-risk-classification
+summary: "Phase 2 screening output capturing prohibited-uses gate, risk indicators, and assigned depth tier."
+tokens:
+  - system_name
+  - assessment_date
+  - prohibited_uses_status
+  - risk_indicator_table
+  - depth_tier
+  - rationale
+template: |
+  ## Risk Classification Screening — {{system_name}}
+
+  **Date:** {{assessment_date}}
+  **Prohibited Uses Gate:** {{prohibited_uses_status}}
+  **Assigned Depth Tier:** {{depth_tier}}
+
+  ### Risk Indicators
+
+  {{risk_indicator_table}}
+
+  ### Tier Rationale
+
+  {{rationale}}
+description: |
+  Rendered at the close of Phase 2. When the prohibited-uses gate is "blocked",
+  the agent halts and surfaces the gate result without proceeding to Phase 3.

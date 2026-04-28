@@ -1,0 +1,26 @@
+id: to-004
+title: "Tradeoff: Safe vs. Valid and Reliable"
+itemKind: criterion
+summary: "Conservative safety thresholds (abstention, refusal, human-handoff) reduce harmful action rates but also reduce useful coverage; document the safety vs coverage operating point."
+characteristics:
+  - safe
+  - validReliable
+gates:
+  - id: impact-assessment
+    phase: phase-5-impact-assessment
+    default: pending
+    description: Record the chosen operating point and rationale during Phase 5.
+description: |
+  Source: rai-impact-assessment.instructions.md (tradeoffs section, to-004).
+
+  Tradeoff: Safe characteristic versus Valid and Reliable characteristic.
+
+  Mechanism: Conservative safety thresholds (low-confidence abstention, refusal
+  policies, mandatory human handoff for risky inputs) reduce the rate of harmful or
+  incorrect autonomous actions but also reduce the system's useful answer rate and
+  measured task accuracy on the served subset.
+
+  Required documentation: Record the chosen safety thresholds (confidence cutoff,
+  refusal triggers, handoff routing), the resulting abstention rate, the impact on
+  measured accuracy on the served vs deferred subsets, and the rationale for the
+  chosen operating point.

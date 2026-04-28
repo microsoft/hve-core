@@ -1,0 +1,45 @@
+id: cognitive-a11y
+version: "1.0"
+name: "Cognitive Accessibility - Show Progress in Multi-Step Tasks"
+source: https://www.w3.org/WAI/cognitive/
+description: "Multi-step flows render the current step total step count and remaining work so users know where they are."
+controls:
+  - id: coga-progress-indicators
+    title: "Show Progress in Multi-Step Tasks"
+    description: "Multi-step flows render the current step total step count and remaining work so users know where they are."
+    group: structure-navigation
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: scoping
+        default: pending
+        description: "Project commits to applying the Show Progress in Multi-Step Tasks practice."
+      - id: verification
+        phase: review-handoff
+        default: pending
+        description: "Application of Show Progress in Multi-Step Tasks is verified through review or tooling."
+    applicability:
+      discriminator: surface
+      appliesWhen:
+        - web
+        - mobile-web
+        - hybrid-mobile
+        - native
+        - desktop
+        - content
+      naWhen:
+        - voice-only
+      naReason: "Voice-only surfaces use spoken-language guidance instead of written conventions."
+    evidenceHints:
+      - "**/content-style-guide.md"
+      - "**/readability-report.json"
+      - "**/cognitive-audit/*.md"
+    references:
+      - https://www.w3.org/WAI/cognitive/
+      - https://www.nngroup.com/articles/progress-indicators/

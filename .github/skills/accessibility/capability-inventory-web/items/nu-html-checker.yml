@@ -1,0 +1,35 @@
+id: capability-inventory-web
+version: "1.0"
+name: "Web Capability Inventory - Nu HTML Checker validation"
+source: https://github.com/microsoft/hve-core
+description: "W3C Nu HTML Checker validating served markup against HTML5 conformance rules so parsing errors and duplicate ids are caught before they break assistive tech name role value."
+controls:
+  - id: nu-html-checker
+    title: "Nu HTML Checker validation"
+    description: "W3C Nu HTML Checker validating served markup against HTML5 conformance rules so parsing errors and duplicate ids are caught before they break assistive tech name role value."
+    group: static-analysis
+    assessmentMethod: categorical
+    categories:
+      - absent
+      - partial
+      - present
+      - verified
+    risk: medium
+    gates:
+      - id: presence
+        phase: assessment
+        default: pending
+        description: "Nu HTML Checker validation is configured for the surface under review."
+      - id: verification
+        phase: gap-analysis
+        default: pending
+        description: "Nu HTML Checker validation runs in CI or scheduled review and its findings are triaged."
+    mapsTo:
+      wcag-2-2:
+        - 4-1-1
+    evidenceHints:
+      - "**/.vnurc*"
+      - "**/vnu.json"
+    references:
+      - https://validator.w3.org/nu/
+      - https://github.com/validator/validator

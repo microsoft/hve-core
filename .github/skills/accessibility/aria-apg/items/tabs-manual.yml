@@ -1,0 +1,38 @@
+id: "tabs-manual"
+title: "Tabs (Manual Activation) Pattern"
+itemKind: pattern
+summary: "Tab strip where arrow-key navigation moves focus only; user must press Enter or Space to activate the focused tab."
+keyboardModel:
+  - "tabs"
+focusManagement: "roving"
+relatedRoles:
+  - "tablist"
+  - "tab"
+  - "tabpanel"
+requiredStates:
+  - "aria-selected"
+requiredProperties:
+  - "aria-controls"
+  - "aria-labelledby"
+relatedSuccessCriteria:
+  - "wcag-2-2:1-3-1"
+  - "wcag-2-2:2-1-1"
+  - "wcag-2-2:2-4-3"
+  - "wcag-2-2:4-1-2"
+referenceImplementationUrl: "https://www.w3.org/WAI/ARIA/apg/patterns/tabs-manual/"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+  naWhen:
+    []
+evidenceHints:
+  - "**/*.tsx"
+  - "**/*.jsx"
+  - "**/*.vue"
+  - "**/aria-audit/*.json"
+references:
+  - "https://www.w3.org/WAI/ARIA/apg/patterns/tabs-manual/"
+  - "https://www.w3.org/WAI/ARIA/apg/"

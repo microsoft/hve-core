@@ -1,0 +1,32 @@
+id: "1-3-5"
+title: "Identify Input Purpose"
+itemKind: criterion
+level: "AA"
+principle: "1 Perceivable"
+guideline: "1.3 Adaptable"
+addedIn: "2.1"
+summary: "The purpose of each input field collecting information about the user can be programmatically determined when the field serves a purpose identified in the WCAG input purpose taxonomy."
+verificationMode: automated
+automatableBy:
+  - "axe-core-ci"
+  - "lighthouse-a11y-ci"
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H98"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/identify-input-purpose.html"
+  - "https://www.w3.org/TR/WCAG22/"

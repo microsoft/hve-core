@@ -1,0 +1,32 @@
+id: "1-2-2"
+title: "Captions (Prerecorded)"
+itemKind: criterion
+level: "A"
+principle: "1 Perceivable"
+guideline: "1.2 Time-based Media"
+addedIn: "2.0"
+summary: "Captions are provided for all prerecorded audio content in synchronized media, except when the media is itself a media alternative for text."
+verificationMode: hybrid
+automatableBy:
+  - "ibm-equal-access"
+applicability:
+  discriminator: "surface"
+  appliesWhen:
+    - "web"
+    - "mobile-web"
+    - "hybrid-mobile"
+    - "native"
+    - "desktop"
+    - "content"
+  naWhen: []
+techniques:
+  - "https://www.w3.org/WAI/WCAG22/Techniques/general/G93"
+  - "https://www.w3.org/WAI/WCAG22/Techniques/html/H95"
+relatedAriaPatterns: []
+evidenceHints:
+  - "**/axe-report.json"
+  - "**/lighthouse-a11y.json"
+  - "**/wcag-audit/*.md"
+references:
+  - "https://www.w3.org/WAI/WCAG22/Understanding/captions-prerecorded.html"
+  - "https://www.w3.org/TR/WCAG22/"

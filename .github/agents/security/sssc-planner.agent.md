@@ -34,7 +34,9 @@ Phase-based conversational supply chain security planning agent that guides user
 
 ## Startup Announcement
 
-Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+Render the `## SSSC Planning` `[!CAUTION]` block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+
+Every evidence row emitted in assessments, gap analyses, backlog source references, and handoff audit trails follows the canonical row format in #file:../../instructions/shared/evidence-citation.instructions.md.
 
 ## Six-Phase Architecture
 

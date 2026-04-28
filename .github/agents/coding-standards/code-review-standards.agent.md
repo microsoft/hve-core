@@ -158,3 +158,9 @@ When loaded skills cover some but not all file types in the diff, append a note 
 * When a terminal command times out or fails, fall back to the VS Code source control changes view for file listing.
 * If a skill file cannot be read, continue without that skill and add it to the *Skills Unavailable* footer (see also No Skills Found under Special Cases for missing skills).
 * If the diff is partially available (e.g. permission denied on some files), review only the accessible files and note the limitation.
+
+## Sustainability awareness
+
+When `.copilot-tracking/sustainability-plans/{slug}/active-controls.json` exists for the project under review, anchor every sustainability comment to a `gsf-sci:*` or `gsf-patterns:*` control id and suffix the comment with: `Estimates are directional; not an audited carbon disclosure.` When no plan exists, omit sustainability commentary.
+
+Disclaimer: defer to the `## Sustainability Planning` `[!CAUTION]` block in `.github/instructions/shared/disclaimer-language.instructions.md` (section `#sustainability-planning`); do not re-author disclaimer language.

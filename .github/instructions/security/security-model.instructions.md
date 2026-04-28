@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/security-plans/**'
 
 # Security Model
 
-Systematic STRIDE-based threat identification applied per operational bucket. This guidance drives Phase 4 of the security planning workflow, building on bucket analyses from Phase 2 and standards mappings from Phase 3. Each bucket receives a structured threat assessment producing threat tables with risk ratings and mitigation strategies linked to standards controls.
+Systematic STRIDE-based threat identification applied per operational bucket. This guidance drives Phase 4 of the security planning workflow, building on bucket analyses from Phase 2 and standards mappings from Phase 3. Each bucket receives a structured threat assessment producing threat tables with categorical Concern Levels and mitigation strategies linked to standards controls.
 
 ## STRIDE Methodology
 
@@ -86,9 +86,8 @@ Follow this 6-step process for each operational bucket identified in Phase 2.
 1. Review the bucket analysis: components, data flows, integration points, and external dependencies.
 2. For each component, evaluate all 6 STRIDE categories starting with the bucket's priority categories.
 3. Identify threats with clear descriptions of the attack vector and affected component.
-4. Assess likelihood (High/Medium/Low) and impact (High/Medium/Low) collaboratively with the user. Mark unassessed values with ❓ until the user confirms or adjusts.
-5. Calculate the risk rating using the risk matrix defined in the Threat Table Format section.
-6. Propose mitigations linked to specific standards controls from the Phase 3 mappings.
+4. Assign a categorical Concern Level (Low Concern / Moderate Concern / High Concern) per the Concern Level Assessment table below. Mark unassessed values with ❓ until the user confirms or adjusts. Never derive priority from numerical scores; see [`#file:../shared/planner-priority-rules.instructions.md`](../shared/planner-priority-rules.instructions.md).
+5. Propose mitigations linked to specific standards controls from the Phase 3 mappings.
 
 ### Bucket-Specific STRIDE Focus Areas
 
@@ -128,24 +127,27 @@ When `raiEnabled` is true, AI-specific threats in existing buckets use `T-{BUCKE
 ### Table Columns
 
 ```markdown
-| ID          | STRIDE          | Description                           | Component      | Likelihood | Impact | Risk     | Mitigation                       | Standards             |
-|-------------|-----------------|---------------------------------------|----------------|------------|--------|----------|----------------------------------|-----------------------|
-| T-INFRA-001 | Tampering       | Config drift via unauthorized changes | IaC pipeline   | High       | High   | Critical | Immutable infra, drift detection | CIS 5.1, NIST CM-3    |
-| T-DATA-003  | Info Disclosure | Unencrypted PII in backup storage     | Backup service | Medium     | High   | High     | Encrypt backups, access controls | OWASP A02, NIST SC-28 |
+| ID          | STRIDE          | Description                           | Component      | Concern Level    | Mitigation                       | Standards             |
+|-------------|-----------------|---------------------------------------|----------------|------------------|----------------------------------|-----------------------|
+| T-INFRA-001 | Tampering       | Config drift via unauthorized changes | IaC pipeline   | High Concern     | Immutable infra, drift detection | CIS 5.1, NIST CM-3    |
+| T-DATA-003  | Info Disclosure | Unencrypted PII in backup storage     | Backup service | Moderate Concern | Encrypt backups, access controls | OWASP A02, NIST SC-28 |
 ```
 
-### Risk Matrix
+### Concern Level Assessment
 
-Calculate risk from the combination of Likelihood and Impact:
+Assign a categorical concern level to each identified threat based on contextual judgment:
 
-* High x High = **Critical**
-* High x Medium or Medium x High = **High**
-* Medium x Medium = **Medium**
-* Low x any or any x Low = **Low**
+| Concern Level    | Criteria                                                                                |
+|------------------|-----------------------------------------------------------------------------------------|
+| Low Concern      | Threat is theoretical or mitigated by existing controls; no immediate action suggested. |
+| Moderate Concern | Threat is plausible and partially mitigated; additional controls recommended.           |
+| High Concern     | Threat is likely or unmitigated; priority mitigation suggested.                         |
+
+The concern level is a categorical assessment for the team's consideration, not a numerical risk rating. Do not compute composite scores from these levels; priority derivation follows [`#file:../shared/planner-priority-rules.instructions.md`](../shared/planner-priority-rules.instructions.md).
 
 ### Assessment Guidance
 
-Likelihood and Impact are assessed collaboratively with the user during Phase 4 questioning. Use ❓ for unassessed values. Each threat must have at least one mitigation strategy, and each mitigation should reference at least one standards control.
+Concern Level is assigned collaboratively with the user during Phase 4 questioning. Use ❓ for unassessed values. Each threat must have at least one mitigation strategy, and each mitigation should reference at least one standards control.
 
 ## Data Flow Analysis
 
@@ -216,7 +218,7 @@ After analyzing all buckets, produce a security model summary.
 ### Required Summary Contents
 
 * Total threats by STRIDE category (table or list with counts per category)
-* Risk distribution: counts for Critical, High, Medium, and Low ratings
-* Top 5 highest-risk threats across all buckets with threat ID, description, and risk rating
+* Concern Level distribution: counts for Low Concern, Moderate Concern, and High Concern
+* Top 5 highest-concern threats across all buckets with threat ID, description, and Concern Level
 * Unmapped threats: threats without clear standards references or proposed mitigations
 * Coverage gaps: buckets or components where one or more STRIDE categories have no identified threats
