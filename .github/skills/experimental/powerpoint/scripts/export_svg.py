@@ -184,9 +184,7 @@ def export_pdf_to_svg(
         page_numbers = [n for n in slides if 1 <= n <= total_pages]
         skipped = [n for n in slides if n < 1 or n > total_pages]
         for num in skipped:
-            logger.warning(
-                "Slide %d out of range (1-%d), skipping", num, total_pages
-            )
+            logger.warning("Slide %d out of range (1-%d), skipping", num, total_pages)
     else:
         page_numbers = list(range(1, total_pages + 1))
 

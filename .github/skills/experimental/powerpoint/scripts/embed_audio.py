@@ -5,10 +5,15 @@
 Matches audio files to slides by naming convention (slide-001.wav → slide 1)
 and embeds each as an audio shape using python-pptx's add_movie API.
 
-Usage:
-    python embed_audio.py --input deck.pptx --audio-dir voice-over/ --output deck-narrated.pptx
-    python embed_audio.py --input deck.pptx --audio-dir voice-over/ --output deck-narrated.pptx --slides "1,3,5"
-    python embed_audio.py --input deck.pptx --audio-dir voice-over/ --output deck-narrated.pptx -v
+Usage::
+
+    python embed_audio.py --input deck.pptx \
+        --audio-dir voice-over/ --output out.pptx
+    python embed_audio.py --input deck.pptx \
+        --audio-dir voice-over/ --output out.pptx \
+        --slides "1,3,5"
+    python embed_audio.py --input deck.pptx \
+        --audio-dir voice-over/ --output out.pptx -v
 """
 
 import argparse
@@ -175,9 +180,7 @@ def run(args: argparse.Namespace) -> int:
         logger.warning("No slide-NNN.wav files found in %s", audio_dir)
         return EXIT_FAILURE
 
-    logger.info(
-        "Discovered %d audio file(s) in %s", len(audio_map), audio_dir
-    )
+    logger.info("Discovered %d audio file(s) in %s", len(audio_map), audio_dir)
 
     prs = Presentation(str(input_path))
     total_slides = len(prs.slides)

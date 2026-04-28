@@ -6,10 +6,13 @@ Checks edge margins, adjacent element gaps, boundary overflow, and
 title-subtitle clearance. Decorative accent bars (full-width shapes at
 top with height ≤ 0.12") are exempted from margin rules.
 
-Usage:
-    python validate_geometry.py --input slide-deck/presentation.pptx
-    python validate_geometry.py --input deck.pptx --output results.json --report report.md
-    python validate_geometry.py --input deck.pptx --slides "1,3" --margin 0.6 --gap 0.4
+Usage::
+
+    python validate_geometry.py --input deck.pptx
+    python validate_geometry.py --input deck.pptx \
+        --output results.json --report report.md
+    python validate_geometry.py --input deck.pptx \
+        --slides "1,3" --margin 0.6 --gap 0.4
 """
 
 import argparse
@@ -56,12 +59,14 @@ def _shape_label(shape) -> str:
     name = shape.name or "unnamed"
     if hasattr(shape, "text") and shape.text:
         preview = shape.text[:40].replace("\n", " ")
-        return f"{name} (\"{preview}\")"
+        return f'{name} ("{preview}")'
     return name
 
 
 def check_boundary_overflow(
-    shape, slide_w_in: float, slide_h_in: float,
+    shape,
+    slide_w_in: float,
+    slide_h_in: float,
 ) -> list[dict]:
     """Check whether a shape extends beyond slide boundaries."""
     issues: list[dict] = []
@@ -74,30 +79,37 @@ def check_boundary_overflow(
     label = _shape_label(shape)
 
     if right > slide_w_in + 0.01:
-        issues.append({
-            "check_type": "boundary_overflow",
-            "severity": "error",
-            "description": (
-                f"Shape '{label}' right edge ({right:.2f}\") exceeds "
-                f"slide width ({slide_w_in:.2f}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "boundary_overflow",
+                "severity": "error",
+                "description": (
+                    f"Shape '{label}' right edge ({right:.2f}\") exceeds "
+                    f'slide width ({slide_w_in:.2f}")'
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     if bottom > slide_h_in + 0.01:
-        issues.append({
-            "check_type": "boundary_overflow",
-            "severity": "error",
-            "description": (
-                f"Shape '{label}' bottom edge ({bottom:.2f}\") exceeds "
-                f"slide height ({slide_h_in:.2f}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "boundary_overflow",
+                "severity": "error",
+                "description": (
+                    f"Shape '{label}' bottom edge ({bottom:.2f}\") exceeds "
+                    f'slide height ({slide_h_in:.2f}")'
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     return issues
 
 
 def check_edge_margins(
-    shape, slide_w_in: float, slide_h_in: float, margin: float,
+    shape,
+    slide_w_in: float,
+    slide_h_in: float,
+    margin: float,
 ) -> list[dict]:
     """Check whether a shape maintains minimum edge margins."""
     issues: list[dict] = []
@@ -110,45 +122,51 @@ def check_edge_margins(
     label = _shape_label(shape)
 
     if left < margin - 0.01:
-        issues.append({
-            "check_type": "edge_margin",
-            "severity": "warning",
-            "description": (
-                f"Shape '{label}' left ({left:.2f}\") < "
-                f"minimum margin ({margin}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "edge_margin",
+                "severity": "warning",
+                "description": (
+                    f"Shape '{label}' left ({left:.2f}\") < minimum margin ({margin}\")"
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     if top < margin - 0.01:
-        issues.append({
-            "check_type": "edge_margin",
-            "severity": "warning",
-            "description": (
-                f"Shape '{label}' top ({top:.2f}\") < "
-                f"minimum margin ({margin}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "edge_margin",
+                "severity": "warning",
+                "description": (
+                    f"Shape '{label}' top ({top:.2f}\") < minimum margin ({margin}\")"
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     if right > slide_w_in - margin + 0.01:
-        issues.append({
-            "check_type": "edge_margin",
-            "severity": "warning",
-            "description": (
-                f"Shape '{label}' right edge ({right:.2f}\") > "
-                f"slide width - margin ({slide_w_in - margin:.2f}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "edge_margin",
+                "severity": "warning",
+                "description": (
+                    f"Shape '{label}' right edge ({right:.2f}\") > "
+                    f'slide width - margin ({slide_w_in - margin:.2f}")'
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     if bottom > slide_h_in - margin + 0.01:
-        issues.append({
-            "check_type": "edge_margin",
-            "severity": "warning",
-            "description": (
-                f"Shape '{label}' bottom edge ({bottom:.2f}\") > "
-                f"slide height - margin ({slide_h_in - margin:.2f}\")"
-            ),
-            "location": shape.name or "shape",
-        })
+        issues.append(
+            {
+                "check_type": "edge_margin",
+                "severity": "warning",
+                "description": (
+                    f"Shape '{label}' bottom edge ({bottom:.2f}\") > "
+                    f'slide height - margin ({slide_h_in - margin:.2f}")'
+                ),
+                "location": shape.name or "shape",
+            }
+        )
     return issues
 
 
@@ -173,15 +191,17 @@ def check_adjacent_gaps(shapes, gap: float) -> list[dict]:
         if vertical_gap < gap - 0.01 and vertical_gap >= 0:
             label_a = _shape_label(shape_a)
             label_b = _shape_label(shape_b)
-            issues.append({
-                "check_type": "adjacent_gap",
-                "severity": "warning",
-                "description": (
-                    f"Gap between '{label_a}' and '{label_b}' "
-                    f"is {vertical_gap:.2f}\" (minimum {gap}\")"
-                ),
-                "location": f"{shape_a.name or 'shape'}→{shape_b.name or 'shape'}",
-            })
+            issues.append(
+                {
+                    "check_type": "adjacent_gap",
+                    "severity": "warning",
+                    "description": (
+                        f"Gap between '{label_a}' and '{label_b}' "
+                        f'is {vertical_gap:.2f}" (minimum {gap}")'
+                    ),
+                    "location": f"{shape_a.name or 'shape'}→{shape_b.name or 'shape'}",
+                }
+            )
     return issues
 
 
@@ -210,18 +230,19 @@ def check_title_clearance(shapes, clearance: float) -> list[dict]:
         if title_clearance < clearance - 0.01 and title_clearance >= 0:
             label = _shape_label(shape)
             next_label = _shape_label(rects[i + 1][2])
-            issues.append({
-                "check_type": "title_clearance",
-                "severity": "info",
-                "description": (
-                    f"Title '{label}' to '{next_label}' clearance "
-                    f"is {title_clearance:.2f}\" (recommended {clearance}\")"
-                ),
-                "location": (
-                    f"{shape.name or 'title'}→"
-                    f"{rects[i + 1][2].name or 'shape'}"
-                ),
-            })
+            issues.append(
+                {
+                    "check_type": "title_clearance",
+                    "severity": "info",
+                    "description": (
+                        f"Title '{label}' to '{next_label}' clearance "
+                        f'is {title_clearance:.2f}" (recommended {clearance}")'
+                    ),
+                    "location": (
+                        f"{shape.name or 'title'}→{rects[i + 1][2].name or 'shape'}"
+                    ),
+                }
+            )
     return issues
 
 
@@ -245,7 +266,9 @@ def validate_slide_geometry(
 
         if _is_accent_bar(shape, slide_w_in):
             logger.debug(
-                "Slide %d: exempting accent bar '%s'", slide_num, shape.name,
+                "Slide %d: exempting accent bar '%s'",
+                slide_num,
+                shape.name,
             )
             continue
 
@@ -288,8 +311,13 @@ def validate_geometry(
         if slide_filter and slide_num not in slide_filter:
             continue
         slide_result = validate_slide_geometry(
-            slide, slide_num, slide_w_in, slide_h_in,
-            margin=margin, gap=gap, clearance=clearance,
+            slide,
+            slide_num,
+            slide_w_in,
+            slide_h_in,
+            margin=margin,
+            gap=gap,
+            clearance=clearance,
         )
         slides.append(slide_result)
 
@@ -384,17 +412,24 @@ def create_parser() -> argparse.ArgumentParser:
         )
     )
     parser.add_argument(
-        "--input", required=True, type=Path, help="Input PPTX file path",
+        "--input",
+        required=True,
+        type=Path,
+        help="Input PPTX file path",
     )
     parser.add_argument(
         "--slides",
         help="Comma-separated slide numbers to validate (default: all)",
     )
     parser.add_argument(
-        "--output", type=Path, help="Output JSON file path (default: stdout)",
+        "--output",
+        type=Path,
+        help="Output JSON file path (default: stdout)",
     )
     parser.add_argument(
-        "--report", type=Path, help="Output Markdown report file path",
+        "--report",
+        type=Path,
+        help="Output Markdown report file path",
     )
     parser.add_argument(
         "--per-slide-dir",
@@ -420,7 +455,10 @@ def create_parser() -> argparse.ArgumentParser:
         help="Minimum title-subtitle clearance in inches (default: 0.2)",
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging",
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging",
     )
     return parser
 
@@ -452,9 +490,7 @@ def main() -> int:
         args.per_slide_dir.mkdir(parents=True, exist_ok=True)
         for slide_result in results["slides"]:
             slide_num = slide_result.get("slide_number", 0)
-            per_slide_path = (
-                args.per_slide_dir / f"slide-{slide_num:03d}-geometry.json"
-            )
+            per_slide_path = args.per_slide_dir / f"slide-{slide_num:03d}-geometry.json"
             per_slide_json = json.dumps(slide_result, indent=2)
             per_slide_path.write_text(per_slide_json, encoding="utf-8")
             logger.debug("Per-slide geometry results written to %s", per_slide_path)

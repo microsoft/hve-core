@@ -1104,7 +1104,10 @@ def main():
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Validate content without building PPTX (parse YAML, check images, validate scripts)",
+        help=(
+            "Validate content without building PPTX"
+            " (parse YAML, check images, validate scripts)"
+        ),
     )
     args = parser.parse_args()
 
@@ -1141,9 +1144,17 @@ def main():
                         extra_status = " | extra: skipped"
                 # Check image references
                 images = slide_dir / "images"
-                img_count = len(list(images.glob("*.png"))) + len(list(images.glob("*.jpg"))) if images.exists() else 0
+                img_count = (
+                    len(list(images.glob("*.png"))) + len(list(images.glob("*.jpg")))
+                    if images.exists()
+                    else 0
+                )
                 img_status = f" | {img_count} images" if img_count else ""
-                print(f"  Slide {num:03d}: {title} [{notes_status}{extra_status}{img_status}]")
+                status_line = (
+                    f"  Slide {num:03d}: {title}"
+                    f" [{notes_status}{extra_status}{img_status}]"
+                )
+                print(status_line)
             except Exception as exc:
                 print(f"  Slide {num:03d}: ❌ YAML parse error: {exc}")
                 errors += 1

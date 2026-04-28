@@ -157,9 +157,7 @@ def process_directory(src_dir: Path, dest_dir: Path, color_map: dict[str, str]) 
             process_file(entry, dest_entry, color_map)
 
 
-def update_style_metadata(
-    style_path: Path, theme_id: str, label: str
-) -> None:
+def update_style_metadata(style_path: Path, theme_id: str, label: str) -> None:
     """Patch theme name and append label to title in style.yaml."""
     if not style_path.exists():
         return
@@ -167,16 +165,17 @@ def update_style_metadata(
     # Update theme name field
     text = re.sub(
         r'(name:\s*")[^"]*(")',
-        rf'\g<1>{theme_id}\2',
+        rf"\g<1>{theme_id}\2",
         text,
         count=1,
     )
+
     # Append theme label to title when not already present
     def _append_label(m: re.Match) -> str:
         prefix, title, suffix = m.group(1), m.group(2), m.group(3)
         if label in title:
             return m.group(0)
-        return f'{prefix}{title} ({label}){suffix}'
+        return f"{prefix}{title} ({label}){suffix}"
 
     text = re.sub(
         r'(title:\s*")([^"]*?)(")',
@@ -239,9 +238,7 @@ def run(args: argparse.Namespace) -> int:
     deck_name = content_dir.parent.name
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    logger.info(
-        "Generating %d themed variant(s) for '%s' ...", len(themes), deck_name
-    )
+    logger.info("Generating %d themed variant(s) for '%s' ...", len(themes), deck_name)
 
     for theme_id, theme_config in themes.items():
         generate_theme(content_dir, output_dir, deck_name, theme_id, theme_config)
