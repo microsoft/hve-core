@@ -470,3 +470,7 @@ dependency-pinning-artifacts/
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
+
+# devcontainer
+/.gitconfig.global
+/.gitconfig.local
