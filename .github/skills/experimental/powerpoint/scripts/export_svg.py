@@ -129,13 +129,9 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
         )
         logger.debug("LibreOffice stdout: %s", result.stdout)
     except subprocess.CalledProcessError as e:
-        raise LibreOfficeError(
-            f"LibreOffice conversion failed: {e.stderr}"
-        ) from e
+        raise LibreOfficeError(f"LibreOffice conversion failed: {e.stderr}") from e
     except FileNotFoundError as e:
-        raise LibreOfficeError(
-            f"LibreOffice executable not found: {soffice}"
-        ) from e
+        raise LibreOfficeError(f"LibreOffice executable not found: {soffice}") from e
 
     pdf_name = pptx_path.stem + ".pdf"
     pdf_path = output_dir / pdf_name

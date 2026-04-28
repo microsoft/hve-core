@@ -102,9 +102,7 @@ class TestRemapHexInText:
     def test_chain_remapping_avoided(self):
         """Ensure A->B and B->C produces B, not C (single-pass)."""
         text = "#AAAAAA"
-        result = remap_hex_in_text(
-            text, {"#AAAAAA": "#BBBBBB", "#BBBBBB": "#CCCCCC"}
-        )
+        result = remap_hex_in_text(text, {"#AAAAAA": "#BBBBBB", "#BBBBBB": "#CCCCCC"})
         assert result == "#BBBBBB"
 
     def test_empty_map(self):
