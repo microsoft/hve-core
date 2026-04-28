@@ -2,7 +2,7 @@
 title: Governance
 description: Project governance model, roles, decision-making processes, and contribution authority for HVE Core
 author: HVE Core Team
-ms.date: 2026-02-07
+ms.date: 2026-04-25
 ms.topic: reference
 keywords:
   - governance
@@ -10,7 +10,7 @@ keywords:
   - roles
   - maintainers
   - contributors
-estimated_reading_time: 5
+estimated_reading_time: 8
 ---
 
 HVE Core uses a liberal contribution model where active contributors are recognized for current work. Microsoft maintains stewardship of the project while welcoming community contributions and leadership.
@@ -28,14 +28,14 @@ This project operates under a corporate-sponsored maintainer model:
 
 The following matrix summarizes capabilities by role:
 
-| Capability             | Maintainer | Triage | Contributor |
-|:-----------------------|:----------:|:------:|:-----------:|
-| Code review            |     ✅      |   ✅    |      ✅      |
-| Merge pull requests    |     ✅      |   ❌    |      ❌      |
-| Release management     |     ✅      |   ❌    |      ❌      |
-| Architecture decisions |     ✅      | Advise |   Propose   |
-| Issue triage           |     ✅      |   ✅    |      ❌      |
-| Label management       |     ✅      |   ✅    |      ❌      |
+| Capability             | Maintainer | SIG Chair | Triage | Contributor |
+|:-----------------------|:----------:|:---------:|:------:|:-----------:|
+| Code review            |     ✅      |  Advise   |   ✅    |      ✅      |
+| Merge pull requests    |     ✅      |  Advise   |   ❌    |      ❌      |
+| Release management     |     ✅      |     ❌     |   ❌    |      ❌      |
+| Architecture decisions |     ✅      |  Advise   | Advise |   Propose   |
+| Issue triage           |     ✅      |  Advise   |   ✅    |      ❌      |
+| Label management       |     ✅      |     ❌     |   ✅    |      ❌      |
 
 ### Maintainers
 
@@ -48,7 +48,34 @@ Maintainers guide project direction, manage releases, and resolve conflicts.
 | Community health    | Enforce code of conduct and foster inclusive participation  |
 | Access management   | Grant and revoke repository permissions                     |
 
-Current maintainers are members of the [@microsoft/edge-ai-core-dev](https://github.com/orgs/microsoft/teams/edge-ai-core-dev) team.
+The current maintainer roster is published in [.github/MAINTAINERS.md](.github/MAINTAINERS.md). Membership in the [@microsoft/edge-ai-core-dev](https://github.com/orgs/microsoft/teams/edge-ai-core-dev) team backs repository permissions.
+
+#### Maintainer Continuity and Quorum
+
+The active maintainer roster maintains a minimum of three members. Maintainer status is
+earned through sustained contribution and is added as the bar described in Role
+Progression is met; there is no upper cap on the number of maintainers.
+
+If a maintainer takes a Leave of Absence (LOA), is otherwise unable to serve, or the
+active roster would drop below three, the remaining maintainers vote under the
+Governance-tier decision rules (consensus + one-week comment window) to promote a
+contributor to **Maintainer Pro Tem**.
+
+A Maintainer Pro Tem holds full maintainer authority and serves until the earlier of:
+
+1. Three months elapsed since promotion, or
+2. The LOA maintainer returning to active service.
+
+At the end of the pro tem term, the pro tem either steps down, is reaffirmed as a
+permanent maintainer under the standard Role Progression rules if their contribution
+record qualifies, or, by re-vote of the remaining maintainers, has the pro tem term
+extended for one additional three-month period if the original LOA continues.
+
+Reaffirmation requires an explicit vote of the remaining maintainers under
+Governance-tier rules. The vote process and discussion are conducted privately; the
+**outcome** (promotion confirmed, pro tem ended, or term extended) is announced
+publicly in the `Maintainers` GitHub Discussions category and reflected in
+`MAINTAINERS.md`.
 
 ### Triage Contributors
 
@@ -70,6 +97,47 @@ Contributors improve the project through code, documentation, and community enga
 | Documentation           | Improve guides, fix errors, add examples                     |
 | Issue reporting         | Report bugs with reproduction steps and suggest enhancements |
 | Community participation | Engage in discussions and help other users                   |
+
+## Special Interest Groups
+
+A Special Interest Group (SIG) is an artifact-owning team that takes responsibility for a defined surface of the repository (directories, collections, and instructional content). Each SIG operates under a charter and is attached to [.github/CODEOWNERS](.github/CODEOWNERS) once its GitHub Team is provisioned.
+
+| SIG                                                                 | Owned Surface                                                                                                              |
+|:--------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
+| [SIG Engineering](docs/community/sigs/sig-engineering/CHARTER.md)   | Build, scripts, packaging, plugin generation, CI workflows, and backlog/intake/triage instruction surface.                 |
+| [SIG Standards](docs/community/sigs/sig-standards/CHARTER.md)       | Coding standards, prompt-builder standards, agent/prompt/instruction information architecture, and documentation style.    |
+| [SIG Security](docs/community/sigs/sig-security/CHARTER.md)         | Security review, threat modeling, OWASP skills, supply-chain security, CI hardening, dependency pinning, and scorecards.   |
+| [SIG RAI](docs/community/sigs/sig-rai/CHARTER.md)                   | Responsible AI planning artifacts and review rubric.                                                                       |
+| [SIG Data Science](docs/community/sigs/sig-data-science/CHARTER.md) | Data Science collection, notebook and Python skill conventions, and data-handling guidance.                                |
+| [SIG Emerging AI](docs/community/sigs/sig-emerging-ai/CHARTER.md)   | Experimental agents, prompts, skills, and collections (incubation surface that promotes proven patterns to receiving SIG). |
+
+Full charters live under [docs/community/sigs/](docs/community/sigs/README.md).
+
+### Chair Recruitment
+
+SIG chairs are recruited in two phases. Phase 0 seeds chairs internally from the active maintainer pool to bootstrap each SIG. Phase 1 opens a public call inviting non-maintainer contributors who have demonstrated sustained contribution to the owned surface.
+
+Eligibility:
+
+* Candidate is not a current maintainer.
+* Candidate has demonstrated prior contribution to the SIG's owned surface (code, review, documentation, or triage).
+* Candidate declares any conflicts of interest in the charter pull request.
+
+Terms and onboarding:
+
+* Chair term: 12 months, renewable once for a maximum of 24 consecutive months.
+* 6-month cooldown before a former chair may be re-nominated for the same SIG.
+* Onboarding: (1) charter PR opened, (2) COI declaration recorded, (3) chair listed in `MAINTAINERS.md` and the SIG charter, (4) repository team membership granted, (5) public announcement in the `Maintainers` GitHub Discussions category.
+
+Removal:
+
+* Voluntary step-down at any time.
+* Inactivity removal after 90 days of no SIG activity.
+* For-cause removal by Governance-tier vote of the remaining maintainers.
+
+### Working Groups (Deferred)
+
+Working Groups (WGs) may be added through a future amendment to this document. The structural charter template, sponsoring-SIG mechanic, and chair-eligibility rules will mirror those defined for SIGs above.
 
 ## Decision-Making Process
 
@@ -105,6 +173,20 @@ Modifications to this governance document or project policies:
 
 * Require consensus among active maintainers
 * Allow one-week comment period for community input
+
+### Public Activity
+
+All SIG activity (design proposals, decision logs, scope debates, and routine
+deliberation) SHALL occur in public channels (GitHub Discussions, public issues,
+public PRs) wherever possible. Private deliberation is permitted only for:
+
+1. Security disclosures handled under `SECURITY.md`,
+2. Personnel matters (e.g., maintainer pro tem and reaffirmation votes), and
+3. Pre-publication coordination with Microsoft stewardship.
+
+For private deliberations, the resulting **decision** is published in the appropriate
+public channel (Discussions category, `MAINTAINERS.md`, or `GOVERNANCE.md` amendment)
+even when the deliberation itself remains private.
 
 ## Role Progression
 
