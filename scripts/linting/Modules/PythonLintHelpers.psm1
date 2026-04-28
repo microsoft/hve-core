@@ -6,6 +6,8 @@
 # Purpose: Shared helper functions for Python lint and lint-fix wrappers
 # Author: HVE Core Team
 
+#Requires -Version 7.0
+
 Import-Module (Join-Path $PSScriptRoot "../../lib/Modules/CIHelpers.psm1") -Force
 
 function Get-PythonSkill {

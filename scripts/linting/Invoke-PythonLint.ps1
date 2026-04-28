@@ -4,9 +4,10 @@
 #
 # Invoke-PythonLint.ps1
 #
-# Purpose: Read-only Python lint runner. Discovers Python skills via
-#          pyproject.toml and invokes `ruff check` against each. Does not
-#          modify source files; intended for CI gating.
+# Purpose: Python lint runner. Discovers Python skills via pyproject.toml and
+#          invokes ruff against each. Defaults to read-only `ruff check` for CI
+#          gating. With `-Fix`, applies `ruff check --fix` followed by
+#          `ruff format` (mutates source; intended for local developer use).
 # Author: HVE Core Team
 
 #Requires -Version 7.0
@@ -17,7 +18,10 @@ param(
     [string]$RepoRoot = (Get-Location).Path,
 
     [Parameter(Mandatory = $false)]
-    [string]$OutputPath
+    [string]$OutputPath,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Fix
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,7 +38,10 @@ function Invoke-PythonLint {
         [string]$RepoRoot,
 
         [Parameter(Mandatory = $false)]
-        [string]$OutputPath
+        [string]$OutputPath,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Fix
     )
 
     Push-Location $RepoRoot
@@ -59,7 +66,11 @@ function Invoke-PythonLint {
         }
 
         foreach ($skillPath in $pythonSkills) {
-            Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
+            if ($Fix) {
+                Write-Host "`nRunning ruff --fix and ruff format in $skillPath..." -ForegroundColor Cyan
+            } else {
+                Write-Host "`nRunning ruff in $skillPath..." -ForegroundColor Cyan
+            }
 
             Push-Location $skillPath
             try {
@@ -72,28 +83,69 @@ function Invoke-PythonLint {
                     continue
                 }
 
-                $output = & $ruffCmd check . 2>&1
-                $exitCode = $LASTEXITCODE
+                if ($Fix) {
+                    # Step 1: autofix lint rules
+                    $fixOutput = & $ruffCmd check . --fix 2>&1
+                    $fixExit = $LASTEXITCODE
 
-                $result = @{
-                    path = $skillPath
-                    passed = ($exitCode -eq 0)
-                    output = $output | Out-String
-                }
+                    # Step 2: apply formatter (issue #886 acceptance criterion)
+                    $formatOutput = & $ruffCmd format . 2>&1
+                    $formatExit = $LASTEXITCODE
 
-                $results.details += $result
-                $results.skillsChecked++
+                    $combinedOutput = (@($fixOutput) + @($formatOutput)) | Out-String
+                    $passed = ($fixExit -eq 0 -and $formatExit -eq 0)
 
-                if ($exitCode -ne 0) {
-                    Write-Host "$output" -ForegroundColor Red
-                    Write-Host '❌ Linting issues found' -ForegroundColor Red
-                    $results.success = $false
-                    $results.errors += $skillPath
-                } else {
-                    if ($output) {
-                        Write-Host "$output"
+                    $result = @{
+                        path = $skillPath
+                        passed = $passed
+                        output = $combinedOutput
+                        fixExitCode = $fixExit
+                        formatExitCode = $formatExit
                     }
-                    Write-Host '✓ No linting issues' -ForegroundColor Green
+
+                    $results.details += $result
+                    $results.skillsChecked++
+
+                    if (-not $passed) {
+                        Write-Host "$combinedOutput" -ForegroundColor Red
+                        if ($fixExit -ne 0) {
+                            Write-Host '❌ Unfixable linting issues remain' -ForegroundColor Red
+                        }
+                        if ($formatExit -ne 0) {
+                            Write-Host '❌ ruff format failed' -ForegroundColor Red
+                        }
+                        $results.success = $false
+                        $results.errors += $skillPath
+                    } else {
+                        if ($combinedOutput.Trim()) {
+                            Write-Host "$combinedOutput"
+                        }
+                        Write-Host '✓ Autofix and format complete' -ForegroundColor Green
+                    }
+                } else {
+                    $output = & $ruffCmd check . 2>&1
+                    $exitCode = $LASTEXITCODE
+
+                    $result = @{
+                        path = $skillPath
+                        passed = ($exitCode -eq 0)
+                        output = $output | Out-String
+                    }
+
+                    $results.details += $result
+                    $results.skillsChecked++
+
+                    if ($exitCode -ne 0) {
+                        Write-Host "$output" -ForegroundColor Red
+                        Write-Host '❌ Linting issues found' -ForegroundColor Red
+                        $results.success = $false
+                        $results.errors += $skillPath
+                    } else {
+                        if ($output) {
+                            Write-Host "$output"
+                        }
+                        Write-Host '✓ No linting issues' -ForegroundColor Green
+                    }
                 }
             } catch {
                 Write-Host "Error running ruff: $_" -ForegroundColor Red
@@ -104,7 +156,8 @@ function Invoke-PythonLint {
             }
         }
 
-        $resolvedPath = Write-PythonLintResults -Results $results -RepoRoot $RepoRoot -OutputPath $OutputPath -DefaultFileName 'python-lint-results.json'
+        $defaultFile = if ($Fix) { 'python-lint-fix-results.json' } else { 'python-lint-results.json' }
+        $resolvedPath = Write-PythonLintResults -Results $results -RepoRoot $RepoRoot -OutputPath $OutputPath -DefaultFileName $defaultFile
         Write-Host "📊 Results written to: $resolvedPath" -ForegroundColor Cyan
 
         return $results
@@ -119,13 +172,28 @@ function Invoke-PythonLint {
 
 # Don't run main logic if dot-sourced for testing
 if ($MyInvocation.InvocationName -ne '.') {
-    $result = Invoke-PythonLint -RepoRoot $RepoRoot -OutputPath $OutputPath
-    
-    if ($result.success) {
-        Write-Host "`n✅ All Python skills passed linting" -ForegroundColor Green
-        exit 0
-    } else {
-        Write-Host "`n❌ Linting completed with errors" -ForegroundColor Red
+    try {
+        $result = Invoke-PythonLint -RepoRoot $RepoRoot -OutputPath $OutputPath -Fix:$Fix
+
+        if ($result.success) {
+            if ($Fix) {
+                Write-Host "`n✅ Python lint autofix completed successfully" -ForegroundColor Green
+            } else {
+                Write-Host "`n✅ All Python skills passed linting" -ForegroundColor Green
+            }
+            exit 0
+        } else {
+            if ($Fix) {
+                Write-Host "`n❌ Python lint autofix completed with unfixable errors" -ForegroundColor Red
+            } else {
+                Write-Host "`n❌ Linting completed with errors" -ForegroundColor Red
+            }
+            exit 1
+        }
+    }
+    catch {
+        Write-CIAnnotation -Level 'Error' -Message $_.Exception.Message
+        Write-Error -ErrorAction Continue "Invoke-PythonLint failed: $($_.Exception.Message)"
         exit 1
     }
 }

@@ -35,7 +35,7 @@
     "validate:skills": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-SkillStructure.ps1' -WarningsAsErrors\"",
     "validate:ai-artifacts": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-PlannerArtifacts.ps1'\"",
     "lint:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -OutputPath logs/python-lint-results.json",
-    "lint:py:fix": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLintFix.ps1 -OutputPath logs/python-lint-fix-results.json",
+    "lint:py:fix": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonLint.ps1 -Fix -OutputPath logs/python-lint-fix-results.json",
     "test:py": "pwsh -NoProfile -File ./scripts/linting/Invoke-PythonTests.ps1 -OutputPath logs/python-test-results.json",
     "plugin:postprocess": "markdownlint-cli2 \"plugins/**/*.md\" \"collections/*.md\" --fix && markdown-table-formatter \"plugins/**/*.md\" && markdown-table-formatter \"collections/*.md\"",
     "plugin:generate": "pwsh -File scripts/plugins/Generate-Plugins.ps1 && npm run plugin:postprocess",
