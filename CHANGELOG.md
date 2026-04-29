@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [3.4.0](https://github.com/microsoft/hve-core/compare/hve-core-v3.3.101...hve-core-v3.4.0) (2026-04-29)
+
+
+### ✨ Features
+
+* **agents:** add Task Challenger adversarial questioning agent ([#1315](https://github.com/microsoft/hve-core/issues/1315)) ([a9014c9](https://github.com/microsoft/hve-core/commit/a9014c95050aabfcf19a6c1ac8c79bd2ba0a6176))
+* **scripts:** add lint:py:fix to apply ruff autofixes across Python skills ([#1450](https://github.com/microsoft/hve-core/issues/1450)) ([2b6dca7](https://github.com/microsoft/hve-core/commit/2b6dca76134908614d7efa362d7fc4b593a99186))
+* **scripts:** add structured JSON log output to Validate-Marketplace.ps1 ([#1430](https://github.com/microsoft/hve-core/issues/1430)) ([ec2aa53](https://github.com/microsoft/hve-core/commit/ec2aa5308c0adc3d21d66bc7ff1ebb57f003ecd8))
+* **skills:** expand fuzz_has_formatting_variation to cover all formatting properties ([#1143](https://github.com/microsoft/hve-core/issues/1143)) ([#1296](https://github.com/microsoft/hve-core/issues/1296)) ([d51b4d3](https://github.com/microsoft/hve-core/commit/d51b4d3f04738b98bccce5b439a71a7f43194f41))
+
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump markdownlint-cli2 from 0.22.0 to 0.22.1 in the npm-dependencies group ([#1452](https://github.com/microsoft/hve-core/issues/1452)) ([5440396](https://github.com/microsoft/hve-core/commit/5440396fcf328db0b9d44e58225a065db23d7e91))
+* **deps:** bump the github-actions group with 3 updates ([#1453](https://github.com/microsoft/hve-core/issues/1453)) ([a3ee84e](https://github.com/microsoft/hve-core/commit/a3ee84e308e09649769e12ba6094f30eb89c9e29))
+
 ## [3.2.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.1...hve-core-v3.2.2) (2026-03-23)
 
 
