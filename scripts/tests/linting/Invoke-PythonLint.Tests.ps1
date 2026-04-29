@@ -31,7 +31,7 @@ AfterAll {
 Describe 'Invoke-PythonLint Parameter Validation' -Tag 'Unit' {
     Context 'RepoRoot parameter' {
         BeforeEach {
-            Mock Get-ChildItem { @() }
+            Mock Get-PythonSkill { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
             Mock Push-Location {}
             Mock Pop-Location {}
@@ -46,7 +46,7 @@ Describe 'Invoke-PythonLint Parameter Validation' -Tag 'Unit' {
 
     Context 'OutputPath parameter' {
         BeforeEach {
-            Mock Get-ChildItem { @() }
+            Mock Get-PythonSkill { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
             Mock Push-Location {}
             Mock Pop-Location {}
@@ -68,12 +68,7 @@ Describe 'ruff Tool Availability' -Tag 'Unit' {
         BeforeEach {
             Mock Push-Location {}
             Mock Pop-Location {}
-            Mock Get-ChildItem {
-                @([PSCustomObject]@{
-                    FullName = (Join-Path $TestDrive 'skill1/pyproject.toml')
-                    Directory = [PSCustomObject]@{ FullName = (Join-Path $TestDrive 'skill1') }
-                })
-            }
+            Mock Get-PythonSkill { @((Join-Path $TestDrive 'skill1')) }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'ruff' }
         }
 
@@ -97,7 +92,7 @@ Describe 'ruff Tool Availability' -Tag 'Unit' {
         BeforeEach {
             Mock Push-Location {}
             Mock Pop-Location {}
-            Mock Get-ChildItem { @() }
+            Mock Get-PythonSkill { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
         }
 
@@ -116,7 +111,7 @@ Describe 'Python Skill Discovery' -Tag 'Unit' {
         BeforeEach {
             Mock Push-Location {}
             Mock Pop-Location {}
-            Mock Get-ChildItem { @() }
+            Mock Get-PythonSkill { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
         }
 
@@ -137,12 +132,7 @@ Describe 'Python Skill Discovery' -Tag 'Unit' {
 
         It 'Discovers skills via pyproject.toml' {
             $skillDir = Join-Path $TestDrive 'skill1'
-            Mock Get-ChildItem {
-                @([PSCustomObject]@{
-                    FullName = (Join-Path $skillDir 'pyproject.toml')
-                    Directory = [PSCustomObject]@{ FullName = $skillDir }
-                })
-            }
+            Mock Get-PythonSkill { @($skillDir) }
 
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.skillsChecked | Should -Be 1
@@ -151,30 +141,15 @@ Describe 'Python Skill Discovery' -Tag 'Unit' {
         It 'Discovers multiple skills' {
             $skill1Dir = Join-Path $TestDrive 'skill1'
             $skill2Dir = Join-Path $TestDrive 'skill2'
-            Mock Get-ChildItem {
-                @(
-                    [PSCustomObject]@{
-                        FullName = (Join-Path $skill1Dir 'pyproject.toml')
-                        Directory = [PSCustomObject]@{ FullName = $skill1Dir }
-                    },
-                    [PSCustomObject]@{
-                        FullName = (Join-Path $skill2Dir 'pyproject.toml')
-                        Directory = [PSCustomObject]@{ FullName = $skill2Dir }
-                    }
-                )
-            }
+            Mock Get-PythonSkill { @($skill1Dir, $skill2Dir) }
 
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.skillsChecked | Should -Be 2
         }
 
         It 'Excludes node_modules from discovery' {
-            Mock Get-ChildItem {
-                @([PSCustomObject]@{
-                    FullName = (Join-Path $TestDrive 'node_modules/pkg/pyproject.toml')
-                    Directory = [PSCustomObject]@{ FullName = (Join-Path $TestDrive 'node_modules/pkg') }
-                })
-            }
+            # Get-PythonSkill applies the node_modules filter; mock returns post-filter result.
+            Mock Get-PythonSkill { @() }
 
             $result = Invoke-PythonLint -RepoRoot $TestDrive
             $result.skillsChecked | Should -Be 0
@@ -195,12 +170,7 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
-        Mock Get-ChildItem {
-            @([PSCustomObject]@{
-                FullName = (Join-Path $script:SkillDir 'pyproject.toml')
-                Directory = [PSCustomObject]@{ FullName = $script:SkillDir }
-            })
-        }
+        Mock Get-PythonSkill { @($script:SkillDir) }
     }
 
     Context 'Lint passes' {
@@ -260,6 +230,32 @@ Describe 'Ruff Lint Execution' -Tag 'Unit' {
             $result.errors | Should -Not -BeNullOrEmpty
         }
     }
+
+    Context 'Fix mode with -Fix switch' {
+        BeforeEach {
+            Mock ruff { $global:LASTEXITCODE = 0; '' }
+        }
+
+        It 'Invokes ruff with --fix argument' {
+            Invoke-PythonLint -Fix -RepoRoot $TestDrive
+            Should -Invoke ruff -ParameterFilter { $args -contains '--fix' }
+        }
+
+        It 'Invokes ruff with check subcommand' {
+            Invoke-PythonLint -Fix -RepoRoot $TestDrive
+            Should -Invoke ruff -ParameterFilter { $args -contains 'check' }
+        }
+
+        It 'Invokes ruff with format subcommand' {
+            Invoke-PythonLint -Fix -RepoRoot $TestDrive
+            Should -Invoke ruff -ParameterFilter { $args -contains 'format' }
+        }
+
+        It 'Records formatExitCode in skill detail' {
+            $result = Invoke-PythonLint -Fix -RepoRoot $TestDrive
+            $result.details[0].formatExitCode | Should -Be 0
+        }
+    }
 }
 
 #endregion
@@ -275,12 +271,7 @@ Describe 'Output Persistence' -Tag 'Unit' {
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'ruff' } } -ParameterFilter { $Name -eq 'ruff' }
-        Mock Get-ChildItem {
-            @([PSCustomObject]@{
-                FullName = (Join-Path $script:OutputSkillDir 'pyproject.toml')
-                Directory = [PSCustomObject]@{ FullName = $script:OutputSkillDir }
-            })
-        }
+        Mock Get-PythonSkill { @($script:OutputSkillDir) }
         Mock ruff { $global:LASTEXITCODE = 0; '' }
     }
 

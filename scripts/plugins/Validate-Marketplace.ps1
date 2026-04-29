@@ -14,17 +14,84 @@
     in source values.
 
 .EXAMPLE
-    ./Validate-Marketplace.ps1
+    ./Validate-Marketplace.ps1 -OutputPath 'logs/marketplace-validation-results.json'
 #>
 
 [CmdletBinding()]
-param()
+param(
+    [Parameter(Mandatory = $false)]
+    [string]$OutputPath = 'logs/marketplace-validation-results.json'
+)
 
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Validation Helpers
+
+function Write-MarketplaceValidationReport {
+    <#
+    .SYNOPSIS
+        Writes marketplace validation results to a JSON report.
+
+    .PARAMETER RepoRoot
+        Absolute path to the repository root directory.
+
+    .PARAMETER OutputPath
+        Output report path, absolute or relative to RepoRoot.
+
+    .PARAMETER ErrorCount
+        Total number of validation errors.
+
+    .PARAMETER Results
+        Validation results grouped by plugin or manifest scope.
+
+    .OUTPUTS
+        [void]
+
+    .EXAMPLE
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath 'logs/marketplace-validation-results.json' -ErrorCount 0 -Results @()
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = 'logs/marketplace-validation-results.json',
+
+        [Parameter(Mandatory = $true)]
+        [int]$ErrorCount,
+
+        [Parameter(Mandatory = $false)]
+        [array]$Results = @()
+    )
+
+    if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+        return
+    }
+
+    $resolvedOutputPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) {
+        $OutputPath
+    }
+    else {
+        Join-Path -Path $RepoRoot -ChildPath $OutputPath
+    }
+
+    $outputDirectory = Split-Path -Path $resolvedOutputPath -Parent
+    if (-not [string]::IsNullOrWhiteSpace($outputDirectory) -and -not (Test-Path -Path $outputDirectory -PathType Container)) {
+        New-Item -Path $outputDirectory -ItemType Directory -Force | Out-Null
+    }
+
+    $report = [ordered]@{
+        Timestamp  = (Get-Date).ToUniversalTime().ToString('o')
+        ErrorCount = $ErrorCount
+        Results    = @($Results)
+    }
+
+    $report | ConvertTo-Json -Depth 10 | Set-Content -Path $resolvedOutputPath -Encoding UTF8
+}
 
 function Test-PluginSourceDirectory {
     <#
@@ -112,20 +179,32 @@ function Invoke-MarketplaceValidation {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoRoot
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $false)]
+        [string]$OutputPath = 'logs/marketplace-validation-results.json'
     )
 
     $manifestPath = Join-Path -Path $RepoRoot -ChildPath '.github' -AdditionalChildPath 'plugin', 'marketplace.json'
 
     if (-not (Test-Path -Path $manifestPath)) {
         Write-Host '  FAIL marketplace.json not found' -ForegroundColor Red
+        $results = @(
+            @{
+                PluginName = 'marketplace'
+                IsValid    = $false
+                Errors     = @('marketplace.json not found')
+                Warnings   = @()
+            }
+        )
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount 1 -Results $results
         return @{ Success = $false; ErrorCount = 1 }
     }
 
     Write-Host 'Validating marketplace.json...'
 
-    $errorCount = 0
     $errors = @()
+    $results = @()
 
     # Parse JSON
     try {
@@ -137,6 +216,13 @@ function Invoke-MarketplaceValidation {
         foreach ($err in $errors) {
             Write-Host "    x $err" -ForegroundColor Red
         }
+        $results += @{
+            PluginName = 'marketplace'
+            IsValid    = $false
+            Errors     = @($errors)
+            Warnings   = @()
+        }
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount 1 -Results $results
         return @{ Success = $false; ErrorCount = 1 }
     }
 
@@ -152,6 +238,13 @@ function Invoke-MarketplaceValidation {
         foreach ($err in $errors) {
             Write-Host "    x $err" -ForegroundColor Red
         }
+        $results += @{
+            PluginName = 'marketplace'
+            IsValid    = $false
+            Errors     = @($errors)
+            Warnings   = @()
+        }
+        Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount $errors.Count -Results $results
         return @{ Success = $false; ErrorCount = $errors.Count }
     }
 
@@ -189,18 +282,20 @@ function Invoke-MarketplaceValidation {
 
         foreach ($plugin in $manifest.plugins) {
             $pluginName = $plugin.name
+            $pluginErrors = @()
+            $pluginWarnings = @()
 
             # Required plugin fields
             $pluginRequired = @('name', 'source', 'description', 'version')
             foreach ($field in $pluginRequired) {
                 if (-not $plugin.ContainsKey($field) -or [string]::IsNullOrWhiteSpace([string]$plugin[$field])) {
-                    $errors += "plugin '$pluginName': missing required field '$field'"
+                    $pluginErrors += "missing required field '$field'"
                 }
             }
 
             # Duplicate name check
             if ($seenNames.ContainsKey($pluginName)) {
-                $errors += "duplicate plugin name '$pluginName'"
+                $pluginErrors += "duplicate plugin name '$pluginName'"
             }
             else {
                 $seenNames[$pluginName] = $true
@@ -210,7 +305,7 @@ function Invoke-MarketplaceValidation {
             if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
                 $formatError = Test-PluginSourceFormat -Source $plugin.source
                 if ($formatError) {
-                    $errors += "plugin '$pluginName': $formatError"
+                    $pluginErrors += $formatError
                 }
             }
 
@@ -218,26 +313,44 @@ function Invoke-MarketplaceValidation {
             if (-not [string]::IsNullOrWhiteSpace($plugin.source)) {
                 $dirError = Test-PluginSourceDirectory -Source $plugin.source -PluginsRoot $pluginsRoot
                 if ($dirError) {
-                    $errors += "plugin '$pluginName': $dirError"
+                    $pluginErrors += $dirError
                 }
             }
 
             # Name-source consistency
             if ($pluginName -ne $plugin.source) {
-                $errors += "plugin '$pluginName': name does not match source '$($plugin.source)'"
+                $pluginErrors += "name does not match source '$($plugin.source)'"
             }
 
             # Plugin version consistency
             if ($expectedVersion -and $plugin.version -ne $expectedVersion) {
-                $errors += "plugin '$pluginName': version '$($plugin.version)' does not match package.json version '$expectedVersion'"
+                $pluginErrors += "version '$($plugin.version)' does not match package.json version '$expectedVersion'"
+            }
+
+            $results += @{
+                PluginName = $pluginName
+                IsValid    = ($pluginErrors.Count -eq 0)
+                Errors     = @($pluginErrors)
+                Warnings   = @($pluginWarnings)
+            }
+
+            foreach ($pluginError in $pluginErrors) {
+                $errors += "plugin '$pluginName': $pluginError"
             }
         }
     }
 
-    $errorCount = $errors.Count
+    if ($errors.Count -gt 0 -and $results.Count -eq 0) {
+        $results += @{
+            PluginName = 'marketplace'
+            IsValid    = $false
+            Errors     = @($errors)
+            Warnings   = @()
+        }
+    }
 
-    if ($errorCount -gt 0) {
-        Write-Host "  FAIL marketplace.json - $errorCount error(s)" -ForegroundColor Red
+    if ($errors.Count -gt 0) {
+        Write-Host "  FAIL marketplace.json - $($errors.Count) error(s)" -ForegroundColor Red
         foreach ($err in $errors) {
             Write-Host "      $err" -ForegroundColor Red
         }
@@ -246,9 +359,11 @@ function Invoke-MarketplaceValidation {
         Write-Host "  OK marketplace.json ($($manifest.plugins.Count) plugins)"
     }
 
+    Write-MarketplaceValidationReport -RepoRoot $RepoRoot -OutputPath $OutputPath -ErrorCount $errors.Count -Results $results
+
     return @{
-        Success    = ($errorCount -eq 0)
-        ErrorCount = $errorCount
+        Success    = ($errors.Count -eq 0)
+        ErrorCount = $errors.Count
     }
 }
 
@@ -260,7 +375,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
         $RepoRoot = (Get-Item "$ScriptDir/../..").FullName
 
-        $result = Invoke-MarketplaceValidation -RepoRoot $RepoRoot
+        $result = Invoke-MarketplaceValidation -RepoRoot $RepoRoot -OutputPath $OutputPath
 
         if (-not $result.Success) {
             throw "Marketplace validation failed with $($result.ErrorCount) error(s)."
