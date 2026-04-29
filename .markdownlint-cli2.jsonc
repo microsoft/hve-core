@@ -5,6 +5,7 @@
     ".copilot-tracking/**",
     "logs/**",
     "venv/**",
+    "**/.venv/**",
     "scripts/tests/Fixtures/**",
     "extension/README.md",
     "extension/README.*.md",
