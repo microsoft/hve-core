@@ -137,7 +137,7 @@ content/
 | 401 with Entra ID auth                     | Verify custom domain and `Cognitive Services Speech User` role assignment |
 | Empty WAV files                            | Verify `speaker_notes:` is present and non-empty in `content.yaml`        |
 | Mispronounced acronyms                     | Add entries to `acronyms.yaml` with phonetic aliases                      |
-| Video export shows "No timings recorded"   | Re-embed audio with the latest `embed_audio.py`                          |
+| Video export shows "No timings recorded"   | Re-embed audio with the latest `embed_audio.py`                           |
 
 ## Related Resources
 
