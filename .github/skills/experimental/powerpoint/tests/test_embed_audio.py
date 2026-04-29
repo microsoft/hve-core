@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for embed_audio module."""
 
+import struct
+
 import pytest
 from embed_audio import (
     AUDIO_PATTERN,
@@ -18,8 +20,6 @@ from pptx.util import Inches
 
 def _make_wav_bytes(duration_ms: int = 100) -> bytes:
     """Create minimal valid WAV file bytes."""
-    import struct
-
     sample_rate = 16000
     num_samples = int(sample_rate * duration_ms / 1000)
     data = b"\x00\x00" * num_samples

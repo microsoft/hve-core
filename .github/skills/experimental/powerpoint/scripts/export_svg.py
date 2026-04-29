@@ -26,6 +26,7 @@ from pptx_utils import (
     EXIT_FAILURE,
     EXIT_SUCCESS,
     configure_logging,
+    parse_slide_filter,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,16 +142,6 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
     return pdf_path
 
 
-def parse_slide_numbers(slides_str: str) -> list[int]:
-    """Parse comma-separated slide numbers into a sorted list of integers."""
-    numbers = []
-    for part in slides_str.split(","):
-        part = part.strip()
-        if part:
-            numbers.append(int(part))
-    return sorted(set(numbers))
-
-
 def export_pdf_to_svg(
     pdf_path: Path,
     output_dir: Path,
@@ -213,7 +204,8 @@ def run(args: argparse.Namespace) -> int:
 
     slides: list[int] | None = None
     if args.slides:
-        slides = parse_slide_numbers(args.slides)
+        slide_set = parse_slide_filter(args.slides)
+        slides = sorted(slide_set) if slide_set else None
         logger.info("Filtering to slides: %s", slides)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
