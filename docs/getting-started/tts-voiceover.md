@@ -141,7 +141,7 @@ content/
 
 ## Related Resources
 
-* [SKILL.md](../../.github/skills/experimental/tts-voiceover/SKILL.md): Full skill reference with parameters and SSML template details
+* [SKILL.md](pathname://../../.github/skills/experimental/tts-voiceover/SKILL.md): Full skill reference with parameters and SSML template details
 * [Contributing Skills](../contributing/skills.md): Guidelines for contributing skills to HVE Core
 
 ---
