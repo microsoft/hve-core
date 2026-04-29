@@ -404,6 +404,62 @@ python scripts/render_pdf_images.py \
 
 **Dependencies**: Requires LibreOffice for PPTX-to-PDF conversion and either `pdftoppm` (from `poppler`) or `pymupdf` (pip) for PDF-to-JPG rendering.
 
+### Dry-Run Validation
+
+```bash
+python scripts/build_deck.py \
+  --content-dir content/ \
+  --style content/global/style.yaml \
+  --output /dev/null \
+  --dry-run
+```
+
+Validates content files without producing a PPTX. Parses all `content.yaml` files, checks for speaker notes, runs AST validation on `content-extra.py` scripts, and counts image assets. Reports per-slide status and exits with code 1 if any errors are found.
+
+### Generate Theme Variants
+
+```bash
+python scripts/generate_themes.py \
+  --content-dir content/ \
+  --themes themes.yaml \
+  --output-dir ../
+```
+
+Generates themed content directories from a base content directory using a color mapping YAML file. The themes YAML defines color replacement tables:
+
+```yaml
+themes:
+  fluent:
+    label: "Microsoft Fluent"
+    colors:
+      "1b1b1f": "FFFFFF"
+      "f8f8fc": "242424"
+```
+
+Each theme gets its own output directory with remapped `content.yaml`, `style.yaml`, and `content-extra.py` files. Images are copied as-is. Run `build_deck.py` on each themed directory to produce the PPTX.
+
+### Embed Audio
+
+```bash
+python scripts/embed_audio.py \
+  --input slide-deck/presentation.pptx \
+  --audio-dir voice-over/ \
+  --output slide-deck/presentation-narrated.pptx
+```
+
+Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
+
+### Export Slides to SVG
+
+```bash
+python scripts/export_svg.py \
+  --input slide-deck/presentation.pptx \
+  --output-dir slide-deck/svg/ \
+  --slides 3,5,10
+```
+
+Exports slides to SVG format via LibreOffice (PPTX → PDF) and PyMuPDF (PDF → SVG). Output files are named `slide-NNN.svg`. Pass `--slides` to export specific slides. **Dependencies**: Requires LibreOffice and `pymupdf`.
+
 ## Script Architecture
 
 The build and extraction scripts use shared modules in the `scripts/` directory:
@@ -419,8 +475,12 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `pptx_tables.py`       | Table element creation and extraction with cell merging, banding, and per-cell styling                                                                                                                 |
 | `pptx_charts.py`       | Chart element creation and extraction for 12 chart types (column, bar, line, pie, scatter, bubble, etc.)                                                                                               |
 | `validate_deck.py`     | PPTX-only validation for speaker notes and slide count                                                                                                                                                 |
+| `validate_geometry.py` | Structural validation for element edge margins, adjacent gaps, boundary overflow, and title clearance                                                                                                  |
 | `validate_slides.py`   | Vision-based slide issue detection and quality validation via Copilot SDK with built-in checks and plain-text per-slide output                                                                         |
 | `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming                                                                                                                               |
+| `generate_themes.py`   | Theme variant generation from a base content directory using a color mapping YAML file                                                                                                                 |
+| `embed_audio.py`       | WAV audio embedding into PPTX slides with per-slide file matching and off-screen audio icon placement                                                                                                  |
+| `export_svg.py`        | PPTX-to-SVG export via LibreOffice PDF conversion and PyMuPDF SVG rendering                                                                                                                           |
 
 ## python-pptx Constraints
 

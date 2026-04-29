@@ -18,6 +18,7 @@ import argparse
 import ast
 import builtins
 import importlib.util
+import logging
 import re
 import sys
 from pathlib import Path
@@ -40,7 +41,15 @@ from pptx_text import (
     apply_text_properties,
     populate_text_frame,
 )
-from pptx_utils import load_yaml
+from pptx_utils import (
+    EXIT_ERROR,
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
+    configure_logging,
+    load_yaml,
+)
+
+logger = logging.getLogger(__name__)
 
 CONNECTOR_TYPE_MAP = {
     "straight": MSO_CONNECTOR_TYPE.STRAIGHT,
@@ -959,6 +968,27 @@ def build_slide(
     colors = {}
     typography = {}
 
+    # Populate colors from the matching theme's color map in style.yaml so
+    # content-extra.py scripts can reference theme colors programmatically
+    # via style["colors"]["accent_blue"] instead of hardcoding hex values.
+    # Uses a per-slide lookup based on the themes[].slides list and falls
+    # back to themes[0] when no explicit assignment exists.
+    slide_num = slide_content.get("slide", 0)
+    themes = style.get("themes", [])
+    if themes and isinstance(themes, list):
+        matched_theme = next(
+            (
+                t
+                for t in themes
+                if isinstance(t, dict) and slide_num in t.get("slides", [])
+            ),
+            themes[0] if isinstance(themes[0], dict) else None,
+        )
+        if matched_theme:
+            style_colors = matched_theme.get("colors", {})
+            if style_colors:
+                style = {**style, "colors": style_colors}
+
     if existing_slide is not None:
         slide = existing_slide
         clear_slide_shapes(slide)
@@ -1092,10 +1122,80 @@ def main():
         action="store_true",
         help="Skip AST validation of content-extra.py (trusted content only)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Validate content without building PPTX"
+            " (parse YAML, check images, validate scripts)"
+        ),
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging output",
+    )
     args = parser.parse_args()
+    configure_logging(getattr(args, "verbose", False))
 
     content_dir = Path(args.content_dir)
     style = load_yaml(Path(args.style))
+
+    # Dry-run mode: validate content files without producing a PPTX
+    if args.dry_run:
+        slides_data = discover_slides(content_dir)
+        if not slides_data:
+            logger.error("No slide content found in %s", content_dir)
+            return EXIT_ERROR
+        errors = 0
+        for num, slide_dir in slides_data:
+            content_yaml = slide_dir / "content.yaml"
+            try:
+                slide_content = load_yaml(content_yaml)
+                title = slide_content.get("title", "Untitled")
+                # Check for speaker notes
+                notes = slide_content.get("speaker_notes")
+                notes_status = "✅" if notes else "⚠️ no notes"
+                # Validate content-extra.py if present
+                extra = slide_dir / "content-extra.py"
+                extra_status = ""
+                if extra.exists():
+                    if not args.allow_scripts:
+                        try:
+                            _validate_content_extra(extra)
+                            extra_status = " | extra: ✅"
+                        except ContentExtraError as exc:
+                            extra_status = f" | extra: ❌ {exc}"
+                            errors += 1
+                    else:
+                        extra_status = " | extra: skipped"
+                # Check image references
+                images = slide_dir / "images"
+                img_count = (
+                    len(list(images.glob("*.png"))) + len(list(images.glob("*.jpg")))
+                    if images.exists()
+                    else 0
+                )
+                img_status = f" | {img_count} images" if img_count else ""
+                logger.info(
+                    "  Slide %03d: %s [%s%s%s]",
+                    num,
+                    title,
+                    notes_status,
+                    extra_status,
+                    img_status,
+                )
+            except Exception as exc:
+                logger.error("  Slide %03d: ❌ YAML parse error: %s", num, exc)
+                errors += 1
+        logger.info(
+            "Dry-run complete: %d slides, %d error(s)",
+            len(slides_data),
+            errors,
+        )
+        return EXIT_FAILURE if errors else EXIT_SUCCESS
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
