@@ -16,7 +16,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 | Group                                   | Agents   | Complexity  | Documentation                                                                   |
 |-----------------------------------------|----------|-------------|---------------------------------------------------------------------------------|
-| RPI Orchestration                       | 5        | High        | [RPI Documentation](../rpi/README.md)                                           |
+| RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                           |
 | [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                            |
 | GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                     |
 | ADO Backlog Management                  | 1 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                        |
@@ -32,7 +32,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 
 ## RPI Orchestration
 
-The Research, Plan, Implement methodology separates complex tasks into specialized phases. Five agents (task-researcher, task-planner, task-implementor, task-reviewer, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
+The Research, Plan, Implement methodology separates complex tasks into specialized phases. Six agents (task-researcher, task-planner, task-implementor, task-reviewer, task-challenger, and the RPI orchestrator) coordinate through planning files to deliver structured engineering workflows. See the [RPI Documentation](../rpi/) for the full guide.
 
 ## Code Review
 
@@ -78,7 +78,7 @@ The **SSSC Planner** guides teams through a structured six-phase supply chain se
 
 ## RAI Planning
 
-Guides teams through a five-phase responsible AI assessment covering AI system scoping, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces scored assessments with dual-platform work items. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
+Guides teams through a six-phase responsible AI assessment planning workflow covering AI system scoping, risk classification, RAI standards mapping, security model analysis, impact assessment, and review with backlog handoff. The RAI planner agent builds on security plan outputs when available and produces dual-platform work items for identified gaps. See the [RAI Planner Documentation](rai-planning/) for phase details and entry modes.
 
 ## Design Thinking
 

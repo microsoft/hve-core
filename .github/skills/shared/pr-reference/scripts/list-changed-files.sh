@@ -121,20 +121,39 @@ extract_files() {
   local exclude="$2"
   local results=()
 
-  while IFS= read -r line; do
+  # Load all relevant lines into an array so lookahead never consumes the stream
+  local lines=()
+  mapfile -t lines < <(grep -E '^(diff --git|new file|deleted file|rename from)' "${INPUT_FILE}" 2>/dev/null || true)
+
+  local i=0
+  local count=${#lines[@]}
+
+  while (( i < count )); do
+    local line="${lines[i]}"
+
     # Extract file path from diff header
     if [[ "$line" =~ ^diff\ --git\ a/(.+)\ b/(.+)$ ]]; then
       local old_path="${BASH_REMATCH[1]}"
       local new_path="${BASH_REMATCH[2]}"
       local change_type="modified"
 
-      # Read next lines to determine change type
-      read -r next_line || true
-      if [[ "$next_line" =~ ^new\ file ]]; then
-        change_type="added"
-      elif [[ "$next_line" =~ ^deleted\ file ]]; then
-        change_type="deleted"
-      elif [[ "$next_line" =~ ^rename\ from || "$old_path" != "$new_path" ]]; then
+      # Peek at the next line to determine change type (index-based, no stream consumption)
+      local next=$(( i + 1 ))
+      if (( next < count )); then
+        local next_line="${lines[next]}"
+        if [[ "$next_line" =~ ^new\ file ]]; then
+          change_type="added"
+          (( i++ )) || true
+        elif [[ "$next_line" =~ ^deleted\ file ]]; then
+          change_type="deleted"
+          (( i++ )) || true
+        elif [[ "$next_line" =~ ^rename\ from ]]; then
+          change_type="renamed"
+          (( i++ )) || true
+        elif [[ "$old_path" != "$new_path" ]]; then
+          change_type="renamed"
+        fi
+      elif [[ "$old_path" != "$new_path" ]]; then
         change_type="renamed"
       fi
 
@@ -147,7 +166,9 @@ extract_files() {
         fi
       fi
     fi
-  done < <(grep -E '^(diff --git|new file|deleted file|rename from)' "${INPUT_FILE}" 2>/dev/null || true)
+
+    (( i++ )) || true
+  done
 
   printf '%s\n' "${results[@]}" | sort -t'|' -k1
 }

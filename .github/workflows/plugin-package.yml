@@ -26,7 +26,7 @@ jobs:
             matrix: ${{ steps.discover.outputs.matrix }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
               with:
                   persist-credentials: false
 
@@ -54,14 +54,14 @@ jobs:
             matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
               with:
                   persist-credentials: false
 
             - name: Setup Node.js
-              uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
               with:
-                  node-version: "20"
+                  node-version: "24"
                   cache: "npm"
 
             - name: Install dependencies
@@ -70,12 +70,14 @@ jobs:
             - name: Install PowerShell-Yaml
               shell: pwsh
               run: |
-                  if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml)) {
-                    Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+                  if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+                    Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
                   }
 
             - name: Generate plugins
-              run: npm run plugin:generate
+              run: |
+                  mkdir -p logs
+                  npm run plugin:generate
 
             - name: Package plugin directory
               shell: bash
@@ -90,7 +92,7 @@ jobs:
                   zip -r "dist/plugins/${{ matrix.id }}.zip" "$plugin_dir"
 
             - name: Upload plugin artifact
-              uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: plugin-package-${{ matrix.id }}
                   path: dist/plugins/${{ matrix.id }}.zip

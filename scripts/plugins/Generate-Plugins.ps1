@@ -27,7 +27,7 @@
 .PARAMETER Channel
     Optional. Release channel controlling eligible item maturities.
     Stable includes only stable items. PreRelease includes stable, preview,
-    and experimental. Deprecated is excluded from both channels.
+    and experimental. Deprecated and removed are excluded from both channels.
 
 .EXAMPLE
     ./Generate-Plugins.ps1
@@ -129,6 +129,10 @@ function Select-CollectionItemsByChannel {
 
     foreach ($item in $Collection.items) {
         $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
+        if ($effectiveMaturity -eq 'removed') {
+            Write-Verbose "Skipping removed item: $($item.path)"
+            continue
+        }
         if ($allowedMaturities -contains $effectiveMaturity) {
             $filteredItems += $item
         }
@@ -255,6 +259,11 @@ function Invoke-PluginGeneration {
             continue
         }
 
+        if ($collectionMaturity -eq 'removed') {
+            Write-Verbose "Skipping removed collection: $id"
+            continue
+        }
+
         # Generate plugin directory structure (overwrites in place)
         $filteredCollection = Select-CollectionItemsByChannel -Collection $collection -Channel $Channel
 
@@ -306,6 +315,74 @@ function Invoke-PluginGeneration {
                     }
             }
         }
+
+        #region Update collection.md artifact tables
+        if (-not $DryRun) {
+            $collectionMdPath = Join-Path $collectionsDir "$id.collection.md"
+            if (Test-Path $collectionMdPath) {
+                $bodyContent = Get-Content -Path $collectionMdPath -Raw
+                $parsed = Split-CollectionMdByMarkers -Content $bodyContent
+
+                if ($parsed.HasMarkers) {
+                    $agents = @()
+                    $prompts = @()
+                    $instructions = @()
+                    $skills = @()
+
+                    foreach ($item in $filteredCollection.items) {
+                        if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+                            continue
+                        }
+                        $kind = [string]$item.kind
+                        $path = [string]$item.path
+                        $artifactName = Get-CollectionArtifactKey -Kind $kind -Path $path
+
+                        $resolvedPath = Join-Path $RepoRoot ($path -replace '^\./', '')
+                        if ($kind -eq 'skill') {
+                            $resolvedPath = Join-Path $resolvedPath 'SKILL.md'
+                        }
+                        $artifactDesc = Get-ArtifactDescription -FilePath $resolvedPath
+
+                        $entry = @{ Name = $artifactName; Description = $artifactDesc }
+                        switch ($kind) {
+                            'agent' { $agents += $entry }
+                            'prompt' { $prompts += $entry }
+                            'instruction' { $instructions += $entry }
+                            'skill' { $skills += $entry }
+                        }
+                    }
+
+                    $artifactSections = [System.Text.StringBuilder]::new()
+
+                    foreach ($section in @(
+                        @{ Title = 'Chat Agents'; Items = $agents },
+                        @{ Title = 'Prompts'; Items = $prompts },
+                        @{ Title = 'Instructions'; Items = $instructions },
+                        @{ Title = 'Skills'; Items = $skills }
+                    )) {
+                        if ($section.Items.Count -eq 0) { continue }
+
+                        $null = $artifactSections.AppendLine("### $($section.Title)")
+                        $null = $artifactSections.AppendLine()
+                        $null = $artifactSections.AppendLine('| Name | Description |')
+                        $null = $artifactSections.AppendLine('|------|-------------|')
+                        foreach ($entry in ($section.Items | Sort-Object { $_.Name })) {
+                            $null = $artifactSections.AppendLine("| **$($entry.Name)** | $($entry.Description) |")
+                        }
+                        $null = $artifactSections.AppendLine()
+                    }
+
+                    $generatedBlock = $artifactSections.ToString().TrimEnd()
+                    $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+                    if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
+                        $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
+                    }
+                    $updatedCollectionMd += "`n"
+                    Set-ContentIfChanged -Path $collectionMdPath -Value $updatedCollectionMd
+                }
+            }
+        }
+        #endregion
 
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount

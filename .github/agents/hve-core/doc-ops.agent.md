@@ -35,18 +35,18 @@ The main agent executes directly only for:
 
 ### Included Files
 
-| Pattern              | Description                                  |
-|----------------------|----------------------------------------------|
-| `docs/**/*.md`       | User-facing documentation, tutorials, guides |
-| `README.md`          | Repository root README                       |
-| `CONTRIBUTING.md`    | Contribution guidelines                      |
-| `CHANGELOG.md`       | Release history                              |
-| `CODE_OF_CONDUCT.md` | Community standards                          |
-| `GOVERNANCE.md`      | Project governance                           |
-| `SECURITY.md`        | Security policy                              |
-| `SUPPORT.md`         | Support information                          |
-| `LICENSE`            | License file                                 |
-| `scripts/**/*.md`    | Script documentation and READMEs             |
+| Pattern                                      | Description                                                            |
+|----------------------------------------------|------------------------------------------------------------------------|
+| `docs/**/*.md`                               | User-facing documentation, tutorials, guides                           |
+| `README.md`                                  | Repository root README                                                 |
+| `CONTRIBUTING.md`                            | Contribution guidelines                                                |
+| `CHANGELOG.md`                               | Release history                                                        |
+| `CODE_OF_CONDUCT.md`                         | Community standards                                                    |
+| `GOVERNANCE.md`                              | Project governance                                                     |
+| `SECURITY.md`                                | Security policy                                                        |
+| `SUPPORT.md`                                 | Support information                                                    |
+| `LICENSE`                                    | License file                                                           |
+| Top-level directories containing `.md` files | Script documentation, tool READMEs, and other markdown outside `docs/` |
 
 ### Excluded Files
 
@@ -84,9 +84,9 @@ Verify documentation matches implementation:
 
 Discover undocumented functionality:
 
-* Scan `scripts/` for scripts without corresponding documentation.
-* Check `extension/` for undocumented features or commands.
-* Identify `.github/skills/` entries without adequate documentation.
+* Scan top-level directories for scripts, tools, or modules without corresponding documentation.
+* Check for undocumented features or commands in build, packaging, or extension directories if they exist.
+* Identify `.github/skills/` entries without adequate documentation if the repository uses skills.
 * Find exported functions or APIs lacking usage documentation.
 
 ## Tracking Integration
@@ -157,7 +157,7 @@ Run `Researcher Subagent` with:
 Run `Researcher Subagent` with:
 
 * Task: Compare documentation claims against actual implementation.
-* Focus areas: Script parameter documentation in scripts/, file structure descriptions in docs/, example commands and their expected behavior.
+* Focus areas: Script parameter documentation, file structure descriptions in documentation directories, example commands and their expected behavior.
 * Response format: List each discrepancy with documentation file, implementation file, discrepancy type, and current vs. documented values.
 * Requirement: Indicate whether additional passes are needed.
 
@@ -166,7 +166,7 @@ Run `Researcher Subagent` with:
 Run `Researcher Subagent` with:
 
 * Task: Identify undocumented functionality.
-* Scan locations: scripts/ (scripts without README or usage docs), extension/ (undocumented features), .github/skills/ (skills without adequate documentation).
+* Scan locations: Top-level directories containing scripts or tools (look for missing README or usage docs), packaging or extension directories if present (undocumented features), .github/skills/ if the repository uses skills (inadequate documentation).
 * Response format: List each gap with location, functionality type, and suggested documentation approach.
 * Requirement: Indicate whether additional passes are needed.
 
@@ -225,10 +225,7 @@ After implementation subagents complete:
 
 Run validation scripts and verify work completion.
 
-* Execute available validation commands:
-  * `npm run lint:md` for markdown linting.
-  * `npm run lint:frontmatter` for frontmatter validation.
-  * `npm run lint:md-links` for link checking.
+* Execute available validation commands from `package.json` (common examples: markdown linting, frontmatter validation, link checking). If no validation scripts are defined, rely on manual review against the repository's instructions files.
 * Parse validation output for remaining issues.
 * Compare against baseline from Phase 1.
 
@@ -355,21 +352,15 @@ All subagents return responses containing:
 
 ## Validation Integration
 
-Use available npm scripts for automated validation:
+Check `package.json` for available validation scripts. Common validation types include markdown linting, frontmatter schema validation, and link checking.
 
-| Script                     | Purpose                       |
-|----------------------------|-------------------------------|
-| `npm run lint:md`          | Markdownlint validation       |
-| `npm run lint:frontmatter` | Frontmatter schema validation |
-| `npm run lint:md-links`    | Link validity checking        |
-
-If validation scripts are unavailable, rely on manual review against instructions files.
+If validation scripts are unavailable, rely on manual review against the repository's instructions files.
 
 Run validation:
 
 * Before Phase 1 to establish baseline.
 * After Phase 3 to verify fixes.
-* Parse JSON output from logs/ when available.
+* Parse structured output from the repository's log or output directory when available.
 
 ## Error Handling
 

@@ -45,6 +45,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
 | **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
 | **task-reviewer**    | Validates implementation against research and plan specifications | Requires research/plan artifacts               |
+| **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
 
 ### Documentation and Planning Agents
 
@@ -58,7 +59,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
 | **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff | Six-phase conversational workflow; experimental       |
 | **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM | Six-phase conversational workflow; experimental       |
-| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against MS RAI Standard v2 and NIST AI RMF | Six-phase conversational workflow; experimental       |
+| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental       |
 | **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
 | **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
 
@@ -308,20 +309,21 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### rai-planner
 
-**Creates:** Eight artifacts across 5 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
+**Creates:** Nine artifacts across 6 phases under `.copilot-tracking/rai-plans/{project-slug}/`:
 
 * `state.json` (session state for resume capability)
 * `system-definition-pack.md`, `stakeholder-impact-map.md` (Phase 1: AI System Scoping)
-* `rai-standards-mapping.md` (Phase 2: RAI Standards Mapping)
-* `rai-security-model-addendum.md` (Phase 3: RAI Security Model Analysis)
-* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 4: RAI Impact Assessment)
-* `rai-scorecard.md` and backlog items (Phase 5: Review and Handoff)
+* Risk classification screening output (Phase 2: Risk Classification)
+* `rai-standards-mapping.md` (Phase 3: RAI Standards Mapping)
+* `rai-threat-addendum.md` (Phase 4: RAI Security Model Analysis)
+* `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md` (Phase 5: RAI Impact Assessment)
+* `rai-review-summary.md` and backlog items (Phase 6: Review and Handoff)
 
-**Workflow:** Five sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
+**Workflow:** Six sequential phases mapped to NIST AI RMF functions: AI System Scoping (Govern + Map) → Risk Classification (Govern) → RAI Standards Mapping (Govern + Measure) → RAI Security Model Analysis (Measure) → RAI Impact Assessment (Manage) → Review and Handoff (Manage)
 
 **Entry Modes:** Three modes converge at Phase 2. Capture mode uses exploration-first interviewing adapted from Design Thinking research methods. From-PRD mode seeds the assessment from PRD artifacts. From-security-plan mode continues from a completed Security Planner session, inheriting AI component data and threat ID sequences.
 
-**Critical:** Evaluates AI systems against Microsoft RAI Standard v2 and NIST AI RMF 1.0. Applies AI-specific threat analysis using `RAI-T-{CATEGORY}-{NNN}` format across data poisoning, model evasion, prompt injection, and bias amplification. Six instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
+**Critical:** Evaluates AI systems against the Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF 1.0. Applies AI-specific threat analysis using dual threat ID convention (`T-RAI-{NNN}` sequential IDs and `T-{BUCKET}-AI-{NNN}` cross-references) across data poisoning, model evasion, prompt injection, and bias amplification. Seven instruction files provide domain guidance. Works iteratively with up to 7 questions per turn. Maturity: experimental.
 
 ### sssc-planner
 
@@ -355,7 +357,7 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Subagents:** Codebase Profiler, Skill Assessor, Finding Deep Verifier, Report Generator
 
-**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
+**Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
 
 ### code-review-functional
 

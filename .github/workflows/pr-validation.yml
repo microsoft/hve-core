@@ -60,7 +60,7 @@ jobs:
       has-projects: ${{ steps.find.outputs.has-projects }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -196,6 +196,14 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  ai-artifact-validation:
+    name: AI Artifact Validation
+    uses: ./.github/workflows/ai-artifact-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   msdate-freshness:
     name: ms.date Freshness Check
     uses: ./.github/workflows/msdate-freshness-check.yml
@@ -292,21 +300,23 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
+      # Uses audit-ci with an allowlist for advisories that have no upstream
+      # fix available. See audit-ci.json for the current allowlist and rationale.
       - name: Run security audit
-        run: npm audit --audit-level=moderate
+        run: npm run audit:npm
 
   codeql:
     name: CodeQL Security Analysis
@@ -315,3 +325,4 @@ jobs:
       contents: read
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
+

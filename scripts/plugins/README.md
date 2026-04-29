@@ -16,7 +16,7 @@ manifests.
 ## Prerequisites
 
 * PowerShell 7.0+
-* PowerShell-Yaml module (`Install-Module PowerShell-Yaml`)
+* PowerShell-Yaml module (`Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7`)
 
 ## Collection to Plugin Pipeline
 

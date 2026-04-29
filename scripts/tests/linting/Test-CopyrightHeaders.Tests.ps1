@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -591,7 +591,7 @@ Write-Host "Test"
     It 'Contains required fields' {
         $results = Get-Content $script:OutputPath | ConvertFrom-Json
 
-        $results.PSObject.Properties.Name | Should -Contain 'timestamp'
+        $results.PSObject.Properties.Name | Should -Contain 'Timestamp'
         $results.PSObject.Properties.Name | Should -Contain 'totalFiles'
         $results.PSObject.Properties.Name | Should -Contain 'filesWithHeaders'
         $results.PSObject.Properties.Name | Should -Contain 'filesMissingHeaders'
@@ -600,7 +600,7 @@ Write-Host "Test"
 
     It 'Timestamp field contains a UTC ISO 8601 value ending in Z' {
         $raw = Get-Content $script:OutputPath -Raw
-        $raw | Should -Match '"timestamp":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z"'
+        $raw | Should -Match '"Timestamp":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.*Z"'
     }
 
     It 'Contains compliance percentage' {
