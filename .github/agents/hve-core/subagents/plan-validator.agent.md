@@ -94,13 +94,13 @@ When prior planning logs are available, cross-run comparison notes reference res
 
 ## Response Format
 
-Return Plan Validation Findings including:
+The subagent ALWAYS writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only — full fidelity lives on disk.
 
-* Relative path to the Planning Log file.
-* Validation status: Validated, Gaps Found, Incomplete, or Blocked.
-* Executive summary of identified discrepancies and unaddressed issues with severity and impact.
-* Count of DR- items added, updated, or removed in the Planning Log.
-* Count of DD- items added, updated, or removed in the Planning Log.
-* Coverage summary (internal analysis): counts of covered, partial, missing requirements.
-* Severity-ordered discrepancy findings with evidence references from research and plan files.
-* Clarifying questions requiring parent agent or user input.
+Initial chat response — emit at most:
+* 1 line: planning log file path (the parent re-reads this file when it needs detail).
+* 1 line: validation status (Pass / Fail — Critical / Fail — Major / Fail — Minor).
+* Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize critical and major items.
+* Up to 3 clarifying questions, only when blocking.
+* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete discrepancy details, evidence, and recommended fixes."
+
+Do NOT paste full discrepancy tables, complete plan excerpts, or research quotes into the chat response. The planning log is the source of truth.

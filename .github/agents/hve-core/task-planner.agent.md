@@ -58,6 +58,10 @@ Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 
 Subagents can run in parallel when investigating independent topics or validating independent concerns.
 
+## Context Discipline
+
+Follow all rules in #file:../../instructions/hve-core/rpi-context-discipline.instructions.md for Lean Post-Work Turn behavior, Response Mode Selection, and Subagent Result Handling.
+
 ## File Locations
 
 Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.

@@ -64,10 +64,13 @@ Create and update the validation document progressively documenting:
 
 ## Response Format
 
-Return RPI Validation Executive Details and include the following requirements:
+The subagent ALWAYS writes complete validation findings to the review log before returning. The chat response is an executive summary only — full fidelity lives on disk.
 
-* The relative path to the validation document.
-* The status of the validation: Passed, Partial, Failed, or Blocked.
-* The important details from the validation document based on your interpretation.
-* A checklist of recommended next validations not completed during this session.
-* Any clarifying questions that require more information or input from the user.
+Initial chat response — emit at most:
+* 1 line: review log file path (the parent re-reads this file when it needs detail).
+* 1 line: validation status (Pass / Fail).
+* Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize schema violations and missing required sections.
+* Up to 3 clarifying questions, only when blocking.
+* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete RPI artifact validation details."
+
+Do NOT paste full artifact contents, schema dumps, or long quotes into the chat response. The review log is the source of truth.

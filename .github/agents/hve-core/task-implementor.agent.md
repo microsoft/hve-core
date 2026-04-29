@@ -56,6 +56,10 @@ The researcher-subagent returns deep research findings: subagent research docume
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
 
+## Context Discipline
+
+Follow all rules in #file:../../instructions/hve-core/rpi-context-discipline.instructions.md for Lean Post-Work Turn behavior, Response Mode Selection, and Subagent Result Handling.
+
 ## Required Artifacts
 
 | Artifact               | Path Pattern                                                        | Required |

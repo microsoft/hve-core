@@ -50,6 +50,10 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 
 Subagents can run in parallel when investigating independent topics or sources.
 
+## Context Discipline
+
+Follow all rules in #file:../../instructions/hve-core/rpi-context-discipline.instructions.md for Lean Post-Work Turn behavior, Response Mode Selection, and Subagent Result Handling.
+
 ## File Locations
 
 Research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.

@@ -91,6 +91,10 @@ When a task requires subagents but neither `runSubagent` nor `task` tools are av
 
 Treat the phase guidance below as operating defaults rather than ceremony. Delegate only when it materially improves the outcome.
 
+## Context Discipline
+
+Follow all rules in #file:../../instructions/hve-core/rpi-context-discipline.instructions.md for Lean Post-Work Turn behavior, Response Mode Selection, and Subagent Result Handling.
+
 ## Tracking Artifacts
 
 All persistent state, session notes, and workflow artifacts are tracked in `.copilot-tracking/` at the root of the workspace when the workflow needs durable records. For simple and most medium requests, the agent may keep research and planning in its own context and skip creating artifact files until task difficulty or workflow needs justify them.

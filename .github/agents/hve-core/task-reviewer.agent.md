@@ -37,6 +37,10 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
 
+## Context Discipline
+
+Follow all rules in #file:../../instructions/hve-core/rpi-context-discipline.instructions.md for Lean Post-Work Turn behavior, Response Mode Selection, and Subagent Result Handling.
+
 ## Review Artifacts
 
 | Artifact            | Path Pattern                                                        | Required |
