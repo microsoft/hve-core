@@ -8,7 +8,7 @@ BeforeAll {
     Import-Module "$PSScriptRoot/../../lib/Modules/CIHelpers.psm1" -Force
 }
 
-Describe 'Test-VsceAvailable' {
+Describe 'Test-VsceAvailable' -Tag 'Unit' {
     It 'Returns hashtable with IsAvailable property' {
         $result = Test-VsceAvailable
         $result | Should -BeOfType [hashtable]
@@ -62,7 +62,7 @@ Describe 'Test-VsceAvailable' {
     }
 }
 
-Describe 'Test-ExtensionManifestValid' {
+Describe 'Test-ExtensionManifestValid' -Tag 'Unit' {
     It 'Returns valid result for proper manifest' {
         $manifest = [PSCustomObject]@{
             name = 'my-extension'
@@ -151,7 +151,7 @@ Describe 'Test-ExtensionManifestValid' {
     }
 }
 
-Describe 'Get-VscePackageCommand' {
+Describe 'Get-VscePackageCommand' -Tag 'Unit' {
     It 'Returns npx command structure for npx type' {
         $result = Get-VscePackageCommand -CommandType 'npx'
         $result.Executable | Should -Be 'npx'
@@ -176,7 +176,7 @@ Describe 'Get-VscePackageCommand' {
     }
 }
 
-Describe 'New-PackagingResult' {
+Describe 'New-PackagingResult' -Tag 'Unit' {
     BeforeAll {
         $script:testVsixPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar), 'ext.vsix')
     }
@@ -212,7 +212,7 @@ Describe 'New-PackagingResult' {
     }
 }
 
-Describe 'Get-ResolvedPackageVersion' {
+Describe 'Get-ResolvedPackageVersion' -Tag 'Unit' {
     It 'Returns specified version when provided' {
         $result = Get-ResolvedPackageVersion -SpecifiedVersion '2.0.0' -ManifestVersion '1.0.0' -DevPatchNumber ''
         $result.IsValid | Should -BeTrue
@@ -263,7 +263,7 @@ Describe 'Get-ResolvedPackageVersion' {
     }
 }
 
-Describe 'Invoke-PackageExtension' {
+Describe 'Invoke-PackageExtension' -Tag 'Unit' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-ext-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testRoot 'extension'
@@ -716,7 +716,7 @@ Describe 'Invoke-PackageExtension' {
     }
 }
 
-Describe 'Test-PackagingInputsValid' {
+Describe 'Test-PackagingInputsValid' -Tag 'Unit' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-inputs-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testRoot 'extension'
@@ -790,16 +790,16 @@ Describe 'Test-PackagingInputsValid' {
     }
 }
 
-Describe 'Get-PackagingDirectorySpec' {
+Describe 'Get-PackagingDirectorySpec' -Tag 'Unit' {
     BeforeAll {
         # Use platform-agnostic temp paths for cross-platform CI compatibility
         $script:repoRoot = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-repo'
         $script:extDir = Join-Path ([System.IO.Path]::GetTempPath()) 'spec-ext'
     }
 
-    It 'Returns array of 3 directory specifications' {
+    It 'Returns array of 4 directory specifications' {
         $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
-        $result.Count | Should -Be 3
+        $result.Count | Should -Be 4
     }
 
     It 'Includes .github directory specification' {
@@ -824,6 +824,14 @@ Describe 'Get-PackagingDirectorySpec' {
         $templatesSpec.IsFile | Should -BeFalse
     }
 
+    It 'Includes scripts/security directory specification' {
+        $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
+        $securitySpec = $result | Where-Object { $_.Source -like '*scripts/security' }
+        $securitySpec | Should -Not -BeNullOrEmpty
+        $securitySpec.Destination | Should -BeLike '*scripts/security'
+        $securitySpec.IsFile | Should -BeFalse
+    }
+
     It 'Uses correct path joining for source and destination' {
         $result = Get-PackagingDirectorySpec -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
         foreach ($spec in $result) {
@@ -833,7 +841,7 @@ Describe 'Get-PackagingDirectorySpec' {
     }
 }
 
-Describe 'Invoke-VsceCommand' {
+Describe 'Invoke-VsceCommand' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "vsce-cmd-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
@@ -884,7 +892,7 @@ Describe 'Invoke-VsceCommand' {
     }
 }
 
-Describe 'Remove-PackagingArtifacts' {
+Describe 'Remove-PackagingArtifacts' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "rm-artifacts-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
@@ -934,7 +942,7 @@ Describe 'Remove-PackagingArtifacts' {
     }
 }
 
-Describe 'Restore-PackageJsonVersion' {
+Describe 'Restore-PackageJsonVersion' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "restore-ver-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
@@ -997,7 +1005,7 @@ Describe 'Restore-PackageJsonVersion' {
     }
 }
 
-Describe 'Get-CollectionReadmePath' {
+Describe 'Get-CollectionReadmePath' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "collection-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testDir 'extension'
@@ -1064,7 +1072,7 @@ name: sec
     }
 }
 
-Describe 'Set-CollectionReadme' {
+Describe 'Set-CollectionReadme' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "set-readme-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
@@ -1262,7 +1270,7 @@ Describe 'Copy-DirectoryFiltered' -Tag 'Unit' {
     }
 }
 
-Describe 'Copy-CollectionArtifacts' {
+Describe 'Copy-CollectionArtifacts' -Tag 'Unit' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "copy-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testDir 'extension'
@@ -1452,7 +1460,7 @@ Describe 'Copy-CollectionArtifacts' {
     }
 }
 
-Describe 'Invoke-PackageExtension - Collection mode' {
+Describe 'Invoke-PackageExtension - Collection mode' -Tag 'Unit' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "pkg-col-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testRoot 'extension'
@@ -1543,7 +1551,7 @@ items:
     }
 }
 
-Describe 'CI Integration - Package-Extension' {
+Describe 'CI Integration - Package-Extension' -Tag 'Unit' {
     BeforeAll {
         $script:testRoot = Join-Path ([System.IO.Path]::GetTempPath()) "ci-int-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
         $script:extDir = Join-Path $script:testRoot 'extension'
