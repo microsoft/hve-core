@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 import sys
 import time
 import xml.sax.saxutils
@@ -68,25 +69,34 @@ def load_acronyms(path: Path) -> dict[str, str]:
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """Replace acronyms with SSML ``<sub alias>`` elements.
 
-    Processes longest acronyms first to avoid partial matches.
+    Uses a single-pass regex to avoid corrupting previously-inserted SSML
+    tags when an acronym appears inside an alias value or tag content.
     """
-    for acronym, alias in sorted(acronyms.items(), key=lambda x: -len(x[0])):
-        if acronym in text:
-            replacement = (
-                f'<sub alias="{xml.sax.saxutils.escape(alias)}">'
-                f"{xml.sax.saxutils.escape(acronym)}</sub>"
-            )
-            text = text.replace(acronym, replacement)
-    return text
+    if not acronyms:
+        return text
+    # Build pattern matching all acronyms, longest first
+    sorted_keys = sorted(acronyms.keys(), key=len, reverse=True)
+    pattern = re.compile("|".join(re.escape(k) for k in sorted_keys))
+
+    def _replace(m: re.Match) -> str:
+        acronym = m.group(0)
+        alias = acronyms[acronym]
+        safe_alias = xml.sax.saxutils.quoteattr(alias)
+        safe_acronym = xml.sax.saxutils.escape(acronym)
+        return f"<sub alias={safe_alias}>{safe_acronym}</sub>"
+
+    return pattern.sub(_replace, text)
 
 
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
     """Wrap processed text in a full SSML document."""
+    safe_voice = xml.sax.saxutils.quoteattr(voice)
+    safe_rate = xml.sax.saxutils.quoteattr(rate)
     return (
         '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"'
         ' xmlns:mstts="http://www.w3.org/2001/mstts" xml:lang="en-US">\n'
-        f'  <voice name="{voice}">\n'
-        f'    <prosody rate="{rate}">\n'
+        f"  <voice name={safe_voice}>\n"
+        f"    <prosody rate={safe_rate}>\n"
         f"      {text}\n"
         "    </prosody>\n"
         "  </voice>\n"
@@ -187,6 +197,17 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
+    try:
+        return _run(args)
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return 1
+
+
+def _run(args) -> int:
+    """Execute TTS generation logic."""
 
     content_dir: Path = args.content_dir
     output_dir: Path = args.output_dir

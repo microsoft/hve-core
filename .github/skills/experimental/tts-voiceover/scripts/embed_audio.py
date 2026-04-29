@@ -184,6 +184,17 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
+    try:
+        return _run(args)
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return 1
+
+
+def _run(args) -> int:
+    """Execute audio embedding logic."""
 
     input_path: Path = args.input
     audio_dir: Path = args.audio_dir
@@ -218,10 +229,10 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
-    logger.info(
-        "Saved %s with %d embedded audio files", output_path, embedded_count
-    )
+    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
+    if embedded_count == 0:
+        return EXIT_FAILURE
     return EXIT_SUCCESS
 
 
