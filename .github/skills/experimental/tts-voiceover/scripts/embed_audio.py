@@ -222,6 +222,7 @@ def _run(args: argparse.Namespace) -> int:
 
     prs = Presentation(str(input_path))
     embedded_count = 0
+    failed_count = 0
 
     for idx, slide in enumerate(prs.slides, start=1):
         wav_name = f"slide-{idx:03d}.wav"
@@ -235,12 +236,20 @@ def _run(args: argparse.Namespace) -> int:
             logger.info("Embedded %s into slide %d", wav_name, idx)
         else:
             logger.error("FAILED to embed %s into slide %d", wav_name, idx)
+            failed_count += 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(output_path))
     logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     if embedded_count == 0:
+        return EXIT_FAILURE
+    if failed_count > 0:
+        logger.warning(
+            "Completed with %d failure(s); %d slide(s) embedded successfully.",
+            failed_count,
+            embedded_count,
+        )
         return EXIT_FAILURE
     return EXIT_SUCCESS
 

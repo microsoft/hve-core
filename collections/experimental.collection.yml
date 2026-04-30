@@ -25,7 +25,6 @@ items:
     kind: skill
   - path: .github/skills/experimental/vscode-playwright
     kind: skill
-    maturity: experimental
   # Instructions
   - path: .github/instructions/experimental/experiment-designer.instructions.md
     kind: instruction
