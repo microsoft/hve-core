@@ -40,5 +40,6 @@ items:
   # Skills
   - path: .github/skills/github/gh-code-scanning
     kind: skill
+    maturity: experimental
 display:
   ordering: manual
