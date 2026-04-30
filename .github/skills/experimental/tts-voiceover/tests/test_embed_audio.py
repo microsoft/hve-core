@@ -4,7 +4,7 @@
 
 import wave
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from embed_audio import (
     _add_narration_timing,
@@ -90,7 +90,7 @@ class TestAddNarrationTiming:
 class TestEmbedSlideAudio:
     """Tests for embed_slide_audio."""
 
-    def test_returns_true_on_success(self, tmp_path):
+    def test_returns_true_on_success(self, tmp_path, mocker):
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_shape = MagicMock()
@@ -98,8 +98,8 @@ class TestEmbedSlideAudio:
         mock_slide.shapes.add_movie.return_value = mock_shape
         mock_slide.shapes.__iter__ = MagicMock(return_value=iter([]))
 
-        with patch("embed_audio._find_audio_shape_id", return_value=None):
-            result = embed_slide_audio(mock_slide, wav)
+        mocker.patch("embed_audio._find_audio_shape_id", return_value=None)
+        result = embed_slide_audio(mock_slide, wav)
         assert result is True
 
     def test_returns_false_on_exception(self, tmp_path):
