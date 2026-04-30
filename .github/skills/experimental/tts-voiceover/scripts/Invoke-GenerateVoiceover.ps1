@@ -1,12 +1,11 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 #
 # Invoke-GenerateVoiceover.ps1
 #
 # Purpose: Wrapper that manages uv venv setup and delegates to generate_voiceover.py
-
-#Requires -Version 7.0
 
 <#
 .SYNOPSIS

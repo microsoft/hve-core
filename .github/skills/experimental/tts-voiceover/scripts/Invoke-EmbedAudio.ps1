@@ -1,12 +1,11 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
+#Requires -Version 7.0
 #
 # Invoke-EmbedAudio.ps1
 #
 # Purpose: Wrapper that manages uv venv setup and delegates to embed_audio.py
-
-#Requires -Version 7.0
 
 <#
 .SYNOPSIS
