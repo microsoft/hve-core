@@ -178,6 +178,6 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
 
-> Brought to you by microsoft/hve-core
-
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+
+> Brought to you by microsoft/hve-core
