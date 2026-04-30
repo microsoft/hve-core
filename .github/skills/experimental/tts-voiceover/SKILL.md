@@ -4,8 +4,6 @@ description: 'Text-to-speech voice-over generation from YAML speaker notes using
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  requires_python: ">=3.11"
-  platform: "Cross-platform (Windows, macOS, Linux)"
 ---
 
 # TTS Voice Over Skill
