@@ -5,7 +5,11 @@ HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge
 
 ## Overview
 
+# HVE Core Workflow
+
 HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
+
+## Included Artifacts
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 

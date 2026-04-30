@@ -5,7 +5,11 @@ GitHub issue discovery, triage, sprint planning, and backlog execution agents an
 
 ## Overview
 
+# GitHub Backlog Management
+
 Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
+
+## Included Artifacts
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 

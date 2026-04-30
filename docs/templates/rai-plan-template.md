@@ -195,7 +195,7 @@ Common tradeoff patterns:
 
 #### Description
 
-[What needs to be done and why — include the RAI benefit]
+[What needs to be done and why - include the RAI benefit]
 
 #### Implementation Steps
 

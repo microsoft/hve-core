@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 7: High-Fidelity Prototypes — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 7: High-Fidelity Prototypes - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-07*'
 ---
 

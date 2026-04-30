@@ -5,7 +5,11 @@ PRDs, BRDs, ADRs, and architecture diagrams
 
 ## Overview
 
-Create architecture decision records, requirements documents, and diagrams — all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+# Project Planning
+
+Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+
+## Included Artifacts
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 

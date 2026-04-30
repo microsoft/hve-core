@@ -1,5 +1,5 @@
 ---
-description: 'Deep expertise for Method 3: Input Synthesis — advanced affinity analysis, insight frameworks, and problem statement articulation'
+description: 'Deep expertise for Method 3: Input Synthesis - advanced affinity analysis, insight frameworks, and problem statement articulation'
 applyTo: ''
 ---
 

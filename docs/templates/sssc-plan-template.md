@@ -231,7 +231,7 @@ _Important to note:_ This supply chain security assessment cannot certify or att
 
 #### Description
 
-[What needs to be done and why — include the security benefit]
+[What needs to be done and why - include the security benefit]
 
 #### Adoption Steps
 

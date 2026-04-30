@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 9: Iteration at Scale — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 9: Iteration at Scale - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-09*'
 ---
 

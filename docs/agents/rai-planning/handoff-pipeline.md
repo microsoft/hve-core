@@ -147,7 +147,7 @@ Persisted RAI artifacts include transparency footers that communicate AI involve
 Every Phase 5 and Phase 6 artifact includes a transparency note at the end of the file:
 
 <!-- markdownlint-disable search-replace -->
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+> **Note** - The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
 <!-- markdownlint-enable search-replace -->
 
 ### Human Review Checkbox
