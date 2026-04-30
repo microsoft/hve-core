@@ -147,6 +147,12 @@ def embed_slide_audio(slide: object, wav_path: Path) -> bool:
             duration_ms = get_wav_duration_ms(wav_path)
             _add_narration_timing(slide, shape_id, duration_ms)
             _set_slide_transition(slide, duration_ms)
+        else:
+            logger.warning(
+                "Could not find audio shape for %s; narration timing not set",
+                wav_path.name,
+            )
+            return False
         return True
     except Exception as exc:  # noqa: BLE001
         logger.exception(

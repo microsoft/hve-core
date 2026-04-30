@@ -61,8 +61,14 @@ def load_acronyms(path: Path) -> dict[str, str]:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         acronyms = data.get("acronyms") if isinstance(data, dict) else None
         if isinstance(acronyms, dict):
-            logger.info("Loaded %d acronyms from %s", len(acronyms), path)
-            return acronyms
+            clean = {
+                str(k): str(v)
+                for k, v in acronyms.items()
+                if k is not None and v is not None
+            }
+            if clean:
+                logger.info("Loaded %d acronyms from %s", len(clean), path)
+                return clean
         logger.warning("Invalid acronyms format in %s; using defaults", path)
     return dict(_DEFAULT_ACRONYMS)
 

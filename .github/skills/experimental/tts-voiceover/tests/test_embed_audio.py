@@ -93,14 +93,22 @@ class TestEmbedSlideAudio:
     def test_given_valid_slide_when_embed_then_returns_true(self, tmp_path, mocker):
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
-        mock_shape = MagicMock()
-        mock_shape.shape_id = 99
-        mock_slide.shapes.add_movie.return_value = mock_shape
-        mock_slide.shapes.__iter__ = MagicMock(return_value=iter([]))
+        mock_slide.shapes.add_movie.return_value = MagicMock()
+
+        mocker.patch("embed_audio._find_audio_shape_id", return_value=42)
+        mocker.patch("embed_audio._add_narration_timing")
+        mocker.patch("embed_audio._set_slide_transition")
+        result = embed_slide_audio(mock_slide, wav)
+        assert result is True
+
+    def test_given_no_shape_id_when_embed_then_returns_false(self, tmp_path, mocker):
+        wav = _make_wav(tmp_path)
+        mock_slide = MagicMock()
+        mock_slide.shapes.add_movie.return_value = MagicMock()
 
         mocker.patch("embed_audio._find_audio_shape_id", return_value=None)
         result = embed_slide_audio(mock_slide, wav)
-        assert result is True
+        assert result is False
 
     def test_given_exception_when_embed_audio_then_returns_false(self, tmp_path):
         wav = _make_wav(tmp_path)
