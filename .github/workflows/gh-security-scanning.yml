@@ -1,22 +1,18 @@
-name: Weekly Security Scanning
+name: GitHub Security Scanning
 
 on:
-  schedule:
-    - cron: '0 3 * * 1' # Mondays at 03:00 UTC
-  workflow_dispatch:
+  workflow_call:
     inputs:
       owner:
-        description: 'Repository owner (defaults to current repo owner)'
+        description: 'Repository owner'
         required: false
         type: string
+        default: ''
       repo:
-        description: 'Repository name (defaults to current repo name)'
+        description: 'Repository name'
         required: false
         type: string
-
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
+        default: ''
 
 permissions:
   contents: read
@@ -33,8 +29,8 @@ jobs:
       security-events: read
     env:
       GH_TOKEN: ${{ github.token }}
-      OWNER: ${{ inputs.owner || github.repository_owner }}
-      REPO: ${{ inputs.repo || github.event.repository.name }}
+      OWNER: ${{ inputs.owner != '' && inputs.owner || github.repository_owner }}
+      REPO: ${{ inputs.repo != '' && inputs.repo || github.event.repository.name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

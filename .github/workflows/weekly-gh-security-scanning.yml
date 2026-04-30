@@ -1,0 +1,36 @@
+name: Weekly GitHub Security Scanning
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays at 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      owner:
+        description: 'Repository owner (defaults to current repo owner)'
+        required: false
+        type: string
+      repo:
+        description: 'Repository name (defaults to current repo name)'
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  security-events: read
+
+jobs:
+  gh-security-scanning:
+    name: GitHub Security Scanning
+    uses: ./.github/workflows/gh-security-scanning.yml
+    permissions:
+      contents: read
+      issues: write
+      security-events: read
+    with:
+      owner: ${{ inputs.owner || '' }}
+      repo: ${{ inputs.repo || '' }}
