@@ -29,6 +29,16 @@ jobs:
     uses: ./.github/workflows/gh-security-scanning.yml
     permissions:
       contents: read
+      security-events: read
+    with:
+      owner: ${{ inputs.owner || '' }}
+      repo: ${{ inputs.repo || '' }}
+
+  create-gh-security-scanning-issues:
+    name: Create GitHub Security Scanning Issues
+    needs: [gh-security-scanning]
+    uses: ./.github/workflows/create-gh-security-scanning-issues.yml
+    permissions:
       issues: write
       security-events: read
     with:

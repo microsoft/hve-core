@@ -16,16 +16,14 @@ on:
 
 permissions:
   contents: read
-  issues: write
   security-events: read
 
 jobs:
-  scan-and-backlog:
-    name: Scan Code Alerts and Create Backlog Issues
+  scan:
+    name: Fetch Code Scanning Alerts
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      issues: write
       security-events: read
     env:
       GH_TOKEN: ${{ github.token }}
@@ -46,59 +44,10 @@ jobs:
             -OutputFormat Json
           $alerts | Set-Content alerts.json -Encoding utf8
 
-      - name: Create backlog issues for new findings
-        shell: bash
-        run: |
-          while IFS= read -r alert; do
-            RULE_ID=$(echo "$alert" | jq -r '.RuleId')
-            RULE_DESC=$(echo "$alert" | jq -r '.RuleDescription')
-            SEVERITY=$(echo "$alert" | jq -r '.SecuritySeverity // "unspecified"')
-            TOOL=$(echo "$alert" | jq -r '.Tool')
-            COUNT=$(echo "$alert" | jq -r '.Count')
-            PATHS=$(echo "$alert" | jq -r '.SamplePaths | join(", ")')
-            MARKER="automation:security-scan:${RULE_ID}"
-
-            existing=$(gh issue list \
-              --repo "${OWNER}/${REPO}" \
-              --search "\"[Security] ${RULE_DESC}\" in:title" \
-              --state open --json number --jq '.[0].number // empty')
-
-            if [[ -z "$existing" ]]; then
-              gh issue create \
-                --repo "${OWNER}/${REPO}" \
-                --title "[Security] ${RULE_DESC}" \
-                --label "security" \
-                --body "<!-- ${MARKER} -->
-          ## Code Scanning Alert: ${RULE_DESC}
-
-          **Rule:** \`${RULE_ID}\`
-          **Severity:** ${SEVERITY}
-          **Tool:** ${TOOL}
-          **Affected files:** ${COUNT} occurrences
-
-          ### Sample affected paths
-          ${PATHS}
-          "
-            fi
-          done < <(jq -c '.[]' alerts.json)
-
-      - name: Check for scan analysis errors
-        shell: bash
-        run: |
-          errors=$(gh api "repos/${OWNER}/${REPO}/code-scanning/analyses" \
-            --jq '[.[] | select(.error != "" and .error != null)] | length' 2>/dev/null || echo "0")
-          if [[ "$errors" -gt 0 ]]; then
-            gh issue create \
-              --repo "${OWNER}/${REPO}" \
-              --title "[Security] Code scanning analysis failure detected" \
-              --label "security,ci-scanning-failure" \
-              --body "## Code Scanning Analysis Failure
-
-          The weekly security scanning workflow detected ${errors} failed analysis run(s).
-
-          **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          **Detection Date:** $(date -u '+%Y-%m-%d')
-
-          Review the code scanning analyses page for details.
-          "
-          fi
+      - name: Upload alerts artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gh-security-scanning-alerts
+          path: alerts.json
+          retention-days: 30
