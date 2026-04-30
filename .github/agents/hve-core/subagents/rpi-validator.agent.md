@@ -67,6 +67,8 @@ Create and update the validation document progressively documenting:
 The subagent ALWAYS writes complete validation findings to the review log before returning. The chat response is an executive summary only — full fidelity lives on disk.
 
 Initial chat response — emit at most:
+* The relative path to the subagent research document.
+* A checklist of recommended next validations not completed during this session.
 * 1 line: review log file path (the parent re-reads this file when it needs detail).
 * 1 line: validation status (Pass / Fail).
 * Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize schema violations and missing required sections.
