@@ -2,17 +2,6 @@ name: GitHub Security Scanning
 
 on:
   workflow_call:
-    inputs:
-      owner:
-        description: 'Repository owner'
-        required: false
-        type: string
-        default: ''
-      repo:
-        description: 'Repository name'
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: read
@@ -27,8 +16,8 @@ jobs:
       security-events: read
     env:
       GH_TOKEN: ${{ github.token }}
-      OWNER: ${{ inputs.owner != '' && inputs.owner || github.repository_owner }}
-      REPO: ${{ inputs.repo != '' && inputs.repo || github.event.repository.name }}
+      OWNER: ${{ github.repository_owner }}
+      REPO: ${{ github.event.repository.name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

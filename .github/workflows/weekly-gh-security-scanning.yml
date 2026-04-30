@@ -4,15 +4,6 @@ on:
   schedule:
     - cron: '0 3 * * 1' # Mondays at 03:00 UTC
   workflow_dispatch:
-    inputs:
-      owner:
-        description: 'Repository owner (defaults to current repo owner)'
-        required: false
-        type: string
-      repo:
-        description: 'Repository name (defaults to current repo name)'
-        required: false
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}
@@ -30,9 +21,6 @@ jobs:
     permissions:
       contents: read
       security-events: read
-    with:
-      owner: ${{ inputs.owner || '' }}
-      repo: ${{ inputs.repo || '' }}
 
   create-gh-security-scanning-issues:
     name: Create GitHub Security Scanning Issues
@@ -41,6 +29,3 @@ jobs:
     permissions:
       issues: write
       security-events: read
-    with:
-      owner: ${{ inputs.owner || '' }}
-      repo: ${{ inputs.repo || '' }}
