@@ -212,7 +212,7 @@ Describe 'Manifest Generation' -Tag 'Unit' {
 
             $manifest = Get-Content $script:outputPath -Raw | ConvertFrom-Json
             $fields = ($manifest | Get-Member -MemberType NoteProperty).Name | Sort-Object
-            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'version') | Sort-Object
+            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'sessionPath', 'version') | Sort-Object
             $fields | Should -Be $expected
         }
     }

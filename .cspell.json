@@ -77,7 +77,13 @@
     "whiteboarding",
     "ˈpræksɪs",
     "πρᾶξις",
-    "agentic"
+    "agentic",
+    "sssc",
+    "SSSC",
+    "SLSA",
+    "Sigstore",
+    "cosign",
+    "scorecard"
   ],
   "reporters": [
     "default",

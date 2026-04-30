@@ -20,6 +20,7 @@ BeforeAll {
     $script:Tier1Text = '> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.'
     $script:CheckboxText = '> - [ ] Reviewed and validated by a human reviewer'
     $script:DisclaimerText = '> **Disclaimer** — This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice.'
+    $script:SsscDisclaimerText = '> **Disclaimer** — This SSSC agent is an assistive tool only. It does not provide security, legal, or compliance advice.'
 
     # Create valid footer-with-review.yml
     $script:FooterConfigContent = @"
@@ -52,7 +53,7 @@ artifact-classification:
     artifacts:
       - rai-review-summary
 
-  human-facing-with-disclaimer:
+  rai-handoff-with-disclaimer:
     required-footers:
       - ai-content-note
       - human-review-checkbox
@@ -60,6 +61,17 @@ artifact-classification:
     disclaimer-ref: rai-full-disclaimer
     artifacts:
       - handoff-summary
+
+  sssc-handoff-with-disclaimer:
+    scope:
+      - .github/instructions/security/sssc-*.instructions.md
+    required-footers:
+      - ai-content-note
+      - human-review-checkbox
+    requires-disclaimer: true
+    disclaimer-ref: sssc-full-disclaimer
+    artifacts:
+      - sssc-handoff-summary
 "@
 
     # Create valid disclaimers.yml
@@ -75,6 +87,15 @@ disclaimers:
     text: >-
       > **Disclaimer** — This agent is an assistive tool only. It does not
       provide legal, regulatory, or compliance advice.
+
+  sssc-planner:
+    id: sssc-full-disclaimer
+    label: "SSSC Planner Full Disclaimer"
+    applies-to:
+      - sssc-handoff-summary
+    text: >-
+      > **Disclaimer** — This SSSC agent is an assistive tool only. It does
+      not provide security, legal, or compliance advice.
 "@
 
     $script:FooterConfigPath = Join-Path $script:ConfigDir 'footer-with-review.yml'
@@ -203,7 +224,7 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
         $refs[0].Tier | Should -Be 'agentic'
     }
 
-    It 'Finds human-facing-with-disclaimer artifact references' {
+    It 'Finds rai-handoff-with-disclaimer artifact references' {
         $refs = Find-ArtifactReferences -ArtifactClassification $script:FooterConfig.'artifact-classification' -RelativePath 'rai-planning/handoff-summary.md'
         $refs.Count | Should -Be 1
         $refs[0].RequiresDisclaimer | Should -BeTrue
@@ -318,7 +339,7 @@ $($script:Tier1Text)
         }
     }
 
-    Context 'Human-facing-with-disclaimer tier (Tier 1 + checkbox + disclaimer)' {
+    Context 'Rai-handoff-with-disclaimer tier (Tier 1 + checkbox + disclaimer)' {
         It 'Passes when all three elements are present' {
             $filePath = Join-Path $script:InstructionDir 'handoff-summary.instructions.md'
             $content = @"
@@ -361,6 +382,56 @@ $($script:CheckboxText)
             $result.Passed | Should -BeFalse
             $result.Issues | Should -HaveCount 1
             $result.Issues[0] | Should -BeLike '*Disclaimer*'
+        }
+    }
+
+    Context 'SSSC handoff with disclaimer tier (Tier 1 + checkbox + SSSC disclaimer)' {
+        It 'Passes when all three elements are present in an SSSC handoff' {
+            $ssscDir = Join-Path $script:TempTestDir '.github/instructions/security'
+            New-Item -ItemType Directory -Path $ssscDir -Force | Out-Null
+            $filePath = Join-Path $ssscDir 'sssc-handoff-summary.instructions.md'
+            $content = @"
+---
+description: SSSC handoff
+---
+
+# Template for sssc-handoff-summary
+
+Content here.
+
+$($script:Tier1Text)
+
+$($script:CheckboxText)
+
+$($script:SsscDisclaimerText)
+"@
+            Set-Content -Path $filePath -Value $content -Encoding utf8
+            $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:FooterConfig -DisclaimerConfig $script:DisclaimerConfig -RepoRoot $script:TempTestDir
+            $result.Passed | Should -BeTrue
+        }
+
+        It 'Fails when SSSC disclaimer is missing from an SSSC handoff' {
+            $ssscDir = Join-Path $script:TempTestDir '.github/instructions/security'
+            New-Item -ItemType Directory -Path $ssscDir -Force | Out-Null
+            $filePath = Join-Path $ssscDir 'sssc-handoff-summary.instructions.md'
+            $content = @"
+---
+description: SSSC handoff
+---
+
+# Template for sssc-handoff-summary
+
+Content here.
+
+$($script:Tier1Text)
+
+$($script:CheckboxText)
+"@
+            Set-Content -Path $filePath -Value $content -Encoding utf8
+            $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:FooterConfig -DisclaimerConfig $script:DisclaimerConfig -RepoRoot $script:TempTestDir
+            $result.Passed | Should -BeFalse
+            $result.Issues | Should -HaveCount 1
+            $result.Issues[0] | Should -BeLike '*SSSC*Disclaimer*'
         }
     }
 

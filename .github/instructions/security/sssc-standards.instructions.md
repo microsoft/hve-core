@@ -1,11 +1,11 @@
 ---
-description: "Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner."
+description: "Phase 3 OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements standards mapping for SSSC Planner."
 applyTo: '**/.copilot-tracking/sssc-plans/**'
 ---
 
 # SSSC Phase 3: Standards Mapping
 
-Map the assessed supply chain posture against OpenSSF® standards. Use the Phase 2 assessment results as input.
+Map the assessed supply chain posture against the open standards anchored below: OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements. Use the Phase 2 assessment results as input.
 
 ## OpenSSF Scorecard: 20 Checks
 
@@ -41,9 +41,9 @@ For each check, record:
 * **Available implementation** (which hve-core or PAT workflow/script addresses this check)
 * **Gap** (what is missing to achieve maximum score)
 
-## SLSA Build Track Levels
+## SLSA v1.0 Build Track Levels
 
-Assess the repository against SLSA Build track requirements:
+Assess the repository against SLSA v1.0 Build track requirements:
 
 | Level    | Requirements                                      | Assessment Criteria                                         |
 |----------|---------------------------------------------------|-------------------------------------------------------------|
@@ -54,7 +54,7 @@ Assess the repository against SLSA Build track requirements:
 
 Record current level and specific steps needed to reach the next level.
 
-## Best Practices Badge Criteria
+## OpenSSF Best Practices Badge Criteria
 
 Assess readiness against OpenSSF Best Practices Badge tiers:
 
@@ -66,27 +66,27 @@ Assess readiness against OpenSSF Best Practices Badge tiers:
 
 Map repository files and practices to Badge criteria. Flag missing criteria as gaps.
 
-## Sigstore Standards
+## Sigstore (cosign) Standards
 
-Assess Sigstore adoption maturity:
+Assess Sigstore adoption maturity using cosign as the canonical signing tool:
 
 * **Not adopted**: No signing or attestation in place
-* **Basic**: Build provenance via `actions/attest-build-provenance`
+* **Basic**: Build provenance via `actions/attest-build-provenance` (cosign-backed)
 * **Intermediate**: Build provenance + SBOM attestation via `actions/attest`
-* **Advanced**: Tag signing via gitsign + build provenance + SBOM attestation + verification workflow
+* **Advanced**: Tag signing via gitsign + cosign artifact signing + build provenance + SBOM attestation + verification workflow
 
 Document current level and steps to advance.
 
-## SBOM Standards
+## NTIA SBOM Minimum Elements
 
-Assess SBOM generation and distribution:
+Assess SBOM generation and distribution against NTIA SBOM minimum elements:
 
 * **Format**: SPDX-JSON (preferred for GitHub ecosystem) or CycloneDX
 * **Generator**: anchore/sbom-action with syft, or Microsoft SBOM Tool
 * **Distribution**: Attached to release artifacts, published to dependency graph
-* **NTIA minimum elements**: Supplier, component name, version, unique identifier, dependency relationship, author, timestamp
+* **NTIA SBOM minimum elements**: Supplier, component name, version, unique identifier, dependency relationship, author, timestamp
 
-Verify NTIA minimum element compliance for existing SBOM output.
+Verify NTIA SBOM minimum element compliance for existing SBOM output.
 
 ## Researcher Subagent Delegation
 

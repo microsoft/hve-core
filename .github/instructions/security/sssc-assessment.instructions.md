@@ -91,6 +91,8 @@ Structure the output as:
 
 ### Shared Capabilities
 {per-capability assessment}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
 ```
 
 Update `state.json`:

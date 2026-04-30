@@ -14,7 +14,12 @@ Validate the complete SSSC plan, generate improvement projections, and produce p
 3. Generate improvement projections (see below).
 4. Present the complete plan to the user for final review.
 5. On confirmation, generate platform-specific handoff files.
-6. Update `state.json` handoff flags.
+6. Sign planner artifacts (see [Signed Artifact Manifest](#signed-artifact-manifest)).
+7. Update `state.json` handoff flags and signing fields.
+
+## Threat ID Convention
+
+When handoff outputs cross-reference threats produced by the Security Planner (or any upstream threat-modeling artifact captured via `securityPlannerLink`), use the canonical token `T-SEC-{NNN}` with sequential, zero-padded numbering scoped to the Security Planner session being referenced. This token is the only form accepted in SSSC handoff descriptions, work item bodies, and improvement-projection rows; it preserves traceability back to the originating Security Planner outputs without re-deriving threat content inside SSSC artifacts.
 
 ## Scorecard Improvement Projection
 
@@ -86,7 +91,27 @@ After generating handoff files, produce a summary covering:
 Update `state.json`:
 * Set `phases.6-handoff.status` to `✅`
 * Update `handoffGenerated` flags for each platform written
+* Set `signingManifestPath` to the manifest path returned by `Sign-PlannerArtifacts.ps1` when signing completed
 * Clear `nextActions` (or populate with post-handoff recommendations)
+
+## Signed Artifact Manifest
+
+After both platform-specific handoff files are written, sign the SSSC planner artifacts by invoking the shared planner signing script. Use the session-path parameter set so the manifest is emitted as `sssc-manifest.json` inside the active SSSC session directory:
+
+```pwsh
+pwsh scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/<session>' -ManifestName 'sssc-manifest.json'
+```
+
+Append `-IncludeCosign` when the user has opted in to cosign keyless signing via `userPreferences.signingRequested`. Cosign keyless signing requires `cosign` in PATH and a Sigstore-compatible OIDC identity provider; the script gracefully skips signing with a warning when cosign is unavailable.
+
+The parameter contract for `Sign-PlannerArtifacts.ps1` exposes two mutually exclusive parameter sets:
+
+* `-ProjectSlug <slug>` (RAI sessions; resolves to `.copilot-tracking/rai-plans/<slug>/`).
+* `-SessionPath <path>` (any planner session, including SSSC; absolute or repo-relative directory).
+* `-ManifestName <file>` (optional; defaults to `artifact-manifest.json`; SSSC sessions must pass `sssc-manifest.json`).
+* `-OutputPath <path>` (optional; full path override that takes precedence over `-ManifestName`).
+
+On success, capture the manifest path returned by the script and update `state.json` field `signingManifestPath`. The `sssc-manifest.json` file (and, when cosign is used, the accompanying `.sig` and `.bundle` siblings) becomes the verifiable record covering every artifact under the SSSC session directory at handoff time.
 
 Present the user with next steps:
 * For ADO: invoke the ADO Backlog Manager to create work items from the handoff file

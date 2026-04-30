@@ -119,6 +119,9 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
   "nextActions": [],
   "userPreferences": { "autonomyTier": "partial" },
   "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
@@ -145,6 +148,9 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 * `entryMode` set based on the invoking prompt (capture, from-prd, from-brd, or from-security-plan)
 * All arrays empty, booleans `false`
 * `ssscEnabled` set to `true`
+* `signingRequested` set to `false` until the user opts in during scoping
+* `signingManifestPath` set to `null` until handoff signing runs
+* `disclaimerShownAt` set to `null` until the SSSC Planning disclaimer is presented at session start
 
 ### State Transitions
 
