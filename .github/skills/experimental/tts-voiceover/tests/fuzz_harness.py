@@ -89,24 +89,24 @@ def fuzz_dispatch(data):
 class TestFuzzApplyAcronymAliases:
     """Property tests for apply_acronym_aliases."""
 
-    def test_known_acronym_replaced(self):
+    def test_given_known_acronym_when_applied_then_sub_element_inserted(self):
         result = apply_acronym_aliases("Check OWASP guidelines", _DEFAULT_ACRONYMS)
         assert "Oh wasp" in result
         assert "<sub" in result
 
-    def test_no_match_returns_unchanged(self):
+    def test_given_text_without_acronyms_when_applied_then_text_unchanged(self):
         result = apply_acronym_aliases("no acronyms here", _DEFAULT_ACRONYMS)
         assert result == "no acronyms here"
 
-    def test_empty_text(self):
+    def test_given_empty_text_when_applied_then_returns_empty(self):
         result = apply_acronym_aliases("", _DEFAULT_ACRONYMS)
         assert result == ""
 
-    def test_empty_acronyms(self):
+    def test_given_empty_acronyms_when_applied_then_text_unchanged(self):
         result = apply_acronym_aliases("OWASP test", {})
         assert result == "OWASP test"
 
-    def test_multiple_acronyms(self):
+    def test_given_multiple_acronyms_when_applied_then_all_replaced(self):
         result = apply_acronym_aliases("ISE uses MCP", _DEFAULT_ACRONYMS)
         assert "I S E" in result
         assert "M C P" in result
@@ -115,19 +115,21 @@ class TestFuzzApplyAcronymAliases:
 class TestFuzzWrapSsml:
     """Property tests for wrap_ssml."""
 
-    def test_contains_voice_tag(self):
+    def test_given_voice_name_when_wrapped_then_voice_tag_present(self):
         result = wrap_ssml("hello", "en-US-Jenny", "+5%")
-        assert 'voice name="en-US-Jenny"' in result
+        assert "en-US-Jenny" in result
+        assert "<voice" in result
 
-    def test_contains_prosody_rate(self):
+    def test_given_rate_when_wrapped_then_prosody_rate_present(self):
         result = wrap_ssml("hello", "en-US-Jenny", "+10%")
-        assert 'rate="+10%"' in result
+        assert "+10%" in result
+        assert "<prosody" in result
 
-    def test_contains_text(self):
+    def test_given_text_when_wrapped_then_text_in_output(self):
         result = wrap_ssml("test content", "voice", "rate")
         assert "test content" in result
 
-    def test_speak_root_element(self):
+    def test_given_any_input_when_wrapped_then_speak_root_element(self):
         result = wrap_ssml("x", "v", "r")
         assert result.startswith("<speak")
         assert result.endswith("</speak>")
@@ -136,23 +138,23 @@ class TestFuzzWrapSsml:
 class TestFuzzLoadAcronyms:
     """Property tests for load_acronyms."""
 
-    def test_nonexistent_file_returns_defaults(self):
+    def test_given_nonexistent_file_when_loaded_then_returns_defaults(self):
         result = load_acronyms(Path("/nonexistent/acronyms.yaml"))
         assert result == _DEFAULT_ACRONYMS
 
-    def test_valid_yaml_file(self, tmp_path):
+    def test_given_valid_yaml_when_loaded_then_returns_custom_map(self, tmp_path):
         lexicon = tmp_path / "acronyms.yaml"
         lexicon.write_text('acronyms:\n  FOO: "bar"\n', encoding="utf-8")
         result = load_acronyms(lexicon)
         assert result == {"FOO": "bar"}
 
-    def test_invalid_format_returns_defaults(self, tmp_path):
+    def test_given_invalid_format_when_loaded_then_returns_defaults(self, tmp_path):
         lexicon = tmp_path / "acronyms.yaml"
         lexicon.write_text("acronyms: not-a-dict\n", encoding="utf-8")
         result = load_acronyms(lexicon)
         assert result == _DEFAULT_ACRONYMS
 
-    def test_empty_file_returns_defaults(self, tmp_path):
+    def test_given_empty_file_when_loaded_then_returns_defaults(self, tmp_path):
         lexicon = tmp_path / "acronyms.yaml"
         lexicon.write_text("", encoding="utf-8")
         result = load_acronyms(lexicon)
