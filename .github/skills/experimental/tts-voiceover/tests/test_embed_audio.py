@@ -38,8 +38,8 @@ class TestGetWavDurationMs:
     def test_short_file(self, tmp_path):
         wav = _make_wav(tmp_path, duration_ms=50)
         result = get_wav_duration_ms(wav)
-        # 50ms audio + 500ms buffer
-        assert result >= 500
+        # 50ms audio + 1500ms buffer = ~1550ms
+        assert result >= 1500
 
 
 class TestAddNarrationTiming:
