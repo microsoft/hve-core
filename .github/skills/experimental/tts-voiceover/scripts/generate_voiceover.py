@@ -269,6 +269,7 @@ def _run(args: argparse.Namespace) -> int:
 
     total_duration = 0.0
     slide_count = 0
+    failed_count = 0
 
     for slide_dir in sorted(content_dir.glob("slide-*")):
         content_file = slide_dir / "content.yaml"
@@ -326,6 +327,7 @@ def _run(args: argparse.Namespace) -> int:
             logger.info("  %s — %.1fs", wav_path.name, duration)
         else:
             logger.error("  FAILED: %s", wav_path.name)
+            failed_count += 1
 
     if args.dry_run:
         print(f"\n--- Dry run complete: {slide_count} slides processed ---")
@@ -336,8 +338,10 @@ def _run(args: argparse.Namespace) -> int:
             total_duration / 60,
             slide_count,
         )
+        if failed_count:
+            logger.error("%d slide(s) failed synthesis", failed_count)
 
-    return EXIT_SUCCESS
+    return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
 
 
 if __name__ == "__main__":
