@@ -32,6 +32,10 @@
 
 .EXAMPLE
     ./Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over -OutputPath deck-narrated.pptx
+
+.NOTES
+    Part of the tts-voiceover skill. Manages uv virtual environment setup
+    and delegates to embed_audio.py for WAV embedding into PPTX slides.
 #>
 
 [CmdletBinding()]

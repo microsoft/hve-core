@@ -44,6 +44,10 @@
 
 .EXAMPLE
     ./Invoke-GenerateVoiceover.ps1 -ContentDir content -Voice "en-US-Jenny:DragonHDLatestNeural" -Rate "+5%"
+
+.NOTES
+    Part of the tts-voiceover skill. Manages uv virtual environment setup
+    and delegates to generate_voiceover.py for TTS audio generation.
 #>
 
 [CmdletBinding()]

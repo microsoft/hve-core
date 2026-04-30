@@ -29,13 +29,13 @@ def _make_wav(tmp_path: Path, name: str = "test.wav", duration_ms: int = 100) ->
 class TestGetWavDurationMs:
     """Tests for get_wav_duration_ms."""
 
-    def test_returns_duration_with_buffer(self, tmp_path):
+    def test_given_1s_wav_when_get_duration_then_includes_buffer(self, tmp_path):
         wav = _make_wav(tmp_path, duration_ms=1000)
         result = get_wav_duration_ms(wav)
         # 1000ms audio + 1500ms buffer = ~2500ms
         assert 2400 <= result <= 2600
 
-    def test_short_file(self, tmp_path):
+    def test_given_short_wav_when_get_duration_then_includes_buffer(self, tmp_path):
         wav = _make_wav(tmp_path, duration_ms=50)
         result = get_wav_duration_ms(wav)
         # 50ms audio + 1500ms buffer = ~1550ms
@@ -45,7 +45,7 @@ class TestGetWavDurationMs:
 class TestAddNarrationTiming:
     """Tests for _add_narration_timing."""
 
-    def test_appends_timing_element(self):
+    def test_given_slide_xml_when_add_timing_then_timing_element_appended(self):
         """Verify p:timing is added with the correct spid attribute."""
         from lxml import etree
 
@@ -66,7 +66,7 @@ class TestAddNarrationTiming:
         assert 'spid="42"' in xml_str
         assert 'dur="5000"' in xml_str
 
-    def test_replaces_existing_timing(self):
+    def test_given_existing_timing_when_add_timing_then_old_replaced(self):
         """Verify existing p:timing is removed before adding new one."""
         from lxml import etree
 
@@ -90,7 +90,7 @@ class TestAddNarrationTiming:
 class TestEmbedSlideAudio:
     """Tests for embed_slide_audio."""
 
-    def test_returns_true_on_success(self, tmp_path, mocker):
+    def test_given_valid_slide_when_embed_then_returns_true(self, tmp_path, mocker):
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_shape = MagicMock()
@@ -102,7 +102,7 @@ class TestEmbedSlideAudio:
         result = embed_slide_audio(mock_slide, wav)
         assert result is True
 
-    def test_returns_false_on_exception(self, tmp_path):
+    def test_given_exception_when_embed_audio_then_returns_false(self, tmp_path):
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_slide.shapes.add_movie.side_effect = RuntimeError("test error")
