@@ -30,15 +30,23 @@ class TestGetWavDurationMs:
     """Tests for get_wav_duration_ms."""
 
     def test_given_1s_wav_when_get_duration_then_includes_buffer(self, tmp_path):
+        # Arrange
         wav = _make_wav(tmp_path, duration_ms=1000)
+
+        # Act
         result = get_wav_duration_ms(wav)
-        # 1000ms audio + 1500ms buffer = ~2500ms
+
+        # Assert — 1000ms audio + 1500ms buffer = ~2500ms
         assert 2400 <= result <= 2600
 
     def test_given_short_wav_when_get_duration_then_includes_buffer(self, tmp_path):
+        # Arrange
         wav = _make_wav(tmp_path, duration_ms=50)
+
+        # Act
         result = get_wav_duration_ms(wav)
-        # 50ms audio + 1500ms buffer = ~1550ms
+
+        # Assert — 50ms audio + 1500ms buffer = ~1550ms
         assert result >= 1500
 
 
@@ -49,19 +57,20 @@ class TestAddNarrationTiming:
         """Verify p:timing is added with the correct spid attribute."""
         from lxml import etree
 
+        # Arrange
         nsmap = {"p": "http://schemas.openxmlformats.org/presentationml/2006/main"}
         slide_xml = etree.Element(f"{{{nsmap['p']}}}sld", nsmap=nsmap)
         mock_slide = MagicMock()
         mock_slide._element = slide_xml
 
+        # Act
         _add_narration_timing(mock_slide, shape_id=42, duration_ms=5000)
 
+        # Assert
         timing = slide_xml.find(
             "{http://schemas.openxmlformats.org/presentationml/2006/main}timing"
         )
         assert timing is not None
-
-        # Verify spid references the correct shape
         xml_str = etree.tostring(timing, encoding="unicode")
         assert 'spid="42"' in xml_str
         assert 'dur="5000"' in xml_str
@@ -70,16 +79,18 @@ class TestAddNarrationTiming:
         """Verify existing p:timing is removed before adding new one."""
         from lxml import etree
 
+        # Arrange
         ns = "http://schemas.openxmlformats.org/presentationml/2006/main"
         slide_xml = etree.Element(f"{{{ns}}}sld")
         old_timing = etree.SubElement(slide_xml, f"{{{ns}}}timing")
         etree.SubElement(old_timing, "old-content")
-
         mock_slide = MagicMock()
         mock_slide._element = slide_xml
 
+        # Act
         _add_narration_timing(mock_slide, shape_id=10, duration_ms=3000)
 
+        # Assert
         timings = slide_xml.findall(f"{{{ns}}}timing")
         assert len(timings) == 1
         xml_str = etree.tostring(timings[0], encoding="unicode")
@@ -91,29 +102,41 @@ class TestEmbedSlideAudio:
     """Tests for embed_slide_audio."""
 
     def test_given_valid_slide_when_embed_then_returns_true(self, tmp_path, mocker):
+        # Arrange
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_slide.shapes.add_movie.return_value = MagicMock()
-
         mocker.patch("embed_audio._find_audio_shape_id", return_value=42)
         mocker.patch("embed_audio._add_narration_timing")
         mocker.patch("embed_audio._set_slide_transition")
+
+        # Act
         result = embed_slide_audio(mock_slide, wav)
+
+        # Assert
         assert result is True
 
     def test_given_no_shape_id_when_embed_then_returns_false(self, tmp_path, mocker):
+        # Arrange
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_slide.shapes.add_movie.return_value = MagicMock()
-
         mocker.patch("embed_audio._find_audio_shape_id", return_value=None)
+
+        # Act
         result = embed_slide_audio(mock_slide, wav)
+
+        # Assert
         assert result is False
 
     def test_given_exception_when_embed_audio_then_returns_false(self, tmp_path):
+        # Arrange
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
         mock_slide.shapes.add_movie.side_effect = RuntimeError("test error")
 
+        # Act
         result = embed_slide_audio(mock_slide, wav)
+
+        # Assert
         assert result is False
