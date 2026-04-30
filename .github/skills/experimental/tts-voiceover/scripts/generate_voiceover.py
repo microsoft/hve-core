@@ -207,7 +207,7 @@ def main() -> int:
         return 1
 
 
-def _run(args) -> int:
+def _run(args: argparse.Namespace) -> int:
     """Execute TTS generation logic."""
 
     content_dir: Path = args.content_dir
@@ -225,6 +225,10 @@ def _run(args) -> int:
     speech_config = None
     credential = None
     token_expires_at = 0
+    speechsdk: Any = None
+    speech_key: str | None = None
+    speech_region: str = "eastus"
+    speech_resource_id: str | None = None
     if not args.dry_run:
         try:
             import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
@@ -304,7 +308,8 @@ def _run(args) -> int:
 
         # Refresh Entra ID token before expiry.
         if (
-            speech_resource_id
+            speechsdk is not None
+            and speech_resource_id
             and not speech_key
             and time.time() > token_expires_at - 300
         ):

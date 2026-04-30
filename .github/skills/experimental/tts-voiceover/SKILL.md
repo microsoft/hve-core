@@ -1,7 +1,11 @@
 ---
 name: tts-voiceover
 description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control - Brought to you by microsoft/hve-core'
-compatibility: 'Requires Python 3.11+, uv, and an Azure Speech resource (key or Entra ID auth)'
+metadata:
+  authors: "microsoft/hve-core"
+  spec_version: "1.0"
+  requires_python: ">=3.11"
+  platform: "Cross-platform (Windows, macOS, Linux)"
 ---
 
 # TTS Voice Over Skill
@@ -176,6 +180,4 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
 
-> Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+> Brought to you by microsoft/hve-core\n\n*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

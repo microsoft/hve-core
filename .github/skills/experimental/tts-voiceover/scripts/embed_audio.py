@@ -193,7 +193,7 @@ def main() -> int:
         return 1
 
 
-def _run(args) -> int:
+def _run(args: argparse.Namespace) -> int:
     """Execute audio embedding logic."""
 
     input_path: Path = args.input
