@@ -1,6 +1,7 @@
 ---
 title: TTS Voice-Over Skill
 description: Generate per-slide WAV voice-over files from YAML speaker notes using Azure Speech SDK
+sidebar_position: 5
 author: Microsoft
 ms.date: 2026-04-23
 ms.topic: how-to
@@ -141,7 +142,7 @@ content/
 
 ## Related Resources
 
-* [SKILL.md](pathname://../../.github/skills/experimental/tts-voiceover/SKILL.md): Full skill reference with parameters and SSML template details
+* [SKILL.md](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/tts-voiceover/SKILL.md): Full skill reference with parameters and SSML template details
 * [Contributing Skills](../contributing/skills.md): Guidelines for contributing skills to HVE Core
 
 ---

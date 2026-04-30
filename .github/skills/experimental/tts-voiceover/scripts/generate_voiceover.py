@@ -23,6 +23,7 @@ import sys
 import time
 import xml.sax.saxutils
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -104,9 +105,9 @@ def wrap_ssml(text: str, voice: str, rate: str) -> str:
     )
 
 
-def generate_audio(ssml: str, output_path: Path, speech_config: object) -> float | None:
+def generate_audio(ssml: str, output_path: Path, speech_config: Any) -> float | None:
     """Generate a WAV file from SSML. Returns duration in seconds or ``None``."""
-    import azure.cognitiveservices.speech as speechsdk
+    import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
 
     audio_config = speechsdk.audio.AudioOutputConfig(filename=str(output_path))
     synthesizer = speechsdk.SpeechSynthesizer(
@@ -123,8 +124,8 @@ def generate_audio(ssml: str, output_path: Path, speech_config: object) -> float
 
 
 def _make_entra_config(
-    speechsdk: object,
-    credential: object,
+    speechsdk: Any,
+    credential: Any,
     resource_id: str,
     region: str,
 ) -> tuple:
@@ -226,7 +227,7 @@ def _run(args) -> int:
     token_expires_at = 0
     if not args.dry_run:
         try:
-            import azure.cognitiveservices.speech as speechsdk
+            import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
         except ImportError:
             logger.error(
                 "azure-cognitiveservices-speech package is required"
@@ -283,7 +284,8 @@ def _run(args) -> int:
             )
             continue
 
-        notes = data.get("speaker_notes", "").strip()
+        raw_notes = data.get("speaker_notes") or ""
+        notes = str(raw_notes).strip()
         title = data.get("title", slide_dir.name)
 
         if not notes:
