@@ -335,10 +335,13 @@ def _run(args: argparse.Namespace) -> int:
             and not speech_key
             and time.time() > token_expires_at - 300
         ):
-            speech_config, token_expires_at = _make_entra_config(
-                speechsdk, credential, speech_resource_id, speech_region
-            )
-            logger.info("Refreshed Entra ID token")
+            try:
+                speech_config, token_expires_at = _make_entra_config(
+                    speechsdk, credential, speech_resource_id, speech_region
+                )
+                logger.info("Refreshed Entra ID token")
+            except Exception:  # network/auth errors during refresh
+                logger.exception("Token refresh failed; using existing token")
 
         wav_path = output_dir / f"{slide_dir.name}.wav"
         logger.info("Generating %s: %s ...", slide_dir.name, title)

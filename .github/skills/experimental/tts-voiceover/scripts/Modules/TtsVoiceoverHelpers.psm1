@@ -30,7 +30,7 @@ function Initialize-PythonEnvironment {
         Root directory of the skill containing pyproject.toml.
     #>
     [CmdletBinding()]
-    [OutputType([System.Void])]
+    [OutputType([void])]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
