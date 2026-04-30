@@ -4,16 +4,6 @@
 # Purpose: Shared helper functions for tts-voiceover skill PowerShell wrappers.
 #Requires -Version 7.0
 
-<#
-.SYNOPSIS
-    Shared helper functions for tts-voiceover skill PowerShell wrappers.
-
-.DESCRIPTION
-    Provides uv availability checking, Python virtual environment setup,
-    and venv Python path resolution used by both Invoke-GenerateVoiceover.ps1
-    and Invoke-EmbedAudio.ps1.
-#>
-
 function Test-UvAvailability {
     <#
     .SYNOPSIS
