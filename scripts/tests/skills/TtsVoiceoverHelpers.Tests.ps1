@@ -95,14 +95,16 @@ Describe 'Initialize-PythonEnvironment' -Tag 'Unit' {
 
 Describe 'Get-VenvPythonPath' -Tag 'Unit' {
     Context 'On non-Windows platforms' {
-        It 'Returns bin/python path' {
-            # Only run on non-Windows
-            if (-not $IsWindows) {
-                $result = Get-VenvPythonPath -VenvDir '/tmp/test-venv'
-                $result | Should -Be '/tmp/test-venv/bin/python'
-            } else {
-                Set-ItResult -Skipped -Because 'Test runs on Linux/macOS only'
-            }
+        It 'Returns bin/python path' -Skip:($IsWindows) {
+            $result = Get-VenvPythonPath -VenvDir '/tmp/test-venv'
+            $result | Should -Be '/tmp/test-venv/bin/python'
+        }
+    }
+
+    Context 'On Windows' {
+        It 'Returns Scripts/python.exe path' -Skip:(-not $IsWindows) {
+            $result = Get-VenvPythonPath -VenvDir 'C:\venv'
+            $result | Should -Be 'C:\venv\Scripts/python.exe'
         }
     }
 

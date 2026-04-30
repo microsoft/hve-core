@@ -43,6 +43,7 @@ function Initialize-PythonEnvironment {
     [OutputType([System.Void])]
     param(
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$SkillRoot
     )
 
@@ -67,6 +68,7 @@ function Get-VenvPythonPath {
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$VenvDir
     )
 

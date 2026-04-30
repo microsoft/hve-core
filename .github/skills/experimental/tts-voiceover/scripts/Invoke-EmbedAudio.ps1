@@ -41,6 +41,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
     [string]$InputPath,
 
     [Parameter()]

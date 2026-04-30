@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import functools
 import logging
 import os
 import re
@@ -73,6 +74,13 @@ def load_acronyms(path: Path) -> dict[str, str]:
     return dict(_DEFAULT_ACRONYMS)
 
 
+@functools.lru_cache(maxsize=8)
+def _compile_acronym_pattern(keys: tuple[str, ...]) -> re.Pattern[str]:
+    """Compile and cache a regex matching all acronym keys, longest first."""
+    sorted_keys = sorted(keys, key=len, reverse=True)
+    return re.compile("|".join(re.escape(k) for k in sorted_keys))
+
+
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """Replace acronyms with SSML ``<sub alias>`` elements.
 
@@ -90,9 +98,7 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
     """
     if not acronyms:
         return text
-    # Build pattern matching all acronyms, longest first
-    sorted_keys = sorted(acronyms.keys(), key=len, reverse=True)
-    pattern = re.compile("|".join(re.escape(k) for k in sorted_keys))
+    pattern = _compile_acronym_pattern(tuple(acronyms.keys()))
 
     def _replace(m: re.Match) -> str:
         acronym = m.group(0)
@@ -143,7 +149,7 @@ def _make_entra_config(
     credential: Any,
     resource_id: str,
     region: str,
-) -> tuple:
+) -> tuple[Any, float]:
     """Create a SpeechConfig with a fresh Entra ID token.
 
     Returns (config, expires_at).
