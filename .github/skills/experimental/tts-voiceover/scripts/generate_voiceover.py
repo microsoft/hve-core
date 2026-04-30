@@ -72,6 +72,15 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
 
     Uses a single-pass regex to avoid corrupting previously-inserted SSML
     tags when an acronym appears inside an alias value or tag content.
+
+    **Input contract**: ``text`` must already be XML-escaped
+    (e.g. via ``xml.sax.saxutils.escape()``).  The returned string is a
+    mix of XML-escaped character data and SSML ``<sub>`` markup fragments
+    intended for embedding directly inside an SSML ``<prosody>`` element.
+
+    **Lexicon constraint**: acronym keys containing XML-special characters
+    (``&``, ``<``, ``>``) will never match because the input text is
+    pre-escaped.  Use only ASCII-safe acronym keys.
     """
     if not acronyms:
         return text
