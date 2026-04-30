@@ -25,6 +25,7 @@ from pathlib import Path
 from lxml import etree
 from pptx import Presentation
 from pptx.oxml.ns import qn
+from pptx.slide import Slide
 from pptx.util import Inches
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def get_wav_duration_ms(wav_path: Path) -> int:
         return int((frames / float(rate)) * 1000) + TIMING_BUFFER_MS
 
 
-def _add_narration_timing(slide: object, shape_id: int, duration_ms: int) -> None:
+def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None:
     """Add auto-play narration timing XML to a slide.
 
     Creates the p:timing element structure that PowerPoint generates
@@ -90,7 +91,7 @@ def _add_narration_timing(slide: object, shape_id: int, duration_ms: int) -> Non
     slide._element.append(etree.fromstring(timing_xml))
 
 
-def _set_slide_transition(slide: object, duration_ms: int) -> None:
+def _set_slide_transition(slide: Slide, duration_ms: int) -> None:
     """Set slide auto-advance timing after audio duration."""
     existing = slide._element.find(qn("p:transition"))
     if existing is not None:
@@ -107,7 +108,7 @@ def _set_slide_transition(slide: object, duration_ms: int) -> None:
         slide._element.append(transition)
 
 
-def _find_audio_shape_id(slide: object) -> int | None:
+def _find_audio_shape_id(slide: Slide) -> int | None:
     """Find the shape ID of the audio/movie shape on a slide."""
     for shape in slide.shapes:
         sp = shape._element
@@ -125,7 +126,7 @@ def _find_audio_shape_id(slide: object) -> int | None:
     return None
 
 
-def embed_slide_audio(slide: object, wav_path: Path) -> bool:
+def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
     """Embed a WAV file into a slide as a media object.
 
     Adds narration timing XML and slide auto-advance so PowerPoint
@@ -154,7 +155,7 @@ def embed_slide_audio(slide: object, wav_path: Path) -> bool:
             )
             return False
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # python-pptx raises varied internal exceptions
         logger.exception(
             "Failed to embed audio %s (%s)", wav_path.name, type(exc).__name__
         )

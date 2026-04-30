@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+import xml.sax.saxutils
 from contextlib import suppress
 from pathlib import Path
 
@@ -35,7 +36,8 @@ from generate_voiceover import (
 def fuzz_apply_acronym_aliases(data):
     """Fuzz apply_acronym_aliases with random text and the default acronym dict."""
     fdp = atheris.FuzzedDataProvider(data)
-    text = fdp.ConsumeUnicodeNoSurrogates(500)
+    raw_text = fdp.ConsumeUnicodeNoSurrogates(500)
+    text = xml.sax.saxutils.escape(raw_text)
     with suppress(ValueError, TypeError):
         apply_acronym_aliases(text, dict(_DEFAULT_ACRONYMS))
 
@@ -43,7 +45,8 @@ def fuzz_apply_acronym_aliases(data):
 def fuzz_wrap_ssml(data):
     """Fuzz wrap_ssml with random text, voice, and rate strings."""
     fdp = atheris.FuzzedDataProvider(data)
-    text = fdp.ConsumeUnicodeNoSurrogates(200)
+    raw_text = fdp.ConsumeUnicodeNoSurrogates(200)
+    text = xml.sax.saxutils.escape(raw_text)
     voice = fdp.ConsumeUnicodeNoSurrogates(50)
     rate = fdp.ConsumeUnicodeNoSurrogates(10)
     with suppress(ValueError, TypeError):
