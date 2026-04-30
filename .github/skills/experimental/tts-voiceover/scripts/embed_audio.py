@@ -148,8 +148,10 @@ def embed_slide_audio(slide: object, wav_path: Path) -> bool:
             _add_narration_timing(slide, shape_id, duration_ms)
             _set_slide_transition(slide, duration_ms)
         return True
-    except Exception:
-        logger.exception("Failed to embed audio %s", wav_path.name)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "Failed to embed audio %s (%s)", wav_path.name, type(exc).__name__
+        )
         return False
 
 
