@@ -84,17 +84,17 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             $parsed.Count | Should -BeGreaterThan 0
         }
 
-        It 'Serializes SamplePaths as a JSON array even when only one path exists' {
+        It 'Serializes AffectedPaths as a JSON array even when only one path exists' {
             # js/xss has a single occurrence; verify the raw JSON uses bracket notation,
             # not a bare string (ConvertFrom-Json re-unwraps single-element arrays so
             # the raw string is the authoritative check)
             $result = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json
             $rawJson = $result | Out-String
 
-            $rawJson | Should -Match '"SamplePaths":\s*\['
+            $rawJson | Should -Match '"AffectedPaths":\s*\['
         }
 
-        It 'Serializes SamplePaths as a JSON array when alert has no associated file path' {
+        It 'Serializes AffectedPaths as empty array and sets HasFilePaths false when alert has no associated file path' {
             $noPathJson = '[{"number":10,"rule":{"id":"BranchProtectionID","description":"Branch-Protection","security_severity_level":"high"},"tool":{"name":"Scorecard"},"most_recent_instance":{"location":{"path":"no file associated with this alert"}}}]'
             ${Function:gh} = {
                 $global:LASTEXITCODE = 0
@@ -102,13 +102,13 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             }.GetNewClosure()
 
             $result = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json
-            $rawJson = $result | Out-String
+            $parsed = $result | ConvertFrom-Json
 
-            $rawJson | Should -Match '"SamplePaths":\s*\['
-            $rawJson | Should -Match 'no file associated with this alert'
+            $parsed[0].AffectedPaths | Should -HaveCount 0
+            $parsed[0].HasFilePaths | Should -BeFalse
         }
 
-        It 'Deduplicates and sorts SamplePaths across multiple occurrences of the same rule' {
+        It 'Deduplicates and sorts AffectedPaths across multiple occurrences of the same rule' {
             $multiPathJson = '[{"number":1,"rule":{"id":"py/empty-except","description":"Empty except","security_severity_level":null},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"scripts/b.py"}}},{"number":2,"rule":{"id":"py/empty-except","description":"Empty except","security_severity_level":null},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"scripts/a.py"}}},{"number":3,"rule":{"id":"py/empty-except","description":"Empty except","security_severity_level":null},"tool":{"name":"CodeQL"},"most_recent_instance":{"location":{"path":"scripts/a.py"}}}]'
             ${Function:gh} = {
                 $global:LASTEXITCODE = 0
@@ -118,9 +118,9 @@ Describe 'Get-CodeScanningAlerts' -Tag 'Unit' {
             $result = & $script:ScriptPath -Owner 'testorg' -Repo 'testrepo' -OutputFormat Json
             $parsed = $result | ConvertFrom-Json
 
-            $parsed[0].SamplePaths | Should -HaveCount 2
-            $parsed[0].SamplePaths[0] | Should -Be 'scripts/a.py'
-            $parsed[0].SamplePaths[1] | Should -Be 'scripts/b.py'
+            $parsed[0].AffectedPaths | Should -HaveCount 2
+            $parsed[0].AffectedPaths[0] | Should -Be 'scripts/a.py'
+            $parsed[0].AffectedPaths[1] | Should -Be 'scripts/b.py'
         }
     }
 
