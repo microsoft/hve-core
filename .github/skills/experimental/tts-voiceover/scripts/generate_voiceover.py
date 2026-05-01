@@ -67,6 +67,13 @@ def load_acronyms(path: Path) -> dict[str, str]:
                 for k, v in acronyms.items()
                 if k is not None and v is not None
             }
+            xml_special = {k for k in clean if any(c in k for c in ("&", "<", ">"))}
+            if xml_special:
+                logger.warning(
+                    "Acronym keys with XML-special characters will never match "
+                    "(input text is pre-escaped): %s",
+                    ", ".join(sorted(xml_special)),
+                )
             if clean:
                 logger.info("Loaded %d acronyms from %s", len(clean), path)
                 return clean
@@ -274,6 +281,8 @@ def _run(args: argparse.Namespace) -> int:
             )
             return EXIT_ERROR
 
+    use_entra_auth = bool(speech_resource_id and not speech_key)
+
     total_duration = 0.0
     slide_count = 0
     failed_count = 0
@@ -315,12 +324,7 @@ def _run(args: argparse.Namespace) -> int:
             continue
 
         # Refresh Entra ID token before expiry.
-        if (
-            speechsdk is not None
-            and speech_resource_id
-            and not speech_key
-            and time.time() > token_expires_at - 300
-        ):
+        if use_entra_auth and time.time() > token_expires_at - 300:
             try:
                 speech_config, token_expires_at = _make_entra_config(
                     speechsdk, credential, speech_resource_id, speech_region
@@ -342,6 +346,13 @@ def _run(args: argparse.Namespace) -> int:
     if args.dry_run:
         print(f"\n--- Dry run complete: {slide_count} slides processed ---")
     else:
+        if slide_count == 0:
+            logger.warning(
+                "No slides with speaker_notes found in %s. "
+                "Verify --content-dir points to a PowerPoint skill content directory.",
+                content_dir,
+            )
+            return EXIT_FAILURE
         logger.info(
             "Total narration: %.1fs (%.1f min) across %d slides",
             total_duration,
