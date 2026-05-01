@@ -7,7 +7,9 @@ from pathlib import Path
 import yaml
 from generate_voiceover import (
     _resolve_lexicon,
+    apply_acronym_aliases,
     create_parser,
+    wrap_ssml,
 )
 
 
@@ -175,3 +177,97 @@ class TestRunDryRun:
 
         # Assert
         assert rc == 0
+
+
+class TestApplyAcronymAliases:
+    """Tests for apply_acronym_aliases."""
+
+    def test_given_known_acronym_when_applied_then_wraps_in_sub(self):
+        # Arrange
+        text = "Use OWASP guidelines"
+        acronyms = {"OWASP": "Oh wasp"}
+
+        # Act
+        result = apply_acronym_aliases(text, acronyms)
+
+        # Assert
+        assert '<sub alias="Oh wasp">OWASP</sub>' in result
+
+    def test_given_empty_acronyms_when_applied_then_returns_unchanged(self):
+        # Arrange
+        text = "no replacements here"
+
+        # Act
+        result = apply_acronym_aliases(text, {})
+
+        # Assert
+        assert result == text
+
+    def test_given_escaped_input_when_applied_then_no_double_escape(self):
+        # Arrange
+        text = "&amp; &lt;tag&gt;"
+
+        # Act
+        result = apply_acronym_aliases(text, {})
+
+        # Assert
+        assert result == text
+
+    def test_given_multiple_acronyms_when_applied_then_all_replaced(self):
+        # Arrange
+        text = "Use API and SDK"
+        acronyms = {"API": "A P I", "SDK": "S D K"}
+
+        # Act
+        result = apply_acronym_aliases(text, acronyms)
+
+        # Assert
+        assert '<sub alias="A P I">API</sub>' in result
+        assert '<sub alias="S D K">SDK</sub>' in result
+
+
+class TestWrapSsml:
+    """Tests for wrap_ssml."""
+
+    def test_given_text_when_wrapped_then_contains_speak_element(self):
+        # Arrange
+        text = "Hello world"
+
+        # Act
+        result = wrap_ssml(text, voice="en-US-AriaNeural", rate="0%")
+
+        # Assert
+        assert "<speak" in result
+        assert "</speak>" in result
+
+    def test_given_voice_when_wrapped_then_voice_attribute_present(self):
+        # Arrange
+        voice = "en-US-AriaNeural"
+
+        # Act
+        result = wrap_ssml("test", voice=voice, rate="0%")
+
+        # Assert
+        assert voice in result
+
+    def test_given_rate_when_wrapped_then_prosody_rate_set(self):
+        # Arrange
+        rate = "-10%"
+
+        # Act
+        result = wrap_ssml("test", voice="en-US-AriaNeural", rate=rate)
+
+        # Assert
+        assert rate in result
+
+    def test_given_ssml_output_when_parsed_then_valid_xml(self):
+        # Arrange
+        import xml.etree.ElementTree as ET
+
+        text = "Hello &amp; world"
+
+        # Act
+        result = wrap_ssml(text, voice="en-US-AriaNeural", rate="0%")
+
+        # Assert
+        ET.fromstring(result)

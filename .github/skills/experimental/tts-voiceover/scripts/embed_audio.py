@@ -197,6 +197,12 @@ def _run(args: argparse.Namespace) -> int:
         f"{input_path.stem}-narrated.pptx"
     )
 
+    if output_path.resolve() == input_path.resolve():
+        logger.error(
+            "Output path must differ from input path to avoid overwriting the source"
+        )
+        return EXIT_ERROR
+
     prs = Presentation(str(input_path))
     embedded_count = 0
     failed_count = 0

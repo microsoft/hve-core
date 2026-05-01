@@ -57,7 +57,8 @@ jobs:
           # from bundled code; distributed licenses are permissive.
           # pkg:npm/hve-core is the private root package (never published to npm).
           # pkg:pypi/certifi uses MPL-2.0 (Mozilla CA bundle).
-          # pkg:pypi/charset-normalizer uses LGPL for detection code; MIT for API.
+          # pkg:pypi/charset-normalizer is MIT licensed; allowed for Azure SDK
+          # transitive dependency chain.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
