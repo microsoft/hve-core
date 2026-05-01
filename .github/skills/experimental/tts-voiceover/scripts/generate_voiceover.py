@@ -218,6 +218,12 @@ def create_parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to custom acronyms.yaml lexicon file",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose (DEBUG) logging",
+    )
     return parser
 
 
@@ -369,11 +375,17 @@ def _run(args: argparse.Namespace) -> int:
     return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
 
 
+def configure_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity level."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+
+
 def main() -> int:
     """Entry point for TTS voice-over generation."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = create_parser()
     args = parser.parse_args()
+    configure_logging(verbose=args.verbose)
     try:
         return _run(args)
     except KeyboardInterrupt:
