@@ -248,13 +248,13 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included       |
-|--------------------------------------|----------------------------------------------------------|-----------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Merge to main                        | `release-stable.yml` (5 jobs)                                      | ✅  Yes               |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
+| Event                                | Workflows That Run                                       | CodeQL Included     |
+|--------------------------------------|----------------------------------------------------------|---------------------|
+| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
+| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
+| Merge to main                        | `release-stable.yml` (5 jobs)                            | ✅  Yes              |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone) |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌  No               |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
@@ -549,12 +549,12 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 
 ## Configuration Files
 
-| File                                                  | Purpose                      | Used By                     |
-|-------------------------------------------------------|------------------------------|-----------------------------|
-| `scripts/linting/PSScriptAnalyzer.psd1`               | PowerShell linting rules     | `ps-script-analyzer.yml`    |
-| `.markdownlint.json`                                  | Markdown formatting rules    | `markdown-lint.yml`         |
-| `scripts/linting/markdown-link-check.config.json`     | Link checking configuration  | `markdown-link-check.yml`   |
-| `.cspell.json`                                        | Spell checking configuration | `spell-check.yml`           |
+| File                                                           | Purpose                      | Used By                     |
+|----------------------------------------------------------------|------------------------------|-----------------------------|
+| `scripts/linting/PSScriptAnalyzer.psd1`                        | PowerShell linting rules     | `ps-script-analyzer.yml`    |
+| `.markdownlint.json`                                           | Markdown formatting rules    | `markdown-lint.yml`         |
+| `scripts/linting/markdown-link-check.config.json`              | Link checking configuration  | `markdown-link-check.yml`   |
+| `.cspell.json`                                                 | Spell checking configuration | `spell-check.yml`           |
 | `.github/instructions/hve-core/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
 | `.github/instructions/hve-core/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
 

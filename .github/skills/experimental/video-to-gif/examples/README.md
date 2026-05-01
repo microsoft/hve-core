@@ -99,7 +99,7 @@ done
 Expected results:
 
 | Algorithm       | File Size | Visual Quality | Processing Time |
-| --------------- | --------- | -------------- | --------------- |
+|-----------------|-----------|----------------|-----------------|
 | sierra2_4a      | Medium    | High           | Medium          |
 | floyd_steinberg | Medium    | Highest        | Slow            |
 | bayer           | Smaller   | Medium         | Fast            |
