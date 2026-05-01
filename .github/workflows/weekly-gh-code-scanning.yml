@@ -4,18 +4,10 @@ on:
   schedule:
     - cron: '0 3 * * 1' # Mondays at 03:00 UTC
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - ready_for_review
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
