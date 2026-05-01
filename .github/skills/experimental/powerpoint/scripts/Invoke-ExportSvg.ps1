@@ -30,9 +30,10 @@
     ./Invoke-ExportSvg.ps1 -InputPath deck.pptx -OutputDir svg/
 #>
 
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$InputPath,
-    [Parameter(Mandatory)][string]$OutputDir,
+    [Parameter(Mandatory = $true)][string]$InputPath,
+    [Parameter(Mandatory = $true)][string]$OutputDir,
     [string]$Slides,
     [switch]$SkipVenvSetup
 )

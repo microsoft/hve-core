@@ -33,10 +33,11 @@
     ./Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over/ -OutputPath out.pptx
 #>
 
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$InputPath,
-    [Parameter(Mandatory)][string]$AudioDir,
-    [Parameter(Mandatory)][string]$OutputPath,
+    [Parameter(Mandatory = $true)][string]$InputPath,
+    [Parameter(Mandatory = $true)][string]$AudioDir,
+    [Parameter(Mandatory = $true)][string]$OutputPath,
     [string]$Slides,
     [switch]$SkipVenvSetup
 )

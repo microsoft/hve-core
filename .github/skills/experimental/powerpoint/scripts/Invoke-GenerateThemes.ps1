@@ -30,10 +30,11 @@
     ./Invoke-GenerateThemes.ps1 -ContentDir content/ -ThemesPath themes.yaml -OutputDir ../
 #>
 
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$ContentDir,
-    [Parameter(Mandatory)][string]$ThemesPath,
-    [Parameter(Mandatory)][string]$OutputDir,
+    [Parameter(Mandatory = $true)][string]$ContentDir,
+    [Parameter(Mandatory = $true)][string]$ThemesPath,
+    [Parameter(Mandatory = $true)][string]$OutputDir,
     [switch]$SkipVenvSetup
 )
 
