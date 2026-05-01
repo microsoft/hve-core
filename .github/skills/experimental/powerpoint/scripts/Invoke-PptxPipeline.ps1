@@ -430,7 +430,7 @@ function Invoke-ValidateDeck {
     }
 
     # Step 2b: Run geometric validation (margin, gap, overflow checks)
-    Write-Host "Step 2b: Running geometric validation..."
+    Write-Host "Step 2b/$totalSteps`: Running geometric validation..."
     $geomScript = Join-Path $ScriptDir 'validate_geometry.py'
     $geomArgs = @(
         $geomScript,

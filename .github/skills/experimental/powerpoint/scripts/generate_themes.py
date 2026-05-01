@@ -88,6 +88,11 @@ def remap_hex_in_text(text: str, color_map: dict[str, str]) -> str:
     the prefix is stripped before matching.  Matching is case-insensitive.
     """
     bare_map = {k.lstrip("#").lower(): v.lstrip("#") for k, v in color_map.items()}
+    invalid = {k: v for k, v in bare_map.items() if len(k) != 6 or len(v) != 6}
+    if invalid:
+        raise ValueError(
+            f"Color map entries must be 6-character hex strings; invalid: {invalid}"
+        )
     if not bare_map:
         return text
     pattern = re.compile(
@@ -110,6 +115,12 @@ def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
     for old_hex, new_hex in color_map.items():
         old_bare = old_hex.lstrip("#").upper()
         bare_map[old_bare] = new_hex.lstrip("#").upper()
+
+    invalid = {k: v for k, v in bare_map.items() if len(k) != 6 or len(v) != 6}
+    if invalid:
+        raise ValueError(
+            f"Color map entries must be 6-character hex strings; invalid: {invalid}"
+        )
 
     if not bare_map:
         return text
