@@ -108,24 +108,6 @@ def _set_slide_transition(slide: Slide, duration_ms: int) -> None:
         slide._element.append(transition)
 
 
-def _find_audio_shape_id(slide: Slide) -> int | None:
-    """Find the shape ID of the audio/movie shape on a slide."""
-    for shape in slide.shapes:
-        sp = shape._element
-        for tag_suffix in ("nvPicPr", "nvSpPr"):
-            nv = sp.find(qn(f"p:{tag_suffix}"))
-            if nv is None:
-                continue
-            nvPr = nv.find(qn("p:nvPr"))
-            if nvPr is None:
-                continue
-            if nvPr.find(qn("a:audioFile")) is not None:
-                return shape.shape_id
-            if nvPr.find(qn("a:videoFile")) is not None:
-                return shape.shape_id
-    return None
-
-
 def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
     """Embed a WAV file into a slide as a media object.
 
@@ -135,7 +117,7 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
     Returns True on success, False on failure.
     """
     try:
-        slide.shapes.add_movie(
+        movie_shape = slide.shapes.add_movie(
             str(wav_path),
             left=0,
             top=0,
@@ -143,7 +125,7 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
             height=ICON_SIZE,
             mime_type=AUDIO_MIME_TYPE,
         )
-        shape_id = _find_audio_shape_id(slide)
+        shape_id: int | None = movie_shape.shape_id
         if shape_id is not None:
             duration_ms = get_wav_duration_ms(wav_path)
             _add_narration_timing(slide, shape_id, duration_ms)
@@ -151,8 +133,7 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
         else:
             # Remove the orphaned audio shape to avoid partial state
             try:
-                sp = slide.shapes[-1]._element
-                sp.getparent().remove(sp)
+                movie_shape._element.getparent().remove(movie_shape._element)
             except Exception:
                 logger.debug(
                     "Could not remove orphaned shape for %s",

@@ -105,8 +105,9 @@ class TestEmbedSlideAudio:
         # Arrange
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
-        mock_slide.shapes.add_movie.return_value = MagicMock()
-        mocker.patch("embed_audio._find_audio_shape_id", return_value=42)
+        mock_shape = MagicMock()
+        mock_shape.shape_id = 42
+        mock_slide.shapes.add_movie.return_value = mock_shape
         mocker.patch("embed_audio._add_narration_timing")
         mocker.patch("embed_audio._set_slide_transition")
 
@@ -120,8 +121,9 @@ class TestEmbedSlideAudio:
         # Arrange
         wav = _make_wav(tmp_path)
         mock_slide = MagicMock()
-        mock_slide.shapes.add_movie.return_value = MagicMock()
-        mocker.patch("embed_audio._find_audio_shape_id", return_value=None)
+        mock_shape = MagicMock()
+        mock_shape.shape_id = None
+        mock_slide.shapes.add_movie.return_value = mock_shape
 
         # Act
         result = embed_slide_audio(mock_slide, wav)
