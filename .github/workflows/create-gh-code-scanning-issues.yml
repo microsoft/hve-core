@@ -56,7 +56,6 @@ jobs:
               PATHS_SECTION=$'### Affected paths\n\n'"${AFFECTED_LIST}"
             else
               PATHS_SECTION=$'### Repository configuration finding\n\nThis alert refers to a repository-level configuration setting with no associated source file.'
-              [[ -n "$FINDING_DESC" ]] && PATHS_SECTION+=$'\n'"**Finding:** ${FINDING_DESC}"
             fi
 
             existing=$(gh issue list \
@@ -97,7 +96,11 @@ jobs:
             else
               gh issue edit "${existing}" \
                 --repo "${OWNER}/${REPO}" \
+                --title "[Security][${SEVERITY}] ${RULE_DESC}" \
                 --body "${ISSUE_BODY}"
+              gh issue edit "${existing}" \
+                --repo "${OWNER}/${REPO}" \
+                --add-label "automated,needs-triage"
               gh issue comment "${existing}" \
                 --repo "${OWNER}/${REPO}" \
                 --body "Weekly scan update: ${COUNT} ${OCCURRENCE_WORD} as of ${DETECTION_DATE}."
