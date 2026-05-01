@@ -38,7 +38,7 @@ function Initialize-PythonEnvironment {
     )
 
     Write-Host 'Syncing Python environment via uv...'
-    & uv sync --directory $SkillRoot
+    & uv sync --directory "$SkillRoot"
     if ($LASTEXITCODE -ne 0) {
         throw 'Failed to sync Python environment via uv.'
     }

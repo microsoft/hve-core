@@ -154,7 +154,11 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
                 sp = slide.shapes[-1]._element
                 sp.getparent().remove(sp)
             except Exception:
-                pass
+                logger.debug(
+                    "Could not remove orphaned shape for %s",
+                    wav_path.name,
+                    exc_info=True,
+                )
             logger.error(
                 "Could not find audio shape for %s; removed orphaned embed",
                 wav_path.name,
@@ -235,7 +239,12 @@ def _run(args: argparse.Namespace) -> int:
     if embedded_count == 0:
         return EXIT_FAILURE
 
-    prs.save(str(output_path))
+    try:
+        prs.save(str(output_path))
+    except OSError as exc:
+        logger.error("Failed to save output PPTX %s: %s", output_path, exc)
+        return EXIT_FAILURE
+
     logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     if failed_count > 0:
