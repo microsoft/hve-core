@@ -160,7 +160,7 @@ function Invoke-CollectionValidation {
     $errorCount = 0
     $seenIds = @{}
     $validatedCount = 0
-    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated')
+    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated', 'removed')
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 
@@ -168,6 +168,13 @@ function Invoke-CollectionValidation {
     foreach ($cf in $collectionFiles) {
         $cfId = $cf.Name -replace '\.collection\.yml$', ''
         $knownCollectionIds[$cfId] = $true
+    }
+
+    # Sub-domain folders that group artifacts shared across multiple themed collections
+    # but are intentionally not collections themselves.
+    $sharedSubdomainFolders = @{
+        'shared'       = $true
+        'rai-planning' = $true
     }
 
     foreach ($file in $collectionFiles) {
@@ -292,7 +299,7 @@ function Invoke-CollectionValidation {
                 # Expected pattern: .github/{type}/{collection-id}/{file-or-deeper}
                 if ($pathSegments.Count -ge 4 -and $pathSegments[0] -eq '.github') {
                     $folderName = $pathSegments[2]
-                    if ($folderName -ne 'shared' -and -not $knownCollectionIds.ContainsKey($folderName)) {
+                    if (-not $sharedSubdomainFolders.ContainsKey($folderName) -and -not $knownCollectionIds.ContainsKey($folderName)) {
                         Write-Host " WARN collection '$id': item folder '$folderName' does not match any known collection ID: $itemPath" -ForegroundColor Yellow
                     }
                 }
@@ -373,8 +380,11 @@ function Invoke-CollectionValidation {
         $themedMatches    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId })
 
         # Check 4: item in one or more themed collections but absent from hve-core-all
-        if ($canonicalManifestFound -and $themedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
-            $themedCollections = ($themedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
+        # Skip when all themed occurrences are marked maturity:'removed' (intentional tombstone
+        # excluded from hve-core-all by Update-HveCoreAllCollection).
+        $activeThemedMatches = @($themedMatches | Where-Object { $_.Maturity -ne 'removed' })
+        if ($canonicalManifestFound -and $activeThemedMatches.Count -gt 0 -and $canonicalMatches.Count -eq 0) {
+            $themedCollections = ($activeThemedMatches | ForEach-Object { $_.CollectionId } | Sort-Object -Unique) -join ', '
             Write-Host "  FAIL item '$itemKey' exists in themed collection(s) [$themedCollections] but is absent from '$canonicalCollectionId'" -ForegroundColor Red
             $errorCount++
             continue
@@ -403,8 +413,15 @@ function Invoke-CollectionValidation {
             $inThemed    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId }).Count -gt 0
 
             if (-not $inCanonical) {
-                Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
-                $errorCount++
+                # Skip orphan failure when all themed occurrences are tombstoned (maturity:'removed').
+                $themedActive  = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -ne 'removed' }).Count -gt 0
+                $themedRemoved = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -eq 'removed' }).Count -gt 0
+                if ($themedRemoved -and -not $themedActive) {
+                    Write-Verbose "Skipping orphan check for tombstoned item '$diskKey'"
+                } else {
+                    Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red
+                    $errorCount++
+                }
             } elseif (-not $inThemed) {
                 Write-Host " WARN '$diskKey' exists in '$canonicalCollectionId' but is not in any themed collection" -ForegroundColor Yellow
             }

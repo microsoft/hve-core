@@ -1,7 +1,7 @@
 {
   "name": "hve-core-all",
   "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
-  "version": "3.3.41",
+  "version": "3.3.101",
   "agents": [
     "agents/ado/",
     "agents/coding-standards/",
@@ -32,6 +32,7 @@
   "skills": [
     "skills/coding-standards/",
     "skills/experimental/",
+    "skills/github/",
     "skills/gitlab/",
     "skills/installer/",
     "skills/jira/",

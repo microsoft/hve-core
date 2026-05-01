@@ -721,6 +721,20 @@ Describe 'Test-CollectionMaturityEligible' {
         $result.Reason | Should -Match 'deprecated.*excluded from all channels'
     }
 
+    It 'Returns ineligible for removed collection on Stable channel' {
+        $manifest = @{ id = 'gone-coll'; maturity = 'removed' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'removed.*excluded from all channels'
+    }
+
+    It 'Returns ineligible for removed collection on PreRelease channel' {
+        $manifest = @{ id = 'gone-coll'; maturity = 'removed' }
+        $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'PreRelease'
+        $result.IsEligible | Should -BeFalse
+        $result.Reason | Should -Match 'removed.*excluded from all channels'
+    }
+
     It 'Defaults to stable when maturity key is absent' {
         $manifest = @{ id = 'no-maturity' }
         $result = Test-CollectionMaturityEligible -CollectionManifest $manifest -Channel 'Stable'
