@@ -3,7 +3,6 @@ name: gh-code-scanning
 description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core'
 license: MIT
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
-ms.date: 2026-04-21
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
