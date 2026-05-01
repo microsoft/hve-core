@@ -96,6 +96,7 @@ if ($MyInvocation.InvocationName -ne '.') {
                 RuleId             = $_.Group[0].rule.id
                 Tool               = $_.Group[0].tool.name
                 SecuritySeverity   = $_.Group[0].rule.security_severity_level
+                Severity           = $_.Group[0].rule.severity
                 Count              = $_.Count
                 AffectedPaths      = $paths
                 HasFilePaths       = ($paths.Count -gt 0)

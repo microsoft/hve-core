@@ -39,13 +39,18 @@ jobs:
           while IFS= read -r alert; do
             RULE_ID=$(echo "$alert" | jq -r '.RuleId')
             RULE_DESC=$(echo "$alert" | jq -r '.RuleDescription')
-            SEVERITY=$(echo "$alert" | jq -r '.SecuritySeverity // "unspecified"')
+            SEVERITY=$(echo "$alert" | jq -r '.SecuritySeverity // .Severity // empty')
             TOOL=$(echo "$alert" | jq -r '.Tool')
             COUNT=$(echo "$alert" | jq -r '.Count')
             HAS_FILE_PATHS=$(echo "$alert" | jq -r '.HasFilePaths')
             ALERT_URL=$(echo "$alert" | jq -r '.AlertUrl // ""')
             FINDING_DESC=$(echo "$alert" | jq -r '.FindingDescription // ""')
             MARKER="automation:security-scan:${RULE_ID}"
+            if [[ -n "$SEVERITY" ]]; then
+              ISSUE_TITLE="[Security][${SEVERITY}] ${RULE_DESC}"
+            else
+              ISSUE_TITLE="[Security] ${RULE_DESC}"
+            fi
             OCCURRENCE_WORD="$([ "$COUNT" = "1" ] && echo "occurrence" || echo "occurrences")"
             DETECTION_DATE=$(date -u '+%Y-%m-%d')
             RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
@@ -67,7 +72,7 @@ jobs:
           ## Code Scanning Alert: ${RULE_DESC}
 
           **Rule:** \`${RULE_ID}\`
-          **Severity:** ${SEVERITY}
+          $([ -n "${SEVERITY}" ] && echo "**Severity:** ${SEVERITY}")
           **Tool:** ${TOOL}
           **Occurrences:** ${COUNT} ${OCCURRENCE_WORD}
           $([ -n "${ALERT_URL}" ] && echo "**Alert:** ${ALERT_URL}")
@@ -90,13 +95,13 @@ jobs:
             if [[ -z "$existing" ]]; then
               gh issue create \
                 --repo "${OWNER}/${REPO}" \
-                --title "[Security][${SEVERITY}] ${RULE_DESC}" \
+                --title "${ISSUE_TITLE}" \
                 --label "security,automated,needs-triage" \
                 --body "${ISSUE_BODY}"
             else
               gh issue edit "${existing}" \
                 --repo "${OWNER}/${REPO}" \
-                --title "[Security][${SEVERITY}] ${RULE_DESC}" \
+                --title "${ISSUE_TITLE}" \
                 --body "${ISSUE_BODY}"
               gh issue edit "${existing}" \
                 --repo "${OWNER}/${REPO}" \
