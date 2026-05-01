@@ -411,8 +411,8 @@ def generate_report(results: dict) -> str:
             sev = issue.get("severity", "info")
             sev_icon = SEVERITY_ICON.get(sev, "")
             check = issue.get("check_type", "")
-            loc = issue.get("location", "")
-            desc = issue.get("description", "")
+            loc = issue.get("location", "").replace("|", "\\|")
+            desc = issue.get("description", "").replace("|", "\\|")
             lines.append(f"| {sev_icon} {sev} | {check} | {loc} | {desc} |")
         lines.append("")
 
@@ -498,7 +498,7 @@ def main() -> int:
     """Main entry point."""
     parser = create_parser()
     args = parser.parse_args()
-    configure_logging(getattr(args, "verbose", False))
+    configure_logging(args.verbose)
 
     pptx_path = args.input
     if not pptx_path.exists():

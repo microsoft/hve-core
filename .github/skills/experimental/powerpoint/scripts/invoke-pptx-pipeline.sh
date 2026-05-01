@@ -244,8 +244,8 @@ invoke_validate_deck() {
   local has_vision_prompt=false
   [[ -n "${VALIDATION_PROMPT:-}" || -n "${VALIDATION_PROMPT_FILE:-}" ]] && has_vision_prompt=true
 
-  local total_steps=3
-  ${has_vision_prompt} && total_steps=4
+  local total_steps=4
+  ${has_vision_prompt} && total_steps=5
 
   # Default image output directory
   if [[ -z "${IMAGE_OUTPUT_DIR:-}" ]]; then
@@ -281,8 +281,8 @@ invoke_validate_deck() {
     echo "PPTX property checks found warnings — see ${deck_report}"
   fi
 
-  # Step 2b: Run geometric validation (margin, gap, overflow checks)
-  echo "Step 2b/${total_steps}: Running geometric validation..."
+  # Step 3: Run geometric validation (margin, gap, overflow checks)
+  echo "Step 3/${total_steps}: Running geometric validation..."
   local geom_output="${IMAGE_OUTPUT_DIR}/geometry-validation-results.json"
   local geom_report="${IMAGE_OUTPUT_DIR}/geometry-validation-report.md"
   local -a geom_args=(
@@ -293,6 +293,7 @@ invoke_validate_deck() {
     "--per-slide-dir" "${IMAGE_OUTPUT_DIR}"
   )
   [[ -n "${SLIDES:-}" ]] && geom_args+=("--slides" "${SLIDES}")
+  [[ "${VERBOSE:-false}" == "true" ]] && geom_args+=("-v")
 
   local geom_exit=0
   "${python}" "${geom_args[@]}" || geom_exit=$?
@@ -303,9 +304,9 @@ invoke_validate_deck() {
     echo "Geometric validation found warnings — see ${geom_report}"
   fi
 
-  # Step 3: Vision validation (when prompt provided)
+  # Step 4: Vision validation (when prompt provided)
   if ${has_vision_prompt}; then
-    echo "Step 3/${total_steps}: Running Copilot SDK vision validation..."
+    echo "Step 4/${total_steps}: Running Copilot SDK vision validation..."
     local vision_script="${SCRIPT_DIR}/validate_slides.py"
     local -a vision_args=(
       "${vision_script}"

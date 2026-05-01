@@ -386,7 +386,7 @@ function Invoke-ValidateDeck {
 
     $python = Get-VenvPythonPath
     $hasVisionPrompt = $ValidationPrompt -or $ValidationPromptFile
-    $totalSteps = if ($hasVisionPrompt) { 3 } else { 2 }
+    $totalSteps = if ($hasVisionPrompt) { 5 } else { 4 }
 
     # Default image output directory when not specified
     if (-not $ImageOutputDir) {
@@ -429,8 +429,8 @@ function Invoke-ValidateDeck {
         Write-Host "PPTX property checks found warnings — see $deckReportPath"
     }
 
-    # Step 2b: Run geometric validation (margin, gap, overflow checks)
-    Write-Host "Step 2b/$totalSteps`: Running geometric validation..."
+    # Step 3: Run geometric validation (margin, gap, overflow checks)
+    Write-Host "Step 3/$totalSteps`: Running geometric validation..."
     $geomScript = Join-Path $ScriptDir 'validate_geometry.py'
     $geomArgs = @(
         $geomScript,
@@ -448,6 +448,9 @@ function Invoke-ValidateDeck {
     $geomArgs += $geomReportPath
     $geomArgs += '--per-slide-dir'
     $geomArgs += $ImageOutputDir
+    if ($VerbosePreference -eq 'Continue') {
+        $geomArgs += '-v'
+    }
 
     & $python @geomArgs
     if ($LASTEXITCODE -eq 2) {
@@ -457,9 +460,9 @@ function Invoke-ValidateDeck {
         Write-Host "Geometric validation found warnings — see $geomReportPath"
     }
 
-    # Step 3: Run Copilot SDK vision validation (when prompt provided)
+    # Step 4: Run Copilot SDK vision validation (when prompt provided)
     if ($hasVisionPrompt) {
-        Write-Host "Step 3/$totalSteps`: Running Copilot SDK vision validation..."
+        Write-Host "Step 4/$totalSteps`: Running Copilot SDK vision validation..."
         $visionScript = Join-Path $ScriptDir 'validate_slides.py'
         $visionArgs = @(
             $visionScript,

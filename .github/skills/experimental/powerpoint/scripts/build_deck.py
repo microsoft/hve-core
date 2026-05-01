@@ -1137,7 +1137,7 @@ def main():
         help="Enable verbose logging output",
     )
     args = parser.parse_args()
-    configure_logging(getattr(args, "verbose", False))
+    configure_logging(args.verbose)
 
     content_dir = Path(args.content_dir)
     style = load_yaml(Path(args.style))
