@@ -74,6 +74,12 @@ def load_themes(themes_path: Path) -> dict[str, Any]:
     for theme_id, cfg in themes.items():
         if "colors" not in cfg or not isinstance(cfg["colors"], dict):
             raise ValueError(f"Theme '{theme_id}' must contain a 'colors' mapping")
+        for k, v in cfg["colors"].items():
+            if not isinstance(k, str) or not isinstance(v, str):
+                raise ValueError(
+                    f"Theme '{theme_id}' color map keys and values must be "
+                    f"strings; got {k!r}: {v!r}"
+                )
     return themes
 
 

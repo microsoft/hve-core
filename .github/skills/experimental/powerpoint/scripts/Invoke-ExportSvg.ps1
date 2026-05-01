@@ -65,3 +65,4 @@ if ($Slides) { $args_ += '--slides'; $args_ += $Slides }
 if ($VerbosePreference -eq 'Continue') { $args_ += '-v' }
 
 & $python @args_
+exit $LASTEXITCODE

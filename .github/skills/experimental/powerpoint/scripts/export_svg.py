@@ -127,8 +127,13 @@ def convert_pptx_to_pdf(pptx_path: Path, output_dir: Path) -> Path:
             capture_output=True,
             text=True,
             check=True,
+            timeout=300,
         )
         logger.debug("LibreOffice stdout: %s", result.stdout)
+    except subprocess.TimeoutExpired as e:
+        raise LibreOfficeError(
+            f"LibreOffice conversion timed out after {e.timeout}s"
+        ) from e
     except subprocess.CalledProcessError as e:
         raise LibreOfficeError(f"LibreOffice conversion failed: {e.stderr}") from e
     except FileNotFoundError as e:

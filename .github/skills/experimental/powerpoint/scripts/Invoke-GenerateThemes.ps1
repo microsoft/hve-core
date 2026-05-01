@@ -64,3 +64,4 @@ $args_ = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--ou
 if ($VerbosePreference -eq 'Continue') { $args_ += '-v' }
 
 & $python @args_
+exit $LASTEXITCODE
