@@ -5,6 +5,7 @@ requires-python = ">=3.11"
 dependencies = [
     "python-pptx",
     "pyyaml",
+    "ruamel.yaml",
     "cairosvg",
     "Pillow",
     "pymupdf",

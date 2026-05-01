@@ -28,6 +28,7 @@ from pptx_utils import (
     EXIT_SUCCESS,
     configure_logging,
 )
+from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
 
@@ -177,12 +178,14 @@ def process_directory(src_dir: Path, dest_dir: Path, color_map: dict[str, str]) 
 def update_style_metadata(style_path: Path, theme_id: str, label: str) -> None:
     """Patch theme name and append label to title in style.yaml.
 
-    Uses yaml.safe_load round-trip to avoid brittle regex patching.
-    Note: this normalizes YAML formatting (key ordering, quoting style).
+    Uses ruamel.yaml for round-trip fidelity: preserves comments,
+    key ordering, and quoting style from the original file.
     """
     if not style_path.exists():
         return
-    data = yaml.safe_load(style_path.read_text(encoding="utf-8"))
+    ryaml = YAML()
+    ryaml.preserve_quotes = True
+    data = ryaml.load(style_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         return
 
@@ -200,10 +203,8 @@ def update_style_metadata(style_path: Path, theme_id: str, label: str) -> None:
         if label not in title:
             metadata["title"] = f"{title} ({label})" if title else label
 
-    style_path.write_text(
-        yaml.dump(data, allow_unicode=True, default_flow_style=False),
-        encoding="utf-8",
-    )
+    with style_path.open("w", encoding="utf-8") as f:
+        ryaml.dump(data, f)
 
 
 def generate_theme(

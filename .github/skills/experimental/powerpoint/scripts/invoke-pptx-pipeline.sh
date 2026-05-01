@@ -244,8 +244,8 @@ invoke_validate_deck() {
   local has_vision_prompt=false
   [[ -n "${VALIDATION_PROMPT:-}" || -n "${VALIDATION_PROMPT_FILE:-}" ]] && has_vision_prompt=true
 
-  local total_steps=2
-  ${has_vision_prompt} && total_steps=3
+  local total_steps=3
+  ${has_vision_prompt} && total_steps=4
 
   # Default image output directory
   if [[ -z "${IMAGE_OUTPUT_DIR:-}" ]]; then
@@ -279,6 +279,28 @@ invoke_validate_deck() {
   fi
   if (( exit_code == 1 )); then
     echo "PPTX property checks found warnings — see ${deck_report}"
+  fi
+
+  # Step 2b: Run geometric validation (margin, gap, overflow checks)
+  echo "Step 2b/${total_steps}: Running geometric validation..."
+  local geom_output="${IMAGE_OUTPUT_DIR}/geometry-validation-results.json"
+  local geom_report="${IMAGE_OUTPUT_DIR}/geometry-validation-report.md"
+  local -a geom_args=(
+    "${SCRIPT_DIR}/validate_geometry.py"
+    "--input" "${INPUT_PATH}"
+    "--output" "${geom_output}"
+    "--report" "${geom_report}"
+    "--per-slide-dir" "${IMAGE_OUTPUT_DIR}"
+  )
+  [[ -n "${SLIDES:-}" ]] && geom_args+=("--slides" "${SLIDES}")
+
+  local geom_exit=0
+  "${python}" "${geom_args[@]}" || geom_exit=$?
+  if (( geom_exit == 2 )); then
+    err "validate_geometry.py encountered an error (exit code ${geom_exit})."
+  fi
+  if (( geom_exit == 1 )); then
+    echo "Geometric validation found warnings — see ${geom_report}"
   fi
 
   # Step 3: Vision validation (when prompt provided)
