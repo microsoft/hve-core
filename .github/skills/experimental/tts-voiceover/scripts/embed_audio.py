@@ -244,9 +244,15 @@ def _run(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def configure_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity level."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+
+
 def main() -> int:
     """Entry point for audio embedding."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    configure_logging()
     parser = create_parser()
     args = parser.parse_args()
     try:
