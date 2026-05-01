@@ -149,7 +149,7 @@ def _make_entra_config(
     credential: Any,
     resource_id: str,
     region: str,
-) -> tuple[Any, float]:
+) -> tuple[Any, int]:
     """Create a SpeechConfig with a fresh Entra ID token.
 
     Returns (config, expires_at).
@@ -212,20 +212,6 @@ def create_parser() -> argparse.ArgumentParser:
         help="Path to custom acronyms.yaml lexicon file",
     )
     return parser
-
-
-def main() -> int:
-    """Entry point for TTS voice-over generation."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    parser = create_parser()
-    args = parser.parse_args()
-    try:
-        return _run(args)
-    except KeyboardInterrupt:
-        return 130
-    except BrokenPipeError:
-        sys.stderr.close()
-        return 1
 
 
 def _run(args: argparse.Namespace) -> int:
@@ -366,6 +352,20 @@ def _run(args: argparse.Namespace) -> int:
             logger.error("%d slide(s) failed synthesis", failed_count)
 
     return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
+
+
+def main() -> int:
+    """Entry point for TTS voice-over generation."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    parser = create_parser()
+    args = parser.parse_args()
+    try:
+        return _run(args)
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return 1
 
 
 if __name__ == "__main__":

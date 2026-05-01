@@ -239,11 +239,13 @@ def _run(args: argparse.Namespace) -> int:
             failed_count += 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    prs.save(str(output_path))
-    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     if embedded_count == 0:
         return EXIT_FAILURE
+
+    prs.save(str(output_path))
+    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
+
     if failed_count > 0:
         logger.warning(
             "Completed with %d failure(s); %d slide(s) embedded successfully.",

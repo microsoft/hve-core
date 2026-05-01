@@ -5,6 +5,9 @@
 # embed-audio.sh
 # Wrapper for embed_audio.py — embeds per-slide WAV voice-over files
 # into a PowerPoint deck.
+#
+# No environment variables required. This script embeds pre-generated
+# WAV files and does not call Azure services.
 
 set -euo pipefail
 

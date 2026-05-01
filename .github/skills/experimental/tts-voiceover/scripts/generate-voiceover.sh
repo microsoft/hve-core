@@ -5,6 +5,14 @@
 # generate-voiceover.sh
 # Wrapper for generate_voiceover.py — generates per-slide TTS voice-over
 # from YAML speaker notes via Azure Speech SDK.
+#
+# Required Environment Variables (key-based auth):
+#   SPEECH_KEY    - Azure Speech resource key
+#   SPEECH_REGION - Azure region (e.g., eastus)
+#
+# Required Environment Variables (Entra ID auth):
+#   SPEECH_RESOURCE_ID - Cognitive Services resource ID
+#   SPEECH_REGION      - Azure region
 
 set -euo pipefail
 
