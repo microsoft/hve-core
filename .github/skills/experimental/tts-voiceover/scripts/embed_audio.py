@@ -149,8 +149,14 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
             _add_narration_timing(slide, shape_id, duration_ms)
             _set_slide_transition(slide, duration_ms)
         else:
-            logger.warning(
-                "Could not find audio shape for %s; narration timing not set",
+            # Remove the orphaned audio shape to avoid partial state
+            try:
+                sp = slide.shapes[-1]._element
+                sp.getparent().remove(sp)
+            except Exception:
+                pass
+            logger.error(
+                "Could not find audio shape for %s; removed orphaned embed",
                 wav_path.name,
             )
             return False
@@ -186,20 +192,6 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output PPTX file path (default: input stem + '-narrated.pptx')",
     )
     return parser
-
-
-def main() -> int:
-    """Entry point for audio embedding."""
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    parser = create_parser()
-    args = parser.parse_args()
-    try:
-        return _run(args)
-    except KeyboardInterrupt:
-        return 130
-    except BrokenPipeError:
-        sys.stderr.close()
-        return 1
 
 
 def _run(args: argparse.Namespace) -> int:
@@ -254,6 +246,20 @@ def _run(args: argparse.Namespace) -> int:
         )
         return EXIT_FAILURE
     return EXIT_SUCCESS
+
+
+def main() -> int:
+    """Entry point for audio embedding."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    parser = create_parser()
+    args = parser.parse_args()
+    try:
+        return _run(args)
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return 1
 
 
 if __name__ == "__main__":
