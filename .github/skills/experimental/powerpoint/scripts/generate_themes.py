@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import yaml
 from pptx_utils import (
     EXIT_ERROR,
     EXIT_FAILURE,
@@ -67,8 +66,8 @@ def load_themes(themes_path: Path) -> dict[str, Any]:
 
     Returns the ``themes`` mapping keyed by theme-id.
     """
-    text = themes_path.read_text(encoding="utf-8")
-    data = yaml.safe_load(text)
+    ryaml = YAML(typ="safe")
+    data = ryaml.load(themes_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or "themes" not in data:
         raise ValueError("themes YAML must contain a top-level 'themes' key")
     themes = data["themes"]

@@ -1989,3 +1989,82 @@ class TestAllowScriptsCLI:
         )
         with pytest.raises(ContentExtraError):
             main()
+
+
+class TestDryRun:
+    """Tests for the --dry-run validation mode."""
+
+    @staticmethod
+    def _make_content(tmp_path, slides=None):
+        """Create minimal content dir and style for dry-run tests."""
+        content_dir = tmp_path / "content"
+        content_dir.mkdir()
+        style_file = tmp_path / "style.yaml"
+        style_file.write_text("dimensions:\n  width_inches: 13.333\n")
+        if slides:
+            for num, yaml_text in slides.items():
+                slide_dir = content_dir / f"slide-{num:03d}"
+                slide_dir.mkdir()
+                (slide_dir / "content.yaml").write_text(yaml_text)
+        return content_dir, style_file
+
+    def test_dry_run_success(self, mocker, tmp_path):
+        """Dry-run with valid content returns EXIT_SUCCESS."""
+        content_dir, style_file = self._make_content(
+            tmp_path, {1: "title: Hello\nspeaker_notes: Some notes\n"}
+        )
+        mocker.patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(tmp_path / "out.pptx"),
+                "--dry-run",
+            ],
+        )
+        rc = main()
+        assert rc == 0
+
+    def test_dry_run_no_slides(self, mocker, tmp_path):
+        """Dry-run with empty content dir returns EXIT_ERROR."""
+        content_dir, style_file = self._make_content(tmp_path)
+        mocker.patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(tmp_path / "out.pptx"),
+                "--dry-run",
+            ],
+        )
+        rc = main()
+        assert rc == 2
+
+    def test_dry_run_yaml_parse_error(self, mocker, tmp_path):
+        """Dry-run with invalid YAML returns EXIT_FAILURE."""
+        content_dir, style_file = self._make_content(
+            tmp_path, {1: ": :\n  - [invalid yaml\n"}
+        )
+        mocker.patch(
+            "sys.argv",
+            [
+                "build_deck.py",
+                "--content-dir",
+                str(content_dir),
+                "--style",
+                str(style_file),
+                "--output",
+                str(tmp_path / "out.pptx"),
+                "--dry-run",
+            ],
+        )
+        rc = main()
+        assert rc == 1

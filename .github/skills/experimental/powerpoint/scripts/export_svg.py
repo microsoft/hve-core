@@ -14,7 +14,6 @@ Usage:
 
 import argparse
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -86,7 +85,7 @@ def find_libreoffice() -> str | None:
         ]
 
     for candidate in candidates:
-        if os.path.isfile(candidate):
+        if Path(candidate).is_file():
             return candidate
 
     return None
