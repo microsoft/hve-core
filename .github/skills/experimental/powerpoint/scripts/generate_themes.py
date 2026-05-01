@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 """Generate themed content directory variants from a base deck's content.
@@ -18,6 +19,7 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pptx_utils import (
@@ -53,11 +55,13 @@ def create_parser() -> argparse.ArgumentParser:
         required=True,
         help="Parent directory where themed content directories are created.",
     )
-    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output"
+    )
     return parser
 
 
-def load_themes(themes_path: Path) -> dict:
+def load_themes(themes_path: Path) -> dict[str, Any]:
     """Load and validate the themes YAML file.
 
     Returns the ``themes`` mapping keyed by theme-id.
@@ -80,8 +84,8 @@ def remap_hex_in_text(text: str, color_map: dict[str, str]) -> str:
     one substitution's output feeds the next (e.g., A→B then B→C
     would incorrectly produce C instead of the intended B).
 
-    Keys and values in *color_map* must include the leading ``#``.
-    Matching is case-insensitive.
+    Keys and values in *color_map* may optionally include the leading ``#``;
+    the prefix is stripped before matching.  Matching is case-insensitive.
     """
     bare_map = {k.lstrip("#").lower(): v.lstrip("#") for k, v in color_map.items()}
     if not bare_map:
@@ -99,7 +103,8 @@ def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
     Uses a single-pass regex callback to avoid chain remapping where
     one substitution's output feeds the next.
 
-    Keys and values in *color_map* must include the leading ``#``.
+    Keys and values in *color_map* may optionally include the leading ``#``;
+    the prefix is stripped before matching.
     """
     bare_map: dict[str, str] = {}
     for old_hex, new_hex in color_map.items():

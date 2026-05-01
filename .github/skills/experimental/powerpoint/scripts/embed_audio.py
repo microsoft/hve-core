@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 """Embed WAV audio files into a PowerPoint deck, one per slide.
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 AUDIO_PATTERN = re.compile(r"^slide-(\d+)\.wav$", re.IGNORECASE)
 
 AUDIO_LEFT = Inches(0.1)
-AUDIO_TOP = Inches(7.0)
+AUDIO_TOP = Inches(8.0)
 AUDIO_WIDTH = Inches(0.3)
 AUDIO_HEIGHT = Inches(0.3)
 

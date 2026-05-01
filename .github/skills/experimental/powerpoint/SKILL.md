@@ -447,7 +447,9 @@ python scripts/embed_audio.py \
   --output slide-deck/presentation-narrated.pptx
 ```
 
-Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
+Embeds WAV audio files into PPTX slides. Audio files are matched to slides by naming convention (`slide-001.wav`, `slide-002.wav`, etc.). The audio icon is placed off-screen (below the slide boundary) to keep it hidden during presentation. Pass `--slides` to embed audio on specific slides only.
+
+**Dependencies**: Requires `pillow` (`pip install pillow`) for poster frame generation.
 
 ### Export Slides to SVG
 

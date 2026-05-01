@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 """Export PowerPoint slides to SVG with optional slide filtering.
@@ -198,7 +199,7 @@ def run(args: argparse.Namespace) -> int:
         logger.error("Input file not found: %s", pptx_path)
         return EXIT_ERROR
 
-    if not pptx_path.suffix.lower() == ".pptx":
+    if pptx_path.suffix.lower() != ".pptx":
         logger.error("Input file must be a .pptx file: %s", pptx_path)
         return EXIT_ERROR
 

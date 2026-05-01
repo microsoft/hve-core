@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 """Validate PPTX element geometry against spacing and margin rules.
@@ -47,7 +48,7 @@ def _is_accent_bar(shape, slide_width_in: float) -> bool:
     width_in = emu_to_inches(shape.width)
     left_in = emu_to_inches(shape.left)
     return (
-        top_in == 0.0
+        top_in <= 0.01
         and left_in <= 0.01
         and height_in <= ACCENT_BAR_MAX_HEIGHT
         and abs(width_in - slide_width_in) < 0.01
@@ -211,7 +212,13 @@ def check_adjacent_gaps(shapes, gap: float) -> list[dict]:
         _, bottom_a, shape_a = rects[i]
         top_b, _, shape_b = rects[i + 1]
         vertical_gap = top_b - bottom_a
-        if vertical_gap < gap - 0.01 and vertical_gap >= 0:
+        # Verify shapes share horizontal extent before flagging
+        left_a = emu_to_inches(shape_a.left)
+        right_a = left_a + emu_to_inches(shape_a.width)
+        left_b = emu_to_inches(shape_b.left)
+        right_b = left_b + emu_to_inches(shape_b.width)
+        h_overlap = min(right_a, right_b) - max(left_a, left_b)
+        if vertical_gap < gap - 0.01 and vertical_gap >= 0 and h_overlap > 0.01:
             label_a = _shape_label(shape_a)
             label_b = _shape_label(shape_b)
             issues.append(
@@ -544,7 +551,9 @@ def main() -> int:
         slide_count,
     )
 
-    if severity in ("error", "warning"):
+    if severity == "error":
+        return EXIT_ERROR
+    if severity == "warning":
         return EXIT_FAILURE
     return EXIT_SUCCESS
 
