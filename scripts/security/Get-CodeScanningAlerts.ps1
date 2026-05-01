@@ -1,0 +1,1 @@
+../../.github/skills/github/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1
