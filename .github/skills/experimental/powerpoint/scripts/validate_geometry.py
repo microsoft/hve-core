@@ -494,12 +494,8 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> int:
-    """Main entry point."""
-    parser = create_parser()
-    args = parser.parse_args()
-    configure_logging(args.verbose)
-
+def run(args: argparse.Namespace) -> int:
+    """Execute geometry validation logic."""
     pptx_path = args.input
     if not pptx_path.exists():
         logger.error("File not found: %s", pptx_path)
@@ -557,6 +553,20 @@ def main() -> int:
     if severity == "warning":
         return EXIT_FAILURE
     return EXIT_SUCCESS
+
+
+def main() -> int:
+    """Main entry point."""
+    parser = create_parser()
+    args = parser.parse_args()
+    configure_logging(args.verbose)
+    try:
+        return run(args)
+    except KeyboardInterrupt:
+        return 130
+    except BrokenPipeError:
+        sys.stderr.close()
+        return EXIT_FAILURE
 
 
 if __name__ == "__main__":

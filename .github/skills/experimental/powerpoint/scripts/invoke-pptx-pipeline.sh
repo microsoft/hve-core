@@ -244,8 +244,8 @@ invoke_validate_deck() {
   local has_vision_prompt=false
   [[ -n "${VALIDATION_PROMPT:-}" || -n "${VALIDATION_PROMPT_FILE:-}" ]] && has_vision_prompt=true
 
-  local total_steps=4
-  ${has_vision_prompt} && total_steps=5
+  local total_steps=3
+  ${has_vision_prompt} && total_steps=4
 
   # Default image output directory
   if [[ -z "${IMAGE_OUTPUT_DIR:-}" ]]; then

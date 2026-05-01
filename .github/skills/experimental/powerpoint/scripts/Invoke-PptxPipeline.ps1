@@ -386,7 +386,7 @@ function Invoke-ValidateDeck {
 
     $python = Get-VenvPythonPath
     $hasVisionPrompt = $ValidationPrompt -or $ValidationPromptFile
-    $totalSteps = if ($hasVisionPrompt) { 5 } else { 4 }
+    $totalSteps = if ($hasVisionPrompt) { 4 } else { 3 }
 
     # Default image output directory when not specified
     if (-not $ImageOutputDir) {
