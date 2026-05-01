@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from pptx import Presentation
+from pptx.shapes.base import BaseShape
 from pptx_utils import (
     EXIT_ERROR,
     EXIT_FAILURE,
@@ -41,7 +42,7 @@ QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️"}
 ACCENT_BAR_MAX_HEIGHT = 0.12
 
 
-def _is_accent_bar(shape, slide_width_in: float) -> bool:
+def _is_accent_bar(shape: BaseShape, slide_width_in: float) -> bool:
     """Return True when shape is a full-width decorative accent bar at top."""
     top_in = emu_to_inches(shape.top)
     height_in = emu_to_inches(shape.height)
@@ -55,7 +56,7 @@ def _is_accent_bar(shape, slide_width_in: float) -> bool:
     )
 
 
-def _shape_label(shape) -> str:
+def _shape_label(shape: BaseShape) -> str:
     """Return a human-readable label for a shape."""
     name = shape.name or "unnamed"
     if hasattr(shape, "text") and shape.text:
@@ -65,7 +66,7 @@ def _shape_label(shape) -> str:
 
 
 def check_boundary_overflow(
-    shape,
+    shape: BaseShape,
     slide_w_in: float,
     slide_h_in: float,
 ) -> list[dict]:
@@ -130,7 +131,7 @@ def check_boundary_overflow(
 
 
 def check_edge_margins(
-    shape,
+    shape: BaseShape,
     slide_w_in: float,
     slide_h_in: float,
     margin: float,
@@ -194,7 +195,7 @@ def check_edge_margins(
     return issues
 
 
-def check_adjacent_gaps(shapes, gap: float) -> list[dict]:
+def check_adjacent_gaps(shapes: list[BaseShape], gap: float) -> list[dict]:
     """Check vertical gaps between adjacent elements.
 
     Sorts shapes by top position and checks consecutive pairs for minimum
@@ -235,7 +236,7 @@ def check_adjacent_gaps(shapes, gap: float) -> list[dict]:
     return issues
 
 
-def check_title_clearance(shapes, clearance: float) -> list[dict]:
+def check_title_clearance(shapes: list[BaseShape], clearance: float) -> list[dict]:
     """Check title-to-next-element vertical clearance.
 
     Identifies positions where a shape name contains 'title' (but not

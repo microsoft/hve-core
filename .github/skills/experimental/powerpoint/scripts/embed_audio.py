@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 AUDIO_PATTERN = re.compile(r"^slide-(\d+)\.wav$", re.IGNORECASE)
 
 AUDIO_LEFT = Inches(0.1)
-AUDIO_TOP = Inches(8.0)
 AUDIO_WIDTH = Inches(0.3)
 AUDIO_HEIGHT = Inches(0.3)
+AUDIO_OFFSCREEN_OFFSET = Inches(0.5)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -130,6 +130,7 @@ def embed_audio(
         Count of slides that received embedded audio.
     """
     embedded_count = 0
+    audio_top = prs.slide_height + AUDIO_OFFSCREEN_OFFSET
     for slide_num, slide in enumerate(prs.slides, start=1):
         if slide_filter and slide_num not in slide_filter:
             continue
@@ -141,7 +142,7 @@ def embed_audio(
         slide.shapes.add_movie(
             movie_file=str(wav_path),
             left=AUDIO_LEFT,
-            top=AUDIO_TOP,
+            top=audio_top,
             width=AUDIO_WIDTH,
             height=AUDIO_HEIGHT,
             poster_frame_image=str(poster_frame),

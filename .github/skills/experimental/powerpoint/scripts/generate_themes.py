@@ -155,8 +155,9 @@ def process_file(src: Path, dest: Path, color_map: dict[str, str]) -> None:
         dest.write_text(text, encoding="utf-8")
     elif src.suffix == ".py":
         text = src.read_text(encoding="utf-8")
+        # remap_rgb_in_python handles both RGBColor(...) and "#RRGGBB" quoted
+        # forms in a single pass; skip remap_hex_in_text to avoid chain remap
         text = remap_rgb_in_python(text, color_map)
-        text = remap_hex_in_text(text, color_map)
         dest.write_text(text, encoding="utf-8")
     else:
         shutil.copy2(src, dest)
