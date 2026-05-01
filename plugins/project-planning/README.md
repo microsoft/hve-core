@@ -44,10 +44,10 @@ Create architecture decision records, requirements documents, and diagrams — a
 | **risk-register**               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                 |
 | **security-capture**            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                    |
 | **security-plan-from-prd**      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                             |
-| **sssc-capture**                | Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode                                                |
-| **sssc-from-brd**               | Start an SSSC assessment from existing BRD artifacts using the SSSC Planner agent                                                               |
-| **sssc-from-prd**               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                               |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                                    |
+| **sssc-capture**                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                               |
+| **sssc-from-prd**               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                               |
+| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                         |
 
 ### Instructions
 
@@ -69,7 +69,7 @@ Create architecture decision records, requirements documents, and diagrams — a
 | **security/sssc-gap-analysis**           | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner.                                                                                                                                                                        |
 | **security/sssc-handoff**                | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | **security/sssc-identity**               | Identity and orchestration instructions for the SSSC Planner agent. Contains six-phase workflow, state.json schema, session recovery, and question cadence.                                                                                                 |
-| **security/sssc-standards**              | Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner.                                                                                                                                               |
+| **security/sssc-standards**              | Phase 3 OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements standards mapping for SSSC Planner.                                                                                                   |
 | **security/standards-mapping**           | Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                 |
 | **shared/disclaimer-language**           | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
 | **shared/hve-core-location**             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
