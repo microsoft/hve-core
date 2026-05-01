@@ -582,6 +582,9 @@ items:
   kind: skill
 - path: .github/skills/experimental/vscode-playwright
   kind: skill
+- path: .github/skills/github/gh-code-scanning
+  kind: skill
+  maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
 - path: .github/skills/installer/hve-core-installer
