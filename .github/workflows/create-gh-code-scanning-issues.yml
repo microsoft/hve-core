@@ -1,4 +1,4 @@
-name: Create GitHub Security Scanning Issues
+name: Create GitHub Code Scanning Issues
 
 on:
   workflow_call:
@@ -7,15 +7,15 @@ on:
         description: 'Name of the artifact containing code scanning alerts'
         required: false
         type: string
-        default: gh-security-scanning-alerts
+        default: gh-code-scanning-alerts
 
 permissions:
   issues: write
   security-events: read
 
 jobs:
-  create-gh-security-scanning-issues:
-    name: Create GitHub Security Scanning Issues
+  create-gh-code-scanning-issues:
+    name: Create GitHub Code Scanning Issues
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -47,12 +47,7 @@ jobs:
               --search "\"[Security] ${RULE_DESC}\" in:title" \
               --state open --json number --jq '.[0].number // empty')
 
-            if [[ -z "$existing" ]]; then
-              gh issue create \
-                --repo "${OWNER}/${REPO}" \
-                --title "[Security] ${RULE_DESC}" \
-                --label "security" \
-                --body "<!-- ${MARKER} -->
+            ISSUE_BODY="<!-- ${MARKER} -->
           ## Code Scanning Alert: ${RULE_DESC}
 
           **Rule:** \`${RULE_ID}\`
@@ -63,5 +58,20 @@ jobs:
           ### Sample affected paths
           ${PATHS}
           "
+
+            if [[ -z "$existing" ]]; then
+              gh issue create \
+                --repo "${OWNER}/${REPO}" \
+                --title "[Security] ${RULE_DESC}" \
+                --label "security" \
+                --body "${ISSUE_BODY}"
+            else
+              gh issue edit "${existing}" \
+                --repo "${OWNER}/${REPO}" \
+                --body "${ISSUE_BODY}"
+              UPDATE_DATE=$(date -u '+%Y-%m-%d')
+              gh issue comment "${existing}" \
+                --repo "${OWNER}/${REPO}" \
+                --body "Weekly scan update: ${COUNT} occurrence(s) as of ${UPDATE_DATE}."
             fi
           done < <(jq -c '.[]' alerts.json)

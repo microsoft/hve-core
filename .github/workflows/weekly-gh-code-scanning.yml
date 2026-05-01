@@ -1,4 +1,4 @@
-name: Weekly GitHub Security Scanning
+name: Weekly GitHub Code Scanning
 
 on:
   schedule:
@@ -15,17 +15,17 @@ permissions:
   security-events: read
 
 jobs:
-  gh-security-scanning:
-    name: GitHub Security Scanning
-    uses: ./.github/workflows/gh-security-scanning.yml
+  gh-code-scanning:
+    name: GitHub Code Scanning
+    uses: ./.github/workflows/gh-code-scanning.yml
     permissions:
       contents: read
       security-events: read
 
-  create-gh-security-scanning-issues:
-    name: Create GitHub Security Scanning Issues
-    needs: [gh-security-scanning]
-    uses: ./.github/workflows/create-gh-security-scanning-issues.yml
+  create-gh-code-scanning-issues:
+    name: Create GitHub Code Scanning Issues
+    needs: [gh-code-scanning]
+    uses: ./.github/workflows/create-gh-code-scanning-issues.yml
     permissions:
       issues: write
       security-events: read
