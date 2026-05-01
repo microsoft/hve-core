@@ -120,7 +120,7 @@ Use `#RRGGBB` hex values or `@theme_name` references for all colors. See the Col
 
 ### Theme Colors in content-extra.py
 
-When `style.yaml` defines a `themes` section, the build script populates `style["colors"]` with the first theme's color map. Use `style.get("colors", {}).get("accent_blue", "#0078D4")` in `content-extra.py` to reference theme-aware colors. This enables theme portability. The same script produces correct colors across all theme variants without regex replacement.
+When `style.yaml` defines a `themes` section, the build script populates `style[\"colors\"]` with the color map for the theme assigned to each slide via `themes[].slides`. Slides not explicitly assigned fall back to the first theme in the list. Use `style.get(\"colors\", {}).get(\"accent_blue\", \"#0078D4\")` in `content-extra.py` to reference theme-aware colors. This enables theme portability. The same script produces correct colors across all theme variants without regex replacement.
 
 ## Contextual Styling
 

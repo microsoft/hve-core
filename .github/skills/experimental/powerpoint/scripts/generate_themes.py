@@ -109,7 +109,8 @@ def remap_hex_in_text(text: str, color_map: dict[str, str]) -> str:
 
 
 def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
-    """Replace ``RGBColor(0xRR, 0xGG, 0xBB)`` and ``"#RRGGBB"`` patterns.
+    """Replace ``RGBColor(0xRR, 0xGG, 0xBB)``, ``"#RRGGBB"``, and
+    ``'#RRGGBB'`` patterns.
 
     Uses a single-pass regex callback to avoid chain remapping where
     one substitution's output feeds the next.
@@ -137,20 +138,26 @@ def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
         b = int(hex6[4:6], 16)
         return rf"RGBColor\(\s*0x{r:02X}\s*,\s*0x{g:02X}\s*,\s*0x{b:02X}\s*\)"
 
-    def _hex_pattern(hex6: str) -> str:
+    def _hex_pattern_double(hex6: str) -> str:
         return rf'"#{re.escape(hex6)}"'
 
-    # Build combined pattern matching all RGBColor(...) and "#RRGGBB" forms
+    def _hex_pattern_single(hex6: str) -> str:
+        return rf"'#{re.escape(hex6)}'"
+
+    # Build combined pattern matching RGBColor(...), "#RRGGBB", and '#RRGGBB'
     rgb_parts = [f"({_rgb_pattern(k)})" for k in bare_map]
-    hex_parts = [f"({_hex_pattern(k)})" for k in bare_map]
-    combined = re.compile("|".join(rgb_parts + hex_parts), re.IGNORECASE)
+    hex_dbl_parts = [f"({_hex_pattern_double(k)})" for k in bare_map]
+    hex_sgl_parts = [f"({_hex_pattern_single(k)})" for k in bare_map]
+    combined = re.compile(
+        "|".join(rgb_parts + hex_dbl_parts + hex_sgl_parts), re.IGNORECASE
+    )
 
     keys = list(bare_map.keys())
     n = len(keys)
 
     def _replace(m: re.Match) -> str:
         for i, k in enumerate(keys):
-            # Groups 1..n are RGBColor patterns, n+1..2n are hex patterns
+            # Groups 1..n are RGBColor, n+1..2n double-quoted, 2n+1..3n single-quoted
             if m.group(i + 1) is not None:
                 v = bare_map[k]
                 r = int(v[0:2], 16)
@@ -159,6 +166,8 @@ def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
                 return f"RGBColor(0x{r:02X}, 0x{g:02X}, 0x{b:02X})"
             if m.group(n + i + 1) is not None:
                 return f'"#{bare_map[k]}"'
+            if m.group(2 * n + i + 1) is not None:
+                return f"'#{bare_map[k]}'"
         return m.group(0)
 
     return combined.sub(_replace, text)
