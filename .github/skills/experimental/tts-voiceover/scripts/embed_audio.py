@@ -176,6 +176,12 @@ def create_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output PPTX file path (default: input stem + '-narrated.pptx')",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose (DEBUG) logging",
+    )
     return parser
 
 
@@ -252,9 +258,9 @@ def configure_logging(verbose: bool = False) -> None:
 
 def main() -> int:
     """Entry point for audio embedding."""
-    configure_logging()
     parser = create_parser()
     args = parser.parse_args()
+    configure_logging(verbose=args.verbose)
     try:
         return _run(args)
     except KeyboardInterrupt:

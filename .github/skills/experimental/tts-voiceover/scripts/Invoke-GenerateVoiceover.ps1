@@ -52,25 +52,25 @@
 
 [CmdletBinding()]
 param(
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [switch]$DryRun,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$Voice,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$Rate,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$ContentDir,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$OutputDir,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$Lexicon,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [switch]$SkipVenvSetup
 )
 

@@ -325,7 +325,10 @@ def _run(args: argparse.Namespace) -> int:
 
         # Refresh Entra ID token before expiry.
         if use_entra_auth and time.time() > token_expires_at - 300:
-            assert speech_resource_id is not None  # guaranteed by use_entra_auth
+            if speech_resource_id is None:
+                raise RuntimeError(
+                    "speech_resource_id must not be None when use_entra_auth is True"
+                )
             try:
                 speech_config, token_expires_at = _make_entra_config(
                     speechsdk, credential, speech_resource_id, speech_region

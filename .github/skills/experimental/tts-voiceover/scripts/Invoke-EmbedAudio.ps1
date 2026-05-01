@@ -44,13 +44,13 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$InputPath,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$AudioDir,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [string]$OutputPath,
 
-    [Parameter()]
+    [Parameter(Mandatory = $false)]
     [switch]$SkipVenvSetup
 )
 
