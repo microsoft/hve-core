@@ -60,9 +60,9 @@ $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
 }
 
 $script = Join-Path $ScriptDir 'export_svg.py'
-$args_ = @($script, '--input', $InputPath, '--output-dir', $OutputDir)
-if ($Slides) { $args_ += '--slides'; $args_ += $Slides }
-if ($VerbosePreference -eq 'Continue') { $args_ += '-v' }
+$ScriptArgs = @($script, '--input', $InputPath, '--output-dir', $OutputDir)
+if ($Slides) { $ScriptArgs += '--slides'; $ScriptArgs += $Slides }
+if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
 
-& $python @args_
+& $python @ScriptArgs
 exit $LASTEXITCODE

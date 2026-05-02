@@ -60,8 +60,8 @@ $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
 }
 
 $script = Join-Path $ScriptDir 'generate_themes.py'
-$args_ = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
-if ($VerbosePreference -eq 'Continue') { $args_ += '-v' }
+$ScriptArgs = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
+if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
 
-& $python @args_
+& $python @ScriptArgs
 exit $LASTEXITCODE

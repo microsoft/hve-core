@@ -64,9 +64,9 @@ $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
 }
 
 $script = Join-Path $ScriptDir 'embed_audio.py'
-$args_ = @($script, '--input', $InputPath, '--audio-dir', $AudioDir, '--output', $OutputPath)
-if ($Slides) { $args_ += '--slides'; $args_ += $Slides }
-if ($VerbosePreference -eq 'Continue') { $args_ += '-v' }
+$ScriptArgs = @($script, '--input', $InputPath, '--audio-dir', $AudioDir, '--output', $OutputPath)
+if ($Slides) { $ScriptArgs += '--slides'; $ScriptArgs += $Slides }
+if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
 
-& $python @args_
+& $python @ScriptArgs
 exit $LASTEXITCODE
