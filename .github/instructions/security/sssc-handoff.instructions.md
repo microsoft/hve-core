@@ -102,7 +102,7 @@ After both platform-specific handoff files are written, sign the SSSC planner ar
 pwsh scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/<session>' -ManifestName 'sssc-manifest.json'
 ```
 
-Append `-IncludeCosign` when the user has opted in to cosign keyless signing via `userPreferences.signingRequested`. Cosign keyless signing requires `cosign` in PATH and a Sigstore-compatible OIDC identity provider; the script gracefully skips signing with a warning when cosign is unavailable.
+Append `-IncludeCosign` when the user has opted in to cosign keyless signing via the top-level `signingRequested` field in `state.json`. Cosign keyless signing requires `cosign` in PATH and a Sigstore-compatible OIDC identity provider; the script gracefully skips signing with a warning when cosign is unavailable.
 
 The parameter contract for `Sign-PlannerArtifacts.ps1` exposes two mutually exclusive parameter sets:
 

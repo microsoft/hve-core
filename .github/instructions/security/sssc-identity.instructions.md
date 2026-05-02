@@ -117,7 +117,17 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "userPreferences": { "autonomyTier": "partial" },
+  "userPreferences": {
+    "autonomyTier": "partial",
+    "outputDetailLevel": "standard",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": {
+      "sbom": false,
+      "scorecardProjection": false,
+      "artifactSigning": false
+    }
+  },
   "ssscEnabled": true,
   "signingRequested": false,
   "signingManifestPath": null,
