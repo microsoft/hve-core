@@ -2,7 +2,7 @@
 title: Video-to-GIF Examples
 description: Usage examples and test data generation for video-to-gif skill
 author: Microsoft
-ms.date: 2026-01-18
+ms.date: 2026-05-01
 ms.topic: reference
 keywords:
   - video

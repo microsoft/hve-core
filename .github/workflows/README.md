@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2025-11-12
+ms.date: 2026-05-01
 ms.topic: reference
 keywords:
   - github actions
