@@ -142,7 +142,7 @@ AfterAll {
         # (which deletes the link itself, not the target) so the subsequent
         # recursive remove cannot follow it into real content.
         if ($script:MainNodeModulesLink -and (Test-Path $script:MainNodeModulesLink)) {
-            try { [System.IO.Directory]::Delete($script:MainNodeModulesLink, $false) } catch { }
+            try { [System.IO.Directory]::Delete($script:MainNodeModulesLink, $false) } catch { Write-Verbose "junction cleanup ignored: $_" }
         }
         Remove-Item -Path $script:MainTestRoot -Recurse -Force -ErrorAction SilentlyContinue
     }

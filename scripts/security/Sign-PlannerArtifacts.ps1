@@ -177,11 +177,14 @@ if ($MyInvocation.InvocationName -ne '.') {
             Write-Host "  ✅ $relativePath" -ForegroundColor Green
         }
 
+        $repoRootBoundary = if ($repoRoot.EndsWith([IO.Path]::DirectorySeparatorChar)) { $repoRoot } else { $repoRoot + [IO.Path]::DirectorySeparatorChar }
         $manifest = [ordered]@{
             version     = '1.0'
             projectSlug = $sessionLabel
-            sessionPath = if ($artifactDir.StartsWith($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-                ($artifactDir.Substring($repoRoot.Length).TrimStart('\','/') -replace '\\','/')
+            sessionPath = if ($artifactDir.Equals($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                ''
+            } elseif ($artifactDir.StartsWith($repoRootBoundary, [System.StringComparison]::OrdinalIgnoreCase)) {
+                ($artifactDir.Substring($repoRootBoundary.Length) -replace '\\','/')
             } else {
                 ($artifactDir -replace '\\','/')
             }
