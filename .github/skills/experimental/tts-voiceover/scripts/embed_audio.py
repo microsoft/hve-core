@@ -230,6 +230,10 @@ def _run(args: argparse.Namespace) -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if embedded_count == 0:
+        logger.error(
+            "No audio files were embedded. Verify that slide-NNN.wav files exist in %s",
+            audio_dir,
+        )
         return EXIT_FAILURE
 
     try:
