@@ -45,7 +45,7 @@ If zero Security Planner artifacts are found, fall back to capture mode and expl
 
 ### Output Preferences
 
-Ask the user up front whether they have output preferences for backlog generation in Phase 5: dual-format ADO and GitHub work items, single-platform output, or a custom template stored under `.copilot-tracking/sssc-plans/references/`. Capture the answer in `state.json` under `outputPreferences` so later phases honor the choice without re-asking.
+Ask the user up front whether they have output preferences for backlog generation in Phase 5: dual-format ADO and GitHub work items (`both`), ADO-only (`ado`), or GitHub-only (`github`). Capture the answer in `state.json` under `userPreferences.targetSystem` (allowed values: `ado`, `github`, `both`) so later phases honor the choice without re-asking. When the user supplies a custom backlog template, store it under `.copilot-tracking/sssc-plans/references/` and still record the closest matching `targetSystem` value.
 
 ### Scope Extraction
 
