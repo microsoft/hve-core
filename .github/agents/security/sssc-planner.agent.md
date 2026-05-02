@@ -142,8 +142,8 @@ State JSON schema for `state.json`:
     "targetSystem": "both",
     "audienceProfile": "mixed",
     "includeOptionalArtifacts": {
-      "adoptionPlaybook": false,
-      "executiveSummary": false,
+      "sbom": false,
+      "scorecardProjection": false,
       "artifactSigning": false
     }
   },
