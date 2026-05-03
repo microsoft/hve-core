@@ -52,6 +52,12 @@ copilot plugin install experimental@hve-core
 | pptx                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                          |
 | pptx-subagent       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                   |
 
+## Commands
+
+| Command       | Description                                                          |
+|---------------|----------------------------------------------------------------------|
+| cspell-config | Updates the cspell.json file with project-specific words and ignores |
+
 ## Instructions
 
 | Instruction                      | Description                                                                                                                                                                                                                                                 |

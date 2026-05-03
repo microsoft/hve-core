@@ -22,6 +22,9 @@ items:
     kind: skill
   - path: .github/skills/experimental/vscode-playwright
     kind: skill
+  # Prompts
+  - path: .github/prompts/experimental/cspell-config.prompt.md
+    kind: prompt
   # Instructions
   - path: .github/instructions/experimental/experiment-designer.instructions.md
     kind: instruction

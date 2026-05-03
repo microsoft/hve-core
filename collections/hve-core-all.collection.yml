@@ -199,6 +199,9 @@ items:
 - path: .github/prompts/design-thinking/dt-start-project.prompt.md
   kind: prompt
   maturity: preview
+- path: .github/prompts/experimental/cspell-config.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/github/github-add-issue.prompt.md
   kind: prompt
 - path: .github/prompts/github/github-discover-issues.prompt.md
