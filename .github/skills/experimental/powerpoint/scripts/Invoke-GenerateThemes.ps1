@@ -28,6 +28,10 @@
 
 .EXAMPLE
     ./Invoke-GenerateThemes.ps1 -ContentDir content/ -ThemesPath themes.yaml -OutputDir ../
+
+.NOTES
+    Part of the powerpoint skill. Manages uv virtual environment setup
+    and delegates to generate_themes.py for themed content generation.
 #>
 
 [CmdletBinding()]
@@ -40,28 +44,40 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+#region Environment Setup
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SkillRoot = Split-Path -Parent $ScriptDir
 $VenvDir = Join-Path $SkillRoot '.venv'
 
-if (-not $SkipVenvSetup) {
-    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-        throw 'uv is required but was not found on PATH.'
+#endregion Environment Setup
+
+#region Main
+
+if ($MyInvocation.InvocationName -ne '.') {
+
+    if (-not $SkipVenvSetup) {
+        if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+            throw 'uv is required but was not found on PATH.'
+        }
+        uv sync --directory $SkillRoot
     }
-    uv sync --directory $SkillRoot
+
+    $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
+        Join-Path $VenvDir 'Scripts/python.exe'
+    } elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
+        Join-Path $VenvDir 'bin/python'
+    } else {
+        throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
+    }
+
+    $script = Join-Path $ScriptDir 'generate_themes.py'
+    $ScriptArgs = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
+    if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
+
+    & $python @ScriptArgs
+    exit $LASTEXITCODE
+
 }
 
-$python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
-    Join-Path $VenvDir 'Scripts/python.exe'
-} elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
-    Join-Path $VenvDir 'bin/python'
-} else {
-    throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
-}
-
-$script = Join-Path $ScriptDir 'generate_themes.py'
-$ScriptArgs = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
-if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
-
-& $python @ScriptArgs
-exit $LASTEXITCODE
+#endregion Main

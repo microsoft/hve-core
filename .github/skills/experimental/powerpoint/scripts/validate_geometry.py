@@ -501,6 +501,10 @@ def run(args: argparse.Namespace) -> int:
         logger.error("File not found: %s", pptx_path)
         return EXIT_ERROR
 
+    if pptx_path.suffix.lower() != ".pptx":
+        logger.error("Input file must be a .pptx file: %s", pptx_path)
+        return EXIT_ERROR
+
     slide_filter = parse_slide_filter(args.slides)
 
     logger.info("Validating geometry: %s", pptx_path)
