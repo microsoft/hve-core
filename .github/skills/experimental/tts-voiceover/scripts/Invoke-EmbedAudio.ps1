@@ -82,6 +82,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     if ($AudioDir) { $PythonArgs += '--audio-dir', $AudioDir }
     if ($OutputPath) { $PythonArgs += '--output', $OutputPath }
+    if ($VerbosePreference -ne 'SilentlyContinue') { $PythonArgs += '--verbose' }
 
     & $python $script @PythonArgs
     if ($LASTEXITCODE -ne 0) {

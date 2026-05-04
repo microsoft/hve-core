@@ -106,6 +106,7 @@ if ($MyInvocation.InvocationName -ne '.') {
     if ($ContentDir) { $PythonArgs += '--content-dir', $ContentDir }
     if ($OutputDir) { $PythonArgs += '--output-dir', $OutputDir }
     if ($Lexicon) { $PythonArgs += '--lexicon', $Lexicon }
+    if ($VerbosePreference -ne 'SilentlyContinue') { $PythonArgs += '--verbose' }
 
     & $python $script @PythonArgs
     if ($LASTEXITCODE -ne 0) {

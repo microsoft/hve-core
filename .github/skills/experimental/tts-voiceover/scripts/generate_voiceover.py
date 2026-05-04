@@ -249,6 +249,7 @@ def _run(args: argparse.Namespace) -> int:
     speech_key: str | None = None
     speech_region: str = "eastus"
     speech_resource_id: str | None = None
+    use_entra_auth = False
     if not args.dry_run:
         try:
             import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
@@ -287,7 +288,7 @@ def _run(args: argparse.Namespace) -> int:
             )
             return EXIT_ERROR
 
-    use_entra_auth = bool(speech_resource_id and not speech_key)
+        use_entra_auth = bool(speech_resource_id and not speech_key)
 
     total_duration = 0.0
     slide_count = 0
@@ -331,10 +332,8 @@ def _run(args: argparse.Namespace) -> int:
 
         # Refresh Entra ID token before expiry.
         if use_entra_auth and time.time() > token_expires_at - 300:
-            if speech_resource_id is None:
-                raise RuntimeError(
-                    "speech_resource_id must not be None when use_entra_auth is True"
-                )
+            # speech_resource_id is guaranteed non-None by use_entra_auth definition.
+            assert speech_resource_id is not None
             try:
                 speech_config, token_expires_at = _make_entra_config(
                     speechsdk, credential, speech_resource_id, speech_region

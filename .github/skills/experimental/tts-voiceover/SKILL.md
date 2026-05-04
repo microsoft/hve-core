@@ -16,9 +16,9 @@ This skill reads `content.yaml` files from a PowerPoint skill content directory,
 
 ## Prerequisites
 
-- **Azure Speech resource** — Free tier provides 500K characters per month.
-- **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`).
-- **Python 3.11+** with `uv` for virtual environment management.
+* **Azure Speech resource** — Free tier provides 500K characters per month.
+* **Authentication** — Key-based (`SPEECH_KEY`) or Microsoft Entra ID (`SPEECH_RESOURCE_ID`).
+* **Python 3.11+** with `uv` for virtual environment management.
 
 ### Key-Based Auth
 
@@ -75,6 +75,7 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 | `--content-dir` | path   | `content`                           | Path to slide content directory               |
 | `--output-dir`  | path   | `voice-over`                        | Path to WAV output directory                  |
 | `--lexicon`     | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
+| `--verbose` / `-v` | flag | `false`                          | Enable verbose (DEBUG) logging output         |
 
 ### embed_audio.py
 
@@ -84,9 +85,10 @@ XML so PowerPoint recognizes the audio for video export via
 
 | Parameter     | Type | Default           | Description                  |
 |:--------------|:-----|:------------------|:-----------------------------|
-| `--input`     | path | *(required)*      | Source PPTX file path        |
-| `--audio-dir` | path | `voice-over`      | Directory with slide-NNN.wav |
-| `--output`    | path | `*-narrated.pptx` | Output PPTX file path        |
+| `--input`     | path | *(required)*      | Source PPTX file path                 |
+| `--audio-dir` | path | `voice-over`      | Directory with slide-NNN.wav          |
+| `--output`    | path | `*-narrated.pptx` | Output PPTX file path                 |
+| `--verbose` / `-v` | flag | `false`      | Enable verbose (DEBUG) logging output |
 
 ## Script Reference
 
@@ -177,7 +179,5 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
 | Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
 
 > Brought to you by microsoft/hve-core
