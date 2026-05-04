@@ -40,14 +40,14 @@ jobs:
             Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
           }
 
+      - name: Create logs directory
+        run: mkdir -p logs
+
       - name: Validate collection metadata
         run: npm run lint:collections-metadata
 
       - name: Validate marketplace manifest
         run: npm run lint:marketplace
-
-      - name: Create logs directory
-        run: mkdir -p logs
 
       - name: Check plugin freshness
         run: |
