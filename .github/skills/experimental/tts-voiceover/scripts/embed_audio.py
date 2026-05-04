@@ -70,8 +70,7 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
         slide._element.remove(existing)
 
     timing_xml = (
-        '<p:timing xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"'
-        ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+        '<p:timing xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">'
         "<p:tnLst><p:par>"
         '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
         "<p:childTnLst>"
@@ -108,9 +107,11 @@ def _set_slide_transition(slide: Slide, duration_ms: int) -> None:
     if existing is not None:
         slide._element.remove(existing)
 
+    # advClick="0" prevents accidental click-to-skip during audio playback;
+    # slides advance only when the audio timer expires.
     transition = slide._element.makeelement(
         qn("p:transition"),
-        {"advClick": "1", "advTm": str(duration_ms)},
+        {"advClick": "0", "advTm": str(duration_ms)},
     )
     timing = slide._element.find(qn("p:timing"))
     if timing is not None:
