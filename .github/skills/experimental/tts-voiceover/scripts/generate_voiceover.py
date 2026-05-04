@@ -85,7 +85,9 @@ def load_acronyms(path: Path) -> dict[str, str]:
 def _compile_acronym_pattern(keys: tuple[str, ...]) -> re.Pattern[str]:
     """Compile and cache a regex matching all acronym keys, longest first."""
     sorted_keys = sorted(keys, key=len, reverse=True)
-    return re.compile("|".join(re.escape(k) for k in sorted_keys))
+    return re.compile(
+        r"\b(?:" + "|".join(re.escape(k) for k in sorted_keys) + r")\b"
+    )
 
 
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
