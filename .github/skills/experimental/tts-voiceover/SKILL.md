@@ -178,6 +178,7 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
 | `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
 | Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
+| Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.  |
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
 
 > Brought to you by microsoft/hve-core

@@ -56,15 +56,16 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
     """
     existing = slide._element.find(qn("p:timing"))
     if existing is not None:
-        # Warn if the existing timing has multiple sequences, indicating
-        # authored animations (entrance effects, click sequences) beyond the
-        # standard narration mainSeq that will be overwritten.
+        # Warn whenever an existing timing element is replaced, since any
+        # authored animation (entrance effect, click sequence) produces at
+        # least one p:seq that will be overwritten.
         child_seqs = existing.findall(f".//{qn('p:seq')}")
-        if len(child_seqs) > 1:
+        if child_seqs:
             logger.warning(
-                "Replacing existing slide timing that contains %d sequences; "
+                "Replacing existing slide timing (%d sequence(s)) for shape %d; "
                 "authored animations on this slide will be overwritten.",
                 len(child_seqs),
+                shape_id,
             )
         slide._element.remove(existing)
 
