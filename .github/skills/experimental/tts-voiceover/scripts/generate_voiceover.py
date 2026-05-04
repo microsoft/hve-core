@@ -85,9 +85,7 @@ def load_acronyms(path: Path) -> dict[str, str]:
 def _compile_acronym_pattern(keys: tuple[str, ...]) -> re.Pattern[str]:
     """Compile and cache a regex matching all acronym keys, longest first."""
     sorted_keys = sorted(keys, key=len, reverse=True)
-    return re.compile(
-        r"\b(?:" + "|".join(re.escape(k) for k in sorted_keys) + r")\b"
-    )
+    return re.compile(r"\b(?:" + "|".join(re.escape(k) for k in sorted_keys) + r")\b")
 
 
 def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
@@ -227,6 +225,12 @@ def create_parser() -> argparse.ArgumentParser:
         help="Enable verbose (DEBUG) logging",
     )
     return parser
+
+
+def configure_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity level."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
 def _run(args: argparse.Namespace) -> int:
@@ -384,12 +388,6 @@ def _run(args: argparse.Namespace) -> int:
             logger.error("%d slide(s) failed synthesis", failed_count)
 
     return EXIT_FAILURE if failed_count > 0 else EXIT_SUCCESS
-
-
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity level."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
 def main() -> int:

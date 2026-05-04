@@ -29,6 +29,7 @@ Options:
   --input <path>             Source PPTX file path (required)
   --audio-dir <path>         Directory containing slide-NNN.wav files (default: voice-over)
   --output <path>            Output PPTX file path (default: input stem + '-narrated.pptx')
+  -v, --verbose              Enable verbose (DEBUG) logging output
   --skip-venv-setup          Skip virtual environment setup
   -h, --help                 Show this help message
 EOF

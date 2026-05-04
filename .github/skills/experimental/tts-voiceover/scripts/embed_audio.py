@@ -197,6 +197,12 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def configure_logging(verbose: bool = False) -> None:
+    """Configure logging based on verbosity level."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+
+
 def _run(args: argparse.Namespace) -> int:
     """Execute audio embedding logic."""
 
@@ -264,12 +270,6 @@ def _run(args: argparse.Namespace) -> int:
         )
         return EXIT_FAILURE
     return EXIT_SUCCESS
-
-
-def configure_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity level."""
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
 def main() -> int:

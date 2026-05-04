@@ -37,6 +37,7 @@ Options:
   --content-dir <path>       Path to slide content directory (default: content)
   --output-dir <path>        Path to WAV output directory (default: voice-over)
   --lexicon <path>           Path to custom acronyms.yaml lexicon file
+  -v, --verbose              Enable verbose (DEBUG) logging output
   --skip-venv-setup          Skip virtual environment setup
   -h, --help                 Show this help message
 EOF
