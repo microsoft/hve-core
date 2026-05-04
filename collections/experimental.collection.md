@@ -12,9 +12,9 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Prompts
 
-| Name              | Description                                                                     |
-|-------------------|---------------------------------------------------------------------------------|
-| **cspell-config** | Creates or updates the cspell.json file with project-specific words and ignores |
+| Name | Description |
+|------|-------------|
+| **cspell-config** | Creates or updates the project cspell configuration with project-specific words and ignores |
 
 ### Instructions
 
