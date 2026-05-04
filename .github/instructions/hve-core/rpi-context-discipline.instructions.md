@@ -1,11 +1,13 @@
 ---
 description: "Context-discipline rules for RPI parent agents: lean post-work turns, response modes, subagent results"
-applyTo: '**/.copilot-tracking/{research,plans,details,changes,reviews,challenges}/**'
+applyTo: '**/.copilot-tracking/{research,plans,details,changes,reviews}/**'
 ---
 
 # RPI Context Discipline
 
-Shared rules for RPI parent agents (`RPI Agent`, `Task Researcher`, `Task Planner`, `Task Implementor`, `Task Reviewer`, `Task Challenger`) to keep chat context bounded and avoid `/compact` loops. Each parent agent references this file via `#file:` so a single edit propagates.
+Shared rules for RPI parent agents that dispatch subagents (`RPI Agent`, `Task Researcher`, `Task Planner`, `Task Implementor`, `Task Reviewer`) to keep chat context bounded and avoid `/compact` loops. Each parent agent references this file via `#file:` so a single edit propagates.
+
+`Task Challenger` is intentionally out of scope: it does not dispatch subagents and already enforces a stricter one-question-per-response protocol.
 
 ## Lean Post-Work Turn
 
