@@ -1,5 +1,5 @@
 ---
-description: "Shared context-discipline rules for RPI parent agents — lean post-work turns, response mode selection, and subagent result handling"
+description: "Context-discipline rules for RPI parent agents: lean post-work turns, response modes, subagent results"
 applyTo: '**/.copilot-tracking/{research,plans,details,changes,reviews,challenges}/**'
 ---
 

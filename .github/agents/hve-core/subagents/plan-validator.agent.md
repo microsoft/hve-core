@@ -99,9 +99,8 @@ The subagent ALWAYS writes complete validation findings to the Planning Log befo
 Initial chat response — emit at most:
 * 1 line: planning log file path (the parent re-reads this file when it needs detail).
 * 1 line: validation status (Pass / Fail — Critical / Fail — Major / Fail — Minor).
-* Count of DR- items added, updated, or removed in the Planning Log.
-* Count of DD- items added, updated, or removed in the Planning Log.
 * Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize critical and major items.
+* 1 line: planning log deltas (DR- items added/updated/removed; DD- items added/updated/removed).
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete discrepancy details, evidence, and recommended fixes."
 
