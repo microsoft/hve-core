@@ -264,6 +264,12 @@ def _run(args: argparse.Namespace) -> int:
         speech_region = os.environ.get("SPEECH_REGION", "eastus")
         speech_resource_id = os.environ.get("SPEECH_RESOURCE_ID")
 
+        if speech_key and speech_resource_id:
+            logger.warning(
+                "Both SPEECH_KEY and SPEECH_RESOURCE_ID are set; "
+                "using key-based auth. Unset SPEECH_KEY to use Entra ID auth."
+            )
+
         if speech_key:
             speech_config = speechsdk.SpeechConfig(
                 subscription=speech_key, region=speech_region

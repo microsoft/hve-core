@@ -35,6 +35,8 @@ from generate_voiceover import (
 
 def fuzz_apply_acronym_aliases(data):
     """Fuzz apply_acronym_aliases with random text and the default acronym dict."""
+    if not FUZZING:
+        return
     fdp = atheris.FuzzedDataProvider(data)
     raw_text = fdp.ConsumeUnicodeNoSurrogates(500)
     text = xml.sax.saxutils.escape(raw_text)
@@ -44,6 +46,8 @@ def fuzz_apply_acronym_aliases(data):
 
 def fuzz_wrap_ssml(data):
     """Fuzz wrap_ssml with random text, voice, and rate strings."""
+    if not FUZZING:
+        return
     fdp = atheris.FuzzedDataProvider(data)
     raw_text = fdp.ConsumeUnicodeNoSurrogates(200)
     text = xml.sax.saxutils.escape(raw_text)
@@ -55,6 +59,8 @@ def fuzz_wrap_ssml(data):
 
 def fuzz_load_acronyms(data):
     """Fuzz load_acronyms with random YAML content written to a temp file."""
+    if not FUZZING:
+        return
     fdp = atheris.FuzzedDataProvider(data)
     content = fdp.ConsumeUnicodeNoSurrogates(300)
     with tempfile.NamedTemporaryFile(
