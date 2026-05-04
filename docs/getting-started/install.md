@@ -63,6 +63,34 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 
 ⭐ **VS Code Extension** is the recommended method for most users who don't need customization.
 
+> [!NOTE]
+> The term "HVE Core" refers to different things depending on context:
+>
+> * **Repository** (`microsoft/hve-core`) - source for all 221 artifacts
+> * **Extension** (`HVE Core`) - installs the flagship collection (41 artifacts)
+> * **Extension** (`HVE Core All`) - installs all collections (221 artifacts)
+>
+> Most users should start with the **HVE Core** extension (flagship RPI workflows) and add domain-specific collections later.
+
+### How the Pieces Fit Together
+
+```mermaid
+graph LR
+    REPO["microsoft/hve-core<br/>(source repository)"]
+    REPO --> C1["hve-core<br/>(flagship collection)"]
+    REPO --> C2["ado, github, security...<br/>(domain collections)"]
+    C1 --> EXT1["HVE Core Extension<br/>(41 artifacts)"]
+    C1 --> C2
+    C2 --> EXT2["HVE Core All Extension<br/>(221 artifacts)"]
+```
+
+### Which Extension Should I Install?
+
+* **I want to try it out quickly** → Install **HVE Core All** (everything included, explore at your pace)
+* **I only need Research, Plan, Implement workflows** → Install **HVE Core** (flagship, 41 artifacts)
+* **My team needs specific domains only** → Install **HVE Installer** (pick collections individually)
+* **I want to contribute or modify source** → Clone the repository (see [Developer Setup](#developer-setup))
+
 ## Collection Packages
 
 HVE Core organizes artifacts into role-based collections. The VS Code extension installs the **HVE Core Workflow** collection (flagship RPI workflow and core artifacts). For the complete set across all collections, use the `hve-core-all` CLI plugin or installer skill. Clone-based methods also support filtering which agents to copy by collection bundle.
