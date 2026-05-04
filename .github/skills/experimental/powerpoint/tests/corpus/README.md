@@ -23,12 +23,12 @@ Seed inputs for the Atheris fuzz harness. Each file is raw bytes consumed by
 `{target_index}_{description}` where `target_index` matches the FUZZ_TARGETS
 array position:
 
-| Index | Target                        |
-|-------|-------------------------------|
-| 0     | `fuzz_resolve_color`          |
-| 1     | `fuzz_hex_brightness`         |
-| 2     | `fuzz_max_severity`           |
-| 3     | `fuzz_has_formatting_variation`|
+| Index | Target                          |
+|-------|---------------------------------|
+| 0     | `fuzz_resolve_color`            |
+| 1     | `fuzz_hex_brightness`           |
+| 2     | `fuzz_max_severity`             |
+| 3     | `fuzz_has_formatting_variation` |
 
 ## Usage
 

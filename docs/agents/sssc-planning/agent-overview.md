@@ -64,7 +64,7 @@ All state lives in `.copilot-tracking/sssc-plans/{project-slug}/state.json`. The
 
 ### State Fields
 
-The state file tracks 17 fields across scoping, analysis, and handoff concerns.
+The state file tracks 20 fields across scoping, analysis, handoff, and trust concerns.
 
 | Field                       | Type     | Description                                                |
 |-----------------------------|----------|------------------------------------------------------------|
@@ -87,6 +87,9 @@ The state file tracks 17 fields across scoping, analysis, and handoff concerns.
 | `nextActions`               | string[] | Pending actions for the current or next phase              |
 | `userPreferences`           | object   | Autonomy preference: `full`, `partial`, or `manual`        |
 | `ssscEnabled`               | boolean  | Whether SSSC planning is active                            |
+| `signingRequested`          | boolean  | Whether the user opted into Sigstore signing of artifacts  |
+| `signingManifestPath`       | string   | Path to the signing manifest produced after Phase 6        |
+| `disclaimerShownAt`         | string   | ISO 8601 timestamp when the full disclaimer was shown      |
 | `securityPlannerLink`       | string   | Path to the upstream Security Planner state file           |
 | `raiPlannerLink`            | string   | Path to an associated RAI Planner state file               |
 

@@ -34,7 +34,9 @@ Phase-based conversational supply chain security planning agent that guides user
 
 ## Startup Announcement
 
-Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+
+After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-standards.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
 
 ## Six-Phase Architecture
 
@@ -75,7 +77,7 @@ Generate actionable work items in dual format (ADO + GitHub) from identified gap
 
 ### Phase 6: Review and Handoff
 
-Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`.
+Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `scripts/security/Sign-PlannerArtifacts.ps1` via `execute/runInTerminal` with `-SessionPath '.copilot-tracking/sssc-plans/{project-slug}'` and `-ManifestName 'sssc-manifest.json'` to generate a SHA-256 manifest and optionally sign with cosign.
 
 ## Entry Modes
 
@@ -131,7 +133,20 @@ State JSON schema for `state.json`:
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "userPreferences": { "autonomyTier": "partial" },
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
+  "userPreferences": {
+    "autonomyTier": "partial",
+    "outputDetailLevel": "standard",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": {
+      "sbom": false,
+      "scorecardProjection": false,
+      "artifactSigning": false
+    }
+  },
   "ssscEnabled": true,
   "securityPlannerLink": null,
   "raiPlannerLink": null
@@ -197,22 +212,24 @@ Subagents can run in parallel when researching independent standard domains.
 
 ### Session Resume
 
-Four-step resume protocol when returning to an existing SSSC assessment:
+Five-step resume protocol when returning to an existing SSSC assessment:
 
 1. Read `state.json` from the project slug directory.
-2. Display current phase progress and checklist status.
-3. Summarize what was completed and what remains.
-4. Continue from the last incomplete action.
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Display current phase progress and checklist status.
+4. Summarize what was completed and what remains.
+5. Continue from the last incomplete action.
 
 ### Post-Summarization Recovery
 
-Five-step recovery when conversation context is compacted:
+Six-step recovery when conversation context is compacted:
 
 1. Read `state.json` to restore phase context.
-2. Read existing artifacts (supply-chain-assessment.md, standards-mapping.md, gap-analysis.md, sssc-backlog.md) for accumulated findings.
-3. Re-derive the current question set from the active phase.
-4. Present a brief "Welcome back" summary with phase status.
-5. Continue with the next question set.
+2. If `disclaimerShownAt` is `null`, display the Startup Announcement verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Read existing artifacts (supply-chain-assessment.md, standards-mapping.md, gap-analysis.md, sssc-backlog.md) for accumulated findings.
+4. Re-derive the current question set from the active phase.
+5. Present a brief "Welcome back" summary with phase status.
+6. Continue with the next question set.
 
 ## Cross-Agent Integration
 
@@ -239,7 +256,10 @@ Reference `.github/instructions/security/sssc-handoff.instructions.md` for full 
 ## Operational Constraints
 
 * Create all files only under `.copilot-tracking/sssc-plans/{project-slug}/`.
+* User-supplied reference content is persisted under `.copilot-tracking/sssc-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
+* Embedded standards (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM) are referenced directly from the sssc-standards instruction file.
 * Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
 * Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain`. Verify workflow availability before recommending adoption.
 * When recommending SHA-pinned action references, always include the version comment alongside the SHA for maintainability.
+* When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.

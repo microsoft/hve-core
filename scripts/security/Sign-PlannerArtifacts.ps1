@@ -6,21 +6,31 @@
 
 <#
 .SYNOPSIS
-    Generates a SHA-256 manifest for RAI planning artifacts and optionally signs it with cosign.
+    Generates a SHA-256 manifest for planner artifacts (RAI or SSSC) and optionally signs it with cosign.
 
 .DESCRIPTION
-    Enumerates all files under the RAI planning artifact directory for a given project slug,
-    computes SHA-256 hashes for each artifact, and writes a JSON manifest file. When cosign
-    is available and requested, the manifest is signed using Sigstore keyless signing to
+    Enumerates all files under a planner session directory, computes SHA-256 hashes for each
+    artifact, and writes a JSON manifest file. Supports RAI sessions via -ProjectSlug (resolved
+    to .copilot-tracking/rai-plans/{ProjectSlug}/) and arbitrary planner sessions via -SessionPath
+    (an absolute or repo-relative directory, e.g., .copilot-tracking/sssc-plans/{slug}/). When
+    cosign is available and requested, the manifest is signed using Sigstore keyless signing to
     provide cryptographic provenance.
 
 .PARAMETER ProjectSlug
-    The project slug identifying the RAI planning session. Corresponds to the subdirectory
-    under .copilot-tracking/rai-plans/.
+    The project slug identifying an RAI planning session. Corresponds to the subdirectory under
+    .copilot-tracking/rai-plans/. Mutually exclusive with -SessionPath.
+
+.PARAMETER SessionPath
+    Direct path to a planner session directory (absolute, or relative to the repository root).
+    Use this for SSSC sessions or any non-RAI planner. Mutually exclusive with -ProjectSlug.
+
+.PARAMETER ManifestName
+    File name for the generated manifest written inside the session directory. Defaults to
+    'artifact-manifest.json'. Ignored when -OutputPath is supplied.
 
 .PARAMETER OutputPath
-    Path for the generated manifest file. Defaults to
-    .copilot-tracking/rai-plans/{ProjectSlug}/artifact-manifest.json.
+    Full path for the generated manifest file. When omitted, the manifest is written inside the
+    resolved session directory using -ManifestName.
 
 .PARAMETER IncludeCosign
     When specified, attempts to sign the manifest with cosign keyless signing after
@@ -43,16 +53,28 @@
 
     Invokes the script through the npm wrapper with cosign signing enabled.
 
+.EXAMPLE
+    ./scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/contoso-supply-chain' -ManifestName 'sssc-manifest.json'
+
+    Generates a manifest named sssc-manifest.json for an SSSC planner session.
+
 .NOTES
-    The manifest excludes its own file (artifact-manifest.json) and any cosign signature
-    files (.sig, .bundle) from the hash inventory to avoid circular references.
+    The manifest excludes its own file and any cosign signature files (.sig, .bundle) from the
+    hash inventory to avoid circular references.
 #>
 
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'ByProjectSlug')]
 param(
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'ByProjectSlug')]
     [ValidateNotNullOrEmpty()]
     [string]$ProjectSlug,
+
+    [Parameter(Mandatory, ParameterSetName = 'BySessionPath')]
+    [ValidateNotNullOrEmpty()]
+    [string]$SessionPath,
+
+    [Parameter(Mandatory = $false)]
+    [string]$ManifestName = 'artifact-manifest.json',
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath,
@@ -93,7 +115,20 @@ if ($MyInvocation.InvocationName -ne '.') {
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
             $repoRoot = $PWD.Path
         }
-        $artifactDir = Join-Path -Path $repoRoot -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+
+        if ($PSCmdlet.ParameterSetName -eq 'BySessionPath') {
+            if ([System.IO.Path]::IsPathRooted($SessionPath)) {
+                $artifactDir = $SessionPath
+            }
+            else {
+                $artifactDir = Join-Path -Path $repoRoot -ChildPath $SessionPath
+            }
+            $sessionLabel = Split-Path -Path $artifactDir -Leaf
+        }
+        else {
+            $artifactDir = Join-Path -Path $repoRoot -ChildPath ".copilot-tracking/rai-plans/$ProjectSlug"
+            $sessionLabel = $ProjectSlug
+        }
 
         if (-not (Test-Path -Path $artifactDir -PathType Container)) {
             Write-Host "❌ Artifact directory not found: $artifactDir" -ForegroundColor Red
@@ -101,17 +136,19 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
 
         if (-not $OutputPath) {
-            $OutputPath = Join-Path -Path $artifactDir -ChildPath 'artifact-manifest.json'
+            $OutputPath = Join-Path -Path $artifactDir -ChildPath $ManifestName
         }
+
+        $manifestFileName = Split-Path -Path $OutputPath -Leaf
 
         # File patterns to exclude from the manifest to avoid circular references
         $excludePatterns = @(
-            'artifact-manifest.json',
+            $manifestFileName,
             '*.sig',
             '*.bundle'
         )
 
-        Write-Host "🔐 Generating artifact manifest for project: $ProjectSlug" -ForegroundColor Cyan
+        Write-Host "🔐 Generating artifact manifest for session: $sessionLabel" -ForegroundColor Cyan
 
         $artifacts = Get-ChildItem -Path $artifactDir -File -Recurse |
             Where-Object {
@@ -140,9 +177,17 @@ if ($MyInvocation.InvocationName -ne '.') {
             Write-Host "  ✅ $relativePath" -ForegroundColor Green
         }
 
+        $repoRootBoundary = if ($repoRoot.EndsWith([IO.Path]::DirectorySeparatorChar)) { $repoRoot } else { $repoRoot + [IO.Path]::DirectorySeparatorChar }
         $manifest = [ordered]@{
             version     = '1.0'
-            projectSlug = $ProjectSlug
+            projectSlug = $sessionLabel
+            sessionPath = if ($artifactDir.Equals($repoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+                ''
+            } elseif ($artifactDir.StartsWith($repoRootBoundary, [System.StringComparison]::OrdinalIgnoreCase)) {
+                ($artifactDir.Substring($repoRootBoundary.Length) -replace '\\','/')
+            } else {
+                ($artifactDir -replace '\\','/')
+            }
             generatedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ")
             algorithm   = 'SHA256'
             fileCount   = $fileEntries.Count

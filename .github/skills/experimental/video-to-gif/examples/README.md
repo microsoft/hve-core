@@ -2,7 +2,7 @@
 title: Video-to-GIF Examples
 description: Usage examples and test data generation for video-to-gif skill
 author: Microsoft
-ms.date: 2026-01-18
+ms.date: 2026-05-01
 ms.topic: reference
 keywords:
   - video
@@ -99,7 +99,7 @@ done
 Expected results:
 
 | Algorithm       | File Size | Visual Quality | Processing Time |
-| --------------- | --------- | -------------- | --------------- |
+|-----------------|-----------|----------------|-----------------|
 | sierra2_4a      | Medium    | High           | Medium          |
 | floyd_steinberg | Medium    | Highest        | Slow            |
 | bayer           | Smaller   | Medium         | Fast            |

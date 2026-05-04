@@ -41,6 +41,9 @@ Each generated work item follows this structure:
 ### GitHub Mapping
 - Labels: supply-chain, ossf, {scorecard-check}, {adoption-type}
 - Milestone: {milestone}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 ## Priority Derivation
@@ -127,6 +130,9 @@ Markdown template for GitHub issue body:
 
 - [ ] {criterion_1}
 - [ ] {criterion_2}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 ## Content Sanitization
