@@ -33,7 +33,7 @@ Hypervelocity Engineering (HVE) Core (accelerating software delivery through AI-
 
 1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 <!-- markdownlint-disable MD013 -->
-   [![Install HVE Core - Flagship Collection](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/ise-hve-essentials.hve-core) [![Install HVE Core - All Collection](https://img.shields.io/badge/VS%20Code-Install%20All%20Collections-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/ise-hve-essentials.hve-core-all)
+   [![Install HVE Core - Flagship Collection](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) [![Install HVE Core - All Collection](https://img.shields.io/badge/VS%20Code-Install%20All%20Collections-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)
 <!-- markdownlint-enable MD013 -->
 1. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
 2. Select an agent from the picker (try **rpi-agent**, **task-researcher**, or **memory**) and start a conversation.
