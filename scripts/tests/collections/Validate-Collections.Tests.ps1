@@ -1219,3 +1219,157 @@ Content.
         $result.ErrorCount | Should -Be 0
     }
 }
+
+Describe 'Collection validation JSON reporting' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+        $script:repoRoot = Join-Path $TestDrive 'json-reporting-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Includes structured validation results in the return payload' {
+        $yaml = @"
+name: No ID Collection
+description: Missing id field
+items:
+  - path: .github/agents/test/a.agent.md
+    kind: agent
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.md') -Value '# No ID' -Force
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $result.Results | Should -Not -BeNullOrEmpty
+        $missingField = @($result.Results | Where-Object { $_.ErrorType -eq 'MissingRequiredField' })
+        $missingField | Should -Not -BeNullOrEmpty
+        $missingField[0].Collection | Should -Be 'no-id'
+        $missingField[0].Message | Should -Match "missing required field 'id'"
+    }
+
+    It 'Exports JSON report with expected schema' {
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $outputPath = Join-Path $TestDrive 'collection-validation-results.json'
+        Export-CollectionValidationReport -ValidationResult $result -OutputPath $outputPath
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+
+        $report.Timestamp | Should -Not -BeNullOrEmpty
+        $report.TotalCollections | Should -Be 1
+        $report.ErrorCount | Should -Be 0
+        $report.PSObject.Properties.Name | Should -Contain 'Results'
+        $report.Results | ForEach-Object {
+            $_.PSObject.Properties.Name | Should -Contain 'Collection'
+            $_.PSObject.Properties.Name | Should -Contain 'Severity'
+            $_.PSObject.Properties.Name | Should -Contain 'ErrorType'
+            $_.PSObject.Properties.Name | Should -Contain 'Message'
+        }
+    }
+
+    It 'Differentiates Severity between warnings and errors in results' {
+        $yaml = @"
+name: No ID Collection
+description: Missing id field
+items:
+  - path: .github/agents/test/a.agent.md
+    kind: agent
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
+
+        # Also create a valid companion-less collection to generate a Warning alongside the Error
+        $validYaml = @"
+id: some-collection
+name: Some Collection
+description: Valid collection missing companion md
+items:
+  - path: .github/agents/test/a.agent.md
+    kind: agent
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'some-collection.collection.yml') -Value $validYaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $errors = @($result.Results | Where-Object { $_.Severity -eq 'Error' })
+        $warnings = @($result.Results | Where-Object { $_.Severity -eq 'Warning' })
+
+        $errors | Should -Not -BeNullOrEmpty
+        $warnings | Should -Not -BeNullOrEmpty
+        $errors[0].ErrorType | Should -Be 'MissingRequiredField'
+        $warnings | Where-Object { $_.ErrorType -eq 'MissingCompanionCollectionMd' } | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Creates output directory when it does not exist' {
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $newDir = Join-Path $TestDrive 'nonexistent-logs-dir'
+        $outputPath = Join-Path $newDir 'results.json'
+
+        Test-Path $newDir | Should -BeFalse
+        Export-CollectionValidationReport -ValidationResult $result -OutputPath $outputPath
+        Test-Path $newDir | Should -BeTrue
+        Test-Path $outputPath | Should -BeTrue
+    }
+
+    It 'Captures multiple distinct ErrorType values in a single run' {
+        $yaml = @"
+id: multi-error
+name: Multi Error Collection
+description: Has both a path-not-found and a missing-kind error
+items:
+  - path: .github/agents/test/nonexistent.agent.md
+    kind: agent
+  - path: .github/agents/test/a.agent.md
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'multi-error.collection.yml') -Value $yaml
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $errorTypes = $result.Results | Select-Object -ExpandProperty ErrorType
+        $errorTypes | Should -Contain 'PathNotFound'
+        $errorTypes | Should -Contain 'MissingItemKind'
+    }
+
+    It 'Returns a Results key even when a collection passes validation' {
+        $manifest = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeTrue
+        $result.Keys | Should -Contain 'Results'
+    }
+}
