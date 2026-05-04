@@ -12,8 +12,8 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Prompts
 
-| Name | Description |
-|------|-------------|
+| Name              | Description                                                          |
+|-------------------|----------------------------------------------------------------------|
 | **cspell-config** | Updates the cspell.json file with project-specific words and ignores |
 
 ### Instructions
