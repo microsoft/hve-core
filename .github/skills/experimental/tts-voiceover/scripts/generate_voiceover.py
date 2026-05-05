@@ -345,10 +345,10 @@ def _run(args: argparse.Namespace) -> int:
         # Refresh Entra ID token before expiry.
         if use_entra_auth and time.time() > token_expires_at - 300:
             # Explicit guard rather than assert: assert is stripped under -O.
-            if speech_resource_id is None:
+            if speech_resource_id is None or credential is None:
                 raise RuntimeError(
-                    "Unexpected state: speech_resource_id is None when "
-                    "use_entra_auth is True"
+                    "Unexpected state: speech_resource_id or credential is None "
+                    "when use_entra_auth is True"
                 )
             try:
                 speech_config, token_expires_at = _make_entra_config(

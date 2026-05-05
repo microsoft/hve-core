@@ -237,18 +237,28 @@ def _run(args: argparse.Namespace) -> int:
     embedded_count = 0
     failed_count = 0
 
+    # Build a mapping from slide number to WAV path so embedding matches
+    # the directory names used by generate_voiceover.py rather than
+    # re-deriving names from the enumerate index.
+    wav_files: dict[int, Path] = {}
+    for wav in sorted(audio_dir.glob("slide-*.wav")):
+        try:
+            num = int(wav.stem.split("-")[1])
+            wav_files[num] = wav
+        except (IndexError, ValueError):
+            logger.warning("Ignoring unexpected file: %s", wav.name)
+
     for idx, slide in enumerate(prs.slides, start=1):
-        wav_name = f"slide-{idx:03d}.wav"
-        wav_path = audio_dir / wav_name
-        if not wav_path.is_file():
-            logger.info("SKIP slide %d: %s not found", idx, wav_name)
+        wav_path = wav_files.get(idx)
+        if wav_path is None:
+            logger.info("SKIP slide %d: no WAV found", idx)
             continue
 
         if embed_slide_audio(slide, wav_path):
             embedded_count += 1
-            logger.info("Embedded %s into slide %d", wav_name, idx)
+            logger.info("Embedded %s into slide %d", wav_path.name, idx)
         else:
-            logger.error("FAILED to embed %s into slide %d", wav_name, idx)
+            logger.error("FAILED to embed %s into slide %d", wav_path.name, idx)
             failed_count += 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
