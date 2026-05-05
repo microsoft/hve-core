@@ -64,7 +64,7 @@ Create and update the validation document progressively documenting:
 
 ## Response Format
 
-The subagent ALWAYS writes complete validation findings to the review log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
+The subagent always writes complete validation findings to the review log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
 Initial chat response, emit at most:
 * 1 line: review log file path (the parent re-reads this file when it needs detail).
@@ -74,4 +74,4 @@ Initial chat response, emit at most:
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete RPI artifact validation details."
 
-Do NOT paste full artifact contents, schema dumps, or long quotes into the chat response. The review log is the source of truth.
+Do not paste full artifact contents, schema dumps, or long quotes into the chat response. The review log is the source of truth.

@@ -58,7 +58,7 @@ External URLs may still use markdown link syntax.
 
 ## Response Format
 
-The subagent ALWAYS writes complete findings to its subagent file before returning. The chat response is an executive summary only. Full fidelity lives on disk.
+The subagent always writes complete findings to its subagent file before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
 Initial chat response, emit at most:
 * 1 line: subagent file path (the parent re-reads this file when it needs detail).
@@ -68,4 +68,4 @@ Initial chat response, emit at most:
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete evidence, code blocks, file/line citations, and rejected alternatives."
 
-Do NOT paste file contents, code blocks, long quotes, or full evidence tables into the chat response. The subagent file is the source of truth.
+Do not paste file contents, code blocks, long quotes, or full evidence tables into the chat response. The subagent file is the source of truth.

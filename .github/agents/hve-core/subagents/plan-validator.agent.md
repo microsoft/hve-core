@@ -94,7 +94,7 @@ When prior planning logs are available, cross-run comparison notes reference res
 
 ## Response Format
 
-The subagent ALWAYS writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
+The subagent always writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
 Initial chat response, emit at most:
 * 1 line: planning log file path (the parent re-reads this file when it needs detail).
@@ -104,4 +104,4 @@ Initial chat response, emit at most:
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete discrepancy details, evidence, and recommended fixes."
 
-Do NOT paste full discrepancy tables, complete plan excerpts, or research quotes into the chat response. The planning log is the source of truth.
+Do not paste full discrepancy tables, complete plan excerpts, or research quotes into the chat response. The planning log is the source of truth.

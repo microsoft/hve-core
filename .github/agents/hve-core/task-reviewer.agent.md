@@ -39,11 +39,11 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 
 ## Context Discipline
 
-After any subagent returns, this turn MUST be lean:
+After any subagent returns, this turn must be lean:
 
 1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
 2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
-3. Stop. Do NOT re-read large planning, research, or details files in the closing turn. Do NOT re-quote subagent payloads. Do NOT narrate the next phase plan.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
 
 Choose the lightest response mode that satisfies the request:
 
