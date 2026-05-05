@@ -105,9 +105,21 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
     sp_tgt = timing.find(".//p:spTgt", ns)
     if sp_tgt is not None:
         sp_tgt.set("spid", str(shape_id))
+    else:
+        logger.warning(
+            "spTgt element not found in timing template for shape %d; "
+            "audio shape link will be missing.",
+            shape_id,
+        )
     ctn_dur = timing.find(".//p:cTn[@id='5']", ns)
     if ctn_dur is not None:
         ctn_dur.set("dur", str(duration_ms))
+    else:
+        logger.warning(
+            "cTn[@id='5'] not found in timing template for shape %d; "
+            "audio duration will be unset.",
+            shape_id,
+        )
     slide._element.append(timing)
 
 
