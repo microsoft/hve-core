@@ -1111,7 +1111,9 @@ def main():
         "--content-dir", required=True, help="Path to the content/ directory"
     )
     parser.add_argument("--style", required=True, help="Path to the global style.yaml")
-    parser.add_argument("--output", required=True, help="Output PPTX file path")
+    parser.add_argument(
+        "--output", help="Output PPTX file path (required unless --dry-run)"
+    )
     parser.add_argument("--template", help="Template PPTX file path for themed builds")
     parser.add_argument("--source", help="Source PPTX to update (for partial rebuilds)")
     parser.add_argument(
@@ -1195,6 +1197,10 @@ def main():
             errors,
         )
         return EXIT_FAILURE if errors else EXIT_SUCCESS
+
+    if not args.output:
+        logger.error("--output is required when not using --dry-run")
+        return EXIT_ERROR
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)

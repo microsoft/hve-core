@@ -171,28 +171,31 @@ def export_pdf_to_svg(
             "PyMuPDF is required for SVG export. Install via: pip install pymupdf"
         ) from e
 
-    doc = fitz.open(str(pdf_path))
-    total_pages = len(doc)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    with fitz.open(str(pdf_path)) as doc:
+        total_pages = len(doc)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    if slides:
-        page_numbers = [n for n in slides if 1 <= n <= total_pages]
-        skipped = [n for n in slides if n < 1 or n > total_pages]
-        for num in skipped:
-            logger.warning("Slide %d out of range (1-%d), skipping", num, total_pages)
-    else:
-        page_numbers = list(range(1, total_pages + 1))
+        if slides:
+            page_numbers = [n for n in slides if 1 <= n <= total_pages]
+            skipped = [n for n in slides if n < 1 or n > total_pages]
+            for num in skipped:
+                logger.warning(
+                    "Slide %d out of range (1-%d), skipping",
+                    num,
+                    total_pages,
+                )
+        else:
+            page_numbers = list(range(1, total_pages + 1))
 
-    exported: list[Path] = []
-    for page_num in page_numbers:
-        page = doc[page_num - 1]
-        svg_text = page.get_svg_image()
-        svg_path = output_dir / f"slide-{page_num:03d}.svg"
-        svg_path.write_text(svg_text, encoding="utf-8")
-        logger.info("Exported slide %d → %s", page_num, svg_path.name)
-        exported.append(svg_path)
+        exported: list[Path] = []
+        for page_num in page_numbers:
+            page = doc[page_num - 1]
+            svg_text = page.get_svg_image()
+            svg_path = output_dir / f"slide-{page_num:03d}.svg"
+            svg_path.write_text(svg_text, encoding="utf-8")
+            logger.info("Exported slide %d → %s", page_num, svg_path.name)
+            exported.append(svg_path)
 
-    doc.close()
     return exported
 
 

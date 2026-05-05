@@ -410,7 +410,6 @@ python scripts/render_pdf_images.py \
 python scripts/build_deck.py \
   --content-dir content/ \
   --style content/global/style.yaml \
-  --output /dev/null \
   --dry-run
 ```
 

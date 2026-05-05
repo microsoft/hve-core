@@ -149,6 +149,8 @@ class TestExportPdfToSvg:
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=3)
         mock_doc.__getitem__ = MagicMock(return_value=mock_page)
+        mock_doc.__enter__ = MagicMock(return_value=mock_doc)
+        mock_doc.__exit__ = MagicMock(return_value=False)
 
         mock_fitz = MagicMock()
         mock_fitz.open.return_value = mock_doc
@@ -170,6 +172,8 @@ class TestExportPdfToSvg:
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=5)
         mock_doc.__getitem__ = MagicMock(return_value=mock_page)
+        mock_doc.__enter__ = MagicMock(return_value=mock_doc)
+        mock_doc.__exit__ = MagicMock(return_value=False)
 
         mock_fitz = MagicMock()
         mock_fitz.open.return_value = mock_doc
@@ -190,6 +194,8 @@ class TestExportPdfToSvg:
         mock_doc = MagicMock()
         mock_doc.__len__ = MagicMock(return_value=2)
         mock_doc.__getitem__ = MagicMock(return_value=mock_page)
+        mock_doc.__enter__ = MagicMock(return_value=mock_doc)
+        mock_doc.__exit__ = MagicMock(return_value=False)
 
         mock_fitz = MagicMock()
         mock_fitz.open.return_value = mock_doc
