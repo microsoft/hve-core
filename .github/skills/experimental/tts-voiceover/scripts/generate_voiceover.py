@@ -367,6 +367,11 @@ def _run(args: argparse.Namespace) -> int:
         else:
             logger.error("  FAILED: %s", wav_path.name)
             failed_count += 1
+            # Remove potentially partial file left by the SDK on failure
+            # so embed_audio.py does not embed a corrupt zero-duration WAV.
+            if wav_path.is_file():
+                wav_path.unlink(missing_ok=True)
+                logger.debug("Removed partial file: %s", wav_path.name)
 
     if args.dry_run:
         print(f"\n--- Dry run complete: {slide_count} slides processed ---")

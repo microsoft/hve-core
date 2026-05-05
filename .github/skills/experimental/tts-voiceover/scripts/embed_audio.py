@@ -69,13 +69,14 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
             )
         slide._element.remove(existing)
 
-    timing_xml = (
-        '<p:timing xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">'
+    _PPTX_NS = "http://schemas.openxmlformats.org/presentationml/2006/main"
+    _TIMING_TEMPLATE = (
+        f'<p:timing xmlns:p="{_PPTX_NS}">'
         "<p:tnLst><p:par>"
         '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
         "<p:childTnLst>"
         '<p:seq concurrent="1" nextAc="seek">'
-        f'<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+        '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
         "<p:childTnLst><p:par>"
         '<p:cTn id="3" fill="hold">'
         '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
@@ -84,8 +85,8 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
         '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
         "<p:childTnLst>"
         '<p:cmd type="call" cmd="playFrom(0)"><p:cBhvr>'
-        f'<p:cTn id="5" dur="{duration_ms}" fill="hold"/>'
-        f'<p:tgtEl><p:spTgt spid="{shape_id}"/></p:tgtEl>'
+        '<p:cTn id="5" dur="0" fill="hold"/>'
+        '<p:tgtEl><p:spTgt spid="0"/></p:tgtEl>'
         "</p:cBhvr></p:cmd>"
         "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>"
         "</p:childTnLst></p:cTn>"
@@ -98,7 +99,16 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
         "</p:seq></p:childTnLst></p:cTn>"
         "</p:par></p:tnLst></p:timing>"
     )
-    slide._element.append(etree.fromstring(timing_xml))
+
+    timing = etree.fromstring(_TIMING_TEMPLATE)
+    ns = {"p": _PPTX_NS}
+    sp_tgt = timing.find(".//p:spTgt", ns)
+    if sp_tgt is not None:
+        sp_tgt.set("spid", str(shape_id))
+    ctn_dur = timing.find(".//p:cTn[@id='5']", ns)
+    if ctn_dur is not None:
+        ctn_dur.set("dur", str(duration_ms))
+    slide._element.append(timing)
 
 
 def _set_slide_transition(slide: Slide, duration_ms: int) -> None:
