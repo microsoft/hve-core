@@ -70,7 +70,7 @@ Initial chat response, emit at most:
 * 1 line: review log file path (the parent re-reads this file when it needs detail).
 * 1 line: validation status (Pass / Fail).
 * Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize schema violations and missing required sections.
-* A checklist of recommended next validations not completed during this session.
+* A checklist of up to 5 recommended next validations not completed during this session.
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete RPI artifact validation details."
 

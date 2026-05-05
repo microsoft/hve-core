@@ -64,7 +64,7 @@ Initial chat response, emit at most:
 * 1 line: subagent file path (the parent re-reads this file when it needs detail).
 * 1 line: status (Complete / Blocked / Needs Clarification).
 * Up to 7 bullet-point key findings (each ≤ 240 chars). Prioritize findings the parent cannot act on without reading the file.
-* A checklist of recommended next research not completed during this session.
+* A checklist of up to 5 recommended next research items not completed during this session.
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete evidence, code blocks, file/line citations, and rejected alternatives."
 
