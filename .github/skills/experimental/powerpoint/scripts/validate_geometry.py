@@ -16,6 +16,8 @@ Usage::
         --slides "1,3" --margin 0.6 --gap 0.4
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging

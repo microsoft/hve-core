@@ -17,6 +17,8 @@ Usage::
         --audio-dir voice-over/ --output out.pptx -v
 """
 
+from __future__ import annotations
+
 import argparse
 import io
 import logging

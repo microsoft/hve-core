@@ -12,6 +12,8 @@ Usage:
     python export_svg.py --input presentation.pptx --output-dir svg/ --slides 1,3,5
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
 import platform

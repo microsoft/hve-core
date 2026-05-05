@@ -10,8 +10,11 @@ Python files while copying images as-is.
 Usage::
 
     python generate_themes.py --content-dir content/ \
+
         --themes themes.yaml --output-dir ../
 """
+
+from __future__ import annotations
 
 import argparse
 import logging
@@ -27,6 +30,10 @@ from pptx_utils import (
     EXIT_SUCCESS,
     configure_logging,
 )
+
+# ruamel.yaml is used intentionally for round-trip fidelity in
+# update_style_metadata: preserves comments, key ordering, and quoting
+# style when patching style.yaml files. pyyaml cannot preserve these.
 from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
