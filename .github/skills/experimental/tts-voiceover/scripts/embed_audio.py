@@ -38,6 +38,37 @@ AUDIO_MIME_TYPE = "audio/wav"
 ICON_SIZE = Inches(0.1)
 TIMING_BUFFER_MS = 1500
 
+_PPTX_NS = "http://schemas.openxmlformats.org/presentationml/2006/main"
+_TIMING_TEMPLATE = (
+    f'<p:timing xmlns:p="{_PPTX_NS}">'
+    "<p:tnLst><p:par>"
+    '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+    "<p:childTnLst>"
+    '<p:seq concurrent="1" nextAc="seek">'
+    '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+    "<p:childTnLst><p:par>"
+    '<p:cTn id="3" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+    "<p:childTnLst><p:par>"
+    '<p:cTn id="4" fill="hold">'
+    '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+    "<p:childTnLst>"
+    '<p:cmd type="call" cmd="playFrom(0)"><p:cBhvr>'
+    '<p:cTn id="5" dur="0" fill="hold"/>'
+    '<p:tgtEl><p:spTgt spid="0"/></p:tgtEl>'
+    "</p:cBhvr></p:cmd>"
+    "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>"
+    "</p:childTnLst></p:cTn>"
+    "<p:prevCondLst>"
+    '<p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
+    "</p:prevCondLst>"
+    "<p:nextCondLst>"
+    '<p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
+    "</p:nextCondLst>"
+    "</p:seq></p:childTnLst></p:cTn>"
+    "</p:par></p:tnLst></p:timing>"
+)
+
 
 def get_wav_duration_ms(wav_path: Path) -> int:
     """Return WAV file duration in milliseconds with buffer."""
@@ -68,37 +99,6 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
                 shape_id,
             )
         slide._element.remove(existing)
-
-    _PPTX_NS = "http://schemas.openxmlformats.org/presentationml/2006/main"
-    _TIMING_TEMPLATE = (
-        f'<p:timing xmlns:p="{_PPTX_NS}">'
-        "<p:tnLst><p:par>"
-        '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
-        "<p:childTnLst>"
-        '<p:seq concurrent="1" nextAc="seek">'
-        '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
-        "<p:childTnLst><p:par>"
-        '<p:cTn id="3" fill="hold">'
-        '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
-        "<p:childTnLst><p:par>"
-        '<p:cTn id="4" fill="hold">'
-        '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
-        "<p:childTnLst>"
-        '<p:cmd type="call" cmd="playFrom(0)"><p:cBhvr>'
-        '<p:cTn id="5" dur="0" fill="hold"/>'
-        '<p:tgtEl><p:spTgt spid="0"/></p:tgtEl>'
-        "</p:cBhvr></p:cmd>"
-        "</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>"
-        "</p:childTnLst></p:cTn>"
-        "<p:prevCondLst>"
-        '<p:cond evt="onPrev" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
-        "</p:prevCondLst>"
-        "<p:nextCondLst>"
-        '<p:cond evt="onNext" delay="0"><p:tgtEl><p:sldTgt/></p:tgtEl></p:cond>'
-        "</p:nextCondLst>"
-        "</p:seq></p:childTnLst></p:cTn>"
-        "</p:par></p:tnLst></p:timing>"
-    )
 
     timing = etree.fromstring(_TIMING_TEMPLATE)
     ns = {"p": _PPTX_NS}
@@ -159,26 +159,10 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
             height=ICON_SIZE,
             mime_type=AUDIO_MIME_TYPE,
         )
-        shape_id: int | None = movie_shape.shape_id
-        if shape_id is not None:
-            duration_ms = get_wav_duration_ms(wav_path)
-            _add_narration_timing(slide, shape_id, duration_ms)
-            _set_slide_transition(slide, duration_ms)
-        else:
-            # Remove the orphaned audio shape to avoid partial state
-            try:
-                movie_shape._element.getparent().remove(movie_shape._element)
-            except Exception:
-                logger.debug(
-                    "Could not remove orphaned shape for %s",
-                    wav_path.name,
-                    exc_info=True,
-                )
-            logger.error(
-                "Could not find audio shape for %s; removed orphaned embed",
-                wav_path.name,
-            )
-            return False
+        shape_id: int = movie_shape.shape_id
+        duration_ms = get_wav_duration_ms(wav_path)
+        _add_narration_timing(slide, shape_id, duration_ms)
+        _set_slide_transition(slide, duration_ms)
         return True
     except Exception as exc:  # python-pptx raises varied internal exceptions
         logger.exception(
