@@ -10,7 +10,6 @@ Python files while copying images as-is.
 Usage::
 
     python generate_themes.py --content-dir content/ \
-
         --themes themes.yaml --output-dir ../
 """
 

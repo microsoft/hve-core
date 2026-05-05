@@ -141,6 +141,11 @@ def embed_audio(
             logger.debug("Slide %d: no audio file found, skipping", slide_num)
             continue
 
+        # python-pptx does not expose a public audio-embedding API, so we use
+        # add_movie which creates a video relationship type. PowerPoint Desktop
+        # handles WAV media embedded this way correctly for narration timing and
+        # video export via "Use Recorded Timings and Narrations". Other viewers
+        # (LibreOffice, Google Slides) may display a video icon instead.
         slide.shapes.add_movie(
             movie_file=str(wav_path),
             left=AUDIO_LEFT,

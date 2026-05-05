@@ -38,6 +38,10 @@ class LibreOfficeError(RuntimeError):
     """Raised when LibreOffice is missing or conversion fails."""
 
 
+class PyMuPDFError(RuntimeError):
+    """Raised when PyMuPDF is missing or SVG rendering fails."""
+
+
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
@@ -167,7 +171,7 @@ def export_pdf_to_svg(
     try:
         import fitz  # noqa: PLC0415 — PyMuPDF
     except ImportError as e:
-        raise LibreOfficeError(
+        raise PyMuPDFError(
             "PyMuPDF is required for SVG export. Install via: pip install pymupdf"
         ) from e
 
@@ -223,7 +227,7 @@ def run(args: argparse.Namespace) -> int:
         try:
             pdf_path = convert_pptx_to_pdf(pptx_path, tmp_path)
             exported = export_pdf_to_svg(pdf_path, output_dir, slides)
-        except LibreOfficeError as e:
+        except (LibreOfficeError, PyMuPDFError) as e:
             logger.error("%s", e)
             return EXIT_FAILURE
 
