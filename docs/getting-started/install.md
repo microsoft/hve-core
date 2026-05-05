@@ -69,8 +69,9 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 > * **Repository** (`microsoft/hve-core`) - source for all 221 artifacts
 > * **Extension** (`HVE Core`) - installs the flagship collection (41 artifacts)
 > * **Extension** (`HVE Core All`) - installs all collections (221 artifacts)
+> * **CLI plugin** (`hve-core`) - installable via `copilot plugin install hve-core@hve-core`
 >
-> Most users should start with the **HVE Core** extension (flagship RPI workflows) and add domain-specific collections later.
+> Most users who only need Research, Plan, and Implement workflows should start with the **HVE Core** extension. To explore all domains, install **HVE Core All** instead.
 
 ### How the Pieces Fit Together
 
@@ -80,8 +81,8 @@ graph LR
     REPO --> C1["hve-core<br/>(flagship collection)"]
     REPO --> C2["ado, github, security...<br/>(domain collections)"]
     C1 --> EXT1["HVE Core Extension<br/>(41 artifacts)"]
-    C1 --> C2
-    C2 --> EXT2["HVE Core All Extension<br/>(221 artifacts)"]
+    C1 --> EXT2["HVE Core All Extension<br/>(221 artifacts)"]
+    C2 --> EXT2
 ```
 
 ### Which Extension Should I Install?
