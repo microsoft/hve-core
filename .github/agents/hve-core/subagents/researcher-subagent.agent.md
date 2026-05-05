@@ -58,9 +58,9 @@ External URLs may still use markdown link syntax.
 
 ## Response Format
 
-The subagent ALWAYS writes complete findings to its subagent file before returning. The chat response is an executive summary only — full fidelity lives on disk.
+The subagent ALWAYS writes complete findings to its subagent file before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
-Initial chat response — emit at most:
+Initial chat response, emit at most:
 * 1 line: subagent file path (the parent re-reads this file when it needs detail).
 * 1 line: status (Complete / Blocked / Needs Clarification).
 * Up to 7 bullet-point key findings (each ≤ 240 chars). Prioritize findings the parent cannot act on without reading the file.

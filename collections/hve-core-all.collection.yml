@@ -496,8 +496,6 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/pull-request.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/rpi-context-discipline.instructions.md
-  kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/jira/jira-backlog-discovery.instructions.md

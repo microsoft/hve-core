@@ -94,11 +94,11 @@ When prior planning logs are available, cross-run comparison notes reference res
 
 ## Response Format
 
-The subagent ALWAYS writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only — full fidelity lives on disk.
+The subagent ALWAYS writes complete validation findings to the Planning Log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
-Initial chat response — emit at most:
+Initial chat response, emit at most:
 * 1 line: planning log file path (the parent re-reads this file when it needs detail).
-* 1 line: validation status (Pass / Fail — Critical / Fail — Major / Fail — Minor).
+* 1 line: validation status (Pass / Fail - Critical / Fail - Major / Fail - Minor).
 * Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize critical and major items.
 * 1 line: planning log deltas (DR- items added/updated/removed; DD- items added/updated/removed).
 * Up to 3 clarifying questions, only when blocking.

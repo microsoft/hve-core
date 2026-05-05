@@ -92,8 +92,6 @@ items:
     kind: prompt
     maturity: experimental
   # Instructions
-  - path: .github/instructions/hve-core/rpi-context-discipline.instructions.md
-    kind: instruction
   - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
