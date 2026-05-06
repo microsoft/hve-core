@@ -476,3 +476,160 @@ Just content, no YAML.
 }
 
 #endregion
+
+#region Write-ModelReferenceOutput Tests
+
+Describe 'Write-ModelReferenceOutput' -Tag 'Unit' {
+    BeforeAll {
+        $script:OutputDir = Join-Path $script:TempDir 'output'
+        New-Item -ItemType Directory -Path $script:OutputDir -Force | Out-Null
+    }
+
+    Context 'when validation has no errors' {
+        BeforeAll {
+            $script:CleanOutputPath = Join-Path $script:OutputDir 'clean-results.json'
+            $script:CleanValidation = @{
+                timestamp          = '2026-05-06T00:00:00Z'
+                catalogLastUpdated = '2026-05-06'
+                totalFiles         = 5
+                filesWithModels    = 3
+                totalReferences    = 4
+                validReferences    = 4
+                invalidReferences  = 0
+                retiringReferences = 0
+                results            = @(
+                    @{ file = 'test.agent.md'; models = @('Model A (copilot)'); status = 'valid' }
+                )
+                warnings           = @()
+                errors             = @()
+            }
+
+            $script:CleanExitCode = Write-ModelReferenceOutput -ValidationResult $script:CleanValidation -OutputPath $script:CleanOutputPath
+        }
+
+        It 'Returns exit code 0' {
+            $script:CleanExitCode | Should -Be 0
+        }
+
+        It 'Writes JSON output file' {
+            Test-Path $script:CleanOutputPath | Should -BeTrue
+        }
+
+        It 'Written JSON contains correct totalFiles' {
+            $written = Get-Content $script:CleanOutputPath -Raw | ConvertFrom-Json
+            $written.totalFiles | Should -Be 5
+        }
+
+        It 'Written JSON contains correct validReferences' {
+            $written = Get-Content $script:CleanOutputPath -Raw | ConvertFrom-Json
+            $written.validReferences | Should -Be 4
+        }
+    }
+
+    Context 'when validation has invalid references' {
+        BeforeAll {
+            $script:ErrorOutputPath = Join-Path $script:OutputDir 'error-results.json'
+            $script:ErrorValidation = @{
+                timestamp          = '2026-05-06T00:00:00Z'
+                catalogLastUpdated = '2026-05-06'
+                totalFiles         = 2
+                filesWithModels    = 1
+                totalReferences    = 2
+                validReferences    = 1
+                invalidReferences  = 1
+                retiringReferences = 0
+                results            = @(
+                    @{ file = 'bad.agent.md'; models = @('Model A (copilot)', 'Fake (copilot)'); status = 'invalid' }
+                )
+                warnings           = @()
+                errors             = @(
+                    @{ file = 'bad.agent.md'; model = 'Fake (copilot)'; message = "Unrecognized model: 'Fake (copilot)'" }
+                )
+            }
+
+            $script:ErrorExitCode = Write-ModelReferenceOutput -ValidationResult $script:ErrorValidation -OutputPath $script:ErrorOutputPath
+        }
+
+        It 'Returns exit code 1' {
+            $script:ErrorExitCode | Should -Be 1
+        }
+
+        It 'Writes JSON output file' {
+            Test-Path $script:ErrorOutputPath | Should -BeTrue
+        }
+
+        It 'Written JSON contains error details' {
+            $written = Get-Content $script:ErrorOutputPath -Raw | ConvertFrom-Json
+            $written.errors | Should -HaveCount 1
+        }
+    }
+
+    Context 'when validation has retiring references' {
+        BeforeAll {
+            $script:WarnOutputPath = Join-Path $script:OutputDir 'warn-results.json'
+            $script:WarnValidation = @{
+                timestamp          = '2026-05-06T00:00:00Z'
+                catalogLastUpdated = '2026-05-06'
+                totalFiles         = 1
+                filesWithModels    = 1
+                totalReferences    = 1
+                validReferences    = 1
+                invalidReferences  = 0
+                retiringReferences = 1
+                results            = @(
+                    @{ file = 'old.agent.md'; models = @('Old Model (copilot)'); status = 'warning' }
+                )
+                warnings           = @(
+                    @{ file = 'old.agent.md'; model = 'Old Model (copilot)'; message = "Model 'Old Model (copilot)' is retiring" }
+                )
+                errors             = @()
+            }
+
+            $script:WarnExitCode = Write-ModelReferenceOutput -ValidationResult $script:WarnValidation -OutputPath $script:WarnOutputPath
+        }
+
+        It 'Returns exit code 0 for warnings only' {
+            $script:WarnExitCode | Should -Be 0
+        }
+
+        It 'Writes JSON with warning details' {
+            $written = Get-Content $script:WarnOutputPath -Raw | ConvertFrom-Json
+            $written.warnings | Should -HaveCount 1
+        }
+    }
+
+    Context 'when output directory does not exist' {
+        BeforeAll {
+            $script:NestedOutputPath = Join-Path $script:OutputDir 'nested/deep/results.json'
+            if (Test-Path (Split-Path $script:NestedOutputPath -Parent)) {
+                Remove-Item (Split-Path $script:NestedOutputPath -Parent) -Recurse -Force
+            }
+
+            $script:NestedValidation = @{
+                timestamp          = '2026-05-06T00:00:00Z'
+                catalogLastUpdated = '2026-05-06'
+                totalFiles         = 0
+                filesWithModels    = 0
+                totalReferences    = 0
+                validReferences    = 0
+                invalidReferences  = 0
+                retiringReferences = 0
+                results            = @()
+                warnings           = @()
+                errors             = @()
+            }
+
+            $script:NestedExitCode = Write-ModelReferenceOutput -ValidationResult $script:NestedValidation -OutputPath $script:NestedOutputPath
+        }
+
+        It 'Creates the directory and writes file' {
+            Test-Path $script:NestedOutputPath | Should -BeTrue
+        }
+
+        It 'Returns exit code 0' {
+            $script:NestedExitCode | Should -Be 0
+        }
+    }
+}
+
+#endregion

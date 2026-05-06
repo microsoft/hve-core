@@ -339,3 +339,313 @@ Describe 'Compare-Catalogs' -Tag 'Unit' {
 }
 
 #endregion Compare-Catalogs Tests
+
+#region Invoke-ModelCatalogUpdate Tests
+
+Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
+    BeforeAll {
+        $script:CatalogDir = Join-Path ([System.IO.Path]::GetTempPath()) "CatalogUpdateTests_$([guid]::NewGuid().ToString('N'))"
+        New-Item -ItemType Directory -Path $script:CatalogDir -Force | Out-Null
+    }
+
+    AfterAll {
+        if (Test-Path $script:CatalogDir) {
+            Remove-Item -Path $script:CatalogDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    Context 'when no existing catalog exists' {
+        BeforeAll {
+            $script:NewCatalogPath = Join-Path $script:CatalogDir 'new-catalog.json'
+            if (Test-Path $script:NewCatalogPath) { Remove-Item $script:NewCatalogPath -Force }
+
+            $release = @(
+                @{ name = 'Model A'; release_status = 'GA' }
+                @{ name = 'Model B'; release_status = 'Preview' }
+            )
+            $mult = @(
+                @{ name = 'Model A'; multiplier_paid = 1 }
+                @{ name = 'Model B'; multiplier_paid = 0.25 }
+            )
+
+            $script:NewResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:NewCatalogPath
+        }
+
+        It 'Returns created status' {
+            $script:NewResult.status | Should -Be 'created'
+        }
+
+        It 'Returns null diff' {
+            $script:NewResult.diff | Should -BeNullOrEmpty
+        }
+
+        It 'Returns all discovered models in finalModels' {
+            $script:NewResult.finalModels | Should -HaveCount 2
+        }
+
+        It 'Writes catalog file to disk' {
+            Test-Path $script:NewCatalogPath | Should -BeTrue
+        }
+
+        It 'Written catalog contains correct model count' {
+            $written = Get-Content $script:NewCatalogPath -Raw | ConvertFrom-Json
+            $written.models | Should -HaveCount 2
+        }
+
+        It 'Written catalog has lastUpdated field' {
+            $written = Get-Content $script:NewCatalogPath -Raw | ConvertFrom-Json
+            $written.lastUpdated | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'when catalog exists with no changes' {
+        BeforeAll {
+            $script:UnchangedPath = Join-Path $script:CatalogDir 'unchanged-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:UnchangedPath -Encoding utf8
+
+            $release = @(@{ name = 'Model A'; release_status = 'GA' })
+            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+
+            $script:UnchangedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:UnchangedPath
+        }
+
+        It 'Returns unchanged status' {
+            $script:UnchangedResult.status | Should -Be 'unchanged'
+        }
+
+        It 'Updates lastUpdated timestamp in file' {
+            $written = Get-Content $script:UnchangedPath -Raw | ConvertFrom-Json
+            $written.lastUpdated | Should -Be (Get-Date -Format 'yyyy-MM-dd')
+        }
+    }
+
+    Context 'when models are added' {
+        BeforeAll {
+            $script:AddedPath = Join-Path $script:CatalogDir 'added-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:AddedPath -Encoding utf8
+
+            $release = @(
+                @{ name = 'Model A'; release_status = 'GA' }
+                @{ name = 'Model B'; release_status = 'Preview' }
+            )
+            $mult = @(
+                @{ name = 'Model A'; multiplier_paid = 1 }
+                @{ name = 'Model B'; multiplier_paid = 3 }
+            )
+
+            $script:AddedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:AddedPath
+        }
+
+        It 'Returns updated status' {
+            $script:AddedResult.status | Should -Be 'updated'
+        }
+
+        It 'Includes new model in finalModels' {
+            $names = @($script:AddedResult.finalModels | ForEach-Object { if ($_ -is [hashtable]) { $_['name'] } else { $_.name } })
+            $names | Should -Contain 'Model B (copilot)'
+        }
+
+        It 'Reports addition in diff' {
+            $script:AddedResult.diff.added | Should -HaveCount 1
+        }
+    }
+
+    Context 'when models are removed' {
+        BeforeAll {
+            $script:RemovedPath = Join-Path $script:CatalogDir 'removed-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                    @{ name = 'Model B (copilot)'; tier = 'premium'; multiplier = 3; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:RemovedPath -Encoding utf8
+
+            $release = @(@{ name = 'Model A'; release_status = 'GA' })
+            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+
+            $script:RemovedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:RemovedPath
+        }
+
+        It 'Returns updated status' {
+            $script:RemovedResult.status | Should -Be 'updated'
+        }
+
+        It 'Returns a hashtable with status, diff, and finalModels keys' {
+            $script:RemovedResult.Keys | Should -Contain 'status'
+            $script:RemovedResult.Keys | Should -Contain 'diff'
+            $script:RemovedResult.Keys | Should -Contain 'finalModels'
+        }
+
+        It 'Marks removed model as retiring PSCustomObject in finalModels' {
+            $retiring = $script:RemovedResult.finalModels | Where-Object {
+                if ($_ -is [hashtable]) { $_['name'] -eq 'Model B (copilot)' }
+                else { $_.name -eq 'Model B (copilot)' }
+            }
+            $retiring | Should -BeOfType [PSCustomObject]
+            $retiring.status | Should -Be 'retiring'
+        }
+
+        It 'Preserves tier and multiplier on retiring model' {
+            $retiring = $script:RemovedResult.finalModels | Where-Object {
+                if ($_ -is [hashtable]) { $_['name'] -eq 'Model B (copilot)' }
+                else { $_.name -eq 'Model B (copilot)' }
+            }
+            $retiring.tier | Should -Be 'premium'
+            $retiring.multiplier | Should -Be 3
+        }
+
+        It 'Sets retiredDate as future date on removed model' {
+            $retiring = $script:RemovedResult.finalModels | Where-Object {
+                if ($_ -is [hashtable]) { $_['name'] -eq 'Model B (copilot)' }
+                else { $_.name -eq 'Model B (copilot)' }
+            }
+            $retiring.retiredDate | Should -Not -BeNullOrEmpty
+            [datetime]::Parse($retiring.retiredDate) | Should -BeGreaterThan (Get-Date)
+        }
+
+        It 'Keeps non-removed models unchanged' {
+            $kept = $script:RemovedResult.finalModels | Where-Object {
+                if ($_ -is [hashtable]) { $_['name'] -eq 'Model A (copilot)' }
+                else { $_.name -eq 'Model A (copilot)' }
+            }
+            $kept | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context 'when multipliers change' {
+        BeforeAll {
+            $script:ChangedPath = Join-Path $script:CatalogDir 'changed-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:ChangedPath -Encoding utf8
+
+            $release = @(@{ name = 'Model A'; release_status = 'GA' })
+            $mult = @(@{ name = 'Model A'; multiplier_paid = 5 })
+
+            $script:ChangedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:ChangedPath
+        }
+
+        It 'Returns updated status' {
+            $script:ChangedResult.status | Should -Be 'updated'
+        }
+
+        It 'Reports change in diff' {
+            $script:ChangedResult.diff.changed | Should -HaveCount 1
+            $script:ChangedResult.diff.changed[0].oldMultiplier | Should -Be 1
+            $script:ChangedResult.diff.changed[0].newMultiplier | Should -Be 5
+        }
+    }
+
+    Context 'when DryRun is specified' {
+        BeforeAll {
+            $script:DryRunPath = Join-Path $script:CatalogDir 'dryrun-catalog.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:DryRunPath -Encoding utf8
+
+            $release = @(
+                @{ name = 'Model A'; release_status = 'GA' }
+                @{ name = 'Model B'; release_status = 'GA' }
+            )
+            $mult = @(
+                @{ name = 'Model A'; multiplier_paid = 1 }
+                @{ name = 'Model B'; multiplier_paid = 3 }
+            )
+
+            $script:DryRunResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DryRunPath -DryRun
+        }
+
+        It 'Returns dryrun status' {
+            $script:DryRunResult.status | Should -Be 'dryrun'
+        }
+
+        It 'Does not modify the catalog file' {
+            $written = Get-Content $script:DryRunPath -Raw | ConvertFrom-Json
+            $written.lastUpdated | Should -Be '2026-01-01'
+            $written.models | Should -HaveCount 1
+        }
+
+        It 'Still computes finalModels' {
+            $script:DryRunResult.finalModels.Count | Should -BeGreaterThan 1
+        }
+    }
+
+    Context 'when DryRun with no changes' {
+        BeforeAll {
+            $script:DryRunNoChangePath = Join-Path $script:CatalogDir 'dryrun-nochange.json'
+            $existingCatalog = @{
+                lastUpdated = '2026-01-01'
+                source      = 'https://example.com'
+                models      = @(
+                    @{ name = 'Model A (copilot)'; tier = 'standard'; multiplier = 1; status = 'ga' }
+                )
+            }
+            $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:DryRunNoChangePath -Encoding utf8
+
+            $release = @(@{ name = 'Model A'; release_status = 'GA' })
+            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+
+            $script:DryRunNoChangeResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DryRunNoChangePath -DryRun
+        }
+
+        It 'Returns unchanged status' {
+            $script:DryRunNoChangeResult.status | Should -Be 'unchanged'
+        }
+
+        It 'Does not update lastUpdated in file' {
+            $written = Get-Content $script:DryRunNoChangePath -Raw | ConvertFrom-Json
+            $written.lastUpdated | Should -Be '2026-01-01'
+        }
+    }
+
+    Context 'when catalog path directory does not exist' {
+        BeforeAll {
+            $script:DeepPath = Join-Path $script:CatalogDir 'deep/nested/dir/catalog.json'
+            if (Test-Path (Split-Path $script:DeepPath -Parent)) {
+                Remove-Item (Split-Path $script:DeepPath -Parent) -Recurse -Force
+            }
+
+            $release = @(@{ name = 'Model A'; release_status = 'GA' })
+            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+
+            $script:DeepResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DeepPath
+        }
+
+        It 'Creates directory and writes catalog' {
+            Test-Path $script:DeepPath | Should -BeTrue
+        }
+
+        It 'Returns created status' {
+            $script:DeepResult.status | Should -Be 'created'
+        }
+    }
+}
+
+#endregion Invoke-ModelCatalogUpdate Tests

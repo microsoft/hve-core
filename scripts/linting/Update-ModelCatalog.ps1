@@ -187,35 +187,48 @@ function Compare-Catalogs {
 
 #endregion Functions
 
-#region Main
+#region Orchestration
 
-# Only run main logic when executed directly
-if ($MyInvocation.InvocationName -ne '.') {
-    Write-Host "Fetching model data from github/docs YAML sources..." -ForegroundColor Cyan
+function Invoke-ModelCatalogUpdate {
+    <#
+    .SYNOPSIS
+    Orchestrates catalog update from fetched model data.
 
-    try {
-        $releaseStatusUrl = "$BaseUrl/model-release-status.yml"
-        $multipliersUrl = "$BaseUrl/model-multipliers.yml"
+    .PARAMETER ReleaseStatus
+    Array of model release status objects.
 
-        Write-Host "  Fetching: $releaseStatusUrl"
-        $releaseStatus = Get-RemoteYaml -Url $releaseStatusUrl
+    .PARAMETER Multipliers
+    Array of model multiplier objects.
 
-        Write-Host "  Fetching: $multipliersUrl"
-        $multipliers = Get-RemoteYaml -Url $multipliersUrl
-    }
-    catch {
-        Write-Warning "Failed to fetch source data: $_"
-        Write-Warning "Model catalog not updated. Check network or source URLs."
-        exit 1
-    }
+    .PARAMETER CatalogPath
+    Path to the catalog JSON file.
 
-    if (-not $releaseStatus -or $releaseStatus.Count -eq 0) {
-        Write-Warning "No models found in release status data. Source format may have changed."
-        exit 1
-    }
+    .PARAMETER DryRun
+    When true, reports changes without writing to disk.
 
-    $discoveredModels = Merge-ModelData -ReleaseStatus $releaseStatus -Multipliers $multipliers
+    .OUTPUTS
+    [hashtable] With status ('unchanged', 'updated', 'created', 'dryrun'), diff, and finalModels.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [object[]]$ReleaseStatus,
+
+        [Parameter(Mandatory = $true)]
+        [object[]]$Multipliers,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CatalogPath,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$DryRun
+    )
+
+    $discoveredModels = Merge-ModelData -ReleaseStatus $ReleaseStatus -Multipliers $Multipliers
     Write-Host "  Discovered $($discoveredModels.Count) models from docs" -ForegroundColor Green
+
+    $diff = $null
+    $finalModels = $null
 
     # Load current catalog if it exists
     if (Test-Path -Path $CatalogPath) {
@@ -239,19 +252,18 @@ if ($MyInvocation.InvocationName -ne '.') {
 
         if ($diff.added.Count -eq 0 -and $diff.removed.Count -eq 0 -and $diff.changed.Count -eq 0) {
             Write-Host "`n  No changes detected. Catalog is current." -ForegroundColor Green
-            # Update lastUpdated timestamp even if no changes
             if (-not $DryRun) {
                 $currentCatalog.lastUpdated = (Get-Date -Format 'yyyy-MM-dd')
                 $currentCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $CatalogPath -Encoding utf8
             }
-            exit 0
+            return @{ status = 'unchanged'; diff = $diff; finalModels = $currentModels }
         }
 
         # Mark removed models as retiring instead of deleting
         $finalModels = @()
         foreach ($curr in $currentModels) {
             if ($curr.name -in @($diff.removed | ForEach-Object { $_.name })) {
-                $retiring = @{
+                $retiring = [PSCustomObject]@{
                     name        = $curr.name
                     tier        = $curr.tier
                     multiplier  = $curr.multiplier
@@ -279,7 +291,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     if ($DryRun) {
         Write-Host "`n  [DRY RUN] No changes written to disk." -ForegroundColor Yellow
-        exit 0
+        return @{ status = 'dryrun'; diff = $diff; finalModels = $finalModels }
     }
 
     # Write updated catalog
@@ -298,6 +310,51 @@ if ($MyInvocation.InvocationName -ne '.') {
     $newCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $CatalogPath -Encoding utf8
     Write-Host "`n  Catalog updated: $CatalogPath" -ForegroundColor Green
     Write-Host "  Total models: $($finalModels.Count)" -ForegroundColor Green
+
+    $resultStatus = if ($null -eq $diff) { 'created' } else { 'updated' }
+    return @{ status = $resultStatus; diff = $diff; finalModels = $finalModels }
+}
+
+#endregion Orchestration
+
+#region Main
+
+# Only run main logic when executed directly
+if ($MyInvocation.InvocationName -ne '.') {
+    Write-Host "Fetching model data from github/docs YAML sources..." -ForegroundColor Cyan
+
+    try {
+        $releaseStatusUrl = "$BaseUrl/model-release-status.yml"
+        $multipliersUrl = "$BaseUrl/model-multipliers.yml"
+
+        Write-Host "  Fetching: $releaseStatusUrl"
+        $releaseStatus = Get-RemoteYaml -Url $releaseStatusUrl
+
+        Write-Host "  Fetching: $multipliersUrl"
+        $multipliers = Get-RemoteYaml -Url $multipliersUrl
+    }
+    catch {
+        Write-Warning "Failed to fetch source data: $_"
+        Write-Warning "Model catalog not updated. Check network or source URLs."
+        exit 1
+    }
+
+    if (-not $releaseStatus -or $releaseStatus.Count -eq 0) {
+        Write-Warning "No models found in release status data. Source format may have changed."
+        exit 1
+    }
+
+    $updateParams = @{
+        ReleaseStatus = $releaseStatus
+        Multipliers   = $multipliers
+        CatalogPath   = $CatalogPath
+    }
+    if ($DryRun) { $updateParams['DryRun'] = $true }
+
+    $result = Invoke-ModelCatalogUpdate @updateParams
+    if ($result.status -eq 'unchanged' -or $result.status -eq 'dryrun') {
+        exit 0
+    }
     exit 0
 }
 

@@ -218,6 +218,64 @@ function Invoke-ModelReferenceValidation {
     }
 }
 
+function Write-ModelReferenceOutput {
+    <#
+    .SYNOPSIS
+    Writes validation results to a JSON file and outputs a summary.
+
+    .PARAMETER ValidationResult
+    Hashtable from Invoke-ModelReferenceValidation.
+
+    .PARAMETER OutputPath
+    Path for the JSON results file.
+
+    .OUTPUTS
+    [int] Exit code: 1 if invalid references found, 0 otherwise.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ValidationResult,
+
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath
+    )
+
+    # Ensure output directory exists
+    $outputDir = Split-Path -Path $OutputPath -Parent
+    if ($outputDir -and -not (Test-Path -Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+
+    $ValidationResult | ConvertTo-Json -Depth 5 | Set-Content -Path $OutputPath -Encoding utf8
+
+    # Summary output
+    Write-Host "Model Reference Validation Results:" -ForegroundColor Cyan
+    Write-Host "  Total files scanned: $($ValidationResult.totalFiles)"
+    Write-Host "  Files with model references: $($ValidationResult.filesWithModels)"
+    Write-Host "  Total model references: $($ValidationResult.totalReferences)"
+    Write-Host "  Valid references: $($ValidationResult.validReferences)" -ForegroundColor Green
+    if ($ValidationResult.retiringReferences -gt 0) {
+        Write-Host "  Retiring references: $($ValidationResult.retiringReferences)" -ForegroundColor Yellow
+    }
+    if ($ValidationResult.invalidReferences -gt 0) {
+        Write-Host "  Invalid references: $($ValidationResult.invalidReferences)" -ForegroundColor Red
+        foreach ($err in $ValidationResult.errors) {
+            Write-Host "    ERROR: $($err.file) - $($err.message)" -ForegroundColor Red
+        }
+    }
+    foreach ($warn in $ValidationResult.warnings) {
+        Write-Host "    WARNING: $($warn.file) - $($warn.message)" -ForegroundColor Yellow
+    }
+
+    Write-Host "`nResults written to: $OutputPath"
+
+    if ($ValidationResult.invalidReferences -gt 0) {
+        return 1
+    }
+    return 0
+}
+
 # Only run main logic when executed directly (not dot-sourced for testing)
 if ($MyInvocation.InvocationName -ne '.') {
     # Validate catalog exists
@@ -227,41 +285,8 @@ if ($MyInvocation.InvocationName -ne '.') {
     }
 
     $output = Invoke-ModelReferenceValidation -CatalogPath $CatalogPath
-
-    # Ensure output directory exists
-    $outputDir = Split-Path -Path $OutputPath -Parent
-    if ($outputDir -and -not (Test-Path -Path $outputDir)) {
-        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-    }
-
-    $output | ConvertTo-Json -Depth 5 | Set-Content -Path $OutputPath -Encoding utf8
-
-    # Summary output
-    Write-Host "Model Reference Validation Results:" -ForegroundColor Cyan
-    Write-Host "  Total files scanned: $($output.totalFiles)"
-    Write-Host "  Files with model references: $($output.filesWithModels)"
-    Write-Host "  Total model references: $($output.totalReferences)"
-    Write-Host "  Valid references: $($output.validReferences)" -ForegroundColor Green
-    if ($output.retiringReferences -gt 0) {
-        Write-Host "  Retiring references: $($output.retiringReferences)" -ForegroundColor Yellow
-    }
-    if ($output.invalidReferences -gt 0) {
-        Write-Host "  Invalid references: $($output.invalidReferences)" -ForegroundColor Red
-        foreach ($err in $output.errors) {
-            Write-Host "    ERROR: $($err.file) - $($err.message)" -ForegroundColor Red
-        }
-    }
-    foreach ($warn in $output.warnings) {
-        Write-Host "    WARNING: $($warn.file) - $($warn.message)" -ForegroundColor Yellow
-    }
-
-    Write-Host "`nResults written to: $OutputPath"
-
-    if ($output.invalidReferences -gt 0) {
-        exit 1
-    }
-
-    exit 0
+    $exitCode = Write-ModelReferenceOutput -ValidationResult $output -OutputPath $OutputPath
+    exit $exitCode
 }
 
 #endregion Main
