@@ -89,14 +89,18 @@ Prompt files MUST:
 | Style    | Keep hints concise; lead with required arguments                                                                                               |
 | Example  | `"project=... [type={Epic\|Feature\|UserStory\|Bug\|Task}] [title=...]"`                                                                       |
 
-**`model`** (string)
+**`model`** (string or array of strings)
 
-| Property | Value                                                                             |
-|----------|-----------------------------------------------------------------------------------|
-| Purpose  | Specifies a preferred AI model for prompt invocation                              |
-| Format   | Model identifier string                                                           |
-| Style    | Use the model's canonical identifier; omit if the workspace default is acceptable |
-| Example  | `gpt-4o`                                                                          |
+| Property | Value                                                                                          |
+|----------|------------------------------------------------------------------------------------------------|
+| Purpose  | Specifies a preferred AI model for prompt invocation (cost optimization)                       |
+| Format   | Model display name with `(copilot)` suffix, or prioritized array for fallback                  |
+| Style    | Use names from `scripts/linting/model-catalog.json`; omit if the session default is acceptable |
+| Example  | `Claude Haiku 4.5 (copilot)`                                                                   |
+
+Use `model` on prompts that perform mechanical operations (git commits, issue creation, file I/O) rather than complex reasoning or code generation. The cost tier constraint applies: the prompt model cannot exceed the user's session model tier.
+
+Run `npm run lint:models` to validate model references against the catalog.
 
 **`disable-model-invocation`** (boolean)
 
