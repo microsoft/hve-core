@@ -31,12 +31,13 @@ Hypervelocity Engineering (HVE) Core (accelerating software delivery through AI-
 
 ## Quick Start
 
-1. Install the [HVE Core extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
 <!-- markdownlint-disable MD013 -->
-   [![Install HVE Core - Flagship Collection](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) [![Install HVE Core - All Collection](https://img.shields.io/badge/VS%20Code-Install%20All%20Collections-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)
+[![Install HVE Core - Flagship Collection](https://img.shields.io/badge/VS%20Code-Install%20HVE%20Core-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) [![Install HVE Core - All Collection](https://img.shields.io/badge/VS%20Code-Install%20All%20Collections-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)
 <!-- markdownlint-enable MD013 -->
-1. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Select an agent from the picker (try **rpi-agent**, **task-researcher**, or **memory**) and start a conversation.
+
+1. Install the [HVE Core - Flagship Collection extension](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core) from the VS Code Marketplace.
+2. Open any project and launch GitHub Copilot Chat (`Ctrl+Alt+I`).
+3. Select an agent from the picker (try **rpi-agent**, **task-researcher**, or **memory**) and start a conversation.
 
 That's it. Agents, instructions, and prompts activate automatically once the extension is installed.
 
@@ -44,7 +45,7 @@ That's it. Agents, instructions, and prompts activate automatically once the ext
 
 ```bash
 copilot plugin marketplace add microsoft/hve-core
-copilot plugin install hve-core-all@hve-core
+copilot plugin install hve-core@hve-core
 ```
 
 See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for usage details.
