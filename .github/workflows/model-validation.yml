@@ -38,6 +38,11 @@ jobs:
             Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
           }
 
+      - name: Refresh model catalog from GitHub docs
+        shell: pwsh
+        run: |
+          & scripts/linting/Update-ModelCatalog.ps1 -CatalogPath scripts/linting/model-catalog.json
+
       - name: Validate model references against catalog
         id: validate
         shell: pwsh
@@ -55,15 +60,18 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-      - name: Check catalog freshness
+      - name: Report catalog drift
+        if: always()
         shell: pwsh
         run: |
           $catalog = Get-Content -Path scripts/linting/model-catalog.json -Raw | ConvertFrom-Json
-          $lastUpdated = [datetime]::Parse($catalog.lastUpdated)
-          $daysSinceUpdate = ([datetime]::UtcNow - $lastUpdated).Days
-          if ($daysSinceUpdate -gt 90) {
-            Write-Warning "Model catalog is $daysSinceUpdate days old (last updated: $($catalog.lastUpdated)). Consider refreshing from: $($catalog.source)"
-            echo "::warning::Model catalog is $daysSinceUpdate days old. Consider refreshing model definitions."
+          $retiring = @($catalog.models | Where-Object { $_.status -eq 'retiring' })
+          if ($retiring.Count -gt 0) {
+            Write-Host "Models marked as retiring:" -ForegroundColor Yellow
+            foreach ($m in $retiring) {
+              Write-Host "  - $($m.name) (retiring: $($m.retiredDate))" -ForegroundColor Yellow
+            }
+            echo "::warning::$($retiring.Count) model(s) are marked as retiring. Update agent/prompt references."
           } else {
-            Write-Host "Model catalog freshness OK ($daysSinceUpdate days since last update)"
+            Write-Host "No models are retiring. All references current." -ForegroundColor Green
           }

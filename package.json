@@ -25,6 +25,7 @@
     "rai:sign": "pwsh -NoProfile -File scripts/security/Sign-PlannerArtifacts.ps1",
     "lint:ai-artifacts": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-PlannerArtifacts.ps1' -FailOnMissing\"",
     "lint:models": "pwsh -NoProfile -File scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json",
+    "lint:models:refresh": "pwsh -NoProfile -File scripts/linting/Update-ModelCatalog.ps1",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:ps-module-pins && npm run lint:py && npm run validate:skills && npm run lint:ai-artifacts && npm run lint:models",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
