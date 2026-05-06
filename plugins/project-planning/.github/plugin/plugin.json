@@ -1,7 +1,7 @@
 {
   "name": "project-planning",
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-  "version": "3.3.101",
+  "version": "3.4.0",
   "agents": [
     "agents/hve-core/",
     "agents/hve-core/subagents/",
