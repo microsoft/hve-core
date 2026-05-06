@@ -39,7 +39,7 @@ param(
     [Parameter(Mandatory = $true)][string]$ContentDir,
     [Parameter(Mandatory = $true)][string]$ThemesPath,
     [Parameter(Mandatory = $true)][string]$OutputDir,
-    [switch]$SkipVenvSetup
+    [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )
 
 $ErrorActionPreference = 'Stop'

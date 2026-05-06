@@ -58,6 +58,16 @@ def _is_accent_bar(shape: BaseShape, slide_width_in: float) -> bool:
     )
 
 
+def _is_offscreen_media(shape: BaseShape, slide_h_in: float) -> bool:
+    """Return True when shape is placed entirely below the slide boundary.
+
+    Audio shapes embedded by embed_audio.py are positioned off-screen
+    below the slide height. These should not trigger boundary overflow errors.
+    """
+    top_in = emu_to_inches(shape.top)
+    return top_in > slide_h_in
+
+
 def _shape_label(shape: BaseShape) -> str:
     """Return a human-readable label for a shape."""
     name = shape.name or "unnamed"
@@ -313,7 +323,16 @@ def validate_slide_geometry(
     non_accent_shapes = []
 
     for shape in slide.shapes:
-        # Boundary overflow applies to all shapes
+        # Skip off-screen media shapes (e.g. audio embedded below slide boundary)
+        if _is_offscreen_media(shape, slide_h_in):
+            logger.debug(
+                "Slide %d: exempting off-screen media '%s'",
+                slide_num,
+                shape.name,
+            )
+            continue
+
+        # Boundary overflow applies to all visible shapes
         issues.extend(check_boundary_overflow(shape, slide_w_in, slide_h_in))
 
         if _is_accent_bar(shape, slide_w_in):

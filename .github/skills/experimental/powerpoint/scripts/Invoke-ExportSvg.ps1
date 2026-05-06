@@ -38,8 +38,8 @@
 param(
     [Parameter(Mandatory = $true)][string]$InputPath,
     [Parameter(Mandatory = $true)][string]$OutputDir,
-    [string]$Slides,
-    [switch]$SkipVenvSetup
+    [Parameter(Mandatory = $false)][string]$Slides,
+    [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )
 
 $ErrorActionPreference = 'Stop'

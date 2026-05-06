@@ -42,8 +42,8 @@ param(
     [Parameter(Mandatory = $true)][string]$InputPath,
     [Parameter(Mandatory = $true)][string]$AudioDir,
     [Parameter(Mandatory = $true)][string]$OutputPath,
-    [string]$Slides,
-    [switch]$SkipVenvSetup
+    [Parameter(Mandatory = $false)][string]$Slides,
+    [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )
 
 $ErrorActionPreference = 'Stop'
