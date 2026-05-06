@@ -1140,6 +1140,8 @@ def main():
         help="Enable verbose logging output",
     )
     args = parser.parse_args()
+    if not args.dry_run and not args.output:
+        parser.error("--output is required when not using --dry-run")
     configure_logging(args.verbose)
 
     content_dir = Path(args.content_dir)
@@ -1198,10 +1200,6 @@ def main():
             errors,
         )
         return EXIT_FAILURE if errors else EXIT_SUCCESS
-
-    if not args.output:
-        logger.error("--output is required when not using --dry-run")
-        return EXIT_ERROR
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
