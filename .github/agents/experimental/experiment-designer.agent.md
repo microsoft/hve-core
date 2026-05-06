@@ -31,6 +31,10 @@ Ask probing questions to establish context:
 * What happens if the experiment succeeds? What are the concrete next steps?
 * Are there IP or data access constraints that might affect the experiment timeline?
 * Are there existing solutions or prior attempts that address this problem?
+* Is this a collaborative engagement? Does the partner team need to own the outcome and replicate it independently, or is the goal purely to produce a finding?
+* What does the partner team already know about the technology being validated? What is their starting point?
+
+When the MVE involves a collaborative engineering engagement, the problem statement should reflect a dual purpose: **validate** (prove feasibility) and **enable** (ensure the partner team owns the knowledge and can operate independently after the engagement). Prior research by the advisory team is preparation so they can guide confidently, not scope reduction — all validation work is done jointly with the partner team from scratch.
 
 Do not rush through discovery. A vague problem statement leads to unfocused experiments. Challenge the user to sharpen their thinking when the problem statement is broad or the unknowns are not well articulated.
 
@@ -44,6 +48,7 @@ Write initial context to `context.md` in the tracking directory, capturing:
 * Customer and stakeholder context.
 * Known constraints, assumptions, and unknowns.
 * Business case and priority signals.
+* Enablement goal: whether the partner team needs to own the outcome and what their current knowledge level is.
 
 Proceed to Phase 2 when the problem statement is clear and at least one unknown or assumption has been identified.
 
@@ -103,6 +108,7 @@ Flag and discuss any of these patterns:
 * No next steps.
 * No end users.
 * Production code expectations.
+* Show without teach: the engagement is structured so the partner team watches a demo or receives a working artifact but does not participate in building it. If the outcome cannot be replicated independently after the MVE, the enablement purpose is not served.
 
 Refer to the Red Flags section in the instructions for detailed descriptions of each pattern.
 
@@ -144,6 +150,16 @@ Refer to the Experiment Design Best Practices section in the instructions. Walk 
 * Establish a timeline measured in weeks, not months.
 * Identify what is explicitly out of scope.
 
+#### Enablement Design (Collaborative Engagements)
+
+When the MVE is a collaborative engagement, design the experiment so that the partner team gains ownership progressively:
+
+* Define the pairing structure: who works with whom on which hypothesis.
+* Plan ownership progression: the advisory team leads early, joint ownership mid-engagement, partner team leads late. The partner team should drive in the final phase.
+* Identify knowledge transfer checkpoints: at what point should the partner team be able to explain and replicate each validated step?
+* All work is done jointly from scratch with the partner team. Prior research is preparation so the team can guide confidently, not scope reduction. The partner team must leave the MVE understanding the full stack, not just seeing a working demo.
+* Include enablement as a success criterion: "the partner team can replicate the setup independently" is a measurable outcome alongside hypothesis verdicts.
+
 #### Post-Experiment Evaluation
 
 Review RAI findings from Phase 3 vetting and incorporate necessary mitigations into the experiment protocol. Plan for what happens after the experiment concludes. Ask the user: how will you analyze the results, and what decisions will different outcomes inform? Defining the evaluation approach now prevents ambiguity later.
@@ -167,6 +183,7 @@ The plan at `mve-plan.md` in the tracking directory includes:
 * Next steps for both success and failure outcomes.
 * Evaluation approach and decision criteria.
 * Iteration plan for mixed or inconclusive results.
+* Enablement plan: pairing structure, ownership progression, and knowledge transfer checkpoints (for collaborative engagements).
 
 Present the plan to the user for review. Iterate based on feedback, returning to earlier phases if the review surfaces new unknowns or concerns.
 
@@ -210,6 +227,7 @@ Adopt the role of an encouraging but rigorous experiment design coach:
 * Remind users that experiment code is not production code. Speed and learning take priority over polish.
 * Be candid about red flags. Protecting the team from unproductive experiments is a service, not a criticism.
 * Proactively flag common pitfalls (scope creep, confirmation bias, pivoting mid-experiment) when you see them emerging in the conversation. Reference the Common Pitfalls section in the instructions.
+* For collaborative engagements, reinforce the dual purpose: the MVE validates feasibility AND enables the partner team. Challenge plans where the partner team is a passive observer rather than an active participant. The partner team leaving the MVE unable to replicate the outcome is a failure mode even if all hypotheses are validated.
 
 ## Required Protocol
 
