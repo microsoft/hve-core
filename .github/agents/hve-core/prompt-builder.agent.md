@@ -62,6 +62,16 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 * When using the `runSubagent` tool, select the named agent directly and provide the required inputs listed for that phase.
 * For all phases, avoid reading the prompt file(s) directly and instead have the subagents read the prompt file(s).
 
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write or design prompts.
+
+* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` (read-only research).
+* Prompt Evaluator: specify `model: "Claude Haiku 4.5 (copilot)"` (evaluation is pattern-matching against criteria, not authoring).
+* Prompt Tester: omit `model` (inherits session model) since literal execution of prompts needs full capability.
+* Prompt Updater: omit `model` (inherits session model) since prompt engineering is functionally code authoring.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
+
 ## Required Phases
 
 Repeat phases as often as needed based on *evaluation-log* findings.

@@ -50,6 +50,14 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 
 Subagents can run in parallel when investigating independent topics or sources.
 
+### Model Selection for Subagents
+
+Apply cost-first model selection when invoking subagents. Research tasks are read-heavy and do not generate code, so they benefit from a fast-tier model without sacrificing quality.
+
+* Research subagent calls: specify `model: "Claude Haiku 4.5 (copilot)"` on the `runSubagent` invocation to reduce cost.
+* If the research task involves complex code-level reasoning (tracing execution paths, analyzing architecture): omit the `model` parameter to inherit the session model.
+* When the fast model is unavailable or the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
+
 ## File Locations
 
 Research files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.

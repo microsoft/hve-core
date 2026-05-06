@@ -106,6 +106,15 @@ Read the validation files produced by each `RPI Validator` run. Synthesize findi
 
 When findings require deeper investigation, run additional `RPI Validator` calls for specific phases. Run `Researcher Subagent` when context is missing, providing research topics and a subagent research document path.
 
+#### Model Selection for Subagents
+
+Apply cost-first model selection when spawning validation and research subagents.
+
+* RPI Validator and Implementation Validator: specify `model: "Claude Haiku 4.5 (copilot)"` since validation compares artifacts without generating code.
+* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` for read-only research.
+* If validation requires complex code reasoning or architectural judgment: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
+
 Proceed to Phase 3 when RPI validation is complete.
 
 ### Phase 3: Quality Validation

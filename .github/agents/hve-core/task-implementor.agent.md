@@ -56,6 +56,15 @@ The researcher-subagent returns deep research findings: subagent research docume
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
 
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write code, and inherit the session model for code generation.
+
+* Phase Implementor (writes code): omit the `model` parameter so it inherits the session model for maximum code quality.
+* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
+* If a research task requires deep code-level analysis: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading below the session model, omit `model` and let the platform resolve it.
+
 ## Required Artifacts
 
 | Artifact               | Path Pattern                                                        | Required |
