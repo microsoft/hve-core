@@ -3,7 +3,7 @@ description: "Manual quality review on pull requests, triggered by /review"
 on:
   slash_command:
     name: review
-    events: [pull_request, pull_request_comment, pull_request_review_comment]
+    events: [pull_request_comment, pull_request_review_comment]
   roles: [admin, maintainer, write]
   reaction: eyes
 
@@ -51,20 +51,20 @@ safe-outputs:
 # PR Review
 
 Perform a quality review on a pull request when a maintainer or contributor
-invokes `/review` in the PR body, a PR comment, or a PR review comment. This
-workflow is manual-only; it does not run automatically on PR open or update.
+invokes `/review` in a PR conversation comment or inline review comment. This
+workflow is manual-only; it does not run automatically on PR open or update,
+and it does not respond to `/review` placed in the PR description body.
 Because it is triggered via comment events on the base repository, it runs in
 the base-repo context with full secrets and write access, so it works on PRs
 from forks as well as same-repo PRs.
 
 ## Maintainer Advisory Mode
 
-Determine the PR author's association from the event context. For
-`pull_request` events read `github.event.pull_request.user.author_association`;
-for comment events read `github.event.issue.user.author_association` (PR
-comment) or `github.event.pull_request.user.author_association` (PR review
-comment). If the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, set the
-review mode to **advisory**.
+Determine the PR author's association from the event context. For PR
+conversation comments, read `github.event.issue.user.author_association`; for
+PR review comments, read `github.event.pull_request.user.author_association`.
+If the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, set the review
+mode to **advisory**.
 In advisory mode:
 
 * Never use `REQUEST_CHANGES`. Use `COMMENT` for all findings.
