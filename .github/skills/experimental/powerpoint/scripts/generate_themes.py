@@ -72,6 +72,7 @@ def load_themes(themes_path: Path) -> dict[str, Any]:
 
     Returns the ``themes`` mapping keyed by theme-id.
     """
+    hex6_re = re.compile(r"^#?[0-9A-Fa-f]{6}$")
     ryaml = YAML(typ="safe")
     data = ryaml.load(themes_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or "themes" not in data:
@@ -85,6 +86,11 @@ def load_themes(themes_path: Path) -> dict[str, Any]:
                 raise ValueError(
                     f"Theme '{theme_id}' color map keys and values must be "
                     f"strings; got {k!r}: {v!r}"
+                )
+            if not hex6_re.match(k) or not hex6_re.match(v):
+                raise ValueError(
+                    f"Theme '{theme_id}' color entry {k!r}: {v!r} "
+                    "must be 6-character hex strings (with optional # prefix)"
                 )
     return themes
 

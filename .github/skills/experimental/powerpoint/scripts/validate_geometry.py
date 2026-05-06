@@ -238,11 +238,29 @@ def check_adjacent_gaps(shapes: list[BaseShape], gap: float) -> list[dict]:
     return issues
 
 
+def _is_title_placeholder(shape: BaseShape) -> bool:
+    """Return True when shape is a title (not subtitle) placeholder.
+
+    Prefers the placeholder type when available (robust across templates),
+    falls back to shape name heuristic for non-placeholder shapes.
+    """
+    try:
+        ph = shape.placeholder_format
+        if ph is not None:
+            # PP_PLACEHOLDER: TITLE idx=0, CENTER_TITLE type=3
+            return ph.idx in (0, 15) or ph.type is not None and ph.type in (15, 3)
+    except (AttributeError, ValueError):
+        pass
+    # Fallback: name-based detection for non-placeholder shapes
+    name_lower = (shape.name or "").lower()
+    return "title" in name_lower and "subtitle" not in name_lower
+
+
 def check_title_clearance(shapes: list[BaseShape], clearance: float) -> list[dict]:
     """Check title-to-next-element vertical clearance.
 
-    Identifies positions where a shape name contains 'title' (but not
-    'subtitle') and verifies the next element below has sufficient clearance.
+    Identifies title placeholders and verifies the next element below
+    has sufficient clearance.
     """
     issues: list[dict] = []
     rects = []
@@ -253,8 +271,7 @@ def check_title_clearance(shapes: list[BaseShape], clearance: float) -> list[dic
     rects.sort(key=lambda r: r[0])
 
     for i, (_, bottom, shape) in enumerate(rects):
-        name_lower = (shape.name or "").lower()
-        if "title" not in name_lower or "subtitle" in name_lower:
+        if not _is_title_placeholder(shape):
             continue
         if i + 1 >= len(rects):
             continue

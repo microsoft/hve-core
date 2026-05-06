@@ -456,8 +456,11 @@ function Invoke-ValidateDeck {
     if ($LASTEXITCODE -eq 2) {
         throw "validate_geometry.py encountered an error (exit code $LASTEXITCODE)."
     }
-    if ($LASTEXITCODE -eq 1) {
+    elseif ($LASTEXITCODE -eq 1) {
         Write-Host "Geometric validation found warnings — see $geomReportPath"
+    }
+    elseif ($LASTEXITCODE -ne 0) {
+        throw "validate_geometry.py exited with unexpected code $LASTEXITCODE."
     }
 
     # Step 4: Run Copilot SDK vision validation (when prompt provided)
