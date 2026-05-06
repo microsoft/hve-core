@@ -276,9 +276,10 @@ invoke_validate_deck() {
   "${python}" "${pptx_args[@]}" || exit_code=$?
   if (( exit_code == 2 )); then
     err "validate_deck.py encountered an error (exit code ${exit_code})."
-  fi
-  if (( exit_code == 1 )); then
+  elif (( exit_code == 1 )); then
     echo "PPTX property checks found warnings — see ${deck_report}"
+  elif (( exit_code != 0 )); then
+    err "validate_deck.py exited with unexpected code ${exit_code}."
   fi
 
   # Step 3: Run geometric validation (margin, gap, overflow checks)
@@ -299,9 +300,10 @@ invoke_validate_deck() {
   "${python}" "${geom_args[@]}" || geom_exit=$?
   if (( geom_exit == 2 )); then
     err "validate_geometry.py encountered an error (exit code ${geom_exit})."
-  fi
-  if (( geom_exit == 1 )); then
+  elif (( geom_exit == 1 )); then
     echo "Geometric validation found warnings — see ${geom_report}"
+  elif (( geom_exit != 0 )); then
+    err "validate_geometry.py exited with unexpected code ${geom_exit}."
   fi
 
   # Step 4: Vision validation (when prompt provided)
