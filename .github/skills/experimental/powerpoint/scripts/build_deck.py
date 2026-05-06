@@ -903,6 +903,7 @@ def _find_blank_layout(prs):
     try:
         return prs.slide_layouts[6]
     except IndexError:
+        # Template has fewer than 7 layouts; fall through to name search.
         pass
     # Search by name across all masters
     for layout in _all_layouts(prs):

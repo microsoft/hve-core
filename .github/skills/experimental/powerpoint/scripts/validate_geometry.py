@@ -250,6 +250,7 @@ def _is_title_placeholder(shape: BaseShape) -> bool:
             # PP_PLACEHOLDER: TITLE idx=0, CENTER_TITLE type=3
             return ph.idx in (0, 15) or ph.type is not None and ph.type in (15, 3)
     except (AttributeError, ValueError):
+        # Non-placeholder shapes raise ValueError; fall through to name heuristic.
         pass
     # Fallback: name-based detection for non-placeholder shapes
     name_lower = (shape.name or "").lower()
