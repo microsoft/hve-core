@@ -1,7 +1,7 @@
 {
   "name": "security",
   "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
-  "version": "3.3.101",
+  "version": "3.3.113",
   "agents": [
     "agents/hve-core/subagents/",
     "agents/rai-planning/",
