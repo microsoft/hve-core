@@ -5,11 +5,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
   - PowerPoint Subagent
-handoffs:
-  - label: "Compact"
-    agent: PowerPoint Builder
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include any current analysis log artifacts. Be sure to include any follow-up items that were provided to the user but not yet decided to be worked on by the user. Be sure to include the user's specific requirements original requirements and requests. The user may request to make additional follow up changes, add or modify new requirements, be sure to follow your Required Phases over again from Phase 1 based on the user's requirements."
 ---
 
 # PowerPoint Builder

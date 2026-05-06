@@ -6,10 +6,6 @@ agents:
   - Researcher Subagent
   - Plan Validator
 handoffs:
-  - label: "Compact"
-    agent: Task Planner
-    send: true
-    prompt: "/compact  make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Implementor and the user will switch to it when they are done with Task Planner"
   - label: "⚡ Implement"
     agent: Task Implementor
     prompt: /task-implement

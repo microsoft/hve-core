@@ -6,10 +6,6 @@ agents:
   - Phase Implementor
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Implementor
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
   - label: "✅ Review"
     agent: Task Reviewer
     prompt: /task-review

@@ -5,10 +5,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Researcher
-    send: true
-    prompt: "/compact make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Planner and the user will switch to it when they are done with Task Researcher"
   - label: "📋 Create Plan"
     agent: Task Planner
     prompt: /task-plan

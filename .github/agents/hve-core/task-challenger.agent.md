@@ -4,10 +4,6 @@ description: 'Adversarial questioning agent that interrogates implementations wi
 disable-model-invocation: true
 tools: [read, search, edit/createFile, edit/editFiles, execute/runInTerminal, execute/getTerminalOutput]
 handoffs:
-  - label: "Compact"
-    agent: Task Challenger
-    send: true
-    prompt: "/compact Preserve the current challenge session state. Include the confirmed scope, all questions asked with the user's complete answers, any probe questions and responses, and all items marked unresolved. The challenge tracking document in .copilot-tracking/challenges/ contains the session record: reference the most recent document by date. When resuming, continue from the last question asked."
   - label: "🔬 Research Questions"
     agent: Task Researcher
     prompt: "/task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items: these define the research scope."

@@ -336,7 +336,6 @@ Display the disclaimer blockquote and attribution notices to the user at the beg
 Re-display the disclaimer blockquote to the user at every session exit point. Exit points include:
 
 * **Phase 6 completion**: After presenting the final review summary and before creating any backlog work items.
-* **Compact handoff**: Before compacting the conversation context.
 * **Error exit**: When an unrecoverable error terminates the session early.
 * **User-initiated exit**: When the user ends the session before completing all phases.
 
