@@ -251,7 +251,7 @@ class TestRun:
             ]
         )
         rc = run(args)
-        assert rc == 1
+        assert rc == 2  # EXIT_ERROR: misconfigured input directory
 
 
 class TestMain:
