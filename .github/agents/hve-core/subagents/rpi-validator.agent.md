@@ -2,6 +2,10 @@
 name: RPI Validator
 description: 'Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core'
 user-invocable: false
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
+  - Gemini 3 Flash (Preview) (copilot)
 ---
 
 # RPI Validator

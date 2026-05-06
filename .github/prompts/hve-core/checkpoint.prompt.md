@@ -2,6 +2,7 @@
 description: "Save or restore conversation context using memory files - Brought to you by microsoft/hve-core"
 agent: Memory
 argument-hint: "[mode={save|continue|incremental}] [description=...]"
+model: Claude Haiku 4.5 (copilot)
 ---
 
 # Checkpoint
