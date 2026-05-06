@@ -136,6 +136,17 @@ function Invoke-ModelReferenceValidation {
     $validModelNames = @($catalog.models | ForEach-Object { $_.name })
     $retiringModels = @($catalog.models | Where-Object { $_.status -eq 'retiring' } | ForEach-Object { $_.name })
 
+    # Provider allowlist — controls which providers are permitted in references.
+    # To allow additional providers, add them to providerAllowlist in model-catalog.json.
+    $providerAllowlist = @()
+    if ($catalog.providerAllowlist) {
+        $providerAllowlist = @($catalog.providerAllowlist)
+    }
+    $providerLookup = @{}
+    foreach ($m in $catalog.models) {
+        if ($m.provider) { $providerLookup[$m.name] = $m.provider }
+    }
+
     # Find all agent and prompt files
     $agentFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.agent.md' -ErrorAction SilentlyContinue
     $promptFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.prompt.md' -ErrorAction SilentlyContinue
@@ -189,6 +200,17 @@ function Invoke-ModelReferenceValidation {
                     file    = $relativePath
                     model   = $modelName
                     message = "Model '$modelName' is marked as retiring in the catalog"
+                }
+            }
+            elseif ($providerAllowlist.Count -gt 0 -and $providerLookup.ContainsKey($modelName) -and
+                    $providerLookup[$modelName] -notin $providerAllowlist) {
+                $invalidReferences++
+                $fileStatus = 'invalid'
+                $provider = $providerLookup[$modelName]
+                $errors += @{
+                    file    = $relativePath
+                    model   = $modelName
+                    message = "Provider '$provider' is not in the allowed providers list ($($providerAllowlist -join ', '))"
                 }
             }
             else {

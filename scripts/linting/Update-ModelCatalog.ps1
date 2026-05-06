@@ -32,6 +32,12 @@
     Data files are structured YAML from github/docs and are more stable than
     rendered page scraping. If the file paths change, update BaseUrl or the
     file names in the script.
+
+    Upstream is fetched from github/docs@main without a pinned SHA or tag.
+    This means results are non-deterministic across runs — upstream additions
+    or removals can appear between invocations. The CI workflow detects drift
+    between the refreshed catalog and the committed version, so staleness is
+    surfaced rather than silently accepted.
 #>
 
 [CmdletBinding()]
@@ -71,6 +77,46 @@ function Get-RemoteYaml {
 
     $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -ErrorAction Stop
     return ConvertFrom-Yaml -Yaml $response.Content -AllDocuments
+}
+
+function Get-ModelProvider {
+    <#
+    .SYNOPSIS
+    Derives the provider name from a model display name using prefix matching.
+
+    .DESCRIPTION
+    Maps model names to their provider using known prefix patterns. Models not
+    matching any known prefix are classified as 'Unknown'. To support additional
+    providers in the future, add a new entry to the $providerPatterns array below.
+
+    .PARAMETER ModelName
+    The model display name (without the "(copilot)" suffix).
+
+    .OUTPUTS
+    [string] Provider name.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ModelName
+    )
+
+    # Provider prefix patterns — add new providers here as they become available.
+    # Order matters: first match wins.
+    $providerPatterns = @(
+        @{ Pattern = '^Claude';    Provider = 'Anthropic' }
+        @{ Pattern = '^GPT-|^o\d'; Provider = 'OpenAI' }
+        @{ Pattern = '^Gemini';    Provider = 'Google' }
+        @{ Pattern = '^Grok';      Provider = 'xAI' }
+    )
+
+    foreach ($entry in $providerPatterns) {
+        if ($ModelName -match $entry.Pattern) {
+            return $entry.Provider
+        }
+    }
+
+    return 'Unknown'
 }
 
 function Merge-ModelData {
@@ -131,6 +177,7 @@ function Merge-ModelData {
             tier       = $tier
             multiplier = $multiplier
             status     = $status
+            provider   = Get-ModelProvider -ModelName $name
         }
     }
 
@@ -295,11 +342,22 @@ function Invoke-ModelCatalogUpdate {
     }
 
     # Write updated catalog
+    # providerAllowlist controls which providers are permitted in agent/prompt model
+    # references. To allow additional providers, add them to this array.
+    $allowlist = @('Anthropic', 'OpenAI')
+    if (Test-Path -Path $CatalogPath) {
+        $existingCatalog = Get-Content -Path $CatalogPath -Raw | ConvertFrom-Json
+        if ($existingCatalog.providerAllowlist) {
+            $allowlist = @($existingCatalog.providerAllowlist)
+        }
+    }
+
     $newCatalog = @{
-        '$schema'   = './schemas/model-catalog.schema.json'
-        lastUpdated = (Get-Date -Format 'yyyy-MM-dd')
-        source      = 'https://docs.github.com/en/copilot/reference/ai-models/supported-models'
-        models      = $finalModels
+        '$schema'           = './schemas/model-catalog.schema.json'
+        lastUpdated         = (Get-Date -Format 'yyyy-MM-dd')
+        source              = 'https://docs.github.com/en/copilot/reference/ai-models/supported-models'
+        providerAllowlist   = $allowlist
+        models              = $finalModels
     }
 
     $outputDir = Split-Path -Path $CatalogPath -Parent

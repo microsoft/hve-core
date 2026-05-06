@@ -43,6 +43,15 @@ jobs:
         run: |
           & scripts/linting/Update-ModelCatalog.ps1 -CatalogPath scripts/linting/model-catalog.json
 
+      - name: Detect catalog drift from committed version
+        shell: bash
+        run: |
+          if ! git diff --quiet scripts/linting/model-catalog.json; then
+            echo "::warning::model-catalog.json differs from committed version after upstream refresh. Run 'npm run lint:models:refresh' locally and commit the updated catalog."
+            echo "### Catalog drift detected" >> "$GITHUB_STEP_SUMMARY"
+            git diff --stat scripts/linting/model-catalog.json >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Validate model references against catalog
         id: validate
         shell: pwsh

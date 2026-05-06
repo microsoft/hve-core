@@ -7,11 +7,19 @@
     "required": [
         "lastUpdated",
         "source",
-        "models"
+        "models",
+        "providerAllowlist"
     ],
     "properties": {
         "$schema": {
             "type": "string"
+        },
+        "providerAllowlist": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Providers permitted for use in agent/prompt model references. Add entries here to allow additional providers in the future."
         },
         "lastUpdated": {
             "type": "string",
@@ -31,7 +39,8 @@
                     "name",
                     "tier",
                     "multiplier",
-                    "status"
+                    "status",
+                    "provider"
                 ],
                 "properties": {
                     "name": {
@@ -67,6 +76,10 @@
                         "type": "string",
                         "format": "date",
                         "description": "Date when model will be retired (only for retiring status)"
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "Model provider name (e.g., Anthropic, OpenAI, Google, xAI)"
                     }
                 },
                 "additionalProperties": false
