@@ -42,6 +42,7 @@ SEVERITY_ICON = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}
 QUALITY_ICON = {"good": "✅", "needs-attention": "⚠️"}
 
 ACCENT_BAR_MAX_HEIGHT = 0.12
+POSITION_TOLERANCE_IN = 0.01  # floating-point tolerance for inch comparisons
 
 
 def _is_accent_bar(shape: BaseShape, slide_width_in: float) -> bool:
@@ -91,7 +92,7 @@ def check_boundary_overflow(
     right = left + width
     bottom = top + height
     label = _shape_label(shape)
-    if left < -0.01:
+    if left < -POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "boundary_overflow",
@@ -103,7 +104,7 @@ def check_boundary_overflow(
                 "location": shape.name or "shape",
             }
         )
-    if top < -0.01:
+    if top < -POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "boundary_overflow",
@@ -115,7 +116,7 @@ def check_boundary_overflow(
                 "location": shape.name or "shape",
             }
         )
-    if right > slide_w_in + 0.01:
+    if right > slide_w_in + POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "boundary_overflow",
@@ -127,7 +128,7 @@ def check_boundary_overflow(
                 "location": shape.name or "shape",
             }
         )
-    if bottom > slide_h_in + 0.01:
+    if bottom > slide_h_in + POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "boundary_overflow",
@@ -158,7 +159,7 @@ def check_edge_margins(
     bottom = top + height
     label = _shape_label(shape)
 
-    if left < margin - 0.01:
+    if left < margin - POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "edge_margin",
@@ -169,7 +170,7 @@ def check_edge_margins(
                 "location": shape.name or "shape",
             }
         )
-    if top < margin - 0.01:
+    if top < margin - POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "edge_margin",
@@ -180,7 +181,7 @@ def check_edge_margins(
                 "location": shape.name or "shape",
             }
         )
-    if right > slide_w_in - margin + 0.01:
+    if right > slide_w_in - margin + POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "edge_margin",
@@ -192,7 +193,7 @@ def check_edge_margins(
                 "location": shape.name or "shape",
             }
         )
-    if bottom > slide_h_in - margin + 0.01:
+    if bottom > slide_h_in - margin + POSITION_TOLERANCE_IN:
         issues.append(
             {
                 "check_type": "edge_margin",
@@ -208,10 +209,13 @@ def check_edge_margins(
 
 
 def check_adjacent_gaps(shapes: list[BaseShape], gap: float) -> list[dict]:
-    """Check vertical gaps between adjacent elements.
+    """Check vertical gaps between vertically adjacent elements.
 
     Sorts shapes by top position and checks consecutive pairs for minimum
-    vertical clearance.
+    vertical clearance. Only pairs that share horizontal extent are evaluated.
+
+    Note: Horizontal gaps between side-by-side elements at the same vertical
+    level are not checked by this function.
     """
     issues: list[dict] = []
     rects = []
@@ -231,7 +235,8 @@ def check_adjacent_gaps(shapes: list[BaseShape], gap: float) -> list[dict]:
         left_b = emu_to_inches(shape_b.left)
         right_b = left_b + emu_to_inches(shape_b.width)
         h_overlap = min(right_a, right_b) - max(left_a, left_b)
-        if vertical_gap < gap - 0.01 and vertical_gap >= 0 and h_overlap > 0.01:
+        too_close = vertical_gap < gap - POSITION_TOLERANCE_IN
+        if too_close and vertical_gap >= 0 and h_overlap > POSITION_TOLERANCE_IN:
             label_a = _shape_label(shape_a)
             label_b = _shape_label(shape_b)
             issues.append(
@@ -289,7 +294,7 @@ def check_title_clearance(shapes: list[BaseShape], clearance: float) -> list[dic
             continue
         next_top = rects[i + 1][0]
         title_clearance = next_top - bottom
-        if title_clearance < clearance - 0.01 and title_clearance >= 0:
+        if title_clearance < clearance - POSITION_TOLERANCE_IN and title_clearance >= 0:
             label = _shape_label(shape)
             next_label = _shape_label(rects[i + 1][2])
             issues.append(

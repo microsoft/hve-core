@@ -1178,7 +1178,10 @@ def main():
                 # Check image references
                 images = slide_dir / "images"
                 img_count = (
-                    len(list(images.glob("*.png"))) + len(list(images.glob("*.jpg")))
+                    sum(
+                        len(list(images.glob(f"*{ext}")))
+                        for ext in (".png", ".jpg", ".jpeg")
+                    )
                     if images.exists()
                     else 0
                 )
