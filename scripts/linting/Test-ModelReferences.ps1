@@ -37,6 +37,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '..' '..' | Resolve-Path).Path
+
 Import-Module PowerShell-Yaml -ErrorAction Stop
 
 #region Functions
@@ -59,7 +61,7 @@ function Get-FrontmatterFromFile {
     )
 
     $content = Get-Content -Path $FilePath -Raw -ErrorAction Stop
-    if ($content -match '(?s)^---\r?\n(.+?)\r?\n---') {
+    if ($content -match '(?s)^---\r?\n(.*?)\r?\n---(\r?\n|\z)') {
         $yamlBlock = $Matches[1]
         try {
             return ConvertFrom-Yaml -Yaml $yamlBlock
@@ -162,7 +164,7 @@ function Invoke-ModelReferenceValidation {
     $filesWithModels = 0
 
     foreach ($file in $allFiles) {
-        $relativePath = $file.FullName -replace [regex]::Escape((Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar), ''
+        $relativePath = $file.FullName -replace [regex]::Escape($RepoRoot + [System.IO.Path]::DirectorySeparatorChar), ''
         $relativePath = $relativePath.Replace('\', '/')
 
         $frontmatter = Get-FrontmatterFromFile -FilePath $file.FullName
