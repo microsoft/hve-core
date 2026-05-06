@@ -71,7 +71,14 @@ _TIMING_TEMPLATE = (
 
 
 def get_wav_duration_ms(wav_path: Path) -> int:
-    """Return WAV file duration in milliseconds with buffer."""
+    """Return WAV file duration in milliseconds with buffer.
+
+    Args:
+        wav_path: Path to the WAV audio file.
+
+    Returns:
+        Duration in milliseconds plus ``TIMING_BUFFER_MS``.
+    """
     with wave.open(str(wav_path), "rb") as wf:
         frames = wf.getnframes()
         rate = wf.getframerate()
@@ -81,9 +88,14 @@ def get_wav_duration_ms(wav_path: Path) -> int:
 def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None:
     """Add auto-play narration timing XML to a slide.
 
-    Creates the p:timing element structure that PowerPoint generates
+    Creates the ``p:timing`` element structure that PowerPoint generates
     when using Record Slide Show, enabling 'Use Recorded Timings and
     Narrations' in video export.
+
+    Args:
+        slide: The slide to modify.
+        shape_id: The ``spId`` of the embedded audio shape.
+        duration_ms: Audio duration in milliseconds.
     """
     existing = slide._element.find(qn("p:timing"))
     if existing is not None:
@@ -124,7 +136,16 @@ def _add_narration_timing(slide: Slide, shape_id: int, duration_ms: int) -> None
 
 
 def _set_slide_transition(slide: Slide, duration_ms: int) -> None:
-    """Set slide auto-advance timing after audio duration."""
+    """Set slide auto-advance timing after audio duration.
+
+    Sets ``advClick="0"`` so slides advance only on the audio timer,
+    not on manual click. To re-enable click-to-advance after embedding,
+    use the Transitions tab in PowerPoint.
+
+    Args:
+        slide: The slide to modify.
+        duration_ms: Auto-advance delay in milliseconds.
+    """
     existing = slide._element.find(qn("p:transition"))
     if existing is not None:
         slide._element.remove(existing)
@@ -148,7 +169,12 @@ def embed_slide_audio(slide: Slide, wav_path: Path) -> bool:
     Adds narration timing XML and slide auto-advance so PowerPoint
     recognizes the audio for video export.
 
-    Returns True on success, False on failure.
+    Args:
+        slide: The target slide.
+        wav_path: Path to the WAV audio file to embed.
+
+    Returns:
+        ``True`` on success, ``False`` on failure.
     """
     try:
         movie_shape = slide.shapes.add_movie(

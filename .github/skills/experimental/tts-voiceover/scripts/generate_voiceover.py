@@ -57,7 +57,16 @@ _DEFAULT_ACRONYMS: dict[str, str] = {
 
 
 def load_acronyms(path: Path) -> dict[str, str]:
-    """Load acronym aliases from YAML, falling back to built-in defaults."""
+    """Load acronym aliases from YAML, falling back to built-in defaults.
+
+    Args:
+        path: Path to a YAML file whose top-level ``acronyms`` key maps
+            acronym strings to phonetic replacement strings.
+
+    Returns:
+        A mapping of acronym keys to their replacement strings. Falls
+        back to ``_DEFAULT_ACRONYMS`` when the file is absent or malformed.
+    """
     if path.is_file():
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         acronyms = data.get("acronyms") if isinstance(data, dict) else None
@@ -118,7 +127,16 @@ def apply_acronym_aliases(text: str, acronyms: dict[str, str]) -> str:
 
 
 def wrap_ssml(text: str, voice: str, rate: str) -> str:
-    """Wrap processed text in a full SSML document."""
+    """Wrap processed text in a full SSML document.
+
+    Args:
+        text: Pre-processed text (XML-escaped with acronym aliases applied).
+        voice: Azure TTS voice name.
+        rate: Speech prosody rate string.
+
+    Returns:
+        A complete SSML document string ready for synthesis.
+    """
     safe_voice = xml.sax.saxutils.quoteattr(voice)
     safe_rate = xml.sax.saxutils.quoteattr(rate)
     return (
@@ -134,7 +152,16 @@ def wrap_ssml(text: str, voice: str, rate: str) -> str:
 
 
 def generate_audio(ssml: str, output_path: Path, speech_config: Any) -> float | None:
-    """Generate a WAV file from SSML. Returns duration in seconds or ``None``."""
+    """Generate a WAV file from SSML via Azure Speech SDK.
+
+    Args:
+        ssml: Complete SSML document string.
+        output_path: Destination path for the generated WAV file.
+        speech_config: Configured ``SpeechConfig`` instance.
+
+    Returns:
+        Duration in seconds on success, or ``None`` on synthesis failure.
+    """
     import azure.cognitiveservices.speech as speechsdk  # noqa: PLC0415
 
     audio_config = speechsdk.audio.AudioOutputConfig(filename=str(output_path))
@@ -159,7 +186,14 @@ def _make_entra_config(
 ) -> tuple[Any, int]:
     """Create a SpeechConfig with a fresh Entra ID token.
 
-    Returns (config, expires_at).
+    Args:
+        speechsdk: The ``azure.cognitiveservices.speech`` module.
+        credential: An Azure ``DefaultAzureCredential`` instance.
+        resource_id: Cognitive Services resource ID string.
+        region: Azure region (e.g. ``eastus``).
+
+    Returns:
+        A tuple of (SpeechConfig, token_expires_on_epoch).
     """
     token_obj = credential.get_token("https://cognitiveservices.azure.com/.default")
     auth_token = f"aad#{resource_id}#{token_obj.token}"
@@ -171,7 +205,16 @@ def _make_entra_config(
 
 
 def _resolve_lexicon(args_lexicon: Path | None, content_dir: Path) -> Path:
-    """Resolve the acronym lexicon path from argument, content dir, or defaults."""
+    """Resolve the acronym lexicon path from argument, content dir, or defaults.
+
+    Args:
+        args_lexicon: Explicit lexicon path from ``--lexicon`` argument, or ``None``.
+        content_dir: Content directory to check for ``acronyms.yaml``.
+
+    Returns:
+        Resolved path to the lexicon file (may not exist on disk when
+        falling through to the built-in default filename).
+    """
     if args_lexicon is not None:
         return args_lexicon
     content_lexicon = content_dir / "acronyms.yaml"
