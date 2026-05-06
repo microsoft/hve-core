@@ -85,13 +85,23 @@ if ($MyInvocation.InvocationName -ne '.') {
     $Grouped = $Alerts |
         Group-Object { $_.rule.description } |
         ForEach-Object {
+            $paths = @(
+                $_.Group |
+                ForEach-Object { $_.most_recent_instance.location.path } |
+                Where-Object { $_ -and $_ -notmatch '(?i)no file' } |
+                Sort-Object -Unique
+            )
             [PSCustomObject]@{
-                RuleDescription  = $_.Name
-                RuleId           = $_.Group[0].rule.id
-                Tool             = $_.Group[0].tool.name
-                SecuritySeverity = $_.Group[0].rule.security_severity_level
-                Count            = $_.Count
-                SamplePaths      = @($_.Group | ForEach-Object { $_.most_recent_instance.location.path } | Sort-Object -Unique)
+                RuleDescription    = $_.Name
+                RuleId             = $_.Group[0].rule.id
+                Tool               = $_.Group[0].tool.name
+                SecuritySeverity   = $_.Group[0].rule.security_severity_level
+                Severity           = $_.Group[0].rule.severity
+                Count              = $_.Count
+                AffectedPaths      = $paths
+                HasFilePaths       = ($paths.Count -gt 0)
+                AlertUrl           = $_.Group[0].html_url
+                FindingDescription = $_.Group[0].most_recent_instance.message.text
             }
         } |
         Sort-Object -Property Count -Descending

@@ -3,7 +3,6 @@ name: gh-code-scanning
 description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core'
 license: MIT
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
-ms.date: 2026-04-21
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
@@ -41,12 +40,12 @@ This returns a JSON array of alert groups sorted by occurrence count, descending
 
 ## Parameters Reference
 
-| Parameter       | Type   | Required | Default | Description                                                               |
-|-----------------|--------|----------|---------|---------------------------------------------------------------------------|
-| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                      |
-| `-Repo`         | String | Yes      |         | Repository name                                                           |
-| `-OutputFormat` | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption |
-| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                             |
+| Parameter       | Type   | Required | Default | Description                                                                                                                 |
+|-----------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------|
+| `-Owner`        | String | Yes      |         | GitHub organization or user that owns the repository                                                                        |
+| `-Repo`         | String | Yes      |         | Repository name                                                                                                             |
+| `-OutputFormat` | String | No       | Table   | Output format: agents must always use `Json` for programmatic consumption; `GroupedJson` is accepted as an alias for `Json` |
+| `-Branch`       | String | No       | `main`  | Branch to scope alert results                                                                                               |
 
 > These parameters apply to `Get-CodeScanningAlerts.ps1`. For bash script flags including `-s {severity}`, see the Script Reference section below.
 
@@ -108,36 +107,46 @@ Use `-Branch {branch}` to scope to a branch other than `main`.
     "RuleId": "py/empty-except",
     "Tool": "CodeQL",
     "SecuritySeverity": null,
+    "Severity": "warning",
     "Count": 23,
-    "SamplePaths": [
+    "AffectedPaths": [
       "scripts/collections/Get-CollectionItems.py",
       "scripts/linting/Validate-MarkdownFrontmatter.py"
-    ]
+    ],
+    "HasFilePaths": true,
+    "AlertUrl": "https://github.com/microsoft/hve-core/security/code-scanning/42",
+    "FindingDescription": "'except' clause does nothing but pass and there is no explanatory comment."
   },
   {
     "RuleDescription": "Code injection",
     "RuleId": "actions/code-injection/medium",
     "Tool": "CodeQL",
     "SecuritySeverity": "medium",
+    "Severity": "error",
     "Count": 2,
-    "SamplePaths": [
+    "AffectedPaths": [
       ".github/workflows/validate.yml"
-    ]
+    ],
+    "HasFilePaths": true,
+    "AlertUrl": "https://github.com/microsoft/hve-core/security/code-scanning/17",
+    "FindingDescription": "Potential code injection in ${{ inputs.version }}, which may be controlled by an external user."
   },
   {
     "RuleDescription": "Branch-Protection",
     "RuleId": "BranchProtectionID",
     "Tool": "Scorecard",
     "SecuritySeverity": "high",
+    "Severity": "error",
     "Count": 1,
-    "SamplePaths": [
-      "no file associated with this alert"
-    ]
+    "AffectedPaths": [],
+    "HasFilePaths": false,
+    "AlertUrl": "https://github.com/microsoft/hve-core/security/code-scanning/1",
+    "FindingDescription": "score is 9: branch protection is not maximal on development and all release branches"
   }
 ]
 ```
 
-`SecuritySeverity` is `null` when the rule has no severity tier assigned. `SamplePaths` is always a JSON array. When an alert has no associated source file (for example, `BranchProtectionID`), the array contains the sentinel string `"no file associated with this alert"`.
+`SecuritySeverity` is `null` for code quality rules that have no security classification; `Severity` (the non-security rule severity: `error`, `warning`, `note`, `none`) provides a fallback. `AffectedPaths` is always a JSON array of unique, sorted file paths with sentinel strings filtered out. `HasFilePaths` is `false` and `AffectedPaths` is `[]` when an alert has no associated source file (for example, `BranchProtectionID`). `AlertUrl` links directly to the alert in the GitHub Security tab. `FindingDescription` is the most recent alert message text.
 
 ### Get single alert detail
 
@@ -149,11 +158,14 @@ gh api repos/{owner}/{repo}/code-scanning/alerts/{alert_number}
 
 ### List affected file paths
 
-Use `-OutputFormat Json` and read the `SamplePaths` field from each rule group. The JSON output includes `RuleDescription`, `RuleId`, `Tool`, `SecuritySeverity`, `Count`, and `SamplePaths` (unique, sorted file paths) per group.
+Use `-OutputFormat Json` and read the `AffectedPaths` field from each rule group. The JSON output includes `RuleDescription`, `RuleId`, `Tool`, `SecuritySeverity`, `Severity`, `Count`, `AffectedPaths` (unique, sorted file paths), `HasFilePaths` (boolean: `false` for repo-level rules that have no associated source file), `AlertUrl` (string: direct link to the alert in the GitHub Security tab), and `FindingDescription` (string: most recent alert message text from the analysis tool) per group.
 
 ### Key fields
 
-* `rule.security_severity_level`: severity tier: `critical`, `high`, `medium`, or `low`
+These are GitHub API response field paths, not output object properties. The grouped output object field names are listed in the JSON output shape section above.
+
+* `rule.security_severity_level`: security severity tier: `critical`, `high`, `medium`, or `low`; `null` for code quality rules
+* `rule.severity`: non-security rule severity: `error`, `warning`, `note`, or `none`; always populated
 * `rule.id`: rule identifier used for deduplication and cross-referencing
 * `tool.name`: analysis tool that produced the alert (for example, `CodeQL`)
 * `most_recent_instance.location.path`: source file path of the most recent alert occurrence
@@ -199,12 +211,12 @@ if [[ -z "$existing" ]]; then
 ## Code Scanning Alert: {rule_description}
 
 **Rule:** \`{rule_id}\`
-**Severity:** {security_severity}
+$([ -n "{severity}" ] && echo "**Severity:** {severity}")
 **Tool:** {tool}
 **Affected files:** {count} occurrences
 
-### Sample affected paths
-{sample_paths}
+### Affected paths
+{affected_paths}
 "
 fi
 ```
