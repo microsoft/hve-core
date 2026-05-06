@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -37,7 +37,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '..' '..' | Resolve-Path).Path
+$gitRoot = git rev-parse --show-toplevel 2>$null
+$RepoRoot = if ($gitRoot) { $gitRoot } else { (Join-Path $PSScriptRoot '..' '..' | Resolve-Path).Path }
 
 Import-Module PowerShell-Yaml -ErrorAction Stop
 
