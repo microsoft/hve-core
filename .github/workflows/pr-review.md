@@ -1,9 +1,10 @@
 ---
-description: "Automated quality review on pull requests"
+description: "Manual quality review on pull requests, triggered by /review"
 on:
-  pull_request:
-    types: [opened, ready_for_review, synchronize]
-  skip-bots: ["dependabot[bot]", "github-actions[bot]"]
+  slash_command:
+    name: review
+    events: [pull_request, pull_request_comment, pull_request_review_comment]
+  roles: [admin, maintainer, write]
   reaction: eyes
 
 engine: copilot
@@ -49,34 +50,21 @@ safe-outputs:
 
 # PR Review
 
-Perform an automated quality review on pull requests before human review.
-
-## Activation Guard
-
-Check the PR state from the event context.
-
-**You MUST call `noop` and stop immediately if any of these conditions are true:**
-
-* The PR is a draft: call `noop` with message "Skipping: PR is a draft."
-* The PR has the `skip-review` label AND the PR author's association is `MEMBER`,
-  `OWNER`, or `COLLABORATOR`: call `noop` with message "Skipping: skip-review label
-  set by maintainer."
-* The PR originates from a fork (`github.event.pull_request.head.repo.id` is
-  null or does not equal `github.repository_id`): call `noop` with message
-  "Skipping: fork PR, secrets unavailable."
-* The PR author (`github.event.pull_request.user.login`) is `dependabot[bot]`
-  or `github-actions[bot]`: call `noop` with message "Skipping: PR authored by
-  bot." Keep this list aligned with the `skip-bots` frontmatter entry above.
-  Dependabot PRs are handed off to the `dependency-pr-review` workflow, which
-  owns automated review for dependency bumps; this guard prevents duplicate
-  review from `pr-review`.
-
-**Failure to call `noop` when no review action is taken will cause workflow failure.**
+Perform a quality review on a pull request when a maintainer or contributor
+invokes `/review` in the PR body, a PR comment, or a PR review comment. This
+workflow is manual-only; it does not run automatically on PR open or update.
+Because it is triggered via comment events on the base repository, it runs in
+the base-repo context with full secrets and write access, so it works on PRs
+from forks as well as same-repo PRs.
 
 ## Maintainer Advisory Mode
 
-Check the PR author's association from the event context. If the author is
-a `MEMBER`, `OWNER`, or `COLLABORATOR`, set the review mode to **advisory**.
+Determine the PR author's association from the event context. For
+`pull_request` events read `github.event.pull_request.user.author_association`;
+for comment events read `github.event.issue.user.author_association` (PR
+comment) or `github.event.pull_request.user.author_association` (PR review
+comment). If the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, set the
+review mode to **advisory**.
 In advisory mode:
 
 * Never use `REQUEST_CHANGES`. Use `COMMENT` for all findings.
@@ -223,8 +211,8 @@ for review.
 * If the PR is too large to review thoroughly (more than 50 changed files),
   post a comment suggesting the author split it into smaller PRs, submit
   `REQUEST_CHANGES`, and stop.
-* If no action is needed (maintainer PR or draft), you MUST call the `noop`
-  tool with a message explaining why.
+* If you decide no review action is appropriate, call the `noop` tool with
+  a message explaining why.
 
 ---
 
