@@ -183,3 +183,5 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 | Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
 
 > Brought to you by microsoft/hve-core
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
