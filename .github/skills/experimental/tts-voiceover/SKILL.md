@@ -67,15 +67,15 @@ uv run scripts/embed_audio.py --input deck.pptx --audio-dir voice-over --output 
 
 ### generate_voiceover.py
 
-| Parameter       | Type   | Default                             | Description                                   |
-|:----------------|:-------|:------------------------------------|:----------------------------------------------|
-| `--dry-run`     | flag   | `false`                             | Print SSML templates without generating audio |
-| `--voice`       | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
-| `--rate`        | string | `+10%`                              | Speech prosody rate                           |
-| `--content-dir` | path   | `content`                           | Path to slide content directory               |
-| `--output-dir`  | path   | `voice-over`                        | Path to WAV output directory                  |
-| `--lexicon`     | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
-| `--verbose` / `-v` | flag | `false`                          | Enable verbose (DEBUG) logging output         |
+| Parameter          | Type   | Default                             | Description                                   |
+|:-------------------|:-------|:------------------------------------|:----------------------------------------------|
+| `--dry-run`        | flag   | `false`                             | Print SSML templates without generating audio |
+| `--voice`          | string | `en-US-Andrew:DragonHDLatestNeural` | Azure TTS voice name                          |
+| `--rate`           | string | `+10%`                              | Speech prosody rate                           |
+| `--content-dir`    | path   | `content`                           | Path to slide content directory               |
+| `--output-dir`     | path   | `voice-over`                        | Path to WAV output directory                  |
+| `--lexicon`        | path   | *(auto-detect)*                     | Custom acronyms.yaml path                     |
+| `--verbose` / `-v` | flag   | `false`                             | Enable verbose (DEBUG) logging output         |
 
 ### embed_audio.py
 
@@ -83,12 +83,12 @@ Embeds WAV files into corresponding PPTX slides and adds narration timing
 XML so PowerPoint recognizes the audio for video export via
 **File > Export > Create a Video > Use Recorded Timings and Narrations**.
 
-| Parameter     | Type | Default           | Description                  |
-|:--------------|:-----|:------------------|:-----------------------------|
-| `--input`     | path | *(required)*      | Source PPTX file path                 |
-| `--audio-dir` | path | `voice-over`      | Directory with slide-NNN.wav          |
-| `--output`    | path | `*-narrated.pptx` | Output PPTX file path                 |
-| `--verbose` / `-v` | flag | `false`      | Enable verbose (DEBUG) logging output |
+| Parameter          | Type | Default           | Description                           |
+|:-------------------|:-----|:------------------|:--------------------------------------|
+| `--input`          | path | *(required)*      | Source PPTX file path                 |
+| `--audio-dir`      | path | `voice-over`      | Directory with slide-NNN.wav          |
+| `--output`         | path | `*-narrated.pptx` | Output PPTX file path                 |
+| `--verbose` / `-v` | flag | `false`           | Enable verbose (DEBUG) logging output |
 
 ## Script Reference
 
@@ -170,17 +170,17 @@ Each `content.yaml` should contain a `speaker_notes:` field with the narration t
 
 ## Troubleshooting
 
-| Issue                                                | Solution                                                                                                                       |
-|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|
-| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                        |
-| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes. |
-| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                            |
-| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                          |
-| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                          |
-| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                           |
-| Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.  |
+| Issue                                                | Solution                                                                                                                                                                  |
+|:-----------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Set SPEECH_KEY ... or SPEECH_RESOURCE_ID`           | Export `SPEECH_KEY` (key auth) or `SPEECH_RESOURCE_ID` (Entra ID) with `SPEECH_REGION`.                                                                                   |
+| 401 with Entra ID auth                               | Verify custom domain on the Speech resource and `Cognitive Services Speech User` role. RBAC propagation takes up to 5 minutes.                                            |
+| Empty WAV files or skipped slides                    | Verify `speaker_notes:` is present and non-empty in `content.yaml`.                                                                                                       |
+| Mispronounced acronyms                               | Add entries to `acronyms.yaml` with phonetic aliases.                                                                                                                     |
+| `azure-cognitiveservices-speech package is required` | Run `uv sync` in the skill directory.                                                                                                                                     |
+| Audio icon visible in PPTX                           | Reposition or resize the audio object in PowerPoint after embedding.                                                                                                      |
+| Authored slide animations missing after embedding    | `embed_audio.py` replaces existing `p:timing` with narration timing; re-apply animations in PowerPoint after embedding audio.                                             |
 | Slides no longer advance on click after embedding    | `embed_audio.py` sets `advClick="0"` for auto-advance. To re-enable, select all slides in PowerPoint and check **Advance Slide > On Mouse Click** in the Transitions tab. |
-| Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                |
+| Video export shows "No timings recorded"             | Re-embed audio with the updated `embed_audio.py` which adds narration timing XML automatically.                                                                           |
 
 > Brought to you by microsoft/hve-core
 
