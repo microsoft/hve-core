@@ -105,131 +105,163 @@ function Get-ModelReferences {
 
 #region Main
 
-# Validate catalog exists
-if (-not (Test-Path -Path $CatalogPath)) {
-    Write-Error "Model catalog not found at: $CatalogPath"
-    exit 1
-}
+function Invoke-ModelReferenceValidation {
+    <#
+    .SYNOPSIS
+    Runs model reference validation and returns structured results.
 
-$catalog = Get-Content -Path $CatalogPath -Raw | ConvertFrom-Json
-$validModelNames = @($catalog.models | ForEach-Object { $_.name })
-$retiringModels = @($catalog.models | Where-Object { $_.status -eq 'retiring' } | ForEach-Object { $_.name })
+    .PARAMETER CatalogPath
+    Path to the model catalog JSON file.
 
-# Find all agent and prompt files
-$agentFiles = Get-ChildItem -Path '.github' -Recurse -Filter '*.agent.md' -ErrorAction SilentlyContinue
-$promptFiles = Get-ChildItem -Path '.github' -Recurse -Filter '*.prompt.md' -ErrorAction SilentlyContinue
-$allFiles = @($agentFiles) + @($promptFiles) | Where-Object { $null -ne $_ }
+    .PARAMETER ScanPath
+    Root path to scan for agent and prompt files.
 
-$results = @()
-$warnings = @()
-$errors = @()
-$totalReferences = 0
-$validReferences = 0
-$invalidReferences = 0
-$retiringReferences = 0
-$filesWithModels = 0
+    .OUTPUTS
+    [hashtable] Validation results with counts, file results, warnings, and errors.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CatalogPath,
 
-foreach ($file in $allFiles) {
-    $relativePath = $file.FullName -replace [regex]::Escape((Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar), ''
-    $relativePath = $relativePath.Replace('\', '/')
+        [Parameter(Mandatory = $false)]
+        [string]$ScanPath = '.github'
+    )
 
-    $frontmatter = Get-FrontmatterFromFile -FilePath $file.FullName
-    if ($null -eq $frontmatter) {
-        continue
+    if (-not (Test-Path -Path $CatalogPath)) {
+        throw "Model catalog not found at: $CatalogPath"
     }
 
-    $models = Get-ModelReferences -Frontmatter $frontmatter
-    if ($models.Count -eq 0) {
-        continue
-    }
+    $catalog = Get-Content -Path $CatalogPath -Raw | ConvertFrom-Json
+    $validModelNames = @($catalog.models | ForEach-Object { $_.name })
+    $retiringModels = @($catalog.models | Where-Object { $_.status -eq 'retiring' } | ForEach-Object { $_.name })
 
-    $filesWithModels++
-    $fileStatus = 'valid'
-    $fileModels = @()
+    # Find all agent and prompt files
+    $agentFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.agent.md' -ErrorAction SilentlyContinue
+    $promptFiles = Get-ChildItem -Path $ScanPath -Recurse -Filter '*.prompt.md' -ErrorAction SilentlyContinue
+    $allFiles = @($agentFiles) + @($promptFiles) | Where-Object { $null -ne $_ }
 
-    foreach ($modelName in $models) {
-        $totalReferences++
-        $fileModels += $modelName
+    $results = @()
+    $warnings = @()
+    $errors = @()
+    $totalReferences = 0
+    $validReferences = 0
+    $invalidReferences = 0
+    $retiringReferences = 0
+    $filesWithModels = 0
 
-        if ($modelName -notin $validModelNames) {
-            $invalidReferences++
-            $fileStatus = 'invalid'
-            $errors += @{
-                file    = $relativePath
-                model   = $modelName
-                message = "Unrecognized model: '$modelName' not found in catalog"
+    foreach ($file in $allFiles) {
+        $relativePath = $file.FullName -replace [regex]::Escape((Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar), ''
+        $relativePath = $relativePath.Replace('\', '/')
+
+        $frontmatter = Get-FrontmatterFromFile -FilePath $file.FullName
+        if ($null -eq $frontmatter) {
+            continue
+        }
+
+        $models = Get-ModelReferences -Frontmatter $frontmatter
+        if ($models.Count -eq 0) {
+            continue
+        }
+
+        $filesWithModels++
+        $fileStatus = 'valid'
+        $fileModels = @()
+
+        foreach ($modelName in $models) {
+            $totalReferences++
+            $fileModels += $modelName
+
+            if ($modelName -notin $validModelNames) {
+                $invalidReferences++
+                $fileStatus = 'invalid'
+                $errors += @{
+                    file    = $relativePath
+                    model   = $modelName
+                    message = "Unrecognized model: '$modelName' not found in catalog"
+                }
+            }
+            elseif ($modelName -in $retiringModels) {
+                $retiringReferences++
+                $validReferences++
+                if ($fileStatus -ne 'invalid') { $fileStatus = 'warning' }
+                $warnings += @{
+                    file    = $relativePath
+                    model   = $modelName
+                    message = "Model '$modelName' is marked as retiring in the catalog"
+                }
+            }
+            else {
+                $validReferences++
             }
         }
-        elseif ($modelName -in $retiringModels) {
-            $retiringReferences++
-            $validReferences++
-            if ($fileStatus -ne 'invalid') { $fileStatus = 'warning' }
-            $warnings += @{
-                file    = $relativePath
-                model   = $modelName
-                message = "Model '$modelName' is marked as retiring in the catalog"
-            }
-        }
-        else {
-            $validReferences++
+
+        $results += @{
+            file   = $relativePath
+            models = $fileModels
+            status = $fileStatus
         }
     }
 
-    $results += @{
-        file   = $relativePath
-        models = $fileModels
-        status = $fileStatus
+    return @{
+        timestamp           = (Get-Date -Format 'o')
+        catalogLastUpdated  = $catalog.lastUpdated
+        totalFiles          = $allFiles.Count
+        filesWithModels     = $filesWithModels
+        totalReferences     = $totalReferences
+        validReferences     = $validReferences
+        invalidReferences   = $invalidReferences
+        retiringReferences  = $retiringReferences
+        results             = $results
+        warnings            = $warnings
+        errors              = $errors
     }
 }
 
-# Build output
-$output = @{
-    timestamp           = (Get-Date -Format 'o')
-    catalogLastUpdated  = $catalog.lastUpdated
-    totalFiles          = $allFiles.Count
-    filesWithModels     = $filesWithModels
-    totalReferences     = $totalReferences
-    validReferences     = $validReferences
-    invalidReferences   = $invalidReferences
-    retiringReferences  = $retiringReferences
-    results             = $results
-    warnings            = $warnings
-    errors              = $errors
-}
-
-# Ensure output directory exists
-$outputDir = Split-Path -Path $OutputPath -Parent
-if ($outputDir -and -not (Test-Path -Path $outputDir)) {
-    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-}
-
-$output | ConvertTo-Json -Depth 5 | Set-Content -Path $OutputPath -Encoding utf8
-
-# Summary output
-Write-Host "Model Reference Validation Results:" -ForegroundColor Cyan
-Write-Host "  Total files scanned: $($allFiles.Count)"
-Write-Host "  Files with model references: $filesWithModels"
-Write-Host "  Total model references: $totalReferences"
-Write-Host "  Valid references: $validReferences" -ForegroundColor Green
-if ($retiringReferences -gt 0) {
-    Write-Host "  Retiring references: $retiringReferences" -ForegroundColor Yellow
-}
-if ($invalidReferences -gt 0) {
-    Write-Host "  Invalid references: $invalidReferences" -ForegroundColor Red
-    foreach ($err in $errors) {
-        Write-Host "    ERROR: $($err.file) - $($err.message)" -ForegroundColor Red
+# Only run main logic when executed directly (not dot-sourced for testing)
+if ($MyInvocation.InvocationName -ne '.') {
+    # Validate catalog exists
+    if (-not (Test-Path -Path $CatalogPath)) {
+        Write-Error "Model catalog not found at: $CatalogPath"
+        exit 1
     }
-}
-foreach ($warn in $warnings) {
-    Write-Host "    WARNING: $($warn.file) - $($warn.message)" -ForegroundColor Yellow
-}
 
-Write-Host "`nResults written to: $OutputPath"
+    $output = Invoke-ModelReferenceValidation -CatalogPath $CatalogPath
 
-if ($invalidReferences -gt 0) {
-    exit 1
+    # Ensure output directory exists
+    $outputDir = Split-Path -Path $OutputPath -Parent
+    if ($outputDir -and -not (Test-Path -Path $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+
+    $output | ConvertTo-Json -Depth 5 | Set-Content -Path $OutputPath -Encoding utf8
+
+    # Summary output
+    Write-Host "Model Reference Validation Results:" -ForegroundColor Cyan
+    Write-Host "  Total files scanned: $($output.totalFiles)"
+    Write-Host "  Files with model references: $($output.filesWithModels)"
+    Write-Host "  Total model references: $($output.totalReferences)"
+    Write-Host "  Valid references: $($output.validReferences)" -ForegroundColor Green
+    if ($output.retiringReferences -gt 0) {
+        Write-Host "  Retiring references: $($output.retiringReferences)" -ForegroundColor Yellow
+    }
+    if ($output.invalidReferences -gt 0) {
+        Write-Host "  Invalid references: $($output.invalidReferences)" -ForegroundColor Red
+        foreach ($err in $output.errors) {
+            Write-Host "    ERROR: $($err.file) - $($err.message)" -ForegroundColor Red
+        }
+    }
+    foreach ($warn in $output.warnings) {
+        Write-Host "    WARNING: $($warn.file) - $($warn.message)" -ForegroundColor Yellow
+    }
+
+    Write-Host "`nResults written to: $OutputPath"
+
+    if ($output.invalidReferences -gt 0) {
+        exit 1
+    }
+
+    exit 0
 }
-
-exit 0
 
 #endregion Main

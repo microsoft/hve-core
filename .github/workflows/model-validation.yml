@@ -1,0 +1,69 @@
+name: Model Reference Validation
+
+on:
+  schedule:
+    # Weekly scan: Wednesdays at 08:00 UTC
+    - cron: '0 8 * * 3'
+  pull_request:
+    paths:
+      - '.github/agents/**/*.agent.md'
+      - '.github/prompts/**/*.prompt.md'
+      - 'scripts/linting/model-catalog.json'
+      - 'scripts/linting/Test-ModelReferences.ps1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-models:
+    name: Validate Model References
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+            Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+          }
+
+      - name: Validate model references against catalog
+        id: validate
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          & scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-validation-results
+          path: |
+            logs/model-validation-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Check catalog freshness
+        shell: pwsh
+        run: |
+          $catalog = Get-Content -Path scripts/linting/model-catalog.json -Raw | ConvertFrom-Json
+          $lastUpdated = [datetime]::Parse($catalog.lastUpdated)
+          $daysSinceUpdate = ([datetime]::UtcNow - $lastUpdated).Days
+          if ($daysSinceUpdate -gt 90) {
+            Write-Warning "Model catalog is $daysSinceUpdate days old (last updated: $($catalog.lastUpdated)). Consider refreshing from: $($catalog.source)"
+            echo "::warning::Model catalog is $daysSinceUpdate days old. Consider refreshing model definitions."
+          } else {
+            Write-Host "Model catalog freshness OK ($daysSinceUpdate days since last update)"
+          }
