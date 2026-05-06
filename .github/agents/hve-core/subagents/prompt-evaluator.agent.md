@@ -2,6 +2,9 @@
 name: Prompt Evaluator
 description: 'Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance'
 user-invocable: false
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Prompt Evaluator

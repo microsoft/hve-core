@@ -5,10 +5,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Researcher
-    send: true
-    prompt: "/compact make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Planner and the user will switch to it when they are done with Task Researcher"
   - label: "📋 Create Plan"
     agent: Task Planner
     prompt: /task-plan
@@ -49,6 +45,14 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 Subagents can run in parallel when investigating independent topics or sources.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection when invoking subagents. Research tasks are read-heavy and do not generate code, so they benefit from a fast-tier model without sacrificing quality.
+
+* Research subagent calls: specify `model: "Claude Haiku 4.5 (copilot)"` on the `runSubagent` invocation to reduce cost.
+* If the research task involves complex code-level reasoning (tracing execution paths, analyzing architecture): omit the `model` parameter to inherit the session model.
+* When the fast model is unavailable or the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ## File Locations
 

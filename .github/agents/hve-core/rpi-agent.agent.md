@@ -7,10 +7,6 @@ agents:
   - Researcher Subagent
   - Phase Implementor
 handoffs:
-  - label: Compact
-    agent: RPI Agent
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, always include file paths for all of the Tracking Artifacts for this session. Indicate percent complete for each of the artifacts. Include the last Phase before compaction, steps of phase completed, in-progress step of phase, remaining steps of phase. Be sure to include executive details for each of the `Phase 4: Review` most recent findings. Must include all of the most recent `Phase 5: Discover` follow up work items and their order with complete and consistent details."
-    send: true
   - label: "1️⃣"
     agent: RPI Agent
     prompt: "/rpi continue=1"

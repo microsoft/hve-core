@@ -5,6 +5,9 @@ user-invocable: false
 tools:
   - read
   - search
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Implementation Validator

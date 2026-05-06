@@ -7,6 +7,9 @@ tools:
   - search/fileSearch
   - read/readFile
 user-invocable: false
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Report Generator

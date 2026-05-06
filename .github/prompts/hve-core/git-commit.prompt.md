@@ -1,6 +1,7 @@
 ---
 agent: 'agent'
 description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
+model: Claude Haiku 4.5 (copilot)
 ---
 
 # Stage, Generate, and Commit
