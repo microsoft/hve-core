@@ -125,7 +125,9 @@ Use explicit model selection for cost optimization:
 
 ### Cost Tier Constraint
 
-VS Code enforces that subagent models cannot exceed the cost tier of the parent model. If the user selects Sonnet (standard) in the model picker, subagents can use Haiku (fast) but not Opus (premium). Fallback arrays provide resilience when the preferred model is unavailable or exceeds the cost tier.
+The `model` property is a **preference hint**, not a hard constraint. VS Code never fails a prompt or agent invocation due to model unavailability. When a specified model is unavailable or exceeds the cost tier of the parent model, VS Code falls back through the array entries in order, then to the session model (model picker selection).
+
+VS Code enforces that subagent models cannot exceed the cost tier of the parent model. If the user selects Sonnet (standard) in the model picker, subagents can use Haiku (fast) but not Opus (premium). Fallback arrays provide resilience when the preferred model is unavailable or exceeds the cost tier. A single-model string is equally safe: it falls back to the session model when the specified model cannot be used.
 
 ### Model Catalog Validation
 

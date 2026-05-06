@@ -98,7 +98,9 @@ Prompt files MUST:
 | Style    | Use names from `scripts/linting/model-catalog.json`; omit if the session default is acceptable |
 | Example  | `Claude Haiku 4.5 (copilot)`                                                                   |
 
-Use `model` on prompts that perform mechanical operations (git commits, issue creation, file I/O) rather than complex reasoning or code generation. The cost tier constraint applies: the prompt model cannot exceed the user's session model tier.
+Use `model` on prompts that perform mechanical operations (git commits, issue creation, file I/O) rather than complex reasoning or code generation.
+
+The `model` property is a **preference hint**, not a hard requirement. When the specified model is unavailable or exceeds the user's session model cost tier, VS Code falls back through the array (if specified) then to the session model. A single-model string is safe: it never causes failure. Fallback arrays add resilience when cost-tier constraints may make the primary model unavailable.
 
 Run `npm run lint:models` to validate model references against the catalog.
 
