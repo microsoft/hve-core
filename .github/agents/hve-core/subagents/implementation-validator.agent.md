@@ -199,13 +199,13 @@ During any validation scope, note issues that fall outside predefined categories
 
 ## Response Format
 
-Return implementation validation findings including:
+The subagent always writes complete validation findings to the review log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
-* Relative path to the implementation validation log.
-* Validation status: Passed, Partial, Failed, or Blocked.
-* Executive summary of findings with severity counts.
-* Count of findings by category.
-* Top critical and major findings with evidence.
-* Scopes completed, skipped, or blocked.
-* Suggested areas for additional investigation.
-* Clarifying questions requiring parent agent or user input.
+Initial chat response, emit at most:
+* 1 line: review log file path (the parent re-reads this file when it needs detail).
+* 1 line: validation status (Pass / Pass with Warnings / Fail).
+* Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize blocking issues and regressions.
+* Up to 3 clarifying questions, only when blocking.
+* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete validation output, test results, and remediation guidance."
+
+Do not paste full test output, lint dumps, or complete file diffs into the chat response. The review log is the source of truth.

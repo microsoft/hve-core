@@ -58,6 +58,29 @@ Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 
 Subagents can run in parallel when investigating independent topics or validating independent concerns.
 
+## Context Discipline
+
+After any subagent returns, this turn must be lean:
+
+1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
+2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
+
+Choose the lightest response mode that satisfies the request:
+
+| Mode        | When to use                                                                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct      | Answer from this turn's context only. No subagent, no file reads. Use for clarifications, status questions, or queries when the relevant file is already attached. |
+| Lightweight | Single subagent with a focused prompt. Skip re-reading prior phase tracking files. Use for summarizing findings or single-file edits.                              |
+| Standard    | Default behavior: subagent dispatch, tracking-file update, and handoff suggestion.                                                                                 |
+| Full        | Multiple parallel subagents and cross-phase synthesis. Use only when explicitly requested or when the phase contract requires it.                                  |
+
+Subagent result handling:
+
+* Treat the subagent's chat response as an index, not the full result.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
+* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+
 ## File Locations
 
 Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
