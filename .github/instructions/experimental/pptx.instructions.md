@@ -79,7 +79,9 @@ For partial rebuild workflows (update a few slides in an existing deck):
 
 ## Validation Criteria
 
-These criteria define the quality standards agents verify after building or updating slides. Visual checks use `validate_slides.py` and PPTX-only checks use `validate_deck.py`.
+These criteria define the quality standards agents verify after building or updating slides. The Validate pipeline runs three checks in sequence: PPTX property validation (`validate_deck.py`), geometric validation (`validate_geometry.py`), and optionally vision-based validation (`validate_slides.py`).
+
+Geometric validation runs automatically during the Validate action and checks the element positioning rules below programmatically. It catches margin violations, boundary overflow, and insufficient gaps without requiring vision model access.
 
 ### Element Positioning
 
@@ -115,6 +117,10 @@ These criteria define the quality standards agents verify after building or upda
 ## Color Conventions
 
 Use `#RRGGBB` hex values or `@theme_name` references for all colors. See the Color Syntax section in `content-yaml-template.md` for the full specification including theme brightness adjustments and dict syntax.
+
+### Theme Colors in content-extra.py
+
+When `style.yaml` defines a `themes` section, the build script populates `style[\"colors\"]` with the color map for the theme assigned to each slide via `themes[].slides`. Slides not explicitly assigned fall back to the first theme in the list. Use `style.get(\"colors\", {}).get(\"accent_blue\", \"#0078D4\")` in `content-extra.py` to reference theme-aware colors. This enables theme portability. The same script produces correct colors across all theme variants without regex replacement.
 
 ## Contextual Styling
 

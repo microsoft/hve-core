@@ -386,7 +386,7 @@ function Invoke-ValidateDeck {
 
     $python = Get-VenvPythonPath
     $hasVisionPrompt = $ValidationPrompt -or $ValidationPromptFile
-    $totalSteps = if ($hasVisionPrompt) { 3 } else { 2 }
+    $totalSteps = if ($hasVisionPrompt) { 4 } else { 3 }
 
     # Default image output directory when not specified
     if (-not $ImageOutputDir) {
@@ -429,9 +429,43 @@ function Invoke-ValidateDeck {
         Write-Host "PPTX property checks found warnings — see $deckReportPath"
     }
 
-    # Step 3: Run Copilot SDK vision validation (when prompt provided)
+    # Step 3: Run geometric validation (margin, gap, overflow checks)
+    Write-Host "Step 3/$totalSteps`: Running geometric validation..."
+    $geomScript = Join-Path $ScriptDir 'validate_geometry.py'
+    $geomArgs = @(
+        $geomScript,
+        '--input', $InputPath
+    )
+    if ($Slides) {
+        $geomArgs += '--slides'
+        $geomArgs += $Slides
+    }
+    $geomOutputPath = Join-Path $ImageOutputDir 'geometry-validation-results.json'
+    $geomArgs += '--output'
+    $geomArgs += $geomOutputPath
+    $geomReportPath = Join-Path $ImageOutputDir 'geometry-validation-report.md'
+    $geomArgs += '--report'
+    $geomArgs += $geomReportPath
+    $geomArgs += '--per-slide-dir'
+    $geomArgs += $ImageOutputDir
+    if ($VerbosePreference -eq 'Continue') {
+        $geomArgs += '-v'
+    }
+
+    & $python @geomArgs
+    if ($LASTEXITCODE -eq 2) {
+        throw "validate_geometry.py encountered an error (exit code $LASTEXITCODE)."
+    }
+    elseif ($LASTEXITCODE -eq 1) {
+        Write-Host "Geometric validation found warnings — see $geomReportPath"
+    }
+    elseif ($LASTEXITCODE -ne 0) {
+        throw "validate_geometry.py exited with unexpected code $LASTEXITCODE."
+    }
+
+    # Step 4: Run Copilot SDK vision validation (when prompt provided)
     if ($hasVisionPrompt) {
-        Write-Host "Step 3/$totalSteps`: Running Copilot SDK vision validation..."
+        Write-Host "Step 4/$totalSteps`: Running Copilot SDK vision validation..."
         $visionScript = Join-Path $ScriptDir 'validate_slides.py'
         $visionArgs = @(
             $visionScript,
