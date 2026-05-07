@@ -82,6 +82,7 @@ Use this edition when you want access to everything without choosing a focused c
 | **checkpoint**                                  | Save or restore conversation context using memory files                                                                                          |
 | **code-review-full**                            | Run both functional and standards code reviews on the current branch in a single pass                                                            |
 | **code-review-functional**                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps                                               |
+| **cspell-config**                               | Creates or updates the project cspell configuration with project-specific words and ignores                                                      |
 | **doc-ops-update**                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
 | **dt-canonical-deck**                           | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build                       |
 | **dt-figma-export**                             | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server                        |

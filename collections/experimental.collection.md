@@ -10,6 +10,12 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 | **pptx**                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                   |
 | **pptx-subagent**       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                            |
 
+### Prompts
+
+| Name              | Description                                                                                 |
+|-------------------|---------------------------------------------------------------------------------------------|
+| **cspell-config** | Creates or updates the project cspell configuration with project-specific words and ignores |
+
 ### Instructions
 
 | Name                                 | Description                                                                                                                                                                                                                                                 |

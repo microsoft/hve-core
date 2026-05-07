@@ -6,6 +6,9 @@
     "agents/experimental/",
     "agents/experimental/subagents/"
   ],
+  "commands": [
+    "commands/experimental/"
+  ],
   "skills": [
     "skills/experimental/"
   ]
