@@ -43,7 +43,7 @@ $ErrorActionPreference = 'Stop'
 
 #region Environment Setup
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = $PSScriptRoot
 $SkillRoot = Split-Path -Parent $ScriptDir
 $VenvDir = Join-Path $SkillRoot '.venv'
 
