@@ -53,28 +53,34 @@ $VenvDir = Join-Path $SkillRoot '.venv'
 
 if ($MyInvocation.InvocationName -ne '.') {
 
-    if (-not $SkipVenvSetup) {
-        if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-            throw 'uv is required but was not found on PATH.'
+    try {
+        if (-not $SkipVenvSetup) {
+            if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+                throw 'uv is required but was not found on PATH.'
+            }
+            uv sync --directory $SkillRoot
         }
-        uv sync --directory $SkillRoot
+
+        $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
+            Join-Path $VenvDir 'Scripts/python.exe'
+        } elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
+            Join-Path $VenvDir 'bin/python'
+        } else {
+            throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
+        }
+
+        $script = Join-Path $ScriptDir 'export_svg.py'
+        $ScriptArgs = @($script, '--input', $InputPath, '--output-dir', $OutputDir)
+        if ($Slides) { $ScriptArgs += '--slides'; $ScriptArgs += $Slides }
+        if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
+
+        & $python @ScriptArgs
+        exit $LASTEXITCODE
     }
-
-    $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
-        Join-Path $VenvDir 'Scripts/python.exe'
-    } elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
-        Join-Path $VenvDir 'bin/python'
-    } else {
-        throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
+    catch {
+        Write-Error -ErrorAction Continue "Invoke-ExportSvg failed: $($_.Exception.Message)"
+        exit 1
     }
-
-    $script = Join-Path $ScriptDir 'export_svg.py'
-    $ScriptArgs = @($script, '--input', $InputPath, '--output-dir', $OutputDir)
-    if ($Slides) { $ScriptArgs += '--slides'; $ScriptArgs += $Slides }
-    if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
-
-    & $python @ScriptArgs
-    exit $LASTEXITCODE
 
 }
 

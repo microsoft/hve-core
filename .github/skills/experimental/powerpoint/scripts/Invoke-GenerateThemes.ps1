@@ -53,27 +53,33 @@ $VenvDir = Join-Path $SkillRoot '.venv'
 
 if ($MyInvocation.InvocationName -ne '.') {
 
-    if (-not $SkipVenvSetup) {
-        if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-            throw 'uv is required but was not found on PATH.'
+    try {
+        if (-not $SkipVenvSetup) {
+            if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
+                throw 'uv is required but was not found on PATH.'
+            }
+            uv sync --directory $SkillRoot
         }
-        uv sync --directory $SkillRoot
+
+        $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
+            Join-Path $VenvDir 'Scripts/python.exe'
+        } elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
+            Join-Path $VenvDir 'bin/python'
+        } else {
+            throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
+        }
+
+        $script = Join-Path $ScriptDir 'generate_themes.py'
+        $ScriptArgs = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
+        if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
+
+        & $python @ScriptArgs
+        exit $LASTEXITCODE
     }
-
-    $python = if (Test-Path (Join-Path $VenvDir 'Scripts/python.exe')) {
-        Join-Path $VenvDir 'Scripts/python.exe'
-    } elseif (Test-Path (Join-Path $VenvDir 'bin/python')) {
-        Join-Path $VenvDir 'bin/python'
-    } else {
-        throw "Python interpreter not found in venv. Run: uv sync --directory `"$SkillRoot`""
+    catch {
+        Write-Error -ErrorAction Continue "Invoke-GenerateThemes failed: $($_.Exception.Message)"
+        exit 1
     }
-
-    $script = Join-Path $ScriptDir 'generate_themes.py'
-    $ScriptArgs = @($script, '--content-dir', $ContentDir, '--themes', $ThemesPath, '--output-dir', $OutputDir)
-    if ($VerbosePreference -eq 'Continue') { $ScriptArgs += '-v' }
-
-    & $python @ScriptArgs
-    exit $LASTEXITCODE
 
 }
 

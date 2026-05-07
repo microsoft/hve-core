@@ -258,7 +258,9 @@ def generate_theme(
     color_map = theme_config["colors"]
     label = theme_config.get("label", theme_id)
 
-    output_base = output_dir / f"{deck_name}-{theme_id}"
+    # Sanitize theme_id to prevent path traversal via malformed YAML.
+    safe_id = re.sub(r"[^a-zA-Z0-9_\-]", "_", theme_id)
+    output_base = output_dir / f"{deck_name}-{safe_id}"
     output_content = output_base / "content"
     output_deck = output_base / "slide-deck"
 
