@@ -9,12 +9,16 @@ items:
   # Agents
   - path: .github/agents/experimental/experiment-designer.agent.md
     kind: agent
+  - path: .github/agents/experimental/graph-researcher.agent.md
+    kind: agent
   - path: .github/agents/experimental/pptx.agent.md
     kind: agent
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
   # Skills
   - path: .github/skills/experimental/customer-card-render
+    kind: skill
+  - path: .github/skills/experimental/graphify
     kind: skill
   - path: .github/skills/experimental/powerpoint
     kind: skill
@@ -27,6 +31,8 @@ items:
     kind: skill
   # Instructions
   - path: .github/instructions/experimental/experiment-designer.instructions.md
+    kind: instruction
+  - path: .github/instructions/experimental/graphify.instructions.md
     kind: instruction
   - path: .github/instructions/experimental/pptx.instructions.md
     kind: instruction
