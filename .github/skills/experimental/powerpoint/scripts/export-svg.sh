@@ -12,6 +12,7 @@ SKILL_ROOT="$(dirname "${SCRIPT_DIR}")"
 VENV_DIR="${SKILL_ROOT}/.venv"
 
 SKIP_VENV_SETUP=false
+VERBOSE=false
 
 err() {
   printf "ERROR: %s\n" "$1" >&2
