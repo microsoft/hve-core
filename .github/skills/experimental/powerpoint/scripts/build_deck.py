@@ -14,6 +14,8 @@ Usage::
         --output slide-deck/presentation.pptx --slides 3,7,15
 """
 
+from __future__ import annotations
+
 import argparse
 import ast
 import builtins

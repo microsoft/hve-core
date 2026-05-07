@@ -187,7 +187,7 @@ def run(args: argparse.Namespace) -> int:
     audio_map = discover_audio_files(audio_dir)
     if not audio_map:
         logger.warning("No slide-NNN.wav files found in %s", audio_dir)
-        return EXIT_ERROR  # misconfigured input directory
+        return EXIT_FAILURE
 
     logger.info("Discovered %d audio file(s) in %s", len(audio_map), audio_dir)
 

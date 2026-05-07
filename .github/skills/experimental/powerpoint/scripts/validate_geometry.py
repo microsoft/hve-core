@@ -264,7 +264,7 @@ def _is_title_placeholder(shape: BaseShape) -> bool:
         if ph is not None:
             # PP_PLACEHOLDER.TITLE = 1, CENTER_TITLE = 3; idx 0 is the
             # standard title placeholder index in most templates.
-            return ph.idx == 0 or ph.type is not None and ph.type in (1, 3)
+            return ph.idx == 0 or (ph.type is not None and ph.type in (1, 3))
     except (AttributeError, ValueError):
         # Non-placeholder shapes raise ValueError; fall through to name heuristic.
         pass

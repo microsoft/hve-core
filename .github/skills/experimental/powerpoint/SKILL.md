@@ -454,7 +454,8 @@ Embeds WAV audio files into PPTX slides. Audio files are matched to slides by na
 
 **Dependencies**: Requires `pillow` (`pip install pillow`) for poster frame generation.
 
-> **Note:** WAV files are embedded uncompressed. For large narrated decks, consider pre-compressing audio before embedding to manage PPTX file size.
+> [!NOTE]
+> WAV files are embedded uncompressed. For large narrated decks, consider pre-compressing audio before embedding to manage PPTX file size.
 
 ### Export Slides to SVG
 

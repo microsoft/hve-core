@@ -251,7 +251,7 @@ class TestRun:
             ]
         )
         rc = run(args)
-        assert rc == 2  # EXIT_ERROR: misconfigured input directory
+        assert rc == 1  # EXIT_FAILURE: no matching audio files
 
 
 class TestMain:
