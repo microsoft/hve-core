@@ -52,10 +52,10 @@ def _is_accent_bar(shape: BaseShape, slide_width_in: float) -> bool:
     width_in = emu_to_inches(shape.width)
     left_in = emu_to_inches(shape.left)
     return (
-        top_in <= 0.01
-        and left_in <= 0.01
+        top_in <= POSITION_TOLERANCE_IN
+        and left_in <= POSITION_TOLERANCE_IN
         and height_in <= ACCENT_BAR_MAX_HEIGHT
-        and abs(width_in - slide_width_in) < 0.01
+        and abs(width_in - slide_width_in) < POSITION_TOLERANCE_IN
     )
 
 

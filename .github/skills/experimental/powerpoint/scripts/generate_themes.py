@@ -129,6 +129,9 @@ def remap_rgb_in_python(text: str, color_map: dict[str, str]) -> str:
 
     Keys and values in *color_map* may optionally include the leading ``#``;
     the prefix is stripped before matching.
+
+    Note: Replacement output is always uppercase hex (e.g. ``#1B1B1F``)
+    regardless of the original casing in the source file.
     """
     bare_map: dict[str, str] = {}
     for old_hex, new_hex in color_map.items():
