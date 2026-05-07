@@ -463,9 +463,11 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
-    # Write back updated artifact section into collection.md when markers are present
+    # Write back updated artifact section into collection.md when markers are present.
+    # Wrap the generated h3 sections under an h2 so collection.md stays compliant
+    # with MD001 heading-increment when the file begins with an h1 title.
     if ($parsed.HasMarkers) {
-        $generatedBlock = $artifactSections.ToString().TrimEnd()
+        $generatedBlock = "## Included Artifacts`n`n" + $artifactSections.ToString().TrimEnd()
         $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
         if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
             $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"

@@ -1,5 +1,5 @@
 ---
-description: 'Manufacturing industry context for DT coaching — vocabulary, constraints, empathy tools, and reference scenarios'
+description: 'Manufacturing industry context for DT coaching - vocabulary, constraints, empathy tools, and reference scenarios'
 applyTo: ''
 ---
 

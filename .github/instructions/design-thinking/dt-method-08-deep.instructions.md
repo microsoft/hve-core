@@ -1,5 +1,5 @@
 ---
-description: 'Deep expertise for Method 8: Test and Validate — advanced test design, small-sample analysis, iteration triggers, and bias mitigation'
+description: 'Deep expertise for Method 8: Test and Validate - advanced test design, small-sample analysis, iteration triggers, and bias mitigation'
 applyTo: ''
 ---
 

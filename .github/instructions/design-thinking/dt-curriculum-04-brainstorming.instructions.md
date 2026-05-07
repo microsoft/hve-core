@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 4: Brainstorming — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 4: Brainstorming - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-04*'
 ---
 

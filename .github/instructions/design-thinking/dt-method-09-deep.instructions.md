@@ -1,5 +1,5 @@
 ---
-description: 'Deep expertise for Method 9: Iteration at Scale — change management, scaling, and adoption measurement'
+description: 'Deep expertise for Method 9: Iteration at Scale - change management, scaling, and adoption measurement'
 applyTo: ''
 ---
 

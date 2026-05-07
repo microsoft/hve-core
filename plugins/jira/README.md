@@ -5,7 +5,11 @@ Jira backlog management, PRD issue planning, and issue operations through agents
 
 ## Overview
 
+# Jira Integration
+
 Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This collection adds dedicated Jira agents, prompts, and instructions on top of the Jira skill so discovery, triage, execution, and planning workflows use the same tracking and handoff patterns as the rest of HVE Core.
+
+## Included Artifacts
 
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
