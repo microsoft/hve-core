@@ -23,9 +23,6 @@
 .PARAMETER SkipVenvSetup
     Skip virtual environment setup.
 
-.PARAMETER Verbose
-    Enable verbose output.
-
 .EXAMPLE
     ./Invoke-GenerateThemes.ps1 -ContentDir content/ -ThemesPath themes.yaml -OutputDir ../
 
@@ -36,9 +33,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][string]$ContentDir,
-    [Parameter(Mandatory = $true)][string]$ThemesPath,
-    [Parameter(Mandatory = $true)][string]$OutputDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ContentDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$ThemesPath,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$OutputDir,
     [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )
 

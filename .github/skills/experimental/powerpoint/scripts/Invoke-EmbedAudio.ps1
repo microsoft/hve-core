@@ -26,9 +26,6 @@
 .PARAMETER SkipVenvSetup
     Skip virtual environment setup.
 
-.PARAMETER Verbose
-    Enable verbose output.
-
 .EXAMPLE
     ./Invoke-EmbedAudio.ps1 -InputPath deck.pptx -AudioDir voice-over/ -OutputPath out.pptx
 
@@ -39,9 +36,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][string]$InputPath,
-    [Parameter(Mandatory = $true)][string]$AudioDir,
-    [Parameter(Mandatory = $true)][string]$OutputPath,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$InputPath,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$AudioDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$OutputPath,
     [Parameter(Mandatory = $false)][string]$Slides,
     [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )

@@ -220,7 +220,7 @@ def update_style_metadata(style_path: Path, theme_id: str, label: str) -> None:
     """
     if not style_path.exists():
         return
-    ryaml = YAML()
+    ryaml = YAML()  # RoundTripLoader: preserves comments, ordering, and quoting
     ryaml.preserve_quotes = True
     data = ryaml.load(style_path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):

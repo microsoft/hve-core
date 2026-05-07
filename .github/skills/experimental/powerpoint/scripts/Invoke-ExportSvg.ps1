@@ -23,9 +23,6 @@
 .PARAMETER SkipVenvSetup
     Skip virtual environment setup.
 
-.PARAMETER Verbose
-    Enable verbose output.
-
 .EXAMPLE
     ./Invoke-ExportSvg.ps1 -InputPath deck.pptx -OutputDir svg/
 
@@ -36,8 +33,8 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)][string]$InputPath,
-    [Parameter(Mandatory = $true)][string]$OutputDir,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$InputPath,
+    [Parameter(Mandatory = $true)][ValidateNotNullOrEmpty()][string]$OutputDir,
     [Parameter(Mandatory = $false)][string]$Slides,
     [Parameter(Mandatory = $false)][switch]$SkipVenvSetup
 )

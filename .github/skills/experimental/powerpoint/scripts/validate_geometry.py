@@ -618,7 +618,7 @@ def main() -> int:
         return EXIT_FAILURE
     except Exception as e:
         logger.error("Unexpected error: %s", e)
-        return EXIT_FAILURE
+        return EXIT_ERROR
 
 
 if __name__ == "__main__":
