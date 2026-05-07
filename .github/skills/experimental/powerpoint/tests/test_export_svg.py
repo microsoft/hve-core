@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for export_svg module."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from unittest.mock import MagicMock
 

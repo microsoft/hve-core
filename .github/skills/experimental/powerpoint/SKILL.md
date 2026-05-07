@@ -435,8 +435,8 @@ themes:
   fluent:
     label: "Microsoft Fluent"
     colors:
-      "1b1b1f": "FFFFFF"
-      "f8f8fc": "242424"
+      "#1B1B1F": "#FFFFFF"
+      "#F8F8FC": "#242424"
 ```
 
 Each theme gets its own output directory with remapped `content.yaml`, `style.yaml`, and `content-extra.py` files. Images are copied as-is. Run `build_deck.py` on each themed directory to produce the PPTX.

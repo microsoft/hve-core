@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for generate_themes module."""
 
+from __future__ import annotations
+
 import pytest
 import yaml
 from generate_themes import (

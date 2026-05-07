@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for validate_geometry module."""
 
+from __future__ import annotations
+
 import json
 
 import pytest

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """Tests for embed_audio module."""
 
+from __future__ import annotations
+
 import struct
 
 import pytest
