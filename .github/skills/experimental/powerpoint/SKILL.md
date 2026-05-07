@@ -413,7 +413,11 @@ python scripts/build_deck.py \
   --dry-run
 ```
 
-Validates content files without producing a PPTX. Parses all `content.yaml` files, checks for speaker notes, runs AST validation on `content-extra.py` scripts, and counts image assets. Reports per-slide status and exits with code 1 if any errors are found.
+Validates content files without producing a PPTX. Parses all `content.yaml` files, checks for speaker notes, runs AST validation on `content-extra.py` scripts, and counts image assets. Exit codes:
+
+* code 0: no errors found
+* code 1: one or more slide-level content errors (YAML parse failures, invalid scripts)
+* code 2: configuration error (e.g., no slide content found in the content directory)
 
 ### Generate Theme Variants
 

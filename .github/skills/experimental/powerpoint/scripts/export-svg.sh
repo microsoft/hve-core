@@ -64,6 +64,8 @@ main() {
   local python
   python="$(get_venv_python_path)"
 
+  [[ "${VERBOSE:-false}" == "true" ]] && pass_through+=("-v")
+
   "${python}" "${SCRIPT_DIR}/export_svg.py" "${pass_through[@]}"
 }
 

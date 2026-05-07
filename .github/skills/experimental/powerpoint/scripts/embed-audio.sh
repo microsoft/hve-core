@@ -65,6 +65,8 @@ main() {
   local python
   python="$(get_venv_python_path)"
 
+  [[ "${VERBOSE:-false}" == "true" ]] && pass_through+=("-v")
+
   "${python}" "${SCRIPT_DIR}/embed_audio.py" "${pass_through[@]}"
 }
 
