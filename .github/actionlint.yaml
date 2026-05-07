@@ -24,5 +24,6 @@ paths:
   .github/workflows/*.lock.yml:
     ignore:
       - "shellcheck reported issue in this script: SC2015:.+"
+      - "shellcheck reported issue in this script: SC2016:.+"
       - "shellcheck reported issue in this script: SC2086:.+"
       - "shellcheck reported issue in this script: SC2129:.+"

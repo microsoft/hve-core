@@ -59,9 +59,15 @@ jobs:
           # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
           # CLI toolchain, deliberately used in beval.yml.
           # pkg:npm/hve-core is the private root package (never published to npm).
+          # pkg:pypi/certifi uses MPL-2.0 (Mozilla CA bundle).
+          # pkg:pypi/charset-normalizer is MIT licensed but some older wheel
+          # metadata declares a compound SPDX expression; the action treats
+          # compound expressions as a mismatch against allow-licenses.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
+            pkg:pypi/certifi,
+            pkg:pypi/charset-normalizer,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
             pkg:npm/%40github/copilot,
