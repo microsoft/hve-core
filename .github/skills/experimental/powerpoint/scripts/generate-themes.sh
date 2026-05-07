@@ -49,6 +49,7 @@ main() {
   while (( $# > 0 )); do
     case "$1" in
       --skip-venv-setup) SKIP_VENV_SETUP=true; shift ;;
+      -v|--verbose) VERBOSE=true; shift ;;
       -h|--help) usage ;;
       *) pass_through+=("$1"); shift ;;
     esac
