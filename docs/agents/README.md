@@ -29,6 +29,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 | Infrastructure                          | 1        | Very High   | Planned                                                                         |
 | Utility                                 | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence)            |
 | [Design Thinking](#design-thinking)     | 2        | High        | Active                                                                          |
+| [Graph Research](#graph-research)       | 1        | Medium      | [Graph Researcher](graphify/README.md) (experimental)                           |
 
 ## RPI Orchestration
 
@@ -88,6 +89,10 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 |---------------------|--------------------------------------------------------------|
 | `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
 | `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
+
+## Graph Research
+
+The graph-researcher agent answers structural questions about a codebase by querying a knowledge graph built with the upstream `graphifyy` package. The graph spans code, docs, PDFs, and images; edges are tagged `EXTRACTED`, `INFERRED`, or `AMBIGUOUS` so every conclusion carries explicit evidence. Ships in the experimental collection. See the [Graph Research Documentation](graphify/README.md) for the workflow, MCP setup, and cost considerations.
 
 > Brought to you by microsoft/hve-core
 
