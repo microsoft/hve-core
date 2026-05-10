@@ -57,14 +57,14 @@ description: "Creates or updates the project cspell configuration with project-s
 
 1. Re-run cspell using the same command from Step 4.
 2. Report the final counts: files checked, issues found, files with issues.
-3. If more than 50 issues remain, provide a short rationale and suggest next actions (add more words, fix typos, or add more ignore paths).
+3. If the issue count has not meaningfully decreased from baseline (target: ≥80% reduction), provide a short rationale and suggest next actions (add more words, fix typos, or add more ignore paths).
 4. List any typos identified in Step 5 that should be fixed in source.
 
 ## Acceptance criteria
 
 * The cspell configuration includes a comprehensive `ignorePaths` array that excludes generated and vendored folders.
 * The `words` array and any custom dictionary files contain the most common project-specific tokens, alphabetized and deduplicated.
-* A final cspell run shows a significantly reduced issue count (ideally fewer than 50). When not achievable automatically, provide a prioritized list of remaining tokens and typos for manual review.
+* A final cspell run shows a meaningful reduction from the baseline (target ≥80%, or the agent documents the remaining categories with rationale).
 
 ## Notes and best practices
 
