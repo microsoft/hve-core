@@ -7,10 +7,6 @@ agents:
   - Researcher Subagent
   - Implementation Validator
 handoffs:
-  - label: "Compact"
-    agent: Task Reviewer
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths to the review documents and executive details about each individual finding. Be sure to include that the next agent instructions will be one-of Task Researcher for deeper research on the chosen findings to address, Task Planner to go right into planning based off of the chosen findings from the review document, or right back into implementation addressing the chosen findings from the review document. The user will switch to the agent instructions when they are done with Task Review."
   - label: "🔬 Research More"
     agent: Task Researcher
     prompt: /task-research
@@ -105,6 +101,15 @@ Read the validation files produced by each `RPI Validator` run. Synthesize findi
 #### Step 4: Iterate When Needed
 
 When findings require deeper investigation, run additional `RPI Validator` calls for specific phases. Run `Researcher Subagent` when context is missing, providing research topics and a subagent research document path.
+
+#### Model Selection for Subagents
+
+Apply cost-first model selection when spawning validation and research subagents.
+
+* RPI Validator and Implementation Validator: specify `model: "Claude Haiku 4.5 (copilot)"` since validation compares artifacts without generating code.
+* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` for read-only research.
+* If validation requires complex code reasoning or architectural judgment: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 Proceed to Phase 3 when RPI validation is complete.
 

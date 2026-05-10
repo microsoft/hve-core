@@ -8,10 +8,6 @@ description: >-
 agents:
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: SSSC Planner
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through .copilot-tracking/sssc-plans/ folder files, and be sure to include the current phase, entry mode, and project slug"
   - label: "Security Planner"
     agent: Security Planner
     prompt: /security-capture

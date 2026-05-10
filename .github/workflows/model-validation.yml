@@ -1,0 +1,86 @@
+name: Model Reference Validation
+
+on:
+  schedule:
+    # Weekly scan: Wednesdays at 08:00 UTC
+    - cron: '0 8 * * 3'
+  pull_request:
+    paths:
+      - '.github/agents/**/*.agent.md'
+      - '.github/prompts/**/*.prompt.md'
+      - 'scripts/linting/model-catalog.json'
+      - 'scripts/linting/Test-ModelReferences.ps1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-models:
+    name: Validate Model References
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+            Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+          }
+
+      - name: Refresh model catalog from GitHub docs
+        shell: pwsh
+        run: |
+          & scripts/linting/Update-ModelCatalog.ps1 -CatalogPath scripts/linting/model-catalog.json
+
+      - name: Detect catalog drift from committed version
+        shell: bash
+        run: |
+          if ! git diff --quiet scripts/linting/model-catalog.json; then
+            echo "::warning::model-catalog.json differs from committed version after upstream refresh. Run 'npm run lint:models:refresh' locally and commit the updated catalog."
+            echo "### Catalog drift detected" >> "$GITHUB_STEP_SUMMARY"
+            git diff --stat scripts/linting/model-catalog.json >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Validate model references against catalog
+        id: validate
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          & scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: model-validation-results
+          path: |
+            logs/model-validation-results.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Report catalog drift
+        if: always()
+        shell: pwsh
+        run: |
+          $catalog = Get-Content -Path scripts/linting/model-catalog.json -Raw | ConvertFrom-Json
+          $retiring = @($catalog.models | Where-Object { $_.status -eq 'retiring' })
+          if ($retiring.Count -gt 0) {
+            Write-Host "Models marked as retiring:" -ForegroundColor Yellow
+            foreach ($m in $retiring) {
+              Write-Host "  - $($m.name) (retiring: $($m.retiredDate))" -ForegroundColor Yellow
+            }
+            echo "::warning::$($retiring.Count) model(s) are marked as retiring. Update agent/prompt references."
+          } else {
+            Write-Host "No models are retiring. All references current." -ForegroundColor Green
+          }

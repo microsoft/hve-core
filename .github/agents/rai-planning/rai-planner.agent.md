@@ -8,10 +8,6 @@ handoffs:
     agent: Security Planner
     prompt: /security-capture
     send: true
-  - label: "Compact"
-    agent: RAI Planner
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through .copilot-tracking/rai-plans/ folder files, and be sure to include the current phase, entry mode, and project slug"
 tools:
   - read
   - edit/createFile

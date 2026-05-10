@@ -6,10 +6,6 @@ agents:
   - Researcher Subagent
   - Plan Validator
 handoffs:
-  - label: "Compact"
-    agent: Task Planner
-    send: true
-    prompt: "/compact  make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Implementor and the user will switch to it when they are done with Task Planner"
   - label: "⚡ Implement"
     agent: Task Implementor
     prompt: /task-implement
@@ -57,6 +53,15 @@ Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 Subagents can run in parallel when investigating independent topics or validating independent concerns.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not produce code or architectural decisions.
+
+* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
+* Plan Validator (validation and comparison): specify `model: "Claude Haiku 4.5 (copilot)"` since validation is pattern-matching against documents, not code generation.
+* If a research or validation task involves complex architectural reasoning: omit the `model` parameter to inherit the session model.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ## File Locations
 

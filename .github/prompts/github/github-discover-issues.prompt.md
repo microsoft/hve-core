@@ -2,6 +2,7 @@
 description: 'Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review'
 agent: GitHub Backlog Manager
 argument-hint: "documents=... [milestone=...] [searchTerms=...]"
+model: Claude Haiku 4.5 (copilot)
 ---
 
 # Discover GitHub Issues
