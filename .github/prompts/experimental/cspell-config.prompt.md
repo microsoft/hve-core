@@ -41,7 +41,10 @@ description: "Creates or updates the project cspell configuration with project-s
 ### Step 5: Curate and categorize tokens
 
 1. Group unknown tokens into categories: project-specific terms, acronyms, technology names, environment variables, proper nouns, and potential typos.
-2. Filter out obvious garbage (long random hashes, base64 strings, generated identifiers).
+2. Filter out obvious garbage using these heuristics:
+   * Hex strings of 16+ characters (`[a-f0-9]{16,}`)
+   * Base64 looking strings (`[A-Za-z0-9+/]{20,}={0,2}`)
+   * Tokens appearing only in lockfiles, minified assets, or build output
 3. Identify likely typos that should be fixed in source rather than added to the dictionary (e.g., `recieve` → `receive`). Report these separately for the user to review. <!-- cspell:disable-line -->
 4. For each remaining token, decide placement: inline `words` array for project-specific terms, or the appropriate custom dictionary file when one exists and the token fits its category.
 
