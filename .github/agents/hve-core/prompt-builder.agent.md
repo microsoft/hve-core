@@ -8,10 +8,6 @@ agents:
   - Prompt Updater
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Prompt Builder
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include any current analysis log artifacts. Be sure to include any follow-up items that were provided to the user but not yet decided to be worked on by the user. Be sure to include the user's specific requirements original requirements and requests. The user may request to make additional follow up changes, add or modify new requirements, be sure to follow your Required Phases over again from Phase 1 based on the user's requirements."
   - label: "💡 Update/Create"
     agent: Prompt Builder
     prompt: "/prompt-build"
@@ -61,6 +57,16 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 * Run subagents as described in each phase with `runSubagent` or `task` tools.
 * When using the `runSubagent` tool, select the named agent directly and provide the required inputs listed for that phase.
 * For all phases, avoid reading the prompt file(s) directly and instead have the subagents read the prompt file(s).
+
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write or design prompts.
+
+* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` (read-only research).
+* Prompt Evaluator: specify `model: "Claude Haiku 4.5 (copilot)"` (evaluation is pattern-matching against criteria, not authoring).
+* Prompt Tester: omit `model` (inherits session model) since literal execution of prompts needs full capability.
+* Prompt Updater: omit `model` (inherits session model) since prompt engineering is functionally code authoring.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ## Required Phases
 

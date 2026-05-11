@@ -6,10 +6,6 @@ agents:
   - Phase Implementor
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Implementor
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
   - label: "✅ Review"
     agent: Task Reviewer
     prompt: /task-review
@@ -78,6 +74,15 @@ Subagent result handling:
 * Treat the subagent's chat response as an index, not the full result.
 * When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
 * Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write code, and inherit the session model for code generation.
+
+* Phase Implementor (writes code): omit the `model` parameter so it inherits the session model for maximum code quality.
+* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
+* If a research task requires deep code-level analysis: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading below the session model, omit `model` and let the platform resolve it.
 
 ## Required Artifacts
 

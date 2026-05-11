@@ -79,19 +79,65 @@ Focus on agents that:
 
 All AI artifacts (agents, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
 
+The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot for validation purposes, but not all cataloged models are accepted for use in hve-core artifacts, per above.
+
 ### Accepted Models
 
-| Provider  | Models                                                      |
-|-----------|-------------------------------------------------------------|
-| Anthropic | Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) |
-| OpenAI    | Latest GPT models (e.g., GPT-5, 5.1-COdEX)                  |
+| Provider  | Models                                                          |
+|-----------|-----------------------------------------------------------------|
+| Anthropic | Latest Claude models (e.g., Claude Sonnet 4.6, Claude Opus 4.6) |
+| OpenAI    | Latest GPT models (e.g., GPT-5.4, GPT-5.3-Codex)                |
 
 ### Not Accepted
 
-* ❌ Older model versions (e.g., GPT-4o, Claude 4)
 * ❌ Models from other providers
+* ❌ Older model versions not in the catalog (e.g., GPT-4o, Claude 3.5)
 * ❌ Custom or fine-tuned models
-* ❌ Deprecated model versions
+* ❌ Deprecated or retired model versions
+
+### Model Name Format
+
+Model references in frontmatter use the VS Code display name with vendor suffix:
+
+```yaml
+# Single model
+model: Claude Haiku 4.5 (copilot)
+
+# Prioritized fallback array (system tries each in order)
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
+```
+
+The `(copilot)` suffix is required. Run `npm run lint:models` to validate all model references against the catalog.
+
+### Model Selection (Optional)
+
+The `model` frontmatter property is **optional**. When omitted, the agent or prompt inherits the user's session model (whatever is selected in the VS Code model picker).
+
+Use explicit model selection for cost optimization:
+
+| Tier     | Multiplier  | Use When                                                | Example Models                 |
+|----------|-------------|---------------------------------------------------------|--------------------------------|
+| Fast     | 0.25x–0.33x | Read-only research, mechanical file ops, classification | Claude Haiku 4.5, GPT-5.4 mini |
+| Standard | 1x          | Code generation, architecture, complex synthesis        | Claude Sonnet 4.6, GPT-5.4     |
+| Premium  | 3x–15x      | Vision-capable tasks, complex architectural decisions   | Claude Opus 4.6, GPT-5.5       |
+
+### Cost Tier Constraint
+
+The `model` property is a **preference hint**, not a hard constraint. VS Code never fails a prompt or agent invocation due to model unavailability. When a specified model is unavailable or exceeds the cost tier of the parent model, VS Code falls back through the array entries in order, then to the session model (model picker selection).
+
+VS Code enforces that subagent models cannot exceed the cost tier of the parent model. If the user selects Sonnet (standard) in the model picker, subagents can use Haiku (fast) but not Opus (premium). Fallback arrays provide resilience when the preferred model is unavailable or exceeds the cost tier. A single-model string is equally safe: it falls back to the session model when the specified model cannot be used.
+
+### Model Catalog Validation
+
+Model references are validated against `scripts/linting/model-catalog.json` by the `lint:models` script. A scheduled GitHub Actions workflow (`model-validation.yml`) runs weekly to detect catalog drift and retiring models.
+
+To refresh the catalog from upstream documentation:
+
+```bash
+npm run lint:models:refresh
+```
 
 ### Rationale
 
@@ -99,6 +145,7 @@ All AI artifacts (agents, instructions, prompts) **MUST** target the **latest av
 2. Maintenance burden: supporting multiple model versions creates testing and compatibility overhead
 3. Performance: latest models provide superior reasoning, accuracy, and efficiency
 4. Future-proofing: older models will be deprecated and removed from service
+5. Cost optimization: fast-tier models reduce consumption for tasks that do not require premium reasoning
 
 ## Collections
 
@@ -688,6 +735,9 @@ npm run spell-check
 
 # Validate all links
 npm run lint:md-links
+
+# Validate model references in agent/prompt frontmatter
+npm run lint:models
 
 # PowerShell analysis (if applicable)
 npm run lint:ps
