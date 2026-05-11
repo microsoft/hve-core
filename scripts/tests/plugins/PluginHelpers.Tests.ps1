@@ -2,6 +2,9 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
+param()
+
 BeforeAll {
     Import-Module $PSScriptRoot/../../plugins/Modules/PluginHelpers.psm1 -Force
 }
