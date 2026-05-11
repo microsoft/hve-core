@@ -6,10 +6,6 @@ agents:
   - Phase Implementor
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Implementor
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
   - label: "✅ Review"
     agent: Task Reviewer
     prompt: /task-review
@@ -55,6 +51,15 @@ Run `researcher-subagent` agents as subagents using `runSubagent` or `task` tool
 The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write code, and inherit the session model for code generation.
+
+* Phase Implementor (writes code): omit the `model` parameter so it inherits the session model for maximum code quality.
+* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
+* If a research task requires deep code-level analysis: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading below the session model, omit `model` and let the platform resolve it.
 
 ## Required Artifacts
 

@@ -88,11 +88,12 @@ The `/task-*` prompts attempt to auto-discover recent artifacts in `.copilot-tra
 
 `/compact` takes a different approach. Instead of removing conversation history entirely, it summarizes the history into a condensed form that preserves key context while reducing the token count.
 
+`/compact` remains available as a typed command but is no longer offered as an agent handoff button. It was removed from agent handoffs because Autopilot mode could trigger compaction loops that degraded context unpredictably.
+
 When to use `/compact`:
 
 * Mid-phase, when a conversation grows long but you need to continue the current task
 * When you want to retain awareness of prior decisions without carrying the full token weight
-* When handoff buttons between phases embed transition context into the summary prompt
 
 When to use `/clear` instead:
 
@@ -100,13 +101,16 @@ When to use `/clear` instead:
 * When switching to a different task entirely
 * When agent behavior has visibly degraded
 
+For session persistence across phases, use the Memory Agent (`/checkpoint`) instead of relying on `/compact`. The Memory Agent writes structured state to disk, making context recovery deterministic rather than dependent on summarization quality.
+
 The tradeoff is precision. `/compact` summaries lose detail because the model decides what to keep and what to discard. Critical nuances from earlier in the conversation may not survive the summarization.
 
-| Command    | Effect                             | Use When                             |
-|------------|------------------------------------|--------------------------------------|
-| `/clear`   | Removes all conversation history   | Between phases, switching tasks      |
-| `/compact` | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
-| New chat   | Fresh conversation, new context    | Starting unrelated work              |
+| Command       | Effect                             | Use When                             |
+|---------------|------------------------------------|--------------------------------------|
+| `/clear`      | Removes all conversation history   | Between phases, switching tasks      |
+| `/compact`    | Summarizes history, reduces tokens | Mid-phase, conversation growing long |
+| `/checkpoint` | Persists state to disk             | Between sessions, preserving context |
+| New chat      | Fresh conversation, new context    | Starting unrelated work              |
 
 ## The rpi-agent Difference
 

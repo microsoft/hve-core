@@ -2,15 +2,15 @@
 # SPDX-License-Identifier: MIT
 """Generate corpus seeds for fuzz targets."""
 
-import os
+from pathlib import Path
 
-CORPUS_DIR = os.path.dirname(__file__)
+CORPUS_DIR = Path(__file__).parent
 
 
-def write_seed(name, data: bytes):
+def write_seed(name: str, data: bytes) -> None:
     """Write raw bytes to corpus file."""
-    with open(os.path.join(CORPUS_DIR, name), "wb") as f:
-        f.write(data)
+    path = CORPUS_DIR / name
+    path.write_bytes(data)
     print(f"Created: {name} ({len(data)} bytes)")
 
 
