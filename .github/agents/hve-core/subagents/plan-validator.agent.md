@@ -2,6 +2,9 @@
 name: Plan Validator
 description: 'Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core'
 user-invocable: false
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Plan Validator
