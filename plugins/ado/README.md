@@ -5,8 +5,6 @@ Azure DevOps work item management, build monitoring, and pull request creation
 
 ## Overview
 
-# Azure DevOps Integration
-
 Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies - all from within VS Code.
 
 ## Included Artifacts

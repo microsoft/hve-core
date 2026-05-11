@@ -8,8 +8,6 @@ Evaluation dataset creation, data specification generation, Jupyter notebooks, a
 
 ## Overview
 
-# Data Science
-
 Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
 
 > [!CAUTION]

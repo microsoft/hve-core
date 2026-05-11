@@ -8,8 +8,6 @@ Security review, planning, incident response, risk assessment, and vulnerability
 
 ## Overview
 
-# Security
-
 Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments.
 
 > [!CAUTION]

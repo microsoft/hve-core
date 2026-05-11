@@ -294,12 +294,18 @@ function New-PluginReadmeContent {
         [void]$sb.AppendLine($Collection.notice.TrimEnd())
     }
 
-    # Inject collection description content as an Overview section
+    # Inject collection description content as an Overview section.
+    # Strip the leading H1 since the title is already emitted above.
     if (-not [string]::IsNullOrWhiteSpace($CollectionContent)) {
-        [void]$sb.AppendLine()
-        [void]$sb.AppendLine('## Overview')
-        [void]$sb.AppendLine()
-        [void]$sb.AppendLine($CollectionContent.TrimEnd())
+        $overviewText = $CollectionContent -replace '(?m)\A#\s+[^\r\n]+\r?\n\r?\n', ''
+        $overviewText = $overviewText.TrimEnd()
+
+        if (-not [string]::IsNullOrWhiteSpace($overviewText)) {
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine('## Overview')
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine($overviewText)
+        }
     }
 
     [void]$sb.AppendLine()

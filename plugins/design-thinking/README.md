@@ -7,8 +7,6 @@ Design Thinking coaching identity, quality constraints, and methodology instruct
 
 ## Overview
 
-# Design Thinking
-
 Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
 
 > Preview: Core features are complete and functional. Suitable for adoption with the understanding that refinements may follow.
