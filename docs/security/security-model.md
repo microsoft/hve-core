@@ -747,7 +747,7 @@ These threats address ethical and responsible AI considerations aligned with Mic
 
 ### OAuth Authentication Threats
 
-These threats address risks specific to the OAuth 2.0 Authorization Code + PKCE flow used by the [Mural skill](../../.github/skills/experimental/mural/SKILL.md) and apply to any future skill that authenticates against a third-party authorization server using a loopback redirect URI on the developer workstation.
+These threats address risks specific to the OAuth 2.0 Authorization Code + PKCE flow used by the [Mural skill](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SKILL.md) and apply to any future skill that authenticates against a third-party authorization server using a loopback redirect URI on the developer workstation.
 
 The catalog uses an extended 11-row format that adds **Source** (verbatim citation), **Trust Boundary Crossed**, and **Detection** to the standard STRIDE row template.
 
@@ -1204,16 +1204,16 @@ HVE Core documents integrations with Model Context Protocol servers. This sectio
 
 ### Mural Skill MCP Server
 
-| Attribute          | Assessment                                                                                                                                                                                |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Operator**       | hve-core (`.github/skills/experimental/mural/`)                                                                                                                                           |
-| **Deployment**     | Local stdio (`python scripts/mural.py mcp`)                                                                                                                                               |
-| **Authentication** | Per-user Mural OAuth app via Authorization Code + PKCE loopback flow                                                                                                                      |
-| **Authorization**  | Inherits the granted Mural scope set; destructive tools re-check `granted_scopes` at dispatch                                                                                             |
-| **Data Handling**  | Tokens persisted to a per-user on-disk cache (mode `0600`); Mural payloads returned as untrusted text in MCP tool results                                                                 |
-| **Audit**          | stderr request log plus Mural API audit trail                                                                                                                                             |
-| **Threat Model**   | [Mural Skill Security Model](../../.github/skills/experimental/mural/SECURITY.md); OAuth-flow STRIDE entries OA-1..OA-17 in [OAuth Authentication Threats](#oauth-authentication-threats) |
-| **Recommendation** | Medium data-flow risk; treat all returned widget text as untrusted, restrict OAuth scopes via `MURAL_SCOPES` where possible                                                               |
+| Attribute          | Assessment                                                                                                                                                                                                                          |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Operator**       | hve-core (`.github/skills/experimental/mural/`)                                                                                                                                                                                     |
+| **Deployment**     | Local stdio (`python scripts/mural.py mcp`)                                                                                                                                                                                         |
+| **Authentication** | Per-user Mural OAuth app via Authorization Code + PKCE loopback flow                                                                                                                                                                |
+| **Authorization**  | Inherits the granted Mural scope set; destructive tools re-check `granted_scopes` at dispatch                                                                                                                                       |
+| **Data Handling**  | Tokens persisted to a per-user on-disk cache (mode `0600`); Mural payloads returned as untrusted text in MCP tool results                                                                                                           |
+| **Audit**          | stderr request log plus Mural API audit trail                                                                                                                                                                                       |
+| **Threat Model**   | [Mural Skill Security Model](https://github.com/microsoft/hve-core/blob/main/.github/skills/experimental/mural/SECURITY.md); OAuth-flow STRIDE entries OA-1..OA-17 in [OAuth Authentication Threats](#oauth-authentication-threats) |
+| **Recommendation** | Medium data-flow risk; treat all returned widget text as untrusted, restrict OAuth scopes via `MURAL_SCOPES` where possible                                                                                                         |
 
 #### Outstanding Hardening Work
 
