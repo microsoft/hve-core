@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 3: Synthesis — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 3: Synthesis - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-03*'
 ---
 

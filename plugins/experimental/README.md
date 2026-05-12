@@ -9,6 +9,8 @@ Experimental and preview artifacts not yet promoted to stable collections
 
 Experimental and preview artifacts not yet promoted to stable collections. Items in this collection may change or be removed without notice.
 
+## Included Artifacts
+
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
 ### Chat Agents
@@ -18,6 +20,12 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 | **experiment-designer** | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning |
 | **pptx**                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                   |
 | **pptx-subagent**       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                            |
+
+### Prompts
+
+| Name              | Description                                                                                 |
+|-------------------|---------------------------------------------------------------------------------------------|
+| **cspell-config** | Creates or updates the project cspell configuration with project-specific words and ignores |
 
 ### Instructions
 
@@ -52,6 +60,12 @@ copilot plugin install experimental@hve-core
 | experiment-designer | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core |
 | pptx                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                                                          |
 | pptx-subagent       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                                                                   |
+
+## Commands
+
+| Command       | Description                                                                                 |
+|---------------|---------------------------------------------------------------------------------------------|
+| cspell-config | Creates or updates the project cspell configuration with project-specific words and ignores |
 
 ## Instructions
 

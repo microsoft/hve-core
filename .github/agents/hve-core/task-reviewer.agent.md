@@ -7,10 +7,6 @@ agents:
   - Researcher Subagent
   - Implementation Validator
 handoffs:
-  - label: "Compact"
-    agent: Task Reviewer
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths to the review documents and executive details about each individual finding. Be sure to include that the next agent instructions will be one-of Task Researcher for deeper research on the chosen findings to address, Task Planner to go right into planning based off of the chosen findings from the review document, or right back into implementation addressing the chosen findings from the review document. The user will switch to the agent instructions when they are done with Task Review."
   - label: "🔬 Research More"
     agent: Task Researcher
     prompt: /task-research
@@ -36,6 +32,29 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 * Complete all validation before presenting findings; avoid partial reviews with indeterminate items.
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
+
+## Context Discipline
+
+After any subagent returns, this turn must be lean:
+
+1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
+2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
+
+Choose the lightest response mode that satisfies the request:
+
+| Mode        | When to use                                                                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct      | Answer from this turn's context only. No subagent, no file reads. Use for clarifications, status questions, or queries when the relevant file is already attached. |
+| Lightweight | Single subagent with a focused prompt. Skip re-reading prior phase tracking files. Use for summarizing findings or single-file edits.                              |
+| Standard    | Default behavior: subagent dispatch, tracking-file update, and handoff suggestion.                                                                                 |
+| Full        | Multiple parallel subagents and cross-phase synthesis. Use only when explicitly requested or when the phase contract requires it.                                  |
+
+Subagent result handling:
+
+* Treat the subagent's chat response as an index, not the full result.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
+* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
 
 ## Review Artifacts
 
@@ -105,6 +124,15 @@ Read the validation files produced by each `RPI Validator` run. Synthesize findi
 #### Step 4: Iterate When Needed
 
 When findings require deeper investigation, run additional `RPI Validator` calls for specific phases. Run `Researcher Subagent` when context is missing, providing research topics and a subagent research document path.
+
+#### Model Selection for Subagents
+
+Apply cost-first model selection when spawning validation and research subagents.
+
+* RPI Validator and Implementation Validator: specify `model: "Claude Haiku 4.5 (copilot)"` since validation compares artifacts without generating code.
+* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` for read-only research.
+* If validation requires complex code reasoning or architectural judgment: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 Proceed to Phase 3 when RPI validation is complete.
 

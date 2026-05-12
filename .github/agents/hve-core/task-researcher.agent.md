@@ -5,10 +5,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Researcher
-    send: true
-    prompt: "/compact make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Planner and the user will switch to it when they are done with Task Researcher"
   - label: "📋 Create Plan"
     agent: Task Planner
     prompt: /task-plan
@@ -49,6 +45,37 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled.
 
 Subagents can run in parallel when investigating independent topics or sources.
+
+## Context Discipline
+
+After any subagent returns, this turn must be lean:
+
+1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
+2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
+
+Choose the lightest response mode that satisfies the request:
+
+| Mode        | When to use                                                                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct      | Answer from this turn's context only. No subagent, no file reads. Use for clarifications, status questions, or queries when the relevant file is already attached. |
+| Lightweight | Single subagent with a focused prompt. Skip re-reading prior phase tracking files. Use for summarizing findings or single-file edits.                              |
+| Standard    | Default behavior: subagent dispatch, tracking-file update, and handoff suggestion.                                                                                 |
+| Full        | Multiple parallel subagents and cross-phase synthesis. Use only when explicitly requested or when the phase contract requires it.                                  |
+
+Subagent result handling:
+
+* Treat the subagent's chat response as an index, not the full result.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
+* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection when invoking subagents. Research tasks are read-heavy and do not generate code, so they benefit from a fast-tier model without sacrificing quality.
+
+* Research subagent calls: specify `model: "Claude Haiku 4.5 (copilot)"` on the `runSubagent` invocation to reduce cost.
+* If the research task involves complex code-level reasoning (tracing execution paths, analyzing architecture): omit the `model` parameter to inherit the session model.
+* When the fast model is unavailable or the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ## File Locations
 

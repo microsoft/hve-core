@@ -6,10 +6,6 @@ agents:
   - Phase Implementor
   - Researcher Subagent
 handoffs:
-  - label: "Compact"
-    agent: Task Implementor
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, and be sure to include that the next agent instructions will be Task Reviewer and the user will switch to it when they are done with Task Implementation"
   - label: "✅ Review"
     agent: Task Reviewer
     prompt: /task-review
@@ -55,6 +51,38 @@ Run `researcher-subagent` agents as subagents using `runSubagent` or `task` tool
 The researcher-subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
+
+## Context Discipline
+
+After any subagent returns, this turn must be lean:
+
+1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
+2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
+
+Choose the lightest response mode that satisfies the request:
+
+| Mode        | When to use                                                                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct      | Answer from this turn's context only. No subagent, no file reads. Use for clarifications, status questions, or queries when the relevant file is already attached. |
+| Lightweight | Single subagent with a focused prompt. Skip re-reading prior phase tracking files. Use for summarizing findings or single-file edits.                              |
+| Standard    | Default behavior: subagent dispatch, tracking-file update, and handoff suggestion.                                                                                 |
+| Full        | Multiple parallel subagents and cross-phase synthesis. Use only when explicitly requested or when the phase contract requires it.                                  |
+
+Subagent result handling:
+
+* Treat the subagent's chat response as an index, not the full result.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
+* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+
+### Model Selection for Subagents
+
+Apply cost-first model selection: use a fast model for tasks that do not write code, and inherit the session model for code generation.
+
+* Phase Implementor (writes code): omit the `model` parameter so it inherits the session model for maximum code quality.
+* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
+* If a research task requires deep code-level analysis: omit `model` to inherit the session model.
+* When the cost tier constraint prevents downgrading below the session model, omit `model` and let the platform resolve it.
 
 ## Required Artifacts
 

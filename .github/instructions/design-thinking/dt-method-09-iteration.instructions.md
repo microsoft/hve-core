@@ -1,5 +1,5 @@
 ---
-description: 'Design Thinking Method 9: Iteration at Scale — systematic refinement, scaling patterns, and organizational deployment'
+description: 'Design Thinking Method 9: Iteration at Scale - systematic refinement, scaling patterns, and organizational deployment'
 applyTo: '**/.copilot-tracking/dt/**/method-09*'
 ---
 

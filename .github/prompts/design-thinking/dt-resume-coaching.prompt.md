@@ -1,5 +1,5 @@
 ---
-description: 'Resume a Design Thinking coaching session — reads coaching state and re-establishes context - Brought to you by microsoft/hve-core'
+description: 'Resume a Design Thinking coaching session - reads coaching state and re-establishes context - Brought to you by microsoft/hve-core'
 agent: DT Coach
 argument-hint: "project-slug=..."
 ---

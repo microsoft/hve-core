@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 6: Low-Fidelity Prototypes — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 6: Low-Fidelity Prototypes - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-06*'
 ---
 
