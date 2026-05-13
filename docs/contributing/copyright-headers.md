@@ -3,7 +3,7 @@ title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-01-31
+ms.date: 2026-05-13
 ms.topic: reference
 keywords:
   - copyright
