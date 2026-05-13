@@ -3,7 +3,7 @@ title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-05-13
 ms.topic: tutorial
 keywords:
   - task planner

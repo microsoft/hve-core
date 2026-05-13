@@ -3,7 +3,7 @@ title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-05-13
 ms.topic: tutorial
 keywords:
   - task implementor
