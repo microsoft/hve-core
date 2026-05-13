@@ -10,8 +10,10 @@
 # Default owner for all files (fallback)
 * @microsoft/edge-ai-core-dev
 
-# Self-protection: CODEOWNERS file changes require core team approval
+# Self-protection: governance files require core team approval
 /.github/CODEOWNERS @microsoft/edge-ai-core-dev
+/GOVERNANCE.md @microsoft/edge-ai-core-dev
+/.github/MAINTAINERS.md @microsoft/edge-ai-core-dev
 
 # GitHub configuration (workflows, templates, instructions)
 /.github/ @microsoft/edge-ai-core-dev
@@ -24,3 +26,43 @@
 
 # Documentation
 /docs/ @microsoft/edge-ai-core-dev
+
+# ---------------------------------------------------------------------------
+# SIG-scoped ownership (commented stubs)
+#
+# The following per-SIG entries are commented out until GitHub Teams
+# `@microsoft/hve-core-sig-<id>` are provisioned. Uncomment one entry per SIG
+# when its team exists; see `docs/community/sigs/<sig-id>/CHARTER.md`.
+# ---------------------------------------------------------------------------
+
+# Engineering — build, scripts, packaging, CI, intake/triage
+# /scripts/                                     @microsoft/hve-core-sig-engineering
+# /extension/                                   @microsoft/hve-core-sig-engineering
+# /.github/workflows/                           @microsoft/hve-core-sig-engineering
+# /.github/instructions/ado/                    @microsoft/hve-core-sig-engineering
+# /.github/instructions/github/                 @microsoft/hve-core-sig-engineering
+# /.github/instructions/jira/                   @microsoft/hve-core-sig-engineering
+#
+# Emerging AI — experimental incubation surface
+# /.github/agents/experimental/                 @microsoft/hve-core-sig-emerging-ai
+# /.github/skills/experimental/                 @microsoft/hve-core-sig-emerging-ai
+# /collections/experimental.collection.*        @microsoft/hve-core-sig-emerging-ai
+#
+# Standards — coding standards, prompt-builder, doc IA
+# /.github/instructions/coding-standards/       @microsoft/hve-core-sig-standards
+# /.github/instructions/hve-core/               @microsoft/hve-core-sig-standards
+# /docs/contributing/                           @microsoft/hve-core-sig-standards
+# /docs/templates/                              @microsoft/hve-core-sig-standards
+#
+# Security — review, threat modeling, supply chain, CI hardening
+# (overrides Engineering for security-scoped paths via later-match-wins)
+# /.github/instructions/security/               @microsoft/hve-core-sig-security
+# /.github/skills/security/                     @microsoft/hve-core-sig-security
+# /scripts/security/                            @microsoft/hve-core-sig-security
+# /scripts/linting/                             @microsoft/hve-core-sig-security
+#
+# RAI — responsible AI planning
+# /.github/instructions/rai-planning/           @microsoft/hve-core-sig-rai
+#
+# Data Science — DS collection and DS-scoped artifacts
+# /collections/data-science.collection.*        @microsoft/hve-core-sig-data-science
