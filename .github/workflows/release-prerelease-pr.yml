@@ -78,6 +78,14 @@ jobs:
           COMMIT_COUNT=$(git rev-list --count "${LAST_TAG}..HEAD" 2>/dev/null || echo "0")
           PRE_VERSION="${PRE_MAJOR}.${PRE_MINOR}.${COMMIT_COUNT}"
 
+          # Honor manual override via Pre-Release-As trailer on the latest commit.
+          # Mirrors release-please's Release-As: trailer for the stable pipeline.
+          OVERRIDE=$(git log -1 --format='%(trailers:key=Pre-Release-As,valueonly)' HEAD | tr -d '[:space:]')
+          if [ -n "$OVERRIDE" ]; then
+            echo "Manual override applied: $PRE_VERSION -> $OVERRIDE"
+            PRE_VERSION="$OVERRIDE"
+          fi
+
           echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
           echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"
           echo "Computed pre-release version: $PRE_VERSION (current: $CURRENT, last stable: $LAST_TAG)"
