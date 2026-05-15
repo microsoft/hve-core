@@ -84,6 +84,8 @@ Describe 'Get-MarkdownFiles' -Tag 'Unit' {
             New-Item -ItemType File -Path 'logs/output.md' -Force | Out-Null
             New-Item -ItemType Directory -Path '.copilot-tracking' -Force | Out-Null
             New-Item -ItemType File -Path '.copilot-tracking/notes.md' -Force | Out-Null
+            New-Item -ItemType Directory -Path 'plugins/hve-core' -Force | Out-Null
+            New-Item -ItemType File -Path 'plugins/hve-core/README.md' -Force | Out-Null
             New-Item -ItemType File -Path 'CHANGELOG.md' -Force | Out-Null
             New-Item -ItemType File -Path 'valid.md' -Force | Out-Null
         }
@@ -110,6 +112,11 @@ Describe 'Get-MarkdownFiles' -Tag 'Unit' {
         It 'Excludes .copilot-tracking directory' {
             $files = @(Get-MarkdownFiles -SearchPaths @('.'))
             $files.Name | Should -Not -Contain 'notes.md'
+        }
+
+        It 'Excludes plugins directory' {
+            $files = @(Get-MarkdownFiles -SearchPaths @('.'))
+            $files.Name | Should -Not -Contain 'README.md'
         }
 
         It 'Excludes CHANGELOG.md' {

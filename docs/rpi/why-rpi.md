@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-05-13
 ms.topic: concept
 keywords:
   - rpi workflow
