@@ -1,0 +1,87 @@
+name: Behavioral Evaluation (beval)
+
+on:
+  workflow_call:
+    secrets:
+      COPILOT_TOKEN:
+        required: true
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      AGENT_REPO_ROOT: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install GitHub Copilot CLI
+        run: |
+          npm ci --prefix beval
+          echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Install beval
+        # beval is hosted under a personal account (vyta) while an org-owned
+        # home is evaluated. The install is pinned to a specific commit SHA to
+        # mitigate supply-chain risk in the interim.
+        run: pip install --no-cache-dir "beval[all] @ git+https://github.com/vyta/beval.git@a2effa10cec1b06c394811587fede0070174d589#subdirectory=python"
+
+      - name: Start agent (TCP)
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          copilot --acp --port 3000 &
+          for i in $(seq 1 30); do
+            nc -z 127.0.0.1 3000 && break
+            echo "Waiting for agent to start ($i)..."
+            sleep 2
+          done
+          nc -z 127.0.0.1 3000 || { echo "Agent failed to start"; exit 1; }
+
+      - name: Start judge (TCP)
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_TOKEN }}
+        run: |
+          copilot --acp --port 3001 &
+          for i in $(seq 1 30); do
+            nc -z 127.0.0.1 3001 && break
+            echo "Waiting for judge to start ($i)..."
+            sleep 2
+          done
+          nc -z 127.0.0.1 3001 || { echo "Judge failed to start"; exit 1; }
+
+      - name: Run evaluations
+        run: |
+          beval \
+            -c beval/dt-coach/eval.config.yaml \
+            run \
+            --cases beval/dt-coach/cases/ \
+            --agent beval/dt-coach/agent.yaml \
+            -m validation \
+            -o beval/dt-coach/results/results.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        if: always()
+        with:
+          name: beval-results-${{ github.run_id }}
+          path: beval/dt-coach/results/
+          retention-days: 30

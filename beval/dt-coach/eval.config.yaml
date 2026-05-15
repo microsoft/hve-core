@@ -1,0 +1,20 @@
+eval:
+  mode: validation
+  thresholds:
+    grade_pass: 0.5
+    case_pass: 0.5
+  agents:
+    default: dt-coach
+    definitions:
+      - name: dt-coach
+  output:
+    dir: beval/dt-coach/results
+    format: json
+  judge:
+    protocol: acp
+    connection:
+      transport: tcp
+      host: ${JUDGE_HOST:-127.0.0.1}
+      port: ${JUDGE_PORT:-3001}
+      model: ${JUDGE_MODEL:-claude-opus-4.6-1m}
+    timeout: 60
