@@ -743,11 +743,11 @@ When the organization supports issue types (verified via `mcp_github_list_issue_
 
 ### Type Definitions
 
-| Type    | Purpose                                                             | Children          |
-|---------|---------------------------------------------------------------------|-------------------|
-| Feature | Grouping container for related work items that deliver a capability | Features, Tasks   |
-| Task    | Individual actionable work item assignable to one person            | None (leaf node)  |
-| Bug     | Defect in existing functionality requiring a fix                    | Tasks (optional)  |
+| Type    | Purpose                                                             | Children         |
+|---------|---------------------------------------------------------------------|------------------|
+| Feature | Grouping container for related work items that deliver a capability | Features, Tasks  |
+| Task    | Individual actionable work item assignable to one person            | None (leaf node) |
+| Bug     | Defect in existing functionality requiring a fix                    | Tasks (optional) |
 
 ### Assignment Rules
 
