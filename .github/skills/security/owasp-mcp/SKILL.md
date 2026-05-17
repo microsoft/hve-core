@@ -1,7 +1,7 @@
 ---
 name: owasp-mcp
-description: OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments - Brought to you by microsoft/hve-core.
-license: CC-BY-SA-4.0
+description: OWASP MCP Top 10 (2025) vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments - Brought to you by microsoft/hve-core.
+license: CC-BY-NC-SA-4.0
 user-invocable: false
 metadata:
   authors: "OWASP MCP Top 10 Project"
@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://owasp.org/www-project-mcp-top-10/"
 ---
 
-# OWASP MCP Top 10 — Skill Entry
+# OWASP® MCP Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the MCP Vulnerabilities skill.
 
@@ -39,6 +39,17 @@ that an agent can query to identify, assess, and remediate MCP security risks.
 - `references/` — the MCP Top 10 normative documents.
   - `00-vulnerability-index.md` — index of all vulnerability identifiers, severities, and cross-references.
   - `01` through `10` — one document per vulnerability aligned with OWASP MCP numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® MCP Top 10 (2025) content is derived from works by the
+OWASP Foundation, licensed under CC BY-NC-SA 4.0
+(<https://creativecommons.org/licenses/by-nc-sa/4.0/>).
+Source: <https://owasp.org/www-project-mcp-top-10/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
 
 ---
 
