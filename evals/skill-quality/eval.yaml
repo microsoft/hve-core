@@ -1,0 +1,73 @@
+name: skill-quality
+description: >
+  Evaluate hve-core skill behavior via copilot-sdk. Tests that skills
+  provide accurate, structured guidance when invoked with domain-specific
+  prompts. Uses multiple runs to account for non-deterministic output.
+type: capability
+config:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+environment:
+  skills:
+    - ../../.github/skills/security/owasp-top-10
+    - ../../.github/skills/security/owasp-cicd
+
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: owasp-top10-identify-injection
+    prompt: |
+      I have a web application that constructs SQL queries by concatenating
+      user input directly into the query string. What OWASP Top 10 category
+      does this fall under, and what are the recommended mitigations?
+    tags:
+      category: skill-quality
+      skill: owasp-top-10
+    graders:
+      - type: output-matches
+        name: identifies-injection-category
+        config:
+          pattern: "(?i)\\binjection\\b"
+      - type: output-matches
+        name: references-parameterized-queries
+        config:
+          pattern: "(?i)parameterized|prepared.statement"
+
+  - name: owasp-top10-identify-broken-access
+    prompt: |
+      A user can modify the URL parameter from /api/users/123 to /api/users/456
+      and access another user's data. What OWASP Top 10 vulnerability is this?
+    tags:
+      category: skill-quality
+      skill: owasp-top-10
+    graders:
+      - type: output-matches
+        name: identifies-broken-access-control
+        config:
+          pattern: "(?i)broken.access.control|insecure.direct.object.reference|IDOR"
+      - type: output-matches
+        name: suggests-authorization-check
+        config:
+          # cspell:disable-next-line
+          pattern: "(?i)authori[sz]ation|access.control|ownership.check|server.side"
+
+  - name: owasp-cicd-pipeline-poisoning
+    prompt: |
+      Our CI/CD pipeline pulls build scripts from an external repository
+      that multiple developers can push to without review. What security
+      risks does this introduce according to OWASP CI/CD guidelines?
+    tags:
+      category: skill-quality
+      skill: owasp-cicd
+    graders:
+      - type: output-matches
+        name: identifies-pipeline-poisoning
+        config:
+          pattern: "(?i)pipeline.poison|code.injection|supply.chain|untrusted"
+      - type: output-matches
+        name: recommends-controls
+        config:
+          pattern: "(?i)branch.protect|code.review|sign|pin|restrict"
