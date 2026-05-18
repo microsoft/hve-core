@@ -202,6 +202,9 @@ items:
 - path: .github/prompts/experimental/cspell-config.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/experimental/graph-research.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/github/github-add-issue.prompt.md
   kind: prompt
 - path: .github/prompts/github/github-discover-issues.prompt.md
@@ -476,6 +479,8 @@ items:
   kind: instruction
   maturity: preview
 - path: .github/instructions/experimental/experiment-designer.instructions.md
+  kind: instruction
+- path: .github/instructions/experimental/graphify.instructions.md
   kind: instruction
 - path: .github/instructions/experimental/pptx.instructions.md
   kind: instruction
