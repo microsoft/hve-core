@@ -19,8 +19,27 @@ This prompt **never triggers a graph build**. Graph builds have cost, time, and 
 
 Before starting research:
 
-1. Confirm `graphify-out/graph.json` exists at the workspace root. If absent, stop and report: "No `graphify-out/graph.json` found. Run `graphify . --mode standard --update` from the upstream CLI before invoking `/graph-research`."
-2. Attempt the first `mcp_graphify_*` call. The chat session has no API to enumerate available MCP tools, so server availability is confirmed reactively. If the call fails because the tool is unknown or the server is unreachable, stop and report: "Graphify MCP server not registered or unreachable. Run `graphify vscode install` from the upstream CLI and reload the window."
+1. Confirm `graphify-out/graph.json` exists at the workspace root. If absent, do **not** build the graph automatically — graph builds have cost, time, and (for non-`fast` modes) data-upload implications. Stop and present the user with the two build options so they can choose knowingly, then wait for them to run it:
+
+   * Standard build (LLM-assisted, higher fidelity, uploads code to the configured backend):
+
+     ```bash
+     graphify . --mode standard --update
+     ```
+
+   * Sensitive-tree fallback (AST-only, no LLM, no upload — use for Microsoft-internal, customer, regulated, or secret-bearing trees):
+
+     ```bash
+     graphify . --mode fast --update
+     ```
+
+   See the [Sensitive-Tree Fallback](#sensitive-tree-fallback) section for data-residency notes before recommending `--mode deep` or surfacing `MOONSHOT_API_KEY`.
+
+2. Attempt the first `mcp_graphify_*` call. The chat session has no API to enumerate available MCP tools, so server availability is confirmed reactively. If the call fails because the tool is unknown or the server is unreachable, the MCP server is not registered. Registration is a local, reversible VS Code config change, so offer to perform it:
+
+   * Ask the user: "The `graphify` MCP server isn't registered. Run `graphify vscode install` now? You'll need to reload the VS Code window afterward for the tools to appear."
+   * On confirmation, run the command in a terminal and instruct the user to reload the window. Stop the current research turn — the MCP tools will not be available until after reload.
+   * On decline, print the command and the reload step, then stop.
 
 Do not proceed with speculative answers when the graph is unavailable.
 
