@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md"
 ---
 
-# OpenVEX Specification — Skill Entry
+# OpenVEX Specification: Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OpenVEX specification skill. It encodes the
 **OpenVEX v0.2.0** specification as structured references for producing valid VEX documents,
