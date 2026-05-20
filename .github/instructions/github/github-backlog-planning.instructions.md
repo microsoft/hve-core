@@ -676,6 +676,7 @@ Resolve milestone selection deterministically using these targets:
 Security vulnerabilities follow the same resolution logic but are escalated in priority: they skip lower-priority work in the target milestone and ship in the earliest available release.
 
 When uncertain about milestone assignment, or when no milestone clearly matches these rules, default to the nearest pre-release or next milestone and flag for human review.
+
 ## Issue Field Matrix
 
 Track field usage explicitly so downstream automation can rely on consistent data. The matrix defines required and optional fields per operation type. These field requirements apply to both issues and pull requests. When targeting a pull request, pass the PR number as `issue_number` (see the Pull Request Field Operations section in the MCP Tool Catalog).
@@ -703,6 +704,75 @@ Rules:
 * When closing as `duplicate`, the `duplicate_of` field should reference the original issue number.
 * Comment operations must provide issue_number and body (passed to `mcp_github_add_issue_comment`).
 * Call `mcp_github_list_issue_types` before using the `type` field to confirm the organization supports issue types.
+
+## Issue Body Template
+
+Issue bodies must follow a consistent structure to ensure clarity and completeness. The template below applies to all Create operations and serves as the target structure when updating existing issues.
+
+### Template
+
+    [1-5 sentence description of the issue's purpose and scope]
+
+    **Acceptance Criteria:**
+
+    - [ ] [Criterion 1]
+    - [ ] [Criterion 2]
+    - [ ] [Criterion 3]
+
+    **Related:**
+
+    - Parent: #[parent_issue_number] (if applicable)
+    - Depends on: #[dependency_number] ([brief description]) (if applicable)
+    - [Additional context references (hypotheses, decisions, documents)]
+
+### Guidelines
+
+* Every Create operation must include an **Acceptance Criteria** section with at least one checkbox item. Acceptance criteria define the conditions that must be met for the issue to be considered complete. The term "Definition of Done" (DoD) is an acceptable alternative when it better fits the team's conventions.
+* Acceptance criteria should be specific, measurable, and verifiable — not vague aspirations.
+* Feature-type issues (parent/grouping issues) should have acceptance criteria that summarize the aggregate outcomes of their children, not duplicate individual task criteria.
+* Task-type issues (leaf work items) should have acceptance criteria that describe the concrete deliverable or state change.
+* The **Related** section captures structural relationships not expressed through GitHub's sub-issue mechanism:
+  * `Parent:` references the parent issue when the issue is a sub-issue.
+  * `Depends on:` lists issues that must be completed before this issue can start or be completed.
+  * Additional context lines reference domain-specific artifacts (hypotheses, ADRs, design documents) relevant to the issue.
+* Avoid narrative "Expected output" sections in issue bodies. Prefer acceptance criteria checkboxes that define completion conditions.
+
+## Issue Type Strategy
+
+When the organization supports issue types (verified via `mcp_github_list_issue_types`), apply the following strategy to classify issues into types.
+
+### Type Definitions
+
+| Type    | Purpose                                                             | Children         |
+|---------|---------------------------------------------------------------------|------------------|
+| Feature | Grouping container for related work items that deliver a capability | Features, Tasks  |
+| Task    | Individual actionable work item assignable to one person            | None (leaf node) |
+| Bug     | Defect in existing functionality requiring a fix                    | Tasks (optional) |
+
+### Assignment Rules
+
+* **Feature** issues group two or more related Tasks or sub-Features. A Feature describes what capability is delivered, not how.
+* **Task** issues are leaf nodes representing assignable work. A Task describes a concrete deliverable with clear acceptance criteria.
+* **Bug** issues describe defects. A Bug may optionally have Task sub-issues when the fix requires multiple steps.
+* Multi-level nesting is supported: Feature → Feature → Task. Use nested Features when a capability naturally decomposes into sub-capabilities with their own task sets.
+* Do not create a Feature for a single Task. If a requirement maps to exactly one work item, create a Task directly.
+
+### Hierarchy Examples
+
+Simple hierarchy:
+
+    Feature: Provision Azure resources
+    ├── Task: Provision AI Foundry workspace
+    ├── Task: Provision Fabric workspace
+    └── Feature: Provision Data Sources
+        ├── Task: Provision PostgreSQL
+        ├── Task: Provision Blob Storage
+        └── Task: Provision Databricks
+
+Flat structure (no Feature wrapper needed):
+
+    Task: Create ADR for architecture decision
+    Task: Define evaluation metrics
 
 ## Content Sanitization Guards
 
