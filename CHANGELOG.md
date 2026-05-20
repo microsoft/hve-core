@@ -12,6 +12,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Note:** This file is automatically maintained by [release-please](https://github.com/googleapis/release-please). Do not edit manually.
 
+## [4.0.0](https://github.com/microsoft/hve-core/compare/hve-core-v3.3.101...hve-core-v4.0.0) (2026-05-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **agents:** per-agent model selection for cost optimization and /compact loop fix ([#1541](https://github.com/microsoft/hve-core/issues/1541))
+
+### ✨ Features
+
+* add Vally evaluation infrastructure ([#1590](https://github.com/microsoft/hve-core/issues/1590)) ([8f3914c](https://github.com/microsoft/hve-core/commit/8f3914c2d6cd1939e9928dc67166c36d6df8d02a))
+* **agents:** add enablement dimension to Experiment Designer for code-with MVEs ([#1416](https://github.com/microsoft/hve-core/issues/1416)) ([84077a8](https://github.com/microsoft/hve-core/commit/84077a82e269e4e38cb4a87890708c17f9cacdf8))
+* **agents:** add Task Challenger adversarial questioning agent ([#1315](https://github.com/microsoft/hve-core/issues/1315)) ([a9014c9](https://github.com/microsoft/hve-core/commit/a9014c95050aabfcf19a6c1ac8c79bd2ba0a6176))
+* **agents:** optimize RPI agent context management with discipline rules ([#1492](https://github.com/microsoft/hve-core/issues/1492)) ([35e5924](https://github.com/microsoft/hve-core/commit/35e5924a7313aa1fe2a63ddf832bfd96c8c53618))
+* **agents:** per-agent model selection for cost optimization and /compact loop fix ([#1541](https://github.com/microsoft/hve-core/issues/1541)) ([e158d88](https://github.com/microsoft/hve-core/commit/e158d88237e6b5e0fb57cb707dfc82410aa86702))
+* **prompts:** add cspell-config prompt for automated spell check maintenance ([#1516](https://github.com/microsoft/hve-core/issues/1516)) ([79db525](https://github.com/microsoft/hve-core/commit/79db525325e5e5bc087af12d0fc658c8db2d9458))
+* **scripts:** add lint:py:fix to apply ruff autofixes across Python skills ([#1450](https://github.com/microsoft/hve-core/issues/1450)) ([2b6dca7](https://github.com/microsoft/hve-core/commit/2b6dca76134908614d7efa362d7fc4b593a99186))
+* **scripts:** add structured JSON log output to Validate-Collections.ps1 ([57ea279](https://github.com/microsoft/hve-core/commit/57ea279d17424d8fabc4bafe13d793432242e31c))
+* **scripts:** add structured JSON log output to Validate-Marketplace.ps1 ([#1430](https://github.com/microsoft/hve-core/issues/1430)) ([ec2aa53](https://github.com/microsoft/hve-core/commit/ec2aa5308c0adc3d21d66bc7ff1ebb57f003ecd8))
+* **skills:** add 6 PowerPoint skill enhancements ([#1481](https://github.com/microsoft/hve-core/issues/1481)) ([97c40e8](https://github.com/microsoft/hve-core/commit/97c40e8733f8ffee22c6d2581625ec2cb0f1c3af))
+* **skills:** add github-security code-scanning skill ([#1418](https://github.com/microsoft/hve-core/issues/1418)) ([5bedf80](https://github.com/microsoft/hve-core/commit/5bedf808c31530e86dfe75d87900791ede3ce5ef))
+* **skills:** add tts-voiceover skill for Azure Speech SDK voice-over generation ([#1415](https://github.com/microsoft/hve-core/issues/1415)) ([c330c7a](https://github.com/microsoft/hve-core/commit/c330c7aabebb16d36787e09c239c99de34d6cfcb))
+* **skills:** expand fuzz_has_formatting_variation to cover all formatting properties ([#1143](https://github.com/microsoft/hve-core/issues/1143)) ([#1296](https://github.com/microsoft/hve-core/issues/1296)) ([d51b4d3](https://github.com/microsoft/hve-core/commit/d51b4d3f04738b98bccce5b439a71a7f43194f41))
+* **workflows:** add Pre-Release-As trailer override to pre-release w… ([#1565](https://github.com/microsoft/hve-core/issues/1565)) ([310c68c](https://github.com/microsoft/hve-core/commit/310c68c91ff0461b94d135348aff70804c5045a7))
+* **workflows:** convert pr-review to manual /review slash command ([#1544](https://github.com/microsoft/hve-core/issues/1544)) ([84e47f0](https://github.com/microsoft/hve-core/commit/84e47f0e5a123e351b45ccb92df8669d68e09d61))
+
+
+### 🐛 Bug Fixes
+
+* **build:** bump basic-ftp override to 6.0.1 to clear high-severity advisory ([#1545](https://github.com/microsoft/hve-core/issues/1545)) ([4353df1](https://github.com/microsoft/hve-core/commit/4353df145f3b424e71c915fa01cf93a0a17af6bc))
+* **build:** override ip-address to 10.2.0 for GHSA-v2v4-37r5-5v8g ([#1539](https://github.com/microsoft/hve-core/issues/1539)) ([ba520aa](https://github.com/microsoft/hve-core/commit/ba520aa481997cce77a9a7cf616e9aa9ed33c55c))
+* **build:** pin uuid and postcss via overrides to resolve Dependabot alerts ([#1491](https://github.com/microsoft/hve-core/issues/1491)) ([af1f9ca](https://github.com/microsoft/hve-core/commit/af1f9ca335e623d7a5fd8f474a7f9b3beb179764))
+* **scripts:** Exclude plugins/ from ms.date freshness check to prevent duplicate stale reports ([#1586](https://github.com/microsoft/hve-core/issues/1586)) ([0b617ce](https://github.com/microsoft/hve-core/commit/0b617ce0c955011c6345b2f6b6d2e5df63cf4202))
+* **settings:** remove markdownlint exclusion for collections/*.collection.md ([#1372](https://github.com/microsoft/hve-core/issues/1372)) ([42cc137](https://github.com/microsoft/hve-core/commit/42cc13775e90f84332846ea47a46045a8ae983d4))
+* **skills:** resolve pip-audit findings in tts-voiceover skill lock file ([#1627](https://github.com/microsoft/hve-core/issues/1627)) ([2f206b5](https://github.com/microsoft/hve-core/commit/2f206b597b8dc246e2df8ad6c629ab9df22c6d24))
+
+
+### 📚 Documentation
+
+* improve new user onboarding with terminology, CLI plugins, and collections clarity ([#1520](https://github.com/microsoft/hve-core/issues/1520)) ([66b524a](https://github.com/microsoft/hve-core/commit/66b524a5d881b11a22b8f87702b18be4ebda7e6a))
+* update ms.date frontmatter for 13 stale documentation files ([#1588](https://github.com/microsoft/hve-core/issues/1588)) ([940773c](https://github.com/microsoft/hve-core/commit/940773c7065ca3c06217d8ebda68b40571cd73f3))
+
+
+### 🔧 Maintenance
+
+* **deps-dev:** bump fast-uri from 3.1.0 to 3.1.2 ([#1549](https://github.com/microsoft/hve-core/issues/1549)) ([7a2ee69](https://github.com/microsoft/hve-core/commit/7a2ee695664b90b87d6aeb623beb42ea411e077b))
+* **deps-dev:** bump markdownlint-cli2 from 0.22.0 to 0.22.1 in the npm-dependencies group ([#1452](https://github.com/microsoft/hve-core/issues/1452)) ([5440396](https://github.com/microsoft/hve-core/commit/5440396fcf328db0b9d44e58225a065db23d7e91))
+* **deps:** bump brace-expansion from 5.0.5 to 5.0.6 in /docs/docusaurus ([#1614](https://github.com/microsoft/hve-core/issues/1614)) ([e5dcd9a](https://github.com/microsoft/hve-core/commit/e5dcd9a980a074a4ced994abedff7c8fa99afe16))
+* **deps:** bump fast-uri from 3.1.0 to 3.1.2 in /docs/docusaurus ([#1548](https://github.com/microsoft/hve-core/issues/1548)) ([80fbddd](https://github.com/microsoft/hve-core/commit/80fbddd621317d7011a724fa04a31c54596e1940))
+* **deps:** bump the github-actions group with 3 updates ([#1453](https://github.com/microsoft/hve-core/issues/1453)) ([a3ee84e](https://github.com/microsoft/hve-core/commit/a3ee84e308e09649769e12ba6094f30eb89c9e29))
+* **deps:** bump the github-actions group with 3 updates ([#1601](https://github.com/microsoft/hve-core/issues/1601)) ([173d558](https://github.com/microsoft/hve-core/commit/173d558d015d9849174acf0e38bf43eb009e11ff))
+* **deps:** bump urllib3 from 2.6.3 to 2.7.0 in /.github/skills/experimental/tts-voiceover ([#1583](https://github.com/microsoft/hve-core/issues/1583)) ([8d3b095](https://github.com/microsoft/hve-core/commit/8d3b09549865c181d45c75e2b259459e98f3d106))
+* **deps:** bump webpack-dev-server from 5.2.3 to 5.2.4 in /docs/docusaurus ([#1613](https://github.com/microsoft/hve-core/issues/1613)) ([f689272](https://github.com/microsoft/hve-core/commit/f6892725893fdda10b805ad9b6968dc4f8f8e10b))
+
 ## [3.2.2](https://github.com/microsoft/hve-core/compare/hve-core-v3.2.1...hve-core-v3.2.2) (2026-03-23)
 
 
