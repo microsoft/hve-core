@@ -15,6 +15,12 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **dt-coach**          | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy |
 | **dt-learning-tutor** | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing  |
 
+### Skills
+
+| Name           | Description                                                                                                                       |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| **demo-setup** | Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype |
+
 ### Prompts
 
 | Name                                | Description                                                                                                                |
