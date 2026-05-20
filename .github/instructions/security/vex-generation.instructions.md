@@ -98,13 +98,17 @@ documents must identify the maintainer team or organization, not the agent.
 
 When drafting VEX content, follow these rules for external data:
 
-| Source              | License             | Permitted use                                                    |
-|---------------------|---------------------|------------------------------------------------------------------|
-| OSV.dev             | CC0 (public domain) | Paraphrase freely. Use for summaries, affected ranges, severity. |
-| NVD API 2.0         | US Gov public domain | Use for CVSS vectors and CWE classification.                    |
-| GitHub Advisory DB   | CC-BY-4.0           | Reference URLs only. Do not quote or closely paraphrase prose.  |
+| Source              | License                           | Permitted use                                                    |
+|---------------------|-----------------------------------|------------------------------------------------------------------|
+| OSV.dev             | Mixed (varies by upstream source) | Check record provenance before paraphrasing. Only paraphrase CC0 or public domain records. Write original prose for CC-BY-4.0 sourced records. |
+| NVD API 2.0         | US Gov public domain              | Use for CVSS vectors and CWE classification.                    |
+| GitHub Advisory DB   | CC-BY-4.0                        | Reference URLs and identifiers only. Do not quote or closely paraphrase prose. |
 
-Write original remediation and impact prose. Do not copy from any CC-BY-4.0 source.
+OSV.dev aggregates records from multiple databases. Check the record `id` prefix (`GHSA-` = CC-BY-4.0,
+`RUSTSEC-` = CC0, `CVE-` from NVD = public domain) to determine the upstream license. When the
+upstream license is unclear, write original prose and cite the record URL as a reference.
+
+Write original remediation and impact prose. Do not copy from any external source.
 
 ## Report templates
 
