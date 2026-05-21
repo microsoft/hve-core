@@ -9,10 +9,7 @@ config:
   timeout: 120s
   executor: copilot-sdk
 
-environment:
-  skills:
-    - ../../.github/skills/security/owasp-top-10
-    - ../../.github/skills/security/owasp-cicd
+environment: security
 
 scoring:
   threshold: 0.7
