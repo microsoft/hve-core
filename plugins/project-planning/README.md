@@ -5,7 +5,7 @@ PRDs, BRDs, ADRs, and architecture diagrams
 
 ## Overview
 
-Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+Create architecture decision records (MADR v4 + Y-Statement) with phase-gated coaching, ASR-trigger validation, supersession lineage, and per-project templates. Build PRDs, BRDs, and architecture diagrams through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and run STRIDE-based security model analysis with automated backlog generation.
 
 ## Included Artifacts
 
@@ -15,7 +15,7 @@ Create architecture decision records, requirements documents, and diagrams - all
 
 | Name                             | Description                                                                                                                                                                                                                                                                      |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **adr-creation**                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai                                                                       |
+| **adr-creation**                 | ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff                                                                         |
 | **agile-coach**                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool                                                                                                                                                 |
 | **arch-diagram-builder**         | Architecture diagram builder agent that builds high quality ASCII-art diagrams                                                                                                                                                                                                   |
 | **brd-builder**                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                 |
@@ -55,6 +55,10 @@ Create architecture decision records, requirements documents, and diagrams - all
 
 | Name                                     | Description                                                                                                                                                                                                                                                 |
 |------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **project-planning/adr-byo-template**    | BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator                                                                                               |
+| **project-planning/adr-handoff**         | ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates                                                                                                      |
+| **project-planning/adr-identity**        | ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions                                                                            |
+| **project-planning/adr-standards**       | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions                                                                   |
 | **rai-planning/rai-backlog-handoff**     | RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation                                                                                                                                               |
 | **rai-planning/rai-capture-coaching**    | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods                                                                                                                                                 |
 | **rai-planning/rai-identity**            | RAI Planner identity, 6-phase orchestration, state management, and session recovery                                                                                                                                                                         |
@@ -77,6 +81,12 @@ Create architecture decision records, requirements documents, and diagrams - all
 | **shared/hve-core-location**             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | **shared/story-quality**                 | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 
+### Skills
+
+| Name           | Description                                                                                                                                                                                                                                                                             |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **adr-author** | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
 ## Install
@@ -92,7 +102,7 @@ copilot plugin install project-planning@hve-core
 | agile-coach                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool - Brought to you by microsoft/hve-core                                                                                                                                      |
 | product-manager-advisor      | Product management advisor for requirements discovery, validation, and issue creation                                                                                                                                                                                                                        |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                                                                                                                    |
-| adr-creation                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai                                                                                                   |
+| adr-creation                 | ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff - Brought to you by microsoft/hve-core                                                              |
 | arch-diagram-builder         | Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core                                                                                                                                                                                        |
 | brd-builder                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                                             |
 | network-isa95-planner        | ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core                                                                                                                      |
@@ -129,6 +139,10 @@ copilot plugin install project-planning@hve-core
 
 | Instruction                          | Description                                                                                                                                                                                                                                                 |
 |--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| adr-byo-template.instructions        | BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator - Brought to you by microsoft/hve-core                                                        |
+| adr-handoff.instructions             | ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates - Brought to you by microsoft/hve-core                                                               |
+| adr-identity.instructions            | ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions - Brought to you by microsoft/hve-core                                     |
+| adr-standards.instructions           | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions - Brought to you by microsoft/hve-core                            |
 | rai-backlog-handoff.instructions     | RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation                                                                                                                                               |
 | rai-identity.instructions            | RAI Planner identity, 6-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core                                                                                                                                  |
 | rai-impact-assessment.instructions   | RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation - Brought to you by microsoft/hve-core                                                                                     |
@@ -150,6 +164,12 @@ copilot plugin install project-planning@hve-core
 | disclaimer-language.instructions     | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
 | hve-core-location.instructions       | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality.instructions           | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+
+## Skills
+
+| Skill      | Description                                                                                                                                                                                                                                                                             |
+|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| adr-author | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
 
 ---
 

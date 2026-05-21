@@ -18,6 +18,10 @@
     ],
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
+    ],
+    "./scripts/linting/schemas/adr-config.schema.json": [
+      "**/.adr-config.yml",
+      "**/.adr-config.yaml"
     ]
   },
   "json.schemas": [

@@ -1,0 +1,36 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+[project]
+name = "adr-author"
+version = "0.1.0"
+description = "ADR authoring skill: render MADR templates, validate frontmatter, manage lineage, and normalize BYO templates."
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6",
+    "jsonschema>=4",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6",
+    "pytest>=8",
+    "pytest-mock>=3",
+    "pytest-cov>=5",
+]
+# Atheris ships manylinux-only wheels; keep separate from dev so uv sync works on macOS.
+fuzz = [
+    "atheris>=3.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = ["test_*.py", "fuzz_harness.py"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

@@ -73,6 +73,8 @@ Generate actionable work items in dual format (ADO + GitHub) from identified gap
 
 Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`.
 
+If the assessment surfaced architectural decisions worth preserving — signing strategy, build-isolation topology, registry or distribution choices, SBOM tooling — you may want to capture them as ADRs via `@adr-creation`.
+
 ## Entry Modes
 
 Four entry modes determine how Phase 1 begins. All converge at Phase 2 once scoping completes.

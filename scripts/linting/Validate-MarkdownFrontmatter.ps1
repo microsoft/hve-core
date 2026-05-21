@@ -18,6 +18,7 @@ using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types
 # (FileTypeInfo, ValidationIssue, etc.) available at parse time for [OutputType] attributes
 using module .\Modules\FrontmatterValidation.psm1
+using module .\Modules\AdrConsistency.psm1
 
 [CmdletBinding()]
 param(
@@ -30,6 +31,7 @@ param(
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
         'scripts/tests/Fixtures/**',
+        'scripts/tests/**/fixtures/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',
@@ -54,7 +56,8 @@ param(
     [Parameter(Mandatory = $false)]
     [string[]]$FooterExcludePaths = @(
         'CHANGELOG.md',
-        'dependency-pinning-artifacts/**'
+        'dependency-pinning-artifacts/**',
+        '**/.*-config.md'
     ),
 
     [Parameter(Mandatory = $false)]
@@ -344,6 +347,7 @@ function Test-ValueAgainstSchema {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [object]$Value,
 
         [Parameter(Mandatory = $true)]
@@ -354,6 +358,27 @@ function Test-ValueAgainstSchema {
     )
 
     $localErrors = [List[string]]::new()
+
+    # Null values are accepted when the schema declares 'null' as an allowed type
+    # (e.g. "type": ["string", "null"]). Skip further checks in that case.
+    if ($null -eq $Value) {
+        $allowsNull = $false
+        if ($Schema.type) {
+            if ($Schema.type -is [string]) {
+                $allowsNull = ($Schema.type -eq 'null')
+            }
+            elseif ($Schema.type -is [System.Collections.IEnumerable]) {
+                $allowsNull = ($Schema.type -contains 'null')
+            }
+        }
+        else {
+            $allowsNull = $true
+        }
+        if (-not $allowsNull) {
+            $localErrors.Add("Field '$Path' must not be null")
+        }
+        return $localErrors.ToArray()
+    }
 
     # Handle oneOf by validating against each subschema.
     if ($Schema.oneOf) {
@@ -770,6 +795,36 @@ function Test-FrontmatterValidation {
     # Use module's orchestration function for core validation
     $summary = Invoke-FrontmatterValidation -Files $resolvedFiles -RepoRoot $repoRoot -FooterExcludePaths $FooterExcludePaths -SkipFooterValidation:$SkipFooterValidation
 
+    # ADR consistency overlay (advisory; canonical hard gate is `npm run lint:adr-consistency`)
+    # Routes ADR markdown files through Invoke-AdrConsistencyValidation and writes
+    # aggregated violations to logs/adr-consistency-results.json so the frontmatter
+    # validator surfaces ADR-specific defects alongside its normal output.
+    $adrViolationRecords = [System.Collections.Generic.List[object]]::new()
+    foreach ($fileResult in $summary.Results) {
+        $relForAdr = $fileResult.FilePath.Replace($repoRoot, '').TrimStart('\', '/').Replace('\', '/')
+        if ($relForAdr -like 'docs/planning/adrs/*.md' -or $relForAdr -like 'docs/planning/adrs/**/*.md') {
+            try {
+                $adrResult = Invoke-AdrConsistencyValidation -Path $fileResult.FilePath -RepoRoot $repoRoot
+                if ($adrResult -and $adrResult.Violations.Count -gt 0) {
+                    Write-Warning "ADR consistency issues in $relForAdr"
+                    foreach ($violation in $adrResult.Violations) {
+                        Write-Warning "  - [$($violation.ruleId)] ($($violation.severity)) $($violation.message)"
+                        $adrViolationRecords.Add([pscustomobject]@{
+                                file     = $relForAdr
+                                ruleId   = $violation.ruleId
+                                severity = $violation.severity
+                                message  = $violation.message
+                                line     = $violation.line
+                            })
+                    }
+                }
+            }
+            catch {
+                Write-Warning "ADR consistency validation failed for ${relForAdr}: $($_.Exception.Message)"
+            }
+        }
+    }
+
     # Optional schema validation overlay (advisory only)
     # Uses frontmatter already parsed by Invoke-FrontmatterValidation
     if ($EnableSchemaValidation -and (Initialize-JsonSchemaValidation)) {
@@ -801,6 +856,14 @@ function Test-FrontmatterValidation {
         New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
     }
     Export-ValidationResults -Summary $summary -OutputPath (Join-Path -Path $repoRoot -ChildPath $OutputPath)
+
+    # Export ADR consistency overlay results so downstream tooling can inspect ADR-specific
+    # violations surfaced by Invoke-AdrConsistencyValidation alongside frontmatter findings.
+    $adrLogPath = Join-Path -Path $logsDir -ChildPath 'adr-consistency-results.json'
+    @{
+        generated  = (Get-Date).ToString('o')
+        violations = @($adrViolationRecords)
+    } | ConvertTo-Json -Depth 10 | Set-Content -Path $adrLogPath -Encoding UTF8
 
     # GitHub step summary
     $hasIssues = $summary.GetExitCode($WarningsAsErrors) -ne 0
