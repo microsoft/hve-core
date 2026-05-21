@@ -1,34 +1,62 @@
 ---
-description: "Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent"
-agent: sssc-planner
+description: >-
+  Initiate supply chain security planning from existing PRD artifacts using the
+  SSSC Planner agent in from-prd mode
+agent: SSSC Planner
 ---
 
 # SSSC from PRD
 
-Activate the SSSC Planner in **from-prd mode** to bootstrap a supply chain security assessment from existing product definition artifacts.
+Activate the SSSC Planner in **from-prd mode** for project slug `${input:project-slug}`.
 
 ## Inputs
 
-* ${input:project-slug}: (Optional) Project slug for the SSSC plan directory. When omitted, derive from the discovered PRD project name.
+* `${input:project-slug}`: (Optional) Project slug for the SSSC plan directory. When omitted, derive from the discovered PRD project name.
 
 ## Requirements
 
-### PRD Discovery
+### Pre-Scan
 
-Scan these directories as the primary discovery path:
+Scan the workspace for PRD artifacts and supporting context:
+
+**Primary paths:**
 
 * `.copilot-tracking/prd-sessions/` for product requirements documents
 
-If the primary path yields no matches, perform a secondary scan of `.copilot-tracking/` for files whose names match `prd-*.md`, `*-prd.md`, or `product-definition*.md`. Exclude generic matches like `requirements.txt` or files outside product-scoping contexts.
+**Secondary scan:**
 
-Present all discovery results to the user for confirmation before proceeding.
+* `.copilot-tracking/` for files matching `prd-*.md`, `*-prd.md`, or `product-definition*.md`. Exclude generic matches like `requirements.txt` or files outside product-scoping contexts.
+
+Also scan the shared supporting context sources defined in `sssc-identity.instructions.md`.
+
+Present pre-scan results as a checklist:
+
+* ✅ Discovered PRD artifacts and supporting context with file paths and brief descriptions
+* ❌ Expected sources that were not found
+
+If zero PRD artifacts are found, fall back to capture mode and explain the switch.
+
+### Scope Extraction
+
+Extract from the discovered PRD artifacts:
+
+1. Project name and supply chain security purpose
+2. Technology stack and package managers
+3. CI/CD platform and release strategy
+4. Deployment targets and registry destinations
+5. Compliance requirements and integration points
 
 ### Initialization
 
-* Create the project directory at `.copilot-tracking/sssc-plans/{project-slug}/` and write `state.json` with `entryMode: "from-prd"`, `currentPhase: 1`, and remaining fields populated from PRD context.
-* Extract technology stack, package managers, CI/CD platform, deployment targets, and integration points from the PRD.
-* Pre-populate Phase 1 scoping fields with extracted information and ask 3-5 confirmation questions to verify accuracy and fill gaps.
+Create the project directory at `.copilot-tracking/sssc-plans/${input:project-slug}/`.
 
-## Entry Behavior
+Write `state.json` with `entryMode` set to `"from-prd"`, `currentPhase` set to `1`, preserving `disclaimerShownAt` if already set, and remaining fields populated from the extracted PRD context.
 
-Start supply chain security planning from PRD artifacts. Discover PRD files, extract context, initialize the project directory, and begin Phase 1 with pre-populated scoping data.
+### Phase 1 Entry
+
+Present the extracted scope as a checklist with markers:
+
+* ✅ Items confirmed from the PRD
+* ❓ Items that need clarification or are missing
+
+Then invite the user into a Phase 1 conversation with 3 to 5 facilitative clarifying questions targeting supply chain gaps not covered by the PRD, such as runner topology, signing strategy, SBOM tooling, and Best Practices Badge readiness. Use confirmation-and-refinement phrasing rather than directives.

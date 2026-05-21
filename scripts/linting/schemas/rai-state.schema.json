@@ -23,6 +23,8 @@
     "referencesProcessed",
     "nextActions",
     "signingRequested",
+    "signingManifestPath",
+    "disclaimerShownAt",
     "userPreferences"
   ],
   "properties": {

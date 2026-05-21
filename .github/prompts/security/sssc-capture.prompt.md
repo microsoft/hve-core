@@ -1,20 +1,47 @@
 ---
-description: "Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode"
-agent: sssc-planner
+description: >-
+  Initiate supply chain security planning from existing knowledge using the
+  SSSC Planner agent in capture mode
+agent: SSSC Planner
 ---
 
 # SSSC Capture
 
+Activate the SSSC Planner in **capture mode** for project slug `${input:project-slug}`.
+
 ## Inputs
 
-* ${input:project-slug}: (Optional) Kebab-case project identifier for the artifact directory. When omitted, asks for a suitable project name and derives the slug.
+* `${input:project-slug}`: (Optional) Kebab-case project identifier for the artifact directory. When omitted, ask for a suitable project name and derive the slug.
 
 ## Requirements
 
-* Initialize capture mode by creating the project directory at `.copilot-tracking/sssc-plans/{project-slug}/` and writing `state.json` with `entryMode: "capture"`, `currentPhase: 1`, and empty or default values for remaining fields.
-* If the user provides existing supply chain security notes, workflow inventories, or documentation as input, extract relevant information and pre-populate Phase 1 fields before asking clarifying questions.
-* Begin the Phase 1 interview about the project's supply chain security posture with 3-5 focused questions covering: project name and purpose, technology stack, package managers, CI/CD platform, release strategy, and known compliance targets (OpenSSF Scorecard, SLSA, Best Practices Badge).
+### Pre-Scan
 
-## Entry Behavior
+Before initialization, scan the shared supporting context sources defined in `sssc-identity.instructions.md` to pre-populate Phase 1.
 
-Start supply chain security planning in capture mode. Initialize the project directory and begin the Phase 1 scoping interview.
+Present pre-scan results as a checklist:
+
+* ✅ Discovered context with file paths and brief descriptions
+* ❌ Expected sources that were not found
+
+### Initialization
+
+Create the project directory at `.copilot-tracking/sssc-plans/${input:project-slug}/`.
+
+Write `state.json` with `entryMode` set to `"capture"`, `currentPhase` set to `1`, preserving `disclaimerShownAt` if already set, and remaining fields at their schema defaults.
+
+If the user has provided existing supply chain notes, workflow inventories, or compliance documentation, extract relevant details and pre-populate Phase 1 fields where possible.
+
+### Phase 1 Entry
+
+Present a short summary sentence describing the assessment scope, then invite the user into a Phase 1 conversation with up to 5 focused questions covering:
+
+* Project name and supply chain security purpose
+* Programming languages, frameworks, and package managers
+* CI/CD platform and runner topology
+* Release strategy and artifact distribution channels
+* Deployment targets and registry destinations
+* Existing security tooling (Dependabot, CodeQL, secret scanning, signing)
+* Compliance targets (Scorecard threshold, SLSA Build level, Best Practices Badge tier)
+
+Use facilitative phrasing — invite confirmation and refinement rather than dictating answers — and mark each question with ❓ pending, ✅ complete, or ❌ blocked or skipped as the conversation progresses.

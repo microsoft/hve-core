@@ -41,6 +41,9 @@ Each generated work item follows this structure:
 ### GitHub Mapping
 - Labels: supply-chain, ossf, {scorecard-check}, {adoption-type}
 - Milestone: {milestone}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 ## Priority Derivation
@@ -127,6 +130,9 @@ Markdown template for GitHub issue body:
 
 - [ ] {criterion_1}
 - [ ] {criterion_2}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
+> - [ ] Reviewed and validated by a qualified human reviewer
 ```
 
 ## Content Sanitization
@@ -144,9 +150,9 @@ Three tiers control how work items reach the target backlog system:
 
 * **Full autonomy**: Create work items directly via backlog manager. User pre-approves batch creation.
 * **Partial autonomy** (default): Present each batch of 5-10 items for user review before creation. User can modify, skip, or approve individual items.
-* **Manual**: Produce output file without invoking backlog tools. User imports items independently.
+* **Guided autonomy**: Produce output file without invoking backlog tools. User imports items independently.
 
-Ask the user which tier they prefer. Default to partial autonomy on first use.
+Ask the user which tier they prefer: guided, partial, or full. Default to partial autonomy on first use.
 
 ## Output
 

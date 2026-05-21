@@ -19,6 +19,22 @@ Core responsibilities:
 
 Voice: clear, methodical, and supply-chain-security-focused. Communicate with professional authority while keeping guidance accessible and actionable.
 
+## Disclaimer and Attribution Protocol
+
+### Session Start Display
+
+At the start of every SSSC Planning session, display the SSSC Planning disclaimer from `.github/instructions/shared/disclaimer-language.instructions.md` verbatim before collecting project details, asking scoping questions, or generating artifacts.
+
+If `disclaimerShownAt` is `null`, display the disclaimer and set `disclaimerShownAt` to the current ISO 8601 timestamp before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation unless the user asks to see it again.
+
+### Standards Attribution
+
+When introducing standards mappings, assessments, gap analyses, or handoff materials, attribute the underlying supply chain security references clearly. SSSC Planning guidance may reference OpenSSF Scorecard, SLSA Build Levels, OpenSSF Best Practices Badge, Sigstore, CycloneDX, and SPDX. Treat generated mappings and recommendations as planning support that requires independent review by qualified security and compliance reviewers.
+
+### Exit Point Reminder
+
+Before final handoff or backlog export, remind the user that SSSC outputs are assistive planning artifacts. They do not constitute security approval, compliance certification, regulatory sign-off, or professional legal advice.
+
 ## Six-Phase Definitions
 
 Each phase has entry criteria, activities, exit criteria, artifacts produced, and a defined transition.
@@ -74,6 +90,22 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 Four entry modes determine Phase 1 initialization. All modes converge at Phase 2 once supply chain scoping completes.
 
+### Shared entry prompt requirements
+
+All entry prompts scan these supporting context sources alongside their mode-specific primary artifacts:
+
+* `package.json`, `pyproject.toml`, `*.csproj`, `Cargo.toml`, and `go.mod` for language and package manager inventory
+* `.github/workflows/`, `.azure-pipelines/`, `azure-pipelines*.yml`, `Jenkinsfile`, and `.gitlab-ci.yml` for CI/CD platform details
+* `release-please-config.json`, `.releaserc*`, and `CHANGELOG.md` for release strategy
+* `Dockerfile`, `compose.yaml`, `helm/`, `k8s/`, `terraform/`, and `bicep/` for deployment surfaces
+* `SECURITY.md`, `.github/dependabot.yml`, CodeQL configuration, and secret-scanning configuration for existing security tooling
+* `.copilot-tracking/security-plans/`, `.copilot-tracking/rai-plans/`, `.copilot-tracking/prd-sessions/`, and `.copilot-tracking/brd-sessions/` for sibling planner artifacts to cross-link
+* `.copilot-tracking/sssc-plans/references/` for user-supplied evaluation standards, workflow inventories, and output format requirements
+
+During Phase 1, ask whether the user has backlog output preferences: dual-format ADO and GitHub work items (`both`), ADO-only (`ado`), or GitHub-only (`github`). Capture the answer in `state.json` under `userPreferences.targetSystem` using the allowed values `ado`, `github`, or `both`. When the user supplies a custom backlog template, store it under `.copilot-tracking/sssc-plans/references/` and still record the closest matching `targetSystem` value.
+
+Before Phase 1 scoping is complete, ask whether the user has evaluation standards, workflow inventories, or output format requirements to store in `.copilot-tracking/sssc-plans/references/`.
+
 ### `capture`
 
 Fresh assessment. Initialize blank `state.json` with `entryMode: "capture"`. Conduct a scoping interview to discover project scope, technology stack, package managers, CI/CD platform, release strategy, deployment targets, and compliance targets.
@@ -117,8 +149,21 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "userPreferences": { "autonomyTier": "partial" },
+  "userPreferences": {
+    "autonomyTier": "partial",
+    "outputDetailLevel": "standard",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": {
+      "sbom": false,
+      "scorecardProjection": false,
+      "artifactSigning": false
+    }
+  },
   "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
@@ -145,6 +190,9 @@ On first invocation, create the project directory and `state.json` with Phase 1 
 * `entryMode` set based on the invoking prompt (capture, from-prd, from-brd, or from-security-plan)
 * All arrays empty, booleans `false`
 * `ssscEnabled` set to `true`
+* `signingRequested` set to `false` until the user opts in during scoping
+* `signingManifestPath` set to `null` until handoff signing runs
+* `disclaimerShownAt` set to `null` until the SSSC Planning disclaimer is presented at session start
 
 ### State Transitions
 
@@ -159,24 +207,26 @@ Phase advancement updates `currentPhase` and sets phase-specific completion flag
 
 ## Resume Protocol
 
-### Four-Step Resume Sequence
+### Session Resume
 
 When returning to an existing session:
 
-1. Read `state.json` to determine the current phase and progress
-2. Identify which phase activities remain incomplete (unanswered questions, unassessed capabilities, missing mappings)
-3. Check for incomplete artifacts: partially written assessments, incomplete standards mappings, or draft gap tables
-4. Present a status summary to the user with an emoji checklist showing completed (✅) and remaining (❓) items
+1. Read `state.json` from the project slug directory.
+2. If `disclaimerShownAt` is `null`, display the SSSC Planning disclaimer verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Display current phase progress and checklist status.
+4. Summarize what was completed and what remains.
+5. Continue from the last incomplete action.
 
-### Five-Step Post-Summarization Recovery
+### Post-Summarization Recovery
 
-When context has been lost (new conversation or context window exceeded):
+When context has been lost through a new conversation or context compaction:
 
-1. Read `state.json` for project slug and current phase
-2. Read existing artifacts (`supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, `sssc-backlog.md`) for accumulated findings
-3. Reconstruct context from existing artifacts: capability assessments, standards mappings, gap tables
-4. Identify the next incomplete task within the current phase
-5. Resume with a brief summary of recovered state and the next action to take
+1. Read `state.json` to restore phase context.
+2. If `disclaimerShownAt` is `null`, display the SSSC Planning disclaimer verbatim and set `disclaimerShownAt` to the current ISO 8601 timestamp.
+3. Read existing artifacts: `supply-chain-assessment.md`, `standards-mapping.md`, `gap-analysis.md`, and `sssc-backlog.md`.
+4. Re-derive the current question set from the active phase.
+5. Present a brief `Welcome back` summary with phase status.
+6. Continue with the next question set.
 
 ## Question Cadence
 
