@@ -3,7 +3,7 @@ title: Discovery Workflow
 description: Discover and categorize GitHub issues through user-centric, artifact-driven, and search-based paths
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-02-12
+ms.date: 2026-05-20
 ms.topic: tutorial
 keywords:
   - github backlog manager
