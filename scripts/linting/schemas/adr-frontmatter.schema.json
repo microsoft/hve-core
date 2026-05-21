@@ -1,0 +1,312 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/microsoft/hve-core/schemas/adr-frontmatter.schema.json",
+  "title": "ADR Frontmatter Schema",
+  "description": "Frontmatter schema for Architecture Decision Records authored under docs/planning/adrs/NNNN-{kebab-case}.md. Aligns with MADR v4.0.0 plus the hve-core ADR Planner extensions for ID, lineage, and Architecturally Significant Requirement (ASR) triggers.",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "status",
+    "proposed_date",
+    "deciders",
+    "affected_components"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "description": "Four-digit zero-padded ADR identifier scoped to the owning project_slug (e.g. '0001')."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short, decision-focused title."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line summary of the decision used by the docs frontmatter validator and search indexes."
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Optional primary author or owning role for docs metadata."
+    },
+    "ms.date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Optional YYYY-MM-DD publish date for docs metadata."
+    },
+    "ms.topic": {
+      "type": "string",
+      "enum": ["overview", "concept", "tutorial", "reference", "how-to", "troubleshooting"],
+      "description": "Optional Microsoft docs topic type."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "deprecated",
+        "superseded",
+        "withdrawn"
+      ],
+      "description": "Canonical six-value ADR status taxonomy from adr-standards.instructions.md (MADR v4.0.0 plus 'withdrawn' for proposals retired before acceptance or rejection)."
+    },
+    "proposed_date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 date (YYYY-MM-DD) the ADR was first proposed. Required for every ADR regardless of status."
+    },
+    "accepted_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO 8601 date (YYYY-MM-DD) the decision was accepted. Required when status='accepted' (enforced by validator). Null until acceptance."
+    },
+    "effort": {
+      "type": "string",
+      "enum": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "description": "T-shirt sizing of implementation effort. S=days, M=weeks, L=quarter, XL=multi-quarter."
+    },
+    "affected_components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Repository-relative paths, package names, or named components materially changed by this decision. At least one entry required; use ['none'] only for purely informational decisions."
+    },
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "metric",
+          "target",
+          "measurement_window",
+          "source"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Named, observable metric (e.g., 'p95 cold-start latency', 'frontmatter-validation pass rate')."
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Concrete target value or threshold (e.g., '<200ms', '>=99%', 'zero CI failures over 30 days')."
+          },
+          "measurement_window": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Window over which the metric is evaluated (e.g., '30 days post-merge', 'per-PR', 'first production week')."
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where the metric is read from (e.g., 'logs/pester-summary.json', 'Application Insights', 'GitHub Actions run summary')."
+          }
+        }
+      },
+      "description": "Measurable, time-bound criteria for declaring this decision successful. Required (non-empty) when asr_triggers is non-empty (enforced by validator)."
+    },
+    "deciders": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "People or roles accountable for the decision."
+    },
+    "consulted": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Subject-matter experts consulted with two-way communication."
+    },
+    "informed": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Stakeholders kept up-to-date with one-way communication."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Optional free-form classification tags."
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}$",
+      "description": "Single-parent supersession (GP-06): the four-digit ID of the prior ADR this decision supersedes within the same project."
+    },
+    "superseded-by": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^\\d{4}$",
+      "description": "Four-digit ID of the ADR that supersedes this one, when applicable."
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "relation"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repository-relative path to the related ADR or artifact."
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "informational",
+              "influenced-by",
+              "influences"
+            ],
+            "description": "Nature of the relationship."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 280,
+            "description": "Optional short rationale (<= 280 chars)."
+          }
+        }
+      },
+      "description": "Cross-references to other ADRs or supporting artifacts."
+    },
+    "asr_triggers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "evidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cost",
+              "performance",
+              "security",
+              "compliance",
+              "availability",
+              "scalability",
+              "maintainability"
+            ],
+            "description": "ASR trigger taxonomy (GP-07, 7-kind enum)."
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Required citation, link, or quoted constraint that justifies the trigger."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 280,
+            "description": "Optional short clarification (<= 280 chars)."
+          }
+        }
+      },
+      "description": "Architecturally Significant Requirements that motivated the decision."
+    },
+    "migrated-from": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provenance: relative path to the source template or prior format the ADR was migrated from."
+    },
+    "migrated-on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Provenance: ISO 8601 date the migration completed."
+    },
+    "migrated-by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provenance: tool or person responsible for the migration."
+    },
+    "original-id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provenance: identifier used in the prior system before migration."
+    },
+    "decisionMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "driverToTriggerMap": {
+          "type": "object",
+          "patternProperties": {
+            "^.+$": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "description": "Map from Decision Driver labels (free-text strings matching the driver bullets in the body) to ASR trigger references; populated by the ADR Planner at Decide exit and enforced by Validate-AdrConsistency rule ADR-CONSISTENCY-008 (driver-trigger-map-complete). Map keys are substring-matched against driver bullet text after normalization, so they may be short labels or full sentences as long as each driver has at least one corresponding key."
+        }
+      },
+      "description": "Optional planner-internal metadata serialized into ADR frontmatter. Mirrors `state.json.decisionMetadata` from the ADR Planner; not authored by hand."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "accepted"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "accepted_date"
+        ],
+        "properties": {
+          "accepted_date": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+}
