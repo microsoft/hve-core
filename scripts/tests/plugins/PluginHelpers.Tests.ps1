@@ -2,6 +2,9 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
+[System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
+param()
+
 BeforeAll {
     Import-Module $PSScriptRoot/../../plugins/Modules/PluginHelpers.psm1 -Force
 }
@@ -49,6 +52,50 @@ Describe 'New-PluginReadmeContent - maturity notice' {
         $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
         $result = New-PluginReadmeContent -Collection $collection -Items $items -Maturity $null
         $result | Should -Not -Match '\u26A0'
+    }
+}
+
+Describe 'New-PluginReadmeContent - CollectionContent H1 stripping' {
+    BeforeAll {
+        $baseCollection = @{
+            id          = 'test-h1'
+            name        = 'Test Collection'
+            description = 'A test collection'
+        }
+        $items = @(@{ Name = 'test-agent'; Description = 'desc'; Kind = 'agent' })
+    }
+
+    It 'Strips leading H1 from CollectionContent to avoid duplicate title' {
+        $content = "# Test Collection`n`nBody text here.`n"
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $content
+        $h1Matches = [regex]::Matches($result, '(?m)^# ')
+        $h1Matches.Count | Should -Be 1
+        $result | Should -Match 'Body text here\.'
+    }
+
+    It 'Preserves artifact markers and tables in CollectionContent' {
+        $content = "# Test Collection`n`nBody text.`n`n## Included Artifacts`n`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`n### Chat Agents`n`n<!-- END AUTO-GENERATED ARTIFACTS -->`n"
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $content
+        $result | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
+        $result | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+        $result | Should -Match '## Included Artifacts'
+    }
+
+    It 'Emits Overview section when CollectionContent has body text' {
+        $content = "# Test Collection`n`nSome description.`n"
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $content
+        $result | Should -Match '## Overview'
+        $result | Should -Match 'Some description\.'
+    }
+
+    It 'Omits Overview section when CollectionContent is null' {
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $null
+        $result | Should -Not -Match '## Overview'
+    }
+
+    It 'Omits Overview section when CollectionContent is whitespace' {
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent '   '
+        $result | Should -Not -Match '## Overview'
     }
 }
 

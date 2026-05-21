@@ -27,7 +27,7 @@
     "lint:ai-artifacts": "pwsh -NoProfile -Command \"& './scripts/linting/Validate-PlannerArtifacts.ps1' -FailOnMissing\"",
     "lint:models": "pwsh -NoProfile -File scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json",
     "lint:models:refresh": "pwsh -NoProfile -File scripts/linting/Update-ModelCatalog.ps1",
-    "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:ps-module-pins && npm run lint:py && npm run validate:skills && npm run lint:ai-artifacts && npm run lint:models",
+    "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:links && npm run lint:frontmatter && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:ps-module-pins && npm run lint:py && npm run validate:skills && npm run lint:ai-artifacts && npm run lint:models && npm run eval:lint",
     "format:tables": "markdown-table-formatter \"**/*.md\"",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
     "extension:prepare:prerelease": "pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease",
@@ -46,10 +46,12 @@
     "clean:logs": "pwsh -NoProfile -Command \"Get-ChildItem -Path logs -File -Recurse -Exclude .gitkeep | Remove-Item -Force\"",
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:test": "npm --prefix docs/docusaurus test",
-    "docs:serve": "npm --prefix docs/docusaurus run serve"
+    "docs:serve": "npm --prefix docs/docusaurus run serve",
+    "eval:lint": "vally lint --eval evals/"
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.0",
+    "@microsoft/vally-cli": "0.4.0",
     "@vscode/vsce": "3.9.1",
     "audit-ci": "7.1.0",
     "cspell": "10.0.0",
@@ -62,6 +64,7 @@
   },
   "overrides": {
     "basic-ftp": "6.0.1",
+    "brace-expansion@^5": "5.0.6",
     "ip-address": "10.2.0",
     "markdown-it": "14.1.1",
     "picomatch@^2": "2.3.2",

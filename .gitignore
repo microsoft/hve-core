@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Vally evaluation results
+evals/results/
+
 # macOS
 .DS_Store
 

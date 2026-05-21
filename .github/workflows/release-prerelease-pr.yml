@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v2.0.0
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v2.0.0
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -77,6 +77,14 @@ jobs:
           # Use commit count since last tag as patch for unique, monotonic versions
           COMMIT_COUNT=$(git rev-list --count "${LAST_TAG}..HEAD" 2>/dev/null || echo "0")
           PRE_VERSION="${PRE_MAJOR}.${PRE_MINOR}.${COMMIT_COUNT}"
+
+          # Honor manual override via Pre-Release-As trailer on the latest commit.
+          # Mirrors release-please's Release-As: trailer for the stable pipeline.
+          OVERRIDE=$(git log -1 --format='%(trailers:key=Pre-Release-As,valueonly)' HEAD | tr -d '[:space:]')
+          if [ -n "$OVERRIDE" ]; then
+            echo "Manual override applied: $PRE_VERSION -> $OVERRIDE"
+            PRE_VERSION="$OVERRIDE"
+          fi
 
           echo "version=$PRE_VERSION" >> "$GITHUB_OUTPUT"
           echo "last_tag=$LAST_TAG" >> "$GITHUB_OUTPUT"

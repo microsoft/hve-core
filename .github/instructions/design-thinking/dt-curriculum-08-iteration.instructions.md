@@ -1,5 +1,5 @@
 ---
-description: 'DT Curriculum Module 8: User Testing — concepts, techniques, checks, and exercises'
+description: 'DT Curriculum Module 8: User Testing - concepts, techniques, checks, and exercises'
 applyTo: '**/.copilot-tracking/dt/**/curriculum-08*'
 ---
 

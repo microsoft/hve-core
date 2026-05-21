@@ -24,6 +24,23 @@ MVEs differ from MVPs in several important ways:
 * Succeed whether hypotheses are validated or invalidated; both outcomes are valuable.
 * Can be run by a full or partial crew with help from subject matter experts.
 
+### MVE as Enablement (Collaborative Engagements)
+
+In collaborative engineering engagements, MVEs serve a dual purpose:
+
+1. **Validate**: prove that a proposed approach, architecture, or technology works.
+2. **Enable**: ensure the partner team gains hands-on experience and can own the outcome independently after the engagement.
+
+The enablement dimension means:
+
+* All work is done jointly with the partner team from scratch. Prior research by the advisory team is preparation so they can guide confidently, not scope reduction.
+* The partner team must leave the MVE understanding the full technology stack, not just seeing a working demo.
+* Ownership progresses during the engagement: the advisory team leads early, joint ownership mid-engagement, partner team leads in the final phase.
+* Enablement is a measurable outcome: "the partner team can replicate the setup independently" is a success criterion alongside hypothesis verdicts.
+* Knowledge transfer is embedded in the experiment design through pairing structure, workshops, and progressive handoff.
+
+When designing a collaborative MVE, ask: if all hypotheses are validated but the outcome cannot be replicated independently, has the MVE succeeded? The answer is no.
+
 | Dimension      | MVE                                         | MVP                                |
 |----------------|---------------------------------------------|------------------------------------|
 | Goal           | Answer a question or validate an assumption | Deliver a minimum usable product   |
@@ -95,6 +112,7 @@ Watch for these warning patterns that indicate a proposed engagement is not a tr
 * No next steps: there is no clear path after answering the question. If nobody will act on the results, the experiment adds no value.
 * No end users: user-facing projects require user involvement. Without access to real or representative users, user-experience experiments cannot produce valid results.
 * Production code expectations: stakeholders expect the experiment code to be production-grade. MVE artifacts are disposable by design.
+* Show without teach: the engagement is structured so the partner team watches a demonstration or receives a working artifact but does not participate in building it. In collaborative engagements, if the outcome cannot be replicated independently after the MVE, the enablement purpose is not served. This is a demo disguised as an experiment.
 
 ## Hypothesis Format
 
@@ -288,6 +306,7 @@ These mistakes occur during experiment design and execution. Unlike Red Flags (w
 * Not involving the right people. Missing crucial perspectives from data science, UX, or domain experts.
 * Lack of next-step plan. Finishing an MVE without acting on findings wastes the learning.
 * Treating experiment code as production-ready. MVE code is disposable; reimplement for production.
+* Partner team as passive observer. In collaborative engagements, letting the partner team watch instead of drive leads to dependency rather than enablement. Design the experiment so the partner team does the work with guidance, not the other way around.
 
 ## Evaluating Results
 

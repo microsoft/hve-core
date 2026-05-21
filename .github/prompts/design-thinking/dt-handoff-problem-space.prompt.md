@@ -1,5 +1,5 @@
 ---
-description: 'Problem Space exit handoff — compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher'
+description: 'Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher'
 agent: 'agent'
 tools: ['read_file', 'create_file']
 argument-hint: "project-slug=..."

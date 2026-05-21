@@ -1,0 +1,22 @@
+paths:
+  evals: evals
+  results: evals/results
+
+suites:
+  skill-quality:
+    description: Evaluate skill behavior via copilot-sdk agent conversations
+    filter:
+      tags:
+        category: skill-quality
+
+  agent-behavior:
+    description: Evaluate agent routing and response quality
+    filter:
+      tags:
+        category: agent-behavior
+
+  script-validation:
+    description: Validate script correctness via copilot-sdk conversations
+    filter:
+      tags:
+        category: script-validation

@@ -62,6 +62,8 @@
     "general-technical"
   ],
   "words": [
+    "ˈpræksɪs",
+    "agentic",
     "atheris",
     "behaviour",
     "behavioural",
@@ -69,19 +71,27 @@
     "clusterfuzzlite",
     "collab",
     "easyops",
+    "evals",
+    "fetchone",
     "figjam",
     "hideable",
+    "idor",
     "learning",
+    "skillmd",
     "smol",
     "subcat",
     "uncited",
+    "vally",
     "whiteboarding",
-    "ˈpræksɪs",
-    "πρᾶξις",
-    "agentic"
+    "πρᾶξις"
   ],
   "reporters": [
     "default",
-    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
+    [
+      "@cspell/cspell-json-reporter",
+      {
+        "outFile": "logs/cspell-results.json"
+      }
+    ]
   ]
 }

@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-02-07
+ms.date: 2026-05-13
 ms.topic: guide
 keywords:
   - contributing
@@ -30,7 +30,7 @@ This project uses several tools to maintain code quality and consistency:
 ### Required Tools
 
 | Tool                      | Purpose                                    |
-|---------------------------|--------------------------------------------|
+|---------------------------|--------------------------------------------||
 | markdownlint-cli2         | Validates markdown formatting and style    |
 | cspell                    | Spell checking across all file types       |
 | markdown-table-formatter  | Ensures consistent table formatting        |

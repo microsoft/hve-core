@@ -1,5 +1,5 @@
 ---
-description: 'Deep expertise for Method 4: Brainstorming — advanced facilitation techniques, creative block recovery, and convergence frameworks'
+description: 'Deep expertise for Method 4: Brainstorming - advanced facilitation techniques, creative block recovery, and convergence frameworks'
 applyTo: '**/.copilot-tracking/dt/**/method-04*'
 ---
 

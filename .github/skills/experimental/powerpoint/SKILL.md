@@ -488,7 +488,7 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 | `render_pdf_images.py` | PDF-to-JPG rendering via PyMuPDF with optional slide-number-based naming                                                                                                                               |
 | `generate_themes.py`   | Theme variant generation from a base content directory using a color mapping YAML file                                                                                                                 |
 | `embed_audio.py`       | WAV audio embedding into PPTX slides with per-slide file matching and off-screen audio icon placement                                                                                                  |
-| `export_svg.py`        | PPTX-to-SVG export via LibreOffice PDF conversion and PyMuPDF SVG rendering                                                                                                                           |
+| `export_svg.py`        | PPTX-to-SVG export via LibreOffice PDF conversion and PyMuPDF SVG rendering                                                                                                                            |
 
 ## python-pptx Constraints
 
