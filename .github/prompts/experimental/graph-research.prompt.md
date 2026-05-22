@@ -19,7 +19,11 @@ This prompt **never triggers a graph build**. Graph builds have cost, time, and 
 
 Before starting research:
 
-1. Confirm `graphify-out/graph.json` exists at the workspace root. If absent, do **not** build the graph automatically — graph builds have cost, time, and (for non-`fast` modes) data-upload implications. Stop and present the user with the two build options so they can choose knowingly, then wait for them to run it:
+1. Confirm `graphify-out/graph.json` exists at the workspace root and that the `graphify` MCP server is registered. Probe the MCP server reactively by attempting the first `mcp_graphify_*` call; the chat session has no API to enumerate available MCP tools, so an "unknown tool" or unreachable-server error means the server is not registered.
+
+2. If **both** the graph file and the MCP server are missing, ask the user once whether the agent should perform both setup steps: "Neither `graphify-out/graph.json` nor the `graphify` MCP server are present. Should I install the MCP server (`graphify vscode install`, requires a window reload) and build the graph? If yes, choose a build mode: `standard` (LLM-assisted, uploads code to the configured backend) or `fast` (AST-only, no LLM, no upload — recommended for Microsoft-internal, customer, regulated, or secret-bearing trees)." On confirmation, run `graphify vscode install`, instruct the user to reload the VS Code window, then run the selected build command. Stop the current research turn — the MCP tools will not be available until after reload.
+
+3. If only the graph file is missing, do **not** build it automatically — graph builds have cost, time, and (for non-`fast` modes) data-upload implications. Present the two build options so the user can choose knowingly, then wait for them to run it:
 
    * Standard build (LLM-assisted, higher fidelity, uploads code to the configured backend):
 
@@ -35,7 +39,7 @@ Before starting research:
 
    See the [Sensitive-Tree Fallback](#sensitive-tree-fallback) section for data-residency notes before recommending `--mode deep` or surfacing `MOONSHOT_API_KEY`.
 
-2. Attempt the first `mcp_graphify_*` call. The chat session has no API to enumerate available MCP tools, so server availability is confirmed reactively. If the call fails because the tool is unknown or the server is unreachable, the MCP server is not registered. Registration is a local, reversible VS Code config change, so offer to perform it:
+4. If only the MCP server is missing, registration is a local, reversible VS Code config change, so offer to perform it:
 
    * Ask the user: "The `graphify` MCP server isn't registered. Run `graphify vscode install` now? You'll need to reload the VS Code window afterward for the tools to appear."
    * On confirmation, run the command in a terminal and instruct the user to reload the window. Stop the current research turn — the MCP tools will not be available until after reload.
