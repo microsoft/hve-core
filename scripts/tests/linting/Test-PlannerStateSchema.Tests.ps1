@@ -5,6 +5,8 @@
 .SYNOPSIS
     Asserts tiered phase gates, `disclaimerShownAt`, and `referencesProcessed` defaults
     in the inline JSON-literal state block of both planner identity files.
+.NOTES
+    Effective case count: 8 (4 `It` blocks × `-ForEach $script:identityFiles` arity 2).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path

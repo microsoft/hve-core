@@ -5,6 +5,9 @@
 .SYNOPSIS
     Asserts the Security Planner has no risk multiplication notation and the
     security-model named-bucket grid markers are present.
+.NOTES
+    Effective case count: 7 (2 multiplication-notation cases via `-ForEach $script:files`
+    + 5 bucket-name cases via `-ForEach $script:bucketNames`).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path

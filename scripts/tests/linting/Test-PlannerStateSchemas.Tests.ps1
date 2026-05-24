@@ -9,6 +9,9 @@
     schema block must declare `disclaimerShownAt` with default `null` and the canonical state
     schemas must declare type `["string","null"]`, format `date-time`, and keep the key in
     `required` for cross-planner uniformity (see plan DD-06/ID-02).
+.NOTES
+    Effective case count: 4 (2 inline-default + 2 canonical-schema), not parametrized; each
+    identity / schema pair is asserted in its own `It` block by design.
 #>
 
 BeforeAll {

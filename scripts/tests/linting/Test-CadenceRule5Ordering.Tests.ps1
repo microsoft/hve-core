@@ -5,6 +5,8 @@
 .SYNOPSIS
     Asserts Cadence Rule 5 in both planner identity files leads with open-ended
     discovery before any mention of option lists.
+.NOTES
+    Effective case count: 2 (1 `It` block × `-ForEach $script:files` arity 2).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path

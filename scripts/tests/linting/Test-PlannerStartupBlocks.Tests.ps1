@@ -5,6 +5,8 @@
 .SYNOPSIS
     Asserts every Security / SSSC entry prompt has a `## Startup` block and the correct
     framework attribution string.
+.NOTES
+    Effective case count: 6 (1 `It` block × `-ForEach $script:prompts` arity 6).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
