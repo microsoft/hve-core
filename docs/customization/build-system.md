@@ -92,6 +92,12 @@ All validation, formatting, and testing operations run through npm scripts defin
 | `lint:marketplace`          | `npm run lint:marketplace`          | Marketplace manifest validation          |
 | `lint:version-consistency`  | `npm run lint:version-consistency`  | GitHub Action version consistency        |
 | `lint:permissions`          | `npm run lint:permissions`          | Workflow permissions validation          |
+| `lint:dependency-pinning` | `npm run lint:dependency-pinning` | Dependency pinning validation            |
+| `lint:ps-module-pins`     | `npm run lint:ps-module-pins`     | PowerShell module pin validation         |
+| `lint:py`                 | `npm run lint:py`                 | Python linting                           |
+| `lint:ai-artifacts`       | `npm run lint:ai-artifacts`       | Planner artifact validation             |
+| `lint:models`             | `npm run lint:models`             | Model reference validation               |
+| `eval:lint`               | `npm run eval:lint`               | Evaluation definition linting            |
 
 ### Validation
 
@@ -137,7 +143,13 @@ The `lint:all` script chains every linter in a fixed sequence:
 8. `lint:marketplace` validates marketplace manifest
 9. `lint:version-consistency` checks GitHub Action version alignment
 10. `lint:permissions` validates workflow permissions
-11. `validate:skills` verifies skill directory structure
+11. `lint:dependency-pinning` checks dependency pinning compliance
+12. `lint:ps-module-pins` validates PowerShell module pins
+13. `lint:py` runs Python linting
+14. `validate:skills` verifies skill directory structure
+15. `lint:ai-artifacts` validates planner artifacts
+16. `lint:models` validates model references
+17. `eval:lint` validates evaluation definitions
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:
