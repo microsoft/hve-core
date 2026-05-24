@@ -77,6 +77,18 @@ Skill files are typically organized in a collection subdirectory by convention:
 > accepts any valid repo-relative path regardless of the artifact's parent directory.
 
 The `scripts/` directory is **optional**. When present, it **MUST** contain at least one `.ps1` file and **SHOULD** contain at least one `.sh` file for cross-platform support. Skills without scripts are valid and function as documentation-driven knowledge packages.
+### Python Audit Suppressions
+
+Skills with Python dependency files are checked by the shared `pip-audit.yml` workflow. If a skill has an acknowledged or disputed finding that should be suppressed, place a `pip-audit-known-vulnerabilities.txt` file at the skill root, next to `SKILL.md`.
+
+Use one vulnerability ID per line, and use `#` for comments:
+
+```text
+# Accepted until upstream package publishes a patched release.
+PYSEC-2025-183
+```
+
+Only suppress findings with a documented reason. Include a comment that explains the rationale and when the suppression should be revisited, such as an upstream release, dependency replacement, or periodic review date.
 
 ### Naming Convention
 
