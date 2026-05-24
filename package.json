@@ -46,7 +46,12 @@
     "docs:build": "npm --prefix docs/docusaurus run build",
     "docs:test": "npm --prefix docs/docusaurus test",
     "docs:serve": "npm --prefix docs/docusaurus run serve",
-    "eval:lint": "vally lint --eval evals/"
+    "eval:lint": "vally lint --eval evals/",
+    "eval:run": "vally eval --suite skill-quality && vally eval --suite agent-behavior && vally eval --suite script-validation",
+    "eval:run:skills": "vally eval --suite skill-quality",
+    "eval:run:agents": "vally eval --suite agent-behavior",
+    "eval:run:scripts": "vally eval --suite script-validation",
+    "eval:compare": "vally compare"
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.0",
