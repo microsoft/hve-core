@@ -30,3 +30,7 @@ Concrete usage examples with expected output.
 ## Troubleshooting
 
 Common issues and solutions.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

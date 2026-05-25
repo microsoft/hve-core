@@ -41,3 +41,7 @@ Brief description of what this agent does and when to use it.
 * Criterion one
 * Criterion two
 * Criterion three
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

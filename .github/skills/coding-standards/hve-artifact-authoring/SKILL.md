@@ -319,3 +319,7 @@ All artifact files must follow these markdown rules (enforced by markdownlint):
 - Instruction template: [assets/instruction-template.md](assets/instruction-template.md)
 - Skill template: [assets/skill-template.md](assets/skill-template.md)
 - Collection template: [assets/collection-template.yml](assets/collection-template.yml)
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

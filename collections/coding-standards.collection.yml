@@ -64,7 +64,7 @@ items:
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
-  - path: .github/skills/coding-standards/hve-artifact-authoring/SKILL.md
+  - path: .github/skills/coding-standards/hve-artifact-authoring
     kind: skill
     maturity: stable
   - path: .github/skills/coding-standards/python-foundational

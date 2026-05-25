@@ -1,3 +1,7 @@
+---
+description: 'Frontmatter field reference for agents, prompts, instructions, skills, and collection manifests'
+---
+
 # Frontmatter Schema Reference
 
 ## Agent Frontmatter (`agent-frontmatter.schema.json`)
@@ -79,3 +83,7 @@ items:
     usage: "Usage guidance text"                         # Optional
     maturity: stable                                     # Optional: overrides collection maturity
 ```
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

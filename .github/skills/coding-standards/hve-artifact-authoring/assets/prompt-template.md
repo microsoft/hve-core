@@ -19,3 +19,7 @@ argument-hint: 'arg=... [option={a|b}]'
 1. Execute the primary workflow
 2. Validate results against requirements
 3. Present findings to user
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
