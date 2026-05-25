@@ -1,5 +1,5 @@
 ---
-description: 'Design Thinking Coach telemetry overlay — applies telemetry-foundations vocabulary to DT session artifacts. Brought to you by microsoft/hve-core'
+description: 'Design Thinking Coach telemetry overlay: applies telemetry-foundations vocabulary to DT session artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/dt/**'
 ---
 

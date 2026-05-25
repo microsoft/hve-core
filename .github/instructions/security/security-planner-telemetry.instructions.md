@@ -1,5 +1,5 @@
 ---
-description: 'Security Planner telemetry overlay — applies telemetry-foundations vocabulary to security plan artifacts. Brought to you by microsoft/hve-core'
+description: 'Security Planner telemetry overlay: applies telemetry-foundations vocabulary to security plan artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 

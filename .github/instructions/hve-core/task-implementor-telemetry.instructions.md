@@ -1,5 +1,5 @@
 ---
-description: 'Task Implementor telemetry overlay — applies telemetry-foundations vocabulary to implementation change artifacts. Brought to you by microsoft/hve-core'
+description: 'Task Implementor telemetry overlay: applies telemetry-foundations vocabulary to implementation change artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/changes/**'
 ---
 

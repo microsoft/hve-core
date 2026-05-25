@@ -1,5 +1,5 @@
 ---
-description: 'RAI Planner telemetry overlay — applies telemetry-foundations vocabulary to RAI plan artifacts. Brought to you by microsoft/hve-core'
+description: 'RAI Planner telemetry overlay: applies telemetry-foundations vocabulary to RAI plan artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

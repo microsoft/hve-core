@@ -1,5 +1,5 @@
 ---
-description: 'PRD Builder telemetry overlay — applies telemetry-foundations vocabulary to PRD artifacts. Brought to you by microsoft/hve-core'
+description: 'PRD Builder telemetry overlay: applies telemetry-foundations vocabulary to PRD artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/prd-sessions/**'
 ---
 

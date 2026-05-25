@@ -1,5 +1,5 @@
 ---
-description: 'Code Review telemetry overlay — applies telemetry-foundations vocabulary to code-review report artifacts. Brought to you by microsoft/hve-core'
+description: 'Code Review telemetry overlay: applies telemetry-foundations vocabulary to code-review report artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/reviews/code-reviews/**'
 ---
 

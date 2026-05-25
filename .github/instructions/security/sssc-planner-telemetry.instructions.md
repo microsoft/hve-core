@@ -1,5 +1,5 @@
 ---
-description: 'SSSC Planner telemetry overlay — applies telemetry-foundations vocabulary to SSSC plan artifacts. Brought to you by microsoft/hve-core'
+description: 'SSSC Planner telemetry overlay: applies telemetry-foundations vocabulary to SSSC plan artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/sssc-plans/**'
 ---
 

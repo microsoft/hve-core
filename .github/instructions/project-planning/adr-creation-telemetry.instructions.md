@@ -1,5 +1,5 @@
 ---
-description: 'ADR Planner telemetry overlay — applies telemetry-foundations vocabulary to ADR artifacts. Brought to you by microsoft/hve-core'
+description: 'ADR Planner telemetry overlay: applies telemetry-foundations vocabulary to ADR artifacts. Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**'
 ---
 
