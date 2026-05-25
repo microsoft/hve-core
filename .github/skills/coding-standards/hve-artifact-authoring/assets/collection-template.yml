@@ -1,0 +1,16 @@
+id: collection-id
+name: Human-Readable Collection Name
+description: Purpose and scope of this collection
+tags:
+  - tag1
+  - tag2
+items:
+  - path: .github/agents/collection-id/agent-name.agent.md
+    kind: agent
+    maturity: stable
+  - path: .github/prompts/collection-id/prompt-name.prompt.md
+    kind: prompt
+  - path: .github/instructions/collection-id/instruction-name.instructions.md
+    kind: instruction
+  - path: .github/skills/collection-id/skill-name/SKILL.md
+    kind: skill
