@@ -160,6 +160,7 @@ Authoritative external sources:
 * [W3C Trace Context](https://www.w3.org/TR/trace-context/)
 * [OpenTelemetry Protocol (OTLP) Specification](https://opentelemetry.io/docs/specs/otlp/)
 * [OpenTelemetry Logs Data Model](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+* [OpenTelemetry FaaS Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/faas/)
 
 Portions adapted from OpenTelemetry Semantic Conventions, (C) OpenTelemetry Authors, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
@@ -169,3 +170,5 @@ Internal:
 * [references/proposed-additions.md](references/proposed-additions.md) - intake for new vocabulary proposals.
 
 > Brought to you by microsoft/hve-core
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
