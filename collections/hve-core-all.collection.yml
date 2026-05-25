@@ -573,7 +573,6 @@ items:
   kind: instruction
 - path: .github/skills/coding-standards/hve-artifact-authoring
   kind: skill
-  maturity: stable
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental

@@ -1,7 +1,7 @@
 ---
 name: hve-artifact-authoring
 description: >
-  Create, validate, and package AI artifacts for HVE Core — GitHub Copilot's prompt engineering
+  Create, validate, and package AI artifacts for HVE Core, GitHub Copilot's prompt engineering
   framework. Covers agents, prompts, instructions, skills, and collections with frontmatter
   contracts, naming conventions, collection packaging, subagent delegation, workspace state
   tracking, and CI validation pipelines. Use when building any markdown-based AI artifact that
