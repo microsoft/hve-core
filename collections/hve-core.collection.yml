@@ -108,5 +108,10 @@ items:
   # Skills
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  # Telemetry overlays
+  - path: .github/instructions/hve-core/task-implementor-telemetry.instructions.md
+    kind: instruction
 display:
   ordering: manual
