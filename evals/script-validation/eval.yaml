@@ -10,9 +10,7 @@ config:
   timeout: 120s
   executor: copilot-sdk
 
-environment:
-  skills:
-    - ../../.github/skills/coding-standards/python-foundational
+environment: coding-standards
 
 scoring:
   threshold: 0.7
