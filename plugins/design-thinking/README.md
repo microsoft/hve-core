@@ -22,12 +22,6 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **dt-coach**          | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy |
 | **dt-learning-tutor** | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing  |
 
-### Skills
-
-| Name           | Description                                                                                                             |
-|----------------|-------------------------------------------------------------------------------------------------------------------------|
-| **demo-setup** | Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype |
-
 ### Prompts
 
 | Name                                | Description                                                                                                                |
@@ -96,6 +90,12 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **design-thinking/dt-rpi-review-context**                | DT-aware Task Reviewer context: quality criteria for Design Thinking artifacts                                                                                                                                                                              |
 | **design-thinking/dt-subagent-handoff**                  | DT subagent handoff workflow: readiness assessment, artifact compilation, and handoff validation via subagent dispatch                                                                                                                                      |
 | **shared/hve-core-location**                             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+
+### Skills
+
+| Name           | Description                                                                                                             |
+|----------------|-------------------------------------------------------------------------------------------------------------------------|
+| **demo-setup** | Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

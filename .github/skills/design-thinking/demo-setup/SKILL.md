@@ -55,13 +55,13 @@ Run a demo with custom inputs:
 
 ## Inputs
 
-| Input | Required | Description |
-|---|---|---|
-| `customer` | Yes | Customer name or organization for the demo scenario |
-| `industry` | Yes | Industry vertical (field service, government, healthcare, manufacturing, energy) |
-| `persona` | No | End-user persona name and role. Generated from customer and industry context when omitted |
-| `problem` | No | Brief problem statement. Inferred from industry patterns when omitted |
-| `accelerated` | No | Whether to use accelerated DT method pacing for demo purposes. Defaults to `true` |
+| Input         | Required | Description                                                                               |
+|---------------|----------|-------------------------------------------------------------------------------------------|
+| `customer`    | Yes      | Customer name or organization for the demo scenario                                       |
+| `industry`    | Yes      | Industry vertical (field service, government, healthcare, manufacturing, energy)          |
+| `persona`     | No       | End-user persona name and role. Generated from customer and industry context when omitted |
+| `problem`     | No       | Brief problem statement. Inferred from industry patterns when omitted                     |
+| `accelerated` | No       | Whether to use accelerated DT method pacing for demo purposes. Defaults to `true`         |
 
 ## Customer Persona Brief Template
 
@@ -71,44 +71,44 @@ Save location: `.copilot-tracking/dt/{project-slug}/context/customer-persona-bri
 
 ### Organization Profile
 
-| Field | Description |
-|---|---|
-| Name | Organization name |
-| Industry | Industry vertical and sub-sector |
-| Size | Employee count and scale indicators |
-| Context | Business context, market position, and relevant operational details |
+| Field    | Description                                                         |
+|----------|---------------------------------------------------------------------|
+| Name     | Organization name                                                   |
+| Industry | Industry vertical and sub-sector                                    |
+| Size     | Employee count and scale indicators                                 |
+| Context  | Business context, market position, and relevant operational details |
 
 ### Persona Profile
 
-| Field | Description |
-|---|---|
-| Name | Full name of the persona |
-| Role | Job title and department |
-| Daily work | Typical workday activities and responsibilities |
-| Frustrations | Top 3 to 5 pain points in current workflow |
-| Goals | What success looks like for this person |
+| Field        | Description                                     |
+|--------------|-------------------------------------------------|
+| Name         | Full name of the persona                        |
+| Role         | Job title and department                        |
+| Daily work   | Typical workday activities and responsibilities |
+| Frustrations | Top 3 to 5 pain points in current workflow      |
+| Goals        | What success looks like for this person         |
 
 ### Problem Scenario
 
-| Field | Description |
-|---|---|
-| Specific situation | Concrete instance of the problem occurring |
-| Constraints | Budget, timeline, regulatory, or technical limitations |
-| Stakeholders affected | Who else feels the impact of this problem |
-| Existing workarounds | How the persona currently copes with the problem |
+| Field                 | Description                                            |
+|-----------------------|--------------------------------------------------------|
+| Specific situation    | Concrete instance of the problem occurring             |
+| Constraints           | Budget, timeline, regulatory, or technical limitations |
+| Stakeholders affected | Who else feels the impact of this problem              |
+| Existing workarounds  | How the persona currently copes with the problem       |
 
 ### Conversation Seeds
 
 Conversation seeds provide realistic customer responses that the DT Coach uses during simulated interactions. Each seed matches the coaching focus of its method.
 
-| Method | Seed Focus | Example Response Pattern |
-|---|---|---|
-| M1 Scope | What the customer says about their problem initially | Describes the pain point in their own words, mentions what prompted the conversation |
-| M2 Research | Daily workflow description and pain points | Walks through a typical day, highlights where things break down |
-| M3 Synthesis | Reactions to synthesized themes | Confirms or challenges pattern accuracy, adds nuance from their experience |
-| M4 Brainstorming | What excites and concerns them about ideas | Responds to feasibility, flags organizational constraints, identifies quick wins |
-| M5 Concepts | Feedback on visual concepts | Reacts to desirability, viability, and feasibility of proposed solutions |
-| M6 Lo-Fi | Reactions to paper prototypes | Points out usability friction, suggests workflow changes, identifies missing steps |
+| Method           | Seed Focus                                           | Example Response Pattern                                                             |
+|------------------|------------------------------------------------------|--------------------------------------------------------------------------------------|
+| M1 Scope         | What the customer says about their problem initially | Describes the pain point in their own words, mentions what prompted the conversation |
+| M2 Research      | Daily workflow description and pain points           | Walks through a typical day, highlights where things break down                      |
+| M3 Synthesis     | Reactions to synthesized themes                      | Confirms or challenges pattern accuracy, adds nuance from their experience           |
+| M4 Brainstorming | What excites and concerns them about ideas           | Responds to feasibility, flags organizational constraints, identifies quick wins     |
+| M5 Concepts      | Feedback on visual concepts                          | Reacts to desirability, viability, and feasibility of proposed solutions             |
+| M6 Lo-Fi         | Reactions to paper prototypes                        | Points out usability friction, suggests workflow changes, identifies missing steps   |
 
 ### Domain Vocabulary
 
@@ -118,14 +118,14 @@ Industry-specific terms the persona would naturally use in conversation. Include
 
 Follow the six-step workflow to set up a complete HVE Core demo. Each step builds on the previous one.
 
-| Step | Name | Purpose |
-|---|---|---|
-| 1 | Define Customer Scenario | Generate the customer context and persona brief from user inputs |
-| 2 | Initialize DT Coach Session | Create project structure and start the coaching session |
-| 3 | Guided DT Methods 1-6 | Accelerated coaching with simulated customer conversations |
-| 4 | Prototype Scaffold | Transition to Method 7 and generate the runnable prototype |
-| 5 | Demo Walkthrough Guide | Generate the presenter's guide and finalize the demo |
-| 6 | Demo Video Script | Generate a narrated video script for recording the demo |
+| Step | Name                        | Purpose                                                          |
+|------|-----------------------------|------------------------------------------------------------------|
+| 1    | Define Customer Scenario    | Generate the customer context and persona brief from user inputs |
+| 2    | Initialize DT Coach Session | Create project structure and start the coaching session          |
+| 3    | Guided DT Methods 1-6       | Accelerated coaching with simulated customer conversations       |
+| 4    | Prototype Scaffold          | Transition to Method 7 and generate the runnable prototype       |
+| 5    | Demo Walkthrough Guide      | Generate the presenter's guide and finalize the demo             |
+| 6    | Demo Video Script           | Generate a narrated video script for recording the demo          |
 
 ### Step 1: Define Customer Scenario
 
@@ -188,15 +188,15 @@ Transition to Method 7 and invoke the hifi-prototype skill for scaffold generati
 
 #### Hifi-Prototype Input Mapping
 
-| hifi-prototype Input | Source DT Artifact | Derivation |
-|---|---|---|
-| Hypothesis | M3 problem statement | Reframe as a testable prediction about user behavior |
-| Success criteria | M5 concept D/F/V assessment | Convert desirability, feasibility, and viability ratings into measurable conditions |
-| Stack preference | Always `html` | Default zero-install stack for demos |
-| Simulation needs | M2 constraint catalog and M6 usability notes | List components that cannot be built live and require fixtures |
-| Telemetry level | Always `basic` | Page views, clicks, and task timing for demo purposes |
-| Storage | Always `files` | Zero-dependency demo default; avoids database setup |
-| LLM provider | Always `none` | Demos use fixture data, not live LLM calls |
+| hifi-prototype Input | Source DT Artifact                           | Derivation                                                                          |
+|----------------------|----------------------------------------------|-------------------------------------------------------------------------------------|
+| Hypothesis           | M3 problem statement                         | Reframe as a testable prediction about user behavior                                |
+| Success criteria     | M5 concept D/F/V assessment                  | Convert desirability, feasibility, and viability ratings into measurable conditions |
+| Stack preference     | Always `html`                                | Default zero-install stack for demos                                                |
+| Simulation needs     | M2 constraint catalog and M6 usability notes | List components that cannot be built live and require fixtures                      |
+| Telemetry level      | Always `basic`                               | Page views, clicks, and task timing for demo purposes                               |
+| Storage              | Always `files`                               | Zero-dependency demo default; avoids database setup                                 |
+| LLM provider         | Always `none`                                | Demos use fixture data, not live LLM calls                                          |
 
 Checkpoint: prototype runs locally by opening `index.html` in a browser.
 
@@ -252,40 +252,40 @@ Every demo scaffold follows a fixed structure. The hifi-prototype skill generate
 
 ### Fixed Elements (same across all demos)
 
-| Element | Details |
-|---|---|
-| Experiment banner | Visible on every page with hypothesis text |
-| CSS reset | System fonts, 2-color palette, dashed borders, 44px touch targets |
-| Rough UI constraints | No shadows, gradients, or custom fonts |
-| Telemetry skeleton | Page views, clicks, task timing, session UUID |
-| `[SIMULATED]` badges | Applied to every mock component |
-| Experiment card | Hypothesis, success criteria, failure criteria, simulation inventory |
-| Demo video script | Narrated walkthrough with visual cues, timing, and production notes |
+| Element              | Details                                                              |
+|----------------------|----------------------------------------------------------------------|
+| Experiment banner    | Visible on every page with hypothesis text                           |
+| CSS reset            | System fonts, 2-color palette, dashed borders, 44px touch targets    |
+| Rough UI constraints | No shadows, gradients, or custom fonts                               |
+| Telemetry skeleton   | Page views, clicks, task timing, session UUID                        |
+| `[SIMULATED]` badges | Applied to every mock component                                      |
+| Experiment card      | Hypothesis, success criteria, failure criteria, simulation inventory |
+| Demo video script    | Narrated walkthrough with visual cues, timing, and production notes  |
 
 ### Variable Elements (customized per demo)
 
-| Element | Varies By |
-|---|---|
-| Accent color | Industry or customer brand association |
-| Layout | Screen count and workflow shape (1 to 5 screens max) |
-| Fixture schema | Domain-specific data structure in `sim/fixtures/` |
-| Domain terms | Industry vocabulary in labels, headings, and fixture data |
-| Hypothesis text | Derived from DT session Method 3 themes |
-| Success criteria | Derived from DT session Method 5 concepts |
+| Element          | Varies By                                                 |
+|------------------|-----------------------------------------------------------|
+| Accent color     | Industry or customer brand association                    |
+| Layout           | Screen count and workflow shape (1 to 5 screens max)      |
+| Fixture schema   | Domain-specific data structure in `sim/fixtures/`         |
+| Domain terms     | Industry vocabulary in labels, headings, and fixture data |
+| Hypothesis text  | Derived from DT session Method 3 themes                   |
+| Success criteria | Derived from DT session Method 5 concepts                 |
 
 ## Integration with HVE Core Tools
 
 Each step of the demo workflow showcases specific HVE Core tools and features.
 
-| Tool / Feature | Where Showcased | Demo Talking Point |
-|---|---|---|
-| DT Coach agent | Methods 1-6 coaching | AI-guided Design Thinking with structured method progression |
-| Customer persona brief | Step 1 scenario setup | Simulated customer conversations grounded in realistic personas |
-| Coaching state management | Session persistence across methods | Session recovery, method tracking, and artifact lineage |
-| hifi-prototype skill | Method 7 scaffold generation | Experiment-framed prototypes with hypothesis-driven development |
-| Experiment cards | Prototype setup | Every prototype starts with a falsifiable hypothesis |
-| Telemetry instrumentation | Prototype scaffold | Measurement built in from day one, not added later |
-| Canonical deck (optional) | Method 1, 3, and 5 snapshots | Visual summaries at scope, synthesis, and concept milestones |
+| Tool / Feature            | Where Showcased                    | Demo Talking Point                                              |
+|---------------------------|------------------------------------|-----------------------------------------------------------------|
+| DT Coach agent            | Methods 1-6 coaching               | AI-guided Design Thinking with structured method progression    |
+| Customer persona brief    | Step 1 scenario setup              | Simulated customer conversations grounded in realistic personas |
+| Coaching state management | Session persistence across methods | Session recovery, method tracking, and artifact lineage         |
+| hifi-prototype skill      | Method 7 scaffold generation       | Experiment-framed prototypes with hypothesis-driven development |
+| Experiment cards          | Prototype setup                    | Every prototype starts with a falsifiable hypothesis            |
+| Telemetry instrumentation | Prototype scaffold                 | Measurement built in from day one, not added later              |
+| Canonical deck (optional) | Method 1, 3, and 5 snapshots       | Visual summaries at scope, synthesis, and concept milestones    |
 
 ## Validation
 
@@ -302,16 +302,16 @@ Each step of the demo workflow showcases specific HVE Core tools and features.
 
 ## Troubleshooting
 
-| Issue | Cause | Solution |
-|---|---|---|
-| Persona brief feels generic | Insufficient industry context provided | Add specific domain vocabulary and 3 to 5 concrete workflow details to the inputs |
-| DT Coach exits accelerated mode | Coaching state missing `session_mode: demo` | Verify coaching-state.md has `session_mode: demo` under the project block in Step 2 |
-| Prototype scaffold missing telemetry | hifi-prototype skill not invoked correctly | Ensure the experiment card is complete before triggering Method 7 transition |
-| Audience confuses demo with real product | Missing simulation labels | Every mock component requires a visible `[SIMULATED]` badge; check the validation list |
-| Demo takes too long to present | Full coaching mode active | Set `accelerated` input to `true` (default) for 2 to 3 exchanges per method |
-| Fixture data does not match domain | Conversation seeds missing domain vocabulary | Update the Domain Vocabulary section of the persona brief before starting the session |
-| Demo video script too long | Too many prototype screens narrated | Limit prototype demo to 2 to 3 key screens; reference additional screens briefly without full narration |
-| Video script feels disconnected from prototype | Script written before scaffold finalized | Generate the video script after Step 5 completes so all prototype screens and the README are available as source material |
+| Issue                                          | Cause                                        | Solution                                                                                                                  |
+|------------------------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| Persona brief feels generic                    | Insufficient industry context provided       | Add specific domain vocabulary and 3 to 5 concrete workflow details to the inputs                                         |
+| DT Coach exits accelerated mode                | Coaching state missing `session_mode: demo`  | Verify coaching-state.md has `session_mode: demo` under the project block in Step 2                                       |
+| Prototype scaffold missing telemetry           | hifi-prototype skill not invoked correctly   | Ensure the experiment card is complete before triggering Method 7 transition                                              |
+| Audience confuses demo with real product       | Missing simulation labels                    | Every mock component requires a visible `[SIMULATED]` badge; check the validation list                                    |
+| Demo takes too long to present                 | Full coaching mode active                    | Set `accelerated` input to `true` (default) for 2 to 3 exchanges per method                                               |
+| Fixture data does not match domain             | Conversation seeds missing domain vocabulary | Update the Domain Vocabulary section of the persona brief before starting the session                                     |
+| Demo video script too long                     | Too many prototype screens narrated          | Limit prototype demo to 2 to 3 key screens; reference additional screens briefly without full narration                   |
+| Video script feels disconnected from prototype | Script written before scaffold finalized     | Generate the video script after Step 5 completes so all prototype screens and the README are available as source material |
 
 ## Demo Video Script Template
 
