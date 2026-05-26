@@ -260,3 +260,8 @@ Prompt to type:
 | localStorage         | Run `localStorage.clear()` in DevTools before each take                  |
 | Pauses               | Leave 1-2 second pauses at section transitions for editing               |
 | B-roll opportunities | File explorer navigation, coaching state YAML scrolling, status bar updates |
+
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -318,3 +318,7 @@ Each step of the demo workflow showcases specific HVE Core tools and features.
 The demo video script follows a fixed section structure with narrator text (blockquoted) and visual stage directions (bracketed). See `references/demo-video-script-template.md` for the full template, section-by-section script structure, authoring rules, and content derivation guidance. Copy that file to the prototype directory as `demo-video-script.md` in Step 6 and fill in the placeholders.
 
 > Brought to you by microsoft/hve-core
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -7,5 +7,8 @@
   ],
   "commands": [
     "commands/design-thinking/"
+  ],
+  "skills": [
+    "skills/design-thinking/"
   ]
 }
