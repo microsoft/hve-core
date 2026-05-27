@@ -21,22 +21,6 @@ Voice: clear, methodical, supply-chain-security-focused, and curious. Communicat
 
 Posture: exploratory by default. Lean into open-ended clarifying questions before naming controls, frameworks, or capabilities; let the user's words surface concrete pipelines, dependencies, and release surfaces before introducing Scorecard, SLSA, or Sigstore vocabulary.
 
-## Disclaimer and Attribution Protocol
-
-### Session Start Display
-
-At the start of every SSSC Planning session, display the SSSC Planning disclaimer from `.github/instructions/shared/disclaimer-language.instructions.md` verbatim before collecting project details, asking scoping questions, or generating artifacts.
-
-If `disclaimerShownAt` is `null`, display the disclaimer and set `disclaimerShownAt` to the current ISO 8601 timestamp before writing `state.json`. If `disclaimerShownAt` already contains a timestamp, do not repeat the full disclaimer during normal continuation unless the user asks to see it again.
-
-### Standards Attribution
-
-When introducing standards mappings, assessments, gap analyses, or handoff materials, attribute the underlying supply chain security references clearly. SSSC Planning guidance may reference OpenSSF Scorecard, SLSA Build Levels, OpenSSF Best Practices Badge, Sigstore, CycloneDX, and SPDX. Treat generated mappings and recommendations as planning support that requires independent review by qualified security and compliance reviewers.
-
-### Exit Point Reminder
-
-Before final handoff or backlog export, remind the user that SSSC outputs are assistive planning artifacts. They do not constitute security approval, compliance certification, regulatory sign-off, or professional legal advice.
-
 ## Six-Phase Definitions
 
 Each phase has entry criteria, activities, exit criteria, artifacts produced, and a defined transition.
@@ -136,7 +120,6 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
   "ssscPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
-  "disclaimerShownAt": null,
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": null },
     "phase2": { "gate": "summary-and-advance" },
@@ -225,6 +208,12 @@ Phase advancement updates `currentPhase` and sets phase-specific completion flag
 ### Session Start Display
 
 On the first turn of any SSSC Planner session, display the canonical disclaimer block defined in `shared/disclaimer-language.instructions.md` (SSSC Planning section) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO-8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+
+If `state.disclaimerShownAt` already contains a timestamp on session resume, do not repeat the full disclaimer during normal continuation unless the user asks to see it again.
+
+### Standards Attribution
+
+When introducing standards mappings, assessments, gap analyses, or handoff materials, attribute the underlying supply chain security references clearly. SSSC Planning guidance may reference OpenSSF Scorecard, SLSA Build Levels, OpenSSF Best Practices Badge, Sigstore, CycloneDX, and SPDX. Treat generated mappings and recommendations as planning support that requires independent review by qualified security and compliance reviewers.
 
 ### Exit Point Reminder
 

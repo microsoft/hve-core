@@ -13,9 +13,7 @@ Display the SSSC Planning CAUTION block from #file:../../instructions/shared/dis
 
 After the disclaimer, display the framework attribution `OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM`. Display both the disclaimer and the attribution before any questions or analysis.
 
-Activate the SSSC Planner in **from-brd mode** to bootstrap a supply chain security assessment from existing business requirements documents.
-
-Activate the SSSC Planner in **from-brd mode** for project slug `${input:project-slug}`.
+Activate the SSSC Planner in **from-brd mode** for project slug `${input:project-slug}` to bootstrap a supply chain security assessment from existing business requirements documents.
 
 ## Inputs
 

@@ -13,9 +13,7 @@ Display the SSSC Planning CAUTION block from #file:../../instructions/shared/dis
 
 After the disclaimer, display the framework attribution `OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM`. Display both the disclaimer and the attribution before any questions or analysis.
 
-Activate the SSSC Planner in **from-security-plan mode** to extend an existing Security Planner assessment with supply chain security coverage.
-
-Activate the SSSC Planner in **from-security-plan mode** for project slug `${input:project-slug}`.
+Activate the SSSC Planner in **from-security-plan mode** for project slug `${input:project-slug}` to extend an existing Security Planner assessment with supply chain security coverage.
 
 ## Inputs
 
