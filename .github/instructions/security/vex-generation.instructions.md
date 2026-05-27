@@ -9,76 +9,26 @@ Rules governing AI-assisted VEX document generation. Agents producing or editing
 must follow these instructions. For OpenVEX schema details, see the
 `openvex-spec` skill at `.github/skills/security/openvex-spec/SKILL.md`.
 
-## Evidence requirements
+## Evidence requirements, confidence routing, and forbidden transitions
 
-Every VEX status determination must be supported by evidence proportional to its assertion
-strength. Stronger assertions (especially `not_affected`) require stronger evidence.
+The canonical definitions for justification codes, evidence requirements per status,
+confidence-routing bands, and forbidden transitions live in the `openvex-spec` skill reference:
+`.github/skills/security/openvex-spec/references/vex-status-logic.md`.
 
-### not_affected
+Agents must follow the decision tree, evidence thresholds, and band routing defined in that
+reference. The behavioral rules below supplement that reference with agent-specific constraints.
 
-Requires at least one of:
+### Agent behavioral rules
 
-* Code citation: file path and line range demonstrating the vulnerable function is unreachable
-  (no import path, dead code, or excluded by build configuration).
-* Mitigation reference: specific control or configuration that prevents exploitation, with
-  explanation of why it cannot be bypassed.
-
-The justification code must match the evidence type:
-
-| Evidence type              | Justification code                                    |
-|----------------------------|-------------------------------------------------------|
-| Component absent from tree | `component_not_present`                               |
-| Code excluded at build     | `vulnerable_code_not_present`                         |
-| No runtime call path       | `vulnerable_code_not_in_execute_path`                 |
-| Input not attacker-controlled | `vulnerable_code_cannot_be_controlled_by_adversary` |
-| Built-in mitigation        | `inline_mitigations_already_exist`                    |
-
-### affected
-
-Requires:
-
-* Reachable execution path or runtime invocation evidence demonstrating the vulnerable code is
-  exercised.
-* An `action_statement` describing recommended remediation or mitigation steps.
-
-### fixed
-
-Requires:
-
-* Version reference identifying the release where the fix was applied.
-* Dependency update reference, patch citation, or commit hash.
-
-### under_investigation
-
-* No evidence required. This is the safe default for uncertain cases.
-* Include `status_notes` describing what is being investigated.
-
-## Confidence-routing rules
-
-The agent must classify each finding into exactly one confidence band before drafting a VEX
-statement. The band determines what the agent is allowed to draft.
-
-| Band              | Criteria                                                                                                   | Agent action                                                                              | Human action                                    |
-|-------------------|------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|-------------------------------------------------|
-| High not_affected | Vulnerable symbol provably unreachable (no import path, dead code, or guarded by mitigation)               | Draft `not_affected` with justification code and code citations                           | Approve PR (skim evidence)                      |
-| High affected     | Vulnerable symbol on a reachable execution path                                                            | Draft `affected` with link to remediation issue                                           | Approve PR and triage remediation               |
-| Medium            | Symbol reachable in some configurations but ambiguous (feature flags, optional codepaths, runtime conditionals) | Draft `under_investigation` with structured questions for human reviewer                  | Decide final status, edit PR                    |
-| Low               | Cannot determine reachability (closed-source dep, dynamic dispatch, native code)                           | Draft `under_investigation` only. **Forbidden** from drafting `not_affected`.             | Manual analysis, may downgrade                  |
-| Vendor-disputed   | OSV/NVD shows dispute or CVSS < 4.0 with no known exploit                                                 | Draft `under_investigation` with `status_notes` recording the dispute source and CVSS rationale | Review dispute evidence, decide final status    |
-
-## Forbidden transitions
-
-These transitions are never permitted regardless of context.
-
-| From state              | To state       | Reason                                                               |
-|-------------------------|----------------|----------------------------------------------------------------------|
-| Unknown reachability    | `not_affected` | Cannot assert non-exploitability without reachability evidence.      |
-| Unknown reachability    | `affected`     | Cannot assert exploitability without reachability evidence.          |
-| No analysis performed   | `not_affected` | Absence of evidence is not evidence of absence.                      |
-| No analysis performed   | `affected`     | Vulnerability presence alone does not confirm exploitability.        |
-
-**Default rule**: when reachability or exploitability is uncertain, the only valid status is
-`under_investigation`.
+* Every VEX status determination must be supported by evidence proportional to its assertion
+  strength. Stronger assertions (especially `not_affected`) require stronger evidence.
+* The agent must classify each finding into exactly one confidence band before drafting a VEX
+  statement.
+* When reachability or exploitability is uncertain, the only valid status is
+  `under_investigation`.
+* The agent is **forbidden** from drafting `not_affected` in the Low confidence band.
+* In the Medium and Low bands, the agent must include structured questions for the human
+  reviewer.
 
 ## Author-of-record contract
 
