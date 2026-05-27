@@ -1,6 +1,6 @@
 ---
 description: "VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage - Brought to you by microsoft/hve-core"
-applyTo: '**/.github/agents/security/vex-*.agent.md, **/.github/agents/security/subagents/cve-*.agent.md'
+applyTo: '.github/agents/security/vex-*.agent.md, .github/agents/security/subagents/cve-*.agent.md'
 ---
 
 # VEX Generation Instructions
