@@ -103,3 +103,8 @@ VEX statuses evolve over time as investigation progresses. Typical progressions:
 
 Each status change produces a new VEX statement with an updated timestamp. Previous statements
 remain valid for their point in time; the latest statement takes precedence.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
+
