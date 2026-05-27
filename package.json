@@ -77,7 +77,8 @@
     "undici": "7.24.1",
     "uuid": "14.0.0",
     "yaml": "2.8.3",
-    "yauzl": "3.2.1"
+    "yauzl": "3.2.1",
+    "tmp": "0.2.7"
   },
   "repository": {
     "type": "git",
