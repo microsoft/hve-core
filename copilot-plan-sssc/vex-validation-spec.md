@@ -70,34 +70,34 @@ Companion to the implementation plan at `.copilot-tracking/plans/2026-04-29/vex-
 
 ### P2-SKILL: OpenVEX Spec Skill
 
-- [ ] `SKILL.md` exists at `.github/skills/security/openvex-spec/SKILL.md`
-- [ ] Has valid YAML frontmatter with `name: openvex-spec`, `description`, `license`, `user-invocable: false`, and `metadata` block
-- [ ] Lists normative references pointing to files in `references/` subdirectory
-- [ ] References directory contains:
+- [x] `SKILL.md` exists at `.github/skills/security/openvex-spec/SKILL.md`
+- [x] Has valid YAML frontmatter with `name: openvex-spec`, `description`, `license`, `user-invocable: false`, and `metadata` block
+- [x] Lists normative references pointing to files in `references/` subdirectory
+- [x] References directory contains:
   - `openvex-schema.md` — JSON schema reference with field definitions
   - `vex-status-logic.md` — Status determination decision tree
   - `cve-data-sources.md` — OSV.dev, NVD, GHSA API references with licensing
-- [ ] Each reference file has valid YAML frontmatter
+- [x] Each reference file has valid YAML frontmatter
 
 ### P2-INSTRUCTIONS: VEX Generation
 
-- [ ] File exists at `.github/instructions/security/vex-generation.instructions.md`
-- [ ] Has valid YAML frontmatter with `description` and `applyTo` fields
-- [ ] Contains evidence requirements per VEX status:
+- [x] File exists at `.github/instructions/security/vex-generation.instructions.md`
+- [x] Has valid YAML frontmatter with `description` and `applyTo` fields
+- [x] Contains evidence requirements per VEX status:
   - `not_affected`: requires code citation (file + line range) or mitigation reference
   - `affected`: requires reachable execution path or runtime invocation evidence
   - `under_investigation`: no evidence required (safe default)
   - `fixed`: requires version reference where fix was applied
-- [ ] Contains confidence-routing rules matching Phase 1 instructions
-- [ ] Contains forbidden transitions matching Phase 1 instructions
-- [ ] Contains report template sections (executive summary, technical report, OpenVEX JSON)
-- [ ] Contains licensing posture matching Phase 1 instructions
+- [x] Contains confidence-routing rules matching Phase 1 instructions
+- [x] Contains forbidden transitions matching Phase 1 instructions
+- [x] Contains report template sections (executive summary, technical report, OpenVEX JSON)
+- [x] Contains licensing posture matching Phase 1 instructions
 
 ### P2-VALIDATE: Automated Checks
 
-- [ ] `npm run validate:skills` passes (skill structure valid)
-- [ ] `npm run lint:md` passes
-- [ ] `npm run lint:frontmatter` passes
+- [x] `npm run validate:skills` passes (skill structure valid)
+- [x] `npm run lint:md` passes
+- [x] `npm run lint:frontmatter` passes
 
 ## Phase 3: VEX Agent + Subagent
 
