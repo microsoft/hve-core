@@ -1,0 +1,91 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+#
+# evaluate.yml
+# Run Vally evaluation suites on PRs that touch evals, skills, agents, or collections.
+# Gated behind vars.EVAL_ENABLED repository variable for cost control.
+
+name: Evaluate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+    paths:
+      - 'evals/**'
+      - '.vally.yaml'
+      - '.github/skills/**'
+      - '.github/agents/**'
+      - 'collections/**'
+      - 'plugins/**'
+      - '.github/workflows/evaluate.yml'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Suite to run (empty for all)'
+        required: false
+        type: string
+      runs:
+        description: 'Number of eval runs'
+        required: false
+        type: number
+        default: 3
+
+concurrency:
+  group: evaluate-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Run Evaluations
+    runs-on: ubuntu-latest
+    if: |
+      vars.EVAL_ENABLED == 'true' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 120
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Vally CLI
+        run: npx vally --version
+
+      - name: Run evaluations
+        env:
+          GITHUB_TOKEN: ${{ secrets.COPILOT_EVAL_TOKEN }}
+          EVAL_SUITE: ${{ inputs.suite }}
+          EVAL_RUNS: ${{ inputs.runs || '3' }}
+        run: |
+          ARGS="--runs $EVAL_RUNS --workers 5 --threshold 0 --junit"
+          if [ -n "$EVAL_SUITE" ]; then
+            ARGS="--suite $EVAL_SUITE $ARGS"
+          fi
+          npx vally eval $ARGS
+
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-results-${{ github.run_id }}
+          path: evals/results/
+          retention-days: 30
+          if-no-files-found: warn
