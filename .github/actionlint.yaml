@@ -10,6 +10,7 @@ self-hosted-runner:
 # HVE_DEVCONTAINER_IMAGE and HVE_GITHUB_API_URL are environment variables
 # consumed at runtime, not GitHub configuration variables.
 config-variables:
+  - EVAL_ENABLED
   - GH_AW_MODEL_AGENT_COPILOT
   - GH_AW_MODEL_DETECTION_COPILOT
   - HVE_GITHUB_RELEASES_URL

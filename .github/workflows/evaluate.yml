@@ -75,11 +75,11 @@ jobs:
           EVAL_SUITE: ${{ inputs.suite }}
           EVAL_RUNS: ${{ inputs.runs || '3' }}
         run: |
-          ARGS="--runs $EVAL_RUNS --workers 5 --threshold 0 --junit"
+          set -- --runs "$EVAL_RUNS" --workers 5 --threshold 0 --junit
           if [ -n "$EVAL_SUITE" ]; then
-            ARGS="--suite $EVAL_SUITE $ARGS"
+            set -- --suite "$EVAL_SUITE" "$@"
           fi
-          npx vally eval $ARGS
+          npx vally eval "$@"
 
       - name: Upload eval results
         if: always()
