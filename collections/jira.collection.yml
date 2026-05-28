@@ -13,6 +13,8 @@ items:
   - path: .github/agents/jira/jira-prd-to-wit.agent.md
     kind: agent
   # Prompts
+  - path: .github/prompts/jira/jira-setup.prompt.md
+    kind: prompt
   - path: .github/prompts/jira/jira-discover-issues.prompt.md
     kind: prompt
   - path: .github/prompts/jira/jira-execute-backlog.prompt.md

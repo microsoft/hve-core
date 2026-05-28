@@ -63,6 +63,7 @@ copilot plugin install jira@hve-core
 
 | Command              | Description                                                                                                                                 |
 |----------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| jira-setup           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                   |
 | jira-discover-issues | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review |
 | jira-execute-backlog | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                              |
 | jira-prd-to-wit      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                 |

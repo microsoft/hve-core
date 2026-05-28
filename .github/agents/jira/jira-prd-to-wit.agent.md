@@ -38,6 +38,7 @@ PRD artifacts include:
 
 Plan Jira issue structures that can be executed later by Jira backlog workflows.
 
+* Before any Jira command, confirm `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are set. If missing, source `~/.jira.env` when it exists. If credentials are still missing after sourcing, read and follow the [jira-setup prompt](../../prompts/jira/jira-setup.prompt.md) inline to configure them before proceeding.
 * Discover issue types and required create fields with `.github/skills/jira/jira/scripts/jira.py fields <PROJECT-KEY>` before finalizing create payloads.
 * Prefer Epic, Story, Task, Bug, and Sub-task only when the target Jira project supports them.
 * Keep the output planning-only. Do not call Jira mutation commands such as `create`, `update`, `transition`, or `comment` from this agent.
@@ -86,6 +87,8 @@ Phase completion: Summarize the hierarchy updates in conversation, then proceed 
 Key Tools: execute/runInTerminal, file_search, grep_search, list_dir, read_file
 
 Planning Files: planning-log.md, artifact-analysis.md, issues-plan.md
+
+Verify Jira credentials per Jira Planning Scope before proceeding.
 
 Actions:
 
