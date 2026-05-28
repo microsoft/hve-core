@@ -16,6 +16,11 @@ items:
     kind: agent
     maturity: preview
 
+  # Skills
+  - path: .github/skills/design-thinking/lofi-image-prompts
+    kind: skill
+    maturity: preview
+
   # Prompts
   - path: .github/prompts/design-thinking/dt-start-project.prompt.md
     kind: prompt

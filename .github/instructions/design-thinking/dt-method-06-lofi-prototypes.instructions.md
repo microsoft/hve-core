@@ -100,6 +100,8 @@ Coaching hat: Prototype Builder.
 
 Build scrappy prototypes using selected formats. Enforce deliberate roughness and single-assumption focus.
 
+For visual prototype generation (storyboards, scene sketches, annotated concepts), load the `lofi-image-prompts` skill which provides parameterized pencil-sketch prompt templates with 6-layer style enforcement.
+
 Activities:
 
 * Build prototypes using selected formats.

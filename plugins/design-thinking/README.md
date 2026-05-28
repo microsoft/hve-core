@@ -175,6 +175,12 @@ copilot plugin install design-thinking@hve-core
 | dt-curriculum-scenario-manufacturing.instructions | Manufacturing reference scenario for DT learning - factory floor improvement project used across all 9 curriculum modules                                                                                                                                   |
 | hve-core-location.instructions                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
+## Skills
+
+| Skill              | Description                                                                                                                                                    |
+|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| lofi-image-prompts | Pencil-sketch storyboard prompt templates for DT Method 6 lo-fi prototype visualization - Brought to you by microsoft/hve-core                                 |
+
 ---
 
 > Source: [microsoft/hve-core](https://github.com/microsoft/hve-core)
