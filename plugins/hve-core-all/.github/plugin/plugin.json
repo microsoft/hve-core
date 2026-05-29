@@ -31,6 +31,7 @@
     "commands/security/"
   ],
   "skills": [
+    "skills/accessibility/",
     "skills/coding-standards/",
     "skills/experimental/",
     "skills/github/",

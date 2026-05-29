@@ -73,4 +73,15 @@ Create architecture decision records, requirements documents, and diagrams - all
 | **shared/hve-core-location**             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | **shared/story-quality**                 | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 
+### Skills
+
+| Name                  | Description                                                                                                                              |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **aria-apg**          | WAI-ARIA Authoring Practices Guide (APG) design pattern knowledge base for accessibility assessment                                      |
+| **backlog-templates** | Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, and Accessibility planners |
+| **coga**              | W3C Making Content Usable for People with Cognitive and Learning Disabilities (COGA) knowledge base for accessibility assessment         |
+| **en-301-549**        | European EN 301 549 V3.2.1 ICT Accessibility Standard knowledge base for accessibility assessment                                        |
+| **section-508**       | US Section 508 ICT Accessibility Standards (revised 2017) knowledge base for accessibility assessment                                    |
+| **wcag-22**           | WCAG 2.2 success criteria knowledge base for accessibility assessment                                                                    |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->

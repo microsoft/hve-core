@@ -154,5 +154,24 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/accessibility/wcag-22
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/aria-apg
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/coga
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/section-508
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/accessibility/en-301-549
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/shared/backlog-templates
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual
