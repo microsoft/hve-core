@@ -85,9 +85,10 @@ For each dependency change, verify:
 
 This workflow does not approve PRs. GitHub Actions identities are not permitted
 to approve pull requests, and human merge approval should remain explicit.
-Choose between two verdicts:
+Choose between two verdicts, reserving `REQUEST_CHANGES` for true blockers so the
+bot never blocks a PR that only needs human eyes.
 
-**`COMMENT`** when ALL of these are true:
+**`COMMENT`** (clean confirmation) when ALL of these are true:
 
 * The change is a patch or minor version bump.
 * License compatibility is maintained.
@@ -98,15 +99,25 @@ Choose between two verdicts:
 The review body should briefly confirm that safety checks passed so the human
 reviewer can merge with confidence.
 
-**`REQUEST_CHANGES`** when ANY of these are true:
+**`COMMENT`** (flag for human attention, do not block) when ANY of these are
+true:
 
 * The change is a major version bump (breaking changes require human review).
+* The changelog mentions breaking changes or deprecations.
+* A license change is detected and appears permissive.
+* Environment synchronization between `.devcontainer/` and
+  `copilot-setup-steps.yml` needs verification.
+
+Call out the specific signal(s) in the review body so the human reviewer knows
+where to focus.
+
+**`REQUEST_CHANGES`** when ANY of these are true:
+
 * The dependency introduces a license incompatible with MIT.
 * SHA pinning is missing for a GitHub Actions reference.
 * A clear environment synchronization violation between `.devcontainer/` and
   `copilot-setup-steps.yml` exists.
-* The changelog mentions breaking changes or deprecations.
-* A license change is detected and needs human confirmation.
+* Dependabot reports a known vulnerability the bump fails to resolve.
 
 State the specific finding(s) and the action required to resolve them in the
 review body or inline comments.
@@ -127,7 +138,7 @@ Use inline `create-pull-request-review-comment` for findings tied to specific li
 
 * Only process PRs authored by `dependabot[bot]`.
 * Do not duplicate vulnerability scanning already done by Dependabot or CodeQL.
-* Do not approve PRs. Do not merge the PR.
+* Never approve or merge the PR; humans remain the merge gate.
 * Maximum 5 inline review comments.
 * Keep review comments actionable and specific.
 
