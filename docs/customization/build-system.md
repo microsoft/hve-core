@@ -15,16 +15,18 @@ estimated_reading_time: 8
 
 ## Plugin Generation Pipeline
 
-The plugin generation pipeline transforms collection manifests into distributable plugin
-output. It runs in three stages:
+The plugin generation pipeline transforms `collections/core-manifest.yml` into generated collection manifests and distributable plugin output. It runs in four stages:
 
-1. `Generate-Plugins.ps1` reads each `collections/*.collection.yml` manifest and produces
-   output files under `plugins/`. Each collection gets its own subdirectory
-   (e.g., `plugins/hve-core/`, `plugins/ado/`).
+1. `Generate-CollectionManifests.ps1` reads `collections/core-manifest.yml` and regenerates
+   each `collections/*.collection.yml` manifest.
 
-2. `lint:md:fix` applies markdownlint auto-fixes to generated markdown files.
+2. `Generate-Plugins.ps1` reads the generated collection manifests and produces output files
+   under `plugins/`. Each collection gets its own subdirectory (e.g., `plugins/hve-core/`,
+   `plugins/ado/`).
 
-3. `format:tables` aligns markdown table columns in generated output.
+3. `lint:md:fix` applies markdownlint auto-fixes to generated markdown files.
+
+4. `format:tables` aligns markdown table columns in generated output.
 
 Run the full pipeline with a single command:
 
@@ -33,8 +35,8 @@ npm run plugin:generate
 ```
 
 > [!IMPORTANT]
-> Files under `plugins/` are generated output. Do not edit them directly.
-> Changes made to plugin files are overwritten on the next generation run.
+> Files under `collections/*.collection.yml` and `plugins/` are generated output. Do not edit
+> them directly. Changes made to those files are overwritten on the next generation run.
 
 ## Schema Validation System
 

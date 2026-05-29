@@ -224,18 +224,20 @@ This example demonstrates a skill incorporating third-party content with provena
 
 ## Collection Entry Requirements
 
-All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+All distributed skills must have matching entries in `collections/core-manifest.yml`. Canonical manifest entries control distribution and maturity.
 
 ### Adding Your Skill to a Collection
 
-After creating your skill package, add an `items[]` entry in each target collection manifest:
+After creating your skill package, add an entry under `skills` in `collections/core-manifest.yml` and list each target collection:
 
 ```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/skills/{collection-id}/my-skill
-    kind: skill
+skills:
+  .github/skills/{collection-id}/my-skill:
+    path: .github/skills/{collection-id}/my-skill
     maturity: stable
+    collections:
+      - {collection-id}
+      - hve-core-all
 ```
 
 ### Selecting Collections for Skills
