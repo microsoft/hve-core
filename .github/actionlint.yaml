@@ -27,5 +27,3 @@ paths:
       - "shellcheck reported issue in this script: SC2016:.+"
       - "shellcheck reported issue in this script: SC2086:.+"
       - "shellcheck reported issue in this script: SC2129:.+"
-      # gh-aw emits `concurrency.queue`; actionlint <=1.7.12 rejects it. Remove once upstream lands rhysd/actionlint#654.
-      - 'unexpected key "queue" for "concurrency" section\..+'
