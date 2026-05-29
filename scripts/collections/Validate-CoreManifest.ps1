@@ -94,7 +94,7 @@ function Invoke-CoreManifestValidation {
     }
 
     $collectionsSection = Get-CoreManifestProperty -InputObject $manifest -Name 'collections'
-    $collectionIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $collectionIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($collectionId in (Get-CoreManifestKeys -InputObject $collectionsSection)) {
         [void]$collectionIds.Add($collectionId)
     }
@@ -104,12 +104,12 @@ function Invoke-CoreManifestValidation {
     }
 
     $knownAgentNames = @(Get-CoreManifestAgentDisplayNames -RepoRoot $RepoRoot)
-    $discoveredArtifacts = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $discoveredArtifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($discoveredArtifact in (Get-CoreManifestArtifactFiles -RepoRoot $RepoRoot)) {
         [void]$discoveredArtifacts.Add($discoveredArtifact)
     }
 
-    foreach ($sectionName in @('agents', 'prompts', 'instructions', 'skills')) {
+    foreach ($sectionName in (Get-CoreManifestArtifactSectionNames)) {
         $section = Get-CoreManifestProperty -InputObject $manifest -Name $sectionName
         $artifactPaths = Get-CoreManifestKeys -InputObject $section
 
@@ -177,20 +177,122 @@ function Invoke-CoreManifestValidation {
                 Add-Error "$sectionName entry '$artifactKey' path '$entryPath' does not exist."
             }
 
-            if ($allowMissing -and (Test-Path -Path $absoluteArtifactPath)) {
-                Add-Warning "$sectionName entry '$artifactKey' is marked removed but still exists on disk."
-            }
-
             if (-not $allowMissing -and $discoveredArtifacts.Count -gt 0 -and -not $discoveredArtifacts.Contains($normalizedEntryPath)) {
                 Add-Warning "$sectionName entry '$artifactKey' path '$entryPath' was not found by artifact discovery."
             }
 
+            $sourceFile = if ($sectionName -eq 'skills') {
+                Join-Path -Path $absoluteArtifactPath -ChildPath 'SKILL.md'
+            }
+            else {
+                $absoluteArtifactPath
+            }
+
             $artifactEntries[$normalizedEntryPath] = @{
-                Section    = $sectionName
-                Maturity   = $entryMaturity
+                Section     = $sectionName
+                Maturity    = $entryMaturity
                 Collections = @($nonEmptyCollections)
+                Entry       = $entry
+                SourceFile  = $sourceFile
             }
         }
+    }
+
+    $maturityMap = Get-CoreManifestMaturityMap -Manifest $manifest
+    $agentNameIndex = Get-CoreManifestAgentNameIndex -RepoRoot $RepoRoot
+    $maturityViolations = [System.Collections.Generic.List[hashtable]]::new()
+
+    foreach ($sourcePath in $artifactEntries.Keys) {
+        $sourceMetadata = $artifactEntries[$sourcePath]
+        $sourceRank = Get-CoreManifestMaturityRank -Maturity $sourceMetadata.Maturity
+        if ($null -eq $sourceRank) {
+            continue
+        }
+
+        $edges = [System.Collections.Generic.List[hashtable]]::new()
+        $sourceEntry = $sourceMetadata.Entry
+
+        $requires = Get-CoreManifestProperty -InputObject $sourceEntry -Name 'requires'
+        if ($null -ne $requires) {
+            $requiredAgents = Get-CoreManifestProperty -InputObject $requires -Name 'agents'
+            foreach ($agentReference in @($requiredAgents)) {
+                if ([string]::IsNullOrWhiteSpace([string]$agentReference)) {
+                    continue
+                }
+
+                $target = Resolve-CoreManifestReferenceTarget -Reference ([string]$agentReference) -ReferenceKind 'agent' -AgentNameIndex $agentNameIndex -MaturityMap $maturityMap
+                if (-not [string]::IsNullOrWhiteSpace($target)) {
+                    $edges.Add(@{ Target = $target; EdgeType = 'requires' })
+                }
+            }
+        }
+
+        $handoffs = Get-CoreManifestProperty -InputObject $sourceEntry -Name 'handoffs'
+        foreach ($handoff in @($handoffs)) {
+            if ($null -eq $handoff) {
+                continue
+            }
+
+            $handoffAgent = Get-CoreManifestProperty -InputObject $handoff -Name 'agent'
+            if (-not [string]::IsNullOrWhiteSpace([string]$handoffAgent)) {
+                $target = Resolve-CoreManifestReferenceTarget -Reference ([string]$handoffAgent) -ReferenceKind 'agent' -AgentNameIndex $agentNameIndex -MaturityMap $maturityMap
+                if (-not [string]::IsNullOrWhiteSpace($target)) {
+                    $edges.Add(@{ Target = $target; EdgeType = 'handoff-agent' })
+                }
+            }
+
+            $handoffPrompt = Get-CoreManifestProperty -InputObject $handoff -Name 'prompt'
+            if (-not [string]::IsNullOrWhiteSpace([string]$handoffPrompt) -and ([string]$handoffPrompt).Trim().StartsWith('/')) {
+                $target = Resolve-CoreManifestReferenceTarget -Reference ([string]$handoffPrompt) -ReferenceKind 'prompt' -AgentNameIndex $agentNameIndex -MaturityMap $maturityMap
+                if (-not [string]::IsNullOrWhiteSpace($target)) {
+                    $edges.Add(@{ Target = $target; EdgeType = 'handoff-prompt' })
+                }
+            }
+        }
+
+        foreach ($embeddedTarget in @(Get-CoreManifestEmbeddedReferences -SourcePath $sourceMetadata.SourceFile -MaturityMap $maturityMap)) {
+            if (-not [string]::IsNullOrWhiteSpace($embeddedTarget)) {
+                $edges.Add(@{ Target = $embeddedTarget; EdgeType = 'embedded' })
+            }
+        }
+
+        foreach ($edge in $edges) {
+            $targetPath = [string]$edge.Target
+            if ($targetPath -eq $sourcePath) {
+                continue
+            }
+
+            if (-not $maturityMap.ContainsKey($targetPath)) {
+                continue
+            }
+
+            $targetMaturity = [string]$maturityMap[$targetPath]
+            $targetRank = Get-CoreManifestMaturityRank -Maturity $targetMaturity
+            if ($null -eq $targetRank) {
+                continue
+            }
+
+            if ($sourceRank -gt $targetRank) {
+                $maturityViolations.Add(@{
+                        SourcePath     = $sourcePath
+                        SourceMaturity = $sourceMetadata.Maturity
+                        TargetPath     = $targetPath
+                        TargetMaturity = $targetMaturity
+                        EdgeType       = $edge.EdgeType
+                    })
+            }
+        }
+    }
+
+    $sortedViolations = @($maturityViolations | Sort-Object -Property @{ Expression = { $_.SourcePath } }, @{ Expression = { $_.EdgeType } }, @{ Expression = { $_.TargetPath } })
+    $seenViolations = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    foreach ($violation in $sortedViolations) {
+        $violationKey = @($violation.SourcePath, $violation.EdgeType, $violation.TargetPath) -join [char]0x1F
+        if (-not $seenViolations.Add($violationKey)) {
+            continue
+        }
+
+        Add-Error "$($violation.SourcePath) ($($violation.SourceMaturity)) depends on $($violation.TargetPath) ($($violation.TargetMaturity)) via $($violation.EdgeType); higher-maturity assets must not depend on lower-maturity assets."
     }
 
     $releasesSection = Get-CoreManifestProperty -InputObject $manifest -Name 'releases'
@@ -218,7 +320,7 @@ function Invoke-CoreManifestValidation {
             }
         }
 
-        $excludedSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        $excludedSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
         foreach ($excludePath in $excludePaths) {
             if (-not [string]::IsNullOrWhiteSpace([string]$excludePath)) {
                 [void]$excludedSet.Add([string]$excludePath)

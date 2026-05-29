@@ -94,6 +94,99 @@ BeforeAll {
         New-Item -ItemType Directory -Path (Split-Path -Path $ManifestPath -Parent) -Force | Out-Null
         ConvertTo-Yaml -Data $Manifest | Set-Content -Path $ManifestPath
     }
+
+    function Add-CoreManifestAgent {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$RootPath,
+
+            [Parameter(Mandatory = $true)]
+            [object]$Manifest,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Path,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Name,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Maturity,
+
+            [Parameter()]
+            [string]$Body = ''
+        )
+
+        $fullPath = Join-Path $RootPath $Path
+        New-Item -ItemType Directory -Path (Split-Path -Path $fullPath -Parent) -Force | Out-Null
+        Set-Content -Path $fullPath -Value "---`nname: $Name`ndescription: $Name`n---`n$Body"
+        $Manifest.agents[$Path] = [ordered]@{
+            path        = $Path
+            maturity    = $Maturity
+            collections = @('test')
+        }
+    }
+
+    function Add-CoreManifestPrompt {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$RootPath,
+
+            [Parameter(Mandatory = $true)]
+            [object]$Manifest,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Path,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Maturity
+        )
+
+        $fullPath = Join-Path $RootPath $Path
+        New-Item -ItemType Directory -Path (Split-Path -Path $fullPath -Parent) -Force | Out-Null
+        Set-Content -Path $fullPath -Value "---`ndescription: prompt`n---"
+        $Manifest.prompts[$Path] = [ordered]@{
+            path        = $Path
+            maturity    = $Maturity
+            collections = @('test')
+        }
+    }
+
+    function Set-CoreManifestAgentBody {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$RootPath,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Path,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Body
+        )
+
+        $fullPath = Join-Path $RootPath $Path
+        Set-Content -Path $fullPath -Value "---`ndescription: test agent`n---`n$Body"
+    }
+
+    function Format-CoreManifestMaturityViolation {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$SourcePath,
+
+            [Parameter(Mandatory = $true)]
+            [string]$SourceMaturity,
+
+            [Parameter(Mandatory = $true)]
+            [string]$TargetPath,
+
+            [Parameter(Mandatory = $true)]
+            [string]$TargetMaturity,
+
+            [Parameter(Mandatory = $true)]
+            [string]$EdgeType
+        )
+
+        return "$SourcePath ($SourceMaturity) depends on $TargetPath ($TargetMaturity) via $EdgeType; higher-maturity assets must not depend on lower-maturity assets."
+    }
 }
 
 Describe 'Invoke-CoreManifestValidation' {
@@ -157,6 +250,16 @@ Describe 'Invoke-CoreManifestValidation' {
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
         $result.Success | Should -BeTrue
+    }
+
+    It 'Does not warn when a removed artifact is present on disk' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/kept.agent.md' -Name 'Kept Agent' -Maturity 'removed'
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+        $result.Success | Should -BeTrue
+        $result.Warnings -join "`n" | Should -Not -Match 'kept.agent.md'
     }
 
     It 'Fails when a non-removed artifact path is missing' {
@@ -238,5 +341,287 @@ Describe 'Export-CoreManifestValidationReport' {
         $report.ErrorCount | Should -Be 0
         $report.WarningCount | Should -Be 1
         @($report.Warnings)[0] | Should -Be 'test warning'
+    }
+}
+
+Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
+    BeforeEach {
+        $script:repoRoot = Join-Path $TestDrive 'repo'
+        $script:manifestPath = Join-Path $script:repoRoot 'collections/core-manifest.yml'
+        $script:sourceAgent = '.github/agents/test/test.agent.md'
+        New-CoreManifestTestRepo -RootPath $script:repoRoot
+    }
+
+    It 'T1: passes when no dependency edges exist' {
+        $manifest = New-CoreManifestFixture
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'T2: fails when a stable agent requires an experimental agent' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp.agent.md' -TargetMaturity 'experimental' -EdgeType 'requires')
+    }
+
+    It 'T3: passes when an experimental agent requires an experimental agent' {
+        $manifest = New-CoreManifestFixture
+        $manifest.agents[$script:sourceAgent].maturity = 'experimental'
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'T4: passes when an experimental agent requires a stable agent' {
+        $manifest = New-CoreManifestFixture
+        $manifest.agents[$script:sourceAgent].maturity = 'experimental'
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Stable Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'T5: fails when a stable agent hands off to an experimental agent' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].handoffs = @(
+            [ordered]@{ agent = 'Exp Agent'; prompt = 'follow up manually'; label = 'Continue' }
+        )
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp.agent.md' -TargetMaturity 'experimental' -EdgeType 'handoff-agent')
+    }
+
+    It 'T6: fails when a stable agent hands off via a slash command to an experimental prompt' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
+        Add-CoreManifestPrompt -RootPath $script:repoRoot -Manifest $manifest -Path '.github/prompts/test/expprompt.prompt.md' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].handoffs = @(
+            [ordered]@{ agent = 'Stable Agent'; prompt = '/expprompt'; label = 'Run' }
+        )
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/prompts/test/expprompt.prompt.md' -TargetMaturity 'experimental' -EdgeType 'handoff-prompt')
+    }
+
+    It 'T7: skips a free-text (non-slash) prompt handoff' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
+        Add-CoreManifestPrompt -RootPath $script:repoRoot -Manifest $manifest -Path '.github/prompts/test/expprompt.prompt.md' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].handoffs = @(
+            [ordered]@{ agent = 'Stable Agent'; prompt = 'expprompt by hand'; label = 'Run' }
+        )
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'T8: fails when a stable agent embeds a #file directive to an experimental instruction' {
+        $manifest = New-CoreManifestFixture
+        Set-CoreManifestAgentBody -RootPath $script:repoRoot -Path $script:sourceAgent -Body '#file:.github/instructions/test/test.instructions.md'
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/instructions/test/test.instructions.md' -TargetMaturity 'experimental' -EdgeType 'embedded')
+    }
+
+    It 'T9: fails when a stable agent embeds a glob reference to an experimental agent' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        Set-CoreManifestAgentBody -RootPath $script:repoRoot -Path $script:sourceAgent -Body 'Delegates to .github/agents/**/exp.agent.md for the work.'
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp.agent.md' -TargetMaturity 'experimental' -EdgeType 'embedded')
+    }
+
+    It 'T10: does not flag a documentation-table mention or a bare directory glob' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        $body = @(
+            '| Agent | Maturity |',
+            '|-------|----------|',
+            '| Exp Agent | experimental |',
+            '',
+            'See .github/agents/** for the full catalog.'
+        ) -join "`n"
+        Set-CoreManifestAgentBody -RootPath $script:repoRoot -Path $script:sourceAgent -Body $body
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+
+    It 'T11: skips a deprecated target maturity' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/dep.agent.md' -Name 'Dep Agent' -Maturity 'deprecated'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Dep Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $maturityViolations = @($result.Errors | Where-Object { $_ -like '*higher-maturity assets must not depend on lower-maturity assets.*' })
+        $maturityViolations | Should -BeNullOrEmpty
+    }
+
+    It 'T12: skips a removed target maturity' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/gone.agent.md' -Name 'Gone Agent' -Maturity 'removed'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Gone Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $maturityViolations = @($result.Errors | Where-Object { $_ -like '*higher-maturity assets must not depend on lower-maturity assets.*' })
+        $maturityViolations | Should -BeNullOrEmpty
+    }
+
+    It 'T13: fails when a stable agent requires a preview agent' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/prev.agent.md' -Name 'Prev Agent' -Maturity 'preview'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Prev Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/prev.agent.md' -TargetMaturity 'preview' -EdgeType 'requires')
+    }
+
+    It 'T14: fails when a preview agent requires an experimental agent' {
+        $manifest = New-CoreManifestFixture
+        $manifest.agents[$script:sourceAgent].maturity = 'preview'
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -Be 1
+        $result.Errors | Should -Contain (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'preview' -TargetPath '.github/agents/test/exp.agent.md' -TargetMaturity 'experimental' -EdgeType 'requires')
+    }
+
+    It 'T15: returns multiple violations deduplicated and in deterministic sorted order' {
+        $manifest = New-CoreManifestFixture
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp-a.agent.md' -Name 'Exp A' -Maturity 'experimental'
+        Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp-b.agent.md' -Name 'Exp B' -Maturity 'experimental'
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp A', 'Exp B') }
+        $manifest.agents[$script:sourceAgent].handoffs = @(
+            [ordered]@{ agent = 'Exp A'; prompt = 'follow up manually'; label = 'Continue' }
+        )
+        Set-CoreManifestAgentBody -RootPath $script:repoRoot -Path $script:sourceAgent -Body '#file:.github/instructions/test/test.instructions.md'
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $expected = @(
+            (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/instructions/test/test.instructions.md' -TargetMaturity 'experimental' -EdgeType 'embedded'),
+            (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp-a.agent.md' -TargetMaturity 'experimental' -EdgeType 'handoff-agent'),
+            (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp-a.agent.md' -TargetMaturity 'experimental' -EdgeType 'requires'),
+            (Format-CoreManifestMaturityViolation -SourcePath $script:sourceAgent -SourceMaturity 'stable' -TargetPath '.github/agents/test/exp-b.agent.md' -TargetMaturity 'experimental' -EdgeType 'requires')
+        )
+        $maturityViolations = @($result.Errors | Where-Object { $_ -like '*higher-maturity assets must not depend on lower-maturity assets.*' })
+
+        $result.Success | Should -BeFalse
+        $maturityViolations | Should -Be $expected
+    }
+}
+
+Describe 'Invoke-CoreManifestValidation against the real core manifest' {
+    It 'T16: reports no maturity dependency violations for collections/core-manifest.yml' {
+        $realRepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $realManifestPath = Join-Path $realRepoRoot 'collections/core-manifest.yml'
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $realRepoRoot -ManifestPath $realManifestPath
+
+        $maturityViolations = @($result.Errors | Where-Object { $_ -like '*higher-maturity assets must not depend on lower-maturity assets.*' })
+        $maturityViolations | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Get-CoreManifestArtifactSectionNames' {
+    It 'T17: returns the four artifact section names in order' {
+        Get-CoreManifestArtifactSectionNames | Should -Be @('agents', 'prompts', 'instructions', 'skills')
+    }
+}
+
+Describe 'Resolve-CoreManifestEmbeddedToken' {
+    BeforeEach {
+        $script:maturityMap = @{
+            '.github/agents/test/exp.agent.md'               = 'experimental'
+            '.github/instructions/test/test.instructions.md' = 'experimental'
+            '.github/skills/test/test-skill'                 = 'stable'
+        }
+    }
+
+    It 'T18: resolves a direct asset path' {
+        Resolve-CoreManifestEmbeddedToken -Token '.github/agents/test/exp.agent.md' -MaturityMap $script:maturityMap |
+            Should -Be @('.github/agents/test/exp.agent.md')
+    }
+
+    It 'T19: resolves a /SKILL.md suffix to its skill directory' {
+        Resolve-CoreManifestEmbeddedToken -Token '.github/skills/test/test-skill/SKILL.md' -MaturityMap $script:maturityMap |
+            Should -Be @('.github/skills/test/test-skill')
+    }
+
+    It 'T20: resolves a glob by matching its file basename' {
+        Resolve-CoreManifestEmbeddedToken -Token '.github/agents/**/exp.agent.md' -MaturityMap $script:maturityMap |
+            Should -Be @('.github/agents/test/exp.agent.md')
+    }
+
+    It 'T21: returns nothing for a bare directory glob without a concrete file name' {
+        @(Resolve-CoreManifestEmbeddedToken -Token '.github/agents/**' -MaturityMap $script:maturityMap) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'T22: returns nothing for an unknown path' {
+        @(Resolve-CoreManifestEmbeddedToken -Token '.github/agents/test/missing.agent.md' -MaturityMap $script:maturityMap) |
+            Should -BeNullOrEmpty
+    }
+
+    It 'T23: emits a verbose message for a malformed glob whose final segment is still a glob' {
+        $messages = Resolve-CoreManifestEmbeddedToken -Token '.github/agents/test/*' -MaturityMap $script:maturityMap -Verbose 4>&1
+        @($messages | Where-Object { $_ -is [System.Management.Automation.VerboseRecord] }) | Should -Not -BeNullOrEmpty
     }
 }

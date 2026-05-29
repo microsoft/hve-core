@@ -981,7 +981,7 @@ prompts:
     - hve-core-all
   .github/prompts/hve-core/checkpoint.prompt.md:
     path: .github/prompts/hve-core/checkpoint.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1017,19 +1017,19 @@ prompts:
     - hve-core-all
   .github/prompts/hve-core/prompt-analyze.prompt.md:
     path: .github/prompts/hve-core/prompt-analyze.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
   .github/prompts/hve-core/prompt-build.prompt.md:
     path: .github/prompts/hve-core/prompt-build.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
   .github/prompts/hve-core/prompt-refactor.prompt.md:
     path: .github/prompts/hve-core/prompt-refactor.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1041,7 +1041,7 @@ prompts:
     - hve-core-all
   .github/prompts/hve-core/rpi.prompt.md:
     path: .github/prompts/hve-core/rpi.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1053,25 +1053,25 @@ prompts:
     - hve-core-all
   .github/prompts/hve-core/task-implement.prompt.md:
     path: .github/prompts/hve-core/task-implement.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
   .github/prompts/hve-core/task-plan.prompt.md:
     path: .github/prompts/hve-core/task-plan.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
   .github/prompts/hve-core/task-research.prompt.md:
     path: .github/prompts/hve-core/task-research.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
   .github/prompts/hve-core/task-review.prompt.md:
     path: .github/prompts/hve-core/task-review.prompt.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1638,7 +1638,7 @@ instructions:
     - hve-core-all
   .github/instructions/hve-core/commit-message.instructions.md:
     path: .github/instructions/hve-core/commit-message.instructions.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1656,7 +1656,7 @@ instructions:
     - hve-core-all
   .github/instructions/hve-core/prompt-builder.instructions.md:
     path: .github/instructions/hve-core/prompt-builder.instructions.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
@@ -1668,7 +1668,7 @@ instructions:
     - hve-core-all
   .github/instructions/hve-core/writing-style.instructions.md:
     path: .github/instructions/hve-core/writing-style.instructions.md
-    maturity: experimental
+    maturity: stable
     collections:
     - hve-core
     - hve-core-all
