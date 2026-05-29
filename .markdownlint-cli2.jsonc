@@ -6,6 +6,7 @@
     "logs/**",
     "venv/**",
     "scripts/tests/Fixtures/**",
+    "scripts/tests/linting/fixtures/**",
     "extension/README.md",
     "extension/README.*.md",
     "extension/CHANGELOG.md",
