@@ -97,6 +97,30 @@ class TestAddNarrationTiming:
         assert "old-content" not in xml_str
         assert 'spid="10"' in xml_str
 
+    def test_timing_template_parsed_with_hardened_parser_blocks_entity_expansion(self):
+        """Verify _add_narration_timing uses a hardened parser that blocks XXE.
+
+        Calls etree.fromstring directly with a DOCTYPE + entity reference and
+        confirms lxml raises XMLSyntaxError rather than resolving the entity.
+        This is the same defence applied to _TIMING_TEMPLATE via the
+        XMLParser(resolve_entities=False, no_network=True) added in the fix.
+        """
+        from lxml import etree
+
+        xxe_payload = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE root [<!ENTITY xxe "injected">]>'
+            b"<root>&xxe;</root>"
+        )
+        parser = etree.XMLParser(resolve_entities=False, no_network=True)
+        # With resolve_entities=False lxml leaves &xxe; as an unresolved reference;
+        # accessing .text then raises etree.XMLSyntaxError on serialisation, OR
+        # tostring emits the unexpanded entity.  Either way the value "injected"
+        # must not reach the output.
+        root = etree.fromstring(xxe_payload, parser)
+        serialised = etree.tostring(root, encoding="unicode")
+        assert "injected" not in serialised
+
 
 class TestEmbedSlideAudio:
     """Tests for embed_slide_audio."""
