@@ -145,6 +145,14 @@ State JSON schema for `state.json`:
   "ssscPlanFile": "",
   "currentPhase": 1,
   "entryMode": "capture",
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": null },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
   "scopingComplete": false,
   "assessmentComplete": false,
   "standardsMapped": false,
@@ -160,9 +168,6 @@ State JSON schema for `state.json`:
   },
   "referencesProcessed": [],
   "nextActions": [],
-  "signingRequested": false,
-  "signingManifestPath": null,
-  "disclaimerShownAt": null,
   "userPreferences": {
     "autonomyTier": "partial",
     "outputDetailLevel": "standard",
@@ -175,6 +180,9 @@ State JSON schema for `state.json`:
     }
   },
   "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
