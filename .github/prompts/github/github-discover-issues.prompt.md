@@ -1,10 +1,9 @@
 ---
-description: 'Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review'
+description: Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review
 agent: GitHub Backlog Manager
-argument-hint: "documents=... [milestone=...] [searchTerms=...]"
+argument-hint: documents=... [milestone=...] [searchTerms=...]
 model: Claude Haiku 4.5 (copilot)
 ---
-
 # Discover GitHub Issues
 
 Classify the discovery path based on user intent and available inputs, execute the appropriate discovery workflow, assess similarity against existing issues, and produce planning files for review. Three discovery paths are supported: user-centric queries (Path A), artifact-driven analysis from documents (Path B), and search-based exploration (Path C).

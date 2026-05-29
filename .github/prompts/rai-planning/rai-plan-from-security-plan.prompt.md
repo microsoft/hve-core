@@ -1,10 +1,7 @@
 ---
-description: >-
-  Initiate responsible AI assessment planning from a completed Security Plan using
-  the RAI Planner agent in from-security-plan mode (recommended)
-agent: "RAI Planner"
+description: Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)
+agent: RAI Planner
 ---
-
 # RAI Plan from Security Plan
 
 Activate the RAI Planner in **from-security-plan mode**, the recommended workflow for projects that have already completed a security assessment.

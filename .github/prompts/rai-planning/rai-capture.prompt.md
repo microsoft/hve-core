@@ -1,10 +1,7 @@
 ---
-description: >-
-  Initiate responsible AI assessment planning from existing knowledge using the
-  RAI Planner agent in capture mode
-agent: "RAI Planner"
+description: Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode
+agent: RAI Planner
 ---
-
 # RAI Capture
 
 Activate the RAI Planner in **capture mode** for project slug `${input:project-slug}`.

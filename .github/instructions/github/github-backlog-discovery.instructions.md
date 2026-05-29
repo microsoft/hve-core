@@ -1,8 +1,7 @@
 ---
-description: 'Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery'
+description: Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery
 applyTo: '**/.copilot-tracking/github-issues/discovery/**'
 ---
-
 # GitHub Backlog Discovery
 
 Discover GitHub issues through three paths: user-centric queries, artifact-driven analysis, or search-based exploration. Follow *github-backlog-planning.instructions.md* for templates, field definitions, and search protocols.

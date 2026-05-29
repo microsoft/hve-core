@@ -1,8 +1,7 @@
 ---
-description: 'Community interaction voice, tone, and response templates for GitHub-facing agents and prompts'
+description: Community interaction voice, tone, and response templates for GitHub-facing agents and prompts
 applyTo: '**/.github/instructions/github-backlog-*.instructions.md'
 ---
-
 # Community Interaction Guidelines
 
 Voice, tone, and response templates for community-facing interactions on GitHub. Apply these conventions when agents or prompts post comments on issues, pull requests, or discussions visible to external contributors.

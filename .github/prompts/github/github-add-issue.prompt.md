@@ -1,10 +1,9 @@
 ---
-description: 'Create a GitHub issue using discovered repository templates and conversational field collection'
+description: Create a GitHub issue using discovered repository templates and conversational field collection
 agent: GitHub Backlog Manager
-argument-hint: "[templateName=...] [title=...] [labels=...]"
+argument-hint: '[templateName=...] [title=...] [labels=...]'
 model: Claude Haiku 4.5 (copilot)
 ---
-
 # Add GitHub Issue
 
 Discover available issue templates from the repository, collect required and optional fields through conversation, create the issue via GitHub MCP tools, and log the result for tracking.

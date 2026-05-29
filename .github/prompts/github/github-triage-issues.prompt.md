@@ -1,9 +1,8 @@
 ---
-description: 'Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection'
+description: Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection
 agent: GitHub Backlog Manager
 model: Claude Haiku 4.5 (copilot)
 ---
-
 # Triage GitHub Issues
 
 Fetch all open GitHub issues carrying the `needs-triage` label, analyze each for label and milestone recommendations, detect duplicates, and produce a triage plan for review before execution.

@@ -51,6 +51,20 @@
     },
     "estimated_reading_time": {
       "$ref": "#/definitions/positiveInteger"
+    },
+    "maturity": {
+      "type": "string",
+      "enum": ["stable", "preview", "experimental", "deprecated", "removed"],
+      "description": "Lifecycle maturity tier for the artifact"
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "Collection identifiers this artifact belongs to"
     }
   }
 }

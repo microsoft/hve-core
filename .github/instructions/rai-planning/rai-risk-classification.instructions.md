@@ -2,7 +2,6 @@
 description: 'Risk classification screening for Phase 2: prohibited uses gate, risk indicator assessment, and depth tier assignment - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # Risk Classification
 
 Phase 2 screens AI systems for risk using the active classification framework. The prohibited uses gate executes first as a safety-critical check. Risk indicator results determine the suggested assessment depth tier for subsequent phases. By default, indicators derive from the NIST AI Risk Management Framework 1.0 trustworthiness characteristics (see `rai-standards.instructions.md`). Custom classification frameworks can replace or extend these defaults.

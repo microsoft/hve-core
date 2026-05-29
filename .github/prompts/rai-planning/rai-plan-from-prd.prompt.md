@@ -1,10 +1,7 @@
 ---
-description: >-
-  Initiate responsible AI assessment planning from PRD/BRD artifacts using the
-  RAI Planner agent in from-prd mode
-agent: "RAI Planner"
+description: Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode
+agent: RAI Planner
 ---
-
 # RAI Plan from PRD/BRD
 
 Activate the RAI Planner in **from-prd mode** to plan for AI-specific risk assessment for project slug `${input:project-slug}`.

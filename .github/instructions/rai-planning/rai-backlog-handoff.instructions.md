@@ -2,7 +2,6 @@
 description: 'RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # RAI Review and Backlog Handoff
 
 Instructions for generating the review rubric, RAI review summary, and formatted backlog items from RAI assessment findings. Phase 6 produces dual-format work items (ADO and GitHub) compatible with the Security Planner backlog handoff for cross-referencing.

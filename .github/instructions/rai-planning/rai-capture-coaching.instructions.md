@@ -1,8 +1,7 @@
 ---
-description: "Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods - Brought to you by microsoft/hve-core"
+description: Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods - Brought to you by microsoft/hve-core
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # RAI Capture Mode Coaching
 
 Governs conversational behavior during `capture` entry mode, primarily in Phase 1 (AI System Scoping). These techniques replace checklist-style questioning with exploration-first discovery adapted from Design Thinking research methods.

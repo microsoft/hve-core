@@ -1,9 +1,8 @@
 ---
-description: 'Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog'
+description: Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog
 agent: GitHub Backlog Manager
-argument-hint: "milestone=... [documents=...] [sprintGoal=...] [capacity=...] [autonomy={full|partial|manual}]"
+argument-hint: milestone=... [documents=...] [sprintGoal=...] [capacity=...] [autonomy={full|partial|manual}]
 ---
-
 # Plan GitHub Sprint
 
 Analyze a GitHub milestone, assess issue coverage against the full label taxonomy and optional planning documents, and produce a prioritized sprint plan with gap analysis and dependency awareness.

@@ -1,8 +1,7 @@
 ---
-description: 'Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations'
+description: Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations
 applyTo: '**/.copilot-tracking/github-issues/**/handoff-logs.md'
 ---
-
 # GitHub Backlog Update Instructions
 
 Follow all instructions from #file:./github-backlog-planning.instructions.md for planning file templates, field definitions, search protocols, and state persistence.

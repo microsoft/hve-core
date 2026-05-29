@@ -2,7 +2,6 @@
 description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # RAI Security Model Analysis
 
 AI-specific security model analysis extensions for Phase 4 of the RAI Planner. This guidance extends the STRIDE methodology with NIST trustworthiness characteristic overlaps, AI element types, trust boundaries, data flow patterns, and a dual threat ID convention. A merge protocol enables interoperation with Security Planner security models when operating in `from-security-plan` mode.

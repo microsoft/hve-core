@@ -1,9 +1,8 @@
 ---
-description: "Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core"
+description: Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core
 agent: GitHub Backlog Manager
-argument-hint: "[optional: description of restored session context]"
+argument-hint: '[optional: description of restored session context]'
 ---
-
 # GitHub Suggest
 
 Review the restored session context from the memory agent and propose the next workflow step for the current backlog management task.

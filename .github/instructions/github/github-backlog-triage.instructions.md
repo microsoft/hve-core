@@ -1,8 +1,7 @@
 ---
-description: 'Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection'
+description: Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection
 applyTo: '**/.copilot-tracking/github-issues/triage/**'
 ---
-
 # GitHub Backlog Triage Instructions
 
 ## Purpose and Scope

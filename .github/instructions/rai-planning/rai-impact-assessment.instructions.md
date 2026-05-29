@@ -2,7 +2,6 @@
 description: 'RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # RAI Impact Assessment and Controls
 
 Phase 5 evaluates control surface completeness for each identified threat, documents evidence of existing mitigations, identifies coverage gaps, and analyzes tradeoffs between competing trustworthiness characteristics. This file defines the taxonomy, templates, and rules that govern those activities.

@@ -2,7 +2,6 @@
 description: 'Embedded RAI standards for Phase 3: NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, and framework isolation architecture - Brought to you by microsoft/hve-core'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
-
 # RAI Standards Reference
 
 NIST AI RMF 1.0 is embedded directly in this file as the default framework for Phase 3 of the RAI planning workflow. The framework provides 7 trustworthiness characteristics and an authoritative subcategory structure across 4 core functions and 72 subcategories. Evolving regulatory frameworks (EU AI Act, ISO 42001, domain-specific regulations) are delegated to the Researcher Subagent at runtime.

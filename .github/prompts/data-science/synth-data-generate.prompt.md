@@ -1,7 +1,6 @@
 ---
-description: "Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships"
+description: Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships
 ---
-
 # Synthetic Data Generator
 
 Generate comprehensive synthetic data for: **${input:subject}**
