@@ -11,10 +11,7 @@ config:
   timeout: 120s
   executor: copilot-sdk
 
-environment:
-  skills:
-    - ../../.github/skills/security/owasp-top-10
-    - ../../.github/skills/coding-standards/python-foundational
+environment: security-and-coding
 
 scoring:
   threshold: 0.7
