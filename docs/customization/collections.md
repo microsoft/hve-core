@@ -15,22 +15,34 @@ estimated_reading_time: 6
 ## Collection Architecture
 
 Collections bundle related agents, prompts, instructions, and skills into distributable
-packages. Each collection consists of two files in the `collections/` directory:
+packages. Collection membership and metadata start in `collections/core-manifest.yml`,
+which is the manual source for collection definitions, artifact assignments, and maturity
+values.
 
-* A YAML manifest (`*.collection.yml`) that lists every artifact included in the collection
-* A markdown description (`*.collection.md`) that provides human-readable documentation
+The collection pipeline derives package manifests and distributable output from that source:
 
-The YAML manifest defines what the collection contains. The markdown description explains
-the collection's purpose, lists key artifacts, and helps users decide whether to install it.
-Together, these two files form a complete, self-contained collection package that the plugin
-generation pipeline processes into distributable output under `plugins/`.
+* `collections/core-manifest.yml` defines collection metadata, artifact membership, and maturity.
+* `collections/*.collection.yml` files are generated package manifests consumed by validation,
+  extension packaging, and plugin generation.
+* `collections/*.collection.md` files provide human-readable collection descriptions.
+* `plugins/` contains generated plugin bundles and should not be edited directly.
+
+Generated collection manifests define what each package contains. Markdown descriptions explain
+the collection's purpose, list key artifacts, and help users decide whether to install it.
+Together, the generated manifest and markdown description form a complete collection package.
 
 > [!IMPORTANT]
 > The HVE Core installer skill supports agent bundle selection by collection during clone-based setup. This copies agents only. Prompts, instructions, and skills are not filtered by collection. See the [installation guide](../getting-started/install.md) for setup options.
 
-## YAML Manifest Format
+## Core Manifest Format
 
-Every collection manifest follows the `collection-manifest.schema.json` schema. The top-level
+Edit `collections/core-manifest.yml` when you add a collection, assign artifacts to a
+collection, or change maturity. The core manifest uses a top-level `collections` map keyed by
+collection ID. Each collection entry defines the generated manifest path, display metadata,
+tags, and item counts used by the collection tooling.
+
+Generated `collections/*.collection.yml` files follow the `collection-manifest.schema.json`
+schema. Tooling derives these files from the core manifest workflow. The generated top-level
 fields are:
 
 | Field         | Required | Description                                                           |
@@ -52,7 +64,7 @@ Each entry in the `items` array has these fields:
 | `maturity` | No       | Item-level maturity override (defaults to `stable`)                 |
 | `usage`    | No       | Optional usage guidance for the item                                |
 
-Here is a complete manifest example:
+Here is an example generated manifest:
 
 ```yaml
 id: deployment-tools
@@ -98,12 +110,10 @@ Collections support four maturity tiers that control inclusion in generated plug
 | `experimental` | Early-stage, may change significantly      | Excluded from stable builds |
 | `deprecated`   | Scheduled for removal                      | Excluded from new builds    |
 
-Maturity applies at two levels:
+Maturity applies at two levels in the canonical manifest workflow:
 
-* Collection-level: Set the `maturity` field on the manifest root. A collection marked
-  `experimental` excludes all its items from the stable release channel.
-* Item-level: Set the `maturity` field on individual items within the `items` array.
-  This overrides the collection-level default for specific artifacts.
+* Collection-level maturity excludes an entire collection from release channels when needed.
+* Item-level maturity overrides the collection default for specific artifacts.
 
 When `maturity` is omitted at either level, it defaults to `stable`.
 
@@ -114,14 +124,14 @@ Follow these steps to create a new collection:
 1. Choose a collection ID. Use lowercase letters and hyphens (e.g., `sre-operations`).
    The ID must match the pattern `^[a-z0-9-]+$`.
 
-2. Create the YAML manifest at `collections/{id}.collection.yml`. Define the `id`, `name`,
-   `description`, `tags`, and `items` fields following the schema above.
+2. Add the collection to `collections/core-manifest.yml`. Define the generated manifest path,
+   display name, description, tags, and maturity metadata used by the collection tooling.
 
 3. Create the markdown description at `collections/{id}.collection.md`. Describe the
    collection's purpose, list the key agents and prompts, and explain when to use it.
 
-4. Register each artifact in the `items` array with its `path` and `kind`. Verify that
-   every referenced file exists at the specified path.
+4. Register each artifact assignment and maturity value through the canonical manifest
+  workflow. Verify that every referenced file exists at the specified path.
 
 5. Run the plugin generation pipeline:
 
@@ -136,17 +146,18 @@ Follow these steps to create a new collection:
    ```
 
 > [!TIP]
-> Start with an existing collection YAML (such as `hve-core.collection.yml`) as a template.
-> Copy the structure and replace the content with your artifacts.
+> Compare nearby entries in `collections/core-manifest.yml` when adding metadata for a new
+> collection. Do not copy and edit generated `*.collection.yml` files as source material.
 
 ## Subagent Dependencies
 
 When a parent agent declares subagents in its `agents:` frontmatter, those subagent files
-must also appear in the collection YAML. The plugin generation pipeline does not
-automatically resolve transitive agent dependencies.
+must be included through the canonical manifest workflow. The generated package manifest must
+contain both the parent and its required subagents so installed collections have the full
+agent capability.
 
 For example, if `rpi-agent.agent.md` references `phase-implementor.agent.md` as a subagent,
-both files must have entries in the collection manifest:
+both files must appear in the generated collection manifest:
 
 ```yaml
 items:
@@ -161,19 +172,19 @@ from the collection.
 
 ## The hve-core-all Superset
 
-The `hve-core-all.collection.yml` manifest serves as the canonical superset of all stable
-artifacts across every collection. It aggregates items from specialized collections (such
-as `hve-core`, `ado`, `github`, `project-planning`) into a single comprehensive bundle.
+The `hve-core-all.collection.yml` manifest is the generated superset of stable artifacts
+across every collection. It aggregates items from specialized collections such as `hve-core`,
+`ado`, `github`, and `project-planning` into a single comprehensive bundle.
 
-Update `hve-core-all.collection.yml` when you:
+Update `collections/core-manifest.yml` and regenerate outputs when you:
 
-* Add a new artifact to any collection
-* Create an entirely new collection
-* Remove or deprecate an existing artifact
+* Add a new artifact to any collection.
+* Create a collection.
+* Remove or deprecate an existing artifact.
 
 The superset collection ensures users who install the full bundle receive every available
-artifact. Items marked with `maturity: experimental` or `maturity: deprecated` at the item
-level remain in the superset for visibility but are filtered during stable channel generation.
+artifact. Items marked with `maturity: experimental` or `maturity: deprecated` remain visible
+to tooling but are filtered during stable channel generation.
 
 ## Role Scenarios
 

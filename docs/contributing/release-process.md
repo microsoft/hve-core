@@ -2,7 +2,7 @@
 title: Release Process
 description: Trunk-based release workflow using release-please automation and automated VS Code extension publishing
 sidebar_position: 9
-ms.date: 2026-04-17
+ms.date: 2026-05-24
 ms.topic: how-to
 author: WilliamBerryiii
 ---
@@ -188,6 +188,29 @@ for the architectural contract.
 | Stable promotions  | Set `stable` on collection items after production validation                                                                                                                                                                                                                                                                                                                                                                     |
 | Deprecation        | Set `deprecated` on collection items before removal to provide transition time. Move the artifact file to `.github/deprecated/{type}/` so the build system excludes it from all downstream surfaces automatically. See [AI Artifacts Architecture](../architecture/ai-artifacts.md#deprecated-artifacts) for the full deprecation policy.                                                                                        |
 | Removal            | Set `removed` on collection items when the artifact should no longer ship in any plugin or extension build but its source should remain in place for history, references, or future reinstatement. The collection YAML is the single source of truth - no per-artifact frontmatter or file move is required. See [AI Artifacts Architecture - Removed Artifacts](../architecture/ai-artifacts.md#removed-artifacts) for details. |
+
+## Channel Distribution for Plugins and Extensions
+
+Collections that ship a plugin must define a `descriptions` block in their `collections/*.collection.yml`. The block carries two variants of the consumer-facing description text, one per channel:
+
+```yaml
+descriptions:
+  stable: |
+    Description text shown to Stable channel consumers.
+  prerelease: |
+    Description text shown to PreRelease channel consumers.
+```
+
+The two channels distribute differently:
+
+| Surface                                               | Channel    | Description text source   |
+|-------------------------------------------------------|------------|---------------------------|
+| `plugins/<id>/` committed tree                        | PreRelease | `descriptions.prerelease` |
+| `.github/plugin/marketplace.json` entry               | PreRelease | `descriptions.prerelease` |
+| `.vsix` extension package built from a PreRelease tag | PreRelease | `descriptions.prerelease` |
+| `.vsix` extension package built from a Stable tag     | Stable     | `descriptions.stable`     |
+
+The Copilot CLI plugin pipeline only ships PreRelease description text. Stable description text reaches consumers exclusively through Stable-channel `.vsix` packages installed from the VS Code Marketplace. The `descriptions.prerelease` field is required for any collection that produces a plugin; `descriptions.stable` is required for any collection that produces a Stable `.vsix`.
 
 ---
 

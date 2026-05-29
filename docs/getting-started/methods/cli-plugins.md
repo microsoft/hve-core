@@ -3,12 +3,20 @@ title: Copilot CLI Plugins
 description: Install HVE Core agents, prompts, and skills as Copilot CLI plugins
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-23
+ms.date: 2026-05-24
 ms.topic: how-to
 ---
 
 Install HVE Core collections as Copilot CLI plugins for terminal-based
 AI-assisted development workflows.
+
+> [!NOTE]
+> Copilot CLI plugins built from `microsoft/hve-core` always carry PreRelease
+> channel description text and metadata. There is no separate Stable plugin
+> channel - the Stable channel ships exclusively through `.vsix` packages on
+> the VS Code Marketplace. See
+> [Channel Distribution for Plugins and Extensions](../../contributing/release-process.md#channel-distribution-for-plugins-and-extensions)
+> for the full distribution model.
 
 ## Prerequisites
 

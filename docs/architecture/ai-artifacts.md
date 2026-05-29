@@ -132,7 +132,7 @@ description: 'Video-to-GIF conversion with FFmpeg optimization'
 | `name`        | Lowercase kebab-case identifier matching directory name |
 | `description` | Brief capability description                            |
 
-Maturity is tracked in `collections/*.collection.yml`, not in skill frontmatter. See [Collection Manifests](#collection-manifests) for details.
+Maturity is authored in `collections/core-manifest.yml`, not in skill frontmatter. The generated collection manifests carry that metadata into packaging. See [Collection Manifests](#collection-manifests) for details.
 
 Skills answer the question "what specialized utility does this task require?" and provide executable capabilities beyond conversational guidance.
 
@@ -214,20 +214,26 @@ Copilot discovers skills automatically when their description matches the curren
 
 ## Collection Manifests
 
-Collection manifests in `collections/*.collection.yml` serve as the source of truth for artifact selection and maturity. They drive packaging for extension collections and contributor workflows without adding maturity metadata to artifact frontmatter.
+`collections/core-manifest.yml` serves as the source of truth for artifact selection and maturity. The generated `collections/*.collection.yml` manifests drive packaging for extension collections and contributor workflows without adding maturity metadata to artifact frontmatter.
 
 ### Collection Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     Collection Manifests                             │
-│  collections/*.collection.yml                                        │
+│                       Core Manifest                                  │
+│  collections/core-manifest.yml                                       │
 │  ┌─────────────────────────────────────────────────────────────┐     │
-│  │ items[]                                                     │     │
+│  │ agents/prompts/instructions/skills                          │     │
 │  │ - path                                                      │     │
-│  │ - kind                                                      │     │
-│  │ - maturity (optional, defaults to stable)                  │     │
+│  │ - maturity (optional, defaults to stable)                   │     │
+│  │ - collections[]                                             │     │
 │  └─────────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                  Generated Collection Manifests                      │
+│  collections/*.collection.yml                                        │
 └─────────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -243,27 +249,35 @@ Collection manifests in `collections/*.collection.yml` serve as the source of tr
 
 ### Collection Item Structure
 
-Each collection item defines inclusion metadata for artifact selection and release channel filtering:
+Each core manifest item defines inclusion metadata for artifact selection and release channel filtering:
 
 ```yaml
-items:
-    - path: .github/agents/hve-core/rpi-agent.agent.md
-        kind: agent
+agents:
+    .github/agents/hve-core/rpi-agent.agent.md:
+        path: .github/agents/hve-core/rpi-agent.agent.md
         maturity: stable
-    - path: .github/prompts/hve-core/task-plan.prompt.md
-        kind: prompt
+        collections:
+            - hve-core
+            - hve-core-all
+prompts:
+    .github/prompts/hve-core/task-plan.prompt.md:
+        path: .github/prompts/hve-core/task-plan.prompt.md
         maturity: preview
+        collections:
+            - hve-core
+            - hve-core-all
 ```
 
-| Field      | Purpose                                                           |
-|------------|-------------------------------------------------------------------|
-| `path`     | Repository-relative path to the artifact source                   |
-| `kind`     | Artifact type (`agent`, `prompt`, `instruction`, `skill`, `hook`) |
-| `maturity` | Optional release channel gating value (`stable` default)          |
+| Field           | Purpose                                                       |
+|-----------------|---------------------------------------------------------------|
+| `path`          | Repository-relative path to the artifact source               |
+| top-level group | Artifact type (`agents`, `prompts`, `instructions`, `skills`) |
+| `maturity`      | Optional release channel gating value (`stable` default)      |
+| `collections`   | Collection identifiers that include the artifact              |
 
 ### Collection Model
 
-Collections represent role-targeted artifact packages. Collection manifests select artifacts for those roles.
+Collections represent role-targeted artifact packages. The core manifest maps artifacts to those collections, then generation emits the per-collection manifests.
 
 | Collection           | Identifier         | Maturity     | Target Users                                     |
 |----------------------|--------------------|--------------|--------------------------------------------------|
@@ -284,7 +298,7 @@ The **Full** collection aggregates artifacts from all other stable and preview c
 
 ### Collection Build System
 
-Collections define role-filtered artifact packages. Each collection manifest specifies which artifacts to include and controls release channel eligibility through a `maturity` field:
+Collections define role-filtered artifact packages. `collections/core-manifest.yml` specifies which artifacts each collection includes, and collection metadata controls release channel eligibility:
 
 ```json
 {
@@ -299,12 +313,13 @@ Collections define role-filtered artifact packages. Each collection manifest spe
 
 The build system resolves collections by:
 
-1. Reading the collection manifest to identify target artifacts
+1. Reading `collections/core-manifest.yml` to identify target artifacts and collection metadata
 2. Checking collection-level maturity against the target release channel
-3. Filtering collection items by path/kind membership
-4. Including the `hve-core-all` collection artifacts as the base
-5. Adding collection-specific artifacts
-6. Resolving dependencies for included artifacts
+3. Regenerating `collections/*.collection.yml` from the core manifest
+4. Filtering collection items by path/kind membership
+5. Including the `hve-core-all` collection artifacts as the base
+6. Adding collection-specific artifacts
+7. Resolving dependencies for included artifacts
 
 #### Collection Maturity
 
@@ -349,7 +364,7 @@ The extension scans these directories at startup:
 * `.github/instructions/{collection-id}/` for technology standards
 * `.github/skills/{collection-id}/` for utility packages
 
-These paths reflect the conventional directory structure. Artifact inclusion is controlled by `collections/*.collection.yml`, and collection manifests can reference artifacts from any subfolder. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
+These paths reflect the conventional directory structure. Artifact inclusion is authored in `collections/core-manifest.yml`, and generated collection manifests can reference artifacts from any subfolder. Root-level artifacts (files directly under `.github/{type}/` with no subdirectory) are repo-specific, excluded from discovery, and never packaged into extension builds.
 
 | Maturity       | Stable Channel | Pre-release Channel |
 |----------------|----------------|---------------------|

@@ -137,30 +137,35 @@ lastUpdated: '2025-11-19'
 
 ## Collection Entry Requirements
 
-All instructions must have matching entries in one or more `collections/*.collection.yml` manifests, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Collection entries control distribution and maturity.
+All distributed instructions must have matching entries in `collections/core-manifest.yml`, except for repo-specific instructions placed at the root of `.github/instructions/` (without a subdirectory). Canonical manifest entries control distribution and maturity.
 
 > [!NOTE]
 > Root-level instructions (directly under `.github/instructions/` with no subdirectory) are repo-specific and MUST NOT be added to collection manifests. See [Repo-Specific Artifact Exclusion](ai-artifacts-common.md#repo-specific-artifact-exclusion) for details.
 
 ### Adding Your Instructions to a Collection
 
-After creating your instructions file, add an `items[]` entry in each target collection manifest:
+After creating your instructions file, add an entry under `instructions` in `collections/core-manifest.yml` and list each target collection:
 
 ```yaml
-items:
-    # path can reference artifacts from any subfolder
-    - path: .github/instructions/{collection-id}/my-language.instructions.md
-        kind: instruction
+instructions:
+    .github/instructions/{collection-id}/my-language.instructions.md:
+        path: .github/instructions/{collection-id}/my-language.instructions.md
         maturity: stable
+        collections:
+            - {collection-id}
+            - hve-core-all
 ```
 
 For instructions in language subdirectories, use the full path:
 
 ```yaml
-items:
-    - path: .github/instructions/coding-standards/csharp/csharp.instructions.md
-        kind: instruction
+instructions:
+    .github/instructions/coding-standards/csharp/csharp.instructions.md:
+        path: .github/instructions/coding-standards/csharp/csharp.instructions.md
         maturity: stable
+        collections:
+            - coding-standards
+            - hve-core-all
 ```
 
 ### Selecting Collections for Instructions

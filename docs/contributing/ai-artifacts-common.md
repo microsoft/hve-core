@@ -354,6 +354,37 @@ The extension packaging process (`scripts/extension/Prepare-Extension.ps1`) incl
 3. BFS traversal: Performs breadth-first search to find all reachable agents through handoff chains
 4. Include all: Adds all discovered agents to the extension package
 
+#### Name-matching contract
+
+Cross-agent references (both top-level `agents:` entries and `handoffs.agent:` values) MUST match the target agent's `name:` value exactly, including any `(exp)` or `(pre)` maturity suffix.
+
+The picker name is the dispatch key at both layers of resolution: the packaging-time BFS in `Resolve-HandoffDependencies` (`scripts/extension/Prepare-Extension.ps1`) walks the graph by exact name match, and the VS Code chat-agent runtime registers and dispatches each agent by the same string. The maturity suffix stays visible in the picker because it is the RAI signal contributors and users rely on to recognize experimental or preview surfaces.
+
+If the target agent's `name:` is `Foo (exp)`, every reference to that agent uses the same suffixed string. YAML examples quote suffixed names because the parentheses can confuse YAML readers.
+
+```yaml
+# .github/agents/{collection-id}/foo.agent.md (target)
+---
+name: "Foo (exp)"
+description: "Target agent description"
+---
+
+# .github/agents/{collection-id}/orchestrator.agent.md (referrer)
+---
+name: "Orchestrator (exp)"
+description: "Orchestrator description"
+agents:
+  - "Foo (exp)"
+handoffs:
+  - label: "Hand off to Foo"
+    agent: "Foo (exp)"
+    prompt: /foo-handoff
+    send: true
+---
+```
+
+Top-level `agents:` entries in orchestrator frontmatter follow the same contract: the listed name must equal the subagent's registered `name:` value, suffix included.
+
 #### Collection Manifests and Dependencies
 
 **Collection manifests do NOT declare dependencies.** They only specify:

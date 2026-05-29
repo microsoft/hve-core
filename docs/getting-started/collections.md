@@ -15,7 +15,7 @@ Two VS Code Marketplace extensions deliver these collections:
 
 ### HVE Core All (`ise-hve-essentials.hve-core-all`)
 
-The complete bundle containing 221 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
+The complete bundle containing 246 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
 
 ### HVE Installer (`ise-hve-essentials.hve-installer`)
 
@@ -34,19 +34,19 @@ The installer enables targeted deployment of specific collections into workspace
 | Collection       | Description                                                                                                                                    | Agents | Prompts | Instructions | Skills | Maturity     | Marketplace                                                                                            |
 |------------------|------------------------------------------------------------------------------------------------------------------------------------------------|--------|---------|--------------|--------|--------------|--------------------------------------------------------------------------------------------------------|
 | ado              | Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies | 2      | 9       | 9            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-ado)              |
-| coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 3      | 2       | 15           | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-coding-standards) |
-| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 6      | 3       | 10           | 0      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-data-science)     |
-| design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 2      | 13      | 43           | 0      | Preview      | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-design-thinking)  |
+| coding-standards | Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents                           | 3      | 2       | 15           | 2      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-coding-standards) |
+| data-science     | Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions                                   | 7      | 4       | 10           | 0      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-data-science)     |
+| design-thinking  | AI-enhanced design thinking coaching across nine methods                                                                                       | 2      | 15      | 44           | 0      | Preview      | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-design-thinking)  |
 | experimental     | Experimental and preview artifacts not yet promoted to stable collections                                                                      | 3      | 0       | 3            | 2      | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-experimental)     |
-| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 1      | 6       | 6            | 0      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-github)           |
+| github           | Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution                                                 | 1      | 6       | 6            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-github)           |
 | gitlab           | Run GitLab merge request and pipeline workflows through a focused skill package                                                                | 0      | 0       | 1            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-gitlab)           |
-| hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 17     | 15      | 7            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)             |
-| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 51     | 63      | 102          | 12     | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)         |
+| hve-core         | Flagship collection: RPI (Research, Plan, Implement, Review) workflow for complex tasks with Git workflow prompts                              | 18     | 16      | 7            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)             |
+| hve-core-all     | Complete collection of all artifacts across all domains                                                                                        | 54     | 69      | 104          | 19     | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core-all)         |
 | installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 0      | 0       | 1            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer)        |
 | jira             | Manage Jira backlogs, plan PRD-driven issue hierarchies, and execute issue operations                                                          | 2      | 4       | 6            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-jira)             |
-| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 18     | 11      | 20           | 0      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-project-planning) |
+| project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 21     | 15      | 26           | 2      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-project-planning) |
 | rai-planning     | Assess AI systems against Responsible AI standards and capture standards-aligned backlog work                                                  | 2      | 3       | 8            | 0      | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-rai-planning)     |
-| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 9      | 14      | 19           | 5      | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-security)         |
+| security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 9      | 15      | 20           | 10     | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-security)         |
 
 ## How Collections Fit Together
 
@@ -54,7 +54,7 @@ The following diagram shows how the domain collections relate to the two marketp
 
 ```mermaid
 graph TD
-    HCA["hve#45;core#45;all<br/>(221 artifacts)"]
+    HCA["hve#45;core#45;all<br/>(246 artifacts)"]
     INS["installer<br/>(2 artifacts)"]
 
     ADO["ado"]

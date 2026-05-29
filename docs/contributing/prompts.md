@@ -205,18 +205,20 @@ Prompts that delegate to a custom agent via `agent:` typically omit the activati
 
 ## Collection Entry Requirements
 
-All prompts must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+All distributed prompts must have matching entries in `collections/core-manifest.yml`. The generated `collections/*.collection.yml` files control downstream distribution and maturity.
 
 ### Adding Your Prompt to a Collection
 
-After creating your prompt file, add an `items[]` entry in each target collection manifest:
+After creating your prompt file, add an entry under `prompts` in `collections/core-manifest.yml` and list each target collection:
 
 ```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/prompts/{collection-id}/my-prompt.prompt.md
-    kind: prompt
+prompts:
+  .github/prompts/{collection-id}/my-prompt.prompt.md:
+    path: .github/prompts/{collection-id}/my-prompt.prompt.md
     maturity: stable
+    collections:
+      - {collection-id}
+      - hve-core-all
 ```
 
 ### Selecting Collections for Prompts
