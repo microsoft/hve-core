@@ -571,6 +571,8 @@ items:
   kind: instruction
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/skills/coding-standards/hve-artifact-authoring
+  kind: skill
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
