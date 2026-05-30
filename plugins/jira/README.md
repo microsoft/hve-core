@@ -81,9 +81,9 @@ copilot plugin install jira@hve-core
 
 ## Skills
 
-| Skill | Description                                                                                                                                                                                                                                                                                                                                  |
-|-------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jira  | Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. - Brought to you by microsoft/hve-core |
+| Skill | Description                                                                                                                                                                                                                                                                                           |
+|-------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| jira  | Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. |
 
 ---
 
