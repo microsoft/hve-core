@@ -285,8 +285,7 @@ def _run(args: argparse.Namespace) -> int:
             embedded_count += 1
             logger.info("Embedded %s into slide %d", wav_path.name, idx)
         else:
-            logger.error("FAILED to embed %s into slide %d",
-                         wav_path.name, idx)
+            logger.error("FAILED to embed %s into slide %d", wav_path.name, idx)
             failed_count += 1
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -304,8 +303,7 @@ def _run(args: argparse.Namespace) -> int:
         logger.error("Failed to save output PPTX %s: %s", output_path, exc)
         return EXIT_FAILURE
 
-    logger.info("Saved %s with %d embedded audio files",
-                output_path, embedded_count)
+    logger.info("Saved %s with %d embedded audio files", output_path, embedded_count)
 
     if failed_count > 0:
         logger.warning(
