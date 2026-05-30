@@ -1,5 +1,5 @@
 ---
-description: 'Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery'
+description: 'GitHub issue backlog discovery: artifact-driven, user-centric, search-based'
 applyTo: '**/.copilot-tracking/github-issues/discovery/**'
 ---
 

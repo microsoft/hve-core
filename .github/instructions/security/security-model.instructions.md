@@ -1,5 +1,5 @@
 ---
-description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core"
+description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 

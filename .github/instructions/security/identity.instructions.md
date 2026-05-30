@@ -1,5 +1,5 @@
 ---
-description: "Security Planner identity, six-phase orchestration, state management, and session recovery protocols - Brought to you by microsoft/hve-core"
+description: "Security Planner identity, six-phase orchestration, state management, and session recovery protocols"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 

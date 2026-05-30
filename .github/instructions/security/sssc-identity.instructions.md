@@ -1,7 +1,5 @@
 ---
-description: >-
-  Identity and orchestration instructions for the SSSC Planner agent. Contains
-  six-phase workflow, state.json schema, session recovery, and question cadence.
+description: "SSSC Planner identity and orchestration: six-phase workflow, state.json schema, session recovery, and question cadence"
 applyTo: '**/.copilot-tracking/sssc-plans/**'
 ---
 
