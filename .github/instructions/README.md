@@ -32,63 +32,63 @@ See [Contributing Instructions](../../docs/contributing/instructions.md) for aut
 
 ### Language and Technology
 
-| File                                                                                       | Applies To                                   | Purpose                                  |
-|--------------------------------------------------------------------------------------------|----------------------------------------------|------------------------------------------|
-| [coding-standards/bash/bash.instructions.md](coding-standards/bash/bash.instructions.md)  | `**/*.sh`                                    | Bash script implementation standards     |
-| [coding-standards/bicep/bicep.instructions.md](coding-standards/bicep/bicep.instructions.md) | `**/bicep/**`                             | Bicep infrastructure as code patterns    |
-| [coding-standards/csharp/csharp.instructions.md](coding-standards/csharp/csharp.instructions.md) | `**/*.cs`                              | C# implementation and coding conventions |
-| [coding-standards/csharp/csharp-tests.instructions.md](coding-standards/csharp/csharp-tests.instructions.md) | `**/*.cs`                      | C# test code standards                   |
-| [coding-standards/rust/rust.instructions.md](coding-standards/rust/rust.instructions.md) | `**/*.rs`                                | Rust development conventions             |
-| [coding-standards/rust/rust-tests.instructions.md](coding-standards/rust/rust-tests.instructions.md) | `**/*.rs`                          | Rust test code standards                 |
-| [coding-standards/python-script.instructions.md](coding-standards/python-script.instructions.md) | `**/*.py`                              | Python scripting implementation          |
-| [coding-standards/terraform/terraform.instructions.md](coding-standards/terraform/terraform.instructions.md) | `**/*.tf, **/*.tfvars, **/terraform/**` | Terraform infrastructure as code     |
-| [coding-standards/uv-projects.instructions.md](coding-standards/uv-projects.instructions.md) | `**/*.py, **/*.ipynb`                    | Python virtual environments using uv     |
+| File                                                                                                         | Applies To                              | Purpose                                  |
+|--------------------------------------------------------------------------------------------------------------|-----------------------------------------|------------------------------------------|
+| [coding-standards/bash/bash.instructions.md](coding-standards/bash/bash.instructions.md)                     | `**/*.sh`                               | Bash script implementation standards     |
+| [coding-standards/bicep/bicep.instructions.md](coding-standards/bicep/bicep.instructions.md)                 | `**/bicep/**`                           | Bicep infrastructure as code patterns    |
+| [coding-standards/csharp/csharp.instructions.md](coding-standards/csharp/csharp.instructions.md)             | `**/*.cs`                               | C# implementation and coding conventions |
+| [coding-standards/csharp/csharp-tests.instructions.md](coding-standards/csharp/csharp-tests.instructions.md) | `**/*.cs`                               | C# test code standards                   |
+| [coding-standards/rust/rust.instructions.md](coding-standards/rust/rust.instructions.md)                     | `**/*.rs`                               | Rust development conventions             |
+| [coding-standards/rust/rust-tests.instructions.md](coding-standards/rust/rust-tests.instructions.md)         | `**/*.rs`                               | Rust test code standards                 |
+| [coding-standards/python-script.instructions.md](coding-standards/python-script.instructions.md)             | `**/*.py`                               | Python scripting implementation          |
+| [coding-standards/terraform/terraform.instructions.md](coding-standards/terraform/terraform.instructions.md) | `**/*.tf, **/*.tfvars, **/terraform/**` | Terraform infrastructure as code         |
+| [coding-standards/uv-projects.instructions.md](coding-standards/uv-projects.instructions.md)                 | `**/*.py, **/*.ipynb`                   | Python virtual environments using uv     |
 
 ### Documentation and Content
 
-| File                                                                          | Applies To                                                    | Purpose                                |
-|-------------------------------------------------------------------------------|---------------------------------------------------------------|----------------------------------------|
-| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)                 | `**/*.md`                                                     | Markdown formatting standards          |
-| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)       | `**/*.md`                                                     | Voice, tone, and language conventions  |
-| [hve-core/prompt-builder.instructions.md](hve-core/prompt-builder.instructions.md)     | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md`         | Prompt engineering artifact authoring  |
+| File                                                                               | Applies To                                            | Purpose                               |
+|------------------------------------------------------------------------------------|-------------------------------------------------------|---------------------------------------|
+| [hve-core/markdown.instructions.md](hve-core/markdown.instructions.md)             | `**/*.md`                                             | Markdown formatting standards         |
+| [hve-core/writing-style.instructions.md](hve-core/writing-style.instructions.md)   | `**/*.md`                                             | Voice, tone, and language conventions |
+| [hve-core/prompt-builder.instructions.md](hve-core/prompt-builder.instructions.md) | `**/*.prompt.md, **/*.agent.md, **/*.instructions.md` | Prompt engineering artifact authoring |
 
 ### Git and Workflow
 
-| File                                                                      | Applies To                       | Purpose                               |
-|---------------------------------------------------------------------------|----------------------------------|---------------------------------------|
-| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md)       | Commit actions                   | Conventional commit message format    |
-| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)                 | Git operations                   | Merge, rebase, and conflict handling  |
-| [hve-core/pull-request.instructions.md](hve-core/pull-request.instructions.md)           | `**/.copilot-tracking/pr/**`     | PR generation workflow with subagents |
-| [pull-request.instructions.md](pull-request.instructions.md)                             | `**/.copilot-tracking/pr/**`     | Repo-specific PR conventions          |
+| File                                                                               | Applies To                   | Purpose                               |
+|------------------------------------------------------------------------------------|------------------------------|---------------------------------------|
+| [hve-core/commit-message.instructions.md](hve-core/commit-message.instructions.md) | Commit actions               | Conventional commit message format    |
+| [hve-core/git-merge.instructions.md](hve-core/git-merge.instructions.md)           | Git operations               | Merge, rebase, and conflict handling  |
+| [hve-core/pull-request.instructions.md](hve-core/pull-request.instructions.md)     | `**/.copilot-tracking/pr/**` | PR generation workflow with subagents |
+| [pull-request.instructions.md](pull-request.instructions.md)                       | `**/.copilot-tracking/pr/**` | Repo-specific PR conventions          |
 
 ### Azure DevOps Integration
 
-| File                                                                                      | Applies To                                              | Purpose                            |
-|-------------------------------------------------------------------------------------------|---------------------------------------------------------|------------------------------------|
-| [ado/ado-create-pull-request.instructions.md](ado/ado-create-pull-request.instructions.md) | `**/.copilot-tracking/pr/new/**`                      | Pull request creation protocol     |
-| [ado/ado-get-build-info.instructions.md](ado/ado-get-build-info.instructions.md)          | `**/.copilot-tracking/pr/*-build-*.md`                  | Build status and log retrieval     |
-| [ado/ado-update-wit-items.instructions.md](ado/ado-update-wit-items.instructions.md)      | `**/.copilot-tracking/workitems/**/handoff-logs.md`     | Work item creation and updates     |
-| [ado/ado-wit-discovery.instructions.md](ado/ado-wit-discovery.instructions.md)            | `**/.copilot-tracking/workitems/discovery/**`           | Work item discovery protocol       |
-| [ado/ado-wit-planning.instructions.md](ado/ado-wit-planning.instructions.md)              | `**/.copilot-tracking/workitems/**`                     | Work item planning specifications  |
+| File                                                                                       | Applies To                                          | Purpose                           |
+|--------------------------------------------------------------------------------------------|-----------------------------------------------------|-----------------------------------|
+| [ado/ado-create-pull-request.instructions.md](ado/ado-create-pull-request.instructions.md) | `**/.copilot-tracking/pr/new/**`                    | Pull request creation protocol    |
+| [ado/ado-get-build-info.instructions.md](ado/ado-get-build-info.instructions.md)           | `**/.copilot-tracking/pr/*-build-*.md`              | Build status and log retrieval    |
+| [ado/ado-update-wit-items.instructions.md](ado/ado-update-wit-items.instructions.md)       | `**/.copilot-tracking/workitems/**/handoff-logs.md` | Work item creation and updates    |
+| [ado/ado-wit-discovery.instructions.md](ado/ado-wit-discovery.instructions.md)             | `**/.copilot-tracking/workitems/discovery/**`       | Work item discovery protocol      |
+| [ado/ado-wit-planning.instructions.md](ado/ado-wit-planning.instructions.md)               | `**/.copilot-tracking/workitems/**`                 | Work item planning specifications |
 
 ### GitHub Integration
 
-| File                                                                                      | Applies To                                            | Purpose                           |
-|-------------------------------------------------------------------------------------------|-------------------------------------------------------|-----------------------------------|
-| [github/community-interaction.instructions.md](github/community-interaction.instructions.md) | `**/.github/instructions/github-backlog-*.instructions.md` | GitHub-facing communication patterns |
-| [github/github-backlog-discovery.instructions.md](github/github-backlog-discovery.instructions.md) | `**/.copilot-tracking/github-issues/discovery/**` | Issue discovery protocol          |
-| [github/github-backlog-planning.instructions.md](github/github-backlog-planning.instructions.md) | `**/.copilot-tracking/github-issues/**`            | Backlog planning specifications   |
-| [github/github-backlog-triage.instructions.md](github/github-backlog-triage.instructions.md) | `**/.copilot-tracking/github-issues/triage/**`    | Issue triage workflow             |
-| [github/github-backlog-update.instructions.md](github/github-backlog-update.instructions.md) | `**/.copilot-tracking/github-issues/**/handoff-logs.md` | Issue execution workflow       |
+| File                                                                                               | Applies To                                                 | Purpose                              |
+|----------------------------------------------------------------------------------------------------|------------------------------------------------------------|--------------------------------------|
+| [github/community-interaction.instructions.md](github/community-interaction.instructions.md)       | `**/.github/instructions/github-backlog-*.instructions.md` | GitHub-facing communication patterns |
+| [github/github-backlog-discovery.instructions.md](github/github-backlog-discovery.instructions.md) | `**/.copilot-tracking/github-issues/discovery/**`          | Issue discovery protocol             |
+| [github/github-backlog-planning.instructions.md](github/github-backlog-planning.instructions.md)   | `**/.copilot-tracking/github-issues/**`                    | Backlog planning specifications      |
+| [github/github-backlog-triage.instructions.md](github/github-backlog-triage.instructions.md)       | `**/.copilot-tracking/github-issues/triage/**`             | Issue triage workflow                |
+| [github/github-backlog-update.instructions.md](github/github-backlog-update.instructions.md)       | `**/.copilot-tracking/github-issues/**/handoff-logs.md`    | Issue execution workflow             |
 
 ### Jira Integration
 
-| File                                                                                      | Applies To                                         | Purpose                                  |
-|-------------------------------------------------------------------------------------------|----------------------------------------------------|------------------------------------------|
-| [jira/jira-backlog-discovery.instructions.md](jira/jira-backlog-discovery.instructions.md) | `**/.copilot-tracking/jira-issues/discovery/**`    | Jira issue discovery protocol            |
-| [jira/jira-backlog-planning.instructions.md](jira/jira-backlog-planning.instructions.md) | `**/.copilot-tracking/jira-issues/**`              | Jira backlog planning specifications     |
-| [jira/jira-backlog-triage.instructions.md](jira/jira-backlog-triage.instructions.md)     | `**/.copilot-tracking/jira-issues/triage/**`       | Jira issue triage workflow               |
-| [jira/jira-backlog-update.instructions.md](jira/jira-backlog-update.instructions.md)     | `**/.copilot-tracking/jira-issues/**/handoff-logs.md` | Jira issue execution workflow         |
+| File                                                                                       | Applies To                                            | Purpose                              |
+|--------------------------------------------------------------------------------------------|-------------------------------------------------------|--------------------------------------|
+| [jira/jira-backlog-discovery.instructions.md](jira/jira-backlog-discovery.instructions.md) | `**/.copilot-tracking/jira-issues/discovery/**`       | Jira issue discovery protocol        |
+| [jira/jira-backlog-planning.instructions.md](jira/jira-backlog-planning.instructions.md)   | `**/.copilot-tracking/jira-issues/**`                 | Jira backlog planning specifications |
+| [jira/jira-backlog-triage.instructions.md](jira/jira-backlog-triage.instructions.md)       | `**/.copilot-tracking/jira-issues/triage/**`          | Jira issue triage workflow           |
+| [jira/jira-backlog-update.instructions.md](jira/jira-backlog-update.instructions.md)       | `**/.copilot-tracking/jira-issues/**/handoff-logs.md` | Jira issue execution workflow        |
 
 ### GitLab Workflow Entry Points
 
