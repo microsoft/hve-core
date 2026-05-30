@@ -80,77 +80,77 @@ Use this edition when you want access to everything without choosing a focused c
 
 ### Prompts
 
-| Name                                            | Description                                                                                                                                      |
-|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                                |
-| **ado-create-pull-request**                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages.      |
-| **ado-discover-work-items**                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                             |
-| **ado-get-build-info**                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                             |
-| **ado-get-my-work-items**                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                                 |
-| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                                   |
-| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                            |
-| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                                |
-| **ado-update-wit-items**                        | Prompt to update work items based on planning files                                                                                              |
-| **checkpoint**                                  | Save or restore conversation context using memory files                                                                                          |
-| **code-review-full**                            | Run both functional and standards code reviews on the current branch in a single pass                                                            |
-| **code-review-functional**                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps                                               |
-| **cspell-config**                               | Creates or updates the project cspell configuration with project-specific words and ignores                                                      |
-| **doc-ops-update**                              | Invoke doc-ops agent for documentation quality assurance and updates                                                                             |
-| **dt-canonical-deck**                           | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build                       |
-| **dt-figma-export**                             | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server                        |
-| **dt-handoff-implementation-space**             | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                     |
-| **dt-handoff-problem-space**                    | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                |
-| **dt-handoff-solution-space**                   | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                               |
-| **dt-method-04-convergence**                    | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                                                |
-| **dt-method-04-ideation**                       | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                                                    |
-| **dt-method-05-concepts**                       | Concept articulation for Design Thinking Method 5b from brainstorming themes                                                                     |
-| **dt-method-05-evaluation**                     | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                                                    |
-| **dt-method-06-building**                       | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                                               |
-| **dt-method-06-planning**                       | Concept analysis and prototype approach design for Design Thinking Method 6a                                                                     |
-| **dt-method-06-testing**                        | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                                                |
-| **dt-method-next**                              | Assess DT project state and recommend next method with sequencing validation                                                                     |
-| **dt-resume-coaching**                          | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                                                      |
-| **dt-start-project**                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction                                            |
-| **git-commit**                                  | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit                         |
-| **git-commit-message**                          | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch                                 |
-| **git-merge**                                   | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                                                     |
-| **git-setup**                                   | Interactive, verification-first Git configuration assistant (non-destructive)                                                                    |
-| **github-add-issue**                            | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
-| **github-discover-issues**                      | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
-| **github-execute-backlog**                      | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
-| **github-sprint-plan**                          | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
-| **github-suggest**                              | Resume GitHub backlog management workflow after session restore                                                                                  |
-| **github-triage-issues**                        | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
-| **incident-response**                           | Incident response workflow for Azure operations scenarios                                                                                        |
-| **jira-discover-issues**                        | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review      |
-| **jira-execute-backlog**                        | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                                   |
-| **jira-prd-to-wit**                             | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                      |
-| **jira-triage-issues**                          | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                     |
-| **prompt-analyze**                              | Evaluates prompt engineering artifacts against quality criteria and reports findings                                                             |
-| **prompt-build**                                | Build or improve prompt engineering artifacts following quality criteria                                                                         |
-| **prompt-refactor**                             | Refactors and cleans up prompt engineering artifacts through iterative improvement                                                               |
-| **pull-request**                                | Generates pull request descriptions from branch diffs                                                                                            |
-| **rai-capture**                                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                  |
-| **rai-plan-from-prd**                           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                  |
-| **rai-plan-from-security-plan**                 | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended)  |
-| **risk-register**                               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                  |
-| **rpi**                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                                                 |
-| **security-capture**                            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                     |
-| **security-plan-from-prd**                      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                              |
-| **security-review**                             | Runs an OWASP vulnerability assessment against the current codebase                                                                              |
-| **security-review-llm**                         | Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context                                                         |
-| **security-review-sbd**                         | Runs a Secure by Design principles assessment based on UK and Australian government guidance                                                     |
-| **security-review-web**                         | Runs an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                     |
-| **sssc-capture**                                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                     |
-| **sssc-from-brd**                               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                                |
-| **sssc-from-prd**                               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                                |
-| **sssc-from-security-plan**                     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                          |
-| **synth-data-generate**                         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                        |
-| **task-challenge**                              | Adversarial What/Why/How interrogation of completed implementation artifacts                                                                     |
-| **task-implement**                              | Locates and executes implementation plans using Task Implementor                                                                                 |
-| **task-plan**                                   | Initiates implementation planning based on user context or research documents                                                                    |
-| **task-research**                               | Initiates research for implementation planning based on user requirements                                                                        |
-| **task-review**                                 | Initiates implementation review based on user context or automatic artifact discovery                                                            |
+| Name                                            | Description                                                                                                                                  |
+|-------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                            |
+| **ado-create-pull-request**                     | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                                             |
+| **ado-discover-work-items**                     | Discover Azure DevOps work items via user queries, artifact analysis, or search                                                              |
+| **ado-get-build-info**                          | Retrieve Azure DevOps build status and logs for a pull request or build number                                                               |
+| **ado-get-my-work-items**                       | Retrieve your assigned Azure DevOps work items into a planning file                                                                          |
+| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                               |
+| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                        |
+| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                            |
+| **ado-update-wit-items**                        | Update Azure DevOps work items from planning files                                                                                           |
+| **checkpoint**                                  | Save or restore conversation context using memory files                                                                                      |
+| **code-review-full**                            | Run both functional and standards code reviews on the current branch in a single pass                                                        |
+| **code-review-functional**                      | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps                                           |
+| **cspell-config**                               | Create or update the project cspell configuration with project words and ignores                                                             |
+| **doc-ops-update**                              | Run the doc-ops agent for documentation quality assurance and updates                                                                        |
+| **dt-canonical-deck**                           | Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build                              |
+| **dt-figma-export**                             | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                                             |
+| **dt-handoff-implementation-space**             | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                 |
+| **dt-handoff-problem-space**                    | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                            |
+| **dt-handoff-solution-space**                   | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                           |
+| **dt-method-04-convergence**                    | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                                            |
+| **dt-method-04-ideation**                       | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                                                |
+| **dt-method-05-concepts**                       | Concept articulation for Design Thinking Method 5b from brainstorming themes                                                                 |
+| **dt-method-05-evaluation**                     | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                                                |
+| **dt-method-06-building**                       | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                                           |
+| **dt-method-06-planning**                       | Concept analysis and prototype approach design for Design Thinking Method 6a                                                                 |
+| **dt-method-06-testing**                        | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                                            |
+| **dt-method-next**                              | Assess DT project state and recommend next method with sequencing validation                                                                 |
+| **dt-resume-coaching**                          | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                                                  |
+| **dt-start-project**                            | Start a new Design Thinking coaching project with state initialization and first coaching interaction                                        |
+| **git-commit**                                  | Stage all changes, generate a conventional commit message, and commit                                                                        |
+| **git-commit-message**                          | Generate a conventional commit message from all branch changes                                                                               |
+| **git-merge**                                   | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                                                             |
+| **git-setup**                                   | Interactive, verification-first Git configuration assistant (non-destructive)                                                                |
+| **github-add-issue**                            | Create a GitHub issue using discovered repository templates and conversational field collection                                              |
+| **github-discover-issues**                      | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                                             |
+| **github-execute-backlog**                      | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                          |
+| **github-sprint-plan**                          | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                                                    |
+| **github-suggest**                              | Resume GitHub backlog management workflow after session restore                                                                              |
+| **github-triage-issues**                        | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                                         |
+| **incident-response**                           | Run an incident response workflow for Azure operations scenarios                                                                             |
+| **jira-discover-issues**                        | Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files                                           |
+| **jira-execute-backlog**                        | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                               |
+| **jira-prd-to-wit**                             | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                  |
+| **jira-triage-issues**                          | Triage Jira issues with field recommendations, duplicate detection, and optional updates                                                     |
+| **prompt-analyze**                              | Evaluate prompt engineering artifacts against quality criteria and report findings                                                           |
+| **prompt-build**                                | Build or improve prompt engineering artifacts following quality criteria                                                                     |
+| **prompt-refactor**                             | Refactor and clean up prompt engineering artifacts through iterative improvement                                                             |
+| **pull-request**                                | Generate pull request descriptions from branch diffs                                                                                         |
+| **rai-capture**                                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**                           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan**                 | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **risk-register**                               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **rpi**                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                                             |
+| **security-capture**                            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
+| **security-plan-from-prd**                      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
+| **security-review**                             | Run an OWASP vulnerability assessment against the current codebase                                                                           |
+| **security-review-llm**                         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                  |
+| **security-review-sbd**                         | Run a Secure by Design principles assessment per UK and Australian government guidance                                                       |
+| **security-review-web**                         | Run an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                  |
+| **sssc-capture**                                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**                               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
+| **sssc-from-prd**                               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
+| **sssc-from-security-plan**                     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
+| **synth-data-generate**                         | Generate synthetic data for any subject with realistic patterns and relationships                                                            |
+| **task-challenge**                              | Adversarial What/Why/How interrogation of completed implementation artifacts                                                                 |
+| **task-implement**                              | Locate and execute implementation plans using Task Implementor                                                                               |
+| **task-plan**                                   | Initiate implementation planning from user context or research documents                                                                     |
+| **task-research**                               | Initiate research for implementation planning from user requirements                                                                         |
+| **task-review**                                 | Initiate implementation review from user context or artifact discovery                                                                       |
 
 ### Instructions
 

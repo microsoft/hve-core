@@ -33,23 +33,23 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                     |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **incident-response**           | Incident response workflow for Azure operations scenarios                                                                                       |
-| **rai-capture**                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **risk-register**               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                 |
-| **security-capture**            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                    |
-| **security-plan-from-prd**      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                             |
-| **security-review**             | Runs an OWASP vulnerability assessment against the current codebase                                                                             |
-| **security-review-llm**         | Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context                                                        |
-| **security-review-sbd**         | Runs a Secure by Design principles assessment based on UK and Australian government guidance                                                    |
-| **security-review-web**         | Runs an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                    |
-| **sssc-capture**                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
-| **sssc-from-brd**               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                               |
-| **sssc-from-prd**               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                               |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                         |
+| Name                            | Description                                                                                                                                  |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **incident-response**           | Run an incident response workflow for Azure operations scenarios                                                                             |
+| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
+| **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
+| **security-review**             | Run an OWASP vulnerability assessment against the current codebase                                                                           |
+| **security-review-llm**         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                  |
+| **security-review-sbd**         | Run a Secure by Design principles assessment per UK and Australian government guidance                                                       |
+| **security-review-web**         | Run an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                  |
+| **sssc-capture**                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
+| **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
+| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
 
 ### Instructions
 

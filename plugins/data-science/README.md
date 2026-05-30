@@ -31,12 +31,12 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                     |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-capture**                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **synth-data-generate**         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                       |
+| Name                            | Description                                                                                                                                  |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **synth-data-generate**         | Generate synthetic data for any subject with realistic patterns and relationships                                                            |
 
 ### Instructions
 

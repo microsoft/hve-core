@@ -36,24 +36,24 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Prompts
 
-| Name                   | Description                                                                                                              |
-|------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| **checkpoint**         | Save or restore conversation context using memory files                                                                  |
-| **doc-ops-update**     | Invoke doc-ops agent for documentation quality assurance and updates                                                     |
-| **git-commit**         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit |
-| **git-commit-message** | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch         |
-| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                             |
-| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)                                            |
-| **prompt-analyze**     | Evaluates prompt engineering artifacts against quality criteria and reports findings                                     |
-| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria                                                 |
-| **prompt-refactor**    | Refactors and cleans up prompt engineering artifacts through iterative improvement                                       |
-| **pull-request**       | Generates pull request descriptions from branch diffs                                                                    |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                         |
-| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                                             |
-| **task-implement**     | Locates and executes implementation plans using Task Implementor                                                         |
-| **task-plan**          | Initiates implementation planning based on user context or research documents                                            |
-| **task-research**      | Initiates research for implementation planning based on user requirements                                                |
-| **task-review**        | Initiates implementation review based on user context or automatic artifact discovery                                    |
+| Name                   | Description                                                                        |
+|------------------------|------------------------------------------------------------------------------------|
+| **checkpoint**         | Save or restore conversation context using memory files                            |
+| **doc-ops-update**     | Run the doc-ops agent for documentation quality assurance and updates              |
+| **git-commit**         | Stage all changes, generate a conventional commit message, and commit              |
+| **git-commit-message** | Generate a conventional commit message from all branch changes                     |
+| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling   |
+| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)      |
+| **prompt-analyze**     | Evaluate prompt engineering artifacts against quality criteria and report findings |
+| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria           |
+| **prompt-refactor**    | Refactor and clean up prompt engineering artifacts through iterative improvement   |
+| **pull-request**       | Generate pull request descriptions from branch diffs                               |
+| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks   |
+| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts       |
+| **task-implement**     | Locate and execute implementation plans using Task Implementor                     |
+| **task-plan**          | Initiate implementation planning from user context or research documents           |
+| **task-research**      | Initiate research for implementation planning from user requirements               |
+| **task-review**        | Initiate implementation review from user context or artifact discovery             |
 
 ### Instructions
 
