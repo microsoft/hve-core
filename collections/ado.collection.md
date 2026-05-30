@@ -8,10 +8,10 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Chat Agents
 
-| Name                    | Description                                                                                                                                               |
-|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **ado-backlog-manager** | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
-| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                 |
+| Name                    | Description                                                                                                          |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------|
+| **ado-backlog-manager** | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
+| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                            |
 
 ### Prompts
 

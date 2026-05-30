@@ -63,11 +63,11 @@ copilot plugin install coding-standards@hve-core
 
 ## Agents
 
-| Agent                  | Description                                                                                                                                                      |
-|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| code-review-full       | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report - Brought to you by microsoft/hve-core                   |
-| code-review-functional | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core                      |
-| code-review-standards  | Skills-based code reviewer for local changes and PRs - applies project-defined coding standards via dynamic skill loading - Brought to you by microsoft/hve-core |
+| Agent                  | Description                                                                                             |
+|------------------------|---------------------------------------------------------------------------------------------------------|
+| code-review-full       | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report |
+| code-review-functional | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps    |
+| code-review-standards  | Skills-based code reviewer applying project-defined coding standards to local changes and PRs           |
 
 ## Commands
 

@@ -62,10 +62,10 @@ copilot plugin install ado@hve-core
 
 ## Agents
 
-| Agent               | Description                                                                                                                                                                                      |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ado-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                                                        |
-| ado-backlog-manager | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution - Brought to you by microsoft/hve-core |
+| Agent               | Description                                                                                                          |
+|---------------------|----------------------------------------------------------------------------------------------------------------------|
+| ado-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                            |
+| ado-backlog-manager | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
 
 ## Commands
 

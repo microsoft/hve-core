@@ -11,17 +11,17 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 ### Chat Agents
 
-| Name                      | Description                                                                                                                                                                                                                                                                      |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **codebase-profiler**     | Scans the repository to build a technology profile and identify which security skills apply to the codebase                                                                                                                                                                      |
-| **finding-deep-verifier** | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                                                                                                                           |
-| **rai-planner**           | Responsible AI assessment planning agent with 6-phase conversational workflow. Guides planning against NIST AI RMF 1.0 as the default evaluation framework. Prepares RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff.            |
-| **report-generator**      | Collates verified security skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/                                                                                                                                   |
-| **researcher-subagent**   | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                                     |
-| **security-planner**      | Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration                                                                                                         |
-| **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                                                                                                                        |
-| **skill-assessor**        | Assesses a single security knowledge skill against the codebase, reading vulnerability references and returning structured findings                                                                                                                                              |
-| **sssc-planner**          | Guides users through a six-phase assessment of their repository's supply chain security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog referencing reusable workflows from hve-core and microsoft/physical-ai-toolchain. |
+| Name                      | Description                                                                                                                                                                 |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **codebase-profiler**     | Scans the repository to build a technology profile and select applicable security skills                                                                                    |
+| **finding-deep-verifier** | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                      |
+| **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
+| **report-generator**      | Collates verified security skill findings into a comprehensive vulnerability report                                                                                         |
+| **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
+| **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                           |
+| **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |
+| **skill-assessor**        | Assesses a single security skill against the codebase and returns structured findings                                                                                       |
+| **sssc-planner**          | Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows. |
 
 ### Prompts
 

@@ -83,26 +83,26 @@ copilot plugin install hve-core@hve-core
 
 ## Agents
 
-| Agent                    | Description                                                                                                                                                                                       |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| rpi-agent                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core |
-| task-planner             | Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core                                                                                        |
-| memory                   | Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core                                                                                                     |
-| doc-ops                  | Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core                                                 |
-| prompt-builder           | Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core                                 |
-| task-researcher          | Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core                                                                                                |
-| task-implementor         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core                                                    |
-| task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core                                                                |
-| task-challenger          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading - Brought to you by microsoft/hve-core                          |
-| pr-review                | Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core                                                     |
-| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase - Brought to you by microsoft/hve-core                                    |
-| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core                   |
-| plan-validator           | Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core                 |
-| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core                                                           |
-| prompt-evaluator         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance                                                             |
-| prompt-tester            | Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value   |
-| prompt-updater           | Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research                                 |
-| researcher-subagent      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                      |
+| Agent                    | Description                                                                                                                              |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-agent                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                    |
+| task-planner             | Implementation planner that creates actionable, step-by-step plans                                                                       |
+| memory                   | Conversation memory persistence for session continuity                                                                                   |
+| doc-ops                  | Documentation operations agent for pattern compliance, accuracy verification, and gap detection                                          |
+| prompt-builder           | Prompt engineering assistant for creating and validating prompts, agents, and instructions                                               |
+| task-researcher          | Task research specialist for comprehensive project analysis                                                                              |
+| task-implementor         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                  |
+| task-reviewer            | Reviews completed implementation work for accuracy, completeness, and convention compliance                                              |
+| task-challenger          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading        |
+| pr-review                | Pull Request review assistant for code quality, security, and convention compliance                                                      |
+| rpi-validator            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                  |
+| implementation-validator | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
+| plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                  |
+| phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |
+| prompt-evaluator         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance                |
+| prompt-tester            | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value                                      |
+| prompt-updater           | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions                                  |
+| researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
 
 ## Commands
 
