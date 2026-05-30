@@ -64,6 +64,8 @@ Present a summary of all findings, validate completeness, generate the final sec
 
 When the security plan identifies supply chain concerns (dependency management, build integrity, artifact signing, or SBOM requirements), recommend SSSC Planner dispatch. Provide the SSSC Planner agent path (`.github/agents/security/sssc-planner.agent.md`) and suggest `from-security-plan` entry mode.
 
+If the security plan introduced architectural mitigations, trust-boundary changes, or control-placement decisions worth preserving, you may want to capture them as ADRs. The `@adr-creation` agent (`from-planner-handoff` entry mode) accepts a Security Planner handoff directly.
+
 ## Entry Modes
 
 Two entry modes determine how Phase 1 begins. Both converge at Phase 2 once scoping completes.

@@ -73,6 +73,8 @@ Explore control surface coverage for each identified threat. Document evidence o
 
 Prepare a review summary of findings across dimensions: scope boundary clarity, risk identification coverage, control surface adequacy, evidence sufficiency, future work governance, and risk classification alignment. Draft backlog items for identified gaps and prepare for handoff to the ADO or GitHub backlog system. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign.
 
+If the assessment surfaced architectural decisions worth preserving — model selection, training-data sources, human-in-the-loop placement, or AI-surface boundaries — you may want to capture them as ADRs. The `@adr-creation` agent (`from-planner-handoff` entry mode) accepts an RAI Planner handoff directly.
+
 * Artifacts: `rai-review-summary.md`, backlog items, `artifact-manifest.json` (when signing accepted)
 
 ## Entry Modes
