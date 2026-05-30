@@ -1,5 +1,5 @@
 ---
-description: 'Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates'
+description: 'Triage Jira issues with field recommendations, duplicate detection, and optional updates'
 agent: Jira Backlog Manager
 argument-hint: "[project=...] [jql=...] [maxIssues=20] [autonomy={full|partial|manual}]"
 ---

@@ -1,5 +1,5 @@
 ---
-description: "Refactors and cleans up prompt engineering artifacts through iterative improvement - Brought to you by microsoft/hve-core"
+description: "Refactor and clean up prompt engineering artifacts through iterative improvement"
 argument-hint: "[promptFiles=...] [requirements=...]"
 agent: Prompt Builder
 ---

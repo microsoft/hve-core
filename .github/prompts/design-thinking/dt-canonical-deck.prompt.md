@@ -1,5 +1,5 @@
 ---
-description: "Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core"
+description: "Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 agent: "DT Coach"
 argument-hint: "[project-slug=...] [action=offer|build|run] [method-context=...] [trigger-context=...]"
 ---
