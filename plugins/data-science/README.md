@@ -19,15 +19,15 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Chat Agents
 
-| Name                         | Description                                                                                                                                                                                                                                                           |
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **eval-dataset-creator**     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                                                                                                               |
-| **gen-data-spec**            | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                                                                                        |
-| **gen-jupyter-notebook**     | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                                                                             |
-| **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                              |
-| **rai-planner**              | Responsible AI assessment planning agent with 6-phase conversational workflow. Guides planning against NIST AI RMF 1.0 as the default evaluation framework. Prepares RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. |
-| **researcher-subagent**      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                          |
-| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                                                                                         |
+| Name                         | Description                                                                                                                                                            |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **eval-dataset-creator**     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                |
+| **gen-data-spec**            | Generate data dictionaries, machine-readable data profiles, and summaries for downstream EDA notebooks and dashboards                                                  |
+| **gen-jupyter-notebook**     | Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries                                                                       |
+| **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                               |
+| **rai-planner**              | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff |
+| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                            |
+| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                          |
 
 ### Prompts
 
