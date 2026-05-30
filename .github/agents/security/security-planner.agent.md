@@ -1,6 +1,6 @@
 ---
 name: Security Planner
-description: "Phase-based security planner that produces security models, standards mappings, and backlog handoff artifacts with AI/ML component detection and RAI Planner integration"
+description: "Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration"
 agents:
   - Researcher Subagent
 tools:

@@ -1,6 +1,6 @@
 ---
 name: Doc Ops
-description: 'Autonomous documentation operations agent for pattern compliance, accuracy verification, and gap detection - Brought to you by microsoft/hve-core'
+description: 'Documentation operations agent for pattern compliance, accuracy verification, and gap detection'
 disable-model-invocation: true
 agents:
   - Researcher Subagent

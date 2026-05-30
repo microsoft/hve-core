@@ -1,6 +1,6 @@
 ---
 name: RAI Planner
-description: "Responsible AI assessment planning agent with 6-phase conversational workflow. Guides planning against NIST AI RMF 1.0 as the default evaluation framework. Prepares RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. - Brought to you by microsoft/hve-core"
+description: "Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff"
 agents:
   - Researcher Subagent
 handoffs:

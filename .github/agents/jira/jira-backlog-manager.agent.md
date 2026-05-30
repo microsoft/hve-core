@@ -1,6 +1,6 @@
 ---
 name: Jira Backlog Manager
-description: "Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions - Brought to you by microsoft/hve-core"
+description: "Jira backlog orchestrator for discovery, triage, execution, and single-issue actions"
 disable-model-invocation: true
 tools:
   - execute/getTerminalOutput

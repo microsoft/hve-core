@@ -1,6 +1,6 @@
 ---
 name: Documentation Update Checker
-description: "Checks whether documentation accurately reflects recent code changes and opens issues for stale docs - Brought to you by microsoft/hve-core"
+description: "Checks whether documentation accurately reflects recent code changes and opens issues for stale docs"
 ---
 
 # Documentation Update Checker

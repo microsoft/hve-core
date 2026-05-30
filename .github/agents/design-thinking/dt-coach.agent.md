@@ -1,6 +1,6 @@
 ---
 name: DT Coach
-description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy - Brought to you by microsoft/hve-core'
+description: 'Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy'
 tools: [vscode/askQuestions, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/runInTerminal, read, agent, edit, search, web]
 handoffs:
 

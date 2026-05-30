@@ -1,6 +1,6 @@
 ---
 name: Arch Diagram Builder
-description: Architecture diagram builder agent that builds high quality ASCII-art diagrams - Brought to you by microsoft/hve-core
+description: Architecture diagram builder that produces high-quality ASCII-art diagrams
 ---
 
 # Architecture Diagram Builder Agent
