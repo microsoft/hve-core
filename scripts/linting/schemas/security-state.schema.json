@@ -4,7 +4,7 @@
   "title": "Security Planner State Schema",
   "description": "Schema for Security Planner state.json files under .copilot-tracking/security-plans/{project-slug}/",
   "type": "object",
-    "required": [
+  "required": [
     "projectSlug",
     "securityPlanFile",
     "currentPhase",

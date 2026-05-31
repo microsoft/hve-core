@@ -7,16 +7,18 @@
     and asserts cross-schema parity for `disclaimerShownAt` against the sister RAI schema.
 #>
 
+# Enumerated at discovery time so -ForEach receives the fixture corpus before BeforeAll runs.
+$script:fixturesDir = (Resolve-Path (Join-Path $PSScriptRoot '../fixtures/security-state')).Path
+$script:fixtureCases = Get-ChildItem -Path $script:fixturesDir -Filter '*.json' -File | ForEach-Object {
+    @{ Name = $_.Name; Path = $_.FullName }
+}
+
 BeforeAll {
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
     $script:schemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/security-state.schema.json'
     $script:raiSchemaPath = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
-    $script:fixturesDir = Join-Path $script:repoRoot 'scripts/tests/fixtures/security-state'
 
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
-    $script:fixtureCases = Get-ChildItem -Path $script:fixturesDir -Filter '*.json' -File | ForEach-Object {
-        @{ Name = $_.Name; Path = $_.FullName }
-    }
 }
 
 Describe 'Canonical security-state schema validates fixture corpus' {
