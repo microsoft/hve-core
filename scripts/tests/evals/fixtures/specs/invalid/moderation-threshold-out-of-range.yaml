@@ -1,0 +1,17 @@
+name: fixture-moderation-threshold-out-of-range
+description: Spec whose moderation.threshold exceeds the 0.0-1.0 range.
+type: capability
+config:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+moderation:
+  threshold: 2.5
+
+stimuli:
+  - name: out-of-range
+    prompt: "Threshold above 1.0 must fail validation."
+    graders:
+      - type: output-matches
+        name: noop
+        config: {pattern: '.*'}

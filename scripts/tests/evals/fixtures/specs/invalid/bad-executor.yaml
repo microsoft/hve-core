@@ -1,0 +1,17 @@
+name: fixture-bad-executor
+description: Spec with an executor that is not in the whitelist.
+type: capability
+config:
+  runs: 1
+  timeout: 60s
+  executor: not-a-real-executor
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: a-stimulus
+    prompt: "What is 2 + 2?"
+    graders:
+      - type: output-matches
+        name: four
+        config: {pattern: '\b4\b'}
