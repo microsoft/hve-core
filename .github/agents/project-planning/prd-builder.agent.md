@@ -45,6 +45,8 @@ Ensure completeness and quality before approval.
 
 Deliver complete, actionable PRD.
 
+If the PRD surfaced significant architectural decisions worth preserving — for example, tech-stack choices, build-vs-buy calls, system-boundary or integration patterns — you may want to capture them as ADRs. The `@adr-creation` agent can guide you through it; the PRD makes useful context.
+
 ## Handling Ambiguous Requests
 
 When user request lacks clarity:
