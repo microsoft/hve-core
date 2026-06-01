@@ -848,13 +848,13 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
+Source AI artifact files MUST omit attribution from the frontmatter `description` field. Distribution and generation tooling appends attribution automatically to generated outputs:
 
 ```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
+description: 'Tests prompt files in a sandbox environment'
 ```
 
-Format: `- Brought to you by organization/repository-name` appended to the description value.
+Generated outputs append the attribution suffix automatically using the format `- Brought to you by organization/repository-name`.
 
 Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 

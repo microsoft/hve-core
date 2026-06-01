@@ -99,18 +99,18 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                                      |
-|----------|------------------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                                 |
-| Format   | Single sentence ending with attribution                                                                    |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'` |
+| Property | Value                                                                                                   |
+|----------|---------------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                                                              |
+| Format   | Single sentence without the attribution suffix in source frontmatter                                    |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                                    |
 
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
-description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 ---
 ```
 
@@ -194,7 +194,7 @@ Recognized metadata fields:
 ```yaml
 ---
 name: pr-reference
-description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
+description: 'Generate PR reference XML files with commit history and diffs for pull request workflows'
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
@@ -208,7 +208,7 @@ This example demonstrates a skill configured for both automatic semantic loading
 ```yaml
 ---
 name: owasp-llm
-description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base - Brought to you by microsoft/hve-core'
+description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base'
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
