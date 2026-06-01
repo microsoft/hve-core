@@ -579,6 +579,39 @@ def test_run_login_default_http_rejects_token_endpoint_redirect(
     assert excinfo.value.code == "TOKEN_REDIRECT"
 
 
+def test_run_login_defaults_to_hardened_loopback_server(
+    mural_module: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The production path (no injected server_factory) must bind the hardened
+    # _LoopbackServer, not the bare http.server.HTTPServer. Capture the factory
+    # passed to _start_loopback_server and abort before any socket is bound.
+    captured: dict[str, Any] = {}
+
+    class _Stop(Exception):
+        pass
+
+    def _capture_start(*, server_factory: Any, bind_host: str, port: int) -> Any:
+        captured["server_factory"] = server_factory
+        raise _Stop
+
+    monkeypatch.setattr(
+        mural_module._oauth, "_start_loopback_server", _capture_start
+    )
+
+    with pytest.raises(_Stop):
+        mural_module._run_login(
+            env={
+                "MURAL_CLIENT_ID": TEST_CLIENT_ID,
+                "MURAL_REDIRECT_URI": TEST_REDIRECT_URI,
+            },
+            scopes=mural_module.DEFAULT_SCOPES,
+            timeout_seconds=1,
+            open_browser=lambda _url: True,
+        )
+
+    assert captured["server_factory"] is mural_module._LoopbackServer
+
+
 # ---------------------------------------------------------------------------
 # _LoopbackHandler — direct request/response semantics
 # ---------------------------------------------------------------------------

@@ -2,7 +2,6 @@
 # named sections; the design-thinking board bootstrap flow creates one area per section and tags it
 # with dt-section:<name>. Override via --override-path / override_path with
 # the same shape; entries deep-merge by (method, section).
-# TODO(Phase 8): refine geometry and add canonical sub-sections per method.
 methods:
   1:
     sections:

@@ -124,11 +124,6 @@ MURAL_MAX_FRAME_BYTES = int(os.environ.get("MURAL_MAX_FRAME_BYTES", 4 * 1024 * 1
 MURAL_MAX_BODY_BYTES = int(os.environ.get("MURAL_MAX_BODY_BYTES", 16 * 1024 * 1024))
 MURAL_TOOL_TIMEOUT_SECS = float(os.environ.get("MURAL_TOOL_TIMEOUT_SECS", "60"))
 
-# Spatial query feature flags. Both default off until widget rotation and
-# parentId field semantics are verified against the live portal.
-_ROTATION_ENABLED = os.environ.get("MURAL_SPATIAL_ROTATION_ENABLED", "0") == "1"
-_PARENTID_FILTER_ENABLED = os.environ.get("MURAL_SPATIAL_PARENTID_FILTER", "0") == "1"
-
 # Patterns used by ``_redact``. Matches both JSON shapes and form/header
 # shapes so log-line scrubbing works regardless of payload encoding.
 # Mural uses Authorization Code + PKCE only, so the OIDC and alternate-grant

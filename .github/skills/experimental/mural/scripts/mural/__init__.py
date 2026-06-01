@@ -54,7 +54,6 @@ from ._constants import (  # noqa: E402,F401
     _AUTHORED_BY_AI_TAG_TEXT,
     _KNOWN_CREDENTIAL_KEYS,
     _LINE_RE,
-    _PARENTID_FILTER_ENABLED,
     _PROFILE_NAME_RE,
     _PROFILE_REQUIRED_KEYS,
     _REDACT_KEYS,
@@ -62,7 +61,6 @@ from ._constants import (  # noqa: E402,F401
     _REFRESH_LOCK,
     _RESERVED_TAG_PREFIXES,
     _RESERVED_TAGS,
-    _ROTATION_ENABLED,
     _TAG_MERGE_BACKOFF_MAX_MS,
     _TAG_MERGE_BACKOFF_MIN_MS,
     _TAG_MERGE_MAX_RETRIES,
@@ -132,8 +130,8 @@ from ._exceptions import (  # noqa: E402,F401
 
 # Env-driven flags re-read on every package import/reload so importlib.reload(mural)
 # picks up environment changes without also reloading mural._constants.
-_ROTATION_ENABLED = os.environ.get("MURAL_SPATIAL_ROTATION_ENABLED", "0") == "1"  # noqa: F811
-_PARENTID_FILTER_ENABLED = os.environ.get("MURAL_SPATIAL_PARENTID_FILTER", "0") == "1"  # noqa: F811
+_ROTATION_ENABLED = os.environ.get("MURAL_SPATIAL_ROTATION_ENABLED", "0") == "1"
+_PARENTID_FILTER_ENABLED = os.environ.get("MURAL_SPATIAL_PARENTID_FILTER", "0") == "1"
 
 # Cross-platform file-lock primitives. Exactly one is non-None at runtime.
 try:  # pragma: no cover - platform-specific
@@ -1692,6 +1690,43 @@ from ._validation import (  # noqa: E402,F401
     _validate_mural_id,
     _validate_tag_text,
 )
+
+# Explicit re-export surface so static analysis recognizes these names as part
+# of the package API (consumed by sibling modules and ``mural.<symbol>`` tests).
+__all__ = [
+    # re-exported from ._constants
+    "_AUTHORED_BY_AI_TAG_TEXT", "_KNOWN_CREDENTIAL_KEYS", "_LINE_RE",
+    "_PROFILE_NAME_RE", "_PROFILE_REQUIRED_KEYS", "_REDACT_KEYS",
+    "_REDACT_PATTERNS", "_REFRESH_LOCK", "_RESERVED_TAG_PREFIXES",
+    "_RESERVED_TAGS", "_TAG_MERGE_BACKOFF_MAX_MS", "_TAG_MERGE_BACKOFF_MIN_MS",
+    "_TAG_MERGE_MAX_RETRIES",
+    "DEFAULT_LOGIN_SCOPES", "DEFAULT_PROFILE_NAME", "DEFAULT_REDIRECT_URI",
+    "DEFAULT_SCOPES", "ENV_BASE_URL", "ENV_CLIENT_ID", "ENV_CLIENT_SECRET",
+    "ENV_DEFAULT_WORKSPACE", "ENV_ENV_FILE", "ENV_ENV_FILE_RELAXED",
+    "ENV_NONINTERACTIVE", "ENV_PROFILE", "ENV_REDIRECT_URI", "ENV_SCOPES",
+    "ENV_TOKEN_STORE", "ENV_XDG_CONFIG_HOME", "ENV_XDG_DATA_HOME",
+    "EXIT_AREA_CAPACITY", "EXIT_FAILURE", "EXIT_NOPERM", "EXIT_SUCCESS",
+    "EXIT_TEMPFAIL", "EXIT_USAGE", "MAX_BACKOFF_SECONDS", "MAX_BULK_WIDGETS",
+    "MAX_RETRIES", "MURAL_AUTHORIZE_URL", "MURAL_BASE_URL_DEFAULT",
+    "MURAL_MAX_BODY_BYTES", "MURAL_TOKEN_URL", "POLL_DEFAULT_INTERVAL_S",
+    "POLL_DEFAULT_TIMEOUT_S", "POLL_MAX_INTERVAL_S", "POLL_MAX_TIMEOUT_S",
+    "RATE_LIMIT_BUCKET_CAPACITY", "RATE_LIMIT_TOKENS_PER_SEC", "READ_SCOPES",
+    "REFRESH_LEEWAY_SECONDS", "TOKEN_STORE_SCHEMA_VERSION", "USER_AGENT",
+    "WRITE_SCOPES",
+    # env-driven flags defined locally for the importlib.reload contract
+    "_ROTATION_ENABLED", "_PARENTID_FILTER_ENABLED",
+    # re-exported from ._validation
+    "_ALLOWED_HYPERLINK_SCHEMES", "_AZURE_BLOB_HOST_SUFFIX", "_DEFAULT_PAGE_SIZE",
+    "_IMAGE_CONTENT_TYPES", "_MAX_CURSOR_BYTES", "_MAX_HYPERLINK_LEN",
+    "_MAX_PAGE_SIZE", "_MAX_TAG_TEXT_LEN", "_MURAL_ID_RE", "_VALID_AREA_LAYOUTS",
+    "_area_cache", "_build_area_body", "_build_arrow_body", "_build_image_body",
+    "_build_shape_body", "_build_sticky_note_body", "_build_textbox_body",
+    "_coerce_xy", "_extract_field", "_format_output", "_paginate",
+    "_parse_json_arg", "_parse_pagination_cursor", "_project_record",
+    "_resolve_workspace_id", "_unwrap_value_envelope", "_validate_area_layout",
+    "_validate_asset_url", "_validate_hyperlink", "_validate_mural_id",
+    "_validate_tag_text",
+]
 
 
 def _create_asset_url(

@@ -414,7 +414,7 @@ def _run_login(
     scopes: str | None = None,
     timeout_seconds: int = 300,
     open_browser: Callable[[str], bool] = webbrowser.open,
-    server_factory: Callable[..., http.server.HTTPServer] = http.server.HTTPServer,
+    server_factory: Callable[..., http.server.HTTPServer] = _LoopbackServer,
     _http: Callable[..., Any] = _TOKEN_OPENER.open,
     _now: Callable[[], float] = time.time,
 ) -> dict[str, Any]:
