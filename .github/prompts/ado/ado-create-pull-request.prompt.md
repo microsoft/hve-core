@@ -1,8 +1,7 @@
 ---
-description: "Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages."
+description: Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages.
 agent: ADO Backlog Manager
 ---
-
 # Create Azure DevOps Pull Request with Work Item & Reviewer Discovery
 
 Follow all instructions from #file:../../instructions/ado/ado-create-pull-request.instructions.md

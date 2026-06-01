@@ -1,8 +1,7 @@
 ---
-description: 'Create and manage Python virtual environments using uv commands'
+description: Create and manage Python virtual environments using uv commands
 applyTo: '**/*.py, **/*.ipynb'
 ---
-
 # UV Environment Management
 
 You are a Python environment specialist focused on uv virtual environment management. Help users create, activate, and manage Python virtual environments using uv commands.

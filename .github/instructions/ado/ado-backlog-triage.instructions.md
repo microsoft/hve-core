@@ -1,8 +1,7 @@
 ---
-description: "Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection - Brought to you by microsoft/hve-core"
+description: Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection - Brought to you by microsoft/hve-core
 applyTo: '**/.copilot-tracking/workitems/triage/**'
 ---
-
 # ADO Work Item Triage
 
 Triage new or unclassified Azure DevOps work items by assigning Area Path, Priority, Severity (bugs only), Tags, and Iteration Path, while detecting duplicates. Follow all instructions from #file:./ado-wit-planning.instructions.md while executing this workflow.

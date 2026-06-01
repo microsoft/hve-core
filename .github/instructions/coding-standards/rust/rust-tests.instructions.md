@@ -1,8 +1,7 @@
 ---
+description: Required instructions for Rust test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core
 applyTo: '**/*.rs'
-description: 'Required instructions for Rust test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
 ---
-
 # Rust Test Instructions
 
 Conventions for Rust test code. All conventions from [rust.instructions.md](rust.instructions.md) apply, including naming, error handling, and module structure.

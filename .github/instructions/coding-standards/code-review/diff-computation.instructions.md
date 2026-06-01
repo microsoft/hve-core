@@ -1,8 +1,7 @@
 ---
-description: "Shared diff computation protocol for code review agents - branch detection, scope locking, large diff handling, and non-source artifact filtering - Brought to you by microsoft/hve-core"
-applyTo: "**/.github/agents/coding-standards/**, **/.github/prompts/coding-standards/**"
+description: Shared diff computation protocol for code review agents - branch detection, scope locking, large diff handling, and non-source artifact filtering - Brought to you by microsoft/hve-core
+applyTo: '**/.github/agents/coding-standards/**, **/.github/prompts/coding-standards/**'
 ---
-
 # Diff Computation Protocol
 
 Obtain the diff before reading any source files. Use the decision tree below to determine the appropriate method, then apply scope rules and large diff handling.

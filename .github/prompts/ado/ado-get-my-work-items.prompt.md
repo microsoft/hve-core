@@ -1,8 +1,7 @@
 ---
-description: "Retrieve user's current Azure DevOps work items and organize them into planning file definitions"
+description: Retrieve user's current Azure DevOps work items and organize them into planning file definitions
 agent: ADO Backlog Manager
 ---
-
 # Get My Work Items and Create Planning Files
 
 Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.

@@ -1,9 +1,8 @@
 ---
-description: "Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core"
+description: Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core
 agent: Code Review Functional
-argument-hint: "[baseBranch=origin/main]"
+argument-hint: '[baseBranch=origin/main]'
 ---
-
 # Code Review Functional
 
 ## Inputs

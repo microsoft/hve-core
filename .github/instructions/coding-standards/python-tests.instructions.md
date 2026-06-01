@@ -1,8 +1,7 @@
 ---
+description: Required instructions for Python test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core
 applyTo: '**/*.py'
-description: 'Required instructions for Python test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
 ---
-
 # Python Test Instructions
 
 Conventions for Python test code. All conventions from [python-script.instructions.md](python-script.instructions.md) apply.

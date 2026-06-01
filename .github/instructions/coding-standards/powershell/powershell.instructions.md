@@ -1,8 +1,7 @@
 ---
-description: "Instructions for PowerShell scripting implementation - Brought to you by microsoft/hve-core"
+description: Instructions for PowerShell scripting implementation - Brought to you by microsoft/hve-core
 applyTo: '**/*.ps1, **/*.psm1, **/*.psd1'
 ---
-
 # PowerShell Script Instructions
 
 These instructions define conventions for authoring PowerShell scripts, modules, and data files in this repository. Apply these conventions to `.ps1` scripts, `.psm1` modules, and `.psd1` data files.

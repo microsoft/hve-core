@@ -1,8 +1,7 @@
 ---
-description: 'Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name.'
+description: Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name.
 applyTo: '**/.copilot-tracking/pr/*-build-*.md'
 ---
-
 # Azure DevOps Build Info Instructions
 
 These instructions define the protocol for retrieving Azure DevOps (ADO) build information including status, logs, changes, and stage details. The protocol supports both conversational responses and persistent tracking file output.

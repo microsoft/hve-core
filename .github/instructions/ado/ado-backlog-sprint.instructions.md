@@ -1,8 +1,7 @@
 ---
-description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection - Brought to you by microsoft/hve-core"
+description: Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection - Brought to you by microsoft/hve-core
 applyTo: '**/.copilot-tracking/workitems/sprint/**'
 ---
-
 # ADO Sprint Planning
 
 Plan Azure DevOps iterations by analyzing work item coverage, capacity, dependencies, and gaps. Follow all instructions from #file:./ado-wit-planning.instructions.md while executing this workflow. Apply story quality conventions from #file:../shared/story-quality.instructions.md when assessing backlog items and grooming recommendations.

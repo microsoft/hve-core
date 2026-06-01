@@ -1,8 +1,7 @@
 ---
-description: "Prompt to update work items based on planning files"
+description: Prompt to update work items based on planning files
 agent: ADO Backlog Manager
 ---
-
 # Update Work Items
 
 Follow all instructions from #file:../../instructions/ado/ado-update-wit-items.instructions.md for work item planning and planning files.

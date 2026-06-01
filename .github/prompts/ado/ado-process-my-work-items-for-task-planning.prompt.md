@@ -1,8 +1,7 @@
 ---
-description: "Process retrieved work items for task planning and generate task-planning-logs.md handoff file"
+description: Process retrieved work items for task planning and generate task-planning-logs.md handoff file
 agent: ADO Backlog Manager
 ---
-
 # Process My Work Items for Task Planning
 
 Follow all instructions from #file:../../instructions/ado/ado-wit-planning.instructions.md for work item planning and planning file definitions.

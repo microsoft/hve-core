@@ -1,8 +1,7 @@
 ---
+description: Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core
 applyTo: '**/*.cs'
-description: 'Required instructions for C# (CSharp) test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
 ---
-
 # C# Test Instructions
 
 Conventions for C# test code. All conventions from [csharp.instructions.md](csharp.instructions.md) apply, including member ordering and field naming with underscore prefix.

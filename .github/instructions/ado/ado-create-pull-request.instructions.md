@@ -1,8 +1,7 @@
 ---
-description: "Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking."
+description: Required protocol for creating Azure DevOps pull requests with work item discovery, reviewer identification, and automated linking.
 applyTo: '**/.copilot-tracking/pr/new/**'
 ---
-
 # Azure DevOps Pull Request Creation
 
 Follow all instructions from #file:./ado-wit-planning.instructions.md for planning file conventions while executing this workflow.

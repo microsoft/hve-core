@@ -1,8 +1,7 @@
 ---
-description: 'Protocol for discovering Azure DevOps work items via user assignment or artifact analysis with planning file output'
+description: Protocol for discovering Azure DevOps work items via user assignment or artifact analysis with planning file output
 applyTo: '**/.copilot-tracking/workitems/discovery/**'
 ---
-
 # Azure DevOps Work Item Discovery
 
 When invoked via the ADO Backlog Manager, honor the active autonomy mode from the [Three-Tier Autonomy Model](./ado-wit-planning.instructions.md#three-tier-autonomy-model) for operations that create or modify planning files.

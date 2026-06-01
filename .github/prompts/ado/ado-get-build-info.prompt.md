@@ -1,8 +1,7 @@
 ---
-description: "Retrieve Azure DevOps build information for a Pull Request or specific Build Number."
+description: Retrieve Azure DevOps build information for a Pull Request or specific Build Number.
 agent: ADO Backlog Manager
 ---
-
 # ADO Build Info & Log Extraction (Targeted or Latest PR Build)
 
 **MANDATORY**: Follow all instructions from #file:../../instructions/ado/ado-get-build-info.instructions.md

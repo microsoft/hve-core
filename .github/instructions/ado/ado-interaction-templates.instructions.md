@@ -1,8 +1,7 @@
 ---
-description: "Work item description and comment templates for consistent Azure DevOps content formatting - Brought to you by microsoft/hve-core"
+description: Work item description and comment templates for consistent Azure DevOps content formatting - Brought to you by microsoft/hve-core
 applyTo: '**/.github/instructions/ado/**'
 ---
-
 # ADO Interaction Templates
 
 Work item description and comment templates for consistent formatting across Azure DevOps operations. These templates replace the GitHub community interaction model with patterns suited to internal team workflows.

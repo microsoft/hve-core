@@ -1,8 +1,7 @@
 ---
+description: Required instructions for Rust research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core
 applyTo: '**/*.rs'
-description: 'Required instructions for Rust research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
 ---
-
 # Rust Instructions
 
 Conventions for Rust development targeting the 2021 edition.

@@ -1,14 +1,13 @@
 ---
 name: python-foundational
-description: "Foundational Python best practices, idioms, and code quality fundamentals - Brought to you by microsoft/hve-core"
+description: Foundational Python best practices, idioms, and code quality fundamentals - Brought to you by microsoft/hve-core
 license: MIT
 user-invocable: false
 metadata:
-  authors: "microsoft/hve-core"
+  authors: microsoft/hve-core
   spec_version: "1.0"
-  last_updated: "2026-03-23"
+  last_updated: 2026-03-23
 ---
-
 # Python Foundational Coding Standards Skill
 
 ## Overview

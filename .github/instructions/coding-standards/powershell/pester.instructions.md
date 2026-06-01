@@ -1,8 +1,7 @@
 ---
-description: "Instructions for Pester testing conventions - Brought to you by microsoft/hve-core"
+description: Instructions for Pester testing conventions - Brought to you by microsoft/hve-core
 applyTo: '**/*.Tests.ps1'
 ---
-
 # Pester Testing Instructions
 
 Pester 5.x is the testing framework for all PowerShell code. Run tests through the repository's test runner (check `package.json` for a test script, or invoke `Invoke-Pester` directly if no runner is configured). Follow the repository's conventions for test execution.

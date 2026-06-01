@@ -1,9 +1,8 @@
 ---
-name: 'ADO Work Item Planning'
-description: 'Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols'
+name: ADO Work Item Planning
+description: Reference specification for Azure DevOps work item planning files, templates, field definitions, and search protocols
 applyTo: '**/.copilot-tracking/workitems/**'
 ---
-
 # Azure DevOps Work Items Planning File Instructions
 
 ## Purpose and Scope

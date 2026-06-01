@@ -1,8 +1,7 @@
 ---
+description: Instructions for Python scripting implementation - Brought to you by microsoft/hve-core
 applyTo: '**/*.py'
-description: 'Instructions for Python scripting implementation - Brought to you by microsoft/hve-core'
 ---
-
 # Python Script Instructions
 
 Conventions for Python 3.11+ scripts used in automation, tooling, and CLI applications.

@@ -1,9 +1,8 @@
 ---
-description: "Create a single Azure DevOps work item with conversational field collection and parent validation"
+description: Create a single Azure DevOps work item with conversational field collection and parent validation
 agent: ADO Backlog Manager
-argument-hint: "project=... [type={Epic|Feature|UserStory|Bug|Task}] [title=...]"
+argument-hint: project=... [type={Epic|Feature|UserStory|Bug|Task}] [title=...]
 ---
-
 # Add ADO Work Item
 
 Create a single work item through conversational field collection, validate parent hierarchy, and log the result. Use interaction templates from #file:../../instructions/ado/ado-interaction-templates.instructions.md for description formatting.

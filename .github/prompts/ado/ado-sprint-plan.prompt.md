@@ -1,9 +1,8 @@
 ---
-description: "Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps"
+description: Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps
 agent: ADO Backlog Manager
-argument-hint: "project=... iteration=... [documents=...] [capacity=...] [autonomy={full|partial|manual}]"
+argument-hint: project=... iteration=... [documents=...] [capacity=...] [autonomy={full|partial|manual}]
 ---
-
 # Plan ADO Sprint
 
 Analyze an Azure DevOps iteration, assess work item coverage against Area Paths and optional planning documents, and produce a prioritized sprint plan with gap analysis and dependency awareness.

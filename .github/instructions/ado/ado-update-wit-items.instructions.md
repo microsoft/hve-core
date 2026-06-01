@@ -1,8 +1,7 @@
 ---
-description: 'Work item creation and update protocol using MCP ADO tools with handoff tracking'
+description: Work item creation and update protocol using MCP ADO tools with handoff tracking
 applyTo: '**/.copilot-tracking/workitems/**/handoff-logs.md'
 ---
-
 # Azure DevOps Work Item Update Instructions
 
 When invoked via the ADO Backlog Manager, honor the active autonomy mode from the [Three-Tier Autonomy Model](./ado-wit-planning.instructions.md#three-tier-autonomy-model) for all mutation operations. Apply [Content Sanitization Guards](./ado-wit-planning.instructions.md#content-sanitization-guards) before any ADO API call that writes user-visible content.

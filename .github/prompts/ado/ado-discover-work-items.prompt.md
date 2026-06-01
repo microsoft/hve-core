@@ -1,9 +1,8 @@
 ---
-description: "Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration"
+description: Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration
 agent: ADO Backlog Manager
-argument-hint: "project=... [documents=...] [searchTerms=...]"
+argument-hint: project=... [documents=...] [searchTerms=...]
 ---
-
 # Discover ADO Work Items
 
 Classify the discovery path based on user intent, execute the appropriate discovery workflow, assess similarity against existing work items, and produce planning files. Three discovery paths are supported: user-centric queries (Path A), artifact-driven analysis from documents (Path B), and search-based exploration (Path C).

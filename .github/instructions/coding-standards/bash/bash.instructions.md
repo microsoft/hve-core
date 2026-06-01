@@ -1,8 +1,7 @@
 ---
+description: Instructions for bash script implementation - Brought to you by microsoft/hve-core
 applyTo: '**/*.sh'
-description: 'Instructions for bash script implementation - Brought to you by microsoft/hve-core'
 ---
-
 # Bash Script Instructions
 
 These instructions define conventions for authoring Bash scripts in this repository. Scripts follow Bash 5.x conventions with strict error handling and ShellCheck compliance.

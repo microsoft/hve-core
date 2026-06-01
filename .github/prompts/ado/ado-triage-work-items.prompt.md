@@ -1,9 +1,8 @@
 ---
-description: "Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection"
+description: Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection
 agent: ADO Backlog Manager
-argument-hint: "project=... [areaPath=...] [maxItems=20] [autonomy={full|partial|manual}]"
+argument-hint: project=... [areaPath=...] [maxItems=20] [autonomy={full|partial|manual}]
 ---
-
 # Triage ADO Work Items
 
 Fetch work items in `New` state with incomplete classification, analyze each for field recommendations, detect duplicates, and produce a triage plan for review before execution.
