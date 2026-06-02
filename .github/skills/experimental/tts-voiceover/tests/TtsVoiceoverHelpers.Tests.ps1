@@ -104,7 +104,7 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
     Context 'On Windows' {
         It 'Returns Scripts/python.exe path' -Skip:(-not $IsWindows) {
             $result = Get-VenvPythonPath -VenvDir 'C:\venv'
-            $result | Should -Be 'C:\venv\Scripts/python.exe'
+            $result | Should -Be (Join-Path 'C:\venv' 'Scripts/python.exe')
         }
     }
 
@@ -113,7 +113,8 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
             $venvDir = Join-Path $TestDrive 'my-venv'
             $result = Get-VenvPythonPath -VenvDir $venvDir
             if ($IsWindows) {
-                $result | Should -BeLike '*Scripts/python.exe'
+                $expectedSuffix = Join-Path 'Scripts' 'python.exe'
+                $result | Should -BeLike "*$expectedSuffix"
             } else {
                 $result | Should -BeLike '*bin/python'
             }

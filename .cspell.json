@@ -82,9 +82,19 @@
     "skillmd",
     "smol",
     "subcat",
+    "uncited",
     "vally",
     "whiteboarding",
-    "πρᾶξις"
+    "ystatement",
+    "ˈpræksɪs",
+    "πρᾶξις",
+    "agentic",
+    "sssc",
+    "SSSC",
+    "SLSA",
+    "Sigstore",
+    "cosign",
+    "scorecard"
   ],
   "reporters": [
     "default",

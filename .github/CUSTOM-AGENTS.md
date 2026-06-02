@@ -38,30 +38,30 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
 
-| Agent                | Purpose                                                           | Key Constraint                                 |
-|----------------------|-------------------------------------------------------------------|------------------------------------------------|
-| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks       | Requires a subagent tool enabled               |
-| **task-researcher**  | Produces research documents with evidence-based recommendations   | Research-only; never plans or implements       |
-| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                  | Requires research first; never implements code |
-| **task-implementor** | Executes implementation plans with subagent delegation            | Requires completed plan files                  |
-| **task-reviewer**    | Validates implementation against research and plan specifications | Requires research/plan artifacts               |
+| Agent                | Purpose                                                                                               | Key Constraint                                            |
+|----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
+| **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
+| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                                                      | Requires research first; never implements code            |
+| **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
+| **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
 | **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
 
 ### Documentation and Planning Agents
 
-| Agent                            | Purpose                                                                      | Key Constraint                                        |
-|----------------------------------|------------------------------------------------------------------------------|-------------------------------------------------------|
-| **adr-creation**                 | Interactive ADR coaching with guided discovery                               | Socratic coaching approach                            |
-| **brd-builder**                  | Creates Business Requirements Documents with reference integration           | Solution-agnostic requirements focus                  |
-| **doc-ops**                      | Documentation operations and maintenance                                     | Does not modify source code                           |
-| **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
-| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                    | Iterative questioning; state-tracked sessions         |
-| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance           | Principles over format; delegates to prd/brd builders |
-| **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff | Six-phase conversational workflow; experimental       |
-| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM | Six-phase conversational workflow; experimental       |
-| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental       |
-| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                      | Scoped review; delegates security concerns            |
-| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements          | Research artifacts only; visual design in Figma       |
+| Agent                            | Purpose                                                                                                                  | Key Constraint                                                                                                                     |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| **adr-creation**                 | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
+| **brd-builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
+| **doc-ops**                      | Documentation operations and maintenance                                                                                 | Does not modify source code                                                                                                        |
+| **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
+| **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
+| **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
+| **security-planner**             | STRIDE-based security model analysis with standards mapping and backlog handoff                                          | Six-phase conversational workflow; experimental                                                                                    |
+| **sssc-planner**                 | Supply chain security assessment with 6-phase workflow against OpenSSF Scorecard, SLSA, Sigstore, and SBOM               | Six-phase conversational workflow; experimental                                                                                    |
+| **rai-planner**                  | Responsible AI assessment with 6-phase workflow against Microsoft Responsible AI Impact Assessment Guide and NIST AI RMF | Six-phase conversational workflow; experimental                                                                                    |
+| **system-architecture-reviewer** | Reviews system designs for trade-offs and ADR alignment                                                                  | Scoped review; delegates security concerns                                                                                         |
+| **ux-ui-designer**               | JTBD analysis, user journey mapping, and accessibility requirements                                                      | Research artifacts only; visual design in Figma                                                                                    |
 
 ### Utility Agents
 
@@ -71,14 +71,14 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent                          | Purpose                                                          | Key Constraint                                        |
-|--------------------------------|------------------------------------------------------------------|-------------------------------------------------------|
-| **pr-review**                  | 4-phase PR review with tracking artifacts                        | Review-only; never modifies code                      |
-| **prompt-builder**             | Engineers and validates instruction/prompt files                 | Dual-persona system with auto-testing                 |
-| **security-reviewer**          | OWASP vulnerability assessment with subagent-driven verification | Delegates all reference reading to subagents          |
-| **code-review-functional**     | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save |
-| **code-review-full**           | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
-| **code-review-standards**      | Skills-based standards reviewer for local changes and PRs        | Findings must trace to a loaded skill; experimental   |
+| Agent                      | Purpose                                                               | Key Constraint                                            |
+|----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
+| **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
+| **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
+| **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
+| **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |
+| **code-review-full**       | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
+| **code-review-standards**  | Skills-based standards reviewer for local changes and PRs             | Findings must trace to a loaded skill; experimental       |
 
 ### Generator Agents
 
@@ -91,12 +91,12 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Platform Integration Agents
 
-| Agent                    | Purpose                                                    | Key Constraint                                  |
-|--------------------------|------------------------------------------------------------|-------------------------------------------------|
-| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction | Uses MCP GitHub tools                           |
-| **jira-backlog-manager** | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows              |
-| **ado-prd-to-wit**       | Analyzes PRDs and plans Azure DevOps work item hierarchies | Planning-only; does not create work items       |
-| **jira-prd-to-wit**      | Analyzes PRDs and plans Jira issue hierarchies             | Planning-only; does not mutate Jira             |
+| Agent                      | Purpose                                                                          | Key Constraint                            |
+|----------------------------|----------------------------------------------------------------------------------|-------------------------------------------|
+| **github-backlog-manager** | Consolidated GitHub backlog management with community interaction                | Uses MCP GitHub tools                     |
+| **jira-backlog-manager**   | Consolidated Jira backlog management with workflow dispatch and handoff tracking | Uses Jira skill planning workflows        |
+| **ado-prd-to-wit**         | Analyzes PRDs and plans Azure DevOps work item hierarchies                       | Planning-only; does not create work items |
+| **jira-prd-to-wit**        | Analyzes PRDs and plans Jira issue hierarchies                                   | Planning-only; does not mutate Jira       |
 
 ### Testing Agents
 

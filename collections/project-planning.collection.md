@@ -1,6 +1,6 @@
 # Project Planning
 
-Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation.
+Create architecture decision records (MADR v4 + Y-Statement) with phase-gated coaching, ASR-trigger validation, supersession lineage, and per-project templates. Build PRDs, BRDs, and architecture diagrams through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and run STRIDE-based security model analysis with automated backlog generation.
 
 ## Included Artifacts
 
@@ -10,7 +10,7 @@ Create architecture decision records, requirements documents, and diagrams - all
 
 | Name                             | Description                                                                                                                                                                                                                                                                      |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **adr-creation**                 | Interactive AI coaching for collaborative architectural decision record creation with guided discovery, research integration, and progressive documentation building - Brought to you by microsoft/edge-ai                                                                       |
+| **adr-creation**                 | ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff                                                                         |
 | **agile-coach**                  | Conversational agent that helps create or refine goal-oriented user stories with clear acceptance criteria for any tracking tool                                                                                                                                                 |
 | **arch-diagram-builder**         | Architecture diagram builder agent that builds high quality ASCII-art diagrams                                                                                                                                                                                                   |
 | **brd-builder**                  | Business Requirements Document builder with guided Q&A and reference integration                                                                                                                                                                                                 |
@@ -41,15 +41,19 @@ Create architecture decision records, requirements documents, and diagrams - all
 | **risk-register**               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                 |
 | **security-capture**            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                    |
 | **security-plan-from-prd**      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                             |
-| **sssc-capture**                | Start a new SSSC assessment via guided conversation using the SSSC Planner agent in capture mode                                                |
-| **sssc-from-brd**               | Start an SSSC assessment from existing BRD artifacts using the SSSC Planner agent                                                               |
-| **sssc-from-prd**               | Start an SSSC assessment from existing PRD artifacts using the SSSC Planner agent                                                               |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent                                                    |
+| **sssc-capture**                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                               |
+| **sssc-from-prd**               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                               |
+| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                         |
 
 ### Instructions
 
 | Name                                     | Description                                                                                                                                                                                                                                                 |
 |------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **project-planning/adr-byo-template**    | BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator                                                                                               |
+| **project-planning/adr-handoff**         | ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates                                                                                                      |
+| **project-planning/adr-identity**        | ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions                                                                            |
+| **project-planning/adr-standards**       | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions                                                                   |
 | **rai-planning/rai-backlog-handoff**     | RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation                                                                                                                                               |
 | **rai-planning/rai-capture-coaching**    | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods                                                                                                                                                 |
 | **rai-planning/rai-identity**            | RAI Planner identity, 6-phase orchestration, state management, and session recovery                                                                                                                                                                         |
@@ -66,10 +70,17 @@ Create architecture decision records, requirements documents, and diagrams - all
 | **security/sssc-gap-analysis**           | Phase 4 gap comparison, adoption categorization, and effort sizing for SSSC Planner.                                                                                                                                                                        |
 | **security/sssc-handoff**                | Phase 6 backlog handoff protocol with Scorecard projections and dual-format output for SSSC Planner.                                                                                                                                                        |
 | **security/sssc-identity**               | Identity and orchestration instructions for the SSSC Planner agent. Contains six-phase workflow, state.json schema, session recovery, and question cadence.                                                                                                 |
-| **security/sssc-standards**              | Phase 3 OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, and SBOM standards mapping for SSSC Planner.                                                                                                                                               |
+| **security/sssc-standards**              | Phase 3 OpenSSF Scorecard, SLSA v1.0, OpenSSF Best Practices Badge, Sigstore (cosign), and NTIA SBOM minimum elements standards mapping for SSSC Planner.                                                                                                   |
 | **security/standards-mapping**           | Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                 |
+| **shared/coaching-patterns**             | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods                                                                                                                          |
 | **shared/disclaimer-language**           | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
 | **shared/hve-core-location**             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | **shared/story-quality**                 | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+
+### Skills
+
+| Name           | Description                                                                                                                                                                                                                                                                             |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **adr-author** | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

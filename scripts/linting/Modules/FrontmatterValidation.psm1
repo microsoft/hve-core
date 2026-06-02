@@ -830,6 +830,12 @@ function Test-SingleFileFrontmatter {
     # AI artifacts (prompts, instructions, agents, chatmodes) don't require frontmatter
     $isAiArtifact = $fileTypeInfo.IsPrompt -or $fileTypeInfo.IsInstruction -or $fileTypeInfo.IsAgent -or $fileTypeInfo.IsChatMode
 
+    # Skill template assets (under .github/skills/*/templates/) are verbatim content
+    # meant to be rendered into other documents and must not carry wrapping frontmatter
+    # or Copilot footers (which would leak into rendered output).
+    $normalizedForSkillCheck = $relativePath -replace '\\', '/'
+    $isSkillTemplate = $normalizedForSkillCheck -like '*.github/skills/*/templates/*'
+
     # Read file content
     try {
         $content = & $FileReader $FilePath
@@ -865,7 +871,8 @@ function Test-SingleFileFrontmatter {
 
     # Only warn about missing frontmatter for content types that require it
     # AI artifacts (.github prompts, instructions, agents, chatmodes) are exempt
-    if (-not $result.HasFrontmatter -and -not $isAiArtifact) {
+    # Skill template assets are exempt (verbatim content rendered into other documents)
+    if (-not $result.HasFrontmatter -and -not $isAiArtifact -and -not $isSkillTemplate) {
         $result.AddWarning('No frontmatter found', 'frontmatter')
         # Continue to footer validation even without frontmatter
     }
@@ -916,7 +923,7 @@ function Test-SingleFileFrontmatter {
     }
 
     # Footer validation for all markdown EXCEPT AI artifacts (prompts, instructions, agents, chatmodes)
-    if (-not $isAiArtifact -and -not $SkipFooterValidation -and -not $skipFooterForFile) {
+    if (-not $isAiArtifact -and -not $isSkillTemplate -and -not $SkipFooterValidation -and -not $skipFooterForFile) {
         # Determine severity based on file type
         $footerSeverity = 'Warning'
         if ($fileTypeInfo.IsRootCommunityFile -or $fileTypeInfo.IsDevContainer -or $fileTypeInfo.IsVSCodeReadme) {
