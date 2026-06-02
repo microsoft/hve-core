@@ -92,6 +92,18 @@ items:
     kind: prompt
     maturity: experimental
   # Instructions
+  - path: .github/instructions/project-planning/adr-byo-template.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-standards.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
@@ -146,11 +158,17 @@ items:
   - path: .github/instructions/security/sssc-handoff.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/shared/coaching-patterns.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/disclaimer-language.instructions.md
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/project-planning/adr-author
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

@@ -169,6 +169,7 @@ jobs:
           uv --version
           uvx --version
           cosign version
+          npx --no vally -- --version
           echo ""
           echo "=== npm Scripts Available ==="
           npm run --list

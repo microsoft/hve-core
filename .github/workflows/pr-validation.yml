@@ -196,6 +196,18 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  adr-consistency-validation:
+    name: ADR Consistency Validation
+    uses: ./.github/workflows/adr-consistency-validation.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      changed-files-only: true
+      upload-sarif: true
+      upload-artifact: false
+
   ai-artifact-validation:
     name: AI Artifact Validation
     uses: ./.github/workflows/ai-artifact-validation.yml

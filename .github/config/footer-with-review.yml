@@ -33,16 +33,20 @@ artifact-classification:
   agentic:
     scope:
       - .github/instructions/rai-planning/**
+      - .github/instructions/security/sssc-*.instructions.md
     required-footers:
       - ai-content-note
     artifacts:
       - control-surface-catalog
       - evidence-register
+      - supply-chain-inventory
+      - standards-mapping
 
   # Human-facing artifacts: Tier 1 note + human review checkbox
   human-facing:
     scope:
       - .github/instructions/rai-planning/**
+      - .github/instructions/security/sssc-*.instructions.md
     required-footers:
       - ai-content-note
       - human-review-checkbox
@@ -53,9 +57,11 @@ artifact-classification:
       - rai-review-summary
       - transparency-note
       - monitoring-summary
+      - gap-analysis
+      - sssc-backlog
 
-  # Human-facing with disclaimer: Tier 1 + checkbox + Tier 2 disclaimer
-  human-facing-with-disclaimer:
+  # RAI handoff with disclaimer: Tier 1 + checkbox + Tier 2 RAI disclaimer
+  rai-handoff-with-disclaimer:
     scope:
       - .github/instructions/rai-planning/**
     required-footers:
@@ -63,6 +69,19 @@ artifact-classification:
       - human-review-checkbox
     requires-disclaimer: true
     disclaimer-ref: rai-full-disclaimer
+    artifacts:
+      - handoff-summary
+      - compact-handoff-summary
+
+  # SSSC handoff with disclaimer: Tier 1 + checkbox + Tier 2 SSSC disclaimer
+  sssc-handoff-with-disclaimer:
+    scope:
+      - .github/instructions/security/sssc-*.instructions.md
+    required-footers:
+      - ai-content-note
+      - human-review-checkbox
+    requires-disclaimer: true
+    disclaimer-ref: sssc-full-disclaimer
     artifacts:
       - handoff-summary
       - compact-handoff-summary

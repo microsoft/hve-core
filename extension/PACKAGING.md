@@ -2,7 +2,7 @@
 title: Extension Packaging Guide
 description: Developer guide for packaging and publishing the HVE Core VS Code extension
 author: Microsoft
-ms.date: 2026-02-10
+ms.date: 2026-05-20
 ms.topic: reference
 ---
 
