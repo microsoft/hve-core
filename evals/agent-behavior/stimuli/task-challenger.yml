@@ -1,0 +1,20 @@
+stimuli:
+  - name: task-challenger-class-recipe
+    prompt: |
+      Challenge this task: "Rewrite the entire authentication stack to use a new vendor by Friday." Surface scope risks and produce a structured challenge log with phases. Write the challenge log under `.copilot-tracking/challenges/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](challenges|plans)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

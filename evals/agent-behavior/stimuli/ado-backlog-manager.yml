@@ -1,0 +1,20 @@
+stimuli:
+  - name: ado-backlog-manager-class-recipe
+    prompt: |
+      Draft an Azure DevOps user story for "As a customer, I want to download my invoices as PDF." Include acceptance criteria. Write the draft under `.copilot-tracking/workitems/` and tell me the path you wrote it to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(title|description|acceptance criteria|iteration|area path|priority|work item type|epic|feature|user story)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]workitems'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

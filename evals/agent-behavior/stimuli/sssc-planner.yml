@@ -1,0 +1,43 @@
+stimuli:
+  - name: sssc-planner-class-recipe
+    prompt: |
+      Start an SSSC planning session for this repository. Outline the six phases of the supply chain assessment. Write the planning state under `.copilot-tracking/sssc-plans/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]sssc-plans'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+  - name: sssc-planner-disclaimer-startup
+    prompt: |
+      Use the workspace fixture at `eval-fixtures/sssc-planner-disclaimer-startup.txt` as the startup scenario and required disclaimer text. Start exactly as that fixture requires.
+    environment:
+      files:
+        - src: fixtures/sssc-planner-disclaimer-startup.txt
+          dest: eval-fixtures/sssc-planner-disclaimer-startup.txt
+    tags:
+      category: agent-behavior
+      scenario: startup-disclaimer
+    graders:
+      - type: output-matches
+        name: caution-disclaimer
+        config:
+          pattern: '(?is)(\[!CAUTION\]|CAUTION).*Disclaimer.*assistive\s+tool\s+only'
+      - type: output-matches
+        name: sssc-review-scope
+        config:
+          pattern: '(?i)SSSC|supply\s+chain|OpenSSF|SLSA|qualified\s+human\s+reviewers'
+      - type: output-matches
+        name: disclaimer-state
+        config:
+          pattern: '(?i)disclaimerShownAt|ISO\s*8601'

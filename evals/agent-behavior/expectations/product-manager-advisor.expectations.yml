@@ -1,0 +1,106 @@
+# Bucket-A expectations for product-manager-advisor
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: product-manager-advisor
+class: planner-coach
+agent_file: .github/agents/project-planning/product-manager-advisor.agent.md
+stimulus_file: evals/agent-behavior/stimuli/product-manager-advisor.yml
+latest_result: evals/results/agent-matrix/2026-05-28/product-manager-advisor.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-file-location
+    summary: Backlog drafts are written under the tracking subtree, not a database.
+    signal: Output names a workspace path beginning with `.copilot-tracking/`.
+    pass_criteria: |
+      The response reports a workspace-relative draft path beginning with
+      `.copilot-tracking/` for the drafted backlog, satisfying the
+      `tracking-file-write` grader.
+    failure_modes:
+      - Response reports drafts written to a "session SQL database" or to
+        "tables epics and stories" instead of a file path (current 2026-05-28
+        output fails `tracking-file-write` this way).
+      - Drafts written to a temp directory or absolute path.
+      - No location reported at all.
+    priority: high
+    contract_ref: "agent §File Management (drafts under `.copilot-tracking/`)"
+
+  - expectation_id: epic-and-stories-structure
+    summary: Backlog contains one epic with the requested 2–3 child stories.
+    signal: Output shows an epic and 2–3 stories beneath it.
+    pass_criteria: |
+      For a stimulus requesting an epic plus a small number of stories, the
+      response produces exactly one epic and 2–3 child stories, structured
+      hierarchically rather than as a flat undifferentiated list.
+    failure_modes:
+      - Stories produced with no parent epic.
+      - Far more than three stories generated, ignoring the requested scope.
+    priority: high
+    contract_ref: "agent §Backlog Drafting (epic + child stories)"
+
+  - expectation_id: work-item-field-vocabulary
+    summary: Each work item uses the documented field vocabulary.
+    signal: Output items include title, description, acceptance criteria, and priority/label.
+    pass_criteria: |
+      Drafted items present the documented fields (title, description,
+      acceptance criteria, and priority and/or label), satisfying the
+      `field-vocab-present` grader.
+    failure_modes:
+      - Items reduced to one-line titles with no acceptance criteria.
+      - Acceptance criteria omitted from stories.
+    priority: high
+    contract_ref: "agent §Work Item Fields (title, description, acceptance criteria, priority, label)"
+
+  - expectation_id: acceptance-criteria-testable
+    summary: Stories carry testable acceptance criteria.
+    signal: Output shows acceptance criteria phrased as verifiable conditions.
+    pass_criteria: |
+      Each story includes acceptance criteria written as verifiable
+      conditions (e.g. Given/When/Then or checkable statements), not vague
+      aspirations.
+    failure_modes:
+      - Acceptance criteria written as restated titles.
+      - Criteria present but not verifiable.
+    priority: medium
+    contract_ref: "agent §Work Item Quality (testable acceptance criteria)"
+
+  - expectation_id: advisory-clarification
+    summary: Ambiguous product asks trigger clarifying product questions.
+    signal: Output asks about goals, users, or scope before drafting when context is thin.
+    pass_criteria: |
+      When the stimulus is underspecified, the response asks clarifying
+      product questions (target users, problem, scope, success measures)
+      before finalizing the backlog.
+    failure_modes:
+      - Backlog generated immediately for a vague one-liner with no questions.
+    priority: medium
+    applies_when: "stimulus is underspecified"
+    contract_ref: "agent §Advisory Approach (clarify before drafting)"
+
+  - expectation_id: no-source-edit
+    summary: Backlog advising does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to `.copilot-tracking/`.
+    failure_modes:
+      - Drafting a dark-mode backlog leads to editing theme source files.
+    priority: medium
+    contract_ref: "agent scope (writes confined to `.copilot-tracking/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the backlog topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `product-manager-advisor-class-recipe` stimulus, the response
+      contains terms from {dark mode, backlog, epic, story, acceptance criteria}
+      and the items address dark-mode specifics (theme toggle, persistence,
+      contrast) rather than generic template prose.
+    failure_modes:
+      - Off-topic backlog with no dark-mode references.
+      - Stories filled with placeholder text.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

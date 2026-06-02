@@ -1,0 +1,115 @@
+# Bucket-A expectations for phase-implementor
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: phase-implementor is `user-invocable: false`, so the agent-matrix does
+# not produce a `<slug>.json` result file for it. No stimulus exists yet; the
+# `stimulus_file` field below points to the conventional path that a later
+# Bucket-B pass should populate.
+slug: phase-implementor
+class: subagent  # subtype: phase-scoped RPI executor
+agent_file: .github/agents/hve-core/subagents/phase-implementor.agent.md
+stimulus_file: evals/agent-behavior/stimuli/phase-implementor.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: phase-completion-header
+    summary: Response opens with a "Phase Completion" header naming the executed phase.
+    signal: Output contains an H2 heading matching `Phase Completion: <phase_id>`.
+    pass_criteria: |
+      Top-level section heading reads `## Phase Completion: <phase_id>` where
+      `<phase_id>` is the phase identifier supplied by the parent orchestrator.
+    failure_modes:
+      - Heading omitted or replaced with a generic title.
+      - Heading does not include the supplied phase identifier.
+      - Multiple phase headings in a single response (indicates multi-phase execution).
+    priority: high
+    contract_ref: "agent §Response Format (Phase Completion header)"
+
+  - expectation_id: status-from-allowed-set
+    summary: Reported status is exactly one of Complete, Partial, or Blocked.
+    signal: A `**Status:**` line names one of the allowed values.
+    pass_criteria: |
+      A `**Status:**` field appears immediately under the Phase Completion
+      heading and contains exactly one of `Complete`, `Partial`, or `Blocked`.
+    failure_modes:
+      - Status field omitted.
+      - Status value outside the allowed set (e.g., `Done`, `Success`, `Failed`).
+      - Multiple statuses combined on the same line.
+    priority: high
+    contract_ref: "agent §Response Format (Status: Complete | Partial | Blocked)"
+
+  - expectation_id: required-sections-present
+    summary: Completion report contains all documented sections.
+    signal: Response includes every required H3 section heading.
+    pass_criteria: |
+      Response contains H3 sections for `Executive Details`, `Steps Completed`,
+      `Steps Not Completed`, `Files Changed`, `Issues`, `Suggested Additional
+      Steps`, `Validation Results`, and `Clarifying Questions` — in that order.
+    failure_modes:
+      - One or more required sections missing.
+      - Section headings renamed (e.g., `Summary` instead of `Executive Details`).
+      - Sections reordered such that downstream tracking parsers cannot read them.
+    priority: high
+    contract_ref: "agent §Response Format (section list)"
+
+  - expectation_id: single-phase-scope
+    summary: Execution stays within the assigned phase and does not spawn subagents.
+    signal: Response operates on one phase and contains no subagent dispatch language.
+    pass_criteria: |
+      Files Changed, Steps Completed, and Issues all reference work bounded to
+      the assigned phase. Response does not announce or imply launching
+      additional subagents or follow-on discovery orchestration.
+    failure_modes:
+      - Response executes or claims to execute multiple phases.
+      - Response delegates work to a subagent (violates Required Protocol §2).
+      - Response transitions into a discovery or planning mode beyond the phase.
+    priority: high
+    contract_ref: "agent §Required Protocol §2 (execute phase directly; no subagents)"
+
+  - expectation_id: files-changed-categorized
+    summary: Files Changed section enumerates Added, Modified, and Removed buckets.
+    signal: Files Changed contains `Added:`, `Modified:`, and `Removed:` labels with paths.
+    pass_criteria: |
+      The `### Files Changed` section uses the documented Added/Modified/Removed
+      labels. Buckets with no entries either repeat the label with `None` or
+      omit only the empty buckets while keeping at least one populated label.
+    failure_modes:
+      - Files listed as a flat bullet list without categorization.
+      - Categories renamed (e.g., `Created`, `Edited`, `Deleted`).
+      - Paths missing for files claimed as changed.
+    priority: medium
+    contract_ref: "agent §Response Format (Files Changed: Added/Modified/Removed)"
+
+  - expectation_id: blocker-early-return
+    summary: Blocked or partial work is surfaced with documented status and reasons.
+    signal: Steps Not Completed lists blocked steps and Issues explains blockers.
+    pass_criteria: |
+      When any step is incomplete or blocked, Status is `Partial` or `Blocked`,
+      the affected steps appear under `### Steps Not Completed` with a reason,
+      and the `### Issues` section captures the blocker with enough detail for
+      the parent agent to act on it.
+    failure_modes:
+      - Status set to `Complete` despite incomplete or blocked steps.
+      - Blocked steps omitted from Steps Not Completed.
+      - Issues section left empty when blockers exist.
+    priority: high
+    contract_ref: "agent §Step 2 (early-return rules) + §Required Protocol §3"
+
+  - expectation_id: validation-results-recorded
+    summary: Validation Results section captures lint/test/build outcomes when validation runs.
+    signal: Validation Results contains command output or a documented "no validation" note.
+    pass_criteria: |
+      When validation commands are specified in the inputs, the `### Validation
+      Results` section reports lint, test, or build outcomes. When no
+      validation was specified, the section explicitly says so rather than
+      being left empty.
+    failure_modes:
+      - Validation commands specified but Validation Results omitted or empty.
+      - Validation outputs paraphrased to the point of hiding failures.
+      - Validation Results conflates with another section's content.
+    priority: medium
+    contract_ref: "agent §Step 3 (Validate Phase) + §Response Format (Validation Results)"

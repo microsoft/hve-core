@@ -1,0 +1,20 @@
+stimuli:
+  - name: brd-builder-class-recipe
+    prompt: |
+      Draft a Business Requirements Document for a self-service password reset feature. Cover business goals, scope, and success metrics. Write the BRD under `.copilot-tracking/brd-sessions/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](brd-sessions|research)'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(business|requirement|scope|success|password|reset)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

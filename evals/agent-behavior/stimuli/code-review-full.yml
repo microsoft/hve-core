@@ -1,0 +1,27 @@
+stimuli:
+  - name: code-review-full-class-recipe
+    prompt: |
+      Review this diff and produce findings with severity:
+      ```diff
+      -def get_user(user_id):
+      -    return db.query(f"SELECT * FROM users WHERE id = {user_id}")
+      +def get_user(user_id):
+      +    return db.query("SELECT * FROM users WHERE id = ?", user_id)
+      ```
+
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

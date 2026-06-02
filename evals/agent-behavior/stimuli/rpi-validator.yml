@@ -1,0 +1,38 @@
+stimuli:
+  - name: rpi-validator-phase-scope
+    prompt: |
+      Validate phase 3 of the plan at `.copilot-tracking/plans/example.md`
+      against the changes log `.copilot-tracking/changes/example-changes.md`
+      and research at `.copilot-tracking/research/example.md`. Produce a
+      severity-graded RPI validation document and report its path.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: rpi-validation-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]reviews[-/\\]rpi'
+      - type: output-matches
+        name: phase-and-severity-vocabulary
+        config:
+          pattern: '(?i)(phase\s*\d|critical|major|minor|missing|deviation|coverage)'
+
+  - name: rpi-validator-changes-comparison
+    prompt: |
+      As an rpi-validator subagent, describe how you compare a Changes Log
+      against the Implementation Plan, Planning Log, and Research Document for
+      a single phase, including how you verify file evidence and assign
+      severity to findings.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: comparison-vocabulary
+        config:
+          pattern: '(?i)(changes log|implementation plan|planning log|research|phase)'
+      - type: output-matches
+        name: evidence-and-severity
+        config:
+          pattern: '(?i)(evidence|file path|line|critical|major|minor|coverage)'

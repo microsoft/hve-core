@@ -1,0 +1,122 @@
+# Bucket-A expectations for prd-builder
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: prd-builder
+class: research-writer
+agent_file: .github/agents/project-planning/prd-builder.agent.md
+stimulus_file: evals/agent-behavior/stimuli/prd-builder.yml
+latest_result: evals/results/agent-matrix/2026-05-28/prd-builder.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: state-file-location
+    summary: Session state is written under the PRD-sessions tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/prd-sessions/<slug>`.
+    pass_criteria: |
+      The response reports a session-state path beginning with
+      `.copilot-tracking/prd-sessions/` whose slug matches the PRD topic. This
+      satisfies the `tracking-file-write` grader (`.copilot-tracking/(prd-sessions|research)`).
+    failure_modes:
+      - State path omitted or only the PRD path reported (current 2026-05-28
+        output fails state-file path reporting).
+      - State written to a temp directory or absolute path.
+      - State written outside `.copilot-tracking/prd-sessions/`.
+    priority: high
+    contract_ref: "agent §State Tracking (session state under `.copilot-tracking/prd-sessions/`)"
+
+  - expectation_id: both-prd-and-state-created
+    summary: Response creates both the PRD document and its session-state file.
+    signal: Output names a PRD document path and a separate session-state path.
+    pass_criteria: |
+      The response reports two distinct artifacts: the PRD document and the
+      session-state file, rather than only one of the two.
+    failure_modes:
+      - PRD created but state file omitted.
+      - State file created but no PRD document path reported.
+    priority: high
+    contract_ref: "agent §File Management (create both the PRD and the session state file)"
+
+  - expectation_id: required-prd-sections
+    summary: Drafted PRD contains the documented required sections.
+    signal: Output references the full set of required PRD section names.
+    pass_criteria: |
+      The response (or the PRD body it summarizes) names the documented
+      required PRD sections (the 17-section set), including at minimum
+      Overview/Summary, Problem Statement, Goals, User Stories, Requirements,
+      and Success Criteria.
+    failure_modes:
+      - PRD shows only goals/requirements and omits user stories or success
+        criteria.
+      - Sections collapsed into generic prose with no labeled headings.
+    priority: high
+    contract_ref: "agent §PRD Structure (17 required sections)"
+
+  - expectation_id: boilerplate-markers
+    summary: PRD body includes the documented boilerplate/lint markers.
+    signal: Output shows `markdownlint-disable-file` and table-prettify ignore markers.
+    pass_criteria: |
+      The PRD body includes the documented boilerplate markers:
+      `<!-- markdownlint-disable-file -->` and the
+      `markdown-table-prettify-ignore-start` / `-end` markers around tables.
+    failure_modes:
+      - Boilerplate markers omitted entirely.
+      - Only one of the marker pairs present.
+    priority: low
+    contract_ref: "agent §PRD Creation (boilerplate markers: markdownlint-disable-file, table-prettify ignore)"
+
+  - expectation_id: phased-workflow-questions
+    summary: Vague requests progress through the documented phased workflow with questions.
+    signal: Output asks scoping questions tied to the early phases before finalizing.
+    pass_criteria: |
+      When the stimulus is broad, the response advances through the documented
+      7-phase workflow and asks scoping questions before producing the full
+      PRD, rather than emitting a complete document with no elicitation.
+    failure_modes:
+      - Full PRD generated immediately for an underspecified request with no
+        phase progression.
+      - Phases referenced but no actual questions asked.
+    priority: medium
+    applies_when: "stimulus is broad or underspecified"
+    contract_ref: "agent §Workflow (7-phase PRD workflow)"
+
+  - expectation_id: user-stories-and-success-criteria
+    summary: PRD includes user stories and measurable success criteria.
+    signal: Output contains user-story statements and success-criteria items.
+    pass_criteria: |
+      For a stimulus that requests stories and success criteria, the response
+      includes user-story statements and explicit, measurable success criteria
+      rather than feature descriptions alone.
+    failure_modes:
+      - User stories present but no success criteria.
+      - Success criteria stated as vague aspirations with no measurability.
+    priority: medium
+    contract_ref: "agent §PRD Structure (User Stories, Success Criteria)"
+
+  - expectation_id: no-source-edit
+    summary: PRD authoring does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to the PRD document and the
+      `.copilot-tracking/prd-sessions/` state file.
+    failure_modes:
+      - Drafting a notification-preferences PRD leads to editing app source.
+    priority: medium
+    contract_ref: "agent scope (writes confined to PRD output + `.copilot-tracking/prd-sessions/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the PRD topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `prd-builder-class-recipe` stimulus, the response contains terms
+      from {product, requirement, user story, success, notification, preference}
+      and addresses the in-app/email/SMS toggle feature specifically rather
+      than generic template prose.
+    failure_modes:
+      - Off-topic PRD with no notification-preferences references.
+      - Requirements filled with placeholders instead of feature specifics.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

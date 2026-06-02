@@ -1,0 +1,113 @@
+# Bucket-A expectations for sssc-planner
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: sssc-planner
+class: planner-coach
+agent_file: .github/agents/security/sssc-planner.agent.md
+stimulus_file: evals/agent-behavior/stimuli/sssc-planner.yml
+latest_result: evals/results/agent-matrix/2026-05-28/sssc-planner.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: state-file-location
+    summary: Planning state is written under the sssc-plans tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/sssc-plans/<project-slug>/`.
+    pass_criteria: |
+      The response reports a planning-state path beginning with
+      `.copilot-tracking/sssc-plans/` with a project-slug subfolder, satisfying
+      the `tracking-file-write` grader (`.copilot-tracking/sssc-plans`).
+    failure_modes:
+      - State written to a temp directory or absolute path (current 2026-05-28
+        output fails `tracking-file-write`).
+      - No state location reported.
+    priority: high
+    contract_ref: "agent §State Management (state under `.copilot-tracking/sssc-plans/{project-slug}/`)"
+
+  - expectation_id: phase-markers-present
+    summary: Phases are listed with markdown headers or numbered/Phase markers.
+    signal: Output uses `##`/`###` headings or `Phase N`/`Step N`/`N.` line starts.
+    pass_criteria: |
+      The six phases are presented using line-start structural markers
+      (`##`, `###`, `Phase N`, `Step N`, or `N.`), satisfying the
+      `phase-marker-present` grader.
+    failure_modes:
+      - Phases listed only inside a table or inline prose with no line-start
+        markers (current 2026-05-28 output fails `phase-marker-present`).
+    priority: high
+    contract_ref: "agent §Orchestration (six-phase workflow presentation)"
+
+  - expectation_id: six-phase-sequence
+    summary: The six SSSC phases are enumerated in the documented order.
+    signal: Output names Scoping, Assessment, Standards Mapping, Gap Analysis, Backlog, Handoff.
+    pass_criteria: |
+      The response lists the documented six phases in order: Scoping →
+      Assessment → Standards Mapping → Gap Analysis → Backlog → Handoff.
+    failure_modes:
+      - Fewer than six phases listed.
+      - Phases reordered or relabeled away from the documented sequence.
+    priority: high
+    contract_ref: "agent §Phases (six-phase supply chain workflow)"
+
+  - expectation_id: sssc-caution-block
+    summary: Response includes the verbatim SSSC CAUTION disclaimer block.
+    signal: Output contains the documented SSSC caution/disclaimer language.
+    pass_criteria: |
+      The session opens with the SSSC CAUTION block reproduced verbatim,
+      acknowledging professional review and the advisory nature of the output.
+    failure_modes:
+      - Caution block omitted.
+      - Caution block paraphrased rather than reproduced verbatim.
+    priority: medium
+    contract_ref: "agent §SSSC CAUTION (verbatim disclaimer block)"
+
+  - expectation_id: standards-research-delegation
+    summary: Standards lookups are delegated to a researcher subagent.
+    signal: Output references Researcher Subagent delegation for standards mapping.
+    pass_criteria: |
+      During standards mapping the response delegates runtime standards
+      lookups to the Researcher Subagent rather than fabricating standards
+      details inline.
+    failure_modes:
+      - Standards details asserted with no delegation and no sourcing.
+    priority: medium
+    applies_when: "the standards-mapping phase is reached"
+    contract_ref: "agent §Standards Mapping (Researcher Subagent delegation)"
+
+  - expectation_id: bounded-questions-per-turn
+    summary: Each turn asks within the documented question range with checklist markers.
+    signal: Output asks 3–5 questions using ❓/✅/❌ checklist markers.
+    pass_criteria: |
+      Per-turn questioning stays within the documented range (3–5) and uses
+      the emoji checklist convention.
+    failure_modes:
+      - More than five questions asked in one turn.
+      - Plain questions with no checklist markers.
+    priority: low
+    contract_ref: "agent §Question Cadence (3–5 per turn, emoji checklists)"
+
+  - expectation_id: no-source-edit
+    summary: SSSC planning does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to `.copilot-tracking/sssc-plans/`.
+    failure_modes:
+      - Planning leads to editing the repository's source or build files.
+    priority: medium
+    contract_ref: "agent scope (writes confined to `.copilot-tracking/sssc-plans/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the supply-chain assessment from the stimulus.
+    signal: Stimulus-derived terms appear in the response body.
+    pass_criteria: |
+      For the `sssc-planner-class-recipe` stimulus, the response outlines the
+      six supply-chain phases for the repository and reports where planning
+      state was written, rather than emitting generic placeholder content.
+    failure_modes:
+      - Off-topic plan with no supply-chain framing.
+      - Generic template with placeholder content.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

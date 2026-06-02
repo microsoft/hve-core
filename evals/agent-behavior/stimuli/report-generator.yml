@@ -1,0 +1,38 @@
+stimuli:
+  - name: report-generator-vuln-report
+    prompt: |
+      You are a report-generator subagent invocation. Collate verified findings
+      from `owasp-top-10` and `owasp-cicd` skill assessments in audit mode for
+      repository `hve-core` dated 2026-05-27. Produce a VULN_REPORT_V1 report,
+      sort detailed remediation guidance by severity, and report the output path.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: report-output-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]security[-/\\]'
+      - type: output-matches
+        name: severity-ordering-vocabulary
+        config:
+          pattern: '(?i)(critical.*high.*medium.*low|severity|vuln[-_]?report[-_]?v1|remediation)'
+
+  - name: report-generator-plan-mode
+    prompt: |
+      As a report-generator subagent in plan mode, produce a PLAN_REPORT_V1
+      risk assessment for plan reference `plan-001` against repository
+      `hve-core` dated 2026-05-27. Include RISK, CAUTION, COVERED, and
+      NOT_APPLICABLE status counts and report the output path.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: plan-report-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]security[-/\\]'
+      - type: output-matches
+        name: plan-status-vocabulary
+        config:
+          pattern: '(?i)(RISK|CAUTION|COVERED|NOT_APPLICABLE|plan[-_]?report[-_]?v1)'

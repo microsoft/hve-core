@@ -1,0 +1,122 @@
+# Bucket-A expectations for code-review-full
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: code-review-full is the orchestrator that runs a 3-stage review
+# (standards → functional → unified) by delegating to `code-review-standards`
+# and `code-review-functional` subagents and persisting per-stage artifacts
+# under `.copilot-tracking/reviews/code-reviews/<branch>/<run>/`.
+slug: code-review-full
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review-full.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review-full.yml
+latest_result: evals/results/agent-matrix/2026-05-28/code-review-full.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: stage-sequence-named
+    summary: Response names the documented stage sequence (Standards → Functional → Unified).
+    signal: Output references all three stages by name.
+    pass_criteria: |
+      Response names all three stages from the documented pipeline:
+      `Standards` (or `Standards Review`), `Functional` (or
+      `Functional Review`), and `Unified` (or `Unified Report`). Order is
+      preserved.
+    failure_modes:
+      - Output describes only one stage (e.g., findings without naming the
+        Standards pass).
+      - Stages mentioned but in incorrect order.
+      - Standards and Functional collapsed into a single pass.
+    priority: high
+    contract_ref: "agent §Pipeline (Standards → Functional → Unified)"
+
+  - expectation_id: subagent-delegation-evidence
+    summary: Response shows delegation to the documented subagents.
+    signal: Output references invoking `code-review-standards` and `code-review-functional` (or notes delegation tooling is unavailable).
+    pass_criteria: |
+      Response either (a) names invocation of both `code-review-standards`
+      and `code-review-functional` as subagents (with human-readable names
+      acceptable), OR (b) explicitly states that `runSubagent`/`task`
+      tooling is unavailable and falls back to inline review.
+    failure_modes:
+      - Response performs all review inline with no subagent reference and
+        no unavailability notice.
+      - Delegates to undocumented subagent names.
+    priority: high
+    contract_ref: "agent §Subagent Invocation Protocol (delegates to code-review-standards and code-review-functional)"
+
+  - expectation_id: tracking-dir-shape
+    summary: Per-stage artifacts live under the normalized review subtree.
+    signal: Output names a path matching `.copilot-tracking/reviews/code-reviews/<branch>/<run>/`.
+    pass_criteria: |
+      When the agent reports tracking-file activity, the path starts with
+      `.copilot-tracking/reviews/code-reviews/` and includes a normalized
+      branch segment and a run identifier. Expected children include
+      `standards-review.md`, `functional-review.md`, `unified-report.md`,
+      and `diff.xml` or `pr-reference.xml`.
+    failure_modes:
+      - Tracking written outside `.copilot-tracking/reviews/code-reviews/`.
+      - Uses raw branch name with `/` or `.` instead of normalized form.
+      - Run directory omitted (artifacts overwrite previous runs).
+    priority: high
+    applies_when: "agent reports tracking-file creation or update"
+    contract_ref: "agent §Tracking Directory Structure + branch normalization rules"
+
+  - expectation_id: unified-report-structure
+    summary: Unified report includes severity-labeled findings and verdict.
+    signal: Output references a unified report with severity vocabulary and verdict.
+    pass_criteria: |
+      The unified report (or response summarizing it) contains findings
+      labeled with severity from `critical|high|medium|low|info|warning`
+      and concludes with an overall verdict drawn from
+      `approve|approve with changes|request changes|block`.
+    failure_modes:
+      - Unified report lists findings without severities.
+      - No overall verdict named.
+      - Verdict uses non-documented vocabulary.
+    priority: high
+    contract_ref: "agent §Phase 3 Unified Report (severity + verdict)"
+
+  - expectation_id: scope-locking
+    summary: Response locks review scope to a specific diff or branch comparison.
+    signal: Output names a base ref, head ref, or PR identifier.
+    pass_criteria: |
+      Response identifies the diff scope explicitly (e.g., `main..feature/x`,
+      `PR #123`, `HEAD~3..HEAD`) before producing findings. When scope
+      detection is impossible, the response asks for it rather than guessing.
+    failure_modes:
+      - Findings produced without naming what was compared.
+      - Scope inferred silently with no statement.
+    priority: medium
+    contract_ref: "shared diff-computation instructions (branch detection, scope locking)"
+
+  - expectation_id: tracking-markdown-disable-comment
+    summary: Tracking files begin with the markdownlint-disable directive.
+    signal: Output references `<!-- markdownlint-disable-file -->` at the top of tracking files.
+    pass_criteria: |
+      Any tracking file the agent creates or summarizes begins with the
+      literal directive `<!-- markdownlint-disable-file -->` on the first
+      line. The same directive is NOT placed in `docs/` or other published
+      surfaces.
+    failure_modes:
+      - Tracking file shown without the directive on line 1.
+      - Directive placed in published markdown outside `.copilot-tracking/`.
+    priority: low
+    applies_when: "agent reports tracking-file creation"
+    contract_ref: "repo convention (`.copilot-tracking/` files begin with `<!-- markdownlint-disable-file -->`)"
+
+  - expectation_id: no-source-edit
+    summary: Review-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Fix proposals appear in tracking artifacts or fenced snippets, not as
+      claimed edits.
+    failure_modes:
+      - Agent claims to have applied a fix during review.
+      - Modifies build manifests while reviewing.
+    priority: high
+    contract_ref: "agent scope (review-only, fixes captured in tracking artifacts)"

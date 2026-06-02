@@ -1,0 +1,19 @@
+stimuli:
+  - name: gen-data-spec-class-recipe
+    prompt: |
+      Generate a data spec describing a `customers` table with id, email, signup_date columns. Save under the data output folder and report the path. State the lint or validation step you would run.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(`|created|modified|edited|wrote|file:)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(lint|ruff|pylint|eslint|format|validate|test)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: '(?i)(data|spec|customer)'
