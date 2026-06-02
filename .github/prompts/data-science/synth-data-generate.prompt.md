@@ -1,5 +1,6 @@
 ---
 description: "Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships"
+agent: agent
 ---
 
 # Synthetic Data Generator
