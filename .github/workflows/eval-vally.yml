@@ -1,0 +1,206 @@
+name: Evals - Execute Vally Suites
+
+on:
+  workflow_call:
+    inputs:
+      base-sha:
+        description: 'Base SHA for changed-artifact detection'
+        required: true
+        type: string
+      head-sha:
+        description: 'Head SHA for changed-artifact detection'
+        required: true
+        type: string
+    secrets:
+      copilot-github-token:
+        description: 'Token used to authenticate Copilot for eval execution'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  eval-execute:
+    name: Evals - Execute Vally Suites
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      COPILOT_GITHUB_TOKEN: ${{ secrets.copilot-github-token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.10.9"
+
+      - name: Install moderation dependencies
+        run: uv pip install --system -r scripts/evals/moderation/requirements.txt
+
+      - name: Cache Detoxify model
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ~/.cache/torch/hub/checkpoints
+          key: detoxify-unbiased-${{ hashFiles('scripts/evals/moderation/requirements.txt') }}
+
+      - name: Create logs directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Configure Copilot home
+        shell: pwsh
+        run: |
+          $copilotHome = Join-Path $env:RUNNER_TEMP 'copilot-home'
+          New-Item -ItemType Directory -Force -Path $copilotHome | Out-Null
+          "COPILOT_HOME=$copilotHome" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Verify Copilot token
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/evals/Test-CopilotToken.ps1
+
+      - name: Detect changed AI artifacts
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+            -BaseRef "${{ inputs.base-sha }}" `
+            -HeadRef "${{ inputs.head-sha }}" `
+            -OutFile logs/changed-ai-artifacts.json
+
+      - name: Run vally evals for changed artifacts
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/evals/Invoke-VallyEvals.ps1 `
+            -ManifestPath logs/changed-ai-artifacts.json `
+            -LogsDir logs/
+
+      - name: Run per-agent agent-behavior matrix (changed)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $manifestPath = 'logs/changed-ai-artifacts.json'
+          $changedPaths = @()
+          if (Test-Path -LiteralPath $manifestPath) {
+            $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            if ($manifest.artifacts) {
+              $changedPaths = @($manifest.artifacts | ForEach-Object { $_.path } | Where-Object { $_ })
+            }
+          }
+          if ($changedPaths.Count -eq 0) {
+            Write-Host 'No changed AI artifacts; skipping per-agent matrix.' -ForegroundColor Yellow
+            exit 0
+          }
+          pwsh -NoProfile -File scripts/evals/Invoke-AgentMatrix.ps1 `
+            -Changed $changedPaths `
+            -Tier pr
+
+      - name: Upload eval execution artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-execute-logs
+          path: |
+            logs/eval-results-*.json
+            logs/eval-summary.json
+            logs/changed-ai-artifacts.json
+            logs/agent-matrix/**/*.log
+            evals/results/agent-matrix/**/*.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Post or update PR-comment summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const summaryPath = 'logs/eval-summary.json';
+            const marker = '<!-- evals-ci-summary -->';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            if (!fs.existsSync(summaryPath)) {
+              core.info(`${summaryPath} not found; skipping eval summary comment.`);
+              return;
+            }
+
+            let summary;
+            try {
+              summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+            } catch (err) {
+              core.warning(`Could not parse ${summaryPath}: ${err.message}`);
+              return;
+            }
+
+            const totals = summary.totals || {};
+            const artifacts = Number(totals.artifacts || 0);
+            const specs = Number(totals.specs || 0);
+            const assertionsPassed = Number(totals.assertionsPassed || 0);
+            const assertionsFailed = Number(totals.assertionsFailed || 0);
+            const failedSpecs = Number(totals.failedSpecs || 0);
+            const perArtifact = Array.isArray(summary.perArtifact) ? summary.perArtifact : [];
+            const lines = perArtifact.map(a => {
+              const passed = Number(a.assertionsPassed || 0);
+              const failed = Number(a.assertionsFailed || 0);
+              const indicator = a.status === 'fail' ? ':x:' : ':white_check_mark:';
+              const id = a.artifactId || a.path || '(unknown)';
+              return `- ${indicator} \`${id}\` — ${passed} passed, ${failed} failed`;
+            });
+
+            const headline = `**Artifacts:** ${artifacts} | **Specs:** ${specs} (${failedSpecs} failed) | **Assertions:** ${assertionsPassed} passed, ${assertionsFailed} failed`;
+
+            const body = [
+              marker,
+              '## Eval Coverage Summary',
+              '',
+              headline,
+              '',
+              lines.length ? lines.join('\n') : '_No artifact-scoped results in this run._',
+              '',
+              `[View workflow run](${runUrl})`
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }

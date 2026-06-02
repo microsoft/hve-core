@@ -1,0 +1,89 @@
+name: Evals - Corpus Content Moderation
+
+on:
+  workflow_call:
+    inputs:
+      base-sha:
+        description: 'Base SHA for changed-artifact detection'
+        required: true
+        type: string
+      head-sha:
+        description: 'Head SHA for changed-artifact detection'
+        required: true
+        type: string
+      soft-fail:
+        description: 'Whether to continue on content moderation failures'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  content-moderation:
+    name: Evals - Corpus Content Moderation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.10.9"
+
+      - name: Install moderation dependencies
+        run: uv pip install --system -r scripts/evals/moderation/requirements.txt
+
+      - name: Cache Detoxify model
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ~/.cache/torch/hub/checkpoints
+          key: detoxify-unbiased-${{ hashFiles('scripts/evals/moderation/requirements.txt') }}
+
+      - name: Create logs directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Detect changed AI artifacts
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+            -BaseRef "${{ inputs.base-sha }}" `
+            -HeadRef "${{ inputs.head-sha }}" `
+            -OutFile logs/changed-ai-artifacts.json
+
+      - name: Moderate changed corpus
+        shell: pwsh
+        continue-on-error: ${{ inputs.soft-fail }}
+        run: |
+          pwsh -NoProfile -File scripts/evals/Invoke-CorpusModeration.ps1 `
+            -ManifestPath logs/changed-ai-artifacts.json `
+            -OutFile logs/moderation-corpus.json
+
+      - name: Upload moderation artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: content-moderation-logs
+          path: |
+            logs/changed-ai-artifacts.json
+            logs/moderation-corpus.json
+          if-no-files-found: ignore
+          retention-days: 7

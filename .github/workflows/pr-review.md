@@ -12,6 +12,7 @@ timeout-minutes: 15
 
 imports:
   - ../agents/hve-core/pr-review.agent.md
+  - ../agents/content-policy-citation.agent.md
 
 checkout:
   sparse-checkout: |
@@ -199,6 +200,10 @@ to draft by calling `update-pull-request` with `draft: true` in addition
 to submitting REQUEST_CHANGES and adding `needs-revision`. Add a comment
 explaining that the PR was converted to draft due to insufficient quality
 for review.
+
+## Output Style
+
+When any output emitted by this workflow (PR review comments, PR descriptions, or other public output) references or flags a suspected content-policy concern, follow the citation discretion rules from the imported Content Policy Citation agent as authoritative.
 
 ## Constraints
 

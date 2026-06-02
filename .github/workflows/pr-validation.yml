@@ -338,3 +338,50 @@ jobs:
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
 
+  eval-presence:
+    name: Evals - Stimulus Presence
+    permissions:
+      contents: read
+    uses: ./.github/workflows/eval-stimulus-presence.yml
+    with:
+      base-sha: ${{ github.event.pull_request.base.sha }}
+      head-sha: ${{ github.event.pull_request.head.sha }}
+
+  eval-lint:
+    name: Evals - Spec Lint and Skill Hygiene
+    permissions:
+      contents: read
+    uses: ./.github/workflows/eval-spec-lint.yml
+    with:
+      base-sha: ${{ github.event.pull_request.base.sha }}
+      head-sha: ${{ github.event.pull_request.head.sha }}
+
+  eval-text-moderation:
+    name: Evals - Stimulus Text Moderation
+    permissions:
+      contents: read
+    uses: ./.github/workflows/eval-text-moderation.yml
+
+  content-moderation:
+    name: Evals - Corpus Content Moderation
+    permissions:
+      contents: read
+    uses: ./.github/workflows/eval-corpus-moderation.yml
+    with:
+      base-sha: ${{ github.event.pull_request.base.sha }}
+      head-sha: ${{ github.event.pull_request.head.sha }}
+
+  eval-execute:
+    name: Evals - Execute Vally Suites
+    needs: [eval-presence, eval-lint, eval-text-moderation, content-moderation]
+    if: github.event.pull_request.head.repo.fork == false
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/eval-vally.yml
+    with:
+      base-sha: ${{ github.event.pull_request.base.sha }}
+      head-sha: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      copilot-github-token: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+

@@ -1,0 +1,77 @@
+name: Evals - Stimulus Presence
+
+on:
+  workflow_call:
+    inputs:
+      base-sha:
+        description: "Base commit SHA for change detection"
+        required: true
+        type: string
+      head-sha:
+        description: "Head commit SHA for change detection"
+        required: true
+        type: string
+      soft-fail:
+        description: "Whether to continue on validation failures"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  eval-presence:
+    name: Evals - Stimulus Presence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+
+      - name: Create logs directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Detect changed AI artifacts
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
+            -BaseRef "${{ inputs.base-sha }}" `
+            -HeadRef "${{ inputs.head-sha }}" `
+            -OutFile logs/changed-ai-artifacts.json
+
+      - name: Enforce stimulus presence
+        shell: pwsh
+        continue-on-error: ${{ inputs.soft-fail }}
+        run: |
+          pwsh -NoProfile -File scripts/evals/Test-StimulusPresence.ps1 `
+            -ManifestPath logs/changed-ai-artifacts.json `
+            -EvalRoot evals/ `
+            -OutFile logs/stimulus-presence.json
+
+      - name: Upload presence artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-presence-logs
+          path: |
+            logs/changed-ai-artifacts.json
+            logs/stimulus-presence.json
+          if-no-files-found: ignore
+          retention-days: 7
