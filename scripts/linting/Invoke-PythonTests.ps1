@@ -76,7 +76,13 @@ function Invoke-PythonTests {
                     Write-Host '⚠ No tests directory found, skipping' -ForegroundColor Yellow
                     continue
                 }
-                
+
+                # Bootstrap skill venv from lockfile so pytest discovery has resolved deps on clean clones
+                & uv sync --group dev --group fuzz --frozen 2>&1 | Write-Host
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "⚠ uv sync exited with code $LASTEXITCODE for $skillPath; continuing to pytest" -ForegroundColor Yellow
+                }
+
                 # Resolve pytest: prefer skill venv, fall back to global
                 $pytestCmd = $null
                 $venvPytest = Join-Path $skillPath '.venv/bin/pytest'
