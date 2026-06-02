@@ -72,6 +72,8 @@ Every code change has a corresponding issue or work item for tracking and contex
 
 Apply the conventions from `story-quality.instructions.md` when evaluating or creating work items. Specifically enforce the Scope and Sizing, Completeness Dimensions, and Evidence Source sections.
 
+When persisting draft work items, requirements, or planning artifacts to files, write them under `.copilot-tracking/` and report the `.copilot-tracking/` path in your response.
+
 Guide labeling and categorization:
 
 * Apply labels that reflect component, scope size, and priority.

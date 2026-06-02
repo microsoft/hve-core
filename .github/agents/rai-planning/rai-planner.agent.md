@@ -97,7 +97,7 @@ Pre-scans the security plan, asks output preferences, then reads the security pl
 
 ## State Management Protocol
 
-State files live under `.copilot-tracking/rai-plans/{project-slug}/`.
+State files live under `.copilot-tracking/rai-plans/{project-slug}/`. When reporting where artifacts or state were saved, cite the canonical `.copilot-tracking/rai-plans/{project-slug}/` path rather than any underlying physical or temporary path.
 
 State JSON schema for `state.json`:
 
