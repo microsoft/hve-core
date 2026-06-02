@@ -1,0 +1,61 @@
+name: Evals - Text Moderation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on text moderation failures'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  text-moderation:
+    name: Evals - Stimulus Text Moderation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+
+      - name: Create logs directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Moderate AI artifact corpus (alex.js + retext-profanities)
+        shell: pwsh
+        continue-on-error: ${{ inputs.soft-fail }}
+        run: |
+          pwsh -NoProfile -File scripts/evals/Test-EvalSpecText.ps1 `
+            -OutputPath logs/eval-spec-text-moderation.json
+
+      - name: Upload text moderation artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: eval-text-moderation-logs
+          path: |
+            logs/eval-spec-text-moderation.json
+          if-no-files-found: ignore
+          retention-days: 7
