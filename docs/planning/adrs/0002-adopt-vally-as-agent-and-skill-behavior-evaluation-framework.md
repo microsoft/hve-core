@@ -55,15 +55,15 @@ success_criteria:
   - metric: "baseline-equivalence-divergence"
     target: "zero undocumented divergences between the customization layer and the underlying Copilot baseline"
     measurement_window: "per-PR for baseline-equivalence suite"
-    source: "evals/baseline-equivalence/README.md"
+    source: "Planned baseline-equivalence suite README (evals/baseline-equivalence)"
   - metric: "eval-ci-gating"
     target: "the evaluation matrix runs in PR CI and blocks merge on authoritative-gate failures"
     measurement_window: "every PR run"
-    source: ".github/workflows/evals-agent-matrix.yml"
+    source: "Planned evals agent-matrix CI workflow (.github/workflows)"
   - metric: "corpus-moderation-enforcement"
     target: "generated test corpora pass the moderation pipeline before use, with refusal-taxonomy categories enforced"
     measurement_window: "per corpus generation"
-    source: "scripts/evals/moderation/moderate.py"
+    source: "Planned corpus moderation pipeline (scripts/evals/moderation)"
 decisionMetadata:
   driverToTriggerMap:
     "Regression safety": "ASR-maintainability-eval-suite"
@@ -170,7 +170,7 @@ its tag-routed grader catalog matches the multi-suite design, and it is npm-
 and GitHub-Actions-native so it fits existing PR CI and local `npm run`
 workflows.
 
-`vyta/beval` (Option B) is treated as **complementary rather than rejected**: it
+`vyta/beval` (Option B) is treated as complementary rather than rejected. It
 targets a different layer (runtime, multi-turn agentic behavior with scored
 multi-dimensional metrics and persona-driven conversation simulation over
 ACP/A2A) and is being integrated through open pull requests. It does not
