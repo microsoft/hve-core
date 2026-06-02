@@ -170,7 +170,7 @@ its tag-routed grader catalog matches the multi-suite design, and it is npm-
 and GitHub-Actions-native so it fits existing PR CI and local `npm run`
 workflows.
 
-`vyta/beval` (Option B) is treated as **complementary rather than rejected**: it
+`vyta/beval` (Option B) is treated as complementary rather than rejected. It
 targets a different layer (runtime, multi-turn agentic behavior with scored
 multi-dimensional metrics and persona-driven conversation simulation over
 ACP/A2A) and is being integrated through open pull requests. It does not

@@ -122,7 +122,7 @@ ADR templates without forking the agent?
 | Decision driver                      | Option A | Option B | Option C | Option D |
 |--------------------------------------|----------|----------|----------|----------|
 | Standards fidelity + disclaimer      | Yes      | No       | Partial  | No       |
-| Peer-planner consistency             | Yes      | No       | No       | Trap     |
+| Peer-planner consistency             | Yes      | No       | No       | Pitfall  |
 | Thin-orchestrator maintainability    | Yes      | No       | Partial  | No       |
 | BYO template support                 | Yes      | No       | Partial  | No       |
 | Coaching quality (load-before-act)   | Yes      | Partial  | No       | Partial  |
@@ -192,7 +192,7 @@ Compliance with this decision is confirmed by four mechanisms:
 ### Option C
 
 * Good, because each agent can optimize for its specific output shape.
-* Bad, because three agents duplicate identity logic (state machine, six-step protocol, Govern autonomy prompt), exactly the maintenance trap the thin-orchestrator driver names.
+* Bad, because three agents duplicate identity logic (state machine, six-step protocol, Govern autonomy prompt), exactly the maintenance pitfall the thin-orchestrator driver names.
 * Bad, because no shared `state.json` schema; resuming a session requires knowing which agent owned it.
 * Bad, because MADR v4 text and Y-Statement formula end up duplicated across agents, creating drift risk identical to Option B.
 * Neutral, because contributors writing one ADR shape can ignore the others; cognitive load per session is similar to Option A.
