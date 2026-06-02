@@ -31,6 +31,7 @@ import getpass
 import hashlib
 import json
 import logging
+import math
 import os
 import pathlib
 import re
@@ -1882,14 +1883,20 @@ def _cmd_auth_login(args: argparse.Namespace) -> int:
                     "",
                     "Looked for credentials in this order:",
                     f"  1. Process environment ({ENV_CLIENT_ID}, {ENV_CLIENT_SECRET})",
-                    "  2. Active credential backend "
-                    "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})",
+                    (
+                        "  2. Active credential backend "
+                        "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})"
+                    ),
                     f"  3. Credential file: {cred_path}  (exists: {cred_exists})",
                     "",
-                    "Run `mural auth bootstrap` to store Mural app"
-                    " credentials interactively,",
-                    f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
-                    " environment.",
+                    (
+                        "Run `mural auth bootstrap` to store Mural app"
+                        " credentials interactively,"
+                    ),
+                    (
+                        f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
+                        " environment."
+                    ),
                 ]
             ),
             level=logging.ERROR,
@@ -2786,7 +2793,6 @@ def _cmd_auth_status(args: argparse.Namespace) -> int:
         backend_name: str = backend.name
         backend_error: str | None = None
     except MuralError as exc:
-        backend = None  # type: ignore[assignment]
         backend_name = "unavailable"
         backend_error = str(exc)
     keyring_available, keyring_backend_name, keyring_error = (
@@ -3992,8 +3998,8 @@ def _tool_bootstrap_ux_board(arguments: dict[str, Any]) -> Any:
                 title = area.get("title")
                 if isinstance(title, str):
                     existing_titles.add(title)
-    except MuralError:
-        pass
+    except MuralError as exc:
+        LOGGER.debug("failed to list existing areas for %s: %s", mural_id, exc)
     _ensure_tag_manifest(mural_id, [{"text": "ux-board"}])
     created_areas: list[dict[str, Any]] = []
     any_new = False
@@ -4900,7 +4906,6 @@ CONTAINMENT_VERDICT_GEOMETRY_MATCH = "geometry_match"
 CONTAINMENT_VERDICT_PARENT_MISMATCH = "parent_mismatch"
 CONTAINMENT_VERDICT_GEOMETRY_MISMATCH = "geometry_mismatch"
 CONTAINMENT_VERDICT_READBACK_FAILED = "readback_failed"
-CONTAINMENT_VERDICT_INCONCLUSIVE = "inconclusive"
 
 _CONTAINMENT_SUCCESS_VERDICTS = frozenset(
     {
@@ -4922,7 +4927,7 @@ def _coerce_finite_number(value: Any) -> float | None:
         return None
     if isinstance(value, (int, float)):
         f = float(value)
-        if f != f or f in (float("inf"), float("-inf")):
+        if not math.isfinite(f):
             return None
         return f
     return None
@@ -6415,7 +6420,7 @@ def _voting_run_compose(
             0, "VOTING_NO_ID", "voting session create response missing id"
         )
     session_id = session_id_raw
-    session = _voting_session_set_status(mural_id, session_id, "active")
+    _voting_session_set_status(mural_id, session_id, "active")
     poll_result: dict[str, Any] | None = None
     try:
         poll_result = _poll_voting_session(
@@ -7270,79 +7275,6 @@ def _tool_layout_row(arguments: dict[str, Any]) -> Any:
 
 # --- Tool schemas + registry ---------------------------------------------
 
-
-_LIMIT_PROPERTY: dict[str, Any] = {
-    "type": "integer",
-    "minimum": 1,
-    "maximum": _MAX_PAGE_SIZE * 100,
-    "description": "Maximum total records to return.",
-}
-_PAGE_SIZE_PROPERTY: dict[str, Any] = {
-    "type": "integer",
-    "minimum": 1,
-    "maximum": _MAX_PAGE_SIZE,
-    "description": f"Page size (max {_MAX_PAGE_SIZE}).",
-}
-_WIDGET_XY_PROPERTY: dict[str, Any] = {"type": "number"}
-_HYPERLINK_PROPERTY: dict[str, Any] = {
-    "type": "string",
-    "minLength": 1,
-    "maxLength": _MAX_HYPERLINK_LEN,
-    "description": (
-        f"Optional URL to attach to the widget (max {_MAX_HYPERLINK_LEN} chars)."
-    ),
-}
-_TAG_TEXT_PROPERTY: dict[str, Any] = {
-    "type": "string",
-    "minLength": 1,
-    "maxLength": _MAX_TAG_TEXT_LEN,
-    "description": (f"Tag label (max {_MAX_TAG_TEXT_LEN} chars per Mural API)."),
-}
-
-_DRY_RUN_PROPERTY: dict[str, Any] = {
-    "type": "boolean",
-    "default": False,
-    "description": (
-        "When true, validate inputs and return a preview of the API call "
-        "without writing to Mural. Skips the OAuth scope check."
-    ),
-}
-_IDEMPOTENCY_KEY_PROPERTY: dict[str, Any] = {
-    "type": "string",
-    "minLength": 1,
-    "maxLength": 256,
-    "description": (
-        "Caller-supplied key. When the same (tool, key) pair is replayed "
-        "within the in-process cache the previous result is returned and the "
-        "API is not re-invoked."
-    ),
-}
-_NO_AUTHOR_TAG_PROPERTY: dict[str, Any] = {
-    "type": "boolean",
-    "default": False,
-    "description": (
-        "When true, skip attaching the reserved 'authored-by-ai' tag to "
-        "newly created widgets."
-    ),
-}
-_REQUIRE_AUTHOR_TAG_PROPERTY: dict[str, Any] = {
-    "type": "boolean",
-    "default": False,
-    "description": (
-        "When true, refuse to mutate the widget unless it carries the "
-        "reserved 'authored-by-ai' tag. Use `force_human` to override."
-    ),
-}
-_FORCE_HUMAN_PROPERTY: dict[str, Any] = {
-    "type": "boolean",
-    "default": False,
-    "description": ("Override `require_author_tag` and act on human-authored widgets."),
-}
-_FORCE_RESERVED_PROPERTY: dict[str, Any] = {
-    "type": "boolean",
-    "default": False,
-    "description": ("Allow removal of reserved tags such as 'authored-by-ai'."),
-}
 
 # In-process idempotency cache for create-style tools. Bounded LRU using
 # ``OrderedDict``; holds previously formatted tool results keyed by
