@@ -1,0 +1,132 @@
+# Bucket-A expectations for pptx-subagent
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: pptx-subagent is `user-invocable: false`, so the agent-matrix does not
+# produce a `<slug>.json` result file for it. No stimulus exists yet; the
+# existing `evals/agent-behavior/stimuli/pptx.yml` covers the user-invocable
+# PowerPoint Builder orchestrator, not this subagent. The `stimulus_file`
+# field below points to the conventional path that a later Bucket-B pass
+# should populate.
+slug: pptx-subagent
+class: subagent  # subtype: PowerPoint skill task executor
+agent_file: .github/agents/experimental/subagents/pptx-subagent.agent.md
+stimulus_file: evals/agent-behavior/stimuli/pptx-subagent.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: task-type-acknowledged
+    summary: Response confirms the task type from the documented set.
+    signal: Output names one of extract, build-content, build-deck, validate, or export.
+    pass_criteria: |
+      Response names the active task type as exactly one of `extract`,
+      `build-content`, `build-deck`, `validate`, or `export`, matching the
+      task supplied by the parent orchestrator.
+    failure_modes:
+      - Task type omitted.
+      - Task type outside the documented set (e.g., `update`, `render`).
+      - Multiple task types claimed in a single response without delegation.
+    priority: high
+    contract_ref: "agent §Inputs (Task type) + §Step 1 (task dispatch)"
+
+  - expectation_id: working-directory-format
+    summary: Working directory path follows the dated PowerPoint convention.
+    signal: Output cites a working directory under `.copilot-tracking/ppt/`.
+    pass_criteria: |
+      Working directory path matches
+      `.copilot-tracking/ppt/<YYYY-MM-DD>/<ppt-name>/` and is the same path
+      supplied (or implied) by the parent orchestrator.
+    failure_modes:
+      - Working directory omitted or pointed outside `.copilot-tracking/ppt/`.
+      - Missing dated subdirectory or `<ppt-name>` segment.
+      - Working directory differs from the orchestrator-supplied path without explanation.
+    priority: high
+    contract_ref: "agent §Inputs (Working directory)"
+
+  - expectation_id: execution-log-path
+    summary: Response names an execution log path under the working directory.
+    signal: Output reports a log path under `changes/` in the working directory.
+    pass_criteria: |
+      Execution log path matches
+      `<working-directory>/changes/<task-type>-<timestamp>.md` and is
+      surfaced as a workspace-relative path in the response.
+    failure_modes:
+      - Execution log path omitted.
+      - Log file placed outside the working directory.
+      - Log filename missing the task type or timestamp.
+    priority: medium
+    contract_ref: "agent §Execution Log (Path)"
+
+  - expectation_id: status-from-allowed-set
+    summary: Task status is one of complete, partial, or blocked.
+    signal: Response reports a task status field with a documented value.
+    pass_criteria: |
+      Response reports task status as exactly one of `complete`, `partial`,
+      or `blocked` (case as documented in the response format).
+    failure_modes:
+      - Status omitted.
+      - Status uses non-documented vocabulary (`done`, `failed`, `success`).
+    priority: high
+    contract_ref: "agent §Response Format (Task status)"
+
+  - expectation_id: blocking-failure-protocol
+    summary: Blocking failures return status blocked without silent recovery.
+    signal: Response handles wrong slide count, missing output, or build error as blocked.
+    pass_criteria: |
+      When an unexpected result compromises the output (wrong slide count,
+      missing output file, build error, wrong PPTX file), response sets
+      status to `blocked` and reports the failure rather than switching
+      inputs or silently continuing with degraded output.
+    failure_modes:
+      - Status set to complete/partial despite blocking failure conditions.
+      - Subagent silently switches to a different PPTX or fallback file.
+      - Blocking failure mentioned only in the log but not in the response.
+    priority: high
+    contract_ref: "agent §Blocking Failure Protocol"
+
+  - expectation_id: files-created-and-modified-listed
+    summary: Response lists files created and modified with paths.
+    signal: Response includes Files Created and Files Modified entries with paths.
+    pass_criteria: |
+      Response includes Files Created and Files Modified entries, each
+      enumerating workspace-relative paths. Empty buckets are stated as
+      such rather than omitted silently.
+    failure_modes:
+      - One or both file lists omitted.
+      - Paths summarized as counts only, without enumeration.
+      - Paths missing for files that were created or modified.
+    priority: medium
+    contract_ref: "agent §Response Format (Files created + Files modified)"
+
+  - expectation_id: partial-rebuild-correct-flags
+    summary: Partial rebuilds use --source + --slides; do not use --template alone.
+    signal: build-deck task descriptions distinguish full vs partial rebuild flags.
+    pass_criteria: |
+      For partial-rebuild scenarios, response specifies `--source` plus
+      `--slides` and does NOT use `--template`. Response also verifies the
+      output slide count matches the source deck's slide count and reports
+      slide-count mismatches as blocking errors.
+    failure_modes:
+      - Partial rebuild uses `--template`, discarding non-specified slides.
+      - Both `--template` and `--source` passed without acknowledging the precedence rule.
+      - Slide-count verification skipped or mismatch treated as non-blocking.
+    priority: high
+    contract_ref: "agent §Task: build-deck (rebuild mode selection)"
+
+  - expectation_id: validate-input-pptx-verification
+    summary: Validate tasks confirm the input PPTX is the most recently built file.
+    signal: Validate task output confirms slide count and PPTX path before running validation.
+    pass_criteria: |
+      For `validate` tasks, response first confirms the input PPTX path
+      matches the most recently built output and that the slide count
+      matches expectations. If the PPTX appears incorrect, response reports
+      a blocking error rather than falling back to a different file.
+    failure_modes:
+      - Validation runs against a stale or unrelated PPTX without verification.
+      - Subagent silently substitutes a different PPTX when the expected one is missing.
+      - Pre-validation slide-count check skipped.
+    priority: high
+    contract_ref: "agent §Task: validate (Verify the input PPTX is the correct file)"

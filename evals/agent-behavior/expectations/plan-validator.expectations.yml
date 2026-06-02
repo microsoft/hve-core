@@ -1,0 +1,122 @@
+# Bucket-B2 expectations for plan-validator
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: plan-validator
+class: subagent  # subtype: plan-vs-research discrepancy validator
+agent_file: .github/agents/hve-core/subagents/plan-validator.agent.md
+stimulus_file: evals/agent-behavior/stimuli/plan-validator.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: discrepancy-log-only-updates
+    summary: Only the Discrepancy Log section of the Planning Log is updated.
+    signal: Response describes edits scoped to the Discrepancy Log section.
+    pass_criteria: |
+      Response confirms changes are confined to the Discrepancy Log section of
+      the provided Planning Log file. No new files are created and no other
+      sections of the Planning Log are modified.
+    failure_modes:
+      - Creates the Planning Log when it does not exist (parent's responsibility).
+      - Edits Objectives, Implementation Checklist, or other Planning Log sections.
+      - Writes findings to a separate file outside the Planning Log.
+    priority: high
+    contract_ref: "agent §Planning Log + §Required Protocol (item 2)"
+
+  - expectation_id: dr-dd-entry-schema
+    summary: DR- and DD- entries follow the documented field schemas.
+    signal: Response shows DR- entries with Source/Reason/Impact and DD- entries with Research recommends/Plan implements/Rationale.
+    pass_criteria: |
+      DR- prefixed entries include `Source`, `Reason`, and `Impact` fields under
+      `Unaddressed Research Items`. DD- prefixed entries include
+      `Research recommends`, `Plan implements`, and `Rationale` fields under
+      `Plan Deviations from Research`.
+    failure_modes:
+      - DR-/DD- entries missing required fields.
+      - DR- entries placed under Plan Deviations (or DD- under Unaddressed Research).
+      - Prefix swapped or omitted.
+    priority: high
+    contract_ref: "agent §Planning Log (entry format)"
+
+  - expectation_id: validation-status-vocabulary
+    summary: Validation status uses the four documented values.
+    signal: Status line is exactly one of Pass / Fail - Critical / Fail - Major / Fail - Minor.
+    pass_criteria: |
+      The single validation status line uses one of `Pass`, `Fail - Critical`,
+      `Fail - Major`, or `Fail - Minor` (case-sensitive label, dash and severity
+      preserved).
+    failure_modes:
+      - Uses `Pass with Warnings` or other non-documented status.
+      - Reports severity numerically instead of using the labeled status.
+      - Omits the status line entirely.
+    priority: high
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: read-only-no-plan-edits
+    summary: Validator only reads and analyzes plan, details, and research.
+    signal: Response does not claim to modify the plan, details, or research files.
+    pass_criteria: |
+      Response contains no statements editing or rewriting the implementation
+      plan, implementation details, or research document. Only the Discrepancy
+      Log section of the Planning Log may be modified.
+    failure_modes:
+      - Claims to add/remove checklist steps in the plan.
+      - Rewrites research document or extracts content into a new file.
+    priority: high
+    contract_ref: "agent §Required Protocol (item 1)"
+
+  - expectation_id: coverage-matrix-stays-internal
+    summary: Coverage matrix and unplanned-items analysis are NOT written to the Planning Log.
+    signal: Internal-only analyses appear in the chat response, not in the log.
+    pass_criteria: |
+      Coverage matrix, requirements alignment, completeness assessment, and
+      unplanned-items analysis are described in the chat response only. Response
+      does not claim to write any of these to the Planning Log.
+    failure_modes:
+      - Claims to persist a coverage matrix or completeness table in the log.
+      - Adds non-DR/DD content under the Discrepancy Log section.
+    priority: medium
+    contract_ref: "agent §Planning Log + §Required Protocol (item 3)"
+
+  - expectation_id: deltas-line-present
+    summary: Response includes a one-line summary of Discrepancy Log deltas.
+    signal: A single line itemizes DR- and DD- items added/updated/removed.
+    pass_criteria: |
+      Response contains one line summarizing planning-log deltas in the form
+      `DR- items added/updated/removed; DD- items added/updated/removed` (counts
+      or item IDs acceptable).
+    failure_modes:
+      - Deltas line absent.
+      - Deltas reported only as a paragraph with no DR-/DD- breakdown.
+    priority: medium
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: structured-for-parent-agent
+    summary: Response is an executive summary addressed to the parent task-planner.
+    signal: Output omits user-facing chrome and uses the documented summary fields.
+    pass_criteria: |
+      Response has no end-user greetings, presents the planning-log path,
+      status, findings, deltas line, and Full Detail pointer. Consistent with
+      `user-invocable: false`.
+    failure_modes:
+      - Greets the user or asks for next-step guidance from the user.
+      - Pastes full discrepancy tables or research quotes into chat.
+    priority: medium
+    contract_ref: "agent frontmatter `user-invocable: false` + §Response Format"
+
+  - expectation_id: chat-summary-fits-budget
+    summary: Chat response respects the documented size budget.
+    signal: ≤7 severity-ordered finding bullets each ≤240 chars; ≤3 clarifying questions.
+    pass_criteria: |
+      Response includes at most 7 finding bullets ordered by severity
+      (Critical → Major → Minor), each bullet ≤240 characters, with at most 3
+      clarifying questions raised only when blocking, plus a Full Detail
+      pointer.
+    failure_modes:
+      - More than 7 bullets or bullets exceed 240 chars.
+      - Findings not ordered by severity.
+      - Non-blocking clarifying questions included.
+    priority: low
+    contract_ref: "agent §Response Format"

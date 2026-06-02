@@ -1,0 +1,121 @@
+# Bucket-A expectations for agentic-workflows
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `agentic-workflows` FAILS both
+# `phase-marker-present` and `tracking-file-write` because the output
+# wrote the plan to an arbitrary path
+# (`C:\Users\…\.copilot\session-state\…\plan.md`) instead of the
+# `.copilot-tracking/plans/` subtree, and structured phases inside a table
+# rather than as headed sections matching `^(##|###|Step \d+|Phase \d+|\d+\.)`.
+# Expectations below promote contract-grounded checks targeting both
+# failures plus broader Engineering-Excellence planning conformance.
+slug: agentic-workflows
+class: planner-coach
+agent_file: .github/agents/hve-core/agentic-workflows.agent.md
+stimulus_file: evals/agent-behavior/stimuli/agentic-workflows.yml
+latest_result: evals/results/agent-matrix/2026-05-28/agentic-workflows.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: phase-headings-present
+    summary: Plan is organized into headed phases or numbered steps.
+    signal: Output contains lines matching `^(##|###|Step \d+|Phase \d+|\d+\.)`.
+    pass_criteria: |
+      Plan body contains multiple top-level markers from
+      `## <heading>`, `### <heading>`, `Step <n>`, `Phase <n>`, or numbered
+      list items (`1.` …). A table row alone does not satisfy this.
+    failure_modes:
+      - Phases captured only as rows in a single table.
+      - Single prose block with no headings or step markers
+        (matches current 2026-05-28 matrix failure).
+    priority: high
+    contract_ref: "current `phase-marker-present` grader (regex /(?m)^(##|###|Step \\d+|Phase \\d+|\\d+\\.)/)"
+
+  - expectation_id: tracking-plan-path
+    summary: Plan is written under the `.copilot-tracking/plans/` subtree.
+    signal: Output names a path matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.instructions.md`.
+    pass_criteria: |
+      Reported plan path is workspace-relative, starts with
+      `.copilot-tracking/plans/`, includes a dated subdirectory, and ends in
+      `-plan.instructions.md`. Absolute paths to `.copilot` session state,
+      temp directories, or repo root are not acceptable.
+    failure_modes:
+      - Plan written to an absolute path under `.copilot/session-state/`
+        (current 2026-05-28 matrix failure).
+      - Plan written to repo root with no tracking prefix.
+      - Path matches `.copilot-tracking/plans/` but is missing the dated
+        subdirectory or `-plan.instructions.md` suffix.
+    priority: high
+    contract_ref: "agent §Tracking Artifacts (Implementation Plan path under `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task-description}}-plan.instructions.md`)"
+
+  - expectation_id: success-criteria-per-phase
+    summary: Each phase names success criteria.
+    signal: Phases include explicit success or exit criteria.
+    pass_criteria: |
+      Each phase carries at least one explicit success/exit criterion
+      (acceptance test, observable outcome, validation command, or
+      measurable result). Criteria are concrete rather than aspirational
+      ("works correctly").
+    failure_modes:
+      - Phases listed with names only and no acceptance criteria.
+      - Success criteria are vague ("complete and tested").
+    priority: high
+    contract_ref: "stimulus instruction (Break into phases with success criteria) + agent §Implementation Plan (per-phase success criteria)"
+
+  - expectation_id: parallelization-markers
+    summary: Plan annotates phases with parallelization markers when appropriate.
+    signal: Output uses `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->` per phase.
+    pass_criteria: |
+      Each phase carries a `<!-- parallelizable: true -->` or
+      `<!-- parallelizable: false -->` annotation. When all phases must run
+      serially, the markers are still present and set to `false`.
+    failure_modes:
+      - Markers omitted entirely.
+      - Parallelization expressed only in prose with no machine-readable
+        annotation.
+    priority: medium
+    contract_ref: "agent §Implementation Plan (mark phases with `<!-- parallelizable: true/false -->`)"
+
+  - expectation_id: tracking-markdown-disable-comment
+    summary: Plan file begins with the markdownlint-disable directive.
+    signal: Output references `<!-- markdownlint-disable-file -->` at the top of the tracking file.
+    pass_criteria: |
+      Plan file (or summary thereof) begins with the literal directive
+      `<!-- markdownlint-disable-file -->` on the first line. The same
+      directive is NOT placed in published markdown under `docs/`.
+    failure_modes:
+      - Plan file shown without the directive.
+      - Directive placed in non-tracking surfaces.
+    priority: low
+    applies_when: "agent reports plan-file creation"
+    contract_ref: "repo convention (`.copilot-tracking/` files begin with `<!-- markdownlint-disable-file -->`)"
+
+  - expectation_id: research-context-reference
+    summary: Plan references prior research or context inputs.
+    signal: Output references a `.copilot-tracking/research/` path or names the inputs that informed the plan.
+    pass_criteria: |
+      Plan body or summary names the research inputs it builds on, either
+      by referencing a research file under
+      `.copilot-tracking/research/<YYYY-MM-DD>/` or by listing the
+      requirements/sources analyzed before phase design.
+    failure_modes:
+      - Plan presented with no rationale for its phase structure.
+      - Plan invented with no reference to user requests or research.
+    priority: medium
+    contract_ref: "agent §Plan Creation (reference research and user requests)"
+
+  - expectation_id: no-source-edit
+    summary: Planning-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Implementation steps appear in the plan, not as claimed edits.
+    failure_modes:
+      - Agent claims to have started implementing the plan.
+      - Modifies build manifests while planning.
+    priority: high
+    contract_ref: "agent scope (planning-only); current `no-source-edit` grader"

@@ -1,0 +1,19 @@
+stimuli:
+  - name: gen-jupyter-notebook-class-recipe
+    prompt: |
+      Generate a Jupyter notebook that loads a CSV file `sales.csv` with pandas and prints the head. Save the notebook and report the path. Note how you would lint or validate the notebook.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(`|created|modified|edited|wrote|file:)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(lint|ruff|pylint|eslint|format|validate|test)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: '(?i)(\.ipynb|notebook|sales)'

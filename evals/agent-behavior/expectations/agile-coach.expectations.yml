@@ -1,0 +1,147 @@
+# Bucket-A expectations for agile-coach
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `agile-coach` is overall=pass on the
+# current three graders, so priorities below come from the agent file's
+# strongest promises rather than active failures.
+slug: agile-coach
+class: workitem-manager
+agent_file: .github/agents/project-planning/agile-coach.agent.md
+stimulus_file: evals/agent-behavior/stimuli/agile-coach.yml
+latest_result: evals/results/agent-matrix/2026-05-28/agile-coach.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: story-output-fields
+    summary: Final story output includes the canonical Title, Description, and Acceptance Criteria sections.
+    signal: Output contains bolded or headed labels for `Title`, `Description`, and `Acceptance Criteria`.
+    pass_criteria: |
+      When the user requests a final or refined story, the response includes
+      labeled sections for `Title`, `Description`, and `Acceptance Criteria`
+      (case-insensitive) in copy-paste markdown form per the documented template.
+    failure_modes:
+      - Story emitted as a single prose paragraph with no section labels.
+      - Acceptance criteria embedded inside Description instead of its own section.
+      - Title given as a heading only with no `Title` label.
+    priority: high
+    contract_ref: "agent §Phase 4 Output Final Story + §Sample Refined Story (Title, Description, Acceptance Criteria layout)"
+
+  - expectation_id: acceptance-criteria-checklist
+    summary: Acceptance criteria are rendered as a binary/testable checklist.
+    signal: Acceptance Criteria block contains at least two `* [ ]` or `- [ ]` items.
+    pass_criteria: |
+      Acceptance Criteria section uses GitHub-style task checkboxes
+      (`* [ ]` or `- [ ]`) with at least two items, and each item is
+      phrased as a verifiable behavior (begins with a verb or observable
+      condition such as "Export button appears…", "User receives…").
+    failure_modes:
+      - Criteria written as plain bullets with no checkbox syntax.
+      - Single AC item provided for a non-trivial story.
+      - Criteria phrased as goals ("Make it fast") rather than verifiable checks.
+    priority: high
+    contract_ref: "agent §Core Principles (Acceptance criteria are binary, testable, and checklist-style) + §Sample Refined Story"
+
+  - expectation_id: mode-selection-asked
+    summary: Opening response in a new session asks the documented mode-selection question.
+    signal: Output contains a create-vs-refine question early in the response.
+    pass_criteria: |
+      On the first turn of a session, the response asks whether the user wants
+      to create a new story from an idea or refine an existing one (the literal
+      Phase 1 opening question, or a close paraphrase that surfaces both
+      options).
+    failure_modes:
+      - Agent jumps directly into questions about the story without offering create vs refine.
+      - Agent assumes refine mode when given a rough idea (or vice versa) without asking.
+    priority: medium
+    applies_when: "first turn of a session with no prior mode declared"
+    contract_ref: "agent §Phase 1 Mode Selection"
+
+  - expectation_id: one-focused-question
+    summary: Discovery turns ask at most one focused question at a time.
+    signal: Output ends with at most one `?` directed at the user during Phase 2/3 probing.
+    pass_criteria: |
+      On Phase 2 (Create) and Phase 3 (Refine) probing turns, the agent ends
+      with a single focused question (or summary-then-confirm), not a multi-
+      question survey.
+    failure_modes:
+      - Three or more questions concatenated in a single turn.
+      - Question list rendered as a checklist of 4+ items the user must answer.
+    priority: medium
+    applies_when: "Phase 2 (Create) or Phase 3 (Refine) probing turns"
+    contract_ref: "agent §Core Principles (Ask one focused question at a time, summarize understanding, then confirm)"
+
+  - expectation_id: refine-mode-requests-context
+    summary: Refine mode asks for the existing title, description, and acceptance criteria.
+    signal: Output references the three artifacts when the user signals refine intent.
+    pass_criteria: |
+      When the user selects refine mode (or presents an existing story for
+      improvement), the response requests the current title, description,
+      and acceptance criteria (all three) before suggesting changes.
+    failure_modes:
+      - Agent begins rewriting without asking for the existing AC.
+      - Asks for title only, omits description and AC.
+    priority: medium
+    applies_when: "refine mode (Phase 3)"
+    contract_ref: "agent §Phase 1 Mode Selection + §Phase 3 Refine Existing Story (Review the provided title, description, and acceptance criteria)"
+
+  - expectation_id: story-splitting-coverage
+    summary: Oversized-story splitting produces multiple distinct stories with clear seams.
+    signal: Output enumerates 3+ stories with separate titles.
+    pass_criteria: |
+      For a stimulus asking to split an oversized story, the response produces
+      at least three distinct child stories, each with its own title and at
+      least one acceptance criterion or scope note, and identifies dependency
+      ordering or independent starting points among them.
+    failure_modes:
+      - Splits into two stories or fewer.
+      - Lists story titles only with no AC or scope per story.
+      - All stories presented as a flat list with no dependency or ordering note.
+    priority: medium
+    applies_when: "stimulus requests splitting/decomposition of an oversized story"
+    contract_ref: "stimulus design (current `agile-coach-class-recipe` is a split request) + §Phase 4 Output Final Story (story-quality conventions)"
+
+  - expectation_id: tracking-path-when-requested
+    summary: When the stimulus asks for drafts under `.copilot-tracking/`, output reports those paths.
+    signal: Output names workspace paths beginning with `.copilot-tracking/`.
+    pass_criteria: |
+      When the user explicitly requests drafts under `.copilot-tracking/<subdir>/`,
+      the response reports a workspace-relative path beginning with
+      `.copilot-tracking/` for each draft produced, and the subdirectory
+      matches the user's requested location.
+    failure_modes:
+      - Drafts reported as filenames only with no directory.
+      - Drafts written to a different tracking subtree than the user requested.
+      - Response describes drafts but reports no path.
+    priority: medium
+    applies_when: "stimulus explicitly requests writes under `.copilot-tracking/`"
+    contract_ref: "stimulus design (current `agile-coach-class-recipe` requests writes under `.copilot-tracking/stories/`)"
+
+  - expectation_id: no-source-edit-during-coaching
+    summary: Story coaching does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Splitting a billing story leads to modifying `package.json` to add scripts.
+      - Drafting a "dark mode" story leads to editing CSS source files.
+    priority: medium
+    contract_ref: "agent scope (Agile Coach writes only the final story artifact, not source code)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the agile coaching topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `agile-coach-class-recipe` stimulus, the response contains terms
+      from {billing, story, split, acceptance criteria} and the child stories
+      cover billing-domain seams (e.g. invoicing, payments, subscriptions)
+      rather than generic placeholder content.
+    failure_modes:
+      - Off-topic response with no billing references.
+      - Generic "story 1 / story 2" titles with no domain content.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

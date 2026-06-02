@@ -1,0 +1,137 @@
+# Bucket-A expectations for jira-backlog-manager
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: jira-backlog-manager
+class: workitem-manager
+agent_file: .github/agents/jira/jira-backlog-manager.agent.md
+stimulus_file: evals/agent-behavior/stimuli/jira-backlog-manager.yml
+latest_result: evals/results/agent-matrix/2026-05-28/jira-backlog-manager.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-under-jira-issues
+    summary: Drafts and planning files are written under the Jira issues tracking subtree.
+    signal: Reported file path starts with `.copilot-tracking/jira-issues/`.
+    pass_criteria: |
+      Output reports a workspace-relative path beginning with
+      `.copilot-tracking/jira-issues/` (any of `triage/`, `discovery/`,
+      `execution/` subdirs by `<YYYY-MM-DD>`, or a single-draft file directly
+      under `jira-issues/`). No reports of session-state, temp, or absolute
+      paths outside the workspace.
+    failure_modes:
+      - "Writes to `.copilot/session-state/.../files/jira-story-*.md` (current 2026-05-28 matrix failure)."
+      - Writes under an OS temp dir.
+      - Reports no path at all when a draft was clearly created.
+    priority: high
+    contract_ref: "agent §Core Directives + §Phase 2 tracking-path table"
+
+  - expectation_id: jira-field-vocabulary-present
+    summary: Drafts use Jira field vocabulary (Summary / Description / Issue Type), not GitHub or ADO terms.
+    signal: Output uses Jira-specific field names.
+    pass_criteria: |
+      Output contains at least two of: `Summary`, `Description`, `Issue Type`,
+      `Priority`, `Component`, `Sprint`, `Epic`, `Story` (case-insensitive).
+      `Title`/`Body`/`Work Item Type` on their own do not satisfy this.
+    failure_modes:
+      - Draft uses ADO-style `Work Item Type` / `Area Path` instead of `Issue Type`.
+      - Draft uses GitHub-style `title`/`body`/`labels` instead of Jira fields.
+    priority: high
+    contract_ref: "stimulus grader `field-vocab-present`"
+
+  - expectation_id: phase-classification-first
+    summary: Orchestrator classifies the request into one of four MVP workflows before dispatching.
+    signal: Output names a workflow (Triage / Discovery / Execution / Single Issue).
+    pass_criteria: |
+      For a non-trivial request the output names the dispatched workflow
+      explicitly (one of the agent's four MVP categories), OR states the
+      single-issue path was taken and why.
+    failure_modes:
+      - Jumps straight to drafting without naming a workflow path.
+      - Adds out-of-scope workflows (e.g. sprint capacity planning) the MVP excludes.
+    priority: medium
+    applies_when: "stimulus is not a one-shot single-draft prompt"
+    contract_ref: "agent §Phase 1: Intent Classification + §Core Directives (MVP scope)"
+
+  - expectation_id: jira-skill-used-for-mutation
+    summary: Real Jira mutations go through the documented Jira skill, not improvised commands.
+    signal: Output references `.github/skills/jira/jira/scripts/jira.py` (or a `jira.py` command).
+    pass_criteria: |
+      When the request implies Jira-side action (create / update / transition /
+      comment), output references the Jira skill commands (`search`, `get`,
+      `create`, `update`, `transition`, `comment`, `comments`, `fields`),
+      ideally via the `jira.py` path. Pure planning replies are exempt.
+    failure_modes:
+      - Claims to call a non-existent `jira_create` MCP tool.
+      - Posts a `curl` or `gh issue create` command in place of the skill.
+    priority: medium
+    applies_when: "stimulus asks for real Jira mutation, not a draft"
+    contract_ref: "agent §Jira Skill Reference"
+
+  - expectation_id: autonomy-default-partial
+    summary: Mutation workflows respect the Partial-autonomy default.
+    signal: Output requests approval before create / transition operations, or reports the active autonomy mode.
+    pass_criteria: |
+      When the request would trigger Jira mutations, output either pauses for
+      approval before the first create/transition, or explicitly notes the
+      autonomy mode (Full / Partial / Manual) under which it proceeded.
+    failure_modes:
+      - Performs creates or transitions silently without approval or mode call-out.
+      - Claims Full mode without user opt-in.
+    priority: medium
+    applies_when: "stimulus implies real Jira mutation (not a draft-only prompt)"
+    contract_ref: "agent §Human Review Interaction"
+
+  - expectation_id: content-sanitization-before-mutation
+    summary: Internal tracking IDs and `.copilot-tracking/` paths are stripped before any Jira-bound content.
+    signal: Output describing Jira-bound content (issue body, comment) does not contain `.copilot-tracking/` paths or planning IDs.
+    pass_criteria: |
+      Any quoted "this is what will be sent to Jira" content omits
+      `.copilot-tracking/` paths and planning reference tokens (e.g. `JI001`).
+      Discussion of those paths in the chat reply itself is allowed.
+    failure_modes:
+      - Jira-bound issue body includes a `.copilot-tracking/...` path.
+      - Jira-bound issue body includes a planning reference like `JI001`.
+    priority: medium
+    applies_when: "agent shows the payload it intends to send to Jira"
+    contract_ref: "agent §Core Directives (Content Sanitization Guards)"
+
+  - expectation_id: acceptance-criteria-on-stories
+    summary: Stories drafted by the agent carry acceptance criteria.
+    signal: Each drafted Story includes an `Acceptance Criteria` section.
+    pass_criteria: |
+      Every Story (or Task that replaces a Story) drafted has a non-empty
+      `Acceptance Criteria` section listing at least one testable criterion.
+      `Given / When / Then` phrasing is preferred but not required.
+    failure_modes:
+      - Story drafted with summary + description only.
+      - Acceptance criteria field present but empty or "TBD".
+    priority: medium
+    contract_ref: "stimulus prompt explicitly asks for acceptance criteria"
+
+  - expectation_id: no-source-modifications
+    summary: Backlog drafting does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml`. Mere
+      mentions in user-quoted text are allowed.
+    failure_modes:
+      - Modifies source files alongside drafting issues.
+      - Edits `package.json` as part of "wiring up" the issue.
+    priority: medium
+    contract_ref: "stimulus grader `no-source-edit`"
+
+  - expectation_id: handoff-summary-on-completion
+    summary: Completion turns surface a structured handoff summary, not just the file path.
+    signal: Output includes a summary of issues produced (keys or summaries) and applied fields.
+    pass_criteria: |
+      When a draft or set of issues is produced, output lists either the
+      summaries/keys of the issues or the key fields applied (Issue Type,
+      Priority, Labels, Sprint) so a reviewer can audit without opening the file.
+    failure_modes:
+      - Reply is only a file path with no summary or field call-out.
+      - Reply describes process but omits what was actually drafted.
+    priority: low
+    contract_ref: "agent §Phase 3: Summary and Handoff"

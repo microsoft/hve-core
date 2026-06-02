@@ -1,0 +1,153 @@
+# Bucket-A expectations for arch-diagram-builder
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the agent file's contract is narrow — it produces ASCII block diagrams
+# inline and does not promise any persistent file output. The current
+# `arch-diagram-builder-class-recipe` stimulus asks for a Mermaid diagram saved
+# to `.copilot-tracking/`, which is a stimulus/agent mismatch. The
+# `tracking-file-write` failure on 2026-05-28 is a stimulus design issue, not
+# an agent contract violation; this file documents what the agent actually
+# promises so the next pass can either rewrite the stimulus or update the agent.
+slug: arch-diagram-builder
+class: research-writer
+agent_file: .github/agents/project-planning/arch-diagram-builder.agent.md
+stimulus_file: evals/agent-behavior/stimuli/arch-diagram-builder.yml
+latest_result: evals/results/agent-matrix/2026-05-28/arch-diagram-builder.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: output-format-block
+    summary: Response uses the documented Output Format with title, diagram, Legend, and Key Relationships.
+    signal: Output contains `## Architecture Diagram:` header followed by a diagram block, `### Legend`, and `### Key Relationships`.
+    pass_criteria: |
+      Diagram-producing responses include all four documented blocks:
+      (a) `## Architecture Diagram: <Name> Architecture` heading,
+      (b) the diagram itself in a fenced block,
+      (c) `### Legend` describing arrow meanings,
+      (d) `### Key Relationships` listing notable connections.
+    failure_modes:
+      - Heading uses different wording (e.g. just `# Architecture`).
+      - Legend or Key Relationships sections omitted.
+      - Sections present but emitted out of order.
+    priority: high
+    contract_ref: "agent §Output Format (diagram title format + Legend + Key Relationships)"
+
+  - expectation_id: ascii-block-diagram
+    summary: The diagram body uses ASCII block-diagram conventions, not Mermaid or images.
+    signal: Diagram block contains characters from the documented set `+-|>:<.` and no `graph TD` / `flowchart` directives.
+    pass_criteria: |
+      Diagram block uses pure ASCII characters (`+`, `-`, `|`, `>`, `<`, `:`,
+      `.`, `=`) per the documented conventions. It does NOT use Mermaid
+      directives (`graph TD`, `flowchart`, `sequenceDiagram`) or embedded
+      images. PlantUML, draw.io, or other non-ASCII formats are also excluded.
+    failure_modes:
+      - Diagram emitted as a ```mermaid``` block.
+      - Diagram emitted as PlantUML, Graphviz `digraph`, or an image link.
+      - ASCII used but with non-documented characters (emoji, box-drawing Unicode)
+        that break alignment in monospaced fonts.
+    priority: high
+    contract_ref: "agent §Diagram Conventions (pure ASCII for consistent alignment) + §Example (ASCII block diagram)"
+
+  - expectation_id: arrow-types-from-table
+    summary: Arrows in the diagram use the three documented arrow types.
+    signal: Diagram contains at least one of `---->`, `<--->`, or `- - >` and Legend documents each used arrow.
+    pass_criteria: |
+      Arrows drawn in the diagram come from the documented set:
+      `---->` (data flow / dependency), `<--->` (bidirectional), `- - >`
+      (optional/conditional). The Legend section explains the meaning of each
+      arrow type actually used in the diagram.
+    failure_modes:
+      - Diagram uses arrows not listed in the agent's Arrow Types table (e.g. `==>` outside grouping borders, `-.->`).
+      - Arrows used in the diagram but Legend omits their meaning.
+    priority: medium
+    contract_ref: "agent §Diagram Conventions › Arrow Types table"
+
+  - expectation_id: layout-tier-ordering
+    summary: Multi-tier diagrams place external/public services at top and data stores at bottom.
+    signal: Diagram positions internet/edge/public services above compute, and data stores below compute.
+    pass_criteria: |
+      For diagrams that include external/public services, compute, and data
+      tiers, the visual layout places external/public at the top, compute or
+      application tier in the middle, and data stores at the bottom, per the
+      documented Layout Guidelines.
+    failure_modes:
+      - Database placed at the top of the diagram.
+      - External services placed below compute or hidden inside compute groupings.
+    priority: medium
+    applies_when: "diagram spans more than one logical tier"
+    contract_ref: "agent §Diagram Conventions › Layout Guidelines"
+
+  - expectation_id: grouping-by-network-boundary
+    summary: Resources inside a VNet/subnet are visually grouped using ASCII boundary characters.
+    signal: Diagram uses `+---+` borders or `:---:` labeled boundaries around grouped resources.
+    pass_criteria: |
+      Resources that share a network boundary (Resource Group, VNet, subnet)
+      are enclosed in an ASCII grouping border (`+---+` rectangles or `:---:`
+      labeled regions) per the documented Grouping conventions, with the
+      boundary label inside the top edge.
+    failure_modes:
+      - All resources rendered as a flat list with no grouping.
+      - Grouping present but uses Unicode box-drawing instead of `+-|` ASCII.
+    priority: medium
+    applies_when: "infrastructure includes a Resource Group, VNet, or subnet boundary"
+    contract_ref: "agent §Diagram Conventions › Grouping"
+
+  - expectation_id: discovery-question-when-scope-unclear
+    summary: Agent asks the documented scope question when the IaC location is unclear.
+    signal: Output contains "Which folders contain the infrastructure to diagram?" or a close paraphrase.
+    pass_criteria: |
+      When the stimulus does not name specific IaC files or folders and none
+      are attached, the agent's first response asks "Which folders contain the
+      infrastructure to diagram?" (or a close paraphrase) before producing a
+      diagram, and limits itself to at most two questions per turn.
+    failure_modes:
+      - Agent produces a diagram from invented resources without asking for scope.
+      - Agent asks three or more clarifying questions in a single turn.
+    priority: medium
+    applies_when: "stimulus does not name IaC folders and no files are attached"
+    contract_ref: "agent §Workflow (Discovery) + §Conversation Guidelines (one or two questions per turn)"
+
+  - expectation_id: title-case-title
+    summary: Diagram title follows the `<Solution or Project Name> Architecture` title-case format.
+    signal: Title heading text ends with the literal word "Architecture" and uses title case.
+    pass_criteria: |
+      The `## Architecture Diagram: <Name>` heading's `<Name>` ends with the
+      word "Architecture" and is rendered in title case (e.g.
+      `AKS Platform Architecture`, not `aks platform architecture` or
+      `AKS Platform`).
+    failure_modes:
+      - Title omits the word "Architecture".
+      - Title in all lowercase or all caps.
+    priority: low
+    contract_ref: "agent §Output Format (Diagram titles follow `<Solution or Project Name> Architecture` in title case)"
+
+  - expectation_id: no-source-edit
+    summary: Diagram generation does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Bicep/Terraform files may be READ for parsing per the workflow but must
+      not be modified.
+    failure_modes:
+      - Agent claims to update `package.json` or app source as part of diagram work.
+      - Agent rewrites a `.tf` or `.bicep` file during parsing instead of reading it.
+    priority: medium
+    contract_ref: "agent §Workflow (Parsing reads IaC files; output is the diagram itself)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the diagram topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `arch-diagram-builder-class-recipe` stimulus, the response
+      contains terms from {browser, api, database, tier} and the diagram shows
+      all three tiers connected, not a generic single-component diagram.
+    failure_modes:
+      - Diagram shows only one or two of the requested tiers.
+      - Off-topic diagram (e.g. unrelated AKS infra) with no browser/API/DB elements.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

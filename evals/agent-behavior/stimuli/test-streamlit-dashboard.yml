@@ -1,0 +1,19 @@
+stimuli:
+  - name: test-streamlit-dashboard-class-recipe
+    prompt: |
+      Write a pytest test that imports a Streamlit dashboard module `dashboard.py` and asserts a `render()` function exists. Save the test file and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(`|created|modified|edited|wrote|file:)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(lint|ruff|pylint|eslint|format|validate|test)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: '(?i)(test_.*\.py|dashboard)'

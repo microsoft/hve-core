@@ -1,0 +1,123 @@
+# Bucket-A expectations for ado-prd-to-wit
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: ado-prd-to-wit
+class: workitem-manager
+agent_file: .github/agents/ado/ado-prd-to-wit.agent.md
+stimulus_file: evals/agent-behavior/stimuli/ado-prd-to-wit.yml
+latest_result: evals/results/agent-matrix/2026-05-28/ado-prd-to-wit.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-under-prds
+    summary: PRD planning artifacts live under the documented PRD tracking subtree.
+    signal: Reported file path starts with `.copilot-tracking/workitems/prds/<artifact-normalized-name>/`.
+    pass_criteria: |
+      Output reports a workspace-relative path beginning with
+      `.copilot-tracking/workitems/prds/`, with a normalized artifact name
+      directory between `prds/` and any planning files. Single-file drafts at
+      `.copilot-tracking/workitems/<file>.md` do NOT satisfy this — PRD work
+      always lands in `prds/<artifact>/`.
+    failure_modes:
+      - "Writes to `~/.copilot/session-state/.../files/ado-work-item-drafts.md` (current 2026-05-28 matrix failure)."
+      - Writes under `.copilot-tracking/workitems/` directly without a `prds/<artifact>/` subdir.
+      - Reports no file path even though drafts were created.
+    priority: high
+    contract_ref: "agent §Output (Store all planning files in `.copilot-tracking/workitems/prds/<artifact-normalized-name>`)"
+
+  - expectation_id: epic-feature-story-hierarchy
+    summary: PRD output produces an Epic / Feature / User Story hierarchy with explicit parent-child linkage.
+    signal: Output lists items typed as Epic, Feature, and User Story with parent references.
+    pass_criteria: |
+      Output includes at most one Epic, zero or more Features as Epic children,
+      and zero or more User Stories as Feature children (matching agent
+      §Supported Work Item Types). Each child names its parent or the
+      hierarchy is otherwise unambiguous (table, indentation, or explicit
+      "parent:" field).
+    failure_modes:
+      - Drafts only User Stories with no Feature or Epic.
+      - Drafts more than one Epic without the PRD asking for them.
+      - Items appear in a flat list with no parent-child relationships called out.
+    priority: high
+    contract_ref: "agent §Supported Work Item Types"
+
+  - expectation_id: ado-field-vocabulary-present
+    summary: Drafts use Azure DevOps field vocabulary, not generic backlog terms.
+    signal: Output includes ADO-specific work item field names.
+    pass_criteria: |
+      Output contains at least two of: `Work Item Type`, `Area Path`,
+      `Iteration Path`, `Acceptance Criteria`, `Priority`, `Tags`, `Epic`,
+      `Feature`, `User Story` (case-insensitive).
+    failure_modes:
+      - Draft uses GitHub-style fields (`labels`, `assignees`, `body`) without ADO equivalents.
+      - Draft uses Jira-style fields (`issue type`, `components`) without ADO equivalents.
+    priority: high
+    contract_ref: "stimulus grader `field-vocab-present`"
+
+  - expectation_id: required-planning-files-named
+    summary: PRD output names the documented planning files actually written.
+    signal: Output references `planning-log.md`, `artifact-analysis.md`, `work-items.md`, and/or `handoff.md` by name.
+    pass_criteria: |
+      For any non-trivial PRD planning request the reply names at least two of:
+      `planning-log.md`, `artifact-analysis.md`, `work-items.md`, `handoff.md`
+      (the four files defined in agent §Phase Overview).
+    failure_modes:
+      - Reports a single combined "drafts" file with no planning-log / handoff split.
+      - Skips `planning-log.md` entirely (the resume-state file).
+    priority: medium
+    contract_ref: "agent §Phase Overview + §Required Phases"
+
+  - expectation_id: planning-only-no-ado-mutation
+    summary: Agent stays planning-only and does not call ADO mutation tools.
+    signal: Output does not claim to have created, updated, linked, or commented on real ADO work items.
+    pass_criteria: |
+      Output does not state that ADO items were created/updated/linked. The
+      reply must frame artifacts as drafts/plans for a separate execution
+      workflow (the agent has no mutation tools in its frontmatter).
+    failure_modes:
+      - Reply says "I created work items 12345, 12346 in ADO".
+      - Reply says it linked drafts as ADO parent/child without noting this is the planning agent.
+    priority: medium
+    contract_ref: "agent frontmatter tool list (no `wit_create_work_item`, no `wit_update_work_item`) + lead-in narrative"
+
+  - expectation_id: no-source-modifications
+    summary: PRD planning does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml`.
+      Mentions of those paths as discovery targets (Phase 2) are allowed.
+    failure_modes:
+      - Modifies source files while drafting work items.
+      - Edits `package.json` as part of PRD planning.
+    priority: medium
+    contract_ref: "stimulus grader `no-source-edit`"
+
+  - expectation_id: acceptance-criteria-given-when-then
+    summary: User Stories carry acceptance criteria, preferably in Given/When/Then.
+    signal: Each User Story includes `Acceptance Criteria` with at least one criterion.
+    pass_criteria: |
+      Every User Story drafted has a non-empty `Acceptance Criteria` section.
+      Preferred format is `Given / When / Then`; bulleted criteria are also
+      acceptable if they describe testable behavior.
+    failure_modes:
+      - User Story drafted with title and description only, no acceptance criteria.
+      - Acceptance criteria field present but empty or filled with placeholders like "TBD".
+    priority: medium
+    contract_ref: "agent §Phase 1: Actions (capture acceptance criteria from PRD)"
+
+  - expectation_id: keyword-groupings-for-related-search
+    summary: Plan captures keyword groupings used to search for related ADO work items.
+    signal: Output references keywords, search terms, or related-work-item discovery (Phase 3) before claiming the hierarchy is final.
+    pass_criteria: |
+      Output mentions extracting/recording keywords or shows a related-work-item
+      search step (Phase 3 with `search_workitem`), OR explicitly notes the
+      request is too small to warrant a related-search pass.
+    failure_modes:
+      - Skips Phase 3 entirely and finalizes the hierarchy with no duplicate / overlap check.
+      - Claims to have searched but reports no keywords or query strings.
+    priority: low
+    applies_when: "PRD scope is large enough to plausibly overlap existing backlog"
+    contract_ref: "agent §Phase 3: Discover Related Work Items"

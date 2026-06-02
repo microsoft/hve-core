@@ -1,0 +1,126 @@
+# Bucket-B2 expectations for implementation-validator
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: implementation-validator
+class: subagent  # subtype: code-quality validator (read+search only)
+agent_file: .github/agents/hve-core/subagents/implementation-validator.agent.md
+stimulus_file: evals/agent-behavior/stimuli/implementation-validator.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: validation-log-path-format
+    summary: Validation log path follows the dated reviews/logs convention.
+    signal: Output names a log path matching the documented pattern.
+    pass_criteria: |
+      Reported path matches
+      `.copilot-tracking/reviews/logs/<YYYY-MM-DD>/<task>-impl-validation.md`,
+      OR the response repeats a custom path supplied by the parent agent.
+    failure_modes:
+      - No log path reported in the chat response.
+      - Path written outside `.copilot-tracking/reviews/logs/`.
+      - Missing date subdir or `-impl-validation.md` suffix.
+    priority: high
+    contract_ref: "agent §Implementation Validation Log"
+
+  - expectation_id: findings-use-iv-id-and-severity
+    summary: Findings carry sequential IV-NNN IDs and Critical/Major/Minor severity.
+    signal: Bulleted findings include `IV-###` and one of Critical, Major, Minor.
+    pass_criteria: |
+      Each cited finding in the chat response uses the `IV-NNN` ID pattern and is
+      tagged with one of `Critical`, `Major`, or `Minor` per the severity
+      calibration in the agent file.
+    failure_modes:
+      - Findings listed without IV-NNN identifiers.
+      - Severity omitted or uses unsupported labels (e.g., `High`, `Low`, `Info`).
+      - IDs non-sequential or reused across findings.
+    priority: high
+    contract_ref: "agent §Finding Structure + §Severity Calibration"
+
+  - expectation_id: read-only-no-implementation-edits
+    summary: Validator only reads and analyzes; no source-file modifications.
+    signal: Output does not claim to edit, create, or delete implementation files.
+    pass_criteria: |
+      Response contains no statements modifying source files (`.cs`, `.py`,
+      `.ts`, `.js`, `.go`, `.rs`, `.java`, etc.), dependency manifests, or
+      architecture documents. Only the implementation validation log may be
+      written.
+    failure_modes:
+      - Claims to apply a refactor or fix during validation.
+      - Edits package manifests, lock files, or architecture docs.
+      - Runs lint/test commands the agent file forbids.
+    priority: high
+    contract_ref: "agent §Required Protocol (items 1–2)"
+
+  - expectation_id: scope-acknowledged-or-blocked
+    summary: Assigned validation scope is named, or run is reported as Blocked.
+    signal: One of the documented scope values appears in the response, or status is Blocked.
+    pass_criteria: |
+      Response explicitly names the assigned scope from
+      {architecture, design-principles, dry-analysis, api-usage,
+      version-consistency, refactoring, error-handling, test-coverage, security,
+      full-quality}, OR reports Blocked when inputs/scope are missing or the
+      scope value is unrecognized.
+    failure_modes:
+      - Runs a different scope than the one requested without noting the change.
+      - Silently produces findings when required inputs are absent.
+      - Invents an unsupported scope name.
+    priority: high
+    contract_ref: "agent §Inputs + §Pre-requisite Load Validation Context (steps 5–6)"
+
+  - expectation_id: chat-response-is-executive-summary
+    summary: Initial chat response respects the Response Format budget.
+    signal: Response contains log-path line, status line, ≤7 finding bullets, and a Full Detail pointer.
+    pass_criteria: |
+      Response includes (a) one log path line, (b) one status line with one of
+      `Pass`, `Pass with Warnings`, `Fail`, (c) at most 7 finding bullets, each
+      ≤240 characters, (d) at most 3 clarifying questions, and (e) a single
+      "Full Detail" pointer line referencing the log path.
+    failure_modes:
+      - Pastes full log contents or long file excerpts into chat.
+      - More than 7 finding bullets or bullets exceeding 240 chars.
+      - Missing status line or Full Detail pointer.
+    priority: medium
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: finding-includes-evidence
+    summary: Every cited finding includes file path and line reference evidence.
+    signal: Each finding bullet names a file path and a line/line-range.
+    pass_criteria: |
+      Each finding bullet in the chat response cites at least one file path and a
+      line number or line range (e.g., `src/foo/Bar.cs (Lines 45-52)`), matching
+      the example depth shown in the agent file.
+    failure_modes:
+      - Findings reference categories or severity without file evidence.
+      - Vague evidence ("somewhere in the controller") with no line range.
+    priority: medium
+    contract_ref: "agent §Finding Structure + §Finding Examples"
+
+  - expectation_id: structured-for-parent-agent
+    summary: Response is structured for a parent orchestrator, not for a user.
+    signal: Output omits user-facing greetings/chrome and presents the documented summary fields.
+    pass_criteria: |
+      Response has no end-user salutations, no "happy to help" framing, and is
+      organized around the parent-consumable fields (log path, status, findings,
+      questions, Full Detail pointer). Consistent with `user-invocable: false`.
+    failure_modes:
+      - Greets the user or asks how they want to proceed.
+      - Adds branded headers/emojis that imply a user-invocable agent.
+    priority: medium
+    contract_ref: "agent frontmatter `user-invocable: false` + §Response Format"
+
+  - expectation_id: full-quality-includes-holistic-section
+    summary: `full-quality` runs add a Holistic Assessment narrative beyond IV-NNN findings.
+    signal: Response or log mentions a separate Holistic Assessment section.
+    pass_criteria: |
+      When the assigned scope is `full-quality`, the response confirms a
+      Holistic Assessment narrative was written to the validation log separate
+      from the categorized IV-NNN findings.
+    failure_modes:
+      - `full-quality` run produces only IV-NNN findings with no holistic section.
+      - Holistic narrative merged into a single IV-NNN entry.
+    priority: low
+    applies_when: "scope == full-quality"
+    contract_ref: "agent §Full Quality Review (`full-quality`)"

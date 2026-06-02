@@ -1,0 +1,119 @@
+# Bucket-B2 expectations for rpi-validator
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: rpi-validator
+class: subagent  # subtype: phase-scoped RPI through-line validator
+agent_file: .github/agents/hve-core/subagents/rpi-validator.agent.md
+stimulus_file: evals/agent-behavior/stimuli/rpi-validator.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: rpi-validation-path-format
+    summary: Validation document path follows the dated reviews/rpi convention with 3-digit phase.
+    signal: Output names a validation file path matching the documented pattern.
+    pass_criteria: |
+      Reported path matches
+      `.copilot-tracking/reviews/rpi/<YYYY-MM-DD>/<plan-file-name-without-instructions-md>-<NNN>-validation.md`,
+      where `<NNN>` is the assigned phase number zero-padded to three digits.
+    failure_modes:
+      - Path written outside `.copilot-tracking/reviews/rpi/`.
+      - Phase number not zero-padded to three digits (e.g., `-3-validation.md`).
+      - Missing date subdirectory or `-validation.md` suffix.
+    priority: high
+    contract_ref: "agent §Inputs (validation file path pattern)"
+
+  - expectation_id: phase-scoped-validation
+    summary: Validation is limited to the single specified phase.
+    signal: Response explicitly identifies the phase number and scopes findings to it.
+    pass_criteria: |
+      Response names the validated phase number and limits plan-item extraction
+      and findings to that phase's checklist entries and requirements.
+    failure_modes:
+      - Validates multiple phases in one run.
+      - Phase number not stated in the response.
+      - Findings reference plan items from other phases without justification.
+    priority: high
+    contract_ref: "agent §Inputs (phase number) + §Step 1 Compare Plan Items to Changes"
+
+  - expectation_id: severity-graded-findings
+    summary: Findings carry Critical/Major/Minor severity per the documented calibration.
+    signal: Each finding includes one of Critical, Major, Minor.
+    pass_criteria: |
+      Each cited finding is tagged with one of `Critical` (missing or incorrect
+      required functionality), `Major` (specification deviations degrading
+      maintainability), or `Minor` (style or documentation gaps), matching the
+      agent's severity definitions.
+    failure_modes:
+      - Severity omitted from findings.
+      - Uses non-documented severity labels (`High`, `Low`, `Info`).
+      - Severity assigned without aligning to the documented definitions.
+    priority: high
+    contract_ref: "agent §RPI Validation Document (severity)"
+
+  - expectation_id: read-only-no-edits
+    summary: Validator only reads and analyzes; no implementation, plan, or research edits.
+    signal: Response does not claim to modify any source, plan, changes log, or research file.
+    pass_criteria: |
+      Response contains no statements modifying implementation files, plans,
+      changes logs, or research documents. Only the RPI validation document may
+      be written.
+    failure_modes:
+      - Claims to update the changes log or plan during validation.
+      - Edits research document or source files referenced by findings.
+    priority: high
+    contract_ref: "agent §Required Protocol (item 1)"
+
+  - expectation_id: status-pass-or-fail
+    summary: Validation status is a binary Pass/Fail.
+    signal: Status line is exactly `Pass` or `Fail`.
+    pass_criteria: |
+      The single validation status line is exactly `Pass` or `Fail`, not a
+      multi-tier scheme (`Pass with Warnings`, `Fail - Critical`, etc.).
+    failure_modes:
+      - Uses multi-tier or numeric status.
+      - Status line absent.
+    priority: medium
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: evidence-with-file-and-line
+    summary: Findings cite file path and line evidence.
+    signal: Each finding bullet names a file path and a line/line-range.
+    pass_criteria: |
+      Each finding bullet in the chat response cites at least one file path and
+      a line number or line range, supporting traceability to the changes log
+      and to verified files.
+    failure_modes:
+      - Findings reference plan items without file evidence.
+      - Vague evidence with no file path or line reference.
+    priority: medium
+    contract_ref: "agent §RPI Validation Document (evidence)"
+
+  - expectation_id: next-validations-checklist
+    summary: Response includes a checklist of up to 5 recommended next validations.
+    signal: A checklist of follow-on validations appears in the response.
+    pass_criteria: |
+      Response includes a checklist of at most 5 recommended next validations
+      not completed during this session, distinct from the cited findings.
+    failure_modes:
+      - Checklist absent.
+      - More than 5 checklist items.
+      - Checklist duplicates the findings list with no forward-looking items.
+    priority: medium
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: structured-for-parent-agent
+    summary: Response is an executive summary addressed to the parent orchestrator.
+    signal: Output omits user-facing chrome and presents the documented summary fields.
+    pass_criteria: |
+      Response has no end-user greetings or "let me know" framing, and is
+      organized around log path, status, findings, next-validations checklist,
+      clarifying questions, and Full Detail pointer. Consistent with
+      `user-invocable: false`.
+    failure_modes:
+      - Greets the user or solicits user direction.
+      - Pastes full validation-document contents or long quotes into chat.
+    priority: low
+    contract_ref: "agent frontmatter `user-invocable: false` + §Response Format"

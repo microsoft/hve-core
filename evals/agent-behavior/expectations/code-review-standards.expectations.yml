@@ -1,0 +1,126 @@
+# Bucket-A expectations for code-review-standards
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: code-review-standards is the language-standards sibling of
+# code-review-functional. It enforces coding-standards instructions
+# (`.github/instructions/coding-standards/<language>/`) against the diff and
+# persists findings to
+# `.copilot-tracking/reviews/code-reviews/<branch>/<run>/standards-review.md`.
+slug: code-review-standards
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review-standards.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review-standards.yml
+latest_result: evals/results/agent-matrix/2026-05-28/code-review-standards.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: standards-scope-only
+    summary: Findings address language-standards compliance, not functional bugs.
+    signal: Output focuses on style, naming, idioms, lint rules, and coding-standards instructions.
+    pass_criteria: |
+      Findings cite coding-standards rules (formatting, naming, idiomatic
+      usage, linter directives, instruction-file rules). Pure functional
+      defects (incorrect logic, missing error handling, race conditions)
+      are absent or explicitly deferred to `code-review-functional`.
+    failure_modes:
+      - Findings list logic bugs or behavioral defects as primary findings.
+      - Mixes functional review into standards review.
+    priority: high
+    contract_ref: "agent §Scope (language standards only; functional correctness is owned by code-review-functional)"
+
+  - expectation_id: standards-instruction-reference
+    summary: Findings reference the relevant coding-standards instruction file.
+    signal: Output names a `.github/instructions/coding-standards/<language>/*.instructions.md` path or rule.
+    pass_criteria: |
+      Each rule-based finding cites either (a) the matching instruction
+      file path under `.github/instructions/coding-standards/`, or (b) a
+      named rule from that instruction file. Generic style critiques
+      without instruction-file backing are flagged as opinion.
+    failure_modes:
+      - Findings critique style with no instruction-file reference.
+      - Names a non-existent instruction file.
+    priority: high
+    contract_ref: "agent §Phase 1 (load coding-standards instructions for the changed languages)"
+
+  - expectation_id: severity-per-finding
+    summary: Each standards finding carries a severity label.
+    signal: Output applies severity words per finding.
+    pass_criteria: |
+      Each standards finding has a case-insensitive severity from
+      `critical|high|medium|low|info|warning`. Severity is per-finding.
+    failure_modes:
+      - Findings unlabeled.
+      - Severities used only in summary text.
+    priority: high
+    contract_ref: "agent §Output Contract (severity per finding); current `severity-vocab` grader"
+
+  - expectation_id: findings-structure-present
+    summary: Output presents findings in a structured form.
+    signal: Output contains a severity-labeled table or per-finding sections.
+    pass_criteria: |
+      Output uses a markdown table with severity column OR per-finding
+      sections using `finding|issue|concern|recommendation` language with
+      each finding tied to a file path and line range when possible.
+    failure_modes:
+      - Single paragraph with no per-finding structure.
+      - Bulleted list with no severity framing.
+    priority: high
+    contract_ref: "agent §Output Contract; current `findings-table-present` grader"
+
+  - expectation_id: diff-scoped-findings
+    summary: Findings are scoped to the reviewed diff.
+    signal: Findings reference changed files or hunks from the diff.
+    pass_criteria: |
+      Findings cite changed files, line ranges, or hunks from the supplied
+      diff. Findings that step outside the diff are explicitly marked as
+      out-of-scope context.
+    failure_modes:
+      - Findings invented for files not in the diff.
+      - Bulk findings about unrelated source trees.
+    priority: medium
+    contract_ref: "agent §Scope (diff-scoped standards review)"
+
+  - expectation_id: tracking-path-shape
+    summary: Standards review artifact lives at the documented path.
+    signal: Output names a path matching `.copilot-tracking/reviews/code-reviews/<branch>/<run>/standards-review.md`.
+    pass_criteria: |
+      When the agent reports persisting a standards review, the path starts
+      with `.copilot-tracking/reviews/code-reviews/`, includes a normalized
+      branch segment, includes a run identifier, and ends in
+      `standards-review.md`.
+    failure_modes:
+      - Artifact written outside `.copilot-tracking/reviews/code-reviews/`.
+      - Filename other than `standards-review.md`.
+    priority: medium
+    applies_when: "agent reports artifact creation"
+    contract_ref: "agent §Tracking Artifact (standards-review.md)"
+
+  - expectation_id: verdict-stated
+    summary: Standards review ends with a verdict from the documented vocabulary.
+    signal: Output names an overall verdict.
+    pass_criteria: |
+      Response concludes with an overall standards verdict drawn from
+      `approve|approve with changes|request changes|block`. Verdict reflects
+      the highest-severity finding.
+    failure_modes:
+      - No final verdict.
+      - Verdict expressed only in informal prose.
+    priority: medium
+    contract_ref: "agent §Output Contract (standards verdict)"
+
+  - expectation_id: no-source-edit
+    summary: Review-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Proposed fixes appear as recommendations or fenced snippets, not as
+      claimed edits.
+    failure_modes:
+      - Agent claims to apply a style fix during review.
+      - Edits build manifests while reviewing.
+    priority: high
+    contract_ref: "agent scope (review-only); current `no-source-edit` grader"

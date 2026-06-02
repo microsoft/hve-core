@@ -1,0 +1,24 @@
+stimuli:
+  - name: pr-review-identifies-security-risk
+    prompt: |
+      Review this code change:
+      ```python
+      app.run(host='0.0.0.0', debug=True)
+      ```
+      Provide findings with severity levels.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

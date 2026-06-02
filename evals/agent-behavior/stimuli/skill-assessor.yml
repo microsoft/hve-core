@@ -1,0 +1,53 @@
+stimuli:
+  - name: skill-assessor-audit-mode-format
+    prompt: |
+      You are the Skill Assessor subagent. The Security Reviewer orchestrator
+      hands you this input:
+        - mode: audit
+        - skill: owasp-top-10
+        - scope: src/web/
+      Assess exactly this one skill against the scope and return findings in the
+      audit format with skill metadata and a findings table.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-metadata-fields
+        config:
+          pattern: '(?i)(skill|framework|version|reference)\s*:'
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*status.*\||findings table|severity)'
+      - type: output-matches
+        name: audit-status-vocabulary
+        config:
+          pattern: '(?i)\b(pass|fail|partial|not[_ ]assessed)\b'
+      - type: output-matches
+        name: location-link-or-sentinel
+        config:
+          pattern: '(?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)'
+
+  - name: skill-assessor-plan-mode-vocabulary
+    prompt: |
+      You are the Skill Assessor subagent. The Security Planner orchestrator
+      hands you this input:
+        - mode: plan
+        - skill: owasp-llm
+        - plan_text: A design doc describing an LLM chatbot that accepts
+          untrusted user input and forwards it to a tool-calling agent.
+      Assess exactly this one skill against the plan text and return findings in
+      the plan-mode format.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: plan-status-vocabulary
+        config:
+          pattern: '(?i)\b(risk|caution|covered|not[_ ]applicable)\b'
+      - type: output-matches
+        name: mitigation-guidance
+        config:
+          pattern: '(?i)(mitigation|guidance|recommend)'

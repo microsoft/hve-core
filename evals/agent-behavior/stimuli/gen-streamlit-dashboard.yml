@@ -1,0 +1,19 @@
+stimuli:
+  - name: gen-streamlit-dashboard-class-recipe
+    prompt: |
+      Generate a minimal Streamlit dashboard that displays a title "Sales" and a line chart from a hard-coded list. Save as `dashboard.py` and report what you produced. State the lint or format command you would run.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(`|created|modified|edited|wrote|file:)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(lint|ruff|pylint|eslint|format|validate|test)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: '(?i)(dashboard\.py|streamlit)'

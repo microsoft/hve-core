@@ -1,0 +1,20 @@
+stimuli:
+  - name: github-backlog-manager-class-recipe
+    prompt: |
+      The app crashes when clicking the Submit button on the contact form. Generate a GitHub issue draft with title, body, labels, and steps to reproduce. Write the issue draft under `.copilot-tracking/github-issues/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(title|body|label|milestone|assignee|steps to reproduce|expected|actual)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](github-issues|workitems)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

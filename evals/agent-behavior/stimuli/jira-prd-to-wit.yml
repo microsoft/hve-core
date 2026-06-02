@@ -1,0 +1,20 @@
+stimuli:
+  - name: jira-prd-to-wit-class-recipe
+    prompt: |
+      Convert this PRD bullet "Users can bulk archive notifications" into a Jira Epic + Story hierarchy. Write the drafts under `.copilot-tracking/jira-issues/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(summary|description|issue type|priority|component|sprint|epic|story)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]jira-issues'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

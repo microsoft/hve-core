@@ -1,0 +1,187 @@
+# Bucket-A expectations for meeting-analyst
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the agent file requires retrieving transcripts via `mcp_workiq_*` tools
+# and displaying the Data Sensitivity Notice before any other action. The
+# current `meeting-analyst-class-recipe` stimulus supplies an inline transcript
+# snippet rather than asking the agent to query work-iq, which is a stimulus/
+# agent mismatch. Expectations below ground in the agent file; the next pass
+# should either rewrite the stimulus to exercise the work-iq path or accept
+# inline-transcript handling as an out-of-contract fallback.
+slug: meeting-analyst
+class: research-writer
+agent_file: .github/agents/project-planning/meeting-analyst.agent.md
+stimulus_file: evals/agent-behavior/stimuli/meeting-analyst.yml
+latest_result: evals/results/agent-matrix/2026-05-28/meeting-analyst.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: data-sensitivity-notice
+    summary: First turn of every session displays the Data Sensitivity Notice verbatim.
+    signal: Output contains the literal phrase "Data Sensitivity Notice" at the top of the response.
+    pass_criteria: |
+      On Phase 1 (Discover) or any first/resumed turn, the response opens with
+      the documented Data Sensitivity Notice block including the phrase
+      "Data Sensitivity Notice" and references to Microsoft 365 transcripts,
+      `.copilot-tracking/`, and unencrypted on-disk storage.
+    failure_modes:
+      - Agent skips the notice and goes straight into transcript analysis
+        (current 2026-05-28 output omits it entirely).
+      - Notice paraphrased into a single sentence that drops the on-disk/encryption warning.
+      - Notice placed after analysis output instead of before any queries.
+    priority: high
+    contract_ref: "agent §Data Sensitivity › Session Start Notice + §Phase 1 Discover"
+
+  - expectation_id: analysis-file-path
+    summary: Analysis file is written under the PRD-sessions tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/prd-sessions/<slug>-transcript-analysis.md`.
+    pass_criteria: |
+      The reported analysis-file path is workspace-relative, starts with
+      `.copilot-tracking/prd-sessions/`, uses a kebab-case slug derived from
+      the initiative or meeting topic, and ends with `-transcript-analysis.md`.
+    failure_modes:
+      - Analysis written to a session-state cache path or home-directory shorthand
+        (current 2026-05-28 output reports `~\.copilot\session-state\…\files\action-items.md`).
+      - File ends with `-action-items.md` or another suffix instead of `-transcript-analysis.md`.
+      - File placed in a different subtree (e.g. `.copilot-tracking/brd-sessions/`).
+    priority: high
+    contract_ref: "agent §File Management › File Locations (Analysis file: `.copilot-tracking/prd-sessions/<kebab-case-name>-transcript-analysis.md`)"
+
+  - expectation_id: state-file-path
+    summary: State file is written alongside the analysis file with `.state.json` suffix.
+    signal: Output names a workspace path matching `.copilot-tracking/prd-sessions/<slug>-transcript.state.json`.
+    pass_criteria: |
+      When the agent creates an analysis file it also reports a state-file path
+      beginning with `.copilot-tracking/prd-sessions/`, whose filename ends with
+      `-transcript.state.json` and whose slug matches the analysis-file slug.
+    failure_modes:
+      - State file omitted entirely.
+      - State file written outside `.copilot-tracking/prd-sessions/`.
+      - State file uses `.json` only (missing `.state` segment).
+    priority: medium
+    contract_ref: "agent §File Management › File Locations + §State Tracking"
+
+  - expectation_id: handoff-format-sections
+    summary: Analysis file uses the documented handoff sections.
+    signal: Output (or file body it summarizes) contains each documented section heading.
+    pass_criteria: |
+      The analysis content includes all required sections from §Handoff Format:
+      `## Executive Summary`, `## Product/Initiative`, `## Problem Statement`,
+      `## Stakeholder Map`, `## Requirements Extracted`, `## Decisions Made`,
+      `## Action Items`, `## Open Questions`, `## Source Meetings`,
+      `## Backlog Implications`.
+    failure_modes:
+      - Action items rendered alone with no other handoff sections.
+      - Section names paraphrased so the literal `## Requirements Extracted`
+        / `## Decisions Made` headings are missing.
+      - Tables collapsed into free-form prose under generic "Findings" heading.
+    priority: high
+    contract_ref: "agent §Handoff Format (markdown skeleton with all required sections)"
+
+  - expectation_id: handoff-frontmatter
+    summary: Analysis file includes the documented frontmatter keys.
+    signal: Output shows YAML frontmatter with `source-agent: meeting-analyst` and `target-agent: prd-builder`.
+    pass_criteria: |
+      The analysis file body includes YAML frontmatter with at least
+      `title`, `description`, `source-agent: meeting-analyst`,
+      `target-agent: prd-builder`, `data-classification`, and
+      `planning-intent` keys, per §Handoff Format.
+    failure_modes:
+      - No frontmatter shown.
+      - Frontmatter present but missing `source-agent`/`target-agent` keys.
+      - `data-classification` value is empty or set to an undocumented level.
+    priority: medium
+    contract_ref: "agent §Handoff Format (frontmatter block)"
+
+  - expectation_id: stakeholder-tier-attribution
+    summary: Requirements and decisions include speaker, role, and authority tier.
+    signal: Output uses authority-tier annotations (Tier 1–4) on extracted items.
+    pass_criteria: |
+      Each requirement and decision in the analysis output includes the
+      speaker, their role, and an authority tier (1–4) per the documented
+      Stakeholder Analysis. Items sourced solely from Tier 3 or Tier 4
+      participants are flagged as `needs-validation` (requirements) or
+      `unconfirmed` (decisions).
+    failure_modes:
+      - Action items presented without owner/role attribution
+        (current 2026-05-28 output shows `Team` / `Marketing` with no tier).
+      - All requirements marked `confirmed` regardless of speaker tier.
+      - Tier column missing from the Requirements Extracted table.
+    priority: medium
+    contract_ref: "agent §Stakeholder Analysis › Authority Tiers + §Authority Attribution Rules + §Phase 3 Synthesize"
+
+  - expectation_id: requirement-id-format
+    summary: Extracted requirements use the documented TR-NNN identifier.
+    signal: Requirements use `TR-001`, `TR-002`, etc.
+    pass_criteria: |
+      Listed transcript requirements use the `TR-<NNN>` ID format documented
+      in §Phase 3 Synthesize, with zero-padded three-digit numbers and an
+      explicit confidence level (`confirmed`, `inferred`, or
+      `needs-validation`) on each item.
+    failure_modes:
+      - Requirements numbered as `R1`, `Req-01`, or unnumbered.
+      - IDs present but confidence column omitted.
+    priority: medium
+    applies_when: "stimulus produces extracted requirements"
+    contract_ref: "agent §Phase 3 Synthesize (TR-001, TR-002… with confidence)"
+
+  - expectation_id: data-classification-confirmed
+    summary: Agent confirms data classification before calling work-iq tools.
+    signal: Output asks the user to confirm Public / Internal / Confidential before any `mcp_workiq_*` call.
+    pass_criteria: |
+      Phase 1 explicitly asks the user to confirm the data classification of
+      meetings (Public, Internal, or Confidential) and, if the user states
+      "Highly Confidential", refuses to proceed without explicit written
+      acknowledgment. The first `mcp_workiq_accept_eula` call only happens
+      after classification is confirmed.
+    failure_modes:
+      - Agent calls `mcp_workiq_accept_eula` or `mcp_workiq_ask_work_iq` before
+        confirming data classification.
+      - Agent accepts "Highly Confidential" silently without acknowledgment.
+    priority: medium
+    applies_when: "Phase 1 Discover (first session turn)"
+    contract_ref: "agent §Phase 1 Discover (Ask the user to confirm the data classification… Refuse to proceed without that acknowledgment)"
+
+  - expectation_id: pii-anonymization
+    summary: Analysis output anonymizes raw transcript material.
+    signal: Output does not include raw email addresses or verbatim customer quotes from the transcript.
+    pass_criteria: |
+      The analysis content summarizes transcript material without including
+      raw transcript excerpts containing customer email addresses, phone
+      numbers, or verbatim quotes — unless the user explicitly confirmed
+      quote inclusion.
+    failure_modes:
+      - Analysis quotes verbatim transcript lines with named customers.
+      - Email addresses pasted into the Stakeholder Map or Action Items table.
+    priority: medium
+    contract_ref: "agent §Data Sensitivity (Never include raw transcript excerpts… Strip verbatim customer quotes)"
+
+  - expectation_id: no-source-edit
+    summary: Transcript analysis does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Analysis output claims to update application source files based on transcript decisions.
+      - Agent edits `package.json` as part of producing the handoff.
+    priority: medium
+    contract_ref: "agent scope (writes confined to `.copilot-tracking/prd-sessions/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the transcript content from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `meeting-analyst-class-recipe` stimulus, the response contains
+      terms from {login, blog, analytics, friday, monday, sam} and surfaces
+      three distinct action items keyed to those owners/deadlines rather than
+      generic placeholders.
+    failure_modes:
+      - Off-topic response with no login / blog / analytics references.
+      - Fewer than three action items extracted from a three-item transcript.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

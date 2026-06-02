@@ -1,0 +1,179 @@
+# Bucket-A expectations for gen-jupyter-notebook
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 stimulus asks for a trivial "load sales.csv and print
+# head" notebook, which under-exercises the agent's 13-section EDA layout,
+# Plotly Express preference, and `uv add` validation step. The current run
+# wrote to `C:\Users\…\AppData\Local\Temp\vally-eval-…\load_sales.ipynb`
+# with a single cell. Expectations below restore the contract; the rewrite
+# pass should re-scope the stimulus to a real EDA scenario.
+slug: gen-jupyter-notebook
+class: code-implementor
+agent_file: .github/agents/data-science/gen-jupyter-notebook.agent.md
+stimulus_file: evals/agent-behavior/stimuli/gen-jupyter-notebook.yml
+latest_result: evals/results/agent-matrix/2026-05-28/gen-jupyter-notebook.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: notebook-under-notebooks-dir
+    summary: Generated notebooks are written under the workspace `notebooks/` folder.
+    signal: Reported notebook path starts with `notebooks/` and ends with `.ipynb`.
+    pass_criteria: |
+      Reported notebook path is workspace-relative, lives under
+      `notebooks/`, and ends with `.ipynb`. Path resolution uses the
+      documented `NOTEBOOK_DIR` / `PROJECT_ROOT` / `DATA_DIR` / `OUTPUTS_DIR`
+      pattern from the Configuration & Imports template, with `DATA_DIR`
+      resolved relative to the project root.
+    failure_modes:
+      - Writes to `C:\Users\…\AppData\Local\Temp\vally-eval-…\load_sales.ipynb`
+        (current 2026-05-28 behavior).
+      - Writes a `.py` script instead of `.ipynb`.
+      - Writes to repo root or `data/` instead of `notebooks/`.
+    priority: high
+    contract_ref: "agent §Generation Guidelines › Path resolution"
+
+  - expectation_id: required-section-layout
+    summary: Notebook contains the documented 13-section layout in order.
+    signal: Markdown cells include headings matching Title & Overview,
+      Configuration & Imports, Data Loading, Data Quality, Univariate,
+      Multivariate, Outliers, Summary Insights, Next Steps.
+    pass_criteria: |
+      Notebook includes markdown section headings for all 13 sections in
+      §Notebook Section Layout, in the documented order. Temporal Trends is
+      present only when datetime fields exist (or marked as conditional with
+      a guard).
+    failure_modes:
+      - Single-cell notebook with no markdown structure
+        (current 2026-05-28 behavior).
+      - Sections present but out of order.
+      - Mixed markdown + code in the same cell.
+    priority: high
+    contract_ref: "agent §Notebook Section Layout (1–13)"
+
+  - expectation_id: minimum-required-cells
+    summary: Notebook meets the minimum cell-count floors per category.
+    signal: Notebook contains at least 3 univariate plots, 2 multivariate
+      relationship plots, a correlation matrix, and an outlier inspection
+      cell.
+    pass_criteria: |
+      Notebook includes at minimum: overview/context, imports/configuration,
+      parameterized data loading, structural summary (shape, dtypes,
+      missingness), three univariate plots, two multivariate relationship
+      plots, a correlation matrix (when 2+ numeric variables), a temporal
+      trend cell (when datetime present), an outlier inspection cell, and
+      an insights/next-steps section.
+    failure_modes:
+      - Fewer than three univariate plots.
+      - No correlation matrix despite multiple numeric columns.
+      - Insights/next-steps section omitted.
+    priority: high
+    contract_ref: "agent §Minimum Required Cells"
+
+  - expectation_id: plotly-express-primary
+    summary: Visualizations use Plotly Express by default.
+    signal: Code cells import `plotly.express as px` and use `px.histogram`,
+      `px.bar`, `px.scatter`, `px.line`, or `px.imshow`.
+    pass_criteria: |
+      Visualization cells primarily use `plotly.express` (aliased `px`).
+      Seaborn or matplotlib appear only when justified by a plot type not
+      easily expressed in Plotly. Figure variables follow the
+      `fig_<concept>` naming convention.
+    failure_modes:
+      - All plots done with matplotlib/seaborn with no Plotly Express usage.
+      - `px.scatter` without `trendline='ols'` where relationship strength is
+        relevant.
+      - Figures created without a semantic variable name.
+    priority: medium
+    contract_ref: "agent §Visualizations Guidance (Primary library + Standard pattern + Plot type guidance)"
+
+  - expectation_id: parameterized-data-loading
+    summary: Data paths are parameterized, not hard-coded absolute paths.
+    signal: Configuration cell uses `Path`, `DATA_DIR`, and resolves paths
+      relative to `PROJECT_ROOT`.
+    pass_criteria: |
+      The Configuration & Imports cell includes the documented `Path`-based
+      resolution snippet (`NOTEBOOK_DIR`, `PROJECT_ROOT`, `DATA_DIR`,
+      `OUTPUTS_DIR`, `PROCESSED_DIR` with `mkdir(parents=True, exist_ok=True)`).
+      Data loading cells reference `DATA_DIR / 'file'` rather than absolute
+      paths.
+    failure_modes:
+      - Hard-coded absolute path in `pd.read_csv(...)`.
+      - Missing `PROCESSED_DIR.mkdir(...)` line.
+      - No `Path` import.
+    priority: medium
+    contract_ref: "agent §Data Handling Constraints + §Generation Guidelines › Path resolution"
+
+  - expectation_id: data-dictionary-referenced
+    summary: Notebook references existing data dictionaries instead of inlining them.
+    signal: Markdown cells link to or summarize `outputs/data-dictionary-*.md`
+      and `outputs/data-summary-*.md` artifacts rather than copying their text.
+    pass_criteria: |
+      Data Assets Summary section links to or briefly summarizes existing
+      dictionary/summary files under `outputs/`. Notebook does not paste
+      multi-paragraph dictionary content inline.
+    failure_modes:
+      - Copies full dictionary markdown into a notebook cell.
+      - Ignores existing `outputs/` artifacts entirely.
+    priority: low
+    applies_when: "an existing data dictionary exists under `outputs/`"
+    contract_ref: "agent §Phase 1 Context Gathering + §Generation Guidelines (Summarize schema info)"
+
+  - expectation_id: uv-add-for-dependencies
+    summary: Missing dependencies are installed via `uv add`, not inside the notebook.
+    signal: Output references `uv add <package>` rather than `!pip install`
+      or `%pip install` cells.
+    pass_criteria: |
+      When a notebook imports a package not present in `pyproject.toml`, the
+      response runs or proposes `uv add <package>` from the terminal. The
+      notebook itself contains no `!pip install` or `%pip install` lines.
+    failure_modes:
+      - `%pip install` or `!pip install` cell in the notebook.
+      - Suggests `conda install` or raw `pip` with no `uv` reference.
+    priority: medium
+    contract_ref: "agent §Phase 3 Validation + §Data Handling Constraints › Avoid"
+
+  - expectation_id: cell-separation-discipline
+    summary: Markdown and code live in separate cells with one concept per cell.
+    signal: No cell mixes prose paragraphs with executable code, and each
+      plot is preceded by a markdown rationale.
+    pass_criteria: |
+      Notebook keeps markdown and code in distinct cells. Each visualization
+      is preceded by a markdown cell explaining the question the plot answers.
+      Code cells stay under ~15 logical lines and focus on a single concept.
+    failure_modes:
+      - Single combined cell with prose comments and plotting code.
+      - Plot cell with no preceding markdown rationale.
+      - Code cell well over 15 lines covering multiple steps.
+    priority: medium
+    contract_ref: "agent §Generation Guidelines › Cell structure + §Visualizations Guidance"
+
+  - expectation_id: column-existence-guards
+    summary: Visualization cells guard against missing columns.
+    signal: Plot cells reference an `if 'col' in df.columns:` (or equivalent)
+      guard before plotting.
+    pass_criteria: |
+      Cells that visualize specific columns (temporal trends, conditional
+      plots, faceted views) gate the plotting code with a column-existence
+      check so the notebook runs top-to-bottom without manual edits.
+    failure_modes:
+      - Plot cell assumes a column exists and raises `KeyError` when missing.
+      - No guards anywhere despite optional/conditional sections.
+    priority: low
+    contract_ref: "agent §Generation Guidelines (Guard visualization cells…) + §Completion Criteria"
+
+  - expectation_id: no-source-modifications
+    summary: Notebook generation does not edit unrelated source files.
+    signal: Output does not reference modifications to non-notebook source files.
+    pass_criteria: |
+      Aside from the generated `.ipynb`, additions to `pyproject.toml` made
+      via `uv add`, and any persisted `data/processed/*.parquet` derived
+      datasets the notebook explicitly creates, no other source files are
+      modified.
+    failure_modes:
+      - Edits application `.py` source files alongside the notebook.
+      - Hand-edits `pyproject.toml` instead of using `uv add`.
+    priority: medium
+    contract_ref: "agent scope (notebook output + uv add + data/processed/ persistence)"

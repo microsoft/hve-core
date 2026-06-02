@@ -1,0 +1,38 @@
+stimuli:
+  - name: plan-validator-discrepancy-log
+    prompt: |
+      Validate the implementation plan at `.copilot-tracking/plans/example.md`
+      against the research document at `.copilot-tracking/research/example.md`.
+      Update only the Discrepancy Log section in the Planning Log with DR-
+      and DD- prefixed entries, and report your validation status.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: discrepancy-log-vocabulary
+        config:
+          pattern: '(?i)(discrepancy log|DR-\d|DD-\d|unaddressed research|plan deviation)'
+      - type: output-matches
+        name: planning-log-path
+        config:
+          pattern: '(?i)(planning log|\.copilot-tracking[-/\\]plans)'
+
+  - name: plan-validator-coverage-matrix
+    prompt: |
+      As a plan-validator subagent, describe how you build an internal coverage
+      matrix that maps each research requirement to plan steps (Covered, Partial,
+      Missing) and which findings are written to the Planning Log versus returned
+      only in the chat response.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: coverage-vocabulary
+        config:
+          pattern: '(?i)(coverage matrix|covered|partial|missing|requirement)'
+      - type: output-matches
+        name: severity-or-internal-vocabulary
+        config:
+          pattern: '(?i)(critical|major|minor|internal|response|chat)'

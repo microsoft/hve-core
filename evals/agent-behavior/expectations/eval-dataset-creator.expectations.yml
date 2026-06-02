@@ -1,0 +1,165 @@
+# Bucket-A expectations for eval-dataset-creator
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 stimulus is mis-scoped — it asks for an arbitrary
+# `eval-data/arithmetic.jsonl` rather than exercising the agent's documented
+# `data/evaluation/` layout and 7-phase interview. The agent obediently did
+# the off-contract task and still tripped `lint-invocation`. Expectations
+# below restore the contract; the rewrite pass should re-scope the stimulus.
+slug: eval-dataset-creator
+class: code-implementor
+agent_file: .github/agents/data-science/eval-dataset-creator.agent.md
+stimulus_file: evals/agent-behavior/stimuli/eval-dataset-creator.yml
+latest_result: evals/results/agent-matrix/2026-05-28/eval-dataset-creator.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: output-path-under-data-evaluation
+    summary: Generated artifacts are written under `data/evaluation/`.
+    signal: Reported paths begin with `data/evaluation/datasets/` or `data/evaluation/docs/`.
+    pass_criteria: |
+      Every reported artifact path is workspace-relative and starts with
+      `data/evaluation/datasets/` (for dataset files) or `data/evaluation/docs/`
+      (for curation/metric/tooling docs). Filenames use the
+      `{agent-name}-eval-dataset.{json,csv}` and
+      `{agent-name}-{curation-notes|metric-selection|tool-recommendations}.md`
+      patterns.
+    failure_modes:
+      - Writes to arbitrary user-specified paths like `eval-data/arithmetic.jsonl`
+        without re-anchoring to `data/evaluation/` (current 2026-05-28 behavior,
+        driven by mis-scoped stimulus).
+      - Writes to absolute temp paths (`C:\Users\…\AppData\Local\Temp\…`).
+      - Filename omits the `{agent-name}-eval-dataset` prefix.
+    priority: high
+    contract_ref: "agent §Output Artifacts (data/evaluation/ tree + naming rule)"
+
+  - expectation_id: interview-driven-flow
+    summary: Dataset generation is preceded by the documented 4-phase interview.
+    signal: Output references the structured interview before producing artifacts,
+      or asks the first interview question instead of generating immediately.
+    pass_criteria: |
+      For a non-trivial dataset request, the first turn either (a) asks
+      Question 1 ("What is the name of the AI agent…") and pauses, or (b) names
+      Phases 1–4 (Agent Context, Agent Capabilities, Evaluation Scenarios,
+      Persona and Tooling) and explains that no artifacts are produced until
+      the interview summary is confirmed.
+    failure_modes:
+      - Generates a dataset file on the first turn with no interview at all
+        (current 2026-05-28 behavior).
+      - Asks several interview questions at once instead of one at a time.
+      - Skips the Phase 4 persona/tooling questions and jumps to JSON output.
+    priority: high
+    contract_ref: "agent §Required Protocol items 1–4 + §Phase 1–4"
+
+  - expectation_id: dual-format-dataset-output
+    summary: Datasets are emitted in both JSON and CSV.
+    signal: Output reports two dataset files with `.json` and `.csv` extensions
+      that share the `{agent-name}-eval-dataset` stem.
+    pass_criteria: |
+      When a dataset is produced, output lists both
+      `{agent-name}-eval-dataset.json` and `{agent-name}-eval-dataset.csv` under
+      `data/evaluation/datasets/`.
+    failure_modes:
+      - Only one format produced (JSONL/JSON only, or CSV only).
+      - Files reported with mismatched stems or extensions.
+    priority: high
+    applies_when: "dataset generation turn (Phase 5)"
+    contract_ref: "agent §Required Protocol item 7 + §Phase 5 (JSON Format / CSV Format)"
+
+  - expectation_id: dataset-schema-conformance
+    summary: JSON dataset includes the documented metadata and pair fields.
+    signal: Output shows or describes a JSON object with `metadata` and
+      `evaluation_pairs` keys carrying the documented sub-fields.
+    pass_criteria: |
+      JSON content includes the `metadata` block (with `agent_name`,
+      `created_date`, `total_pairs`, `distribution`, `persona`,
+      `evaluation_mode`, `recommended_tool`) and an `evaluation_pairs` array
+      whose entries include at minimum `id`, `query`, `expected_response`,
+      `category`, and `difficulty`.
+    failure_modes:
+      - Produces a flat JSONL of `{question, expected_answer}` objects with no
+        metadata block (current 2026-05-28 behavior).
+      - Difficulty values outside `{easy, grounding_source_checks, hard, negative, safety}`.
+      - Missing `distribution` counts or `persona` field.
+    priority: high
+    applies_when: "dataset generation turn (Phase 5)"
+    contract_ref: "agent §Phase 5 › `<dataset-json-format>` block"
+
+  - expectation_id: distribution-floor
+    summary: Dataset distribution honors the minimum 30 pairs and per-category floors.
+    signal: Output reports `total_pairs` >= 30 and each declared category at >= 5%.
+    pass_criteria: |
+      Reported `total_pairs` is at least 30. The `distribution` object lists
+      counts for `easy`, `grounding_source_checks`, `hard`, `negative`, and
+      `safety`, and no category falls below 5% of the total. Sum of category
+      counts equals `total_pairs`.
+    failure_modes:
+      - Dataset has fewer than 30 rows (current 2026-05-28 output has 5 rows).
+      - Distribution drops one or more required categories.
+      - Per-category count below the 5% floor.
+    priority: medium
+    applies_when: "dataset generation turn (Phase 5)"
+    contract_ref: "agent §Phase 5 › Dataset Requirements"
+
+  - expectation_id: three-supporting-docs
+    summary: Phase 7 produces curation, metric, and tool docs alongside the dataset.
+    signal: Output lists three markdown files under `data/evaluation/docs/`.
+    pass_criteria: |
+      On dataset finalization, output reports all three documentation files:
+      `{agent-name}-curation-notes.md`, `{agent-name}-metric-selection.md`, and
+      `{agent-name}-tool-recommendations.md` under `data/evaluation/docs/`,
+      each following the templated sections in the agent file.
+    failure_modes:
+      - Dataset produced but supporting docs not written.
+      - Only one or two of the three docs produced.
+    priority: medium
+    applies_when: "Phase 7 (Documentation and Finalization)"
+    contract_ref: "agent §Phase 7 (three templates) + §Output Artifacts tree"
+
+  - expectation_id: phase-transition-announcement
+    summary: Each phase transition is announced with a brief outcome summary.
+    signal: Output contains a transition line of the form
+      "Phase N complete. … Moving to Phase N+1: …".
+    pass_criteria: |
+      When the agent advances between phases, output names the completed phase
+      and the next phase by number, with a short outcome summary, matching
+      the example in Required Protocol item 5.
+    failure_modes:
+      - Silent transitions between phases.
+      - Phase numbers used in headings but no completion/handoff line.
+    priority: low
+    applies_when: "multi-turn interview spanning phase boundaries"
+    contract_ref: "agent §Required Protocol item 5"
+
+  - expectation_id: persona-driven-tool-recommendation
+    summary: Tool recommendation reflects the persona captured in Phase 4.
+    signal: `recommended_tool` value matches the persona — `copilot-studio`
+      for Citizen Developer / MCS, `azure-ai-foundry` for Pro-Code.
+    pass_criteria: |
+      Reported `recommended_tool` and the contents of
+      `{agent-name}-tool-recommendations.md` align with the persona stated in
+      the Phase 4 interview answers: Citizen Developer/MCS → `copilot-studio`;
+      Pro-Code/Azure AI Foundry → `azure-ai-foundry`. Comparison table from
+      the template is preserved.
+    failure_modes:
+      - Recommends Azure AI Foundry for a stated Citizen Developer persona.
+      - Recommendation absent or omits the rationale section from the template.
+    priority: medium
+    applies_when: "Phase 7, after Phase 4 persona is established"
+    contract_ref: "agent §Target Personas + §Phase 7 › Tool Recommendations Document"
+
+  - expectation_id: no-source-modifications
+    summary: Dataset creation does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Only `data/evaluation/` artifacts are modified.
+    failure_modes:
+      - Edits `package.json` to add an eval script.
+      - Modifies application source files as part of "wiring up" the dataset.
+    priority: medium
+    contract_ref: "agent scope (Output Artifacts confined to `data/evaluation/`)"

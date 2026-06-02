@@ -1,0 +1,20 @@
+stimuli:
+  - name: product-manager-advisor-class-recipe
+    prompt: |
+      I want to add "dark mode" to my app. Help me draft a small backlog (epic + 2-3 stories) with acceptance criteria. Write the drafts under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(title|description|acceptance criteria|priority|label|story|epic)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

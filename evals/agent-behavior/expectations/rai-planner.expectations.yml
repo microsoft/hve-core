@@ -1,0 +1,116 @@
+# Bucket-A expectations for rai-planner
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: rai-planner
+class: planner-coach
+agent_file: .github/agents/rai-planning/rai-planner.agent.md
+stimulus_file: evals/agent-behavior/stimuli/rai-planner.yml
+latest_result: evals/results/agent-matrix/2026-05-28/rai-planner.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: state-file-location
+    summary: Planning state is written under the RAI-plans tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/rai-plans/<project-slug>/`.
+    pass_criteria: |
+      The response reports a planning-state path beginning with
+      `.copilot-tracking/rai-plans/` with a project-slug subfolder, satisfying
+      the `tracking-file-write` grader (`.copilot-tracking/rai-plans`).
+    failure_modes:
+      - State written to `~/.copilot/session-state/<UUID>/plan.md` or another
+        absolute path (current 2026-05-28 output fails `tracking-file-write`
+        this way).
+      - State written to a temp directory.
+      - No state location reported.
+    priority: high
+    contract_ref: "agent §State Management (state under `.copilot-tracking/rai-plans/{project-slug}/`)"
+
+  - expectation_id: phase-markers-present
+    summary: Phases are listed with markdown headers or numbered/Phase markers.
+    signal: Output uses `##`/`###` headings or `Phase N`/`Step N`/`N.` line starts.
+    pass_criteria: |
+      The six phases are presented using line-start structural markers
+      (`##`, `###`, `Phase N`, `Step N`, or `N.`), satisfying the
+      `phase-marker-present` grader.
+    failure_modes:
+      - Phases listed only inside a table or inline prose with no line-start
+        markers (current 2026-05-28 output fails `phase-marker-present`).
+    priority: high
+    contract_ref: "agent §Orchestration (six-phase workflow presentation)"
+
+  - expectation_id: six-phase-sequence
+    summary: The six RAI phases are enumerated in the documented order.
+    signal: Output names Scoping, Risk Classification, Standards Mapping, Security Model, Impact Assessment, Review/Handoff.
+    pass_criteria: |
+      The response lists the documented six phases in order: Scoping → Risk
+      Classification → Standards Mapping → Security Model → Impact Assessment →
+      Review/Handoff.
+    failure_modes:
+      - Fewer than six phases listed.
+      - Phases reordered or relabeled away from the documented sequence.
+    priority: high
+    contract_ref: "agent §Phases (six-phase RAI workflow)"
+
+  - expectation_id: rai-caution-block
+    summary: Response includes the verbatim RAI CAUTION disclaimer block.
+    signal: Output contains the documented RAI caution/disclaimer language.
+    pass_criteria: |
+      The session opens with the RAI CAUTION block reproduced verbatim,
+      acknowledging professional review and the advisory nature of the output.
+    failure_modes:
+      - Caution block omitted.
+      - Caution block paraphrased rather than reproduced verbatim.
+    priority: medium
+    contract_ref: "agent §RAI CAUTION (verbatim disclaimer block)"
+
+  - expectation_id: nist-framework-default
+    summary: Assessment defaults to NIST AI RMF 1.0 as the standards framework.
+    signal: Output references NIST AI RMF 1.0 as the default framework.
+    pass_criteria: |
+      When no framework is specified, the response defaults to NIST AI RMF 1.0
+      for the standards-mapping phase.
+    failure_modes:
+      - A different framework substituted with no rationale.
+      - No framework named.
+    priority: medium
+    applies_when: "no framework specified in the stimulus"
+    contract_ref: "agent §Standards Mapping (NIST AI RMF 1.0 default)"
+
+  - expectation_id: bounded-questions-per-turn
+    summary: Each turn asks no more than the documented question ceiling with checklist markers.
+    signal: Output asks up to seven questions using ❓/✅/❌ checklist markers.
+    pass_criteria: |
+      Per-turn questioning stays within the documented ceiling (up to seven)
+      and uses the emoji checklist convention (❓ open, ✅ answered, ❌ skipped).
+    failure_modes:
+      - More than seven questions asked in one turn.
+      - Plain questions with no checklist markers.
+    priority: low
+    contract_ref: "agent §Question Cadence (up to 7 per turn, emoji checklists)"
+
+  - expectation_id: no-source-edit
+    summary: RAI planning does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to `.copilot-tracking/rai-plans/`.
+    failure_modes:
+      - Planning leads to editing the AI feature's source code.
+    priority: medium
+    contract_ref: "agent scope (writes confined to `.copilot-tracking/rai-plans/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the RAI feature from the stimulus.
+    signal: Stimulus-derived terms appear in the response body.
+    pass_criteria: |
+      For the `rai-planner-class-recipe` stimulus, the response addresses an
+      AI feature that auto-generates customer support replies and frames the
+      phases around that feature rather than generic placeholder content.
+    failure_modes:
+      - Off-topic plan with no reference to the support-reply feature.
+      - Generic template with placeholder feature names.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"
