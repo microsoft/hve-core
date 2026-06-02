@@ -92,9 +92,7 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "private_key",
         "high",
-        re.compile(
-            r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"
-        ),
+        re.compile(r"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----"),
     ),
     Rule(
         "email_address",
@@ -134,9 +132,7 @@ def _redact(match: str) -> str:
     return f"{stripped[:4]}***{stripped[-2:]}"
 
 
-def scan_text(
-    text: str, source: str, *, public: bool = False
-) -> list[dict[str, Any]]:
+def scan_text(text: str, source: str, *, public: bool = False) -> list[dict[str, Any]]:
     """Return a list of finding dicts for ``text`` attributed to ``source``.
 
     When ``public`` is true, internal-URL rules are included; in a private
@@ -165,8 +161,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="scan_sensitive_content",
         description=(
-            "Scan ADR/handoff content for high-confidence secrets and "
-            "internal URLs before durable or external writes."
+            "Scan ADR/handoff content for high-confidence secrets and internal URLs before durable or external writes."
         ),
     )
     parser.add_argument(

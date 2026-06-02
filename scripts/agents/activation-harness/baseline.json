@@ -2,7 +2,7 @@
   "CleanWorkspace": {
     "ScenarioName": "CleanWorkspace",
     "AgentBytes": 10096,
-    "ColdStartBytes": 38409,
+    "ColdStartBytes": 43905,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -10,19 +10,19 @@
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
-        "Bytes": 24132
+        "Bytes": 29628
       },
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
         "Bytes": 4181
       }
     ],
-    "Hash": "9fd83b5a9113bfa50d1e8bd4cc24808331bfc038194468c96d8bdf5e11e12ad8"
+    "Hash": "13b05f44627ca2da701c1e2fd2a953141842dbf41bbbb35dec3a50b3dbcd6d74"
   },
   "SteadyState": {
     "ScenarioName": "SteadyState",
     "AgentBytes": 10096,
-    "ColdStartBytes": 78751,
+    "ColdStartBytes": 88405,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -30,31 +30,31 @@
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
-        "Bytes": 8909
+        "Bytes": 9572
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
-        "Bytes": 15335
+        "Bytes": 17477
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
-        "Bytes": 24132
+        "Bytes": 29628
       },
       {
         "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
-        "Bytes": 16098
+        "Bytes": 17451
       },
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
         "Bytes": 4181
       }
     ],
-    "Hash": "8efde478be60b8ea9ce7c4d7f380f7f6a3d2d623170cfa0ed66ec15b003ce4fb"
+    "Hash": "cdba507819d1fc9e5d6809ae1216c924391aebc6e42e3211f3d38445b75230a7"
   },
   "GovernEntry": {
     "ScenarioName": "GovernEntry",
     "AgentBytes": 10096,
-    "ColdStartBytes": 92147,
+    "ColdStartBytes": 102524,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -62,19 +62,19 @@
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
-        "Bytes": 8909
+        "Bytes": 9572
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
-        "Bytes": 15335
+        "Bytes": 17477
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
-        "Bytes": 24132
+        "Bytes": 29628
       },
       {
         "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
-        "Bytes": 16098
+        "Bytes": 17451
       },
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
@@ -82,15 +82,15 @@
       },
       {
         "Path": ".github/skills/project-planning/adr-author/SKILL.md",
-        "Bytes": 13396
+        "Bytes": 14119
       }
     ],
-    "Hash": "24970f60a8fa20ed7f3f97d6e51464420f8ee9ee1972d638c1304fa1ef30f84e"
+    "Hash": "201491e5e4924c5a23af4270d7ff2f5d0fd817c1206de78ba23dd24054bfd340"
   },
   "AdoptTemplate": {
     "ScenarioName": "AdoptTemplate",
     "AgentBytes": 10096,
-    "ColdStartBytes": 99141,
+    "ColdStartBytes": 109518,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -98,19 +98,19 @@
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
-        "Bytes": 8909
+        "Bytes": 9572
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
-        "Bytes": 15335
+        "Bytes": 17477
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
-        "Bytes": 24132
+        "Bytes": 29628
       },
       {
         "Path": ".github/instructions/project-planning/adr-standards.instructions.md",
-        "Bytes": 16098
+        "Bytes": 17451
       },
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
@@ -122,9 +122,9 @@
       },
       {
         "Path": ".github/skills/project-planning/adr-author/SKILL.md",
-        "Bytes": 13396
+        "Bytes": 14119
       }
     ],
-    "Hash": "2293d95cd4862e6d8fabaa31ecaf5b303b2fc9826c8ea2faf04e205c7bc17d1c"
+    "Hash": "13928b7033ddf7614cf395bb487f204b48abfecce5367a3dd0b2412487f69abd"
   }
 }
