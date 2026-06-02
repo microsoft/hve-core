@@ -713,6 +713,10 @@ Issue bodies must follow a consistent structure to ensure clarity and completene
 
     [1-5 sentence description of the issue's purpose and scope]
 
+    **Children:** *(Feature issues only)*
+
+    - #[child_issue_number] [brief title]
+
     **Acceptance Criteria:**
 
     - [ ] [Criterion 1]
@@ -730,6 +734,7 @@ Issue bodies must follow a consistent structure to ensure clarity and completene
 * Every Create operation must include an **Acceptance Criteria** section with at least one checkbox item. Acceptance criteria define the conditions that must be met for the issue to be considered complete. The term "Definition of Done" (DoD) is an acceptable alternative when it better fits the team's conventions.
 * Acceptance criteria should be specific, measurable, and verifiable — not vague aspirations.
 * Feature-type issues (parent/grouping issues) should have acceptance criteria that summarize the aggregate outcomes of their children, not duplicate individual task criteria.
+* Feature-type issues must include a **Children** section listing linked sub-issues by number and title, placed after the description and before **Acceptance Criteria**. Omit the section entirely for Task and Bug issues that have no children.
 * Task-type issues (leaf work items) should have acceptance criteria that describe the concrete deliverable or state change.
 * The **Related** section captures structural relationships not expressed through GitHub's sub-issue mechanism:
   * `Parent:` references the parent issue when the issue is a sub-issue.
