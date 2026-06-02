@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/microsoft/hve-core/schemas/adr-consistency-rules.schema.json",
+  "title": "ADR Consistency Rule Registry Schema",
+  "description": "Schema for the ADR consistency rule registry consumed by the PowerShell validator. Each rule names a check function dispatched by the implementation to produce findings against ADR markdown under docs/planning/adrs/.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered list of consistency rules. The validator imports this array and dispatches to the named check function.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "scope", "check", "message"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^ADR-CONSISTENCY-\\d{3}$",
+            "description": "Stable rule identifier in the form ADR-CONSISTENCY-NNN (zero-padded three-digit suffix)."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warn"],
+            "description": "Violation severity. 'error' fails the Govern exit gate; 'warn' surfaces a remediation hint without blocking."
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["frontmatter", "body", "cross-region"],
+            "description": "Region of the ADR document the check inspects."
+          },
+          "check": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Kebab-case name of the check function dispatched by the validator. Must resolve to a callable in PowerShell (Test-<PascalCase>)."
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Remediation-oriented message template surfaced to the author. May contain {placeholder} tokens substituted by the validator."
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional human-readable summary of the invariant the rule enforces."
+          }
+        }
+      }
+    }
+  }
+}

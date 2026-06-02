@@ -1,0 +1,167 @@
+name: ADR Consistency Validation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on ADR consistency violations'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only run validation when ADR markdown files changed'
+        required: false
+        type: boolean
+        default: false
+      upload-sarif:
+        description: 'Whether to upload SARIF results to Security tab'
+        required: false
+        type: boolean
+        default: false
+      upload-artifact:
+        description: 'Whether to upload validation results as artifact'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    name: Detect ADR Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      has-adr-changes: ${{ steps.detect.outputs.has-adr-changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check ADR changes
+        id: detect
+        shell: pwsh
+        run: |
+          if ('${{ inputs.changed-files-only }}' -ne 'true') {
+            'has-adr-changes=true' >> $env:GITHUB_OUTPUT
+            Write-Output 'ADR validation requested for all configured ADR files.'
+          } else {
+            $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+            $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- docs/planning/adrs |
+              Where-Object { $_ -match '^docs/planning/adrs/.+\.md$' })
+
+            if ($changed.Count -gt 0) {
+              'has-adr-changes=true' >> $env:GITHUB_OUTPUT
+              Write-Output "Detected $($changed.Count) changed ADR file(s)"
+              $changed | ForEach-Object { Write-Output "- $_" }
+            } else {
+              'has-adr-changes=false' >> $env:GITHUB_OUTPUT
+              Write-Output 'No ADR markdown changes detected under docs/planning/adrs'
+            }
+          }
+
+  report-skipped:
+    name: Report Skipped ADR Validation
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: inputs.changed-files-only && needs.detect-changes.outputs.has-adr-changes != 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Report skipped validation
+        shell: pwsh
+        run: |
+          @(
+            '## ADR Consistency Validation',
+            '',
+            'No ADR markdown changes detected under docs/planning/adrs. Validation skipped.'
+          ) -join "`n" >> $env:GITHUB_STEP_SUMMARY
+
+  validate:
+    name: Validate ADR Consistency
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-adr-changes == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShell-Yaml | Where-Object { $_.Version -eq '0.4.7' })) {
+            Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+          }
+
+      - name: Run ADR consistency validation
+        shell: pwsh
+        continue-on-error: ${{ inputs.soft-fail }}
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $baseBranch = if ($env:GITHUB_BASE_REF) { "origin/$env:GITHUB_BASE_REF" } else { 'origin/main' }
+          $params = @{
+            Paths = @('docs/planning/adrs')
+            BaseBranch = $baseBranch
+            OutputPath = 'logs/adr-consistency-results.json'
+          }
+
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+
+          if ('${{ inputs.upload-sarif }}' -eq 'true') {
+            $params['SarifOutputPath'] = 'logs/adr-consistency-results.sarif'
+          }
+
+          & scripts/linting/Validate-AdrConsistency.ps1 @params
+
+      - name: Upload SARIF handoff
+        if: inputs.upload-sarif && always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: adr-consistency-sarif
+          path: logs/adr-consistency-results.sarif
+          retention-days: 1
+          if-no-files-found: ignore
+
+      - name: Upload validation report
+        if: inputs.upload-artifact && always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: adr-consistency-results
+          path: |
+            logs/adr-consistency-results.json
+            logs/adr-consistency-results.sarif
+          retention-days: 90
+          if-no-files-found: ignore
+
+  upload-sarif:
+    name: Upload ADR SARIF
+    runs-on: ubuntu-latest
+    needs: validate
+    if: inputs.upload-sarif && always() && needs.validate.result != 'skipped'
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    steps:
+      - name: Download SARIF handoff
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v6.0.0
+        with:
+          name: adr-consistency-sarif
+          path: logs
+
+      - name: Upload SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          sarif_file: logs/adr-consistency-results.sarif
+          category: adr-consistency
+        continue-on-error: true

@@ -77,6 +77,12 @@
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "label": { "type": "string", "minLength": 1 },
+              "scope": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "minItems": 1,
+                "description": "Glob patterns disambiguating where this disclaimer applies"
+              },
               "applies-to": {
                 "type": "array",
                 "items": { "type": "string", "minLength": 1 },

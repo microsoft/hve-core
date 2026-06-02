@@ -20,6 +20,8 @@ Assess the target repository's current supply chain security posture against the
 | 5 | Get-VerifiedDownload.ps1             | Verified download utility with SHA-256 hash validation for external tool acquisition        |
 | 6 | Security workflow orchestration      | Coordinated execution of multiple security scans with unified reporting                     |
 
+**Critical incident prompt:** Recall the most recent near-miss or incident in this repository involving an unpinned or stale GitHub Action, an unverified external tool download, or a Python dependency CVE — which of the controls in this batch would have detected or prevented it, and which gap let it through?
+
 ### physical-ai-toolchain Unique (10)
 
 | #  | Capability                            | Implementation                                                                               |
@@ -34,6 +36,8 @@ Assess the target repository's current supply chain security posture against the
 | 14 | Comprehensive threat model            | Structured threat model document with STRIDE analysis                                        |
 | 15 | release-please pipeline               | Automated release management with conventional commits                                       |
 | 16 | Vulnerability SLA                     | Defined service-level agreements for vulnerability remediation timelines                     |
+
+**Critical incident prompt:** Describe the most recent time a downstream consumer, auditor, or release reviewer questioned a release's provenance, signature, SBOM contents, threat model coverage, or vulnerability-remediation timeline — which of the controls in this batch would have provided sufficient evidence or shortened the response?
 
 ### Shared (11)
 
@@ -51,6 +55,8 @@ Assess the target repository's current supply chain security posture against the
 | 26 | SECURITY.md          | Security policy document with vulnerability reporting process            |
 | 27 | CODEOWNERS           | Code ownership enforcement for required reviews                          |
 
+**Critical incident prompt:** Recall the most recent leaked secret, unreviewed dependency change, over-privileged workflow token, CodeQL finding, or unpatched CVE that affected this repository — which of the controls in this batch caught it, would have caught it, or shortened the time to remediate?
+
 ## Assessment Protocol
 
 For each of the 27 capabilities, evaluate the target repository:
@@ -64,7 +70,7 @@ For each of the 27 capabilities, evaluate the target repository:
 3. **Document**: Record evidence (file paths, workflow names, configuration details) for each assessment.
 4. **Verify**: For ✅ and ⚠️ items, confirm the implementation matches the reference patterns from hve-core or physical-ai-toolchain.
 
-Ask the user to confirm or correct assessment findings in batches of 5-7 capabilities per turn.
+Ask the user to confirm or correct assessment findings in batches of 5-7 capabilities per turn. See the human-review exit reminder for Phase 2 in `sssc-planner.agent.md` before advancing to Phase 3.
 
 ## Output
 
@@ -91,6 +97,8 @@ Structure the output as:
 
 ### Shared Capabilities
 {per-capability assessment}
+
+> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated by a qualified human reviewer before use.
 ```
 
 Update `state.json`:
