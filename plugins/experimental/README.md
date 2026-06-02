@@ -23,15 +23,17 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Prompts
 
-| Name              | Description                                                                                 |
-|-------------------|---------------------------------------------------------------------------------------------|
-| **cspell-config** | Creates or updates the project cspell configuration with project-specific words and ignores |
+| Name               | Description                                                                                          |
+|--------------------|------------------------------------------------------------------------------------------------------|
+| **cspell-config**  | Creates or updates the project cspell configuration with project-specific words and ignores          |
+| **graph-research** | Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting |
 
 ### Instructions
 
 | Name                                 | Description                                                                                                                                                                                                                                                 |
 |--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **experimental/experiment-designer** | MVE domain knowledge and coaching conventions for the Experiment Designer agent                                                                                                                                                                             |
+| **experimental/graphify**            | Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow                                                                                                                                                                    |
 | **experimental/pptx**                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
 | **shared/hve-core-location**         | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
@@ -63,15 +65,17 @@ copilot plugin install experimental@hve-core
 
 ## Commands
 
-| Command       | Description                                                                                 |
-|---------------|---------------------------------------------------------------------------------------------|
-| cspell-config | Creates or updates the project cspell configuration with project-specific words and ignores |
+| Command        | Description                                                                                                                                 |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| cspell-config  | Creates or updates the project cspell configuration with project-specific words and ignores                                                 |
+| graph-research | Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting - Brought to you by microsoft/hve-core |
 
 ## Instructions
 
 | Instruction                      | Description                                                                                                                                                                                                                                                 |
 |----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | experiment-designer.instructions | MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core                                                                                                                                      |
+| graphify.instructions            | Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow - Brought to you by microsoft/hve-core                                                                                                                             |
 | pptx.instructions                | Shared conventions for PowerPoint Builder agent, subagent, and powerpoint skill                                                                                                                                                                             |
 | hve-core-location.instructions   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
