@@ -154,7 +154,7 @@ jobs:
       security-events: write  # Required for SARIF upload to Security tab
     steps:
       - name: Download SARIF handoff
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v6.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v6.0.0
         with:
           name: adr-consistency-sarif
           path: logs
