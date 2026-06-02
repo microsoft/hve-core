@@ -205,7 +205,10 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 auto_allow.append(raw.expanduser().resolve().parent)
             except OSError:
-                pass
+                # Unresolvable path (e.g. broken symlink); skip adding its
+                # parent to the allowlist and rely on safe_resolve below to
+                # reject it explicitly.
+                continue
         allow_roots = [
             *auto_allow,
             *(p.expanduser().resolve() for p in args.allow_root),

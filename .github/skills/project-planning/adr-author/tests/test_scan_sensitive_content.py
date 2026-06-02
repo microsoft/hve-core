@@ -35,7 +35,7 @@ class TestScanHighConfidenceTruePositives:
             ("github_token", "ghp_" + "a" * 36),
             ("github_token", "github_pat_" + "A1b2C3d4E5f6G7h8I9j0K1"),
             ("aws_access_key", "AKIAIOSFODNN7EXAMPLE"),
-            ("google_api_key", "AIza" + "B" * 35),
+            ("google_api_key", "AIza" + "B" * 35),  # gitleaks:allow
             ("slack_token", "xoxb-123456789012-abcdefABCDEF"),
             ("openai_api_key", "sk-" + "X" * 40),
             (
