@@ -7,6 +7,7 @@ agents:
   - Prompt Evaluator
   - Prompt Updater
   - Researcher Subagent
+  - Vally Test Author
 handoffs:
   - label: "💡 Update/Create"
     agent: Prompt Builder
@@ -115,7 +116,7 @@ Run `Prompt Evaluator` as a subagent with `runSubagent` or `task`, providing the
 **Based on objectives, gaps, outstanding requirements and issues:**
 
 * Move on to Phase 2 with the findings from the *evaluation-log* and the user's requirements, then iterate on research.
-* If no more modifications are required, finalize your responses following User Conversation Guidelines and respond to the user with important updates, any outstanding issues not yet addressed, and suggestions for next steps.
+* If no more modifications are required, finalize your responses following User Conversation Guidelines and respond to the user with important updates, any outstanding issues not yet addressed, and suggestions for next steps. Include the Handoff Status table from the Handoff Status section to surface lint and eval gate outcomes.
 
 ### Phase 2: Prompt File(s) Research
 
@@ -158,6 +159,8 @@ Finalize the primary research document:
 
 #### Step 2: Iterate Parallel Prompt Updater Subagents
 
+When a target prompt file already exists in the repo, determine intent (update the existing file or author a new variant) and communicate that choice to the user before running `Prompt Updater`.
+
 Run `Prompt Updater` as a subagent using `runSubagent` or `task`, and parallelize calls when prompt files are independent, providing these inputs:
 
 * Prompt file(s) to create or modify.
@@ -191,6 +194,22 @@ When finishing, and after all Phases have been completed and repeated until *eva
 
 * Delete all sandbox file(s) and folder(s) unless otherwise specified by the user.
 * Do not respond with your final output until all sandboxes for this request are cleaned up.
+
+## Handoff Status
+
+When responding to the user after all phases complete, include a Handoff Status table that surfaces lint and eval gate outcomes side by side. The eval columns apply when the workflow created or modified a parent agent file (`.github/agents/**/*.agent.md` without `user-invocable: false`); otherwise mark them `n/a`.
+
+| Gate                              | Status                  | Notes                                                                                |
+|-----------------------------------|-------------------------|--------------------------------------------------------------------------------------|
+| `npm run lint:md`                 | `pass` / `fail`         | Markdown linting on modified prompt and agent files.                                 |
+| `npm run lint:ai-artifacts`       | `pass` / `fail`         | Prompt-engineering artifact lint.                                                    |
+| Surface signature regenerated     | `pass` / `fail` / `n/a` | `pwsh scripts/evals/New-AgentSurfaceSignatures.ps1` produced an entry for the agent. |
+| Stimulus partial authored         | `pass` / `fail` / `n/a` | `evals/agent-behavior/stimuli/<slug>.yml` exists and uses the class recipe.          |
+| Eval spec coverage                | `pass` / `fail` / `n/a` | `pwsh scripts/evals/Test-EvalSpec.ps1 -NewAgentsOnly` exits 0.                       |
+| `Prompt Tester` verdict           | `pass` / `fail` / `n/a` | Subagent run on the new stimulus.                                                    |
+| `Prompt Evaluator` verdict        | `pass` / `fail` / `n/a` | Subagent run on the resulting transcript.                                            |
+
+Block the final handoff until every applicable row reports `pass`.
 
 ## User Conversation Guidelines
 
