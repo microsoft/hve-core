@@ -1,0 +1,76 @@
+{
+  "rules": [
+    {
+      "id": "ADR-CONSISTENCY-001",
+      "severity": "error",
+      "scope": "cross-region",
+      "check": "affected-components-mirror",
+      "message": "Frontmatter 'affected_components' and body '## Affected Components' bullet list must be set-equal. Frontmatter-only: {frontmatter_only}. Body-only: {body_only}. Re-derive the body section from the frontmatter array.",
+      "description": "Asserts the frontmatter affected_components array and the body Affected Components H2 bullet list are set-equal."
+    },
+    {
+      "id": "ADR-CONSISTENCY-002",
+      "severity": "error",
+      "scope": "frontmatter",
+      "check": "success-criteria-source-resolves",
+      "message": "success_criteria[{index}].source '{source}' is path-shaped but does not resolve to an existing file relative to the repository root. Update the path or replace it with a non-path citation.",
+      "description": "Every success_criteria[].source that looks like a repo-relative path must resolve to an existing file."
+    },
+    {
+      "id": "ADR-CONSISTENCY-003",
+      "severity": "error",
+      "scope": "body",
+      "check": "state-placeholder-resolved",
+      "message": "Body contains unresolved session-state references. Found: {tokens}. Govern must substitute every '{{state.<path>}}' placeholder before write, and any 'autonomyTier: full|partial|manual' narrative claim must match the resolved state value.",
+      "description": "Forbids unresolved {{state.*}} placeholders and ambiguous autonomyTier narrative claims in the rendered ADR body."
+    },
+    {
+      "id": "ADR-CONSISTENCY-004",
+      "severity": "error",
+      "scope": "body",
+      "check": "peer-planner-names",
+      "message": "Description and Decision Drivers must reference canonical peer-planner names only (Security Planner, RAI Planner, SSSC Planner, ADR Planner). Found non-canonical labels: {labels}. BRD, PRD, and RPI are upstream artifacts or workflows, not peer planners.",
+      "description": "Restricts peer-planner labels to the canonical PEER_PLANNERS set and flags BRD/PRD/RPI when used as peer-planner names."
+    },
+    {
+      "id": "ADR-CONSISTENCY-005",
+      "severity": "error",
+      "scope": "body",
+      "check": "drivers-matrix-cardinality",
+      "message": "Decision Drivers and Decision Outcome matrix must have a 1:1 mapping. Drivers without a matrix row: {drivers_only}. Matrix rows without a driver bullet: {matrix_only}.",
+      "description": "Enforces that every Decision Driver bullet has exactly one corresponding row in the Decision Outcome matrix and vice versa."
+    },
+    {
+      "id": "ADR-CONSISTENCY-006",
+      "severity": "error",
+      "scope": "body",
+      "check": "risks-consequences-pairing",
+      "message": "Every 'Bad consequences' risk-shaped bullet must have a paired row in '## Risks and Mitigations'. Unpaired risks: {unpaired}.",
+      "description": "Asserts that risk-shaped Bad consequences bullets are mirrored as rows in the Risks and Mitigations table."
+    },
+    {
+      "id": "ADR-CONSISTENCY-007",
+      "severity": "warn",
+      "scope": "body",
+      "check": "numeric-claim-generalized",
+      "message": "Specific numeric claim '{claim}' in {section} is unverified. Generalize the figure (e.g. 'a focused pytest suite') or cite a source that pins the value.",
+      "description": "Flags unverified specific numeric claims in Confirmation, Consequences, and More Information so authors generalize or cite them. Version strings such as 'v7.0' or '-Version 7.0' are excluded to avoid false positives on tooling and runtime version references."
+    },
+    {
+      "id": "ADR-CONSISTENCY-008",
+      "severity": "error",
+      "scope": "frontmatter",
+      "check": "driver-trigger-map-complete",
+      "message": "Every Decision Driver must appear as a key in decisionMetadata.driverToTriggerMap. Missing keys: {missing}. Decide phase must reconcile drivers with ASR triggers before exit.",
+      "description": "Requires decisionMetadata.driverToTriggerMap to cover every Decision Driver so the driver-to-trigger axis stays reconciled."
+    },
+    {
+      "id": "ADR-CONSISTENCY-009",
+      "severity": "error",
+      "scope": "cross-region",
+      "check": "affected-components-cited",
+      "message": "Every affected_components entry must be cited at least once in '## Context' or '## More Information'. Uncited entries: {uncited}.",
+      "description": "Coverage check that every affected_components entry is referenced in Context or More Information body sections."
+    }
+  ]
+}
