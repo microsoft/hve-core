@@ -10,6 +10,7 @@
     "commands/hve-core/"
   ],
   "skills": [
+    "skills/hve-core/",
     "skills/shared/"
   ]
 }

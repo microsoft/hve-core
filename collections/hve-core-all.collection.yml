@@ -68,6 +68,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental
@@ -218,6 +221,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/doc-ops-update.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/evals-import.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit.prompt.md
@@ -247,6 +253,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/vally-test-write.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/jira/jira-discover-issues.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
@@ -604,6 +613,9 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/vally-tests
+  kind: skill
+  maturity: experimental
 - path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/jira/jira
