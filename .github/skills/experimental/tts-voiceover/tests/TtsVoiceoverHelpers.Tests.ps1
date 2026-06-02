@@ -112,12 +112,12 @@ Describe 'Get-VenvPythonPath' -Tag 'Unit' {
         It 'Joins VenvDir with correct subdirectory' {
             $venvDir = Join-Path $TestDrive 'my-venv'
             $result = Get-VenvPythonPath -VenvDir $venvDir
-            if ($IsWindows) {
-                $expectedSuffix = Join-Path 'Scripts' 'python.exe'
-                $result | Should -BeLike "*$expectedSuffix"
+            $expectedSuffix = if ($IsWindows) {
+                Join-Path 'Scripts' 'python.exe'
             } else {
-                $result | Should -BeLike '*bin/python'
+                Join-Path 'bin' 'python'
             }
+            $result | Should -BeLike ("*$expectedSuffix")
         }
 
         It 'Handles trailing separator in VenvDir' {

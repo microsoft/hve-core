@@ -32,8 +32,9 @@ array position:
 
 ## Usage
 
+Run from the skill root:
+
 ```bash
-cd .github/skills/experimental/powerpoint
 uv sync --group fuzz
 uv run python tests/fuzz_harness.py tests/corpus/
 ```

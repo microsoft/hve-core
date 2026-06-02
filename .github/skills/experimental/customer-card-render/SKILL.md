@@ -21,9 +21,9 @@ Keeping these concerns separate means:
 
 * Customer-card mapping logic stays independent from general PowerPoint capabilities.
 * The skill can be included in collections independently.
-* Layout primitives, `Invoke-PptxPipeline.ps1`, theming, and validation behavior are not reimplemented here.
+* Layout primitives, build orchestration, theming, and validation behavior are not reimplemented here.
 
-For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpoint/SKILL.md).
+For full PowerPoint pipeline documentation, load the sibling `powerpoint` skill.
 
 ## Prerequisites
 
@@ -41,12 +41,12 @@ For full PowerPoint pipeline documentation, see [powerpoint/SKILL.md](../powerpo
   pip install uv
   ```
 
-* The experimental `powerpoint` skill at `.github/skills/experimental/powerpoint/` for the `Invoke-PptxPipeline.ps1` build step
+* The experimental `powerpoint` skill (loaded as a sibling skill) provides the build pipeline used in Step 2
 
 ## Directory Structure
 
 ```text
-.github/skills/experimental/customer-card-render/
+<skill-root>/
 ├── SKILL.md
 ├── pyproject.toml
 ├── references/
@@ -93,8 +93,10 @@ Cards are ordered by artifact type (Vision → Problem → Scenario → Use Case
 
 ### Step 1: Generate slide YAML from canonical markdown
 
+Run from the skill root:
+
 ```bash
-python .github/skills/experimental/customer-card-render/scripts/generate_cards.py \
+uv run python scripts/generate_cards.py \
   --canonical-dir .copilot-tracking/dt/<project-slug>/canonical \
   --output-dir .copilot-tracking/dt/<project-slug>/render/content
 ```
@@ -113,14 +115,15 @@ For the section-to-field mapping contract and Use Case 3-slide layout details, s
 
 ### Step 2: Build PPTX using the PowerPoint skill pipeline
 
-```powershell
-./.github/skills/experimental/powerpoint/scripts/Invoke-PptxPipeline.ps1 -Action Build `
-  -ContentDir .copilot-tracking/dt/<project-slug>/render/content `
-  -StylePath .copilot-tracking/dt/<project-slug>/render/content/global/style.yaml `
-  -OutputPath .copilot-tracking/dt/<project-slug>/render/output/customer-cards.pptx
-```
+Load the sibling `powerpoint` skill and invoke its build pipeline with these parameters:
 
-The PowerShell orchestrator manages virtual environment setup and dependency installation automatically via `uv sync`. See [powerpoint/SKILL.md](../powerpoint/SKILL.md) for the full `Invoke-PptxPipeline.ps1` parameter reference, template usage, validation, and export options.
+| Parameter    | Value                                                                          |
+|--------------|--------------------------------------------------------------------------------|
+| `ContentDir` | `.copilot-tracking/dt/<project-slug>/render/content`                           |
+| `StylePath`  | `.copilot-tracking/dt/<project-slug>/render/content/global/style.yaml`         |
+| `OutputPath` | `.copilot-tracking/dt/<project-slug>/render/output/customer-cards.pptx`        |
+
+The powerpoint skill's orchestrator manages virtual environment setup and dependency installation automatically via `uv sync`. For the build command, parameter reference, template usage, validation, and export options, load the sibling `powerpoint` skill.
 
 ## DT Coach Integration
 
@@ -130,8 +133,9 @@ Canonical artifacts are produced by the DT coach and live under `.copilot-tracki
 
 ## Running Tests
 
+Run from the skill root:
+
 ```bash
-cd .github/skills/experimental/customer-card-render
 uv sync --group dev
 uv run pytest tests/
 ```
@@ -158,7 +162,7 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 | Python not found by uv          | No Python 3.11+ on PATH                    | Run `uv python install 3.11`                                                             |
 | Template not found              | `--canonical-dir` contains unknown type    | Check frontmatter `type:` field against supported artifact types                         |
 | Empty output directory          | No canonical markdown files found          | Confirm `--canonical-dir` path and that files have `---` frontmatter                     |
-| PPTX build fails after generate | PowerPoint skill missing or path incorrect | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/`          |
+| PPTX build fails after generate | sibling `powerpoint` skill not loaded      | Load the sibling `powerpoint` skill and re-run the build pipeline from Step 2            |
 
 > Brought to you by microsoft/hve-core
 
