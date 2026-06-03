@@ -145,7 +145,9 @@ class TestAddNarrationTiming:
 
         assert captured, "etree.fromstring was never called"
         parser = captured[0]
-        assert parser is not None, "_add_narration_timing must pass a parser to etree.fromstring"
+        assert parser is not None, (
+            "_add_narration_timing must pass a parser to etree.fromstring"
+        )
         # lxml.etree.XMLParser does not expose resolve_entities as a readable
         # attribute, so verify the security property behaviourally: a parser
         # with resolve_entities=False must not expand entity references.
