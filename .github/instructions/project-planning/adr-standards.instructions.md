@@ -98,11 +98,11 @@ Chosen option: "{title of option 1}", because {justification. e.g., only option,
 
 The Y-Statement is a six-slot decision capture formula authored by Olaf Zimmermann and Uwe Zdun. The formula condenses an architectural decision into a single sentence covering use case, concern, chosen option, alternatives, target quality, and accepted downside.
 
-> Attribution: Olaf Zimmermann and Uwe Zdun. The six-slot formula is reproduced verbatim below from the published Y-Statement formulation.
+> Attribution: The Y-Statement concept originates with Olaf Zimmermann and Uwe Zdun. The six-slot template below is an original HVE rendering of that structure, not a reproduction of the published sentence.
 
 The six slots, in order, are:
 
-> In the context of (USE CASE), facing (CONCERN), we decided for (OPTION) and against (ALTERNATIVES), to achieve (QUALITY), accepting (DOWNSIDE).
+> For (USE CASE), given (CONCERN), choose (OPTION) rather than (ALTERNATIVES) to gain (QUALITY) while accepting (DOWNSIDE).
 
 Slot definitions:
 
