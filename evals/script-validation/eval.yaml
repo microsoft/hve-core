@@ -1,0 +1,87 @@
+name: script-validation
+description: >
+  Validate that agents correctly identify valid and invalid skill
+  structures when presented with file listings. Uses copilot-sdk
+  to test real agent reasoning about validation rules. Will migrate
+  to the mock executor when the deterministic plugin ships.
+type: capability
+config:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+environment: coding-standards
+
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: identify-valid-skill-structure
+    prompt: |
+      I have a skill directory with the following structure:
+      ```
+      my-skill/
+      ├── SKILL.md (contains frontmatter with name, description, license)
+      ├── references/
+      │   └── api-guide.md
+      └── scripts/
+          └── validate.py
+      ```
+      Does this follow valid skill structure conventions? What required
+      elements are present?
+    tags:
+      category: script-validation
+      script: skill-validation
+    graders:
+      - type: output-matches
+        name: identifies-valid-structure
+        config:
+          pattern: "(?i)valid|correct|proper|follows.*convention"
+      - type: output-matches
+        name: identifies-skill-md
+        config:
+          pattern: "(?i)SKILL\\.md|skill.entry|entrypoint"
+
+  - name: identify-missing-skill-md
+    prompt: |
+      I have a skill directory with this structure:
+      ```
+      broken-skill/
+      ├── README.md
+      ├── references/
+      │   └── guide.md
+      └── scripts/
+          └── run.py
+      ```
+      Is this a valid skill structure? What's missing?
+    tags:
+      category: script-validation
+      script: skill-validation
+    graders:
+      - type: output-matches
+        name: identifies-missing-skillmd
+        config:
+          pattern: "(?i)missing.*SKILL\\.md|no.*SKILL\\.md|SKILL\\.md.*required|SKILL\\.md.*missing"
+      - type: output-matches
+        name: identifies-invalid
+        config:
+          pattern: "(?i)invalid|not.*valid|missing.*required|incomplete"
+
+  - name: identify-frontmatter-issues
+    prompt: |
+      This SKILL.md file has the following frontmatter:
+      ```yaml
+      ---
+      name: my-tool
+      ---
+      ```
+      Is this frontmatter complete for a skill file? What fields
+      are missing according to skill conventions?
+    tags:
+      category: script-validation
+      script: frontmatter-validation
+    graders:
+      - type: output-matches
+        name: identifies-missing-description
+        config:
+          pattern: "(?i)description.*missing|missing.*description|need.*description|no.*description|description.*required|lacks.*description|without.*description|description.*absent|description.*not"

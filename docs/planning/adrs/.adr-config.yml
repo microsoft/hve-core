@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../scripts/linting/schemas/adr-config.schema.json
+project_slug: hve-core
+owner: HVE Core Maintainers
+default_status: proposed
+decision_id_format: NNNN
+template_source: .github/skills/project-planning/adr-author/templates/madr-v4.md
+last_decision_id: '0001'

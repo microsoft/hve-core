@@ -1,0 +1,35 @@
+paths:
+  evals: evals
+  results: evals/results
+
+environments:
+  security:
+    skills:
+      - .github/skills/security/owasp-top-10
+      - .github/skills/security/owasp-cicd
+  coding-standards:
+    skills:
+      - .github/skills/coding-standards/python-foundational
+  security-and-coding:
+    skills:
+      - .github/skills/security/owasp-top-10
+      - .github/skills/coding-standards/python-foundational
+
+suites:
+  skill-quality:
+    description: Evaluate skill behavior via copilot-sdk agent conversations
+    filter:
+      tags:
+        category: skill-quality
+
+  agent-behavior:
+    description: Evaluate agent routing and response quality
+    filter:
+      tags:
+        category: agent-behavior
+
+  script-validation:
+    description: Validate script correctness via copilot-sdk conversations
+    filter:
+      tags:
+        category: script-validation

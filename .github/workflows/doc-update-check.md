@@ -84,13 +84,13 @@ When creating issues, use the **bug-report** template structure from `.github/IS
 
 ### Bug-Report Template Field Mapping
 
-| Template Field     | Content                                                              |
-|--------------------|----------------------------------------------------------------------|
-| Component          | Always `Documentation`                                               |
-| Bug Description    | Describe what documentation is stale and what changed in code        |
-| Expected Behavior  | Describe what the documentation should say after the update          |
-| Steps to Reproduce | Reference the specific commit or PR that introduced the change       |
-| Additional Context | Link to the specific documentation file(s) and code file(s)         |
+| Template Field     | Content                                                        |
+|--------------------|----------------------------------------------------------------|
+| Component          | Always `Documentation`                                         |
+| Bug Description    | Describe what documentation is stale and what changed in code  |
+| Expected Behavior  | Describe what the documentation should say after the update    |
+| Steps to Reproduce | Reference the specific commit or PR that introduced the change |
+| Additional Context | Link to the specific documentation file(s) and code file(s)    |
 
 ## Constraints
 

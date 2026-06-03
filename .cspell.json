@@ -72,19 +72,39 @@
     "clusterfuzzlite",
     "collab",
     "easyops",
+    "evals",
+    "fetchone",
     "figjam",
+    "graphify",
+    "graphifyy",
     "hideable",
+    "idor",
     "learning",
     "parseable",
+    "skillmd",
     "smol",
     "subcat",
+    "uncited",
+    "vally",
     "whiteboarding",
     "wireframes",
+    "ystatement",
+    "sssc",
+    "SSSC",
+    "SLSA",
+    "Sigstore",
+    "cosign",
+    "scorecard",
     "ˈpræksɪs",
     "πρᾶξις"
   ],
   "reporters": [
     "default",
-    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
+    [
+      "@cspell/cspell-json-reporter",
+      {
+        "outFile": "logs/cspell-results.json"
+      }
+    ]
   ]
 }

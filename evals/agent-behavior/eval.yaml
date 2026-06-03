@@ -1,0 +1,64 @@
+name: agent-behavior
+description: >
+  Evaluate hve-core skill+agent behavior via copilot-sdk. Tests that the
+  combination of skills loaded in an agent context produces correct structure,
+  applies specialized perspectives, and stays within defined boundaries.
+  Note: Tests skill behavior under agent-style prompts rather than invoking
+  a specific .agent.md file directly (Vally does not yet support agent routing).
+type: capability
+config:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+environment: security-and-coding
+
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: pr-review-identifies-security
+    prompt: |
+      Review this code change for a Python web application:
+      ```python
+      @app.route('/user/<id>')
+      def get_user(id):
+          query = f"SELECT * FROM users WHERE id = {id}"
+          return db.execute(query).fetchone()
+      ```
+      Focus on security and code quality.
+    tags:
+      category: agent-behavior
+      agent: pr-review
+    graders:
+      - type: output-matches
+        name: identifies-sql-injection
+        config:
+          pattern: "(?i)\\bsql\\s*injection\\b|\\binjection\\b"
+      - type: output-matches
+        name: provides-remediation
+        config:
+          pattern: "(?i)parameterized|prepared|placeholder|bind"
+
+  - name: pr-review-identifies-error-handling
+    prompt: |
+      Review this code change:
+      ```python
+      def process_payment(amount):
+          response = requests.post(PAYMENT_API, json={"amount": amount})
+          return response.json()["transaction_id"]
+      ```
+      What issues do you see?
+    tags:
+      category: agent-behavior
+      agent: pr-review
+    graders:
+      - type: output-matches
+        name: identifies-missing-error-handling
+        config:
+          pattern: "(?i)error.handling|exception|try|status.code|timeout"
+      - type: output-matches
+        name: identifies-missing-validation
+        config:
+          # cspell:disable-next-line
+          pattern: "(?i)validat|check|verify|amount|negative"
