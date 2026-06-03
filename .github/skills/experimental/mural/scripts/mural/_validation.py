@@ -183,6 +183,24 @@ def _parse_pagination_cursor(token: str) -> dict[str, Any]:
     return decoded
 
 
+def _list_kwargs(args: argparse.Namespace) -> dict[str, int | None]:
+    limit = getattr(args, "limit", None)
+    page_size = getattr(args, "page_size", None)
+    max_pages = getattr(args, "max_pages", None)
+    for name, value in (
+        ("--limit", limit),
+        ("--page-size", page_size),
+        ("--max-pages", max_pages),
+    ):
+        if value is not None and value <= 0:
+            raise MuralValidationError(f"{name} must be positive")
+        if value is not None and value > _MAX_PAGE_SIZE * 100:
+            raise MuralValidationError(f"{name} exceeds safe maximum")
+    if page_size is not None and page_size > _MAX_PAGE_SIZE:
+        raise MuralValidationError(f"--page-size cannot exceed {_MAX_PAGE_SIZE}")
+    return {"limit": limit, "page_size": page_size, "max_pages": max_pages}
+
+
 # Defensive unwrap of {"value": <dict>} single-GET envelope; passthrough otherwise.
 def _unwrap_value_envelope(record: Any) -> Any:
     if (

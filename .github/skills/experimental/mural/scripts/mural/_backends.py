@@ -23,6 +23,7 @@ import contextlib
 import logging
 import os
 import pathlib
+import sys
 from typing import Protocol
 
 from . import (  # noqa: E402 - package siblings defined before this import runs
@@ -33,9 +34,19 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _NullBackend,
     _state,
 )
-from ._constants import _LINE_RE
+from ._constants import _LINE_RE, ENV_NONINTERACTIVE
 from ._credentials import _resolve_credential_file
 from ._exceptions import MuralError
+
+
+def _bootstrap_is_interactive() -> bool:
+    """Return True when `mural auth bootstrap` may prompt the operator."""
+    return (
+        sys.stdin.isatty()
+        and sys.stdout.isatty()
+        and os.environ.get(ENV_NONINTERACTIVE) != "1"
+        and os.environ.get("CI", "").lower() != "true"
+    )
 
 
 class CredentialBackend(Protocol):

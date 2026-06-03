@@ -9,14 +9,16 @@ token-refresh exchange, the core :func:`_authenticated_request` retry/backoff
 loop, response-body helpers, error-payload extraction, and the asset upload
 helpers (:func:`_create_asset_url`, :func:`_upload_to_sas`).
 
-Helpers that stay in the package ``__init__`` (``_emit``, ``_coalesced_refresh``,
+Helpers that stay in the package ``__init__`` (``_emit``,
 ``_load_token_store``, ``_resolve_active_profile``, ``_select_profile``,
 ``_state``) are imported from the package and bound when this submodule is first
 imported by ``__init__.py`` (which happens after those helpers are defined).
 
-Intra-package calls to ``_authenticated_request`` route through :func:`_pkg`
-(the live ``mural`` module) so ``monkeypatch.setattr(mural, "_authenticated_request",
-...)`` propagates to :func:`_create_asset_url` and other in-package callers.
+Intra-package calls to ``_authenticated_request`` and ``_coalesced_refresh``
+route through :func:`_pkg` (the live ``mural`` module) so monkeypatch interception
+propagates to in-package callers.  ``_coalesced_refresh`` lives in ``_oauth``,
+which is re-exported after this submodule, so it is resolved at call time rather
+than bound at module load.
 """
 
 from __future__ import annotations
@@ -34,7 +36,6 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from . import (  # noqa: E402 - package siblings defined before this import runs
-    _coalesced_refresh,
     _emit,
     _load_token_store,
     _resolve_active_profile,
@@ -346,7 +347,7 @@ def _authenticated_request(
     if expires_at - REFRESH_LEEWAY_SECONDS <= _now() and profile_data.get(
         "refresh_token"
     ):
-        store = _coalesced_refresh(
+        store = _pkg()._coalesced_refresh(
             store_path,
             profile_data.get("access_token", ""),
             client_id=client_id,
@@ -397,7 +398,7 @@ def _authenticated_request(
             if status == 401 and not refreshed_due_to_401:
                 refreshed_due_to_401 = True
                 _emit("access token rejected; forcing refresh", level=logging.INFO)
-                store = _coalesced_refresh(
+                store = _pkg()._coalesced_refresh(
                     store_path,
                     profile_data["access_token"],
                     client_id=client_id,

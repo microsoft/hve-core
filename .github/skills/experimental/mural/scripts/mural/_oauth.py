@@ -8,23 +8,27 @@ Contains the authorize-URL builder, single-shot loopback HTTP handler/server,
 authorization-code exchange, redirect-URI validation, the bootstrap
 client-credentials probe, and the orchestrating ``_run_login`` entry point.
 
-PKCE primitives (``_generate_pkce_pair``, ``_verify_pkce``) remain in the
-package ``__init__`` for now; this module imports the generator at module
-load time.  Transport helpers (``_TOKEN_OPENER``, ``_read_capped``,
-``_parse_token_response``, ``_read_response_body``, ``_emit``,
-``_compute_expires_at``) likewise come from the package and are bound when
-this submodule is first imported by ``__init__.py`` (which happens after
-those helpers are defined).
+PKCE primitives (``_b64url_nopad``, ``_generate_pkce_pair``, ``_verify_pkce``)
+and the scope helpers (``_token_granted_scopes``, ``_require_scope``) now live
+in this module and are re-exported from the package ``__init__`` to preserve
+``mural.<symbol>`` access.  Transport and credential helpers (``_TOKEN_OPENER``,
+``_read_capped``, ``_parse_token_response``, ``_read_response_body``, ``_emit``,
+``_select_profile``, ``_load_token_store``, ``_resolve_token_store_path``) come
+from the package and are bound when this submodule is first imported by
+``__init__.py`` (which happens after those helpers are defined).
 """
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import errno
+import hashlib
 import http.server
 import json
 import logging
 import os
+import pathlib
 import secrets
 import socket
 import sys
@@ -35,19 +39,24 @@ import urllib.parse
 import urllib.request
 import webbrowser
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 
 from . import (  # noqa: E402 - package siblings defined before this import runs
     _TOKEN_OPENER,
     _compute_expires_at,
     _emit,
-    _generate_pkce_pair,
+    _load_token_store,
     _parse_token_response,
     _read_capped,
     _read_response_body,
+    _refresh_access_token,
+    _resolve_token_store_path,
+    _select_profile,
 )
 from ._constants import (
+    _REFRESH_LOCK,
     DEFAULT_LOGIN_SCOPES,
+    DEFAULT_PROFILE_NAME,
     DEFAULT_REDIRECT_URI,
     DEFAULT_SCOPES,
     ENV_CLIENT_ID,
@@ -58,7 +67,168 @@ from ._constants import (
     MURAL_TOKEN_URL,
     USER_AGENT,
 )
-from ._exceptions import MuralAPIError, MuralError, MuralSecurityError
+from ._credentials import _token_store_session
+from ._exceptions import (
+    MuralAPIError,
+    MuralAuthScopeError,
+    MuralError,
+    MuralSecurityError,
+)
+
+
+def _pkg() -> Any:
+    """Return the package module for monkeypatch-aware call-time routing.
+
+    Refresh helpers reach package-level siblings (e.g. ``_apply_refresh``)
+    through this accessor so tests can patch ``mural.<symbol>`` and have the
+    override honored at call time rather than binding at import time.
+    """
+    return sys.modules[__package__]
+
+
+def _apply_refresh(
+    store: dict[str, Any],
+    *,
+    client_id: str,
+    client_secret: str | None,
+    token_url: str,
+    _http: Callable[..., Any],
+    _now: Callable[[], float],
+    profile_name: str = DEFAULT_PROFILE_NAME,
+) -> dict[str, Any]:
+    """Refresh ``profile_name`` inside a v2 envelope and return a new envelope."""
+    profile = _select_profile(store, profile_name)
+    refresh_token = profile.get("refresh_token")
+    if not refresh_token:
+        raise MuralError(
+            "token store has no refresh_token; run `python -m mural auth login`"
+        )
+    fresh = _refresh_access_token(
+        refresh_token,
+        client_id=client_id,
+        client_secret=client_secret,
+        token_url=token_url,
+        _http=_http,
+    )
+    expires_in = int(fresh.get("expires_in", 0) or 0)
+    new_profile = dict(profile)
+    new_profile["access_token"] = fresh["access_token"]
+    if "refresh_token" in fresh and fresh["refresh_token"]:
+        new_profile["refresh_token"] = fresh["refresh_token"]
+    new_profile["expires_at"] = _compute_expires_at(_now(), expires_in)
+    new_store = dict(store)
+    new_profiles = dict(store.get("profiles") or {})
+    new_profiles[profile_name] = new_profile
+    new_store["profiles"] = new_profiles
+    return new_store
+
+
+def _coalesced_refresh(
+    store_path: pathlib.Path,
+    observed_access_token: str,
+    *,
+    client_id: str,
+    client_secret: str | None,
+    token_url: str,
+    _http: Callable[..., Any],
+    _now: Callable[[], float],
+    profile_name: str,
+) -> dict[str, Any]:
+    """Run a token refresh under both in-process and cross-process locks.
+
+    Holds :data:`_REFRESH_LOCK` to coalesce threads, and ``_token_store_session``
+    to coalesce peer processes. Re-reads the token store inside the locks; if a
+    peer (thread or process) already rotated the access token, returns the
+    peer's store without contacting the token endpoint. Otherwise calls
+    :func:`_apply_refresh`, persists, and returns the new store.
+    """
+    with _REFRESH_LOCK:
+        with _token_store_session(store_path) as (envelope, commit):
+            store = envelope or {}
+            profile = _select_profile(store, profile_name)
+            if profile.get("access_token") != observed_access_token:
+                return store
+            store = _pkg()._apply_refresh(
+                store,
+                client_id=client_id,
+                client_secret=client_secret,
+                token_url=token_url,
+                _http=_http,
+                _now=_now,
+                profile_name=profile_name,
+            )
+            commit(store)
+            return store
+
+
+def _b64url_nopad(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def _token_granted_scopes(
+    store: dict[str, Any] | None,
+    profile_name: str = DEFAULT_PROFILE_NAME,
+) -> tuple[str, ...]:
+    """Return the scopes granted to the named profile in a v2 envelope.
+
+    Returns an empty tuple when ``store`` is empty, the profile is missing,
+    or ``granted_scopes`` is absent or malformed. Mural's ``/token`` endpoint
+    does not return ``scope`` (RFC 6749 §5.1 permits this; per §3.3 the
+    granted scope equals the requested scope when omitted), so the canonical
+    record is the ``granted_scopes`` list captured at authorization time.
+    """
+    if not store:
+        return ()
+    try:
+        profile = _select_profile(store, profile_name)
+    except MuralError:
+        return ()
+    granted = profile.get("granted_scopes")
+    if isinstance(granted, list) and all(isinstance(s, str) for s in granted):
+        return tuple(granted)
+    return ()
+
+
+def _require_scope(
+    scope: "str | Sequence[str]",
+    *,
+    store: dict[str, Any] | None = None,
+    profile_name: str = DEFAULT_PROFILE_NAME,
+) -> None:
+    """Raise :class:`MuralAuthScopeError` when ``scope`` is not in the granted
+    set of the named profile.
+
+    ``scope`` may be a single string or a sequence of strings; in the
+    sequence form every entry must be granted (logical AND). Templates and
+    composite tools pass their required scopes directly.
+    """
+    if store is None:
+        store = _load_token_store(_resolve_token_store_path())
+    granted = _token_granted_scopes(store, profile_name)
+    needed = (scope,) if isinstance(scope, str) else tuple(scope)
+    for s in needed:
+        if s not in granted:
+            raise MuralAuthScopeError(s, granted)
+
+
+def _generate_pkce_pair() -> tuple[str, str]:
+    """Return ``(verifier, challenge)`` for the PKCE S256 method."""
+    verifier = secrets.token_urlsafe(64)
+    challenge = _b64url_nopad(hashlib.sha256(verifier.encode("ascii")).digest())
+    return verifier, challenge
+
+
+def _verify_pkce(verifier: str, challenge: str) -> bool:
+    """Return ``True`` when ``challenge`` is the S256 digest of ``verifier``."""
+    try:
+        verifier_bytes = verifier.encode("ascii")
+        challenge_bytes = challenge.encode("ascii")
+    except UnicodeEncodeError:
+        # PKCE values are ASCII per RFC 7636; non-ASCII input cannot match.
+        return False
+    expected = _b64url_nopad(hashlib.sha256(verifier_bytes).digest()).encode("ascii")
+    # Constant-time comparison to mirror what the auth server does.
+    return secrets.compare_digest(expected, challenge_bytes)
 
 
 def _build_authorize_url(

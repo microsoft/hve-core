@@ -14,9 +14,25 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from typing import Any, TypedDict
 
+from ._exceptions import MuralError
+
 LOGGER = logging.getLogger("mural")
+
+# Third-party dependency probe. ``shapely`` is a required runtime dependency
+# (declared in ``pyproject.toml`` and the PEP 723 header above). The guarded
+# import lets ``_probe_geos_version`` raise a structured ``MuralError`` for an
+# older shapely or absent GEOS instead of surfacing an opaque ImportError at
+# module load.
+try:  # pragma: no cover - older shapely
+    from shapely import geos_version as _SHAPELY_GEOS_VERSION
+except ImportError:  # pragma: no cover - older shapely or shapely absent
+    _SHAPELY_GEOS_VERSION = None  # type: ignore[assignment]
+
+
+_GEOS_PROBE_DONE = False
 
 
 class Rect(TypedDict):
@@ -651,3 +667,42 @@ def arrow_graph_summary(graph: Any) -> dict[str, Any]:
             "is_dag": bool(nx.is_directed_acyclic_graph(graph)),
         },
     }
+
+
+def _probe_geos_version() -> tuple[int, int, int]:
+    """Probe the bundled GEOS version exposed by ``shapely``.
+
+    Returns the ``(major, minor, patch)`` tuple from ``shapely.geos_version``,
+    or raises ``MuralError`` when the import or attribute lookup fails or when
+    the detected major/minor is below ``(3, 11)``.
+    """
+    version = _SHAPELY_GEOS_VERSION
+    if version is None:
+        raise MuralError(
+            "Unable to probe shapely.geos_version; mural spatial features "
+            "require GEOS >= 3.11."
+        )
+    try:
+        major, minor, patch = int(version[0]), int(version[1]), int(version[2])
+    except (TypeError, ValueError, IndexError) as exc:
+        raise MuralError(
+            f"Detected GEOS version {version!r} in unexpected shape; mural "
+            "spatial features require GEOS >= 3.11."
+        ) from exc
+    if (major, minor) < (3, 11):
+        raise MuralError(
+            f"Detected GEOS {major}.{minor}.{patch}; mural spatial features "
+            "require GEOS >= 3.11."
+        )
+    return (major, minor, patch)
+
+
+def _ensure_geos_ready() -> None:
+    """Run the GEOS version probe at most once per process."""
+    global _GEOS_PROBE_DONE
+    if _GEOS_PROBE_DONE:
+        return
+    _GEOS_PROBE_DONE = True
+    if os.environ.get("MURAL_SUPPRESS_GEOS_PROBE"):
+        return
+    _probe_geos_version()

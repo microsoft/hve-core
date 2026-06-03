@@ -9,6 +9,17 @@ import sys
 import time
 from typing import Any, Callable
 
+from ._constants import _RESERVED_TAG_PREFIXES, _RESERVED_TAGS
+
+
+def _is_reserved_tag_text(text: str) -> bool:
+    """Return ``True`` for literal-reserved or reserved-prefix tag texts."""
+    if not isinstance(text, str):
+        return False
+    if text in _RESERVED_TAGS:
+        return True
+    return any(text.startswith(prefix) for prefix in _RESERVED_TAG_PREFIXES)
+
 
 def _is_tag_cap_error_impl(
     exc: Any,

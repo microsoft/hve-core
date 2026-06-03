@@ -14,8 +14,11 @@ the facade-dispatch surface.
 from __future__ import annotations
 
 import argparse
+import logging
+import os
 import re
 import sys
+import traceback
 from typing import Any
 
 from . import _state
@@ -36,9 +39,56 @@ __all__ = [
     "_apply_widget_text_coalesce",
     "_emit_records",
     "_emit_record",
+    "_emit",
+    "_emit_debug_traceback",
+    "_color_mode",
 ]
 
+LOGGER = logging.getLogger("mural")
+
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _emit(message: str, *, level: int = logging.INFO) -> None:
+    """Write a redacted message to stderr and the module logger."""
+    redacted = _pkg()._redact(message)
+    LOGGER.log(level, redacted)
+    if level >= logging.ERROR or not _state._CLI_QUIET:
+        print(redacted, file=sys.stderr)
+
+
+def _emit_debug_traceback(exc: BaseException) -> None:
+    """Write a redacted traceback to stderr when ``MURAL_DEBUG`` is set.
+
+    Routes the formatted traceback through :func:`_redact` so OAuth state,
+    tokens, and ``Authorization`` headers cannot leak via an unexpected
+    exception bubbling out of :func:`main`.
+    """
+    if not os.environ.get("MURAL_DEBUG"):
+        return
+    formatted = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    print(_pkg()._redact(formatted), file=sys.stderr)
+
+
+def _color_mode(cli_choice: str | None) -> bool:
+    """Resolve effective color output for CLI streams.
+
+    Precedence: explicit ``--color always|never`` overrides; else honour
+    ``NO_COLOR`` (any non-empty value disables); else honour ``FORCE_COLOR``
+    (any non-empty value enables); else default to ``stderr.isatty()``.
+    """
+    if cli_choice == "always":
+        return True
+    if cli_choice == "never":
+        return False
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    try:
+        return bool(sys.stderr.isatty())
+    except (AttributeError, ValueError):
+        return False
 
 
 def _pkg() -> Any:
