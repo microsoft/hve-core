@@ -133,8 +133,7 @@ class TestAddNarrationTiming:
             captured.append(parser)
             return original_fromstring(text, parser, *args, **kwargs)
 
-        mocker.patch("embed_audio.etree.fromstring",
-                     side_effect=capturing_fromstring)
+        mocker.patch("embed_audio.etree.fromstring", side_effect=capturing_fromstring)
         mock_slide = MagicMock()
         mock_slide.element.find.return_value = None
 
