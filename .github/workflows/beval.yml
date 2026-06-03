@@ -35,8 +35,8 @@ jobs:
 
       - name: Install GitHub Copilot CLI
         run: |
-          npm ci --prefix beval
-          echo "${{ github.workspace }}/beval/node_modules/.bin" >> "$GITHUB_PATH"
+          npm ci --prefix evals/beval
+          echo "${{ github.workspace }}/evals/beval/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Install beval
         # beval is hosted under a personal account (vyta) while an org-owned
@@ -71,17 +71,17 @@ jobs:
       - name: Run evaluations
         run: |
           beval \
-            -c beval/dt-coach/eval.config.yaml \
+            -c evals/beval/dt-coach/eval.config.yaml \
             run \
-            --cases beval/dt-coach/cases/ \
-            --agent beval/dt-coach/agent.yaml \
+            --cases evals/beval/dt-coach/cases/ \
+            --agent evals/beval/dt-coach/agent.yaml \
             -m validation \
-            -o beval/dt-coach/results/results.json
+            -o evals/beval/dt-coach/results/results.json
 
       - name: Upload results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: beval-results-${{ github.run_id }}
-          path: beval/dt-coach/results/
+          path: evals/beval/dt-coach/results/
           retention-days: 30

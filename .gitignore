@@ -475,4 +475,4 @@ docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
 
 # Beval evaluation results
-beval/**/results/
+evals/beval/**/results/

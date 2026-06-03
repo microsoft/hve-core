@@ -25,7 +25,7 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
-    "beval/**/results/**"
+    "evals/beval/**/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
