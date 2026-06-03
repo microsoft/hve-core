@@ -48,6 +48,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 | Name                     | Description                                                                                                                                                                           |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **caveman**              | Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules |
 | **customer-card-render** | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline                                          |
 | **mural**                | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. |
 | **powerpoint**           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling                                                                                |
@@ -98,6 +99,7 @@ copilot plugin install experimental@hve-core
 
 | Skill                | Description                                                                                                                                                                                                                  |
 |----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| caveman              | Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules - Brought to you by microsoft/hve-core |
 | customer-card-render | Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline - Brought to you by microsoft/hve-core                                          |
 | powerpoint           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core                                                                                |
 | tts-voiceover        | Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control - Brought to you by microsoft/hve-core                                                                   |

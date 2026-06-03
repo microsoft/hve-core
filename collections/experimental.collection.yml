@@ -14,6 +14,9 @@ items:
   - path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     kind: agent
   # Skills
+  - path: .github/skills/experimental/caveman
+    kind: skill
+    maturity: experimental
   - path: .github/skills/experimental/customer-card-render
     kind: skill
   - path: .github/skills/experimental/powerpoint
