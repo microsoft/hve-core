@@ -32,6 +32,20 @@ EXPECTED_REDACT_KEYS = (
 SECRET_VALUE = "s3cr3t-VALUE.with-symbols_42"
 
 
+def _package_src(mural_module: Any) -> str:
+    """Concatenate the source of every `.py` file in the `mural` package.
+
+    Source-level redaction contracts must hold across the whole package, not
+    just `__init__.py`. As tiers are carved into sibling modules (e.g.
+    `_transport.py`), call sites relocate; scanning every package module keeps
+    these defense-in-depth checks resilient to that movement.
+    """
+    package_dir = pathlib.Path(mural_module.__file__).parent
+    return "\n".join(
+        path.read_text(encoding="utf-8") for path in sorted(package_dir.glob("*.py"))
+    )
+
+
 # ---------------------------------------------------------------------------
 # Structural contract
 # ---------------------------------------------------------------------------
@@ -160,7 +174,7 @@ def test_redact_does_not_affect_non_secret_form_fields(mural_module: Any) -> Non
 
 def test_logger_token_post_wraps_url_in_redact(mural_module: Any) -> None:
     """Token endpoint POST debug log must redact `token_url`."""
-    src = pathlib.Path(mural_module.__file__).read_text(encoding="utf-8")
+    src = _package_src(mural_module)
     assert 'LOGGER.debug("POST %s", _redact(token_url))' in src
 
 
@@ -168,7 +182,7 @@ def test_logger_authenticated_request_wraps_url_in_redact(
     mural_module: Any,
 ) -> None:
     """`_authenticated_request` per-call debug log must redact `url`."""
-    src = pathlib.Path(mural_module.__file__).read_text(encoding="utf-8")
+    src = _package_src(mural_module)
     assert 'LOGGER.debug("%s %s", method.upper(), _redact(url))' in src
 
 
@@ -176,7 +190,7 @@ def test_logger_area_chain_warning_wraps_exc_in_redact(
     mural_module: Any,
 ) -> None:
     """Area chain walk warning must redact the caught exception text."""
-    src = pathlib.Path(mural_module.__file__).read_text(encoding="utf-8")
+    src = _package_src(mural_module)
     assert 'LOGGER.warning("area chain walk stopped: %s", _redact(str(exc)))' in src
 
 
@@ -186,7 +200,7 @@ def test_logger_no_bare_exception_calls(mural_module: Any) -> None:
     so that exceptions whose repr embeds credentials cannot leak through the
     traceback formatter.
     """
-    src = pathlib.Path(mural_module.__file__).read_text(encoding="utf-8")
+    src = _package_src(mural_module)
     assert "LOGGER.exception(" not in src, (
         "LOGGER.exception() embeds untrusted exception repr in the traceback; "
         "use LOGGER.error('... %s', _redact(repr(exc))) instead"
@@ -197,7 +211,7 @@ def test_top_level_error_wraps_exc_repr_in_redact(
     mural_module: Any,
 ) -> None:
     """Top-level error handling must redact `repr(exc)`."""
-    src = pathlib.Path(mural_module.__file__).read_text(encoding="utf-8")
+    src = _package_src(mural_module)
     assert "_redact(repr(exc))" in src
 
 

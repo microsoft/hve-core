@@ -706,7 +706,7 @@ def test_cli_profile_overrides_env(
     captured: dict[str, Any] = {}
 
     def _fake_request(method: str, path: str, **_kwargs: Any) -> dict[str, Any]:
-        captured["cli_profile"] = mural_module._CLI_PROFILE
+        captured["cli_profile"] = mural_module._state._CLI_PROFILE
         return {"id": TEST_WORKSPACE_ID}
 
     monkeypatch.setattr(mural_module, "_authenticated_request", _fake_request)

@@ -23,32 +23,25 @@ from __future__ import annotations
 
 import argparse
 import base64
-import collections
-import concurrent.futures
 import contextlib
-import datetime
-import getpass
+import getpass  # noqa: F401 - re-exposed as patchable facade attribute
 import hashlib
 import json
 import logging
-import math
 import os
 import pathlib
 import re
 import secrets
 import signal
 import sys
-import threading
 import time
 import traceback
-import urllib.error
-import urllib.parse
-import urllib.request
 import uuid
-import webbrowser
+import webbrowser  # noqa: F401 - re-exposed as patchable facade attribute
 from collections.abc import Mapping, MutableMapping
-from dataclasses import dataclass
-from typing import Any, Callable, Protocol, Sequence
+from typing import Any, Callable, Sequence
+
+from . import _state  # noqa: E402,F401
 
 # Re-export carved-out symbols so residual code and tests keep working.
 from ._constants import (  # noqa: E402,F401
@@ -331,8 +324,8 @@ def _check_credential_file_perms(
         return
     if environ.get(ENV_ENV_FILE_RELAXED) == "1":
         key = str(path)
-        if key not in _seen_relaxed_warn:
-            _seen_relaxed_warn.add(key)
+        if key not in _state._seen_relaxed_warn:
+            _state._seen_relaxed_warn.add(key)
             _emit(
                 f"{ENV_ENV_FILE_RELAXED}=1 honored for {path}; this disables "
                 "mode-0600 enforcement (CI use only)",
@@ -361,24 +354,6 @@ class _KeyringUnavailable(RuntimeError):
     """
 
 
-class CredentialBackend(Protocol):
-    """Protocol for Mural credential storage backends.
-
-    Implementations route credential reads and writes through a uniform
-    ``(service, key)`` namespace where ``service`` is the keyring service
-    name (e.g. ``"hve-core/mural/{profile}"``) and ``key`` is one of the
-    entries in :data:`_KNOWN_CREDENTIAL_KEYS`.
-    """
-
-    name: str
-
-    def get(self, service: str, key: str) -> str | None: ...
-
-    def set(self, service: str, key: str, value: str) -> None: ...
-
-    def delete(self, service: str, key: str) -> None: ...
-
-
 class _NullBackend:
     """Backend used when ``MURAL_CREDENTIAL_BACKEND=env-only``.
 
@@ -399,169 +374,6 @@ class _NullBackend:
         raise RuntimeError("env-only backend cannot persist credentials")
 
 
-class KeyringBackend:
-    """Backend that delegates to the OS keychain via the ``keyring`` package.
-
-    Lazy-imports ``keyring`` in ``__init__`` so module load does not pay
-    the cost of resolving a platform backend until a keyring lookup is
-    requested. Honors ``MURAL_KEYRING_BACKEND`` to override the default
-    backend selection (``module.path.ClassName`` form, applied via
-    ``keyring.set_keyring``).
-    """
-
-    name = "keyring"
-
-    def __init__(self) -> None:
-        try:
-            import keyring
-            from keyring import errors as keyring_errors
-        except ImportError as exc:
-            raise _KeyringUnavailable(f"keyring package not importable: {exc}") from exc
-        override = os.environ.get("MURAL_KEYRING_BACKEND")
-        if override:
-            try:
-                import importlib
-
-                module_path, _, class_name = override.rpartition(".")
-                if not module_path or not class_name:
-                    raise _KeyringUnavailable(
-                        f"MURAL_KEYRING_BACKEND={override!r} must be "
-                        "'module.path.ClassName'"
-                    )
-                module = importlib.import_module(module_path)
-                backend_cls = getattr(module, class_name)
-                keyring.set_keyring(backend_cls())
-            except _KeyringUnavailable:
-                raise
-            except Exception as exc:
-                raise _KeyringUnavailable(
-                    f"failed to apply MURAL_KEYRING_BACKEND={override!r}: {exc}"
-                ) from exc
-        try:
-            self.backend_name = keyring.get_keyring().name
-        except Exception as exc:
-            raise _KeyringUnavailable(
-                f"failed to resolve keyring backend: {exc}"
-            ) from exc
-        self._keyring = keyring
-        self._errors = keyring_errors
-
-    def get(self, service: str, key: str) -> str | None:
-        try:
-            return self._keyring.get_password(service, key)
-        except self._errors.KeyringError as exc:
-            raise _KeyringUnavailable(str(exc)) from exc
-
-    def set(self, service: str, key: str, value: str) -> None:
-        try:
-            self._keyring.set_password(service, key, value)
-        except self._errors.KeyringError as exc:
-            raise _KeyringUnavailable(str(exc)) from exc
-
-    def delete(self, service: str, key: str) -> None:
-        try:
-            self._keyring.delete_password(service, key)
-        except self._errors.PasswordDeleteError:
-            return  # idempotent: missing entry is success
-        except self._errors.KeyringError as exc:
-            raise _KeyringUnavailable(str(exc)) from exc
-
-
-class FileBackend:
-    """Backend that reads and writes a per-profile mode-0600 env file.
-
-    The ``service`` argument is accepted for protocol parity but unused;
-    the backing path (resolved by :func:`_resolve_credential_file`) is
-    bound at construction time.
-    """
-
-    name = "file"
-
-    def __init__(self, path: pathlib.Path) -> None:
-        self._path = path
-
-    def _read_all(self) -> dict[str, str]:
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-        try:
-            fd = os.open(str(self._path), flags)
-        except FileNotFoundError:
-            return {}
-        with os.fdopen(fd, "r", encoding="utf-8", errors="strict") as fh:
-            text = fh.read()
-        result: dict[str, str] = {}
-        for line in text.splitlines():
-            stripped = line.lstrip()
-            if not stripped or stripped.startswith("#"):
-                continue
-            match = _LINE_RE.match(line)
-            if match is None:
-                continue
-            key = match.group("k")
-            value = match.group("v")
-            if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
-                value = value[1:-1]
-            result[key] = value
-        return result
-
-    def get(self, service: str, key: str) -> str | None:
-        return self._read_all().get(key)
-
-    def set(self, service: str, key: str, value: str) -> None:
-        existing = self._read_all()
-        existing[key] = value
-        self._write_all(existing)
-
-    def delete(self, service: str, key: str) -> None:
-        if not self._path.exists():
-            return
-        _check_credential_file_perms(self._path, os.environ)
-        existing = self._read_all()
-        if key not in existing:
-            return
-        existing.pop(key)
-        if existing:
-            self._write_all(existing)
-        else:
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink(self._path)
-
-    def _write_all(self, entries: dict[str, str]) -> None:
-        # Mirrors _cmd_auth_bootstrap: 0o077 umask + O_EXCL temp + os.replace.
-        body_lines = [
-            "# Mural credentials (managed by FileBackend).",
-            "# File mode MUST be 0600. Override only via MURAL_ENV_FILE_RELAXED=1.",
-        ]
-        for k in sorted(entries):
-            body_lines.append(f"{k}={entries[k]}")
-        body = ("\n".join(body_lines) + "\n").encode("utf-8")
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self._path.with_name(f"{self._path.name}.{os.getpid()}.tmp")
-        prev_umask = os.umask(0o077)
-        try:
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_TRUNC
-            fd = os.open(str(tmp), flags, 0o600)
-            try:
-                with os.fdopen(fd, "wb") as fh:
-                    fh.write(body)
-            except BaseException:
-                with contextlib.suppress(OSError):
-                    os.close(fd)
-                raise
-            os.replace(tmp, self._path)
-            with contextlib.suppress(OSError):
-                os.chmod(self._path, 0o600)
-        finally:
-            os.umask(prev_umask)
-            with contextlib.suppress(FileNotFoundError):
-                tmp.unlink()
-
-
-# Module-level dedup sets enforce one-WARN-per-process semantics across
-# repeated resolve_backend calls within the same Python process.
-_seen_fallback_warn: set[str] = set()
-_seen_concurrent_warn: set[tuple[str, str]] = set()
-# Tracks credential paths that already emitted the relaxed-mode WARN.
-_seen_relaxed_warn: set[str] = set()
 # Cached one-shot probe of keyring availability so ``mural auth status`` and
 # downstream callers do not pay the import + backend resolution cost twice.
 # Populated lazily by :func:`_probe_keyring_availability`.
@@ -588,48 +400,6 @@ def _probe_keyring_availability() -> tuple[bool, str | None, str | None]:
     return _keyring_probe_cache
 
 
-def resolve_backend(profile: str = "default") -> CredentialBackend:
-    """Return the credential backend for ``profile`` honoring env overrides.
-
-    ``MURAL_CREDENTIAL_BACKEND`` selects the backend (``auto`` default,
-    ``keyring``, ``file``, ``env-only``). On ``auto``, KeyringBackend is
-    tried first and falls back to FileBackend when ``_KeyringUnavailable``
-    is raised; a one-shot WARN per profile records the fallback. After
-    backend selection (skipped for env-only), a probe checks whether the
-    other persistent backend also holds non-empty values and emits a
-    second one-shot WARN per ``(profile, selected_backend)`` pair when so.
-    The probe never raises and never affects the returned backend.
-    """
-    selector = os.environ.get("MURAL_CREDENTIAL_BACKEND", "auto").lower()
-    file_path = _resolve_credential_file(profile, os.environ)
-    selected: CredentialBackend
-    if selector == "env-only":
-        return _NullBackend()
-    if selector == "file":
-        selected = FileBackend(file_path)
-    elif selector == "keyring":
-        selected = KeyringBackend()  # let _KeyringUnavailable propagate
-    elif selector == "auto":
-        try:
-            selected = KeyringBackend()
-        except _KeyringUnavailable as exc:
-            if profile not in _seen_fallback_warn:
-                _seen_fallback_warn.add(profile)
-                _emit(
-                    f"keyring backend unavailable for profile {profile!r} "
-                    f"({exc}); falling back to file backend at {file_path}",
-                    level=logging.WARNING,
-                )
-            selected = FileBackend(file_path)
-    else:
-        raise MuralError(
-            f"MURAL_CREDENTIAL_BACKEND={selector!r} is not one of "
-            "'auto', 'keyring', 'file', 'env-only'"
-        )
-    _maybe_warn_concurrent_state(profile, selected, file_path)
-    return selected
-
-
 def _maybe_warn_concurrent_state(
     profile: str,
     selected: CredentialBackend,
@@ -642,7 +412,7 @@ def _maybe_warn_concurrent_state(
     backend.
     """
     dedup_key = (profile, selected.name)
-    if dedup_key in _seen_concurrent_warn:
+    if dedup_key in _state._seen_concurrent_warn:
         return
     keyring_populated = False
     file_populated = False
@@ -665,7 +435,7 @@ def _maybe_warn_concurrent_state(
     except Exception:  # noqa: BLE001 - probe must never raise
         file_populated = False
     if keyring_populated and file_populated:
-        _seen_concurrent_warn.add(dedup_key)
+        _state._seen_concurrent_warn.add(dedup_key)
         _emit(
             f"both keyring and file backends populated for profile "
             f"{profile!r}; {selected.name} backend takes precedence "
@@ -877,44 +647,6 @@ def _acquire_cache_lock(path: pathlib.Path):
             os.close(fd)
 
 
-def _load_token_store_locked(path: pathlib.Path) -> dict[str, Any] | None:
-    """Load and validate a token store while the caller holds the lock.
-
-    On a v1 (pre-schema_version) record, transparently migrates to v2 and
-    rewrites the file in place under the same lock. On a v2 envelope,
-    validates ``schema_version == 2`` and every contained profile. Returns
-    ``None`` when the store file is absent.
-    """
-    try:
-        raw = path.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return None
-    except OSError as exc:
-        raise MuralError(f"cannot read token store at {path}: {exc}") from exc
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        raise MuralError(f"token store at {path} is not valid JSON: {exc}") from exc
-    if not isinstance(data, dict):
-        raise MuralError(f"token store at {path} is not a JSON object")
-    if "schema_version" not in data:
-        migrated = _migrate_v1_to_v2(data)
-        _save_token_store_locked(path, migrated)
-        data = migrated
-    if data.get("schema_version") != TOKEN_STORE_SCHEMA_VERSION:
-        raise MuralError(
-            f"token store at {path} has unsupported schema_version "
-            f"{data.get('schema_version')!r}"
-        )
-    profiles = data.get("profiles")
-    if not isinstance(profiles, dict):
-        raise MuralError(f"token store at {path} is missing a 'profiles' object")
-    for name, profile in profiles.items():
-        _validate_profile_name(name)
-        _validate_profile(profile)
-    return data
-
-
 def _load_token_store(path: pathlib.Path) -> dict[str, Any] | None:
     """Load a token store from disk under a cross-process lock."""
     with _acquire_cache_lock(path):
@@ -937,33 +669,6 @@ def _token_store_session(path: pathlib.Path):
             _save_token_store_locked(path, new_envelope)
 
         yield envelope, commit
-
-
-def _save_token_store_locked(path: pathlib.Path, data: dict[str, Any]) -> None:
-    """Write ``data`` atomically with mode 0600. Caller already holds the lock."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(data, indent=2, sort_keys=True).encode("utf-8")
-    tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
-    prev_umask = os.umask(0o077)
-    try:
-        # ``O_EXCL`` rejects a stale temp from a crashed peer rather than
-        # silently overwriting it, defending the atomic-replace invariant.
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_TRUNC
-        fd = os.open(str(tmp), flags, 0o600)
-        try:
-            with os.fdopen(fd, "wb") as fh:
-                fh.write(payload)
-        except BaseException:
-            with contextlib.suppress(OSError):
-                os.close(fd)
-            raise
-        os.replace(tmp, path)
-        with contextlib.suppress(OSError):
-            os.chmod(path, 0o600)
-    finally:
-        os.umask(prev_umask)
-        with contextlib.suppress(FileNotFoundError):
-            tmp.unlink()
 
 
 def _save_token_store(path: pathlib.Path, data: dict[str, Any]) -> None:
@@ -1042,211 +747,11 @@ def _verify_pkce(verifier: str, challenge: str) -> bool:
     return secrets.compare_digest(expected, challenge_bytes)
 
 
-# ---------------------------------------------------------------------------
-# Step 2.2 — Transport: redact, token bucket, refresh, _authenticated_request
-# ---------------------------------------------------------------------------
-
-
-def _redact(text: str) -> str:
-    """Scrub token-shaped substrings from ``text`` before logging."""
-    if not text:
-        return text
-    redacted = text
-    for pattern, replacement in _REDACT_PATTERNS:
-        redacted = pattern.sub(replacement, redacted)
-    return redacted
-
-
-@dataclass
-class _TokenBucket:
-    """Simple token-bucket throttle, instantiated per-process."""
-
-    capacity: float = RATE_LIMIT_BUCKET_CAPACITY
-    tokens_per_sec: float = RATE_LIMIT_TOKENS_PER_SEC
-    tokens: float = RATE_LIMIT_BUCKET_CAPACITY
-    last_refill: float = 0.0
-    lock: threading.Lock = None  # type: ignore[assignment]
-
-    def __post_init__(self) -> None:
-        self.lock = threading.Lock()
-        self.last_refill = time.monotonic()
-
-
-_RATE_BUCKET = _TokenBucket()
-
-
-def _token_bucket_acquire(
-    *,
-    bucket: _TokenBucket | None = None,
-    now: Callable[[], float] = time.monotonic,
-    sleep: Callable[[float], None] = time.sleep,
-) -> None:
-    """Block until one token is available in the bucket."""
-    bucket = bucket or _RATE_BUCKET
-    while True:
-        with bucket.lock:
-            current = now()
-            elapsed = max(0.0, current - bucket.last_refill)
-            bucket.tokens = min(
-                bucket.capacity,
-                bucket.tokens + elapsed * bucket.tokens_per_sec,
-            )
-            bucket.last_refill = current
-            if bucket.tokens >= 1.0:
-                bucket.tokens -= 1.0
-                return
-            deficit = 1.0 - bucket.tokens
-            wait = deficit / bucket.tokens_per_sec if bucket.tokens_per_sec else 0.05
-        sleep(max(wait, 0.001))
-
-
-def _parse_rate_limit_headers(
-    headers: Any,
-    *,
-    bucket: _TokenBucket | None = None,
-    now: Callable[[], float] = time.monotonic,
-) -> dict[str, int | None]:
-    """Parse ``X-RateLimit-*`` headers and tighten the local bucket if needed."""
-    bucket = bucket or _RATE_BUCKET
-
-    def _header(name: str) -> str | None:
-        # urllib's HTTPMessage and plain dicts both expose ``get``.
-        getter = getattr(headers, "get", None)
-        if getter is None:
-            return None
-        value = getter(name)
-        if value is None:
-            value = getter(name.lower())
-        return value
-
-    def _to_int(value: str | None) -> int | None:
-        if value is None:
-            return None
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return None
-
-    remaining = _to_int(_header("X-RateLimit-Remaining"))
-    reset = _to_int(_header("X-RateLimit-Reset"))
-
-    if remaining is not None and remaining <= 0 and reset is not None:
-        # Drain the bucket; the next acquire will sleep until refill.
-        with bucket.lock:
-            bucket.tokens = 0.0
-            bucket.last_refill = now()
-    return {"remaining": remaining, "reset": reset}
-
-
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """Redirect handler that refuses redirects on the OAuth token endpoint."""
-
-    def _block(
-        self,
-        req: urllib.request.Request,
-        fp: Any,
-        code: int,
-        msg: str,
-        headers: Any,
-    ) -> Any:
-        location = headers.get("Location", "<unknown>") if headers else "<unknown>"
-        raise MuralAPIError(
-            code,
-            "TOKEN_REDIRECT",
-            f"token endpoint attempted redirect to {location}",
-        )
-
-    http_error_301 = _block
-    http_error_302 = _block
-    http_error_303 = _block
-    http_error_307 = _block
-    http_error_308 = _block
-
-
-_TOKEN_OPENER = urllib.request.build_opener(_NoRedirect())
-
-
-def _parse_token_response(resp: Any) -> dict[str, Any]:
-    """Validate token endpoint Content-Type, read capped body, return parsed dict."""
-    status = getattr(resp, "status", 200)
-    headers = getattr(resp, "headers", None)
-    content_type = ""
-    if headers is not None:
-        try:
-            content_type = headers.get("Content-Type", "") or ""
-        except AttributeError:
-            content_type = ""
-    if not content_type.lower().startswith("application/json"):
-        raise MuralAPIError(
-            status,
-            "TOKEN_BAD_CONTENT_TYPE",
-            f"token endpoint returned non-JSON Content-Type: {content_type}",
-        )
-    body_bytes = _read_capped(resp, MURAL_MAX_BODY_BYTES)
-    text = body_bytes.decode("utf-8", errors="replace")
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError as exc:
-        raise MuralAPIError(status, "TOKEN_INVALID_JSON", text) from exc
-    if not isinstance(data, dict):
-        raise MuralAPIError(
-            status,
-            "TOKEN_INVALID_PAYLOAD",
-            "token endpoint returned non-object JSON body",
-        )
-    return data
-
-
-def _refresh_access_token(
-    refresh_token: str,
-    *,
-    client_id: str,
-    client_secret: str | None = None,
-    token_url: str = MURAL_TOKEN_URL,
-    _http: Callable[..., Any] = _TOKEN_OPENER.open,
-) -> dict[str, Any]:
-    """Exchange a refresh token for a new access token."""
-    body: dict[str, str] = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-        "client_id": client_id,
-    }
-    if client_secret:
-        body["client_secret"] = client_secret
-    encoded = urllib.parse.urlencode(body).encode("ascii")
-    request = urllib.request.Request(
-        token_url,
-        data=encoded,
-        method="POST",
-        headers={
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-            "User-Agent": USER_AGENT,
-        },
-    )
-    LOGGER.debug("POST %s", _redact(token_url))
-    try:
-        with _http(request) as resp:  # type: ignore[arg-type]
-            data = _parse_token_response(resp)
-            status = getattr(resp, "status", 200)
-    except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
-        _emit(f"refresh failed: HTTP {exc.code} {text}", level=logging.ERROR)
-        raise MuralAPIError(
-            exc.code, "REFRESH_FAILED", text or "refresh failed"
-        ) from exc
-    if status >= 400:
-        raise MuralAPIError(status, "REFRESH_FAILED", json.dumps(data))
-    if "access_token" not in data:
-        raise MuralAPIError(status, "REFRESH_INVALID_PAYLOAD", "missing access_token")
-    return data
-
-
 def _emit(message: str, *, level: int = logging.INFO) -> None:
     """Write a redacted message to stderr and the module logger."""
     redacted = _redact(message)
     LOGGER.log(level, redacted)
-    if level >= logging.ERROR or not _CLI_QUIET:
+    if level >= logging.ERROR or not _state._CLI_QUIET:
         print(redacted, file=sys.stderr)
 
 
@@ -1282,12 +787,6 @@ def _color_mode(cli_choice: str | None) -> bool:
         return bool(sys.stderr.isatty())
     except (AttributeError, ValueError):
         return False
-
-
-_CLI_QUIET: bool = False
-_CLI_FORCE_JSON: bool = False
-_CLI_COLOR: bool = False
-_CLI_PROFILE: str | None = None
 
 
 def _install_signal_handlers() -> None:
@@ -1385,250 +884,59 @@ def _coalesced_refresh(
             return store
 
 
-def _read_capped(stream: Any, limit: int) -> bytes:
-    """Read bytes from ``stream`` up to ``limit`` and raise on overflow.
+# ---------------------------------------------------------------------------
+# Step 2.1 — Credential storage backends
+# ---------------------------------------------------------------------------
+# Carved into ``_backends`` for module size and testability.  Re-imported here
+# so the package surface (and ``mural.<symbol>`` test access) is unchanged.
+# Deferred to this point so ``_backends`` can bind the package siblings it
+# depends on (``_emit``, ``_maybe_warn_concurrent_state``, etc.) which are
+# defined above this line.
 
-    Caps unbounded ``urllib`` response bodies so a hostile or misbehaving
-    server cannot exhaust process memory. Reads ``limit + 1`` bytes; if the
-    stream still has data, the response is rejected with ``ResponseTooLarge``.
-    """
-    chunk = stream.read(limit + 1)
-    if chunk is None:
-        return b""
-    if len(chunk) > limit:
-        raise ResponseTooLarge(f"response body exceeds {limit} bytes")
-    return chunk
+from ._backends import (  # noqa: E402,F401
+    CredentialBackend,
+    FileBackend,
+    KeyringBackend,
+    resolve_backend,
+)
 
-
-def _read_response_body(resp_or_err: Any) -> bytes:
-    """Read a urllib response or :class:`HTTPError` body with the standard cap.
-
-    Mirrors :func:`_read_capped` semantics but tolerates :class:`HTTPError`
-    instances whose ``fp`` is ``None`` (returns ``b""``). Caps total bytes at
-    :data:`MURAL_MAX_BODY_BYTES` so a hostile or misbehaving server cannot
-    exhaust process memory via either a successful or error response body.
-    """
-    if getattr(resp_or_err, "fp", resp_or_err) is None:
-        return b""
-    try:
-        return _read_capped(resp_or_err, MURAL_MAX_BODY_BYTES)
-    except ResponseTooLarge:
-        raise
-    except Exception:  # pragma: no cover - defensive
-        return b""
-
-
-def _authenticated_request(
-    method: str,
-    path: str,
-    *,
-    params: dict[str, Any] | None = None,
-    json_body: Any | None = None,
-    token_store_path: pathlib.Path | None = None,
-    base_url: str | None = None,
-    env: dict[str, str] | None = None,
-    profile: str | None = None,
-    _now: Callable[[], float] = time.time,
-    _http: Callable[..., Any] = urllib.request.urlopen,
-    _sleep: Callable[[float], None] = time.sleep,
-    _bucket: _TokenBucket | None = None,
-) -> Any | None:
-    """Perform an authenticated request with refresh, retry, and backoff."""
-    src = env if env is not None else os.environ
-    base = base_url or src.get(ENV_BASE_URL) or MURAL_BASE_URL_DEFAULT
-    client_id = src.get(ENV_CLIENT_ID)
-    if not client_id:
-        raise MuralError(f"{ENV_CLIENT_ID} is not set")
-    client_secret = src.get(ENV_CLIENT_SECRET) or None
-
-    store_path = token_store_path or _resolve_token_store_path(env=src)
-    store = _load_token_store(store_path)
-    if not store:
-        raise MuralError(
-            f"no token store at {store_path}; run `python -m mural auth login` first"
-        )
-    profile_name = _resolve_active_profile(
-        store, src, profile if profile is not None else _CLI_PROFILE
-    )
-    profile_data = _select_profile(store, profile_name)
-    profile_client_id = profile_data.get("client_id")
-    if profile_client_id and profile_client_id != client_id:
-        raise MuralSecurityError(
-            f"profile {profile_name!r} was issued for a different client_id; "
-            f"run `python -m mural auth login` to refresh"
-        )
-
-    expires_at = int(profile_data.get("expires_at") or 0)
-    if expires_at - REFRESH_LEEWAY_SECONDS <= _now() and profile_data.get(
-        "refresh_token"
-    ):
-        store = _coalesced_refresh(
-            store_path,
-            profile_data.get("access_token", ""),
-            client_id=client_id,
-            client_secret=client_secret,
-            token_url=src.get("MURAL_TOKEN_URL", MURAL_TOKEN_URL),
-            _http=_http,
-            _now=_now,
-            profile_name=profile_name,
-        )
-        profile_data = _select_profile(store, profile_name)
-
-    url = _join_url(base, path, params)
-    encoded: bytes | None = None
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Accept": "application/json",
-    }
-    if json_body is not None:
-        encoded = json.dumps(json_body).encode("utf-8")
-        headers["Content-Type"] = "application/json"
-
-    refreshed_due_to_401 = False
-    attempt = 0
-    while True:
-        _token_bucket_acquire(bucket=_bucket, now=time.monotonic, sleep=_sleep)
-        request_headers = dict(headers)
-        request_headers["Authorization"] = f"Bearer {profile_data['access_token']}"
-        request = urllib.request.Request(
-            url,
-            data=encoded,
-            method=method.upper(),
-            headers=request_headers,
-        )
-        LOGGER.debug("%s %s", method.upper(), _redact(url))
-        try:
-            with _http(request) as resp:  # type: ignore[arg-type]
-                status = getattr(resp, "status", 200)
-                body_bytes = _read_capped(resp, MURAL_MAX_BODY_BYTES)
-                _parse_rate_limit_headers(resp.headers, bucket=_bucket)
-                return _decode_body(status, body_bytes)
-        except urllib.error.HTTPError as exc:
-            status = exc.code
-            body_bytes = _read_response_body(exc)
-            headers_obj = getattr(exc, "headers", None)
-            if headers_obj is not None:
-                _parse_rate_limit_headers(headers_obj, bucket=_bucket)
-
-            if status == 401 and not refreshed_due_to_401:
-                refreshed_due_to_401 = True
-                _emit("access token rejected; forcing refresh", level=logging.INFO)
-                store = _coalesced_refresh(
-                    store_path,
-                    profile_data["access_token"],
-                    client_id=client_id,
-                    client_secret=client_secret,
-                    token_url=src.get("MURAL_TOKEN_URL", MURAL_TOKEN_URL),
-                    _http=_http,
-                    _now=_now,
-                    profile_name=profile_name,
-                )
-                profile_data = _select_profile(store, profile_name)
-                continue
-
-            if status == 429 or 500 <= status < 600:
-                if attempt >= MAX_RETRIES:
-                    raise _build_api_error(status, body_bytes, headers_obj) from exc
-                wait = _backoff_seconds(headers_obj, attempt)
-                _emit(
-                    f"HTTP {status}; retrying in {wait:.2f}s "
-                    f"(attempt {attempt + 1}/{MAX_RETRIES})",
-                    level=logging.WARNING,
-                )
-                _sleep(wait)
-                attempt += 1
-                continue
-
-            raise _build_api_error(status, body_bytes, headers_obj) from exc
-        except urllib.error.URLError as exc:
-            if attempt >= MAX_RETRIES:
-                raise MuralError(f"network error contacting {url}: {exc}") from exc
-            wait = min(MAX_BACKOFF_SECONDS, 2**attempt)
-            _emit(
-                f"network error: {exc}; retrying in {wait:.2f}s "
-                f"(attempt {attempt + 1}/{MAX_RETRIES})",
-                level=logging.WARNING,
-            )
-            _sleep(wait)
-            attempt += 1
-            continue
-
-
-def _join_url(base: str, path: str, params: dict[str, Any] | None) -> str:
-    if path.startswith(("http://", "https://")):
-        url = path
-    else:
-        url = base.rstrip("/") + "/" + path.lstrip("/")
-    if params:
-        flat = {k: v for k, v in params.items() if v is not None}
-        if flat:
-            url = f"{url}?{urllib.parse.urlencode(flat, doseq=True)}"
-    return url
-
-
-def _decode_body(status: int, body_bytes: bytes) -> Any | None:
-    if status == 204 or not body_bytes:
-        return None
-    try:
-        return json.loads(body_bytes.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return body_bytes.decode("utf-8", errors="replace")
-
-
-def _extract_error_payload(
-    body_bytes: bytes,
-    headers_obj: Any,
-) -> tuple[str | None, str | None, str | None]:
-    """Decode a Mural error response into ``(code, message, request_id)``.
-
-    ``request_id`` falls back to the ``X-Request-Id`` header when the body
-    omits it.  This helper exists as a discrete fuzzable seam so error
-    extraction logic can be exercised without issuing real HTTP calls.
-    """
-    code: str | None = None
-    message: str | None = None
-    request_id: str | None = None
-    if headers_obj is not None:
-        getter = getattr(headers_obj, "get", None)
-        if callable(getter):
-            request_id = getter("X-Request-Id") or getter("x-request-id")
-    if body_bytes:
-        try:
-            payload = json.loads(body_bytes.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            payload = None
-        if isinstance(payload, dict):
-            raw_code = payload.get("code")
-            code = str(raw_code) if raw_code is not None else None
-            raw_message = payload.get("message") or payload.get("error")
-            message = str(raw_message) if raw_message else None
-        if message is None:
-            message = body_bytes.decode("utf-8", errors="replace")
-    return code, message, request_id
-
-
-def _build_api_error(status: int, body_bytes: bytes, headers_obj: Any) -> MuralAPIError:
-    code, message, request_id = _extract_error_payload(body_bytes, headers_obj)
-    if not message:
-        message = f"HTTP {status}"
-    return MuralAPIError(status, code, message, request_id)
-
-
-def _backoff_seconds(headers_obj: Any, attempt: int) -> float:
-    retry_after: float | None = None
-    if headers_obj is not None:
-        getter = getattr(headers_obj, "get", None)
-        if callable(getter):
-            raw = getter("Retry-After") or getter("retry-after")
-            if raw is not None:
-                try:
-                    retry_after = float(raw)
-                except (TypeError, ValueError):
-                    retry_after = None
-    if retry_after is None:
-        retry_after = float(min(MAX_BACKOFF_SECONDS, 2**attempt))
-    return min(MAX_BACKOFF_SECONDS, max(0.0, retry_after))
-
+# The transport and OAuth re-export blocks below MUST stay in dependency order:
+# ``_oauth`` reaches back into the package for ``_TOKEN_OPENER`` and
+# ``_parse_token_response`` at module-load time, so ``_transport`` must be
+# re-exported first.  ``# isort: off``/``# isort: on`` pins this order against
+# the isort (``I``) rule, which would otherwise sort ``_oauth`` before
+# ``_transport`` alphabetically and reintroduce a circular-import failure.
+# isort: off
+# ---------------------------------------------------------------------------
+# Step 2.2 — Transport tier (redact, rate limiting, refresh, HTTP, asset upload)
+# ---------------------------------------------------------------------------
+# Carved into ``_transport`` for module size and testability.  Re-imported here
+# so the package surface (and ``mural.<symbol>`` test access) is unchanged.
+# Deferred to this point so ``_transport`` can bind the package siblings it
+# depends on (``_emit``, ``_coalesced_refresh``, ``_load_token_store``, etc.)
+# defined above, and so ``_oauth`` (imported below) sees ``_TOKEN_OPENER`` and
+# ``_parse_token_response`` already bound on the package.
+from ._transport import (  # noqa: E402,F401
+    _RATE_BUCKET,
+    _TOKEN_OPENER,
+    _authenticated_request,
+    _backoff_seconds,
+    _build_api_error,
+    _create_asset_url,
+    _decode_body,
+    _extract_error_payload,
+    _join_url,
+    _NoRedirect,
+    _parse_rate_limit_headers,
+    _parse_token_response,
+    _read_capped,
+    _read_response_body,
+    _redact,
+    _refresh_access_token,
+    _token_bucket_acquire,
+    _TokenBucket,
+    _upload_to_sas,
+)
 
 # ---------------------------------------------------------------------------
 # Step 2.3 — Loopback OAuth login flow
@@ -1637,8 +945,8 @@ def _backoff_seconds(headers_obj: Any, attempt: int) -> float:
 # so the package surface (and ``mural.<symbol>`` test access) is unchanged.
 # PKCE primitives (``_generate_pkce_pair``/``_verify_pkce``) remain above so
 # that ``_oauth`` can import them at module-load time without a cycle on the
-# transport helpers it also depends on (``_TOKEN_OPENER`` etc.).
-
+# transport helpers it also depends on (``_TOKEN_OPENER`` etc.).  ``_transport``
+# is re-exported above so ``_oauth``'s load-time reach-back resolves them.
 from ._oauth import (  # noqa: E402,F401
     _build_authorize_url,
     _CallbackResult,
@@ -1650,6 +958,25 @@ from ._oauth import (  # noqa: E402,F401
     _run_login,
     _start_loopback_server,
     _validate_redirect_uri,
+)
+# isort: on
+
+# ---------------------------------------------------------------------------
+# Step 4 — Output, emit, and widget-text helpers
+# ---------------------------------------------------------------------------
+# Carved into ``_output`` for testability and module size.  Re-imported here
+# so the package surface (and ``mural.<symbol>`` test access) is unchanged.
+# ``_output._emit_record`` reaches back through the package facade for
+# ``_unwrap_value_envelope`` so monkeypatch interception still works.
+# ``_output`` imports ``_validation`` at module load, so Python loads the
+# validation tier transitively regardless of the order of these re-exports.
+from ._output import (  # noqa: E402,F401
+    _apply_widget_text_coalesce,
+    _coalesce_widget_text,
+    _emit_record,
+    _emit_records,
+    _read_fields,
+    _strip_html,
 )
 
 # ---------------------------------------------------------------------------
@@ -1753,6 +1080,8 @@ __all__ = [
     # env-driven flags defined locally for the importlib.reload contract
     "_ROTATION_ENABLED",
     "_PARENTID_FILTER_ENABLED",
+    # process-local mutable state defined locally
+    "_GEOS_PROBE_DONE",
     # re-exported from ._validation
     "_ALLOWED_HYPERLINK_SCHEMES",
     "_AZURE_BLOB_HOST_SUFFIX",
@@ -1785,80 +1114,14 @@ __all__ = [
     "_validate_hyperlink",
     "_validate_mural_id",
     "_validate_tag_text",
+    # re-exported from ._output
+    "_apply_widget_text_coalesce",
+    "_coalesce_widget_text",
+    "_emit_record",
+    "_emit_records",
+    "_read_fields",
+    "_strip_html",
 ]
-
-
-def _create_asset_url(
-    mural_id: str,
-    file_extension: str,
-    **request_kwargs: Any,
-) -> dict[str, Any]:
-    """Call ``POST /murals/{id}/assets`` and return the ``value`` payload."""
-    if not file_extension:
-        raise MuralValidationError("file_extension is required to create an asset url")
-    ext = file_extension.lstrip(".").lower()
-    response = _authenticated_request(
-        "POST",
-        f"/murals/{mural_id}/assets",
-        json_body={"fileExtension": ext},
-        **request_kwargs,
-    )
-    if not isinstance(response, dict):
-        raise MuralAPIError(0, "ASSET_URL_INVALID", "asset response is not an object")
-    value = (
-        response.get("value") if isinstance(response.get("value"), dict) else response
-    )
-    if not isinstance(value, dict) or "url" not in value or "name" not in value:
-        raise MuralAPIError(0, "ASSET_URL_INVALID", "asset response missing url/name")
-    return value
-
-
-def _upload_to_sas(
-    *,
-    url: str,
-    headers: dict[str, str],
-    body: bytes,
-    content_type: str,
-    _http: Callable[..., Any] = urllib.request.urlopen,
-) -> None:
-    """PUT ``body`` to the Azure SAS ``url`` after validating it.
-
-    ``headers`` is the dictionary returned by Mural's ``POST /assets`` call
-    and must include ``x-ms-blob-type: BlockBlob``.  No Mural Bearer token is
-    sent on this request.
-    """
-    _validate_asset_url(url)
-    request_headers: dict[str, str] = {
-        "Content-Type": content_type,
-        "Content-Length": str(len(body)),
-        "User-Agent": USER_AGENT,
-    }
-    for key, value in (headers or {}).items():
-        if key.lower() == "authorization":
-            continue
-        request_headers[key] = value
-    if request_headers.get("x-ms-blob-type", "").lower() != "blockblob":
-        request_headers["x-ms-blob-type"] = "BlockBlob"
-    request = urllib.request.Request(
-        url,
-        data=body,
-        method="PUT",
-        headers=request_headers,
-    )
-    LOGGER.debug("PUT %s", _redact(url))
-    try:
-        with _http(request) as resp:  # type: ignore[arg-type]
-            status = getattr(resp, "status", 200)
-            if status >= 400:
-                payload = _read_response_body(resp).decode("utf-8", errors="replace")
-                raise MuralAPIError(status, "ASSET_UPLOAD_FAILED", payload)
-    except urllib.error.HTTPError as exc:
-        text = _read_response_body(exc).decode("utf-8", errors="replace")
-        raise MuralAPIError(
-            exc.code, "ASSET_UPLOAD_FAILED", text or "upload failed"
-        ) from exc
-    except urllib.error.URLError as exc:
-        raise MuralError(f"network error uploading to asset url: {exc}") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -1866,351 +1129,7 @@ def _upload_to_sas(
 # ---------------------------------------------------------------------------
 
 
-def _cmd_auth_login(args: argparse.Namespace) -> int:
-    _emit("mural auth login", level=logging.INFO)
-    if not os.environ.get(ENV_CLIENT_ID):
-        diag_profile = (
-            getattr(args, "profile", None)
-            or os.environ.get(ENV_PROFILE)
-            or DEFAULT_PROFILE_NAME
-        )
-        cred_path = _resolve_credential_file(diag_profile, os.environ)
-        cred_exists = "yes" if cred_path.exists() else "no"
-        _emit(
-            "\n".join(
-                [
-                    f"{ENV_CLIENT_ID} is not set.",
-                    "",
-                    "Looked for credentials in this order:",
-                    f"  1. Process environment ({ENV_CLIENT_ID}, {ENV_CLIENT_SECRET})",
-                    (
-                        "  2. Active credential backend "
-                        "(MURAL_CREDENTIAL_BACKEND={auto|keyring|file|env-only})"
-                    ),
-                    f"  3. Credential file: {cred_path}  (exists: {cred_exists})",
-                    "",
-                    (
-                        "Run `mural auth bootstrap` to store Mural app"
-                        " credentials interactively,"
-                    ),
-                    (
-                        f"or set {ENV_CLIENT_ID} and {ENV_CLIENT_SECRET} in your"
-                        " environment."
-                    ),
-                ]
-            ),
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None) or DEFAULT_PROFILE_NAME
-        )
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    force = bool(getattr(args, "force", False))
-    service = _service_name_for(profile_name)
-    try:
-        backend = resolve_backend(profile_name)
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_FAILURE
-    existing: dict[str, str] = {}
-    try:
-        for key in _KNOWN_CREDENTIAL_KEYS:
-            value = backend.get(service, key)
-            if value:
-                existing[key] = value
-    except _KeyringUnavailable:
-        existing = {}
-    refresh_present = False
-    try:
-        store = _load_token_store(_resolve_token_store_path())
-        if isinstance(store, dict):
-            profiles = store.get("profiles")
-            if isinstance(profiles, dict):
-                profile_record = profiles.get(profile_name)
-                if isinstance(profile_record, dict):
-                    refresh_present = bool(profile_record.get("refresh_token"))
-    except Exception:  # noqa: BLE001 - probe must never raise
-        refresh_present = False
-    if (existing or refresh_present) and not force:
-        _emit(
-            f"profile {profile_name!r} already has stored credentials; "
-            "rerun with --force to overwrite",
-            level=logging.INFO,
-        )
-        return EXIT_SUCCESS
-    # Scope resolution precedence:
-    #   1. ``--scopes`` (explicit CLI flag).
-    #   2. ``MURAL_SCOPES`` env var (split on whitespace or commas).
-    #   3. ``READ_SCOPES + WRITE_SCOPES`` when ``--write`` is set.
-    #   4. ``READ_SCOPES`` (fallback).
-    # Step 2 wins over Step 3 so that operators can scope-down a write-capable
-    # login via env without removing ``--write`` from automation. An empty or
-    # whitespace-only ``MURAL_SCOPES`` value is rejected to prevent a silent
-    # downgrade to the default scope set.
-    env_scopes = os.environ.get(ENV_SCOPES)
-    scope_source: str
-    if args.scopes:
-        granted = tuple(args.scopes.split())
-        scopes = " ".join(granted)
-        scope_source = "--scopes"
-    elif env_scopes is not None:
-        if not env_scopes.strip():
-            try:
-                raise MuralValidationError(
-                    "INVALID_SCOPES: "
-                    + ENV_SCOPES
-                    + " is set but contains no scope tokens"
-                )
-            except MuralError as exc:
-                _emit(str(exc), level=logging.ERROR)
-                return EXIT_USAGE
-        granted = tuple(
-            token for token in re.split(r"[\s,]+", env_scopes.strip()) if token
-        )
-        scopes = " ".join(granted)
-        scope_source = ENV_SCOPES
-    elif args.write:
-        granted = READ_SCOPES + WRITE_SCOPES
-        scopes = " ".join(granted)
-        scope_source = "--write"
-    else:
-        granted = READ_SCOPES
-        scopes = None
-        scope_source = "default"
-    _emit(
-        f"requesting OAuth scopes ({scope_source}): {' '.join(granted)}",
-        level=logging.INFO,
-    )
-    try:
-        record = _run_login(scopes=scopes, timeout_seconds=args.timeout)
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_FAILURE
-    record["granted_scopes"] = list(granted)
-    # Bind the profile to the client_id used during the OAuth flow so
-    # ``_authenticated_request`` can detect cross-client reuse on subsequent
-    # invocations (Step 3.6 client_id mismatch check).
-    client_id = os.environ.get(ENV_CLIENT_ID)
-    record["client_id"] = client_id
-    path = _resolve_token_store_path()
-    # Login is the recovery path for a corrupt or incompatible store, so a
-    # load failure here is downgraded to "start fresh" rather than blocking
-    # the user from re-authenticating. The recovery write happens in its own
-    # lock acquisition; the happy path uses ``_token_store_session`` to close
-    # the read/modify/write TOCTOU window (IV-001).
-    try:
-        with _token_store_session(path) as (existing, commit):
-            if not existing:
-                existing = {
-                    "schema_version": TOKEN_STORE_SCHEMA_VERSION,
-                    "profiles": {},
-                }
-            profiles = dict(existing.get("profiles") or {})
-            profiles[profile_name] = record
-            envelope = dict(existing)
-            envelope["schema_version"] = TOKEN_STORE_SCHEMA_VERSION
-            envelope["profiles"] = profiles
-            commit(envelope)
-    except MuralError as exc:
-        _emit(
-            f"existing token store at {path} could not be read ({exc}); "
-            "starting a new envelope",
-            level=logging.WARNING,
-        )
-        envelope = {
-            "schema_version": TOKEN_STORE_SCHEMA_VERSION,
-            "profiles": {profile_name: record},
-        }
-        with _acquire_cache_lock(path):
-            _save_token_store_locked(path, envelope)
-    _emit(
-        f"saved token store at {path} (profile {profile_name!r})",
-        level=logging.INFO,
-    )
-    return EXIT_SUCCESS
-
-
-_OAUTH_SETUP_WALKTHROUGH = """\
-Mural OAuth app setup walkthrough
-=================================
-
-1. Sign in at https://app.mural.co and open Account Settings -> Developer
-   Console -> Create new app.
-2. Set the app's Redirect URL to the loopback address this CLI listens on:
-     - Linux  : http://localhost:8765/callback
-     - macOS  : http://localhost:8765/callback
-     - Windows: http://localhost:8765/callback
-   Override with the MURAL_REDIRECT_URI environment variable when port 8765
-   is unavailable; the override must point at a loopback host
-   (`localhost` or `127.0.0.1`) on a port in the range 1024-65535,
-   with `/callback` as the exact path. IPv6 loopback (`[::1]`) is not
-   accepted.
-3. Copy the app credentials into your shell environment:
-     - MURAL_CLIENT_ID      (required) the app's client identifier
-     - MURAL_CLIENT_SECRET  (optional) only required for confidential clients
-     - MURAL_REDIRECT_URI   (optional) overrides the default loopback URL
-     - MURAL_SCOPES         (optional) overrides the default scope set
-       (interactive bootstrap requests `DEFAULT_LOGIN_SCOPES`, the union
-       of the read scopes and `murals:write` / `templates:write` /
-       `rooms:write`, so first-time users can read and write immediately)
-4. Run `mural auth bootstrap` for an interactive walkthrough that opens the
-   developer portal and persists Client ID / Secret via the active
-   credential backend (MURAL_CREDENTIAL_BACKEND={auto|keyring|file|
-   env-only}; defaults to OS keyring with a 0600-mode file fallback),
-   or `mural auth setup` for non-interactive provisioning, then
-   `mural auth login --profile <name>` to mint tokens via the PKCE flow.
-
-Redaction contract: this CLI redacts access tokens, refresh tokens, OAuth
-`code` parameters, `state` parameters, and Authorization headers from every
-stderr/log emission. Never paste raw tokens into shared transcripts.
-"""
-
-
 # Mural exposes no RFC 7009 /revoke endpoint, so logout is local-only.
-_LOGOUT_TRANSPARENCY_LINES: tuple[str, ...] = (
-    "Credentials have been cleared from this machine.",
-    (
-        "Your Mural OAuth tokens may remain active server-side until they "
-        "expire (access tokens have a documented 15-minute TTL; "
-        "refresh tokens persist longer and are not rotated on use)."
-    ),
-    (
-        "To fully revoke access, visit https://app.mural.co/me/apps and "
-        "remove this integration."
-    ),
-)
-
-
-def _cmd_auth_setup(args: argparse.Namespace) -> int:
-    """Provision a new profile non-interactively from env or CLI args."""
-    json_mode = bool(getattr(args, "json", False)) or _CLI_FORCE_JSON
-    if not json_mode:
-        print(_OAUTH_SETUP_WALKTHROUGH)
-    _emit("mural auth setup", level=logging.INFO)
-    try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None) or DEFAULT_PROFILE_NAME
-        )
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    client_id = getattr(args, "client_id", None) or os.environ.get(ENV_CLIENT_ID)
-    if not client_id:
-        _emit(
-            f"{ENV_CLIENT_ID} is not set and --client-id was not provided",
-            level=logging.ERROR,
-        )
-        return EXIT_USAGE
-    scope = (
-        getattr(args, "scope", None)
-        or os.environ.get(ENV_SCOPES)
-        or " ".join(READ_SCOPES)
-    )
-    granted = tuple(scope.split())
-    record = {
-        "client_id": client_id,
-        "access_token": "",
-        "token_type": "Bearer",
-        "obtained_at": int(time.time()),
-        "granted_scopes": list(granted),
-    }
-    path = _resolve_token_store_path()
-    # ``setup`` is also a recovery entry point: a corrupt or incompatible
-    # store should not block the user from preparing a new profile. Happy
-    # path uses ``_token_store_session`` to close the IV-001 TOCTOU window.
-    try:
-        with _token_store_session(path) as (existing, commit):
-            if not existing:
-                existing = {
-                    "schema_version": TOKEN_STORE_SCHEMA_VERSION,
-                    "profiles": {},
-                }
-            profiles = dict(existing.get("profiles") or {})
-            profiles[profile_name] = record
-            envelope = dict(existing)
-            envelope["schema_version"] = TOKEN_STORE_SCHEMA_VERSION
-            envelope["profiles"] = profiles
-            commit(envelope)
-    except MuralError as exc:
-        _emit(
-            f"existing token store at {path} could not be read ({exc}); "
-            "starting a new envelope",
-            level=logging.WARNING,
-        )
-        envelope = {
-            "schema_version": TOKEN_STORE_SCHEMA_VERSION,
-            "profiles": {profile_name: record},
-        }
-        with _acquire_cache_lock(path):
-            _save_token_store_locked(path, envelope)
-    # Mirror the client_id into the active credential backend so
-    # subsequent `mural auth login` invocations can resolve it without
-    # the operator re-exporting MURAL_CLIENT_ID. Failure to write is
-    # surfaced as a single deduped WARN; the token-store record above
-    # is already committed so setup remains useful in env-only mode.
-    try:
-        backend = resolve_backend(profile_name)
-    except MuralError as exc:
-        backend = None
-        _emit(
-            f"could not resolve credential backend while mirroring "
-            f"client_id for profile {profile_name!r}: {exc}",
-            level=logging.WARNING,
-        )
-    if backend is not None:
-        if isinstance(backend, _NullBackend):
-            warn_key = f"setup-null:{profile_name}"
-            if warn_key not in _seen_fallback_warn:
-                _seen_fallback_warn.add(warn_key)
-                _emit(
-                    "credential backend is 'env-only'; client_id was "
-                    f"recorded in the token store at {path} only. Set "
-                    "MURAL_CREDENTIAL_BACKEND=keyring or =file before "
-                    "`mural auth login` to persist the client_id outside "
-                    "the environment.",
-                    level=logging.WARNING,
-                )
-        else:
-            try:
-                backend.set(
-                    _service_name_for(profile_name),
-                    "MURAL_CLIENT_ID",
-                    client_id,
-                )
-            except (_KeyringUnavailable, OSError, RuntimeError) as exc:
-                warn_key = f"setup-write:{profile_name}:{backend.name}"
-                if warn_key not in _seen_fallback_warn:
-                    _seen_fallback_warn.add(warn_key)
-                    _emit(
-                        f"failed to mirror client_id into backend "
-                        f"{backend.name!r} for profile {profile_name!r}: "
-                        f"{exc}",
-                        level=logging.WARNING,
-                    )
-    next_step = f"python -m mural auth login --profile {profile_name}"
-    if json_mode:
-        print(
-            json.dumps(
-                {
-                    "profile": profile_name,
-                    "token_store": str(path),
-                    "status": "prepared",
-                    "next_steps": [next_step],
-                },
-                indent=2,
-            )
-        )
-    else:
-        _emit(
-            f"profile {profile_name!r} prepared at {path}; "
-            f"run `{next_step}` to obtain tokens",
-            level=logging.INFO,
-        )
-    return EXIT_SUCCESS
 
 
 def _bootstrap_is_interactive() -> bool:
@@ -2223,923 +1142,24 @@ def _bootstrap_is_interactive() -> bool:
     )
 
 
-def _cmd_auth_bootstrap(args: argparse.Namespace) -> int:
-    """Interactive one-time setup that writes app credentials to the active backend.
-
-    Replaces the legacy file-only writer: credentials are persisted via
-    :func:`resolve_backend` so the operator's
-    ``MURAL_CREDENTIAL_BACKEND`` selector decides whether the secret
-    lands in the OS keyring or the per-user credential file. The flow
-    runs in eight stages so each side-effect is auditable in the log
-    output.
-    """
-    try:
-        profile_name = _validate_profile_name(
-            getattr(args, "profile", None)
-            or os.environ.get(ENV_PROFILE)
-            or DEFAULT_PROFILE_NAME
-        )
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    if not _bootstrap_is_interactive():
-        _emit(
-            "auth bootstrap requires an interactive TTY; non-interactive "
-            "callers should run `mural auth setup` to provision a profile, "
-            "or set MURAL_CLIENT_ID and MURAL_CLIENT_SECRET in the active "
-            "credential backend directly.",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    force = bool(getattr(args, "force", False))
-    service = _service_name_for(profile_name)
-
-    # Stage 1: detect existing credentials in the active backend.
-    try:
-        backend = resolve_backend(profile_name)
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_FAILURE
-    try:
-        existing_id = backend.get(service, "MURAL_CLIENT_ID")
-    except _KeyringUnavailable as exc:
-        _emit(
-            f"credential backend {backend.name!r} unavailable: {exc}",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    if existing_id and not force:
-        _emit(
-            f"profile {profile_name!r} already has MURAL_CLIENT_ID stored in "
-            f"backend {backend.name!r}; rerun with --force to overwrite, or "
-            "use `mural auth status` to inspect.",
-            level=logging.INFO,
-        )
-        return EXIT_SUCCESS
-
-    # Stage 2: surface portal URL, scopes, and callback URL to the operator.
-    portal_url = "https://app.mural.co/me/apps"
-    callback_url = DEFAULT_REDIRECT_URI
-    scopes = READ_SCOPES + WRITE_SCOPES
-    _emit(
-        f"opening {portal_url} for app credential creation; "
-        "create a new app and copy its Client ID and Client Secret",
-        level=logging.INFO,
-    )
-    _emit(
-        f"required scopes: {', '.join(scopes)}",
-        level=logging.INFO,
-    )
-    _emit(
-        f"callback URL to register on the app: {callback_url}",
-        level=logging.INFO,
-    )
-
-    # Stage 3: best-effort browser open (never raises).
-    with contextlib.suppress(Exception):
-        webbrowser.open(portal_url)
-
-    # Stage 4: prompt for credentials with hidden secret entry.
-    try:
-        client_id = input("Mural Client ID: ").strip()
-        client_secret = getpass.getpass("Mural Client Secret (input hidden): ").strip()
-    except EOFError:
-        _emit(
-            "aborted at prompt; no credentials written",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    try:
-        if not client_id:
-            raise MuralValidationError("Mural Client ID must not be empty")
-        if not client_secret:
-            raise MuralValidationError("Mural Client Secret must not be empty")
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    # Reject malformed secrets (whitespace, truncated pastes) before they
-    # land in the credential backend and surface as opaque ``invalid_client``
-    # errors during ``auth login``.
-    try:
-        client_secret = _validate_client_secret(client_secret)
-    except ValueError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-
-    # Stage 5: persist via the active backend. _NullBackend raises here so
-    # the operator gets a clear actionable message instead of a silent no-op.
-    if isinstance(backend, _NullBackend):
-        _emit(
-            "credential backend is 'env-only'; cannot persist credentials. "
-            "Set MURAL_CREDENTIAL_BACKEND=keyring or =file before rerunning "
-            "`mural auth bootstrap`.",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    try:
-        backend.set(service, "MURAL_CLIENT_ID", client_id)
-        backend.set(service, "MURAL_CLIENT_SECRET", client_secret)
-    except (_KeyringUnavailable, OSError, RuntimeError) as exc:
-        _emit(
-            f"failed to write credentials to backend {backend.name!r}: {exc}",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-
-    # Stage 6: round-trip verification so silent backend faults surface now.
-    try:
-        roundtrip = backend.get(service, "MURAL_CLIENT_ID")
-    except _KeyringUnavailable as exc:
-        _emit(
-            f"backend {backend.name!r} write succeeded but verification "
-            f"read failed: {exc}",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-    if roundtrip != client_id:
-        _emit(
-            f"backend {backend.name!r} verification mismatch: stored "
-            "value differs from input",
-            level=logging.ERROR,
-        )
-        return EXIT_FAILURE
-
-    # Stage 7: probe credentials with /token client_credentials grant so
-    # the operator learns immediately if the saved pair is rejected.
-    if not getattr(args, "no_test", False):
-        ok, message = _probe_client_credentials(client_id, client_secret)
-        if ok:
-            _emit(
-                f"credential probe succeeded: {message}",
-                level=logging.INFO,
-            )
-        else:
-            _emit(
-                f"{message}; your credentials were saved but Mural "
-                "rejected them — try `mural auth bootstrap --no-test` "
-                "if you want to debug separately",
-                level=logging.ERROR,
-            )
-            return EXIT_FAILURE
-
-    # Stage 8: actionable next steps.
-    _emit(
-        f"stored Mural app credentials for profile {profile_name!r} in "
-        f"backend {backend.name!r}",
-        level=logging.INFO,
-    )
-    _emit(
-        "Run `mural auth status` to confirm credentials are resolvable, then "
-        f"`mural auth login --profile {profile_name}` to obtain tokens.",
-        level=logging.INFO,
-    )
-    return EXIT_SUCCESS
-
-
-def _cmd_auth_list(_args: argparse.Namespace) -> int:
-    """List configured profiles with active marker."""
-    path = _resolve_token_store_path()
-    store = _load_token_store(path)
-    profiles_obj: dict[str, Any] = {}
-    active: str | None = None
-    if isinstance(store, dict):
-        raw = store.get("profiles") or {}
-        if isinstance(raw, dict):
-            profiles_obj = raw
-        active_raw = store.get("active_profile")
-        if isinstance(active_raw, str) and active_raw:
-            active = active_raw
-    rows: list[dict[str, Any]] = []
-    for name in sorted(profiles_obj):
-        prof = profiles_obj.get(name) or {}
-        cid = prof.get("client_id") or ""
-        cid_short = cid[-4:] if isinstance(cid, str) and len(cid) > 4 else cid
-        granted = prof.get("granted_scopes")
-        if not (isinstance(granted, list) and all(isinstance(s, str) for s in granted)):
-            granted = []
-        rows.append(
-            {
-                "name": name,
-                "client_id": cid_short,
-                "granted_scopes": list(granted),
-                "expires_at": prof.get("expires_at"),
-                "has_refresh_token": bool(prof.get("refresh_token")),
-                "active": name == active,
-            }
-        )
-    if _CLI_FORCE_JSON or getattr(_args, "format", "json") != "table":
-        print(
-            json.dumps(
-                {"token_store": str(path), "active_profile": active, "profiles": rows},
-                indent=2,
-            )
-        )
-        return EXIT_SUCCESS
-    if not rows:
-        print("(no profiles)")
-        return EXIT_SUCCESS
-    header = (
-        f"  {'NAME':<20} {'CLIENT_ID':<6} {'REFRESH':<7} "
-        f"{'GRANTED_SCOPES':<40} EXPIRES_AT"
-    )
-    print(header)
-    for row in rows:
-        marker = "*" if row["active"] else " "
-        scope = " ".join(row["granted_scopes"])[:40]
-        refresh = "yes" if row["has_refresh_token"] else "no"
-        expires = row["expires_at"]
-        if isinstance(expires, (int, float)):
-            try:
-                expires_str = datetime.datetime.fromtimestamp(
-                    expires, tz=datetime.timezone.utc
-                ).isoformat()
-            except (OverflowError, OSError, ValueError):
-                expires_str = str(expires)
-        else:
-            expires_str = "" if expires is None else str(expires)
-        print(
-            f"{marker} {row['name']:<20} {row['client_id']:<6} "
-            f"{refresh:<7} {scope:<40} {expires_str}"
-        )
-    return EXIT_SUCCESS
-
-
-def _cmd_auth_use(args: argparse.Namespace) -> int:
-    """Set the active profile in the v2 envelope."""
-    json_mode = bool(getattr(args, "json", False)) or _CLI_FORCE_JSON
-    try:
-        name = _validate_profile_name(args.name)
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    path = _resolve_token_store_path()
-    with _token_store_session(path) as (store, commit):
-        if not store:
-            _emit(
-                f"no token store at {path}; run `python -m mural auth login` first",
-                level=logging.ERROR,
-            )
-            return EXIT_FAILURE
-        try:
-            _select_profile(store, name)
-        except MuralError as exc:
-            _emit(str(exc), level=logging.ERROR)
-            return EXIT_FAILURE
-        envelope = dict(store)
-        envelope["active_profile"] = name
-        commit(envelope)
-    if json_mode:
-        print(
-            json.dumps(
-                {
-                    "profile": name,
-                    "token_store": str(path),
-                    "status": "active",
-                },
-                indent=2,
-            )
-        )
-    else:
-        _emit(f"active profile set to {name!r}", level=logging.INFO)
-    return EXIT_SUCCESS
-
-
-def _logout_remove_credentials(
-    profile: str,
-    *,
-    require_force_for_file: bool,
-) -> dict[str, Any]:
-    """Delete every known credential key for ``profile`` from its backend.
-
-    Returns a per-profile result dict suitable for inclusion in the
-    logout JSON envelope and (when ``--json`` is not set) for printing
-    a friendly summary. Never raises: backend errors are captured in
-    the returned ``error`` field so the caller can decide whether to
-    surface them.
-
-    When the resolved backend is :class:`FileBackend` and
-    ``require_force_for_file`` is true, the file is left intact and the
-    returned ``status`` is ``"requires_force"`` so the caller can
-    instruct the operator to re-run with ``--force``.
-    """
-    result: dict[str, Any] = {"profile": profile}
-    try:
-        backend = resolve_backend(profile)
-    except MuralError as exc:
-        result["status"] = "error"
-        result["error"] = str(exc)
-        result["backend"] = "unavailable"
-        return result
-    result["backend"] = backend.name
-    if isinstance(backend, _NullBackend):
-        result["status"] = "skipped"
-        result["reason"] = "MURAL_CREDENTIAL_BACKEND=env-only has no persistence layer"
-        return result
-    if isinstance(backend, FileBackend) and require_force_for_file:
-        result["status"] = "requires_force"
-        result["reason"] = (
-            "FileBackend deletion requires --force "
-            "(removes credential file at "
-            f"{backend._path})"
-        )
-        return result
-    service = _service_name_for(profile)
-    removed: list[str] = []
-    errors: dict[str, str] = {}
-    for key in _KNOWN_CREDENTIAL_KEYS:
-        try:
-            existing = backend.get(service, key)
-        except _KeyringUnavailable as exc:
-            errors[key] = f"read failed: {exc}"
-            continue
-        if not existing:
-            continue
-        try:
-            backend.delete(service, key)
-        except _KeyringUnavailable as exc:
-            errors[key] = f"delete failed: {exc}"
-            continue
-        except OSError as exc:
-            errors[key] = f"delete failed: {exc}"
-            continue
-        removed.append(key)
-    result["removed_keys"] = removed
-    if errors:
-        result["status"] = "partial" if removed else "error"
-        result["errors"] = errors
-    elif removed:
-        result["status"] = "removed"
-    else:
-        result["status"] = "absent"
-    return result
-
-
-def _cmd_auth_logout(args: argparse.Namespace) -> int:
-    """Remove credentials.
-
-    Modes:
-      * no flags: clear the currently-active profile only.
-      * ``--profile NAME``: remove the named profile (and clear
-        ``active_profile`` if it pointed there).
-      * ``--all``: atomically replace the envelope with an empty v2 envelope.
-
-    ``--all`` and ``--profile`` are mutually exclusive (enforced by argparse).
-
-    By default credentials are also removed from the resolved backend
-    (keyring or file). Pass ``--keep-credentials`` to leave backend
-    state untouched. ``--force`` is required to delete from the
-    :class:`FileBackend` (since it removes the on-disk credential file).
-    """
-    json_mode = bool(getattr(args, "json", False)) or _CLI_FORCE_JSON
-    keep_credentials = bool(getattr(args, "keep_credentials", False))
-    force = bool(getattr(args, "force", False))
-    path = _resolve_token_store_path()
-    if getattr(args, "all", False):
-        # Snapshot profile names BEFORE clearing the token store so we
-        # can iterate them for backend deletion.
-        store_snapshot = _load_token_store(path) or {}
-        profile_names = sorted((store_snapshot.get("profiles") or {}).keys())
-        empty = {"schema_version": TOKEN_STORE_SCHEMA_VERSION, "profiles": {}}
-        try:
-            with _acquire_cache_lock(path):
-                _save_token_store_locked(path, empty)
-        except OSError as exc:
-            _emit(f"cannot rewrite {path}: {exc}", level=logging.ERROR)
-            return EXIT_FAILURE
-        credentials_results: list[dict[str, Any]] = []
-        if not keep_credentials:
-            # When --all and no profiles in store, fall back to default
-            # profile so we still try to clean its backend entries.
-            for name in profile_names or [DEFAULT_PROFILE_NAME]:
-                credentials_results.append(
-                    _logout_remove_credentials(name, require_force_for_file=not force)
-                )
-        if json_mode:
-            print(
-                json.dumps(
-                    {
-                        "token_store": str(path),
-                        "status": "cleared",
-                        "scope": "all",
-                        "credentials_removed": credentials_results,
-                        "keep_credentials": keep_credentials,
-                    },
-                    indent=2,
-                )
-            )
-        else:
-            _emit(f"cleared all profiles in {path}", level=logging.INFO)
-            for entry in credentials_results:
-                _emit_logout_credential_summary(entry)
-            _emit_logout_transparency()
-        return EXIT_SUCCESS
-
-    target = getattr(args, "profile", None)
-    with _token_store_session(path) as (store, commit):
-        if not store:
-            credentials_results = []
-            if not keep_credentials:
-                fallback = target or os.environ.get(ENV_PROFILE) or DEFAULT_PROFILE_NAME
-                try:
-                    fallback = _validate_profile_name(fallback)
-                except MuralError as exc:
-                    _emit(str(exc), level=logging.ERROR)
-                    return EXIT_USAGE
-                credentials_results.append(
-                    _logout_remove_credentials(
-                        fallback, require_force_for_file=not force
-                    )
-                )
-            if json_mode:
-                print(
-                    json.dumps(
-                        {
-                            "token_store": str(path),
-                            "status": "absent",
-                            "credentials_removed": credentials_results,
-                            "keep_credentials": keep_credentials,
-                        },
-                        indent=2,
-                    )
-                )
-            else:
-                _emit(f"no token store at {path}", level=logging.INFO)
-                for entry in credentials_results:
-                    _emit_logout_credential_summary(entry)
-            return EXIT_SUCCESS
-        if target is None:
-            target = _resolve_active_profile(store, os.environ, None)
-        else:
-            try:
-                target = _validate_profile_name(target)
-            except MuralError as exc:
-                _emit(str(exc), level=logging.ERROR)
-                return EXIT_USAGE
-        profiles = dict(store.get("profiles") or {})
-        token_status: str
-        if target not in profiles:
-            token_status = "absent"
-        else:
-            profiles.pop(target, None)
-            envelope = dict(store)
-            envelope["schema_version"] = TOKEN_STORE_SCHEMA_VERSION
-            envelope["profiles"] = profiles
-            if envelope.get("active_profile") == target:
-                envelope.pop("active_profile", None)
-            try:
-                commit(envelope)
-            except OSError as exc:
-                _emit(f"cannot rewrite {path}: {exc}", level=logging.ERROR)
-                return EXIT_FAILURE
-            token_status = "removed"
-    credentials_results = []
-    if not keep_credentials:
-        credentials_results.append(
-            _logout_remove_credentials(target, require_force_for_file=not force)
-        )
-    if json_mode:
-        print(
-            json.dumps(
-                {
-                    "profile": target,
-                    "token_store": str(path),
-                    "status": token_status,
-                    "credentials_removed": credentials_results,
-                    "keep_credentials": keep_credentials,
-                },
-                indent=2,
-            )
-        )
-    else:
-        if token_status == "removed":
-            _emit(
-                f"removed profile {target!r} from {path}",
-                level=logging.INFO,
-            )
-        else:
-            _emit(
-                f"profile {target!r} not present in {path}",
-                level=logging.INFO,
-            )
-        for entry in credentials_results:
-            _emit_logout_credential_summary(entry)
-        if token_status == "removed":
-            _emit_logout_transparency()
-    return EXIT_SUCCESS
-
-
-def _emit_logout_credential_summary(entry: dict[str, Any]) -> None:
-    """Print a one-line operator-friendly summary of a credential cleanup."""
-    profile = entry.get("profile", "?")
-    backend = entry.get("backend", "?")
-    status = entry.get("status", "?")
-    if status == "removed":
-        keys = ", ".join(entry.get("removed_keys") or []) or "(none)"
-        _emit(
-            f"removed credentials for profile {profile!r} "
-            f"from {backend} backend (keys: {keys})",
-            level=logging.INFO,
-        )
-    elif status == "absent":
-        _emit(
-            f"no credentials present for profile {profile!r} in {backend} backend",
-            level=logging.INFO,
-        )
-    elif status == "skipped":
-        _emit(
-            f"skipped credential removal for profile {profile!r}: "
-            f"{entry.get('reason')}",
-            level=logging.INFO,
-        )
-    elif status == "requires_force":
-        _emit(
-            f"credential removal for profile {profile!r} requires --force: "
-            f"{entry.get('reason')}",
-            level=logging.WARNING,
-        )
-    elif status == "partial":
-        keys = ", ".join(entry.get("removed_keys") or []) or "(none)"
-        _emit(
-            f"partial credential removal for profile {profile!r} "
-            f"({backend}; removed: {keys}; errors: "
-            f"{entry.get('errors')})",
-            level=logging.WARNING,
-        )
-    else:  # error or unknown
-        _emit(
-            f"credential removal failed for profile {profile!r}: "
-            f"{entry.get('error') or entry.get('errors')}",
-            level=logging.ERROR,
-        )
-
-
-def _emit_logout_transparency() -> None:
-    """Emit the local-only logout transparency message lines."""
-    for line in _LOGOUT_TRANSPARENCY_LINES:
-        _emit(line, level=logging.INFO)
-
-
-def _cmd_auth_status(args: argparse.Namespace) -> int:
-    path = _resolve_token_store_path()
-    cred_profile = (
-        getattr(args, "profile", None)
-        or os.environ.get(ENV_PROFILE)
-        or DEFAULT_PROFILE_NAME
-    )
-    cred_path = _resolve_credential_file(cred_profile, os.environ)
-    selector = os.environ.get("MURAL_CREDENTIAL_BACKEND", "auto").lower()
-    try:
-        backend = resolve_backend(cred_profile)
-        backend_name: str = backend.name
-        backend_error: str | None = None
-    except MuralError as exc:
-        backend_name = "unavailable"
-        backend_error = str(exc)
-    keyring_available, keyring_backend_name, keyring_error = (
-        _probe_keyring_availability()
-    )
-    # Probe both persistent backends so operators can see when concurrent
-    # state exists even if it has not yet triggered a WARN this process.
-    service = _service_name_for(cred_profile)
-    keyring_populated = False
-    if keyring_available:
-        try:
-            probe = KeyringBackend()
-            for key in _KNOWN_CREDENTIAL_KEYS:
-                if probe.get(service, key):
-                    keyring_populated = True
-                    break
-        except _KeyringUnavailable:
-            keyring_populated = False
-    file_populated = False
-    if cred_path.exists():
-        try:
-            file_entries = FileBackend(cred_path)._read_all()
-            file_populated = any(file_entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS)
-        except Exception:  # noqa: BLE001 - probe must never raise
-            file_populated = False
-    concurrent_state = {
-        "keyring_populated": keyring_populated,
-        "file_populated": file_populated,
-        "both_populated": keyring_populated and file_populated,
-    }
-    backends_have_creds = keyring_populated or file_populated
-    cred_keys = {
-        "credential_file": str(cred_path),
-        "credential_file_exists": cred_path.exists(),
-        "backend": backend_name,
-        "backend_selector": selector,
-        "keyring_available": keyring_available,
-        "keyring_backend": keyring_backend_name,
-        "concurrent_state": concurrent_state,
-    }
-    if backend_error is not None:
-        cred_keys["backend_error"] = backend_error
-    if keyring_error is not None and not keyring_available:
-        cred_keys["keyring_error"] = keyring_error
-    store = _load_token_store(path)
-    if not store:
-        print(
-            json.dumps(
-                {"authenticated": False, "token_store": str(path), **cred_keys},
-                indent=2,
-            )
-        )
-        return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
-    profile_name = _resolve_active_profile(
-        store, os.environ, getattr(args, "profile", None)
-    )
-    try:
-        profile = _select_profile(store, profile_name)
-    except MuralError:
-        print(
-            json.dumps(
-                {"authenticated": False, "token_store": str(path), **cred_keys},
-                indent=2,
-            )
-        )
-        return EXIT_SUCCESS if backends_have_creds else EXIT_FAILURE
-    info = {
-        "authenticated": True,
-        "token_store": str(path),
-        "profile": profile_name,
-        "granted_scopes": list(_token_granted_scopes(store, profile_name)),
-        "expires_at": profile.get("expires_at"),
-        "has_refresh_token": bool(profile.get("refresh_token")),
-        **cred_keys,
-    }
-    print(json.dumps(info, indent=2))
-    if backends_have_creds or info["has_refresh_token"]:
-        return EXIT_SUCCESS
-    return EXIT_FAILURE
-
-
-def _cmd_auth_migrate(args: argparse.Namespace) -> int:
-    """Migrate stored credentials between the keyring and file backends.
-
-    Bypasses :func:`resolve_backend` so the operator can move
-    credentials regardless of the active ``MURAL_CREDENTIAL_BACKEND``
-    selector. Performs a round-trip read after every key write so a
-    silent corruption in either backend surfaces as a non-zero exit.
-
-    With ``--cleanup`` the source backend's keys are removed after a
-    successful round-trip; ``--yes`` skips the confirmation prompt
-    (required when ``MURAL_NONINTERACTIVE=1``).
-    """
-    json_mode = bool(getattr(args, "json", False)) or _CLI_FORCE_JSON
-    direction = getattr(args, "to", None)
-    if direction not in {"keyring", "file"}:
-        _emit("--to must be one of 'keyring' or 'file'", level=logging.ERROR)
-        return EXIT_USAGE
-    profile = (
-        getattr(args, "profile", None)
-        or os.environ.get(ENV_PROFILE)
-        or DEFAULT_PROFILE_NAME
-    )
-    try:
-        profile = _validate_profile_name(profile)
-    except MuralError as exc:
-        _emit(str(exc), level=logging.ERROR)
-        return EXIT_USAGE
-    cleanup = bool(getattr(args, "cleanup", False))
-    force = bool(getattr(args, "force", False))
-    yes = bool(getattr(args, "yes", False))
-    noninteractive = os.environ.get("MURAL_NONINTERACTIVE", "").lower() in {
-        "1",
-        "true",
-        "yes",
-    }
-
-    cred_path = _resolve_credential_file(profile, os.environ)
-    service = _service_name_for(profile)
-
-    # Probe both backends up-front. KeyringBackend instantiation may
-    # raise _KeyringUnavailable; treat that as a usage error when the
-    # operator asked to read or write keyring state.
-    try:
-        keyring_backend = KeyringBackend()
-    except _KeyringUnavailable as exc:
-        if direction == "keyring" or _migrate_source_is_keyring(direction):
-            _emit(
-                f"keyring backend unavailable: {exc}",
-                level=logging.ERROR,
-            )
-            return EXIT_FAILURE
-        keyring_backend = None  # type: ignore[assignment]
-    file_backend = FileBackend(cred_path)
-
-    if direction == "keyring":
-        source = file_backend
-        target = keyring_backend
-        source_name = "file"
-        target_name = "keyring"
-    else:
-        if keyring_backend is None:
-            _emit(
-                "keyring backend unavailable; cannot migrate from it",
-                level=logging.ERROR,
-            )
-            return EXIT_FAILURE
-        source = keyring_backend
-        target = file_backend
-        source_name = "keyring"
-        target_name = "file"
-
-    # Concurrent-state guard: surface a one-shot WARN per profile when
-    # both backends already hold values so the operator understands the
-    # migration may overwrite distinct copies.
-    dedup_key = (profile, "migrate")
-    if dedup_key not in _seen_concurrent_warn:
-        try:
-            keyring_has = keyring_backend is not None and any(
-                keyring_backend.get(service, k) for k in _KNOWN_CREDENTIAL_KEYS
-            )
-        except _KeyringUnavailable:
-            keyring_has = False
-        try:
-            file_has = cred_path.exists() and any(
-                file_backend._read_all().get(k) for k in _KNOWN_CREDENTIAL_KEYS
-            )
-        except Exception:  # noqa: BLE001 - probe must never raise
-            file_has = False
-        if keyring_has and file_has:
-            _seen_concurrent_warn.add(dedup_key)
-            if not force:
-                _emit(
-                    f"both keyring and file backends already populated for "
-                    f"profile {profile!r}; rerun with --force to overwrite",
-                    level=logging.ERROR,
-                )
-                return EXIT_FAILURE
-            _emit(
-                f"both keyring and file backends already populated for "
-                f"profile {profile!r}; --force set, overwriting destination",
-                level=logging.WARNING,
-            )
-
-    migrated_slots: list[str] = []
-    skipped_empty_slots: list[str] = []
-    failures: dict[str, str] = {}
-    for slot in _KNOWN_CREDENTIAL_KEYS:
-        try:
-            value = source.get(service, slot)
-        except _KeyringUnavailable as exc:
-            failures[slot] = f"source read failed: {exc}"
-            continue
-        if not value:
-            skipped_empty_slots.append(slot)
-            continue
-        try:
-            target.set(service, slot, value)
-        except (_KeyringUnavailable, OSError, RuntimeError) as exc:
-            failures[slot] = f"target write failed: {exc}"
-            continue
-        try:
-            roundtrip = target.get(service, slot)
-        except _KeyringUnavailable as exc:
-            failures[slot] = f"round-trip read failed: {exc}"
-            continue
-        if roundtrip != value:
-            failures[slot] = "round-trip mismatch (target value differs from source)"
-            continue
-        migrated_slots.append(slot)
-
-    summary: dict[str, Any] = {
-        "profile": profile,
-        "direction": f"{source_name}->{target_name}",
-        "source": source_name,
-        "target": target_name,
-        "migrated": migrated_slots,
-        "skipped_empty": skipped_empty_slots,
-        "failures": failures,
-        "cleanup": False,
-    }
-
-    if failures:
-        summary["status"] = "partial" if migrated_slots else "failed"
-        if json_mode:
-            print(json.dumps(summary, indent=2))
-        else:
-            _emit(
-                f"migration {source_name}->{target_name} for profile "
-                f"{profile!r} encountered failures: {failures}",
-                level=logging.ERROR,
-            )
-            if migrated_slots:
-                _emit(
-                    f"successfully migrated slots: {', '.join(migrated_slots)}",
-                    level=logging.INFO,
-                )
-        return EXIT_FAILURE if not migrated_slots else EXIT_SUCCESS
-
-    if not migrated_slots:
-        summary["status"] = "no-op"
-        if json_mode:
-            print(json.dumps(summary, indent=2))
-        else:
-            _emit(
-                f"no credentials to migrate for profile {profile!r} "
-                f"(source {source_name} is empty)",
-                level=logging.INFO,
-            )
-        return EXIT_SUCCESS
-
-    summary["status"] = "migrated"
-
-    if cleanup:
-        if isinstance(source, FileBackend) and not force:
-            summary["status"] = "migrated_cleanup_requires_force"
-            summary["cleanup_blocked_reason"] = (
-                "FileBackend cleanup requires --force (removes credential file)"
-            )
-            if json_mode:
-                print(json.dumps(summary, indent=2))
-            else:
-                _emit(
-                    f"migration succeeded but --cleanup of file backend "
-                    f"requires --force (file at {cred_path})",
-                    level=logging.WARNING,
-                )
-            return EXIT_SUCCESS
-        if not yes:
-            if noninteractive:
-                summary["status"] = "migrated_cleanup_requires_yes"
-                summary["cleanup_blocked_reason"] = (
-                    "MURAL_NONINTERACTIVE=1 requires --yes for --cleanup"
-                )
-                if json_mode:
-                    print(json.dumps(summary, indent=2))
-                else:
-                    _emit(
-                        "MURAL_NONINTERACTIVE=1 requires --yes to proceed "
-                        "with --cleanup",
-                        level=logging.WARNING,
-                    )
-                return EXIT_USAGE
-            try:
-                response = (
-                    input(
-                        f"Remove migrated credentials from {source_name} backend "
-                        f"for profile {profile!r}? [y/N] "
-                    )
-                    .strip()
-                    .lower()
-                )
-            except (EOFError, KeyboardInterrupt):
-                response = ""
-            if response not in {"y", "yes"}:
-                summary["status"] = "migrated_cleanup_declined"
-                if json_mode:
-                    print(json.dumps(summary, indent=2))
-                else:
-                    _emit(
-                        "cleanup declined; source backend left intact",
-                        level=logging.INFO,
-                    )
-                return EXIT_SUCCESS
-        cleanup_removed_slots: list[str] = []
-        cleanup_errors: dict[str, str] = {}
-        for slot in migrated_slots:
-            try:
-                source.delete(service, slot)
-            except (_KeyringUnavailable, OSError, RuntimeError) as exc:
-                cleanup_errors[slot] = str(exc)
-                continue
-            cleanup_removed_slots.append(slot)
-        summary["cleanup"] = True
-        summary["cleanup_removed"] = cleanup_removed_slots
-        if cleanup_errors:
-            summary["cleanup_errors"] = cleanup_errors
-            summary["status"] = "migrated_cleanup_partial"
-
-    if json_mode:
-        print(json.dumps(summary, indent=2))
-    else:
-        _emit(
-            f"migrated {len(migrated_slots)} slot(s) "
-            f"({', '.join(migrated_slots)}) from {source_name} to {target_name} "
-            f"for profile {profile!r}",
-            level=logging.INFO,
-        )
-        if summary.get("cleanup"):
-            _emit(
-                f"cleanup removed {len(summary.get('cleanup_removed') or [])} "
-                f"slot(s) from {source_name} backend",
-                level=logging.INFO,
-            )
-    return EXIT_SUCCESS
-
-
-def _migrate_source_is_keyring(direction: str) -> bool:
-    """Return True when migration ``direction`` reads from keyring."""
-    return direction == "file"
-
-
-def _read_fields(args: argparse.Namespace) -> list[str] | None:
-    raw = getattr(args, "fields", None)
-    if not raw:
-        return None
-    return [f.strip() for f in raw.split(",") if f.strip()]
+from ._cli_auth import (  # noqa: E402,F401 - re-export carved auth CLI surface
+    _LOGOUT_TRANSPARENCY_LINES,
+    _OAUTH_SETUP_WALKTHROUGH,
+    _cmd_auth_bootstrap,
+    _cmd_auth_list,
+    _cmd_auth_login,
+    _cmd_auth_logout,
+    _cmd_auth_migrate,
+    _cmd_auth_setup,
+    _cmd_auth_status,
+    _cmd_auth_use,
+    _emit_logout_credential_summary,
+    _emit_logout_transparency,
+    _load_token_store_locked,
+    _logout_remove_credentials,
+    _migrate_source_is_keyring,
+    _save_token_store_locked,
+)
 
 
 def _list_kwargs(args: argparse.Namespace) -> dict[str, int | None]:
@@ -3158,74 +1178,6 @@ def _list_kwargs(args: argparse.Namespace) -> dict[str, int | None]:
     if page_size is not None and page_size > _MAX_PAGE_SIZE:
         raise MuralValidationError(f"--page-size cannot exceed {_MAX_PAGE_SIZE}")
     return {"limit": limit, "page_size": page_size, "max_pages": max_pages}
-
-
-_HTML_TAG_RE = re.compile(r"<[^>]+>")
-
-
-def _strip_html(value: Any) -> str:
-    """Strip HTML tags and collapse whitespace from ``value``.
-
-    Mirrors the canonical normaliser used by the diff_board fixture so
-    portal-edited stickies (which migrate plain-text into ``htmlText``)
-    render with a stable, tag-free ``text`` field downstream.
-    """
-    if not isinstance(value, str) or not value:
-        return ""
-    return _HTML_TAG_RE.sub("", value).strip()
-
-
-def _coalesce_widget_text(widget: dict[str, Any]) -> str:
-    """Return the best-available plain-text body for ``widget``.
-
-    Prefers stripped ``htmlText`` (portal edits land there with
-    ``text`` cleared), falling back to ``text``.  Returns ``""`` when
-    neither field carries content.
-    """
-    html_text = _strip_html(widget.get("htmlText"))
-    if html_text:
-        return html_text
-    raw = widget.get("text")
-    return raw.strip() if isinstance(raw, str) else ""
-
-
-def _apply_widget_text_coalesce(payload: Any) -> Any:
-    """Surface ``htmlText`` content as ``text`` on widget-shaped dicts.
-
-    Walks lists and dicts in place. A dict is treated as widget-shaped
-    when it carries an ``htmlText`` key; in that case ``text`` is set
-    to :func:`_coalesce_widget_text` so JSON consumers see the visible
-    body even after portal edits. ``htmlText`` is preserved for
-    round-trip callers. Non-widget records (tags, areas, workspaces)
-    are untouched.
-    """
-    if isinstance(payload, list):
-        for item in payload:
-            _apply_widget_text_coalesce(item)
-    elif isinstance(payload, dict):
-        if "htmlText" in payload:
-            payload["text"] = _coalesce_widget_text(payload)
-        for value in payload.values():
-            if isinstance(value, (dict, list)):
-                _apply_widget_text_coalesce(value)
-    return payload
-
-
-def _emit_records(records: list[Any], args: argparse.Namespace) -> int:
-    _apply_widget_text_coalesce(records)
-    fields = _read_fields(args)
-    fmt = "json" if _CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
-    print(_format_output(records, fields, fmt))
-    return EXIT_SUCCESS
-
-
-def _emit_record(record: Any, args: argparse.Namespace) -> int:
-    record = _unwrap_value_envelope(record)
-    _apply_widget_text_coalesce(record)
-    fields = _read_fields(args)
-    fmt = "json" if _CLI_FORCE_JSON else (getattr(args, "format", None) or "json")
-    print(_format_output(record, fields, fmt))
-    return EXIT_SUCCESS
 
 
 # --- Area cache + traversal helpers ---------------------------------------
@@ -3595,35 +1547,31 @@ from ._layout import (  # noqa: E402,F401
 
 # --- Phase 4 composites: confirmation gate, find, sweep, summary, DT ------
 
-# In-process registry of pending confirmation previews. Keyed by an opaque
-# UUID returned in a ``confirmation_required`` envelope; consumed when the
-# caller re-invokes with ``confirmed_id`` matching the preview.
-_PENDING_CONFIRMATIONS: dict[str, dict[str, Any]] = {}
-_CONFIRMATION_TTL_S = 600.0
-
 
 def _confirmation_register(
     *, tool: str, arguments: dict[str, Any], candidates: list[dict[str, Any]]
 ) -> str:
     """Register a preview and return its ``preview_id``."""
     preview_id = uuid.uuid4().hex
-    _PENDING_CONFIRMATIONS[preview_id] = {
+    _state._PENDING_CONFIRMATIONS[preview_id] = {
         "tool": tool,
         "arguments": dict(arguments),
         "candidates": list(candidates),
-        "expires_at": time.time() + _CONFIRMATION_TTL_S,
+        "expires_at": time.time() + _state._CONFIRMATION_TTL_S,
     }
     # Light cleanup of expired entries to bound the dict.
     now = time.time()
-    expired = [k for k, v in _PENDING_CONFIRMATIONS.items() if v["expires_at"] < now]
+    expired = [
+        k for k, v in _state._PENDING_CONFIRMATIONS.items() if v["expires_at"] < now
+    ]
     for k in expired:
-        _PENDING_CONFIRMATIONS.pop(k, None)
+        _state._PENDING_CONFIRMATIONS.pop(k, None)
     return preview_id
 
 
 def _confirmation_consume(*, tool: str, confirmed_id: str) -> dict[str, Any]:
     """Return the registered preview for ``confirmed_id`` or raise."""
-    entry = _PENDING_CONFIRMATIONS.pop(confirmed_id, None)
+    entry = _state._PENDING_CONFIRMATIONS.pop(confirmed_id, None)
     if entry is None:
         raise MuralValidationError(
             "confirmation_id_mismatch: no pending preview for this id"
@@ -4318,60 +2266,101 @@ def _tool_mural_lineage_lookup(arguments: dict[str, Any]) -> Any:
 # --- Phase 4 CLI handlers -------------------------------------------------
 
 
-def _parse_origin_arg(value: str | None) -> list[float] | None:
-    """Parse ``--origin "x,y"`` into ``[x, y]``; ``None`` when unset."""
-    if value is None:
-        return None
-    parts = [p.strip() for p in value.split(",")]
-    if len(parts) != 2:
-        raise MuralValidationError("--origin must be 'x,y'")
-    try:
-        return [float(parts[0]), float(parts[1])]
-    except ValueError as exc:
-        raise MuralValidationError("--origin values must be numeric") from exc
-
-
-def _layout_cli_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    """Build the ``arguments`` dict from a layout CLI namespace."""
-    payload: dict[str, Any] = {
-        "mural": args.mural,
-        "area": args.area,
-        "widgets": _parse_json_arg(_load_payload_file(args.widgets), "--widgets"),
-    }
-    for src, dst in (
-        ("cell_width", "cell_width"),
-        ("cell_height", "cell_height"),
-        ("gutter", "gutter"),
-    ):
-        v = getattr(args, src, None)
-        if v is not None:
-            payload[dst] = v
-    origin = _parse_origin_arg(getattr(args, "origin", None))
-    if origin is not None:
-        payload["origin"] = origin
-    if hasattr(args, "columns") and args.columns is not None:
-        payload["columns"] = args.columns
-    return payload
-
-
-def _cmd_layout_grid(args: argparse.Namespace) -> int:
-    _ensure_geos_ready()
-    return _emit_record(_tool_layout("grid", _layout_cli_arguments(args)), args)
-
-
-def _cmd_layout_cluster(args: argparse.Namespace) -> int:
-    _ensure_geos_ready()
-    return _emit_record(_tool_layout("cluster", _layout_cli_arguments(args)), args)
-
-
-def _cmd_layout_column(args: argparse.Namespace) -> int:
-    _ensure_geos_ready()
-    return _emit_record(_tool_layout("column", _layout_cli_arguments(args)), args)
-
-
-def _cmd_layout_row(args: argparse.Namespace) -> int:
-    _ensure_geos_ready()
-    return _emit_record(_tool_layout("row", _layout_cli_arguments(args)), args)
+from ._commands import (  # noqa: E402,F401 - re-export carved resource/bulk command surface
+    _BULK_UPDATE_MAX_WORKERS,
+    _CONTAINMENT_SUCCESS_VERDICTS,
+    _DIFF_ANCHOR_KEYS,
+    _DIFF_CONTENT_KEYS,
+    _DIFF_GEOM_KEYS,
+    _DIFF_IGNORED_KEYS,
+    _DIFF_STYLE_KEYS,
+    _POLL_OPS,
+    _WIDGET_TYPE_API_TO_PATH_KEY,
+    _WIDGET_TYPE_TO_PATH,
+    CONTAINMENT_VERDICT_AREA_CHAIN_MATCH,
+    CONTAINMENT_VERDICT_GEOMETRY_MATCH,
+    CONTAINMENT_VERDICT_GEOMETRY_MISMATCH,
+    CONTAINMENT_VERDICT_PARENT_MATCH,
+    CONTAINMENT_VERDICT_PARENT_MISMATCH,
+    CONTAINMENT_VERDICT_READBACK_FAILED,
+    _apply_widget_diff,
+    _attach_containment_to_record,
+    _build_bulk_widget_updates_payload,
+    _build_bulk_widgets_payload,
+    _bulk_apply_author_tag,
+    _bulk_create_widgets,
+    _bulk_delete_widgets,
+    _bulk_update_widgets,
+    _cmd_area_create,
+    _cmd_area_get,
+    _cmd_area_list,
+    _cmd_area_probe,
+    _cmd_clone_with_tags,
+    _cmd_layout_cluster,
+    _cmd_layout_column,
+    _cmd_layout_grid,
+    _cmd_layout_row,
+    _cmd_mural_archive,
+    _cmd_mural_create,
+    _cmd_mural_duplicate,
+    _cmd_mural_get,
+    _cmd_mural_list,
+    _cmd_mural_poll,
+    _cmd_mural_unarchive,
+    _cmd_room_create,
+    _cmd_room_get,
+    _cmd_room_list,
+    _cmd_spatial_arrow_graph,
+    _cmd_spatial_cluster,
+    _cmd_spatial_not_implemented,
+    _cmd_spatial_pairwise_overlaps,
+    _cmd_spatial_sort_along_axis,
+    _cmd_spatial_widgets_in_region,
+    _cmd_spatial_widgets_in_shape,
+    _cmd_tag_apply,
+    _cmd_tag_create,
+    _cmd_tag_list,
+    _cmd_tag_remove,
+    _cmd_template_create,
+    _cmd_template_instantiate,
+    _cmd_template_list,
+    _cmd_widget_create_arrow,
+    _cmd_widget_create_bulk,
+    _cmd_widget_create_image,
+    _cmd_widget_create_shape,
+    _cmd_widget_create_sticky_note,
+    _cmd_widget_create_textbox,
+    _cmd_widget_delete,
+    _cmd_widget_diff,
+    _cmd_widget_get,
+    _cmd_widget_list,
+    _cmd_widget_update,
+    _cmd_widget_update_bulk,
+    _cmd_workspace_get,
+    _cmd_workspace_list,
+    _coerce_finite_number,
+    _create_widget,
+    _diff_widget_fields,
+    _diff_widget_lists,
+    _duplicate_mural,
+    _evaluate_containment_geometry,
+    _evaluate_poll,
+    _extract_bulk_create_succeeded,
+    _is_containment_success,
+    _layout_cli_arguments,
+    _parse_origin_arg,
+    _parse_parent_id,
+    _parse_poll_condition,
+    _patch_widget_or_disambiguate_404,
+    _poll_mural,
+    _read_tag_manifest,
+    _resolve_dotted,
+    _resolve_widget_update_body,
+    _set_mural_status,
+    _template_target_body,
+    _typed_widget_path,
+    _verify_parent_containment,
+)
 
 
 def _cmd_compose_bootstrap_dt_board(args: argparse.Namespace) -> int:
@@ -4457,1780 +2446,6 @@ def _cmd_mural_lineage_lookup(args: argparse.Namespace) -> int:
     if getattr(args, "section", None):
         payload["section"] = args.section
     return _emit_record(_tool_mural_lineage_lookup(payload), args)
-
-
-def _cmd_spatial_widgets_in_shape(args: argparse.Namespace) -> int:
-    """Return widgets contained by ``--shape-id`` per ``--mode`` semantics.
-
-    Fetches the shape widget directly, then drains all mural widgets via
-    pagination so spatial filtering is applied across the full canvas.
-    ``--rotation-aware`` forces rotation-aware AABB expansion of the shape;
-    when absent the env flag ``MURAL_SPATIAL_ROTATION_ENABLED`` (mirrored
-    by ``_ROTATION_ENABLED``) governs the default.
-    """
-    _ensure_geos_ready()
-    mural_id = _validate_mural_id(args.mural_id)
-    shape = _authenticated_request("GET", f"/murals/{mural_id}/widgets/{args.shape_id}")
-    if not isinstance(shape, dict):
-        raise MuralAPIError(
-            0, "WIDGET_INVALID", "shape widget response is not an object"
-        )
-    widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    rotation_aware = bool(args.rotation_aware) or _ROTATION_ENABLED
-    matched = widgets_in_shape(
-        widgets, shape, mode=args.mode, rotation_aware=rotation_aware
-    )
-    return _emit_records(matched, args)
-
-
-def _cmd_spatial_widgets_in_region(args: argparse.Namespace) -> int:
-    """Return widgets inside an axis-aligned region per ``--mode`` semantics.
-
-    Negative ``--w`` / ``--h`` values are sign-corrected by ``safe_rect``
-    so the caller can pass either corner of the region in any order.
-    """
-    _ensure_geos_ready()
-    mural_id = _validate_mural_id(args.mural_id)
-    region = safe_rect(args.x, args.y, args.w, args.h)
-    widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    matched = widgets_in_region(widgets, region, mode=args.mode)
-    return _emit_records(matched, args)
-
-
-def _cmd_spatial_pairwise_overlaps(args: argparse.Namespace) -> int:
-    """Return overlapping widget id pairs across the mural canvas.
-
-    Drains every widget on the mural via pagination, builds the STR R-tree
-    inside ``pairwise_overlaps``, and emits the deterministic pair list.
-    ``--rotation-aware`` forces rotation-aware AABB expansion when set;
-    otherwise the env flag ``MURAL_SPATIAL_ROTATION_ENABLED`` (mirrored by
-    ``_ROTATION_ENABLED``) governs the default.
-    """
-    _ensure_geos_ready()
-    mural_id = _validate_mural_id(args.mural_id)
-    widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    rotation_aware = bool(args.rotation_aware) or _ROTATION_ENABLED
-    pairs = pairwise_overlaps(
-        widgets,
-        predicate=args.predicate,
-        rotation_aware=rotation_aware,
-    )
-    records = [{"a": a, "b": b} for a, b in pairs]
-    return _emit_records(records, args)
-
-
-def _cmd_spatial_cluster(args: argparse.Namespace) -> int:
-    """Group widgets into spatial-proximity clusters via DBSCAN.
-
-    Drains every widget on the mural via pagination, projects centers to
-    2D points, and emits the deterministic cluster list from
-    ``cluster_widgets``. ``--eps-px`` (default 120.0) sets the
-    neighborhood radius and ``--min-samples`` (default 2) sets the
-    density threshold; ``min_samples=1`` keeps isolated widgets as
-    singleton clusters.
-    """
-    mural_id = _validate_mural_id(args.mural_id)
-    widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    clusters = cluster_widgets(
-        widgets,
-        eps_px=args.eps_px,
-        min_samples=args.min_samples,
-    )
-    records = [{"members": members} for members in clusters]
-    return _emit_records(records, args)
-
-
-def _cmd_spatial_sort_along_axis(args: argparse.Namespace) -> int:
-    """Sort widgets along an axis projection and emit the ordered list.
-
-    Drains every widget on the mural via pagination, projects each AABB
-    center onto the axis vector selected by ``--axis``, and emits the
-    deterministic ordering from ``sort_along_axis``. ``--origin-x`` and
-    ``--origin-y`` are jointly optional; when both are provided the sort
-    key becomes the signed projection of ``(center - origin)`` along the
-    axis so callers can order widgets by distance from an anchor along a
-    direction.
-    """
-    _ensure_geos_ready()
-    mural_id = _validate_mural_id(args.mural_id)
-    widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    origin: tuple[float, float] | None
-    if args.origin_x is None and args.origin_y is None:
-        origin = None
-    elif args.origin_x is not None and args.origin_y is not None:
-        origin = (float(args.origin_x), float(args.origin_y))
-    else:
-        print(
-            "error: --origin-x and --origin-y must be provided together",
-            file=sys.stderr,
-        )
-        return EXIT_USAGE
-    ordered = sort_along_axis(widgets, axis=args.axis, origin=origin)
-    return _emit_records(ordered, args)
-
-
-def _cmd_spatial_arrow_graph(args: argparse.Namespace) -> int:
-    """Build a directed multigraph from arrow widgets and emit it.
-
-    Drains every widget on the mural, partitions arrow widgets from the
-    rest, snaps each arrow endpoint to the nearest non-arrow widget AABB
-    center within ``--snap-radius`` (Euclidean pixels), and emits the
-    resulting graph in the requested format. ``summary`` (the default)
-    prints a JSON summary; ``full`` augments each edge with the
-    originating arrow widget; ``dot`` writes a Graphviz ``digraph`` text
-    document. When ``--output`` is supplied the rendered text is written
-    to that path instead of stdout.
-    """
-    _ensure_geos_ready()
-    mural_id = _validate_mural_id(args.mural_id)
-    all_widgets = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            **_list_kwargs(args),
-        )
-    )
-    arrows = [w for w in all_widgets if str(w.get("type", "")).lower() == "arrow"]
-    targets = [w for w in all_widgets if str(w.get("type", "")).lower() != "arrow"]
-    snap_radius = float(args.snap_radius)
-    if snap_radius <= 0.0:
-        print(
-            "error: --snap-radius must be greater than 0",
-            file=sys.stderr,
-        )
-        return EXIT_USAGE
-    graph = build_arrow_graph(targets, arrows, snap_radius=snap_radius)
-    summary = arrow_graph_summary(graph)
-    fmt = args.format
-    if fmt == "summary":
-        text = json.dumps(summary, indent=2)
-    elif fmt == "full":
-        index = {str(w.get("id", "")): w for w in arrows}
-        edges_full: list[dict[str, Any]] = []
-        for edge in summary["edges"]:
-            entry = dict(edge)
-            entry["arrow_widget"] = index.get(edge["id"])
-            edges_full.append(entry)
-        payload = dict(summary)
-        payload["edges"] = edges_full
-        text = json.dumps(payload, indent=2)
-    elif fmt == "dot":
-        lines = ["digraph G {"]
-        for node in summary["nodes"]:
-            lines.append(f'  "{node}";')
-        for edge in summary["edges"]:
-            lines.append(
-                f'  "{edge["source"]}" -> "{edge["target"]}" [label="{edge["id"]}"];'
-            )
-        lines.append("}")
-        text = "\n".join(lines)
-    else:
-        print(
-            f"error: invalid --format value {fmt!r}",
-            file=sys.stderr,
-        )
-        return EXIT_USAGE
-    output_path = getattr(args, "output", None)
-    if output_path:
-        pathlib.Path(output_path).write_text(text, encoding="utf-8")
-    else:
-        print(text)
-    return EXIT_SUCCESS
-
-
-def _cmd_spatial_not_implemented(args: argparse.Namespace) -> int:
-    """Stub for spatial verbs whose implementation lands in a later PR.
-
-    Reserved verb slots are registered so ``mural spatial --help`` lists
-    the full surface and forward-compatible scripts can probe for
-    availability without crashing on a Python traceback.
-    """
-    verb = getattr(args, "spatial_command", None) or "<unknown>"
-    print(
-        f"error: `mural spatial {verb}` is not yet implemented",
-        file=sys.stderr,
-    )
-    return EXIT_USAGE
-
-
-def _cmd_workspace_list(args: argparse.Namespace) -> int:
-    records = list(_paginate("GET", "/workspaces", **_list_kwargs(args)))
-    return _emit_records(records, args)
-
-
-# Single-resource GET handlers rely on _emit_record's defensive {"value"} unwrap.
-def _cmd_workspace_get(args: argparse.Namespace) -> int:
-    workspace_id = _resolve_workspace_id(getattr(args, "workspace", None))
-    record = _authenticated_request("GET", f"/workspaces/{workspace_id}")
-    return _emit_record(record, args)
-
-
-def _cmd_room_list(args: argparse.Namespace) -> int:
-    workspace_id = _resolve_workspace_id(getattr(args, "workspace", None))
-    records = list(
-        _paginate(
-            "GET",
-            f"/workspaces/{workspace_id}/rooms",
-            **_list_kwargs(args),
-        )
-    )
-    return _emit_records(records, args)
-
-
-def _cmd_room_get(args: argparse.Namespace) -> int:
-    record = _authenticated_request("GET", f"/rooms/{args.room}")
-    return _emit_record(record, args)
-
-
-def _cmd_room_create(args: argparse.Namespace) -> int:
-    workspace_id = _resolve_workspace_id(getattr(args, "workspace", None))
-    payload: dict[str, Any] = {
-        "workspaceId": workspace_id,
-        "name": args.name,
-        "type": args.type,
-    }
-    if getattr(args, "description", None):
-        payload["description"] = args.description
-    record = _authenticated_request("POST", "/rooms", json_body=payload)
-    return _emit_record(record, args)
-
-
-def _cmd_mural_list(args: argparse.Namespace) -> int:
-    workspace_id = _resolve_workspace_id(getattr(args, "workspace", None))
-    records = list(
-        _paginate(
-            "GET",
-            f"/workspaces/{workspace_id}/murals",
-            **_list_kwargs(args),
-        )
-    )
-    return _emit_records(records, args)
-
-
-def _cmd_mural_get(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _authenticated_request("GET", f"/murals/{mural_id}")
-    return _emit_record(record, args)
-
-
-def _cmd_mural_create(args: argparse.Namespace) -> int:
-    try:
-        room_id = int(str(args.room).strip())
-    except (TypeError, ValueError) as exc:
-        raise SystemExit(f"error: --room must be an integer room id ({exc})")
-    payload: dict[str, Any] = {"roomId": room_id, "title": args.title}
-    record = _authenticated_request("POST", "/murals", json_body=payload)
-    return _emit_record(record, args)
-
-
-def _cmd_widget_list(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    params: dict[str, Any] = {}
-    widget_type = getattr(args, "type", None)
-    parent_id = getattr(args, "parent_id", None)
-    if widget_type:
-        params["type"] = widget_type
-    if parent_id:
-        params["parentId"] = parent_id
-    records = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/widgets",
-            params=params or None,
-            **_list_kwargs(args),
-        )
-    )
-    return _emit_records(records, args)
-
-
-def _cmd_widget_get(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _authenticated_request("GET", f"/murals/{mural_id}/widgets/{args.widget}")
-    return _emit_record(record, args)
-
-
-def _cmd_widget_delete(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    if getattr(args, "require_author_tag", False) and not getattr(
-        args, "force_human", False
-    ):
-        _assert_widget_has_author_tag(mural_id, args.widget)
-    _authenticated_request("DELETE", f"/murals/{mural_id}/widgets/{args.widget}")
-    print(json.dumps({"ok": True, "deleted": args.widget}))
-    return EXIT_SUCCESS
-
-
-def _patch_widget_or_disambiguate_404(
-    mural_id: str,
-    widget_id: str,
-    body: dict[str, Any],
-    widget_type: str | None = None,
-) -> Any:
-    """PATCH a widget, routing to the correct type-specific endpoint.
-
-    The Mural API requires PATCH against ``/widgets/{type}/{id}``; the
-    generic ``/widgets/{id}`` route returns 404 PATH_NOT_FOUND. When
-    ``widget_type`` is supplied the typed path is used directly. Otherwise the
-    helper attempts the generic path first (preserving prior behavior so
-    mocked tests keep passing) and, on 404, performs a single GET to learn
-    the widget type from the live record before retrying against the typed
-    path.
-    """
-    typed_path = _typed_widget_path(mural_id, widget_id, widget_type)
-    if typed_path is not None:
-        try:
-            return _authenticated_request("PATCH", typed_path, json_body=body)
-        except MuralAPIError as exc:
-            if exc.status != 404:
-                raise
-            # Widget may have a different type than the caller supplied; fall
-            # through to GET-based discovery below.
-    last_exc: MuralAPIError | None = None
-    if typed_path is None:
-        try:
-            return _authenticated_request(
-                "PATCH",
-                f"/murals/{mural_id}/widgets/{widget_id}",
-                json_body=body,
-            )
-        except MuralAPIError as exc:
-            if exc.status != 404:
-                raise
-            last_exc = exc
-    try:
-        record = _authenticated_request(
-            "GET", f"/murals/{mural_id}/widgets/{widget_id}"
-        )
-    except MuralAPIError as probe_exc:
-        if probe_exc.status == 404:
-            raise MuralAPIError(
-                404,
-                "WIDGET_NOT_FOUND",
-                (
-                    f"widget {widget_id} not found on mural {mural_id}; "
-                    "verify the widget id (it may have been deleted). "
-                    "For tag mutations on an existing widget, use "
-                    "`mural tag apply` / `mural tag remove` instead of "
-                    "`widget update --body '{\"tags\":[...]}'`."
-                ),
-            ) from (last_exc or probe_exc)
-        raise
-    inner = record.get("value") if isinstance(record, dict) else None
-    discovered_type = None
-    if isinstance(inner, dict):
-        discovered_type = inner.get("type")
-    if discovered_type is None and isinstance(record, dict):
-        discovered_type = record.get("type")
-    discovered_path = _typed_widget_path(
-        mural_id,
-        widget_id,
-        discovered_type if isinstance(discovered_type, str) else None,
-    )
-    if discovered_path is None:
-        if last_exc is not None:
-            raise last_exc
-        raise MuralAPIError(
-            404,
-            "WIDGET_TYPE_UNKNOWN",
-            (
-                f"widget {widget_id} returned no recognized type from GET; "
-                "cannot route PATCH to the type-specific endpoint."
-            ),
-        )
-    return _authenticated_request("PATCH", discovered_path, json_body=body)
-
-
-def _resolve_widget_update_body(args: argparse.Namespace) -> dict[str, Any]:
-    """Load the patch body from inline ``--body`` or ``--body-file``.
-
-    Mutually exclusive: providing both is an operator error. Either flag may
-    be omitted entirely; the caller is responsible for ensuring the result
-    plus any other inputs (e.g. ``--hyperlink``) is non-empty.
-    """
-    inline = getattr(args, "body", None)
-    file_arg = getattr(args, "body_file", None)
-    if inline and file_arg:
-        raise MuralValidationError("provide either --body or --body-file, not both")
-    if file_arg:
-        body = _parse_json_arg(_load_payload_file(file_arg), "--body-file")
-    elif inline:
-        body = _parse_json_arg(inline, "--body")
-    else:
-        return {}
-    if not isinstance(body, dict):
-        raise MuralValidationError("widget update body must decode to a JSON object")
-    return body
-
-
-# Containment verdict vocabulary. ``parent_match``/``area_chain_match`` mean
-# the readback confirmed the expected parent but area geometry was not
-# available to evaluate; ``geometry_match`` is the strongest success and
-# means the widget's (x, y) is inside the parent area's (width, height).
-# ``geometry_mismatch`` is a hard failure: parent is correct but the widget
-# will render outside the parent's frame. Callers should treat any of the
-# three ``*_match`` values as containment success via
-# :func:`_is_containment_success`.
-CONTAINMENT_VERDICT_PARENT_MATCH = "parent_match"
-CONTAINMENT_VERDICT_AREA_CHAIN_MATCH = "area_chain_match"
-CONTAINMENT_VERDICT_GEOMETRY_MATCH = "geometry_match"
-CONTAINMENT_VERDICT_PARENT_MISMATCH = "parent_mismatch"
-CONTAINMENT_VERDICT_GEOMETRY_MISMATCH = "geometry_mismatch"
-CONTAINMENT_VERDICT_READBACK_FAILED = "readback_failed"
-
-_CONTAINMENT_SUCCESS_VERDICTS = frozenset(
-    {
-        CONTAINMENT_VERDICT_PARENT_MATCH,
-        CONTAINMENT_VERDICT_AREA_CHAIN_MATCH,
-        CONTAINMENT_VERDICT_GEOMETRY_MATCH,
-    }
-)
-
-
-def _is_containment_success(verdict: str | None) -> bool:
-    """Return True when ``verdict`` represents a containment success."""
-    return verdict in _CONTAINMENT_SUCCESS_VERDICTS
-
-
-def _coerce_finite_number(value: Any) -> float | None:
-    """Return ``value`` as ``float`` when it is a finite real number."""
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        f = float(value)
-        if not math.isfinite(f):
-            return None
-        return f
-    return None
-
-
-def _parse_parent_id(value: str) -> str:
-    """argparse ``type=`` validator for ``--parent-id``.
-
-    Rejects empty or whitespace-only values so the Mural API never receives
-    a parentId of "" (which is silently ignored and produces an off-area
-    widget).
-    """
-    if not isinstance(value, str) or not value.strip():
-        raise argparse.ArgumentTypeError("--parent-id must be a non-empty string")
-    return value.strip()
-
-
-def _evaluate_containment_geometry(
-    widget: dict[str, Any],
-    area_chain: list[dict[str, Any]],
-    expected_parent_id: str,
-) -> tuple[str | None, str | None]:
-    """Compare widget (x, y) to the expected parent area's (width, height).
-
-    Returns ``(geometry_verdict, detail)`` where ``geometry_verdict`` is one
-    of ``geometry_match``, ``geometry_mismatch``, or ``None`` when geometry
-    could not be evaluated (missing or non-numeric coordinates/dimensions).
-    ``detail`` is a short human-readable string suitable for ``recommendation``
-    or ``None``.
-    """
-    expected_area: dict[str, Any] | None = None
-    for entry in area_chain:
-        if isinstance(entry, dict) and entry.get("id") == expected_parent_id:
-            expected_area = entry
-            break
-    if expected_area is None:
-        return None, None
-    width = _coerce_finite_number(expected_area.get("width"))
-    height = _coerce_finite_number(expected_area.get("height"))
-    if width is None or height is None:
-        return None, None
-    x = _coerce_finite_number(widget.get("x"))
-    y = _coerce_finite_number(widget.get("y"))
-    if x is None or y is None:
-        return None, None
-    if 0.0 <= x <= width and 0.0 <= y <= height:
-        return (
-            CONTAINMENT_VERDICT_GEOMETRY_MATCH,
-            (
-                f"widget (x={x}, y={y}) is inside parent area "
-                f"(width={width}, height={height})"
-            ),
-        )
-    return (
-        CONTAINMENT_VERDICT_GEOMETRY_MISMATCH,
-        (
-            f"widget (x={x}, y={y}) is outside parent area "
-            f"(width={width}, height={height}); parentId is correct but "
-            "the widget will render off-area — see geometry rules in "
-            "mural-seeding-patterns.instructions.md"
-        ),
-    )
-
-
-def _verify_parent_containment(
-    mural_id: str,
-    widget_id: str,
-    expected_parent_id: str,
-) -> dict[str, Any]:
-    """Read a widget back and verify it persists the expected parent area.
-
-    Returns a verdict dict with keys ``verdict`` (see
-    ``CONTAINMENT_VERDICT_*`` constants), ``expected_parent_id``,
-    ``persisted_parent_id``, ``area_chain_ids``, ``via`` (``parentId``,
-    ``areaChain``, or ``None``), and ``recommendation``. Pure of side
-    effects beyond a single widget GET plus area-chain walk.
-    """
-    try:
-        record = _authenticated_request(
-            "GET", f"/murals/{mural_id}/widgets/{widget_id}"
-        )
-    except MuralAPIError as exc:
-        return {
-            "verdict": CONTAINMENT_VERDICT_READBACK_FAILED,
-            "expected_parent_id": expected_parent_id,
-            "persisted_parent_id": None,
-            "area_chain_ids": [],
-            "via": None,
-            "recommendation": (
-                f"could not read widget {widget_id} back to verify containment: {exc}"
-            ),
-        }
-    inner = record.get("value") if isinstance(record, dict) else None
-    widget = (
-        inner
-        if isinstance(inner, dict)
-        else (record if isinstance(record, dict) else {})
-    )
-    persisted_parent = widget.get("parentId")
-    area_chain = (
-        _walk_area_chain(mural_id, persisted_parent) if persisted_parent else []
-    )
-    chain_ids = [a.get("id") for a in area_chain if isinstance(a, dict)]
-    parent_match_via: str | None = None
-    if persisted_parent == expected_parent_id:
-        parent_match_via = "parentId"
-    elif expected_parent_id in chain_ids:
-        parent_match_via = "areaChain"
-    if parent_match_via is None:
-        return {
-            "verdict": CONTAINMENT_VERDICT_PARENT_MISMATCH,
-            "expected_parent_id": expected_parent_id,
-            "persisted_parent_id": persisted_parent,
-            "area_chain_ids": chain_ids,
-            "via": None,
-            "recommendation": (
-                f"persisted parentId {persisted_parent!r} and area chain "
-                f"{chain_ids} do not contain expected area "
-                f"{expected_parent_id!r}; the Mural API may have ignored "
-                "parentId for this widget type — see probe-before-bulk in "
-                "mural-seeding-patterns.instructions.md"
-            ),
-        }
-    geometry_verdict, geometry_detail = _evaluate_containment_geometry(
-        widget, area_chain, expected_parent_id
-    )
-    if geometry_verdict == CONTAINMENT_VERDICT_GEOMETRY_MATCH:
-        return {
-            "verdict": CONTAINMENT_VERDICT_GEOMETRY_MATCH,
-            "expected_parent_id": expected_parent_id,
-            "persisted_parent_id": persisted_parent,
-            "area_chain_ids": chain_ids,
-            "via": parent_match_via,
-            "recommendation": geometry_detail,
-        }
-    if geometry_verdict == CONTAINMENT_VERDICT_GEOMETRY_MISMATCH:
-        return {
-            "verdict": CONTAINMENT_VERDICT_GEOMETRY_MISMATCH,
-            "expected_parent_id": expected_parent_id,
-            "persisted_parent_id": persisted_parent,
-            "area_chain_ids": chain_ids,
-            "via": parent_match_via,
-            "recommendation": geometry_detail,
-        }
-    if parent_match_via == "parentId":
-        return {
-            "verdict": CONTAINMENT_VERDICT_PARENT_MATCH,
-            "expected_parent_id": expected_parent_id,
-            "persisted_parent_id": persisted_parent,
-            "area_chain_ids": chain_ids,
-            "via": "parentId",
-            "recommendation": (
-                "persisted parentId matches expected area; geometry not "
-                "evaluated (area width/height or widget x/y unavailable)"
-            ),
-        }
-    return {
-        "verdict": CONTAINMENT_VERDICT_AREA_CHAIN_MATCH,
-        "expected_parent_id": expected_parent_id,
-        "persisted_parent_id": persisted_parent,
-        "area_chain_ids": chain_ids,
-        "via": "areaChain",
-        "recommendation": (
-            "persisted parentId differs but expected area is in the area "
-            "chain; containment satisfied transitively (geometry not "
-            "evaluated)"
-        ),
-    }
-
-
-def _attach_containment_to_record(record: Any, verdict: dict[str, Any]) -> None:
-    """Attach a containment verdict to a create/update response in place."""
-    if not isinstance(record, dict):
-        return
-    inner = record.get("value")
-    target = inner if isinstance(inner, dict) else record
-    target["containment_verification"] = verdict
-
-
-def _cmd_widget_update(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    body = _resolve_widget_update_body(args)
-    hyperlink = getattr(args, "hyperlink", None)
-    if hyperlink is not None:
-        body["hyperlink"] = _validate_hyperlink(hyperlink)
-    if not body:
-        raise MuralValidationError(
-            "widget update requires --body, --body-file, or --hyperlink"
-        )
-    if getattr(args, "require_author_tag", False) and not getattr(
-        args, "force_human", False
-    ):
-        _assert_widget_has_author_tag(mural_id, args.widget)
-    record = _patch_widget_or_disambiguate_404(mural_id, args.widget, body)
-    expected_parent = body.get("parentId") if isinstance(body, dict) else None
-    if isinstance(expected_parent, str) and expected_parent:
-        verdict = _verify_parent_containment(mural_id, args.widget, expected_parent)
-        _attach_containment_to_record(record, verdict)
-        if not _is_containment_success(verdict["verdict"]):
-            _emit_record(record, args)
-            return EXIT_FAILURE
-    return _emit_record(record, args)
-
-
-def _create_widget(
-    mural_id: str,
-    widget_type: str,
-    body: dict[str, Any],
-    args: argparse.Namespace,
-) -> int:
-    record = _authenticated_request(
-        "POST",
-        f"/murals/{mural_id}/widgets/{widget_type}",
-        json_body=body,
-    )
-    _maybe_apply_author_tag(
-        mural_id, record, skip=bool(getattr(args, "no_author_tag", False))
-    )
-    expected_parent = getattr(args, "parent_id", None)
-    if expected_parent:
-        widget_id = _resolve_widget_id(record)
-        if widget_id:
-            verdict = _verify_parent_containment(mural_id, widget_id, expected_parent)
-            _attach_containment_to_record(record, verdict)
-            if not _is_containment_success(verdict["verdict"]):
-                _emit_record(record, args)
-                return EXIT_FAILURE
-    return _emit_record(record, args)
-
-
-def _cmd_widget_create_sticky_note(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    return _create_widget(mural_id, "sticky-note", _build_sticky_note_body(args), args)
-
-
-def _cmd_widget_create_textbox(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    return _create_widget(mural_id, "textbox", _build_textbox_body(args), args)
-
-
-def _cmd_widget_create_shape(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    return _create_widget(mural_id, "shape", _build_shape_body(args), args)
-
-
-def _cmd_widget_create_arrow(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    return _create_widget(mural_id, "arrow", _build_arrow_body(args), args)
-
-
-def _cmd_widget_create_image(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    if not (getattr(args, "alt_text", None) or "").strip():
-        raise MuralValidationError(
-            "alt_text is required for image widgets (WCAG 2.2 SC 1.1.1)"
-        )
-    file_path = pathlib.Path(args.file).expanduser()
-    if not file_path.is_file():
-        raise MuralValidationError(f"image file not found: {file_path}")
-    suffix = file_path.suffix.lower()
-    if suffix not in _IMAGE_CONTENT_TYPES:
-        raise MuralValidationError(
-            f"unsupported image extension {suffix!r}; allowed: "
-            + ", ".join(sorted(_IMAGE_CONTENT_TYPES))
-        )
-    body_bytes = file_path.read_bytes()
-    asset = _create_asset_url(mural_id, suffix)
-    _upload_to_sas(
-        url=asset["url"],
-        headers=asset.get("headers") or {},
-        body=body_bytes,
-        content_type=_IMAGE_CONTENT_TYPES[suffix],
-    )
-    record = _authenticated_request(
-        "POST",
-        f"/murals/{mural_id}/widgets/image",
-        json_body=_build_image_body(asset_name=asset["name"], args=args),
-    )
-    _maybe_apply_author_tag(
-        mural_id, record, skip=bool(getattr(args, "no_author_tag", False))
-    )
-    return _emit_record(record, args)
-
-
-# --- Tag, area, and widget-context CLI handlers ---------------------------
-
-
-def _cmd_tag_list(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    records = list(
-        _paginate(
-            "GET",
-            f"/murals/{mural_id}/tags",
-            **_list_kwargs(args),
-        )
-    )
-    return _emit_records(records, args)
-
-
-def _cmd_tag_create(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _create_tag(mural_id, args.text, getattr(args, "color", None))
-    return _emit_record(record, args)
-
-
-def _cmd_tag_apply(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    tag_id = getattr(args, "tag", None)
-    text = getattr(args, "text", None)
-    if not tag_id and not text:
-        raise MuralValidationError("tag apply requires --tag or --text")
-    if not tag_id:
-        manifest = [{"text": _validate_tag_text(text)}]
-        if getattr(args, "color", None):
-            manifest[0]["color"] = args.color
-        mapping = _ensure_tag_manifest(mural_id, manifest)
-        tag_id = mapping[text]
-    record = _merge_tags(mural_id, args.widget, additions=[tag_id])
-    return _emit_record(record, args)
-
-
-def _cmd_tag_remove(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    if _is_reserved_tag_id(mural_id, args.tag):
-        if not getattr(args, "force_reserved", False):
-            raise MuralValidationError(
-                f"refusing to remove reserved tag {args.tag!r}; "
-                "pass --force-reserved to override"
-            )
-        print(
-            f"warning: removing reserved tag {args.tag!r} (forced)",
-            file=sys.stderr,
-        )
-    record = _merge_tags(mural_id, args.widget, removals=[args.tag])
-    return _emit_record(record, args)
-
-
-def _cmd_area_list(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    records = _list_areas_with_widget_fallback(mural_id, **_list_kwargs(args))
-    return _emit_records(records, args)
-
-
-def _cmd_area_get(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _get_area_with_widget_fallback(mural_id, args.area)
-    return _emit_record(record, args)
-
-
-def _cmd_area_create(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    body = _build_area_body(args)
-    record = _authenticated_request("POST", f"/murals/{mural_id}/areas", json_body=body)
-    if isinstance(record, dict):
-        area_id = record.get("id")
-        if isinstance(area_id, str):
-            _area_cache[area_id] = record
-    return _emit_record(record, args)
-
-
-def _cmd_area_probe(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    verdict = _area_probe(mural_id, args.area)
-    return _emit_record(verdict, args)
-
-
-_WIDGET_TYPE_TO_PATH: dict[str, str] = {
-    "stickynote": "widgets/sticky-note",
-    "textbox": "widgets/textbox",
-    "shape": "widgets/shape",
-    "arrow": "widgets/arrow",
-    "image": "widgets/image",
-}
-
-_WIDGET_TYPE_API_TO_PATH_KEY: dict[str, str] = {
-    "sticky note": "stickynote",
-    "sticky-note": "stickynote",
-    "sticky_note": "stickynote",
-    "stickynote": "stickynote",
-    "text box": "textbox",
-    "text-box": "textbox",
-    "text_box": "textbox",
-    "textbox": "textbox",
-    "shape": "shape",
-    "arrow": "arrow",
-    "image": "image",
-}
-
-
-def _typed_widget_path(
-    mural_id: str, widget_id: str, widget_type: str | None
-) -> str | None:
-    """Build the type-specific PATCH/DELETE path for ``widget_type``.
-
-    Returns ``None`` when ``widget_type`` is missing or not in
-    :data:`_WIDGET_TYPE_API_TO_PATH_KEY`. The Mural API rejects PATCH against
-    the generic ``/widgets/{id}`` route with 404 PATH_NOT_FOUND, so callers
-    that know the widget type should target the typed route directly.
-    Accepts the GET-response variant ``"sticky note"`` (space) alongside
-    the canonical hyphen/underscore forms because Mural normalizes types
-    differently on the read and write sides.
-    """
-    if not isinstance(widget_type, str) or not widget_type:
-        return None
-    key = _WIDGET_TYPE_API_TO_PATH_KEY.get(widget_type.strip().lower())
-    if not key:
-        return None
-    suffix = _WIDGET_TYPE_TO_PATH.get(key)
-    if not suffix:
-        return None
-    return f"/murals/{mural_id}/{suffix}/{widget_id}"
-
-
-def _build_bulk_widgets_payload(raw: Any) -> list[dict[str, Any]]:
-    """Validate a bulk-create payload and return the list of widget bodies.
-
-    Accepts either a top-level JSON array or ``{"widgets": [...]}``. Each
-    entry must be a JSON object containing a ``type`` field plus any
-    type-specific fields the Mural API expects. Raises
-    :class:`MuralValidationError` when the payload is malformed or exceeds
-    :data:`MAX_BULK_WIDGETS`.
-    """
-    if isinstance(raw, dict) and "widgets" in raw:
-        widgets = raw["widgets"]
-    else:
-        widgets = raw
-    if not isinstance(widgets, list):
-        raise MuralValidationError(
-            "bulk widgets payload must be a JSON array or {widgets: [...]}"
-        )
-    if not widgets:
-        raise MuralValidationError("bulk widgets payload is empty")
-    if len(widgets) > MAX_BULK_WIDGETS:
-        raise MuralValidationError(
-            f"bulk create exceeds {MAX_BULK_WIDGETS} widgets (received {len(widgets)})"
-        )
-    cleaned: list[dict[str, Any]] = []
-    for index, entry in enumerate(widgets):
-        if not isinstance(entry, dict):
-            raise MuralValidationError(f"bulk widgets[{index}] must be a JSON object")
-        if not isinstance(entry.get("type"), str) or not entry["type"]:
-            raise MuralValidationError(
-                f"bulk widgets[{index}].type must be a non-empty string"
-            )
-        for key in ("parent_id", "parentId"):
-            if key in entry and entry[key] is not None:
-                pid = entry[key]
-                if not isinstance(pid, str) or not pid.strip():
-                    raise MuralValidationError(
-                        f"bulk widgets[{index}].{key} must be a non-empty string"
-                    )
-        cleaned.append(entry)
-    return cleaned
-
-
-def _extract_bulk_create_succeeded(response: Any) -> list[Any]:
-    """Normalize a bulk-create response into a list of created widgets."""
-    if isinstance(response, list):
-        return list(response)
-    if isinstance(response, dict):
-        for key in ("value", "data", "widgets"):
-            value = response.get(key)
-            if isinstance(value, list):
-                return list(value)
-        return [response]
-    return []
-
-
-# Bare `POST /murals/{id}/widgets` returns 404 PATH_NOT_FOUND on Public API v1;
-# each widget is dispatched to its per-type endpoint.
-def _bulk_create_widgets(
-    mural_id: str, widgets: list[dict[str, Any]], *, atomic: bool = False
-) -> dict[str, Any]:
-    skipped: list[dict[str, Any]] = []
-    to_send: list[dict[str, Any]] = []
-    seen_areas: dict[str, set[str]] = {}
-    for entry in widgets:
-        area_id = entry.get("areaId")
-        entry_hash: str | None = None
-        tags = entry.get("tags")
-        if isinstance(tags, list):
-            for t in tags:
-                if isinstance(t, str) and t.startswith(_LAYOUT_HASH_PREFIX):
-                    entry_hash = t[len(_LAYOUT_HASH_PREFIX) :]
-                    break
-        if area_id and entry_hash:
-            if area_id not in seen_areas:
-                seen_areas[area_id] = _existing_layout_hashes(mural_id, area_id)
-            if entry_hash in seen_areas[area_id]:
-                skipped.append(
-                    {
-                        "reason": "layout_hash_match",
-                        "hash": entry_hash,
-                        "area_id": area_id,
-                        "item": entry,
-                    }
-                )
-                continue
-        to_send.append(entry)
-    summary: dict[str, Any] = {
-        "succeeded": [],
-        "skipped": skipped,
-        "failed": [],
-        "warnings": [],
-    }
-    probe_index = next(
-        (
-            i
-            for i, entry in enumerate(to_send)
-            if isinstance(entry.get("parentId"), str) and entry["parentId"]
-        ),
-        None,
-    )
-    probe_outcome: dict[str, Any] | None = None
-    halt_parented = False
-    for index, entry in enumerate(to_send):
-        expected_parent_raw = entry.get("parentId") if isinstance(entry, dict) else None
-        has_parent = isinstance(expected_parent_raw, str) and bool(expected_parent_raw)
-        if halt_parented and has_parent:
-            skip_record: dict[str, Any] = {
-                "reason": "probe_failed",
-                "item": entry,
-            }
-            if probe_outcome is not None:
-                skip_record["probe"] = probe_outcome
-            summary["skipped"].append(skip_record)
-            continue
-        widget_type = entry.get("type")
-        normalized = (
-            widget_type.strip()
-            .lower()
-            .replace("-", "")
-            .replace("_", "")
-            .replace(" ", "")
-        )
-        subpath = _WIDGET_TYPE_TO_PATH.get(normalized)
-        if subpath is None:
-            summary["failed"].append(
-                {
-                    "item": entry,
-                    "error": (
-                        f"unsupported widget type {widget_type!r}; expected one of: "
-                        "sticky-note, textbox, shape, arrow, image"
-                    ),
-                }
-            )
-            if atomic:
-                raise MuralBulkAtomicAbort(summary)
-            if index == probe_index:
-                probe_outcome = {
-                    "index": index,
-                    "reason": "unsupported_widget_type",
-                }
-                summary["probe"] = probe_outcome
-                halt_parented = True
-            continue
-        body = {k: v for k, v in entry.items() if k != "type"}
-        try:
-            response = _authenticated_request(
-                "POST",
-                f"/murals/{mural_id}/{subpath}",
-                json_body=body,
-            )
-        except MuralError as exc:
-            summary["failed"].append({"item": entry, "error": str(exc)})
-            if index == probe_index:
-                probe_outcome = {
-                    "index": index,
-                    "reason": "post_failed",
-                    "error": str(exc),
-                }
-                summary["probe"] = probe_outcome
-                halt_parented = True
-            if atomic:
-                raise MuralBulkAtomicAbort(summary) from exc
-            continue
-        created = _extract_bulk_create_succeeded(response)
-        if created:
-            probe_verdict_value: str | None = None
-            probe_widget_id: str | None = None
-            if has_parent:
-                expected_parent = expected_parent_raw
-                for created_widget in created:
-                    widget_id = _resolve_widget_id(created_widget)
-                    if not widget_id:
-                        continue
-                    verdict = _verify_parent_containment(
-                        mural_id, widget_id, expected_parent
-                    )
-                    _attach_containment_to_record(created_widget, verdict)
-                    success = _is_containment_success(verdict["verdict"])
-                    if not success:
-                        summary["warnings"].append(
-                            f"containment verification failed for widget "
-                            f"{widget_id}: {verdict['recommendation']}"
-                        )
-                    if probe_verdict_value is None:
-                        probe_verdict_value = verdict["verdict"]
-                        probe_widget_id = widget_id
-            summary["succeeded"].extend(created)
-            if index == probe_index and probe_verdict_value is not None:
-                probe_outcome = {
-                    "index": index,
-                    "widget_id": probe_widget_id,
-                    "verdict": probe_verdict_value,
-                }
-                summary["probe"] = probe_outcome
-                if not _is_containment_success(probe_verdict_value):
-                    halt_parented = True
-                    if atomic:
-                        raise MuralBulkAtomicAbort(summary)
-        else:
-            summary["failed"].append(
-                {"item": entry, "error": "empty response from create"}
-            )
-            if index == probe_index:
-                probe_outcome = {
-                    "index": index,
-                    "reason": "empty_response",
-                }
-                summary["probe"] = probe_outcome
-                halt_parented = True
-            if atomic:
-                raise MuralBulkAtomicAbort(summary)
-    return summary
-
-
-def _cmd_widget_create_bulk(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    raw = _parse_json_arg(_load_payload_file(args.file), "--file")
-    widgets = _build_bulk_widgets_payload(raw)
-    result = _bulk_create_widgets(
-        mural_id, widgets, atomic=bool(getattr(args, "atomic", False))
-    )
-    _bulk_apply_author_tag(
-        mural_id, result, skip=bool(getattr(args, "no_author_tag", False))
-    )
-    return _emit_record(result, args)
-
-
-def _bulk_apply_author_tag(
-    mural_id: str, result: dict[str, Any], *, skip: bool
-) -> None:
-    """Best-effort attach the reserved author tag to every succeeded widget.
-
-    Failures are appended to ``result['warnings']`` rather than aborting the
-    whole batch so the caller still receives the create-side outcome.
-    """
-    if skip:
-        return
-    succeeded = result.get("succeeded") or []
-    if not succeeded:
-        return
-    try:
-        tag_id = _ensure_reserved_author_tag(mural_id)
-    except MuralError as exc:
-        result.setdefault("warnings", []).append(f"author-tag setup failed: {exc}")
-        return
-    warnings = result.setdefault("warnings", [])
-    for entry in succeeded:
-        widget_id = _resolve_widget_id(entry)
-        if not widget_id:
-            continue
-        try:
-            _merge_tags(mural_id, widget_id, additions=[tag_id])
-        except MuralError as exc:
-            warnings.append(f"author-tag attach failed for widget {widget_id}: {exc}")
-
-
-_BULK_UPDATE_MAX_WORKERS = 8
-
-
-def _build_bulk_widget_updates_payload(raw: Any) -> list[dict[str, Any]]:
-    """Validate a bulk-update payload and return a normalized list.
-
-    Accepts either a top-level JSON array or ``{"updates": [...]}``. Each
-    entry must be ``{"widget_id": str, "body": dict}`` (camelCase ``widgetId``
-    is also accepted). Raises :class:`MuralValidationError` when the payload
-    is malformed or exceeds :data:`MAX_BULK_WIDGETS`.
-    """
-    if isinstance(raw, dict) and "updates" in raw:
-        updates = raw["updates"]
-    else:
-        updates = raw
-    if not isinstance(updates, list):
-        raise MuralValidationError(
-            "bulk updates payload must be a JSON array or {updates: [...]}"
-        )
-    if not updates:
-        raise MuralValidationError("bulk updates payload is empty")
-    if len(updates) > MAX_BULK_WIDGETS:
-        raise MuralValidationError(
-            f"bulk update exceeds {MAX_BULK_WIDGETS} widgets (received {len(updates)})"
-        )
-    cleaned: list[dict[str, Any]] = []
-    for index, entry in enumerate(updates):
-        if not isinstance(entry, dict):
-            raise MuralValidationError(f"bulk updates[{index}] must be a JSON object")
-        widget_id = entry.get("widget_id") or entry.get("widgetId")
-        if not isinstance(widget_id, str) or not widget_id:
-            raise MuralValidationError(
-                f"bulk updates[{index}].widget_id must be a non-empty string"
-            )
-        body = entry.get("body")
-        if not isinstance(body, dict) or not body:
-            raise MuralValidationError(
-                f"bulk updates[{index}].body must be a non-empty JSON object"
-            )
-        normalized: dict[str, Any] = {"widget_id": widget_id, "body": body}
-        widget_type = entry.get("type") or entry.get("widgetType")
-        if isinstance(widget_type, str) and widget_type:
-            normalized["type"] = widget_type
-        cleaned.append(normalized)
-    return cleaned
-
-
-def _bulk_update_widgets(
-    mural_id: str,
-    updates: list[dict[str, Any]],
-    *,
-    atomic: bool = False,
-    require_author_tag: bool = False,
-    force_human: bool = False,
-) -> dict[str, Any]:
-    """PATCH a batch of widgets concurrently and return a result envelope.
-
-    Returns ``{"succeeded": [...], "failed": [...], "warnings": [...]}``.
-    Each ``succeeded`` entry is ``{"widget_id": str, "widget": <response>}``
-    and each ``failed`` entry is ``{"widget_id": str, "error": str}``.
-
-    When ``atomic`` is true, raises :class:`MuralBulkAtomicAbort` carrying the
-    partial summary as soon as the first failure is observed; remaining
-    in-flight tasks are cancelled where possible.
-    """
-    succeeded: list[dict[str, Any]] = []
-    failed: list[dict[str, Any]] = []
-    warnings: list[str] = []
-    guard_active = require_author_tag and not force_human
-
-    def _patch_one(item: dict[str, Any]) -> dict[str, Any]:
-        widget_id = item["widget_id"]
-        if guard_active:
-            _assert_widget_has_author_tag(mural_id, widget_id)
-        record = _patch_widget_or_disambiguate_404(
-            mural_id, widget_id, item["body"], item.get("type")
-        )
-        return {"widget_id": widget_id, "widget": record}
-
-    workers = min(_BULK_UPDATE_MAX_WORKERS, max(1, len(updates)))
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        future_to_item = {pool.submit(_patch_one, item): item for item in updates}
-        try:
-            for future in concurrent.futures.as_completed(future_to_item):
-                item = future_to_item[future]
-                try:
-                    succeeded.append(future.result())
-                except Exception as exc:  # noqa: BLE001
-                    failed.append({"widget_id": item["widget_id"], "error": str(exc)})
-                    if atomic:
-                        for pending in future_to_item:
-                            if not pending.done():
-                                pending.cancel()
-                        raise MuralBulkAtomicAbort(
-                            {
-                                "succeeded": succeeded,
-                                "failed": failed,
-                                "warnings": warnings,
-                            }
-                        )
-        finally:
-            pass
-    return {"succeeded": succeeded, "failed": failed, "warnings": warnings}
-
-
-def _cmd_widget_update_bulk(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    raw = _parse_json_arg(_load_payload_file(args.file), "--file")
-    updates = _build_bulk_widget_updates_payload(raw)
-    result = _bulk_update_widgets(
-        mural_id,
-        updates,
-        atomic=bool(getattr(args, "atomic", False)),
-        require_author_tag=bool(getattr(args, "require_author_tag", False)),
-        force_human=bool(getattr(args, "force_human", False)),
-    )
-    return _emit_record(result, args)
-
-
-_DIFF_GEOM_KEYS = ("x", "y", "width", "height", "rotation")
-_DIFF_STYLE_KEYS = ("style", "shape")
-_DIFF_CONTENT_KEYS = ("text", "htmlText", "title", "hyperlink")
-_DIFF_ANCHOR_KEYS = (
-    "parentId",
-    "startWidget",
-    "endWidget",
-    "startRefId",
-    "endRefId",
-    "points",
-)
-_DIFF_IGNORED_KEYS = frozenset(
-    {"id", "createdOn", "updatedOn", "createdBy", "updatedBy"}
-)
-
-
-def _diff_widget_lists(
-    baseline: list[dict[str, Any]], current: list[dict[str, Any]]
-) -> dict[str, Any]:
-    """Diff two widget lists by id and group field changes by category.
-
-    ``baseline`` is the prior snapshot (typically the local file); ``current``
-    is the live state (typically fetched from the mural). Widgets are matched
-    by ``id``. ``htmlText``/``text`` are compared via :func:`_coalesce_widget_text`
-    so portal-migrated content is not flagged as a spurious change.
-
-    Returns a dict shaped::
-
-        {
-          "summary": {"added": N, "removed": N, "changed": N},
-          "added": [widget, ...],
-          "removed": [widget, ...],
-          "changed": [{"id": ..., "type": ..., "delta": {category: {field: [a,b]}}}],
-        }
-    """
-    base_by_id = {w["id"]: w for w in baseline if isinstance(w, dict) and w.get("id")}
-    cur_by_id = {w["id"]: w for w in current if isinstance(w, dict) and w.get("id")}
-    added = [cur_by_id[i] for i in cur_by_id if i not in base_by_id]
-    removed = [base_by_id[i] for i in base_by_id if i not in cur_by_id]
-    changed: list[dict[str, Any]] = []
-    for wid, before in base_by_id.items():
-        after = cur_by_id.get(wid)
-        if after is None:
-            continue
-        delta = _diff_widget_fields(before, after)
-        if delta:
-            changed.append(
-                {
-                    "id": wid,
-                    "type": after.get("type") or before.get("type"),
-                    "delta": delta,
-                }
-            )
-    return {
-        "summary": {
-            "added": len(added),
-            "removed": len(removed),
-            "changed": len(changed),
-        },
-        "added": added,
-        "removed": removed,
-        "changed": changed,
-    }
-
-
-def _diff_widget_fields(
-    before: dict[str, Any], after: dict[str, Any]
-) -> dict[str, dict[str, list[Any]]]:
-    """Compute per-category field deltas between two widget dicts.
-
-    Suppresses spurious ``text``/``htmlText`` differences when both sides
-    coalesce to the same plain-text body (WI-16 portal migration).
-    """
-    delta: dict[str, dict[str, list[Any]]] = {}
-    for key in _DIFF_GEOM_KEYS:
-        if before.get(key) != after.get(key) and (
-            before.get(key) is not None or after.get(key) is not None
-        ):
-            delta.setdefault("geometry", {})[key] = [before.get(key), after.get(key)]
-    text_equivalent = _coalesce_widget_text(before) == _coalesce_widget_text(after)
-    for key in _DIFF_CONTENT_KEYS:
-        if before.get(key) == after.get(key):
-            continue
-        if key in {"text", "htmlText"} and text_equivalent:
-            continue
-        delta.setdefault("content", {})[key] = [before.get(key), after.get(key)]
-    for key in _DIFF_STYLE_KEYS:
-        if before.get(key) != after.get(key):
-            delta.setdefault("style", {})[key] = [before.get(key), after.get(key)]
-    for key in _DIFF_ANCHOR_KEYS:
-        if before.get(key) != after.get(key):
-            delta.setdefault("anchor", {})[key] = [before.get(key), after.get(key)]
-    known = (
-        set(_DIFF_GEOM_KEYS)
-        | set(_DIFF_STYLE_KEYS)
-        | set(_DIFF_CONTENT_KEYS)
-        | set(_DIFF_ANCHOR_KEYS)
-        | _DIFF_IGNORED_KEYS
-    )
-    other: dict[str, list[Any]] = {}
-    for key in set(before) | set(after):
-        if key in known:
-            continue
-        if before.get(key) != after.get(key):
-            other[key] = [before.get(key), after.get(key)]
-    if other:
-        delta["other"] = other
-    return delta
-
-
-def _bulk_delete_widgets(
-    mural_id: str, widget_ids: list[str], *, atomic: bool = False
-) -> dict[str, Any]:
-    """Sequentially DELETE widgets and return ``{succeeded, failed, warnings}``.
-
-    The Mural API does not expose a bulk delete endpoint, so this helper
-    walks ``widget_ids`` in order. Under ``atomic``, the first failure
-    raises :class:`MuralBulkAtomicAbort` carrying the partial summary.
-    """
-    succeeded: list[str] = []
-    failed: list[dict[str, Any]] = []
-    for wid in widget_ids:
-        try:
-            _authenticated_request("DELETE", f"/murals/{mural_id}/widgets/{wid}")
-            succeeded.append(wid)
-        except MuralError as exc:
-            failed.append({"widget_id": wid, "error": str(exc)})
-            if atomic:
-                raise MuralBulkAtomicAbort(
-                    {
-                        "succeeded": succeeded,
-                        "failed": failed,
-                        "warnings": [
-                            f"delete failed for {wid} ({exc}); aborting under --atomic"
-                        ],
-                    }
-                ) from exc
-    return {"succeeded": succeeded, "failed": failed, "warnings": []}
-
-
-def _apply_widget_diff(
-    mural_id: str,
-    baseline: list[dict[str, Any]],
-    diff: dict[str, Any],
-    *,
-    atomic: bool = False,
-) -> dict[str, Any]:
-    """Push ``baseline`` to ``mural_id`` using the precomputed ``diff``.
-
-    Routes diff entries to bulk operations so live state matches the
-    snapshot:
-
-    * ``diff['removed']`` (in snapshot, missing live) -> bulk create.
-    * ``diff['changed']`` -> bulk update with baseline field values.
-    * ``diff['added']``   (extra in live, not in snapshot) -> sequential delete.
-
-    Returns ``{create, update, delete}`` envelopes from the underlying
-    helpers. Under ``atomic``, the first failure in any phase raises
-    :class:`MuralBulkAtomicAbort`; later phases are not attempted.
-
-    PATCH bodies cannot unset fields, so when a changed field is absent
-    or null in the baseline a warning is recorded in
-    ``update['warnings']`` and the field is left untouched on live.
-    """
-    base_by_id = {
-        w["id"]: w
-        for w in baseline
-        if isinstance(w, dict) and isinstance(w.get("id"), str)
-    }
-    create_payload: list[dict[str, Any]] = []
-    for entry in diff.get("removed", []):
-        if not isinstance(entry, dict):
-            continue
-        body = {k: v for k, v in entry.items() if k not in _DIFF_IGNORED_KEYS}
-        if isinstance(body.get("type"), str) and body["type"]:
-            create_payload.append(body)
-    delete_ids: list[str] = [
-        entry["id"]
-        for entry in diff.get("added", [])
-        if isinstance(entry, dict) and isinstance(entry.get("id"), str)
-    ]
-    update_payload: list[dict[str, Any]] = []
-    unset_warnings: list[str] = []
-    for change in diff.get("changed", []):
-        if not isinstance(change, dict):
-            continue
-        wid = change.get("id")
-        delta = change.get("delta") or {}
-        base_w = base_by_id.get(wid) if isinstance(wid, str) else None
-        if not isinstance(base_w, dict) or not isinstance(delta, dict):
-            continue
-        body: dict[str, Any] = {}
-        unset_fields: list[str] = []
-        for fields in delta.values():
-            if not isinstance(fields, dict):
-                continue
-            for field in fields:
-                if field in base_w and base_w[field] is not None:
-                    body[field] = base_w[field]
-                else:
-                    unset_fields.append(field)
-        if unset_fields:
-            unset_warnings.append(
-                f"widget {wid}: cannot unset fields via PATCH: "
-                f"{sorted(set(unset_fields))}"
-            )
-        if body:
-            entry: dict[str, Any] = {"widget_id": wid, "body": body}
-            base_type = base_w.get("type")
-            if isinstance(base_type, str) and base_type:
-                entry["type"] = base_type
-            update_payload.append(entry)
-
-    empty_create = {
-        "succeeded": [],
-        "skipped": [],
-        "failed": [],
-        "warnings": [],
-    }
-    empty_update_or_delete = {
-        "succeeded": [],
-        "failed": [],
-        "warnings": [],
-    }
-    create_result = (
-        _bulk_create_widgets(mural_id, create_payload, atomic=atomic)
-        if create_payload
-        else dict(empty_create)
-    )
-    update_result = (
-        _bulk_update_widgets(mural_id, update_payload, atomic=atomic)
-        if update_payload
-        else dict(empty_update_or_delete)
-    )
-    if unset_warnings:
-        update_result.setdefault("warnings", []).extend(unset_warnings)
-    delete_result = (
-        _bulk_delete_widgets(mural_id, delete_ids, atomic=atomic)
-        if delete_ids
-        else dict(empty_update_or_delete)
-    )
-    return {
-        "create": create_result,
-        "update": update_result,
-        "delete": delete_result,
-    }
-
-
-def _cmd_widget_diff(args: argparse.Namespace) -> int:
-    """Diff a local widget snapshot against the live mural state."""
-    mural_id = _validate_mural_id(args.mural)
-    raw = _parse_json_arg(_load_payload_file(args.file), "--file")
-    if isinstance(raw, dict) and "widgets" in raw:
-        baseline = raw["widgets"]
-    else:
-        baseline = raw
-    if not isinstance(baseline, list):
-        raise MuralValidationError(
-            "--file must contain a JSON array of widgets or "
-            "an object with a 'widgets' array"
-        )
-    live = list(_paginate("GET", f"/murals/{mural_id}/widgets"))
-    result = _diff_widget_lists(baseline, live)
-    if getattr(args, "apply", False):
-        apply_result = _apply_widget_diff(
-            mural_id,
-            baseline,
-            result,
-            atomic=bool(getattr(args, "atomic", False)),
-        )
-        result = {**result, "applied": True, **apply_result}
-    return _emit_record(result, args)
-
-
-def _duplicate_mural(source_mural_id: str) -> str:
-    """POST ``/murals/{id}/duplicate`` and return the new mural id.
-
-    Raises :class:`MuralAPIError` when the response does not include an
-    ``id`` field; the new mural identifier is required for downstream
-    workflows such as :func:`_cmd_clone_with_tags`.
-    """
-    response = _authenticated_request("POST", f"/murals/{source_mural_id}/duplicate")
-    new_id: Any = None
-    if isinstance(response, dict):
-        new_id = response.get("id") or (
-            response.get("value") if isinstance(response.get("value"), str) else None
-        )
-        if not isinstance(new_id, str):
-            inner = response.get("value")
-            if isinstance(inner, dict):
-                new_id = inner.get("id")
-    if not isinstance(new_id, str) or not new_id:
-        raise MuralAPIError(
-            0, "DUPLICATE_INVALID", "duplicate response missing mural id"
-        )
-    return new_id
-
-
-def _cmd_mural_duplicate(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    new_id = _duplicate_mural(mural_id)
-    return _emit_record({"new_mural_id": new_id, "source_mural_id": mural_id}, args)
-
-
-def _read_tag_manifest(mural_id: str) -> list[dict[str, Any]]:
-    """Return ``[{text, color?}]`` tag entries from an existing mural."""
-    manifest: list[dict[str, Any]] = []
-    for tag in _paginate("GET", f"/murals/{mural_id}/tags"):
-        if not isinstance(tag, dict):
-            continue
-        text = tag.get("text")
-        if not isinstance(text, str):
-            continue
-        entry: dict[str, Any] = {"text": text}
-        color = tag.get("color")
-        if isinstance(color, str) and color:
-            entry["color"] = color
-        manifest.append(entry)
-    return manifest
-
-
-def _cmd_clone_with_tags(args: argparse.Namespace) -> int:
-    source_id = _validate_mural_id(args.mural)
-    source_manifest = _read_tag_manifest(source_id)
-    new_id = _duplicate_mural(source_id)
-    tag_map = _ensure_tag_manifest(new_id, source_manifest) if source_manifest else {}
-    return _emit_record(
-        {
-            "source_mural_id": source_id,
-            "new_mural_id": new_id,
-            "tag_count": len(tag_map),
-            "tag_map": tag_map,
-            "warnings": ["widget ids are not preserved across mural duplication"],
-        },
-        args,
-    )
-
-
-def _template_target_body(
-    workspace: str | None, room: str | None, name: str | None = None
-) -> dict[str, Any]:
-    body: dict[str, Any] = {"workspaceId": _resolve_workspace_id(workspace)}
-    if room:
-        body["roomId"] = room
-    if name:
-        body["name"] = name
-    return body
-
-
-def _cmd_template_instantiate(args: argparse.Namespace) -> int:
-    template_id = (args.template or "").strip()
-    if not template_id:
-        raise MuralValidationError("--template is required")
-    body = _template_target_body(
-        getattr(args, "workspace", None),
-        getattr(args, "room", None),
-        getattr(args, "name", None),
-    )
-    record = _authenticated_request(
-        "POST", f"/templates/{template_id}/instantiate", json_body=body
-    )
-    return _emit_record(record, args)
-
-
-def _cmd_template_create(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    body = _template_target_body(
-        getattr(args, "workspace", None),
-        getattr(args, "room", None),
-        getattr(args, "name", None),
-    )
-    record = _authenticated_request(
-        "POST", f"/murals/{mural_id}/template", json_body=body
-    )
-    return _emit_record(record, args)
-
-
-def _cmd_template_list(args: argparse.Namespace) -> int:
-    return _emit_record(
-        _tool_template_list({"workspace": getattr(args, "workspace", None)}), args
-    )
-
-
-_POLL_OPS: dict[str, Callable[[Any, Any], bool]] = {
-    "==": lambda a, b: a == b,
-    "!=": lambda a, b: a != b,
-}
-
-
-def _parse_poll_condition(condition: str) -> tuple[list[str], str, str]:
-    """Parse ``"path op value"`` into ``(path_segments, op, expected)``.
-
-    Supported operators are ``==`` and ``!=``. The path is dotted (e.g.
-    ``status`` or ``meta.status``). The value is taken verbatim and matched
-    against the string form of the resolved field.
-    """
-    if not isinstance(condition, str) or not condition.strip():
-        raise MuralValidationError("poll condition must be a non-empty string")
-    text = condition.strip()
-    op_used: str | None = None
-    op_index = -1
-    for op in ("==", "!="):
-        idx = text.find(op)
-        if idx > 0:
-            op_used = op
-            op_index = idx
-            break
-    if op_used is None or op_index <= 0:
-        raise MuralValidationError(
-            "poll condition must be 'path op value' with op == or !="
-        )
-    path = text[:op_index].strip()
-    expected = text[op_index + len(op_used) :].strip()
-    if not path or not expected:
-        raise MuralValidationError(
-            "poll condition path and expected value must be non-empty"
-        )
-    segments = [seg for seg in path.split(".") if seg]
-    if not segments:
-        raise MuralValidationError("poll condition path is invalid")
-    return segments, op_used, expected
-
-
-def _resolve_dotted(record: Any, segments: list[str]) -> Any:
-    cursor: Any = record
-    for seg in segments:
-        if isinstance(cursor, dict):
-            cursor = cursor.get(seg)
-        else:
-            return None
-    return cursor
-
-
-def _evaluate_poll(record: Any, segments: list[str], op: str, expected: str) -> bool:
-    actual = _resolve_dotted(record, segments)
-    actual_str = "" if actual is None else str(actual)
-    return _POLL_OPS[op](actual_str, expected)
-
-
-def _poll_mural(
-    mural_id: str,
-    *,
-    interval_s: float,
-    timeout_s: float,
-    condition: str,
-    sleep: Callable[[float], None] = time.sleep,
-    monotonic: Callable[[], float] = time.monotonic,
-) -> dict[str, Any]:
-    if interval_s <= 0:
-        raise MuralValidationError("--interval must be positive")
-    if timeout_s <= 0:
-        raise MuralValidationError("--timeout must be positive")
-    if interval_s > POLL_MAX_INTERVAL_S:
-        raise MuralValidationError(
-            f"--interval must be ≤ {POLL_MAX_INTERVAL_S} seconds"
-        )
-    if timeout_s > POLL_MAX_TIMEOUT_S:
-        raise MuralValidationError(f"--timeout must be ≤ {POLL_MAX_TIMEOUT_S} seconds")
-    segments, op, expected = _parse_poll_condition(condition)
-    deadline = monotonic() + timeout_s
-    attempt = 0
-    last_record: Any = None
-    while True:
-        last_record = _authenticated_request("GET", f"/murals/{mural_id}")
-        if _evaluate_poll(last_record, segments, op, expected):
-            return {
-                "matched": True,
-                "attempts": attempt + 1,
-                "condition": condition,
-                "mural": last_record,
-            }
-        attempt += 1
-        if monotonic() >= deadline:
-            raise MuralValidationError(
-                f"poll timeout after {timeout_s}s waiting for {condition!r}"
-            )
-        delay = min(interval_s * (2 ** min(attempt - 1, 2)), POLL_MAX_INTERVAL_S)
-        remaining = deadline - monotonic()
-        if remaining <= 0:
-            raise MuralValidationError(
-                f"poll timeout after {timeout_s}s waiting for {condition!r}"
-            )
-        sleep(min(delay, remaining))
-
-
-def _cmd_mural_poll(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    result = _poll_mural(
-        mural_id,
-        interval_s=float(args.interval),
-        timeout_s=float(args.timeout),
-        condition=args.condition,
-    )
-    return _emit_record(result, args)
-
-
-def _set_mural_status(mural_id: str, status: str) -> Any:
-    return _authenticated_request(
-        "PATCH", f"/murals/{mural_id}", json_body={"status": status}
-    )
-
-
-def _cmd_mural_archive(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _set_mural_status(mural_id, "archived")
-    return _emit_record(record, args)
-
-
-def _cmd_mural_unarchive(args: argparse.Namespace) -> int:
-    mural_id = _validate_mural_id(args.mural)
-    record = _set_mural_status(mural_id, "active")
-    return _emit_record(record, args)
-
-
-# --- Voting sessions ---------------------------------------------------------
 
 
 def _validate_voting_session_id(value: Any) -> str:
@@ -7172,16 +3387,13 @@ def _tool_template_create(arguments: dict[str, Any]) -> Any:
     )
 
 
-_TEMPLATE_REGISTRY: list[dict[str, str]] = []
-
-
 def _tool_template_list(arguments: dict[str, Any]) -> Any:
     workspace = arguments.get("workspace")
     if workspace is not None and (
         not isinstance(workspace, str) or not workspace.strip()
     ):
         raise MCPInvalidParamsError("workspace must be a non-empty string when set")
-    return {"templates": [dict(entry) for entry in _TEMPLATE_REGISTRY]}
+    return {"templates": [dict(entry) for entry in _state._TEMPLATE_REGISTRY]}
 
 
 def _tool_mural_poll(arguments: dict[str, Any]) -> Any:
@@ -7276,28 +3488,19 @@ def _tool_layout_row(arguments: dict[str, Any]) -> Any:
 # --- Tool schemas + registry ---------------------------------------------
 
 
-# In-process idempotency cache for create-style tools. Bounded LRU using
-# ``OrderedDict``; holds previously formatted tool results keyed by
-# ``(tool_name, idempotency_key)``. Process-local only — not persisted.
-_IDEMPOTENCY_MAX = 128
-_IDEMPOTENCY_CACHE: "collections.OrderedDict[tuple[str, str], dict[str, Any]]" = (
-    collections.OrderedDict()
-)
-
-
 def _idempotency_get(name: str, key: str) -> dict[str, Any] | None:
-    payload = _IDEMPOTENCY_CACHE.get((name, key))
+    payload = _state._IDEMPOTENCY_CACHE.get((name, key))
     if payload is None:
         return None
-    _IDEMPOTENCY_CACHE.move_to_end((name, key))
+    _state._IDEMPOTENCY_CACHE.move_to_end((name, key))
     return payload
 
 
 def _idempotency_put(name: str, key: str, payload: dict[str, Any]) -> None:
-    _IDEMPOTENCY_CACHE[(name, key)] = payload
-    _IDEMPOTENCY_CACHE.move_to_end((name, key))
-    while len(_IDEMPOTENCY_CACHE) > _IDEMPOTENCY_MAX:
-        _IDEMPOTENCY_CACHE.popitem(last=False)
+    _state._IDEMPOTENCY_CACHE[(name, key)] = payload
+    _state._IDEMPOTENCY_CACHE.move_to_end((name, key))
+    while len(_state._IDEMPOTENCY_CACHE) > _state._IDEMPOTENCY_MAX:
+        _state._IDEMPOTENCY_CACHE.popitem(last=False)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -8519,11 +4722,10 @@ def main(argv: list[str] | None = None) -> int:
         level=getattr(logging, args.log_level, logging.WARNING),
         format="%(levelname)s %(name)s: %(message)s",
     )
-    global _CLI_QUIET, _CLI_FORCE_JSON, _CLI_COLOR, _CLI_PROFILE
-    _CLI_QUIET = bool(getattr(args, "quiet", False))
-    _CLI_FORCE_JSON = bool(getattr(args, "json_output", False))
-    _CLI_COLOR = _color_mode(getattr(args, "color", "auto"))
-    _CLI_PROFILE = getattr(args, "profile", None) or None
+    _state._CLI_QUIET = bool(getattr(args, "quiet", False))
+    _state._CLI_FORCE_JSON = bool(getattr(args, "json_output", False))
+    _state._CLI_COLOR = _color_mode(getattr(args, "color", "auto"))
+    _state._CLI_PROFILE = getattr(args, "profile", None) or None
     profile_name = (
         getattr(args, "profile", None)
         or os.environ.get(ENV_PROFILE)

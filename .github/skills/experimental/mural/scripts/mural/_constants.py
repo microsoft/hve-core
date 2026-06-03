@@ -14,15 +14,69 @@ import os
 import re
 import threading
 
-# Private (underscore-prefixed) globals defined here are consumed only by
-# sibling modules via explicit ``from ._constants import ...`` rather than
-# within this module. CodeQL's ``py/unused-global-variable`` query analyzes
-# each module in isolation and would otherwise flag them as unused. Listing
-# them in ``__all__`` marks them as this module's intended export surface.
-# The package never uses ``from ._constants import *``, so this has no runtime
-# effect on import behavior.
+# Globals defined here are consumed by sibling modules via explicit
+# ``from ._constants import ...`` rather than within this module. CodeQL's
+# ``py/unused-global-variable`` query analyzes each module in isolation and
+# would otherwise flag them as unused. Listing them in ``__all__`` marks them
+# as this module's intended export surface. The package never uses
+# ``from ._constants import *``, so this has no runtime effect on import
+# behavior.
 __all__ = [
+    # OAuth endpoints and redirect.
+    "MURAL_BASE_URL_DEFAULT",
+    "MURAL_AUTHORIZE_URL",
+    "MURAL_TOKEN_URL",
+    "DEFAULT_REDIRECT_URI",
+    # Environment variable name registry.
+    "ENV_BASE_URL",
+    "ENV_CLIENT_ID",
+    "ENV_CLIENT_SECRET",
+    "ENV_PROFILE",
+    "ENV_SCOPES",
+    "ENV_REDIRECT_URI",
+    "ENV_TOKEN_STORE",
+    "ENV_DEFAULT_WORKSPACE",
+    "ENV_XDG_DATA_HOME",
+    "ENV_NONINTERACTIVE",
+    "ENV_ENV_FILE",
+    "ENV_ENV_FILE_RELAXED",
+    "ENV_XDG_CONFIG_HOME",
+    # Bulk and polling limits.
+    "MAX_BULK_WIDGETS",
+    "POLL_DEFAULT_INTERVAL_S",
+    "POLL_MAX_INTERVAL_S",
+    "POLL_DEFAULT_TIMEOUT_S",
+    "POLL_MAX_TIMEOUT_S",
+    # Scopes and user agent.
+    "DEFAULT_LOGIN_SCOPES",
+    "DEFAULT_SCOPES",
+    "READ_SCOPES",
+    "WRITE_SCOPES",
+    "USER_AGENT",
+    # Rate limiting and retry policy.
+    "RATE_LIMIT_TOKENS_PER_SEC",
+    "RATE_LIMIT_BUCKET_CAPACITY",
+    "MAX_RETRIES",
+    "MAX_BACKOFF_SECONDS",
+    "REFRESH_LEEWAY_SECONDS",
+    # Process exit codes.
+    "EXIT_SUCCESS",
+    "EXIT_FAILURE",
+    "EXIT_USAGE",
+    "EXIT_TEMPFAIL",
+    "EXIT_NOPERM",
+    "EXIT_AREA_CAPACITY",
+    # Transport hardening limits.
+    "MURAL_MAX_FRAME_BYTES",
+    "MURAL_MAX_BODY_BYTES",
+    "MURAL_TOOL_TIMEOUT_SECS",
+    # Token-store schema.
+    "TOKEN_STORE_SCHEMA_VERSION",
+    "DEFAULT_PROFILE_NAME",
+    # Private (underscore-prefixed) cross-module globals.
     "_KNOWN_CREDENTIAL_KEYS",
+    "_REDACT_KEYS",
+    "_REDACT_PATTERNS",
     "_REFRESH_LOCK",
     "_RESERVED_TAGS",
     "_AUTHORED_BY_AI_TAG_TEXT",
