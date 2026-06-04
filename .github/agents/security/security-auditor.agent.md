@@ -3,7 +3,6 @@ name: Security Auditor
 description: "Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact - Brought to you by microsoft/hve-core"
 agents:
   - Security Reviewer
-  - Researcher Subagent
 tools:
   - agent
   - read/readFile
@@ -77,7 +76,7 @@ Resolve the source plan with interactive disambiguation only on ties:
 2. Else if `projectSlug` is provided, use `.copilot-tracking/security-plans/<projectSlug>/` when it contains `state.json`.
 3. Else scan `.copilot-tracking/security-plans/*/state.json`:
    * Zero matches: stop. Direct the user to run `/security-capture` or `/security-plan-from-prd` first. Do not proceed without a baseline plan.
-   * One match: use it. Confirm the slug with the user before proceeding.
+   * One match: use it. Confirm the slug with the user before proceeding. If the user declines, stop and offer to accept an explicit `planPath` or `projectSlug` on the next invocation. Do not auto-select a different plan.
    * Multiple matches: list candidates with slug and last-modified time and ask the user to choose.
 
 ## Plan Extraction Checklist
@@ -115,16 +114,18 @@ Invoke `Security Reviewer` as a subagent with `runSubagent`. Use hybrid scoping:
 `Security Reviewer` in `audit` mode does not exclude planning or agent-customization artifacts on its own. To prevent noisy findings against non-application content, the auditor enforces exclusions before invoking Reviewer:
 
 * When building a scope hint from the plan's component inventory, **omit** any path under `.copilot-tracking/`, `docs/planning/`, `docs/adrs/`, `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/`.
-* When `${input:scope}` is provided, accept it as-is but log a warning if it overlaps any excluded prefix above. The user's explicit scope wins; do not silently rewrite it.
-* Post-audit filtering is the contractual enforcement point: after Reviewer returns findings, drop every finding whose location matches an excluded path prefix or file glob from all delta categories, and report the dropped count under "Filtered findings" in the audit summary. Do not rely on free-text directives appended to Reviewer prompts; `Security Reviewer` does not contractually honor them.
+* When `${input:scope}` is provided, accept it as-is but log a warning if it overlaps any excluded prefix above. The user's explicit scope wins; do not silently rewrite it. Record each overlapping prefix as an **opted-in prefix** for this run.
+* Post-audit filtering is the contractual enforcement point: after Reviewer returns findings, drop every finding whose location matches an excluded path prefix or file glob from all delta categories, **except** findings located under an opted-in prefix (from the rule above), which are retained. Report the dropped count under "Filtered findings" and list any opted-in prefixes under "Exclusion overrides" in the audit summary. Do not rely on free-text directives appended to Reviewer prompts; `Security Reviewer` does not contractually honor them.
 
 This exclusion is local to `Security Auditor` and does not change `Security Reviewer` behavior for other callers (e.g., `/security-review`).
 
-Capture from Reviewer:
+Capture from Reviewer via its **Scan Completion Format** (defined in the `security-reviewer-formats` skill, `references/completion-formats.md`):
 
-* The applicable skills list it selected.
-* The report file path it returned.
-* Findings classified by status and severity.
+* `REPORT_FILE_PATH` — the path to the written report. Treat this as the authoritative source of per-finding detail.
+* `SKILLS_ASSESSED` — the comma-separated applicable-skills list Reviewer selected.
+* Severity and summary counts from the completion message.
+
+The completion message does not enumerate individual finding IDs. Read the report at `REPORT_FILE_PATH` to obtain per-finding rows (ID, status, severity, location) for classification. If the completion message omits `REPORT_FILE_PATH` or the report file is unreadable, apply the retry-once protocol in Required Protocol before stopping.
 
 Compare Reviewer's applicable skills list to skills implied by the plan's standards mappings. Any skill Reviewer ran that the plan did not consider is a signal feeding the "Newly introduced threats" section and, when relevant, the RAI or SSSC handoff recommendation.
 
@@ -160,7 +161,7 @@ Apply these delta categories. Every entry must cite both the plan-side reference
 Write the gap report with these sections in this fixed order:
 
 1. **Security plan source** — resolved plan path, slug, `currentPhase`, last-modified timestamp, baseline-completeness note.
-2. **Current repository audit source** — Reviewer report path, mode, scope used, applicable skills selected by Reviewer, and which of those skills were absent from the plan. Include a `Default exclusions applied` sub-block listing the excluded path prefixes and file globs, plus an `Exclusion overrides` line noting any user-provided scope that overlapped an excluded prefix.
+2. **Current repository audit source** — Reviewer report path, mode, scope used, and applicable skills selected by Reviewer. Include a `Skills absent from the plan` sub-block listing each Reviewer-selected skill whose expected plan facets are all absent (per the Skill-to-Plan-Facet Mapping). Include a `Default exclusions applied` sub-block listing the excluded path prefixes and file globs, plus an `Exclusion overrides` line noting any user-provided scope that overlapped an excluded prefix and the opted-in prefixes retained as a result.
 3. **Validated controls** — table with columns: Plan reference, Control, Evidence (Reviewer finding ID), Notes.
 4. **Control drift and regressions** — table with columns: Plan reference, Expected control, Observed state, Reviewer finding ID, Severity.
 5. **Residual open risks** — table with columns: Plan threat ID, Description, Reviewer finding ID, Severity, Recommended action.
@@ -217,6 +218,6 @@ End each audit run with a single completion block:
 * Reviewer report path.
 * Counts for: validated controls, control drift, residual risks, new threats, obsolete items.
 * `Filtered findings: N` — count of Reviewer findings dropped by the planning-artifact exclusion rules (always print; `0` when none).
-* `Default exclusions: ON` (always) plus a one-line summary of excluded path prefixes. If `${input:scope}` overlapped an excluded prefix, append `(user-scope override: <path>)`.
+* `Default exclusions: ON` (always) plus a one-line summary of excluded path prefixes. If `${input:scope}` overlapped an excluded prefix, append `(user-scope override: <path> — retained)` to signal that findings under that prefix were kept rather than filtered.
 * Baseline-completeness flag.
 * Recommended handoffs with one-line rationale each.
