@@ -24,7 +24,7 @@ Planning and agent-customization artifacts are **excluded by default** from audi
 
 * `${input:projectSlug}`: (Optional) Slug under `.copilot-tracking/security-plans/`. The agent uses it for plan resolution and audit artifact directory naming.
 * `${input:planPath}`: (Optional) Explicit path to a plan directory containing `state.json`. Takes precedence over `projectSlug`.
-* `${input:scope}`: (Optional) Path filter passed through to `Security Reviewer`. When omitted, the agent derives a scope hint from the plan's component inventory and lets Reviewer auto-profile.
+* `${input:scope}`: (Optional) Pass-through scope hint forwarded to `Security Reviewer` as-is. When omitted, the agent derives a scope hint from the plan's component inventory and lets Reviewer auto-profile. Overlap with default-excluded prefixes is honored and warned; the user's scope is never silently rewritten.
 * `${input:priorReport}`: (Optional) Prior `Security Reviewer` report path to provide incremental comparison context.
 
 ## Requirements

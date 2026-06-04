@@ -6,7 +6,7 @@ agents:
   - Researcher Subagent
 tools:
   - agent
-  - read
+  - read/readFile
   - edit/createFile
   - edit/createDirectory
   - search/codebase
@@ -55,7 +55,7 @@ Immediately after the CAUTION block, display the following **Default Exclusions*
 
 * (Optional) `projectSlug`: Slug under `.copilot-tracking/security-plans/`.
 * (Optional) `planPath`: Explicit path to a plan directory. Takes precedence over `projectSlug`.
-* (Optional) `scope`: Additional path filter passed to `Security Reviewer`. When omitted, the auditor derives scope hints from the plan's component inventory.
+* (Optional) `scope`: Pass-through scope hint forwarded to `Security Reviewer` as-is. When omitted, the auditor derives a scope hint from the plan's component inventory. Overlap with default-excluded prefixes is honored with a warning; the user's scope is never silently rewritten.
 * (Optional) `priorReport`: Prior `Security Reviewer` report path. Passed through for incremental comparison context only.
 
 ## Output Artifact
@@ -64,13 +64,14 @@ Single file written under `.copilot-tracking/security-audits/<project-slug>/`.
 
 * Filename pattern: `security-audit-{{YYYY-MM-DD}}-{{NNN}}.md`.
 * Sequence number resolution: list existing audits in the project directory for today's date, take the highest `{{NNN}}`, increment by one, zero-pad to three digits. Start at `001` when none exist.
+* Concurrency safety: if the computed file path already exists at write time (concurrent run on the same slug and date), increment `{{NNN}}` and retry until creation succeeds. Cap at `999`; if exhausted, stop with an error rather than overwriting.
 * Create the directory if missing using `edit/createDirectory`.
 
 The auditor writes only this artifact. It does not write under `.copilot-tracking/security-plans/`, `.copilot-tracking/security/`, or any source path.
 
 ## Plan Resolution Order
 
-Resolve the source plan deterministically:
+Resolve the source plan with interactive disambiguation only on ties:
 
 1. If `planPath` is provided and the directory contains `state.json`, use it.
 2. Else if `projectSlug` is provided, use `.copilot-tracking/security-plans/<projectSlug>/` when it contains `state.json`.
@@ -93,6 +94,13 @@ After resolving the plan, extract and hold the following in context. Cite each i
 
 If the plan is incomplete (for example, `currentPhase < 4` or no security model artifact), record a "baseline incomplete" note and limit the audit to categories supported by available evidence. Do not invent plan content.
 
+### Schema-Drift Handling
+
+The planner may evolve `state.json` between releases. Treat every field in the checklist as best-effort:
+
+* If a required key is missing, malformed, or has an unexpected type, log a `schema-drift` note naming the key, degrade to baseline-incomplete, and skip any delta category that depends on that key.
+* Never infer values from siblings or defaults. A missing `aiComponents` array suppresses the RAI signal rather than treating it as empty; a missing `handoffGenerated` map suppresses the SSSC handoff-state check rather than treating it as `false`.
+
 ## Reviewer Invocation Contract
 
 Invoke `Security Reviewer` as a subagent with `runSubagent`. Use hybrid scoping:
@@ -108,8 +116,7 @@ Invoke `Security Reviewer` as a subagent with `runSubagent`. Use hybrid scoping:
 
 * When building a scope hint from the plan's component inventory, **omit** any path under `.copilot-tracking/`, `docs/planning/`, `docs/adrs/`, `.github/agents/`, `.github/prompts/`, `.github/instructions/`, or `.github/skills/`.
 * When `${input:scope}` is provided, accept it as-is but log a warning if it overlaps any excluded prefix above. The user's explicit scope wins; do not silently rewrite it.
-* When neither a user scope nor a derivable plan scope exists and Reviewer must auto-profile the full repo, append the following directive to the Reviewer prompt: *"Exclude planning and agent-customization artifacts from findings: `.copilot-tracking/**`, `docs/planning/**`, `docs/adrs/**`, `.github/agents/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/skills/**`, and any `*.prompt.md`, `*.agent.md`, `*.instructions.md`, `SKILL.md` files. These are out of scope for repository-state security auditing."*
-* If any post-audit finding still cites an excluded path, drop it from all delta categories and note the count in the audit summary under a "Filtered findings" line.
+* Post-audit filtering is the contractual enforcement point: after Reviewer returns findings, drop every finding whose location matches an excluded path prefix or file glob from all delta categories, and report the dropped count under "Filtered findings" in the audit summary. Do not rely on free-text directives appended to Reviewer prompts; `Security Reviewer` does not contractually honor them.
 
 This exclusion is local to `Security Auditor` and does not change `Security Reviewer` behavior for other callers (e.g., `/security-review`).
 
@@ -120,6 +127,21 @@ Capture from Reviewer:
 * Findings classified by status and severity.
 
 Compare Reviewer's applicable skills list to skills implied by the plan's standards mappings. Any skill Reviewer ran that the plan did not consider is a signal feeding the "Newly introduced threats" section and, when relevant, the RAI or SSSC handoff recommendation.
+
+### Skill-to-Plan-Facet Mapping
+
+Use this normative mapping when classifying Reviewer-selected skills against plan facets. A skill counts as "absent from the plan" when none of its expected plan facets are present.
+
+| Reviewer skill                                                 | Expected plan facets                                                              | Handoff signal   |
+|----------------------------------------------------------------|-----------------------------------------------------------------------------------|------------------|
+| `owasp-top-10`                                                 | Web application bucket with OWASP Web Top 10 standards mapping                    | Security Planner |
+| `owasp-infrastructure`                                         | Infrastructure or platform bucket with OWASP Infrastructure or CIS mapping        | Security Planner |
+| `owasp-cicd`                                                   | CI/CD or build bucket with OWASP CI/CD mapping                                    | SSSC Planner     |
+| `secure-by-design`                                             | Cross-cutting design principles mapping                                           | Security Planner |
+| `owasp-llm`, `owasp-agentic`, `owasp-mcp`                      | Non-empty `aiComponents` array and `raiEnabled: true`                             | RAI Planner      |
+| Any supply-chain skill (SBOM, provenance, signing, dependency) | CI/CD or build bucket with SLSA, SBOM, Sigstore, or dependency-integrity controls | SSSC Planner     |
+
+When Reviewer selects a skill whose expected facets are all absent, list the skill in Section 2 under "Skills absent from the plan" and emit the corresponding handoff signal.
 
 ## Comparison Model
 
@@ -155,8 +177,8 @@ Include a top-of-report summary line with counts per category, the baseline-comp
 Recommend only. The user invokes any next agent themselves.
 
 * **Security Planner refresh** (`/security-capture`) — when "Control drift" or "Obsolete plan items" is non-empty, or when the baseline is incomplete.
-* **SSSC Planner** (`/sssc-from-security-plan`) — when newly introduced threats relate to dependency integrity, build integrity, SBOM, provenance, or artifact signing, and `handoffGenerated.sssc` is absent or false.
-* **RAI Planner** (`/rai-plan-from-security-plan`) — when Reviewer selected an AI-related skill (e.g., `owasp-llm`, `owasp-agentic`, `owasp-mcp`) that is not reflected in the plan's `aiComponents`/`raiEnabled` state, or when new AI-specific threats appear.
+* **SSSC Planner** (`/sssc-from-security-plan`) — when newly introduced threats relate to dependency integrity, build integrity, SBOM, provenance, or artifact signing (per the Skill-to-Plan-Facet Mapping), **and** no SSSC plan exists at `.copilot-tracking/sssc-plans/<project-slug>/state.json`. Detect plan presence with `search/fileSearch`; do not rely on planner-side `handoffGenerated` flags, which do not track SSSC handoff state.
+* **RAI Planner** (`/rai-plan-from-security-plan`) — when Reviewer selected an AI-related skill (`owasp-llm`, `owasp-agentic`, `owasp-mcp`) and the plan's `aiComponents` array is missing or empty or `raiEnabled` is not `true`, **or** when no RAI plan exists at `.copilot-tracking/rai-plans/<project-slug>/state.json` and any AI-specific threat is present. Apply Schema-Drift Handling: when `aiComponents` is missing entirely (not empty), suppress this signal rather than treating absence as a trigger.
 
 ## Operational Constraints
 
