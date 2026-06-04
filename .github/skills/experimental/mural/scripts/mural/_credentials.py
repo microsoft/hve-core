@@ -14,7 +14,7 @@ import logging
 import os
 import pathlib
 import sys
-from typing import TYPE_CHECKING, Any, Mapping, MutableMapping
+from typing import Any, Mapping, MutableMapping
 
 from ._constants import (
     _KNOWN_CREDENTIAL_KEYS,
@@ -31,9 +31,7 @@ from ._constants import (
     TOKEN_STORE_SCHEMA_VERSION,
 )
 from ._exceptions import MuralError, MuralValidationError
-
-if TYPE_CHECKING:
-    from ._backends import CredentialBackend
+from ._protocols import CredentialBackend
 
 
 def _pkg() -> Any:

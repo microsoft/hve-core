@@ -24,7 +24,6 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Protocol
 
 from . import (  # noqa: E402 - package siblings defined before this import runs
     _check_credential_file_perms,
@@ -37,6 +36,7 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
 from ._constants import _LINE_RE, ENV_NONINTERACTIVE
 from ._credentials import _resolve_credential_file
 from ._exceptions import MuralError
+from ._protocols import CredentialBackend
 
 
 def _bootstrap_is_interactive() -> bool:
@@ -47,24 +47,6 @@ def _bootstrap_is_interactive() -> bool:
         and os.environ.get(ENV_NONINTERACTIVE) != "1"
         and os.environ.get("CI", "").lower() != "true"
     )
-
-
-class CredentialBackend(Protocol):
-    """Protocol for Mural credential storage backends.
-
-    Implementations route credential reads and writes through a uniform
-    ``(service, key)`` namespace where ``service`` is the keyring service
-    name (e.g. ``"hve-core/mural/{profile}"``) and ``key`` is one of the
-    entries in :data:`_KNOWN_CREDENTIAL_KEYS`.
-    """
-
-    name: str
-
-    def get(self, service: str, key: str) -> str | None: ...
-
-    def set(self, service: str, key: str, value: str) -> None: ...
-
-    def delete(self, service: str, key: str) -> None: ...
 
 
 class KeyringBackend:
