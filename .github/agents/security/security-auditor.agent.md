@@ -125,13 +125,13 @@ Compare Reviewer's applicable skills list to skills implied by the plan's standa
 
 Apply these delta categories. Every entry must cite both the plan-side reference (threat ID, WI ID, bucket, or control name) and the Reviewer finding ID where applicable.
 
-| Category                  | Definition                                                                                  |
-|---------------------------|---------------------------------------------------------------------------------------------|
-| Validated controls        | Control exists in plan and evidence of its implementation exists in the current repo scan. |
-| Control drift             | Control expected by plan is missing, weaker, or inconsistent with current evidence.        |
-| Residual planned risk     | Plan already identified the risk and it remains open per current findings.                 |
-| Newly introduced threats  | Current Reviewer finding is not represented anywhere in the plan.                          |
-| Obsolete plan items       | Plan item no longer matches current architecture, removed components, or stale standards.  |
+| Category                 | Definition                                                                                 |
+|--------------------------|--------------------------------------------------------------------------------------------|
+| Validated controls       | Control exists in plan and evidence of its implementation exists in the current repo scan. |
+| Control drift            | Control expected by plan is missing, weaker, or inconsistent with current evidence.        |
+| Residual planned risk    | Plan already identified the risk and it remains open per current findings.                 |
+| Newly introduced threats | Current Reviewer finding is not represented anywhere in the plan.                          |
+| Obsolete plan items      | Plan item no longer matches current architecture, removed components, or stale standards.  |
 
 ## Report Format
 
