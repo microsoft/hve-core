@@ -73,7 +73,6 @@
     "markdown-it": "14.1.1",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
-    "qs": "6.15.2",
     "smol-toml": "1.6.1",
     "undici": "7.24.1",
     "uuid": "14.0.0",

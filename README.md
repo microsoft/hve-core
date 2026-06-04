@@ -15,7 +15,7 @@ keywords:
 estimated_reading_time: 3
 ---
 
-## Hypervelocity Engineering(HVE) Core
+## Hypervelocity Engineering (HVE) Core
 
 <!-- markdownlint-disable MD013 -->
 [![CI Status](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml/badge.svg)](https://github.com/microsoft/hve-core/actions/workflows/release-stable.yml)
@@ -35,13 +35,6 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 * Instructions that apply coding standards automatically
 * Skills that add reusable tool capabilities
 
-| Component    | Count | Reference                                      |
-|--------------|-------|------------------------------------------------|
-| Agents       | 49    | [Agents](.github/CUSTOM-AGENTS.md)             |
-| Instructions | 102   | [Instructions](.github/instructions/README.md) |
-| Prompts      | 63    | [Prompts](.github/prompts/README.md)           |
-| Skills       | 11    | [Skills](.github/skills/)                      |
-
 ## Where to Start
 
 <!-- markdownlint-disable MD013 -->
@@ -58,8 +51,8 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 > Using GitHub Copilot CLI? Install as a plugin instead:
 >
 > ```bash
->copilot plugin marketplace add microsoft/hve-core
->copilot plugin install hve-core@hve-core
+> copilot plugin marketplace add microsoft/hve-core
+> copilot plugin install hve-core@hve-core
 > ```
 >
 > See [CLI Plugins](docs/getting-started/methods/cli-plugins.md) for usage details.
@@ -74,7 +67,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 | Goal                         | Go here                                                                  |
 |------------------------------|--------------------------------------------------------------------------|
-| Start quickly                | [docs/getting-started/start-here.md](docs/getting-started/start-here.md) |
+| Start quickly                | [docs/getting-started/start-here.md](docs/getting-started/README.md) |
 | Understand all setup options | [docs/getting-started/install.md](docs/getting-started/install.md)       |
 | Learn the core methodology   | [docs/rpi/README.md](docs/rpi/README.md)                                 |
 | Browse docs by topic         | [docs/README.md](docs/README.md)                                         |
