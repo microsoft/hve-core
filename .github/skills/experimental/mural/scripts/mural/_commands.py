@@ -135,28 +135,28 @@ def _layout_cli_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _cmd_layout_grid(args: argparse.Namespace) -> int:
     _ensure_geos_ready()
     return _pkg()._emit_record(
-        _pkg()._tool_layout("grid", _layout_cli_arguments(args)), args
+        _pkg()._op_layout("grid", _layout_cli_arguments(args)), args
     )
 
 
 def _cmd_layout_cluster(args: argparse.Namespace) -> int:
     _ensure_geos_ready()
     return _pkg()._emit_record(
-        _pkg()._tool_layout("cluster", _layout_cli_arguments(args)), args
+        _pkg()._op_layout("cluster", _layout_cli_arguments(args)), args
     )
 
 
 def _cmd_layout_column(args: argparse.Namespace) -> int:
     _ensure_geos_ready()
     return _pkg()._emit_record(
-        _pkg()._tool_layout("column", _layout_cli_arguments(args)), args
+        _pkg()._op_layout("column", _layout_cli_arguments(args)), args
     )
 
 
 def _cmd_layout_row(args: argparse.Namespace) -> int:
     _ensure_geos_ready()
     return _pkg()._emit_record(
-        _pkg()._tool_layout("row", _layout_cli_arguments(args)), args
+        _pkg()._op_layout("row", _layout_cli_arguments(args)), args
     )
 
 
@@ -1808,7 +1808,7 @@ def _cmd_template_create(args: argparse.Namespace) -> int:
 
 def _cmd_template_list(args: argparse.Namespace) -> int:
     return _pkg()._emit_record(
-        _pkg()._tool_template_list(
+        _pkg()._op_template_list(
             {"workspace": getattr(args, "workspace", None)}
         ),
         args,

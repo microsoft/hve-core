@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-"""MCP tool surface tier for the Mural CLI.
+"""CLI operations tier for the Mural CLI.
 
 Carved from ``mural/__init__`` (Step 3.3 of the __init__ modularization plan).
-Holds the MCP ``_tool_*`` handlers, the Design-Thinking and UX board compose
+Holds the ``_op_*`` operation functions, the Design-Thinking and UX board compose
 tools with their ``_cmd_compose_*`` wrappers, lineage tagging helpers, the
-voting-session store and its ``_cmd_voting_*``/``_tool_voting_*`` surface,
+voting-session store and its ``_cmd_voting_*``/``_op_voting_*`` surface,
 workspace search, widget context wrappers, and the idempotency cache accessors.
 
 Helpers that remain in the package ``__init__`` (profile resolution, tag and
@@ -160,7 +160,7 @@ def _confirmation_consume(*, tool: str, confirmed_id: str) -> dict[str, Any]:
 def _trigram_score(a: str, b: str) -> float:
     """Return a 0..1 trigram-overlap similarity for ``a`` vs ``b``.
 
-    Cheap stdlib-only fuzzy match used by :func:`_tool_mural_find` to rank
+    Cheap stdlib-only fuzzy match used by :func:`_op_mural_find` to rank
     candidates without taking a SequenceMatcher dependency.
     """
     if not a or not b:
@@ -181,7 +181,7 @@ def _trigram_score(a: str, b: str) -> float:
     return len(sa & sb) / float(len(sa | sb))
 
 
-def _tool_mural_find(arguments: dict[str, Any]) -> Any:
+def _op_mural_find(arguments: dict[str, Any]) -> Any:
     """Search murals by name with client-side fuzzy ranking.
 
     Falls back to listing the workspace and scoring titles locally; the
@@ -217,7 +217,7 @@ def _tool_mural_find(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_workspace_summary(arguments: dict[str, Any]) -> Any:
+def _op_workspace_summary(arguments: dict[str, Any]) -> Any:
     """Aggregate workspace-wide counts for read-only oversight."""
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     rooms = list(_pkg()._paginate("GET", f"/workspaces/{workspace_id}/rooms"))
@@ -232,7 +232,7 @@ def _tool_workspace_summary(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_parking_lot_sweep(arguments: dict[str, Any]) -> Any:
+def _op_parking_lot_sweep(arguments: dict[str, Any]) -> Any:
     """Discover parked widgets via tag/area lookup. Read-only."""
     mural_id = _validate_mural_id(arguments.get("mural"))
     area_id = arguments.get("area")
@@ -501,7 +501,7 @@ _UX_BOARD_AREAS: list[dict[str, Any]] = [
 ]
 
 
-def _tool_bootstrap_ux_board(arguments: dict[str, Any]) -> Any:
+def _op_bootstrap_ux_board(arguments: dict[str, Any]) -> Any:
     """Bootstrap a UX research board on an existing mural.
 
     Adds the five UX areas (JTBD, Journey Stages, Pain Points,
@@ -561,7 +561,7 @@ def _tool_bootstrap_ux_board(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_bootstrap_dt_board(arguments: dict[str, Any]) -> Any:
+def _op_bootstrap_dt_board(arguments: dict[str, Any]) -> Any:
     """Bootstrap a Design Thinking board for ``method`` (1..9).
 
     Idempotent by ``dt-method:<n>`` reserved tag: if a mural in
@@ -654,7 +654,7 @@ def _tool_bootstrap_dt_board(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_populate_dt_section(arguments: dict[str, Any]) -> Any:
+def _op_populate_dt_section(arguments: dict[str, Any]) -> Any:
     """Populate an area on a DT board with widgets and reserved tags."""
     mural_id = _validate_mural_id(arguments.get("mural"))
     method = arguments.get("method")
@@ -695,7 +695,7 @@ def _tool_populate_dt_section(arguments: dict[str, Any]) -> Any:
     if arguments.get("origin"):
         layout_args["origin"] = arguments.get("origin")
     layout_args = {k: v for k, v in layout_args.items() if v is not None}
-    placement = _tool_layout("cluster", layout_args)
+    placement = _op_layout("cluster", layout_args)
     return {
         "mural_id": mural_id,
         "method": method,
@@ -706,13 +706,13 @@ def _tool_populate_dt_section(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_create_affinity_cluster(arguments: dict[str, Any]) -> Any:
+def _op_create_affinity_cluster(arguments: dict[str, Any]) -> Any:
     """Place ``clusters`` (pre-clustered items) into an affinity area.
 
     LLM-driven clustering is out of scope for this stdlib-only skill;
     callers must pass already-grouped ``clusters`` of the form
     ``[{label, items: [...]}]``. Each cluster is laid out via
-    :func:`_tool_layout` (``cluster``) within a sub-region and tagged
+    :func:`_op_layout` (``cluster``) within a sub-region and tagged
     ``dt-method:3``, ``dt-section:affinity``, ``cluster-label:<slug>``.
     """
     mural_id = _validate_mural_id(arguments.get("mural"))
@@ -769,7 +769,7 @@ def _tool_create_affinity_cluster(arguments: dict[str, Any]) -> Any:
             "origin": [next_origin_x, 0.0],
         }
         try:
-            placement = _tool_layout("cluster", layout_args)
+            placement = _op_layout("cluster", layout_args)
         except MuralAreaCapacityExceeded:
             raise
         except MuralError as exc:
@@ -787,14 +787,14 @@ def _tool_create_affinity_cluster(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_repair_tag_drift(arguments: dict[str, Any]) -> Any:
+def _op_repair_tag_drift(arguments: dict[str, Any]) -> Any:
     """Re-assert intended reserved tags on widgets tracked this session."""
     mural_id = _validate_mural_id(arguments.get("mural"))
     repaired = _repair_tag_drift(mural_id)
     return {"mural_id": mural_id, "repaired": repaired}
 
 
-def _tool_mural_lineage_lookup(arguments: dict[str, Any]) -> Any:
+def _op_mural_lineage_lookup(arguments: dict[str, Any]) -> Any:
     """Return widgets whose title carries a Design Thinking lineage marker.
 
     Filters are optional and combine with AND semantics: a widget is returned
@@ -845,7 +845,7 @@ def _cmd_compose_bootstrap_dt_board(args: argparse.Namespace) -> int:
         payload["title"] = args.title
     if getattr(args, "override_path", None):
         payload["override_path"] = args.override_path
-    return _pkg()._emit_record(_tool_bootstrap_dt_board(payload), args)
+    return _pkg()._emit_record(_op_bootstrap_dt_board(payload), args)
 
 
 def _cmd_compose_bootstrap_ux_board(args: argparse.Namespace) -> int:
@@ -853,7 +853,7 @@ def _cmd_compose_bootstrap_ux_board(args: argparse.Namespace) -> int:
         "workspace": args.workspace,
         "mural": args.mural,
     }
-    return _pkg()._emit_record(_tool_bootstrap_ux_board(payload), args)
+    return _pkg()._emit_record(_op_bootstrap_ux_board(payload), args)
 
 
 def _cmd_compose_populate_dt_section(args: argparse.Namespace) -> int:
@@ -865,7 +865,7 @@ def _cmd_compose_populate_dt_section(args: argparse.Namespace) -> int:
         "section": args.section,
         "items": items,
     }
-    return _pkg()._emit_record(_tool_populate_dt_section(payload), args)
+    return _pkg()._emit_record(_op_populate_dt_section(payload), args)
 
 
 def _cmd_compose_affinity_cluster(args: argparse.Namespace) -> int:
@@ -875,7 +875,7 @@ def _cmd_compose_affinity_cluster(args: argparse.Namespace) -> int:
         "area": args.area,
         "clusters": clusters,
     }
-    return _pkg()._emit_record(_tool_create_affinity_cluster(payload), args)
+    return _pkg()._emit_record(_op_create_affinity_cluster(payload), args)
 
 
 def _cmd_compose_parking_lot_sweep(args: argparse.Namespace) -> int:
@@ -884,14 +884,14 @@ def _cmd_compose_parking_lot_sweep(args: argparse.Namespace) -> int:
         payload["area"] = args.area
     if getattr(args, "tag", None):
         payload["tag"] = args.tag
-    return _pkg()._emit_record(_tool_parking_lot_sweep(payload), args)
+    return _pkg()._emit_record(_op_parking_lot_sweep(payload), args)
 
 
 def _cmd_compose_workspace_summary(args: argparse.Namespace) -> int:
     payload: dict[str, Any] = {}
     if getattr(args, "workspace", None):
         payload["workspace"] = args.workspace
-    return _pkg()._emit_record(_tool_workspace_summary(payload), args)
+    return _pkg()._emit_record(_op_workspace_summary(payload), args)
 
 
 def _cmd_mural_find(args: argparse.Namespace) -> int:
@@ -902,11 +902,11 @@ def _cmd_mural_find(args: argparse.Namespace) -> int:
         payload["min_score"] = args.min_score
     if getattr(args, "limit", None) is not None:
         payload["limit"] = args.limit
-    return _pkg()._emit_record(_tool_mural_find(payload), args)
+    return _pkg()._emit_record(_op_mural_find(payload), args)
 
 
 def _cmd_mural_repair_tag_drift(args: argparse.Namespace) -> int:
-    return _pkg()._emit_record(_tool_repair_tag_drift({"mural": args.mural}), args)
+    return _pkg()._emit_record(_op_repair_tag_drift({"mural": args.mural}), args)
 
 
 def _cmd_mural_lineage_lookup(args: argparse.Namespace) -> int:
@@ -917,7 +917,7 @@ def _cmd_mural_lineage_lookup(args: argparse.Namespace) -> int:
         payload["method"] = args.method
     if getattr(args, "section", None):
         payload["section"] = args.section
-    return _pkg()._emit_record(_tool_mural_lineage_lookup(payload), args)
+    return _pkg()._emit_record(_op_mural_lineage_lookup(payload), args)
 
 
 def _validate_voting_session_id(value: Any) -> str:
@@ -1140,7 +1140,7 @@ def _voting_run_compose(
 # --- Voting tool handlers ----------------------------------------------------
 
 
-def _tool_voting_session_create(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_create(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     body = arguments.get("body")
     if not isinstance(body, dict) or not body:
@@ -1148,13 +1148,13 @@ def _tool_voting_session_create(arguments: dict[str, Any]) -> Any:
     return _voting_session_create(mural_id, body)
 
 
-def _tool_voting_session_get(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_get(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     return _voting_session_get(mural_id, session_id)
 
 
-def _tool_voting_session_list(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_list(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     limit = arguments.get("limit")
     page_size = arguments.get("page_size")
@@ -1167,31 +1167,31 @@ def _tool_voting_session_list(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_voting_session_open(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_open(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     return _voting_session_set_status(mural_id, session_id, "active")
 
 
-def _tool_voting_session_close(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_close(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     return _voting_session_set_status(mural_id, session_id, "closed")
 
 
-def _tool_voting_session_delete(arguments: dict[str, Any]) -> Any:
+def _op_voting_session_delete(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     return _voting_session_delete(mural_id, session_id)
 
 
-def _tool_voting_results(arguments: dict[str, Any]) -> Any:
+def _op_voting_results(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     return _voting_results(mural_id, session_id)
 
 
-def _tool_voting_poll(arguments: dict[str, Any]) -> Any:
+def _op_voting_poll(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     session_id = _validate_voting_session_id(arguments.get("session"))
     interval = arguments.get("interval", POLL_DEFAULT_INTERVAL_S)
@@ -1208,7 +1208,7 @@ def _tool_voting_poll(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_voting_run(arguments: dict[str, Any]) -> Any:
+def _op_voting_run(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     body = arguments.get("body")
     if not isinstance(body, dict) or not body:
@@ -1248,7 +1248,7 @@ def _tool_voting_run(arguments: dict[str, Any]) -> Any:
 # --- Workspace search --------------------------------------------------------
 
 
-def _tool_workspace_search(arguments: dict[str, Any]) -> Any:
+def _op_workspace_search(arguments: dict[str, Any]) -> Any:
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     query = arguments.get("query")
     if not isinstance(query, str) or not query.strip():
@@ -1339,17 +1339,17 @@ def _ns_for_widget_body(arguments: dict[str, Any]) -> argparse.Namespace:
     return ns
 
 
-def _tool_workspace_list(arguments: dict[str, Any]) -> Any:
+def _op_workspace_list(arguments: dict[str, Any]) -> Any:
     kwargs = _list_kwargs(_ns_for_list(arguments))
     return list(_pkg()._paginate("GET", "/workspaces", **kwargs))
 
 
-def _tool_workspace_get(arguments: dict[str, Any]) -> Any:
+def _op_workspace_get(arguments: dict[str, Any]) -> Any:
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     return _pkg()._authenticated_request("GET", f"/workspaces/{workspace_id}")
 
 
-def _tool_room_list(arguments: dict[str, Any]) -> Any:
+def _op_room_list(arguments: dict[str, Any]) -> Any:
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     return list(
         _pkg()._paginate(
@@ -1360,11 +1360,11 @@ def _tool_room_list(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_room_get(arguments: dict[str, Any]) -> Any:
+def _op_room_get(arguments: dict[str, Any]) -> Any:
     return _pkg()._authenticated_request("GET", f"/rooms/{arguments['room']}")
 
 
-def _tool_room_create(arguments: dict[str, Any]) -> Any:
+def _op_room_create(arguments: dict[str, Any]) -> Any:
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     name = arguments.get("name")
     if not isinstance(name, str) or not name.strip():
@@ -1380,7 +1380,7 @@ def _tool_room_create(arguments: dict[str, Any]) -> Any:
     return _pkg()._authenticated_request("POST", "/rooms", json_body=payload)
 
 
-def _tool_mural_list(arguments: dict[str, Any]) -> Any:
+def _op_mural_list(arguments: dict[str, Any]) -> Any:
     workspace_id = _resolve_workspace_id(arguments.get("workspace"))
     return list(
         _pkg()._paginate(
@@ -1391,7 +1391,7 @@ def _tool_mural_list(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_mural_create(arguments: dict[str, Any]) -> Any:
+def _op_mural_create(arguments: dict[str, Any]) -> Any:
     room = arguments.get("room")
     if room is None or not str(room).strip():
         raise MCPInvalidParamsError("room is required")
@@ -1406,12 +1406,12 @@ def _tool_mural_create(arguments: dict[str, Any]) -> Any:
     return _pkg()._authenticated_request("POST", "/murals", json_body=payload)
 
 
-def _tool_mural_get(arguments: dict[str, Any]) -> Any:
+def _op_mural_get(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _pkg()._authenticated_request("GET", f"/murals/{mural_id}")
 
 
-def _tool_widget_list(arguments: dict[str, Any]) -> Any:
+def _op_widget_list(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     params: dict[str, Any] = {}
     if arguments.get("type"):
@@ -1428,14 +1428,14 @@ def _tool_widget_list(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_widget_get(arguments: dict[str, Any]) -> Any:
+def _op_widget_get(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _pkg()._authenticated_request(
         "GET", f"/murals/{mural_id}/widgets/{arguments['widget']}"
     )
 
 
-def _tool_widget_update(arguments: dict[str, Any]) -> Any:
+def _op_widget_update(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = arguments["body"]
     if not isinstance(body, dict):
@@ -1445,7 +1445,7 @@ def _tool_widget_update(arguments: dict[str, Any]) -> Any:
     return _patch_widget_or_disambiguate_404(mural_id, arguments["widget"], body)
 
 
-def _tool_widget_delete(arguments: dict[str, Any]) -> Any:
+def _op_widget_delete(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     if arguments.get("require_author_tag") and not arguments.get("force_human"):
         _assert_widget_has_author_tag(mural_id, arguments["widget"])
@@ -1455,7 +1455,7 @@ def _tool_widget_delete(arguments: dict[str, Any]) -> Any:
     return {"ok": True, "deleted": arguments["widget"]}
 
 
-def _tool_widget_create_sticky_note(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_sticky_note(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = _build_sticky_note_body(_ns_for_widget_body(arguments))
     record = _pkg()._authenticated_request(
@@ -1465,7 +1465,7 @@ def _tool_widget_create_sticky_note(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_widget_create_textbox(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_textbox(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = _build_textbox_body(_ns_for_widget_body(arguments))
     record = _pkg()._authenticated_request(
@@ -1475,7 +1475,7 @@ def _tool_widget_create_textbox(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_widget_create_shape(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_shape(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = _build_shape_body(_ns_for_widget_body(arguments))
     record = _pkg()._authenticated_request(
@@ -1485,7 +1485,7 @@ def _tool_widget_create_shape(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_widget_create_arrow(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_arrow(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = _build_arrow_body(_ns_for_widget_body(arguments))
     record = _pkg()._authenticated_request(
@@ -1495,7 +1495,7 @@ def _tool_widget_create_arrow(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_widget_create_image(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_image(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     if not (arguments.get("alt_text") or "").strip():
         raise MuralValidationError(
@@ -1529,7 +1529,7 @@ def _tool_widget_create_image(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_tag_list(arguments: dict[str, Any]) -> Any:
+def _op_tag_list(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return list(
         _pkg()._paginate(
@@ -1540,12 +1540,12 @@ def _tool_tag_list(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_tag_create(arguments: dict[str, Any]) -> Any:
+def _op_tag_create(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _create_tag(mural_id, arguments["text"], arguments.get("color"))
 
 
-def _tool_tag_apply(arguments: dict[str, Any]) -> Any:
+def _op_tag_apply(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     widget_id = arguments["widget"]
     tag_id = arguments.get("tag")
@@ -1561,7 +1561,7 @@ def _tool_tag_apply(arguments: dict[str, Any]) -> Any:
     return _pkg()._merge_tags(mural_id, widget_id, additions=[tag_id])
 
 
-def _tool_tag_remove(arguments: dict[str, Any]) -> Any:
+def _op_tag_remove(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     widget_id = arguments["widget"]
     tag_id = arguments["tag"]
@@ -1573,19 +1573,19 @@ def _tool_tag_remove(arguments: dict[str, Any]) -> Any:
     return _pkg()._merge_tags(mural_id, widget_id, removals=[tag_id])
 
 
-def _tool_area_list(arguments: dict[str, Any]) -> Any:
+def _op_area_list(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _list_areas_with_widget_fallback(
         mural_id, **_list_kwargs(_ns_for_list(arguments))
     )
 
 
-def _tool_area_get(arguments: dict[str, Any]) -> Any:
+def _op_area_get(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _get_area_with_widget_fallback(mural_id, arguments["area"])
 
 
-def _tool_area_create(arguments: dict[str, Any]) -> Any:
+def _op_area_create(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     body = _build_area_body(_ns_for_widget_body(arguments))
     record = _pkg()._authenticated_request(
@@ -1598,17 +1598,17 @@ def _tool_area_create(arguments: dict[str, Any]) -> Any:
     return record
 
 
-def _tool_area_probe(arguments: dict[str, Any]) -> Any:
+def _op_area_probe(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _area_probe(mural_id, arguments["area"])
 
 
-def _tool_widget_get_with_context(arguments: dict[str, Any]) -> Any:
+def _op_widget_get_with_context(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     return _get_widget_with_context(mural_id, arguments["widget"])
 
 
-def _tool_widget_list_with_context(arguments: dict[str, Any]) -> Any:
+def _op_widget_list_with_context(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural"])
     list_kwargs = _list_kwargs(_ns_for_list(arguments))
     return _list_widgets_with_context(
@@ -1620,7 +1620,7 @@ def _tool_widget_list_with_context(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_auth_status(arguments: dict[str, Any]) -> Any:
+def _op_auth_status(arguments: dict[str, Any]) -> Any:
     path = _resolve_token_store_path()
     profile_arg = arguments.get("profile") if isinstance(arguments, dict) else None
     cred_profile = profile_arg or os.environ.get(ENV_PROFILE) or DEFAULT_PROFILE_NAME
@@ -1648,7 +1648,7 @@ def _tool_auth_status(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_spatial_widgets_in_shape(arguments: dict[str, Any]) -> Any:
+def _op_spatial_widgets_in_shape(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
     shape = _pkg()._authenticated_request(
@@ -1674,7 +1674,7 @@ def _tool_spatial_widgets_in_shape(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_spatial_widgets_in_region(arguments: dict[str, Any]) -> Any:
+def _op_spatial_widgets_in_region(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
     region = safe_rect(
@@ -1695,7 +1695,7 @@ def _tool_spatial_widgets_in_region(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_spatial_pairwise_overlaps(arguments: dict[str, Any]) -> Any:
+def _op_spatial_pairwise_overlaps(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
     widgets = list(
@@ -1714,7 +1714,7 @@ def _tool_spatial_pairwise_overlaps(arguments: dict[str, Any]) -> Any:
     return [{"a": a, "b": b} for a, b in pairs]
 
 
-def _tool_spatial_cluster(arguments: dict[str, Any]) -> Any:
+def _op_spatial_cluster(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments["mural_id"])
     widgets = list(
         _pkg()._paginate(
@@ -1731,7 +1731,7 @@ def _tool_spatial_cluster(arguments: dict[str, Any]) -> Any:
     return [{"members": members} for members in clusters]
 
 
-def _tool_spatial_sort_along_axis(arguments: dict[str, Any]) -> Any:
+def _op_spatial_sort_along_axis(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
     widgets = list(
@@ -1756,7 +1756,7 @@ def _tool_spatial_sort_along_axis(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_spatial_arrow_graph(arguments: dict[str, Any]) -> Any:
+def _op_spatial_arrow_graph(arguments: dict[str, Any]) -> Any:
     _ensure_geos_ready()
     mural_id = _validate_mural_id(arguments["mural_id"])
     all_widgets = list(
@@ -1799,7 +1799,7 @@ def _tool_spatial_arrow_graph(arguments: dict[str, Any]) -> Any:
     raise ValueError(f"invalid format value: {fmt!r}")
 
 
-def _tool_widget_create_bulk(arguments: dict[str, Any]) -> Any:
+def _op_widget_create_bulk(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     widgets = _build_bulk_widgets_payload(arguments.get("widgets"))
     result = _pkg()._bulk_create_widgets(
@@ -1809,7 +1809,7 @@ def _tool_widget_create_bulk(arguments: dict[str, Any]) -> Any:
     return result
 
 
-def _tool_widget_update_bulk(arguments: dict[str, Any]) -> Any:
+def _op_widget_update_bulk(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     updates = _build_bulk_widget_updates_payload(arguments.get("updates"))
     return _pkg()._bulk_update_widgets(
@@ -1821,13 +1821,13 @@ def _tool_widget_update_bulk(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_mural_duplicate(arguments: dict[str, Any]) -> Any:
+def _op_mural_duplicate(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     new_id = _pkg()._duplicate_mural(mural_id)
     return {"new_mural_id": new_id, "source_mural_id": mural_id}
 
 
-def _tool_clone_with_tags(arguments: dict[str, Any]) -> Any:
+def _op_clone_with_tags(arguments: dict[str, Any]) -> Any:
     source_id = _validate_mural_id(arguments.get("mural"))
     source_manifest = _read_tag_manifest(source_id)
     new_id = _pkg()._duplicate_mural(source_id)
@@ -1843,7 +1843,7 @@ def _tool_clone_with_tags(arguments: dict[str, Any]) -> Any:
     }
 
 
-def _tool_template_instantiate(arguments: dict[str, Any]) -> Any:
+def _op_template_instantiate(arguments: dict[str, Any]) -> Any:
     template_id = arguments.get("template")
     if not isinstance(template_id, str) or not template_id.strip():
         raise MCPInvalidParamsError("template is required")
@@ -1857,7 +1857,7 @@ def _tool_template_instantiate(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_template_create(arguments: dict[str, Any]) -> Any:
+def _op_template_create(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     body = _template_target_body(
         arguments.get("workspace"),
@@ -1869,7 +1869,7 @@ def _tool_template_create(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_template_list(arguments: dict[str, Any]) -> Any:
+def _op_template_list(arguments: dict[str, Any]) -> Any:
     workspace = arguments.get("workspace")
     if workspace is not None and (
         not isinstance(workspace, str) or not workspace.strip()
@@ -1878,7 +1878,7 @@ def _tool_template_list(arguments: dict[str, Any]) -> Any:
     return {"templates": [dict(entry) for entry in _state._TEMPLATE_REGISTRY]}
 
 
-def _tool_mural_poll(arguments: dict[str, Any]) -> Any:
+def _op_mural_poll(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     interval = arguments.get("interval_s", POLL_DEFAULT_INTERVAL_S)
     timeout = arguments.get("timeout_s", POLL_DEFAULT_TIMEOUT_S)
@@ -1893,17 +1893,17 @@ def _tool_mural_poll(arguments: dict[str, Any]) -> Any:
     )
 
 
-def _tool_mural_archive(arguments: dict[str, Any]) -> Any:
+def _op_mural_archive(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     return _set_mural_status(mural_id, "archived")
 
 
-def _tool_mural_unarchive(arguments: dict[str, Any]) -> Any:
+def _op_mural_unarchive(arguments: dict[str, Any]) -> Any:
     mural_id = _validate_mural_id(arguments.get("mural"))
     return _set_mural_status(mural_id, "active")
 
 
-def _tool_layout(layout: str, arguments: dict[str, Any]) -> Any:
+def _op_layout(layout: str, arguments: dict[str, Any]) -> Any:
     """Shared handler body for the four ``mural_layout_*`` tools.
 
     Validates inputs, runs the named layout, and returns the structured
@@ -1951,20 +1951,20 @@ def _tool_layout(layout: str, arguments: dict[str, Any]) -> Any:
     return plan
 
 
-def _tool_layout_grid(arguments: dict[str, Any]) -> Any:
-    return _tool_layout("grid", arguments)
+def _op_layout_grid(arguments: dict[str, Any]) -> Any:
+    return _op_layout("grid", arguments)
 
 
-def _tool_layout_cluster(arguments: dict[str, Any]) -> Any:
-    return _tool_layout("cluster", arguments)
+def _op_layout_cluster(arguments: dict[str, Any]) -> Any:
+    return _op_layout("cluster", arguments)
 
 
-def _tool_layout_column(arguments: dict[str, Any]) -> Any:
-    return _tool_layout("column", arguments)
+def _op_layout_column(arguments: dict[str, Any]) -> Any:
+    return _op_layout("column", arguments)
 
 
-def _tool_layout_row(arguments: dict[str, Any]) -> Any:
-    return _tool_layout("row", arguments)
+def _op_layout_row(arguments: dict[str, Any]) -> Any:
+    return _op_layout("row", arguments)
 
 
 # --- Tool schemas + registry ---------------------------------------------

@@ -3,7 +3,7 @@
 """AST-based contract tests for CLI/tool JSON output shapes.
 
 Statically parses every ``*.py`` file under the ``mural`` package and compares the
-literal-dict output shapes of paired ``_cmd_<name>`` and ``_tool_<name>`` handlers.
+literal-dict output shapes of paired ``_cmd_<name>`` and ``_op_<name>`` handlers.
 Catches the bug class where both sides build independent literal dicts that drift in
 their top-level key sets (the original instances were ``auth_status`` and
 ``widget_delete``).
@@ -41,10 +41,10 @@ ALLOWED_CLI_ONLY: frozenset[str] = frozenset(
 # Tool handlers that have no CLI counterpart by design.
 ALLOWED_TOOL_ONLY: frozenset[str] = frozenset({"voting_run"})
 
-# Internal helpers under the ``_tool_`` prefix that are not first-class tools.
+# Internal helpers under the ``_op_`` prefix that are not first-class tools.
 TOOL_HELPERS: frozenset[str] = frozenset({"layout"})
 
-# Pair-name aliasing: ``_tool_<key>`` corresponds to ``_cmd_<value>``.
+# Pair-name aliasing: ``_op_<key>`` corresponds to ``_cmd_<value>``.
 NAME_QUIRKS: dict[str, str] = {
     "workspace_summary": "compose_workspace_summary",
     "parking_lot_sweep": "compose_parking_lot_sweep",
@@ -82,7 +82,7 @@ def _collect_cmd_output_shapes(func: ast.FunctionDef) -> list[frozenset[str]]:
         * ``_emit_records([<dict-literal>, ...], ...)``
 
     Only directly-attached literal ``ast.Dict`` nodes are collected; dicts nested
-    inside other calls (e.g. a ``payload`` argument passed to ``_tool_X``) are not
+    inside other calls (e.g. a ``payload`` argument passed to ``_op_X``) are not
     output and are intentionally ignored.
     """
     shapes: list[frozenset[str]] = []
@@ -128,7 +128,7 @@ def _collect_cmd_output_shapes(func: ast.FunctionDef) -> list[frozenset[str]]:
 
 
 def _collect_tool_output_shapes(func: ast.FunctionDef) -> list[frozenset[str]]:
-    """Return literal-dict shapes returned by a ``_tool_*`` handler.
+    """Return literal-dict shapes returned by a ``_op_*`` handler.
 
     Only ``return <dict-literal>`` patterns are collected; returns of call
     expressions, comprehensions, and names are skipped (no static shape).
@@ -163,8 +163,8 @@ def _parse_handlers() -> tuple[dict[str, ast.FunctionDef], dict[str, ast.Functio
                 continue
             if node.name.startswith("_cmd_"):
                 cmds[node.name[len("_cmd_") :]] = node
-            elif node.name.startswith("_tool_"):
-                tools[node.name[len("_tool_") :]] = node
+            elif node.name.startswith("_op_"):
+                tools[node.name[len("_op_") :]] = node
     return cmds, tools
 
 
@@ -176,7 +176,7 @@ def handlers() -> tuple[dict[str, ast.FunctionDef], dict[str, ast.FunctionDef]]:
 def test_no_unaccounted_cli_handlers(
     handlers: tuple[dict[str, ast.FunctionDef], dict[str, ast.FunctionDef]],
 ) -> None:
-    """Every ``_cmd_*`` pairs with a ``_tool_*`` or appears in ``ALLOWED_CLI_ONLY``."""
+    """Every ``_cmd_*`` pairs with a ``_op_*`` or appears in ``ALLOWED_CLI_ONLY``."""
     cmds, tools = handlers
     cmd_to_tool: dict[str, str] = {cmd: tool for tool, cmd in NAME_QUIRKS.items()}
     unaccounted = sorted(
@@ -185,7 +185,7 @@ def test_no_unaccounted_cli_handlers(
         if cmd not in ALLOWED_CLI_ONLY and cmd_to_tool.get(cmd, cmd) not in tools
     )
     assert not unaccounted, (
-        "_cmd_* handlers without a paired _tool_* and not in ALLOWED_CLI_ONLY: "
+        "_cmd_* handlers without a paired _op_* and not in ALLOWED_CLI_ONLY: "
         f"{unaccounted}. Either add a paired tool, register a name quirk, "
         "or update ALLOWED_CLI_ONLY."
     )
@@ -194,7 +194,7 @@ def test_no_unaccounted_cli_handlers(
 def test_no_unaccounted_tool_handlers(
     handlers: tuple[dict[str, ast.FunctionDef], dict[str, ast.FunctionDef]],
 ) -> None:
-    """Every ``_tool_*`` pairs with a ``_cmd_*`` or is exempt via the allowlists."""
+    """Every ``_op_*`` pairs with a ``_cmd_*`` or is exempt via the allowlists."""
     cmds, tools = handlers
     unaccounted = sorted(
         tool
@@ -204,7 +204,7 @@ def test_no_unaccounted_tool_handlers(
         and NAME_QUIRKS.get(tool, tool) not in cmds
     )
     assert not unaccounted, (
-        "_tool_* handlers without a paired _cmd_* and not exempt: "
+        "_op_* handlers without a paired _cmd_* and not exempt: "
         f"{unaccounted}. Add a paired command, register a name quirk, "
         "or update ALLOWED_TOOL_ONLY / TOOL_HELPERS."
     )
@@ -233,7 +233,7 @@ def test_handler_pair_shape_parity(
             only_cmd = sorted(cmd_keys - tool_keys)
             only_tool = sorted(tool_keys - cmd_keys)
             drifts.append(
-                f"  _cmd_{cmd_name} vs _tool_{tool_name}: "
+                f"  _cmd_{cmd_name} vs _op_{tool_name}: "
                 f"only in CLI: {only_cmd}, only in tool: {only_tool}"
             )
     assert not drifts, (
