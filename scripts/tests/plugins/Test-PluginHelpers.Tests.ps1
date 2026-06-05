@@ -14,10 +14,10 @@ BeforeAll {
         id           = 'channel-fixture'
         name         = 'Channel Fixture'
         description  = 'Base manifest description'
-        descriptions = @{
-            stable     = 'Stable channel text for channel-fixture'
-            prerelease = 'Experimental: prerelease channel text for channel-fixture'
-        }
+        descriptions = @(
+            @{ channel = 'stable'; text = 'Stable channel text for channel-fixture' }
+            @{ channel = 'prerelease'; text = 'Experimental: prerelease channel text for channel-fixture' }
+        )
     }
 }
 

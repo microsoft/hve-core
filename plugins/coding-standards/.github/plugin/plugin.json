@@ -1,6 +1,6 @@
 {
   "name": "coding-standards",
-  "description": "Experimental: Coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, Terraform. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+  "description": "Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/coding-standards/"

@@ -9,6 +9,8 @@
 #Requires -Version 7.0
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
+Import-Module (Join-Path $PSScriptRoot 'CoreManifestHelpers.psm1') -Force
+
 # ---------------------------------------------------------------------------
 # Marker Constants (shared across collection scripts)
 # ---------------------------------------------------------------------------
@@ -57,6 +59,55 @@ function Set-ContentIfChanged {
     }
     Set-Content -LiteralPath $Path -Value $Value -Encoding utf8NoBOM -NoNewline
     return $true
+}
+
+function ConvertTo-PlainHashtable {
+    <#
+    .SYNOPSIS
+        Recursively converts ordered dictionaries to plain hashtables.
+    .DESCRIPTION
+        Walks a structure of [ordered]/OrderedDictionary, hashtable, and array
+        values, returning equivalent plain [hashtable] instances so callers can
+        rely on Hashtable-only members such as .ContainsKey(). Arrays and scalar
+        values are preserved; nested dictionaries and array elements are
+        converted recursively.
+    .PARAMETER InputObject
+        The value to convert.
+    .OUTPUTS
+        The converted value: a [hashtable] for dictionary inputs, an array for
+        enumerable inputs, or the original scalar otherwise.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        $InputObject
+    )
+
+    if ($null -eq $InputObject) {
+        return $null
+    }
+
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        $result = @{}
+        foreach ($key in $InputObject.Keys) {
+            $result[$key] = ConvertTo-PlainHashtable -InputObject $InputObject[$key]
+        }
+        return $result
+    }
+
+    if ($InputObject -is [string]) {
+        return $InputObject
+    }
+
+    if ($InputObject -is [System.Collections.IEnumerable]) {
+        $converted = foreach ($item in $InputObject) {
+            ConvertTo-PlainHashtable -InputObject $item
+        }
+        return @($converted)
+    }
+
+    return $InputObject
 }
 
 # ---------------------------------------------------------------------------
@@ -166,6 +217,23 @@ function Get-CollectionManifest {
         [ValidateNotNullOrEmpty()]
         [string]$CollectionPath
     )
+
+    $collectionFileName = [System.IO.Path]::GetFileName($CollectionPath)
+    $collectionsDir = Split-Path -Path $CollectionPath -Parent
+    $coreManifestPath = if ($collectionsDir) { Join-Path -Path $collectionsDir -ChildPath 'core-manifest.yml' } else { '' }
+
+    if ($collectionFileName -match '^(?<id>.+)\.collection\.ya?ml$' -and
+        -not [string]::IsNullOrWhiteSpace($coreManifestPath) -and
+        (Test-Path -Path $coreManifestPath -PathType Leaf)) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        $projected = ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -CollectionId $Matches['id'] -RepoRoot (Split-Path -Path $collectionsDir -Parent)
+        # ConvertTo-CollectionManifestFromCore returns ordered dictionaries to keep
+        # deterministic YAML render/verify byte-parity. Downstream consumers
+        # (Prepare-Extension) call .ContainsKey(), which OrderedDictionary lacks, so
+        # deep-convert to plain Hashtable at this boundary to honor the [hashtable]
+        # OutputType contract.
+        return ConvertTo-PlainHashtable -InputObject $projected
+    }
 
     if (-not (Test-Path $CollectionPath)) {
         throw "Collection manifest not found: $CollectionPath"
@@ -383,6 +451,13 @@ function Get-AllCollections {
         [string]$CollectionsDir
     )
 
+    $coreManifestPath = Join-Path -Path $CollectionsDir -ChildPath 'core-manifest.yml'
+    if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $repoRoot = Split-Path -Path $CollectionsDir -Parent
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        return @(ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -All -RepoRoot $repoRoot)
+    }
+
     $files = Get-ChildItem -Path $CollectionsDir -Filter '*.collection.yml' -File
     $collections = @()
 
@@ -531,6 +606,28 @@ function Update-HveCoreAllCollection {
         [switch]$DryRun
     )
 
+    $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
+    $coreManifestPath = Join-Path -Path $collectionsDir -ChildPath 'core-manifest.yml'
+    if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        $projected = ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -CollectionId 'hve-core-all' -RepoRoot $RepoRoot
+        $itemCount = @($projected.items).Count
+
+        Write-Host "`n--- hve-core-all Projection ---" -ForegroundColor Cyan
+        Write-Host "  Source: core-manifest.yml"
+        Write-Host "  Final: $itemCount items"
+        if ($DryRun) {
+            Write-Host '  [DRY RUN] No changes written' -ForegroundColor Yellow
+        }
+
+        return @{
+            ItemCount       = $itemCount
+            AddedCount      = 0
+            RemovedCount    = 0
+            DeprecatedCount = 0
+        }
+    }
+
     $collectionPath = Join-Path -Path $RepoRoot -ChildPath 'collections/hve-core-all.collection.yml'
 
     # Read existing manifest to preserve metadata
@@ -557,7 +654,6 @@ function Update-HveCoreAllCollection {
     # Strictest maturity wins: removed > deprecated > experimental > preview > stable.
     $maturityRank = @{ 'stable' = 0; 'preview' = 1; 'experimental' = 2; 'deprecated' = 3; 'removed' = 4 }
     $sourceMaturities = @{}
-    $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $sourceCollections = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ne 'hve-core-all.collection.yml' }
     foreach ($sourceFile in $sourceCollections) {
@@ -638,17 +734,13 @@ function Update-HveCoreAllCollection {
         { $_.path }
 
     # Build new items array as ordered hashtables for clean YAML output.
-    # Emit the maturity key only when it resolves to a non-stable value so the
-    # default tier stays implicit in the manifest.
+    # Always publish the resolved maturity so every item carries an explicit tier.
     $newItems = @()
     foreach ($item in $sortedItems) {
         $newItem = [ordered]@{
-            path = $item.path
-            kind = $item.kind
-        }
-        $resolvedMaturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
-        if ($resolvedMaturity -ne 'stable') {
-            $newItem['maturity'] = $resolvedMaturity
+            path     = $item.path
+            kind     = $item.kind
+            maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
         }
 
         $newItems += $newItem
@@ -683,9 +775,8 @@ function Update-HveCoreAllCollection {
             $displayOrdered['ordering'] = $existing.display['ordering']
         }
         $manifest = [ordered]@{
-            id          = $existing.id
-            name        = $existing.name
-            description = $existing.description
+            id   = $existing.id
+            name = $existing.name
         }
         if ($existing.ContainsKey('descriptions') -and $null -ne $existing.descriptions) {
             $manifest['descriptions'] = $existing.descriptions
@@ -806,8 +897,10 @@ function Resolve-CollectionDescription {
     .SYNOPSIS
         Resolves a channel-specific collection description.
     .DESCRIPTION
-        Uses exact-channel description overrides when present, then falls back to
-        the manifest description and finally the provided default description.
+        Returns the description text for the matching channel entry in the
+        manifest 'descriptions' array, falling back to the manifest top-level
+        'description' and then to the provided default description when no
+        matching channel entry exists.
     .PARAMETER CollectionManifest
         Parsed collection manifest hashtable.
     .PARAMETER Channel
@@ -833,13 +926,19 @@ function Resolve-CollectionDescription {
     )
 
     $overrideKey = if ($Channel -eq 'PreRelease') { 'prerelease' } else { 'stable' }
-    if ($CollectionManifest.ContainsKey('descriptions') -and $CollectionManifest.descriptions -is [hashtable] -and
-        $CollectionManifest.descriptions.ContainsKey($overrideKey) -and
-        -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.descriptions[$overrideKey])) {
-        return [string]$CollectionManifest.descriptions[$overrideKey]
+    if ($CollectionManifest.ContainsKey('descriptions') -and $CollectionManifest.descriptions -is [System.Collections.IEnumerable] -and
+        $CollectionManifest.descriptions -isnot [string]) {
+        foreach ($entry in $CollectionManifest.descriptions) {
+            if ($entry -is [System.Collections.IDictionary] -and $entry.Contains('channel') -and $entry.Contains('text') -and
+                [string]$entry['channel'] -eq $overrideKey -and
+                -not [string]::IsNullOrWhiteSpace([string]$entry['text'])) {
+                return [string]$entry['text']
+            }
+        }
     }
 
-    if ($CollectionManifest.ContainsKey('description') -and -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.description)) {
+    if ($CollectionManifest.ContainsKey('description') -and
+        -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.description)) {
         return [string]$CollectionManifest.description
     }
 

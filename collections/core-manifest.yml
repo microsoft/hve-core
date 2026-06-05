@@ -3,7 +3,9 @@ collections:
   ado:
     path: collections/ado.collection.yml
     name: Azure DevOps Integration
-    description: Azure DevOps work item management, build monitoring, and pull request creation
+    display:
+      ordering: manual
+    intro: Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies - all from within VS Code.
     tags:
     - azure-devops
     - ado
@@ -12,11 +14,16 @@ collections:
     - pull-requests
     itemCount: 21
     descriptions:
-      prerelease: 'Pre-release: Azure DevOps work item management, build monitoring, and pull request creation. May change. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'Azure DevOps work item management, build monitoring, and pull request creation'
+      - channel: prerelease
+        text: 'Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   coding-standards:
     path: collections/coding-standards.collection.yml
     name: Coding Standards
-    description: Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
+    display:
+      ordering: alpha
+    intro: Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
     tags:
     - coding-standards
     - code-review
@@ -32,11 +39,20 @@ collections:
     - uv
     itemCount: 22
     descriptions:
-      prerelease: 'Experimental: Coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, Terraform. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects'
+      - channel: prerelease
+        text: 'Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   data-science:
     path: collections/data-science.collection.yml
     name: Data Science
-    description: Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards
+    display:
+      ordering: manual
+    intro: Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
+    caution: The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified human review, organizational RAI review boards, or regulatory compliance programs. All AI-generated RAI artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risks, or produce recommendations that are incomplete or inappropriate for your context.
+    notice: |
+      > [!CAUTION]
+      > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
     tags:
     - data
     - jupyter
@@ -48,11 +64,16 @@ collections:
     - responsible-ai
     itemCount: 21
     descriptions:
-      prerelease: 'Experimental: Eval dataset creation, data spec generation, Jupyter notebooks, and Streamlit dashboards. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards'
+      - channel: prerelease
+        text: 'Preview & Experimental: Eval datasets, data specs, Jupyter notebooks, and Streamlit dashboards. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   design-thinking:
     path: collections/design-thinking.collection.yml
     name: Design Thinking
-    description: Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods
+    display:
+      ordering: alpha
+    intro: Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
     tags:
     - design-thinking
     - coaching
@@ -60,11 +81,16 @@ collections:
     - ux
     itemCount: 61
     descriptions:
-      prerelease: 'Stable: Design Thinking coaching identity and methodology across nine methods. Available only via pre-release channel. Breaking changes possible. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods'
+      - channel: prerelease
+        text: 'Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   github:
     path: collections/github.collection.yml
     name: GitHub Backlog Management
-    description: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
+    display:
+      ordering: manual
+    intro: Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
     tags:
     - github
     - issues
@@ -73,20 +99,40 @@ collections:
     - sprint
     itemCount: 14
     descriptions:
-      prerelease: 'Experimental: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts'
+      - channel: prerelease
+        text: 'Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   hve-core-all:
     path: collections/hve-core-all.collection.yml
     name: HVE Core All
-    description: Full bundle of all HVE Core agents, prompts, instructions, and skills
+    display:
+      ordering: alpha
+    intro: |
+      HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, GitHub and Jira backlog workflows, data science, design thinking, security, and more.
+
+      Use this edition when you want access to everything without choosing a focused collection.
+    caution: |
+      This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**.
+      They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
+      All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use.
+      AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
     tags:
     - hve
     - complete
     - bundle
-    itemCount: 246
+    itemCount: 247
+    descriptions:
+      - channel: stable
+        text: 'Full bundle of all HVE Core agents, prompts, instructions, and skills'
+      - channel: prerelease
+        text: 'Preview & Experimental: Full bundle of all HVE Core agents, prompts, instructions, and skills. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   hve-core:
     path: collections/hve-core.collection.yml
     name: HVE Core Workflow
-    description: HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts
+    display:
+      ordering: manual
+    intro: HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
     tags:
     - workflow
     - hve-core
@@ -101,11 +147,16 @@ collections:
     - pull-request
     itemCount: 42
     descriptions:
-      prerelease: 'Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts'
+      - channel: prerelease
+        text: 'Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   project-planning:
     path: collections/project-planning.collection.yml
     name: Project Planning
-    description: PRDs, BRDs, ADRs, and architecture diagrams
+    display:
+      ordering: manual
+    intro: Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation. Includes Jira backlog management workflows for discovery, triage, PRD-to-issue conversion, and execution.
     tags:
     - documentation
     - architecture
@@ -117,13 +168,22 @@ collections:
     - rai
     - responsible-ai
     - security
-    itemCount: 64
+    itemCount: 65
     descriptions:
-      prerelease: 'Experimental: PRDs, BRDs, ADRs, and architecture diagrams. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'PRDs, BRDs, ADRs, and architecture diagrams'
+      - channel: prerelease
+        text: 'Preview & Experimental: PRDs, BRDs, ADRs, and architecture diagrams. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
   security:
     path: collections/security.collection.yml
     name: Security
-    description: Security review, planning, incident response, risk assessment, and vulnerability analysis
+    display:
+      ordering: manual
+    intro: Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments.
+    caution: The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+    notice: |
+      > [!CAUTION]
+      > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
     tags:
     - security
     - incident-response
@@ -135,9 +195,12 @@ collections:
     - supply-chain
     - rai
     - responsible-ai
-    itemCount: 54
+    itemCount: 55
     descriptions:
-      prerelease: 'Experimental: Security review, planning, incident response, risk assessment, and vulnerability analysis. AS-IS. Feedback: github.com/microsoft/hve-core/issues'
+      - channel: stable
+        text: 'Security review, planning, incident response, risk assessment, and vulnerability analysis'
+      - channel: prerelease
+        text: 'Preview & Experimental: Security review, planning, incident response, and risk assessment. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
 agents:
   .github/agents/ado/ado-backlog-manager.agent.md:
     path: .github/agents/ado/ado-backlog-manager.agent.md
@@ -145,37 +208,6 @@ agents:
     collections:
     - ado
     - hve-core-all
-    handoffs:
-    - prompt: /ado-discover-work-items
-      agent: ADO Backlog Manager
-      label: Discover
-    - prompt: /ado-triage-work-items
-      agent: ADO Backlog Manager
-      label: Triage
-    - prompt: /ado-sprint-plan
-      agent: ADO Backlog Manager
-      label: Sprint
-    - prompt: /ado-update-wit-items
-      agent: ADO Backlog Manager
-      label: Execute
-    - prompt: /ado-add-work-item
-      agent: ADO Backlog Manager
-      label: Add
-    - prompt: /ado-process-my-work-items-for-task-planning
-      agent: ADO Backlog Manager
-      label: Plan
-    - prompt: Analyze the current PRD inputs and plan Azure DevOps work item hierarchies.
-      agent: AzDO PRD to WIT
-      label: PRD
-    - prompt: /ado-get-build-info
-      agent: ADO Backlog Manager
-      label: Build
-    - prompt: /ado-create-pull-request
-      agent: ADO Backlog Manager
-      label: PR
-    - prompt: /checkpoint
-      agent: Memory
-      label: Save
   .github/agents/ado/ado-prd-to-wit.agent.md:
     path: .github/agents/ado/ado-prd-to-wit.agent.md
     maturity: stable
@@ -188,10 +220,6 @@ agents:
     collections:
     - coding-standards
     - hve-core-all
-    requires:
-      agents:
-      - Code Review Functional
-      - Code Review Standards
   .github/agents/coding-standards/code-review-functional.agent.md:
     path: .github/agents/coding-standards/code-review-functional.agent.md
     maturity: experimental
@@ -240,37 +268,12 @@ agents:
     collections:
     - design-thinking
     - hve-core-all
-    handoffs:
-    - send: false
-      prompt: /dt-method-next
-      agent: DT Coach
-      label: "\U0001F3AF Method Next"
-    - send: false
-      prompt: /dt-canonical-deck
-      agent: DT Coach
-      label: "\U0001F4CB Canonical Deck"
-    - send: false
-      prompt: /dt-canonical-deck
-      agent: DT Coach
-      label: "\U0001F5BC️ Build Customer Cards PPTX"
-    - send: true
-      prompt: /task-research
-      agent: Task Researcher
-      label: "\U0001F52C Hand off to RPI"
-    - send: false
-      prompt: /dt-figma-export
-      agent: DT Coach
-      label: "\U0001F4CB Export to Figma"
   .github/agents/design-thinking/dt-learning-tutor.agent.md:
     path: .github/agents/design-thinking/dt-learning-tutor.agent.md
     maturity: stable
     collections:
     - design-thinking
     - hve-core-all
-    handoffs:
-    - prompt: /dt-start-project
-      agent: DT Coach
-      label: Start a DT project
   .github/agents/experimental/experiment-designer.agent.md:
     path: .github/agents/experimental/experiment-designer.agent.md
     maturity: stable
@@ -281,10 +284,6 @@ agents:
     maturity: stable
     collections:
     - hve-core-all
-    requires:
-      agents:
-      - Researcher Subagent
-      - PowerPoint Subagent
   .github/agents/experimental/subagents/pptx-subagent.agent.md:
     path: .github/agents/experimental/subagents/pptx-subagent.agent.md
     maturity: stable
@@ -296,51 +295,18 @@ agents:
     collections:
     - github
     - hve-core-all
-    handoffs:
-    - prompt: /github-discover-issues
-      agent: GitHub Backlog Manager
-      label: Discover
-    - prompt: /github-triage-issues
-      agent: GitHub Backlog Manager
-      label: Triage
-    - prompt: /github-sprint-plan
-      agent: GitHub Backlog Manager
-      label: Sprint
-    - prompt: /github-execute-backlog
-      agent: GitHub Backlog Manager
-      label: Execute
-    - prompt: /checkpoint
-      agent: Memory
-      label: Save
   .github/agents/hve-core/doc-ops.agent.md:
     path: .github/agents/hve-core/doc-ops.agent.md
     maturity: experimental
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - Researcher Subagent
-      - Phase Implementor
   .github/agents/hve-core/memory.agent.md:
     path: .github/agents/hve-core/memory.agent.md
     maturity: stable
     collections:
     - hve-core
     - hve-core-all
-    handoffs:
-    - send: true
-      prompt: /clear
-      agent: RPI Agent
-      label: "\U0001F5D1️ Clear"
-    - send: true
-      prompt: /rpi suggest
-      agent: RPI Agent
-      label: "\U0001F680 Continue with RPI"
-    - send: true
-      prompt: /github-suggest
-      agent: GitHub Backlog Manager
-      label: "\U0001F680 Continue with Backlog"
   .github/agents/hve-core/pr-review.agent.md:
     path: .github/agents/hve-core/pr-review.agent.md
     maturity: experimental
@@ -353,33 +319,6 @@ agents:
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - Prompt Tester
-      - Prompt Evaluator
-      - Prompt Updater
-      - Researcher Subagent
-    handoffs:
-    - send: false
-      prompt: /prompt-build
-      agent: Prompt Builder
-      label: "\U0001F4A1 Update/Create"
-    - send: true
-      prompt: /prompt-refactor all prompt files in this conversation
-      agent: Prompt Builder
-      label: "\U0001F6E0️ Refactor"
-    - send: true
-      prompt: /prompt-analyze all prompt files in this conversation
-      agent: Prompt Builder
-      label: "\U0001F914 Analyze"
-    - send: true
-      prompt: /prompt-build make updates based on findings in this conversation
-      agent: Prompt Builder
-      label: "\U0001F527 Apply Fixes"
-    - send: true
-      prompt: Clear the sandbox for this conversation
-      agent: Prompt Builder
-      label: ♻️ Cleanup Sandbox
   .github/agents/hve-core/rpi-agent.agent.md:
     path: .github/agents/hve-core/rpi-agent.agent.md
     maturity: stable
@@ -387,35 +326,6 @@ agents:
     - hve-core
     - hve-core-all
     - project-planning
-    requires:
-      agents:
-      - Researcher Subagent
-      - Phase Implementor
-    handoffs:
-    - send: true
-      prompt: /rpi continue=1
-      agent: RPI Agent
-      label: 1️⃣
-    - send: true
-      prompt: /rpi continue=2
-      agent: RPI Agent
-      label: 2️⃣
-    - send: true
-      prompt: /rpi continue=3
-      agent: RPI Agent
-      label: 3️⃣
-    - send: true
-      prompt: /rpi continue=all
-      agent: RPI Agent
-      label: ▶️ All
-    - send: true
-      prompt: /rpi suggest
-      agent: RPI Agent
-      label: "\U0001F504 Suggest"
-    - send: true
-      prompt: /checkpoint
-      agent: Memory
-      label: "\U0001F4BE Save"
   .github/agents/hve-core/subagents/implementation-validator.agent.md:
     path: .github/agents/hve-core/subagents/implementation-validator.agent.md
     maturity: stable
@@ -477,109 +387,36 @@ agents:
     collections:
     - hve-core
     - hve-core-all
-    handoffs:
-    - send: true
-      prompt: '/task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items: these define the research scope.'
-      agent: Task Researcher
-      label: "\U0001F52C Research Questions"
-    - send: true
-      prompt: /task-plan Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for challenge findings and unresolved items before planning.
-      agent: Task Planner
-      label: "\U0001F4CB Revise Plan"
-    - send: true
-      prompt: /task-implement Address the immediate changes identified through the challenge session. Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for findings.
-      agent: Task Implementor
-      label: ⚡ Implement Changes
   .github/agents/hve-core/task-implementor.agent.md:
     path: .github/agents/hve-core/task-implementor.agent.md
     maturity: stable
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - Phase Implementor
-      - Researcher Subagent
-    handoffs:
-    - send: true
-      prompt: /task-review
-      agent: Task Reviewer
-      label: ✅ Review
   .github/agents/hve-core/task-planner.agent.md:
     path: .github/agents/hve-core/task-planner.agent.md
     maturity: stable
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - Researcher Subagent
-      - Plan Validator
-    handoffs:
-    - send: true
-      prompt: /task-implement
-      agent: Task Implementor
-      label: ⚡ Implement
   .github/agents/hve-core/task-researcher.agent.md:
     path: .github/agents/hve-core/task-researcher.agent.md
     maturity: stable
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - Researcher Subagent
-    handoffs:
-    - send: true
-      prompt: /task-plan
-      agent: Task Planner
-      label: "\U0001F4CB Create Plan"
-    - prompt: /task-research continue deeper research based on potential next research items
-      agent: Task Researcher
-      label: "\U0001F52C Deeper Research"
   .github/agents/hve-core/task-reviewer.agent.md:
     path: .github/agents/hve-core/task-reviewer.agent.md
     maturity: stable
     collections:
     - hve-core
     - hve-core-all
-    requires:
-      agents:
-      - RPI Validator
-      - Researcher Subagent
-      - Implementation Validator
-    handoffs:
-    - send: true
-      prompt: /task-research
-      agent: Task Researcher
-      label: "\U0001F52C Research More"
-    - send: true
-      prompt: /task-plan
-      agent: Task Planner
-      label: "\U0001F4CB Revise Plan"
-    - send: true
-      prompt: /task-implement Address the findings found in the review document
-      agent: Task Implementor
-      label: ⚡ Implement Immediately
   .github/agents/jira/jira-backlog-manager.agent.md:
     path: .github/agents/jira/jira-backlog-manager.agent.md
     maturity: stable
     collections:
     - hve-core-all
     - project-planning
-    handoffs:
-    - prompt: /jira-discover-issues
-      agent: Jira Backlog Manager
-      label: Discover
-    - prompt: /jira-triage-issues
-      agent: Jira Backlog Manager
-      label: Triage
-    - prompt: /jira-execute-backlog
-      agent: Jira Backlog Manager
-      label: Execute
-    - prompt: /checkpoint
-      agent: Memory
-      label: Save
   .github/agents/jira/jira-prd-to-wit.agent.md:
     path: .github/agents/jira/jira-prd-to-wit.agent.md
     maturity: stable
@@ -616,20 +453,12 @@ agents:
     collections:
     - hve-core-all
     - project-planning
-    handoffs:
-    - send: false
-      prompt: Create a PRD using the attached transcript analysis handoff document.
-      agent: PRD Builder
-      label: "\U0001F4CB Create PRD"
   .github/agents/project-planning/network-isa95-planner.agent.md:
     path: .github/agents/project-planning/network-isa95-planner.agent.md
     maturity: experimental
     collections:
     - hve-core-all
     - project-planning
-    requires:
-      agents:
-      - Researcher Subagent
   .github/agents/project-planning/prd-builder.agent.md:
     path: .github/agents/project-planning/prd-builder.agent.md
     maturity: experimental
@@ -642,53 +471,18 @@ agents:
     collections:
     - hve-core-all
     - project-planning
-    handoffs:
-    - send: true
-      prompt: Create or refine a Product Requirements Document for this initiative based on our current discussion.
-      agent: PRD Builder
-      label: "\U0001F4C4 Build PRD"
-    - send: true
-      prompt: Create or refine a Business Requirements Document for this initiative based on our current discussion.
-      agent: BRD Builder
-      label: "\U0001F4CB Build BRD"
-    - send: true
-      prompt: /task-research
-      agent: Task Researcher
-      label: "\U0001F50D Research Topic"
-    - send: true
-      prompt: Run a UX and UI review of the proposed solution and suggest improvements.
-      agent: UX UI Designer
-      label: "\U0001F3A8 UX Review"
   .github/agents/project-planning/system-architecture-reviewer.agent.md:
     path: .github/agents/project-planning/system-architecture-reviewer.agent.md
     maturity: experimental
     collections:
     - hve-core-all
     - project-planning
-    handoffs:
-    - send: true
-      prompt: Create an ADR based on the architecture review findings
-      agent: ADR Creation
-      label: "\U0001F4D0 Create ADR"
-    - send: true
-      prompt: /task-plan
-      agent: Task Planner
-      label: "\U0001F4CB Create Plan"
   .github/agents/project-planning/ux-ui-designer.agent.md:
     path: .github/agents/project-planning/ux-ui-designer.agent.md
     maturity: experimental
     collections:
     - hve-core-all
     - project-planning
-    handoffs:
-    - send: true
-      prompt: Review this work from a product management perspective and identify any scope, risk, or alignment issues.
-      agent: Product Manager Advisor
-      label: "\U0001F4CB Product Review"
-    - send: true
-      prompt: /task-research
-      agent: Task Researcher
-      label: "\U0001F50D Research Topic"
   .github/agents/rai-planning/rai-planner.agent.md:
     path: .github/agents/rai-planning/rai-planner.agent.md
     maturity: experimental
@@ -697,14 +491,6 @@ agents:
     - hve-core-all
     - project-planning
     - security
-    requires:
-      agents:
-      - Researcher Subagent
-    handoffs:
-    - send: true
-      prompt: /security-capture
-      agent: Security Planner
-      label: Security Planner
   .github/agents/security/security-planner.agent.md:
     path: .github/agents/security/security-planner.agent.md
     maturity: experimental
@@ -712,30 +498,12 @@ agents:
     - hve-core-all
     - project-planning
     - security
-    requires:
-      agents:
-      - Researcher Subagent
-    handoffs:
-    - send: true
-      prompt: /rai-plan-from-security-plan
-      agent: RAI Planner
-      label: RAI Planner
-    - send: true
-      prompt: /sssc-from-security-plan
-      agent: SSSC Planner
-      label: SSSC Planner
   .github/agents/security/security-reviewer.agent.md:
     path: .github/agents/security/security-reviewer.agent.md
     maturity: experimental
     collections:
     - hve-core-all
     - security
-    requires:
-      agents:
-      - Codebase Profiler
-      - Skill Assessor
-      - Finding Deep Verifier
-      - Report Generator
   .github/agents/security/sssc-planner.agent.md:
     path: .github/agents/security/sssc-planner.agent.md
     maturity: experimental
@@ -743,14 +511,6 @@ agents:
     - hve-core-all
     - project-planning
     - security
-    requires:
-      agents:
-      - Researcher Subagent
-    handoffs:
-    - send: true
-      prompt: /security-capture
-      agent: Security Planner
-      label: Security Planner
   .github/agents/security/subagents/codebase-profiler.agent.md:
     path: .github/agents/security/subagents/codebase-profiler.agent.md
     maturity: stable
@@ -1835,6 +1595,13 @@ instructions:
     - hve-core-all
     - project-planning
     - security
+  .github/instructions/shared/coaching-patterns.instructions.md:
+    path: .github/instructions/shared/coaching-patterns.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
   .github/instructions/shared/disclaimer-language.instructions.md:
     path: .github/instructions/shared/disclaimer-language.instructions.md
     maturity: stable
@@ -2078,6 +1845,7 @@ releases:
     - .github/instructions/jira/jira-backlog-triage.instructions.md
     - .github/instructions/jira/jira-backlog-update.instructions.md
     - .github/instructions/jira/jira-wit-planning.instructions.md
+    - .github/instructions/shared/coaching-patterns.instructions.md
     - .github/instructions/shared/disclaimer-language.instructions.md
     - .github/instructions/shared/hve-core-location.instructions.md
     - .github/instructions/shared/story-quality.instructions.md
@@ -2298,6 +2066,7 @@ releases:
     - .github/instructions/security/sssc-identity.instructions.md
     - .github/instructions/security/sssc-standards.instructions.md
     - .github/instructions/security/standards-mapping.instructions.md
+    - .github/instructions/shared/coaching-patterns.instructions.md
     - .github/instructions/shared/disclaimer-language.instructions.md
     - .github/instructions/shared/hve-core-location.instructions.md
     - .github/instructions/shared/story-quality.instructions.md
@@ -2389,8 +2158,8 @@ releases:
     - .github/skills/security/security-reviewer-formats
     - .github/skills/shared/pr-reference
     descriptions:
-      source: collections/*.collection.yml
-      field: descriptions.prerelease
+      source: collections/core-manifest.yml
+      field: collections[id].descriptions[channel=prerelease].text
     whatNew:
       source: release-please-config.json
       changelogPath: CHANGELOG.md

@@ -122,6 +122,14 @@ jobs:
           Write-Host "🔧 Preparing extension for $channel channel (collection: ${{ matrix.id }})..."
           ./scripts/extension/Prepare-Extension.ps1 -Channel $channel -Collection $collection
 
+      - name: Upload manifest review artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: manifest-review-${{ matrix.id }}
+          path: extension/manifest-review/${{ matrix.id }}/
+          retention-days: 30
+        continue-on-error: true
+
       - name: Package extension
         id: package
         shell: pwsh

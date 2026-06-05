@@ -51,8 +51,10 @@ id: hve-core-all
 name: hve-core
 description: All artifacts
 descriptions:
-  stable: Stable hve-core-all description
-  prerelease: 'Experimental: hve-core-all description'
+  - channel: stable
+    text: Stable hve-core-all description
+  - channel: prerelease
+    text: 'Experimental: hve-core-all description'
 tags: []
 items:
   - path: .github/agents/fixture/fixture.agent.md
@@ -68,8 +70,10 @@ id: fixture-channel
 name: Fixture Channel Collection
 description: Fallback description (should not appear)
 descriptions:
-  stable: '$StableDescription'
-  prerelease: '$PrereleaseDescription'
+  - channel: stable
+    text: '$StableDescription'
+  - channel: prerelease
+    text: '$PrereleaseDescription'
 items:
   - path: .github/agents/fixture/fixture.agent.md
     kind: agent

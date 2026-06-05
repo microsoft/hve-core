@@ -158,7 +158,8 @@ name: ADO Workflow
 displayName: HVE Core - ADO Workflow
 description: ADO workflow agents
 descriptions:
-  prerelease: 'Experimental: ADO workflow agents (preview)'
+  - channel: prerelease
+    text: 'Experimental: ADO workflow agents (preview)'
 "@ | Set-Content -Path (Join-Path $collectionsDir 'ado.collection.yml')
 
         # hve-core-all collection (no description to test fallback)
@@ -167,6 +168,33 @@ id: hve-core-all
 name: All
 displayName: HVE Core - All
 "@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
+
+        # Central manifest: production projects collections from this file.
+        @"
+schemaVersion: `"1.0`"
+collections:
+  hve-core:
+    name: HVE Core
+    intro: HVE Core flagship collection.
+    descriptions:
+      - channel: stable
+        text: All artifacts
+  ado:
+    name: ADO Workflow
+    intro: ADO workflow agents.
+    descriptions:
+      - channel: stable
+        text: ADO workflow agents
+      - channel: prerelease
+        text: 'Experimental: ADO workflow agents (preview)'
+  hve-core-all:
+    name: All
+    intro: All HVE artifacts.
+"@ | Set-Content -Path (Join-Path $collectionsDir 'core-manifest.yml')
+
+        # README template (required for README generation); reuse the real template.
+        $readmeTemplateSource = Join-Path (Get-Item "$PSScriptRoot/../../..").FullName 'extension/templates/README.template.md'
+        Copy-Item -Path $readmeTemplateSource -Destination (Join-Path $templatesDir 'README.template.md') -Force
     }
 
     AfterAll {
@@ -193,12 +221,14 @@ displayName: HVE Core - All
 
     It 'Returns array of generated file paths' {
         $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $result.Count | Should -Be 3
+        # 3 package.*.json files plus 3 README.*.md files.
+        $result.Count | Should -Be 6
     }
 
     It 'Propagates version from template to all generated files' {
         $result = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        foreach ($file in $result) {
+        $packageFiles = $result | Where-Object { $_ -like '*package*.json' }
+        foreach ($file in $packageFiles) {
             $pkg = Get-Content $file -Raw | ConvertFrom-Json
             $pkg.version | Should -Be '2.0.0'
         }
@@ -243,7 +273,7 @@ id: test
         New-Item -ItemType Directory -Path (Join-Path $emptyRoot 'extension/templates') -Force | Out-Null
         @{ name = 'test'; version = '1.0.0' } | ConvertTo-Json | Set-Content -Path (Join-Path $emptyRoot 'extension/templates/package.template.json')
 
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $emptyRoot } | Should -Throw '*No root collection files found*'
+        { Invoke-ExtensionCollectionsGeneration -RepoRoot $emptyRoot } | Should -Throw '*does not exist*'
 
         Remove-Item -Path $emptyRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
@@ -317,6 +347,72 @@ id: test
             Test-Path (Join-Path $script:tempDir 'extension/package.ado.json') | Should -BeTrue
             Test-Path (Join-Path $script:tempDir 'extension/package.hve-core-all.json') | Should -BeTrue
         }
+    }
+}
+
+Describe 'Write-ManifestReviewArtifact' {
+    BeforeAll {
+        $script:repoRoot = (Get-Item "$PSScriptRoot/../../..").FullName
+        $script:reviewTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+    }
+
+    AfterAll {
+        Remove-Item -Path $script:reviewTempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Writes projected collection yaml and markdown into a per-collection subfolder' {
+        $result = Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'ado' -OutputRoot $script:reviewTempDir
+
+        $yamlPath = Join-Path $script:reviewTempDir 'ado/ado.collection.yml'
+        $mdPath = Join-Path $script:reviewTempDir 'ado/ado.collection.md'
+
+        Test-Path -LiteralPath $yamlPath | Should -BeTrue
+        Test-Path -LiteralPath $mdPath | Should -BeTrue
+        $result | Should -Contain $yamlPath
+        $result | Should -Contain $mdPath
+    }
+
+    It 'Returns both written file paths' {
+        $result = Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'ado' -OutputRoot $script:reviewTempDir
+        @($result).Count | Should -Be 2
+    }
+
+    It 'Creates the per-collection output directory when missing' {
+        $freshRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
+        try {
+            Test-Path -LiteralPath $freshRoot | Should -BeFalse
+            $null = Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'ado' -OutputRoot $freshRoot
+            Test-Path -LiteralPath (Join-Path $freshRoot 'ado') | Should -BeTrue
+        }
+        finally {
+            Remove-Item -Path $freshRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Emits yaml that parses to a manifest with the requested collection id' {
+        $null = Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'ado' -OutputRoot $script:reviewTempDir
+        $yamlPath = Join-Path $script:reviewTempDir 'ado/ado.collection.yml'
+        $parsed = ConvertFrom-Yaml (Get-Content -LiteralPath $yamlPath -Raw)
+        $parsed.id | Should -Be 'ado'
+    }
+
+    It 'Emits content matching the committed collection render' {
+        $null = Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'ado' -OutputRoot $script:reviewTempDir
+
+        $coreManifestPath = Join-Path $script:repoRoot 'collections/core-manifest.yml'
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        $expectedYaml = ConvertTo-Yaml -Data (ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -CollectionId 'ado' -RepoRoot $script:repoRoot)
+        $expectedMd = New-CollectionReadmeBodyFromCore -CoreManifest $coreManifest -CollectionId 'ado' -RepoRoot $script:repoRoot
+
+        $actualYaml = Get-Content -LiteralPath (Join-Path $script:reviewTempDir 'ado/ado.collection.yml') -Raw
+        $actualMd = Get-Content -LiteralPath (Join-Path $script:reviewTempDir 'ado/ado.collection.md') -Raw
+
+        $actualYaml | Should -Be $expectedYaml
+        $actualMd | Should -Be $expectedMd
+    }
+
+    It 'Throws for unknown collection ids' {
+        { Write-ManifestReviewArtifact -RepoRoot $script:repoRoot -CollectionId 'does-not-exist' -OutputRoot $script:reviewTempDir } | Should -Throw
     }
 }
 
@@ -850,7 +946,10 @@ Describe 'Resolve-CollectionDescription' {
     It 'Returns stable override on Stable channel when present' {
         $collection = @{
             description  = 'Default'
-            descriptions = @{ stable = 'Stable override'; prerelease = 'Pre override' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable override' }
+                @{ channel = 'prerelease'; text = 'Pre override' }
+            )
         }
         $result = Resolve-CollectionDescription -Collection $collection -Channel 'Stable' -DefaultDescription 'Fallback'
         $result | Should -Be 'Stable override'
@@ -859,7 +958,10 @@ Describe 'Resolve-CollectionDescription' {
     It 'Returns prerelease override on PreRelease channel when present' {
         $collection = @{
             description  = 'Default'
-            descriptions = @{ stable = 'Stable override'; prerelease = 'Pre override' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable override' }
+                @{ channel = 'prerelease'; text = 'Pre override' }
+            )
         }
         $result = Resolve-CollectionDescription -Collection $collection -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Pre override'
@@ -868,7 +970,9 @@ Describe 'Resolve-CollectionDescription' {
     It 'Falls back to collection description on PreRelease channel when only stable override is present' {
         $collection = @{
             description  = 'Default'
-            descriptions = @{ stable = 'Stable override' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable override' }
+            )
         }
         $result = Resolve-CollectionDescription -Collection $collection -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Default'
@@ -877,7 +981,9 @@ Describe 'Resolve-CollectionDescription' {
     It 'Treats whitespace-only override as absent and falls back to collection description' {
         $collection = @{
             description  = 'Default'
-            descriptions = @{ prerelease = '   ' }
+            descriptions = @(
+                @{ channel = 'prerelease'; text = '   ' }
+            )
         }
         $result = Resolve-CollectionDescription -Collection $collection -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Default'
@@ -954,20 +1060,29 @@ Describe 'Per-collection description and displayName constraints' {
     It 'Collection <Name> satisfies marketplace length and distinctness constraints' -ForEach $CollectionCases {
         $manifest = Get-Content -Path $Path -Raw | ConvertFrom-Yaml
 
-        $descriptions = $null
-        if ($manifest -and $manifest.ContainsKey('descriptions') -and $manifest.descriptions -is [hashtable]) {
-            $descriptions = [hashtable]$manifest.descriptions
+        $descriptionsStable = $null
+        $descriptionsPrerelease = $null
+        if ($manifest -and $manifest.ContainsKey('descriptions') -and $manifest.descriptions -is [System.Collections.IEnumerable] -and
+            $manifest.descriptions -isnot [string]) {
+            foreach ($entry in $manifest.descriptions) {
+                if ($entry -is [System.Collections.IDictionary] -and $entry.Contains('channel') -and $entry.Contains('text')) {
+                    switch ([string]$entry['channel']) {
+                        'stable' { $descriptionsStable = [string]$entry['text'] }
+                        'prerelease' { $descriptionsPrerelease = [string]$entry['text'] }
+                    }
+                }
+            }
         }
         $displayNames = $null
         if ($manifest -and $manifest.ContainsKey('displayNames') -and $manifest.displayNames -is [hashtable]) {
             $displayNames = [hashtable]$manifest.displayNames
         }
 
-        if ($descriptions -and $descriptions.ContainsKey('stable')) {
-            ([string]$descriptions['stable']).Length | Should -BeLessOrEqual 200 -Because "descriptions.stable in $Name must fit the VS Code Marketplace 200-char limit"
+        if ($null -ne $descriptionsStable) {
+            $descriptionsStable.Length | Should -BeLessOrEqual 200 -Because "descriptions.stable in $Name must fit the VS Code Marketplace 200-char limit"
         }
-        if ($descriptions -and $descriptions.ContainsKey('prerelease')) {
-            ([string]$descriptions['prerelease']).Length | Should -BeLessOrEqual 200 -Because "descriptions.prerelease in $Name must fit the VS Code Marketplace 200-char limit"
+        if ($null -ne $descriptionsPrerelease) {
+            $descriptionsPrerelease.Length | Should -BeLessOrEqual 200 -Because "descriptions.prerelease in $Name must fit the VS Code Marketplace 200-char limit"
         }
         if ($displayNames -and $displayNames.ContainsKey('stable')) {
             ([string]$displayNames['stable']).Length | Should -BeLessOrEqual 80 -Because "displayNames.stable in $Name must fit a reasonable marketplace display length"
@@ -976,11 +1091,9 @@ Describe 'Per-collection description and displayName constraints' {
             ([string]$displayNames['prerelease']).Length | Should -BeLessOrEqual 80 -Because "displayNames.prerelease in $Name must fit a reasonable marketplace display length"
         }
 
-        if ($descriptions -and $descriptions.ContainsKey('stable') -and $descriptions.ContainsKey('prerelease')) {
-            $stable = [string]$descriptions['stable']
-            $prerelease = [string]$descriptions['prerelease']
-            if (-not [string]::IsNullOrWhiteSpace($stable) -and -not [string]::IsNullOrWhiteSpace($prerelease)) {
-                $stable | Should -Not -Be $prerelease -Because "descriptions.stable and descriptions.prerelease in $Name should differ to justify per-channel overrides"
+        if ($null -ne $descriptionsStable -and $null -ne $descriptionsPrerelease) {
+            if (-not [string]::IsNullOrWhiteSpace($descriptionsStable) -and -not [string]::IsNullOrWhiteSpace($descriptionsPrerelease)) {
+                $descriptionsStable | Should -Not -Be $descriptionsPrerelease -Because "descriptions.stable and descriptions.prerelease in $Name should differ to justify per-channel overrides"
             }
         }
     }
@@ -992,8 +1105,27 @@ Describe 'Get-AllowedMaturities' {
         $result | Should -Be @('stable')
     }
 
-    It 'Returns all maturities for PreRelease channel' {
+    It 'Returns only stable for Stable channel even for hve-core-all' {
+        $result = Get-AllowedMaturities -Channel 'Stable' -CollectionId 'hve-core-all'
+        $result | Should -Be @('stable')
+    }
+
+    It 'Returns stable and preview for PreRelease channel without a collection' {
         $result = Get-AllowedMaturities -Channel 'PreRelease'
+        $result | Should -Contain 'stable'
+        $result | Should -Contain 'preview'
+        $result | Should -Not -Contain 'experimental'
+    }
+
+    It 'Excludes experimental for PreRelease channel on a non-all collection' {
+        $result = Get-AllowedMaturities -Channel 'PreRelease' -CollectionId 'ado'
+        $result | Should -Contain 'stable'
+        $result | Should -Contain 'preview'
+        $result | Should -Not -Contain 'experimental'
+    }
+
+    It 'Includes experimental for PreRelease channel only for hve-core-all' {
+        $result = Get-AllowedMaturities -Channel 'PreRelease' -CollectionId 'hve-core-all'
         $result | Should -Contain 'stable'
         $result | Should -Contain 'preview'
         $result | Should -Contain 'experimental'
@@ -1755,6 +1887,58 @@ displayName: HVE Core
 description: Test extension
 "@ | Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml')
 
+        # Central manifest: production projects collections from this file.
+        @"
+schemaVersion: `"1.0`"
+collections:
+  hve-core:
+    name: HVE Core
+    intro: HVE Core flagship collection.
+    descriptions:
+      - channel: stable
+        text: Test extension
+  hve-core-all:
+    name: hve-core-all
+    descriptions:
+      - channel: stable
+        text: All collections edition
+  developer:
+    name: hve-developer
+    descriptions:
+      - channel: stable
+        text: Developer edition
+  perchannel:
+    name: hve-perchannel
+    descriptions:
+      - channel: stable
+        text: Stable per-channel description
+      - channel: prerelease
+        text: 'Experimental: Per-channel preview description'
+  deprecated-coll:
+    name: deprecated-ext
+    maturity: deprecated
+    descriptions:
+      - channel: stable
+        text: Deprecated collection for testing
+  experimental-coll:
+    name: experimental-ext
+    maturity: experimental
+    descriptions:
+      - channel: stable
+        text: Experimental collection for testing
+  pin-target:
+    name: pin-target
+    descriptions:
+      - channel: stable
+        text: Pin target stable description
+      - channel: prerelease
+        text: 'Experimental: Pin target preview description'
+"@ | Set-Content -Path (Join-Path $script:collectionsDir 'core-manifest.yml')
+
+        # README template (required for README generation); reuse the real template.
+        $readmeTemplateSource = Join-Path (Get-Item "$PSScriptRoot/../../..").FullName 'extension/templates/README.template.md'
+        Copy-Item -Path $readmeTemplateSource -Destination (Join-Path $script:templatesDir 'README.template.md') -Force
+
         # Create .github structure with subdirectories (root-level files are repo-specific)
         $script:ghDir = Join-Path $script:tempDir '.github'
         $script:agentsDir = Join-Path $script:ghDir 'agents'
@@ -1881,7 +2065,7 @@ applyTo: "**/*.js"
 
         $collectionPath = Join-Path $script:tempDir 'prompt-instruction-filter.collection.yml'
         @"
-id: hve-core
+id: hve-core-all
 name: HVE Core
 displayName: HVE Core
 description: Prompt/instruction filtering test
@@ -1919,6 +2103,12 @@ items:
 
         $preReleaseResult.PromptCount | Should -BeGreaterThan $stableResult.PromptCount
         $preReleaseResult.InstructionCount | Should -BeGreaterThan $stableResult.InstructionCount
+
+        # Clean up backup left by the hve-core-all collection template copy
+        $bakPath = Join-Path $script:extDir 'package.json.bak'
+        if (Test-Path $bakPath) {
+            Remove-Item -Path $bakPath -Force
+        }
     }
 
     It 'Updates package.json when not DryRun' {
@@ -2101,7 +2291,8 @@ name: hve-perchannel
 displayName: HVE Core - Per Channel
 description: Stable per-channel description
 descriptions:
-  prerelease: 'Experimental: Per-channel preview description'
+  - channel: prerelease
+    text: 'Experimental: Per-channel preview description'
 "@ | Set-Content -Path $perChannelCollectionPath
 
             $result = Invoke-PrepareExtension `
@@ -2312,7 +2503,8 @@ name: pin-target
 displayName: HVE Core - Pin Target
 description: Pin target stable description
 descriptions:
-  prerelease: 'Experimental: Pin target preview description'
+  - channel: prerelease
+    text: 'Experimental: Pin target preview description'
 "@ | Set-Content -Path $script:pinCollectionPath
         }
 
@@ -2774,6 +2966,22 @@ displayName: HVE Core
 description: Test
 "@ | Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml')
 
+        # Central manifest: generation projects collections from this file.
+        @"
+schemaVersion: `"1.0`"
+collections:
+  hve-core:
+    name: HVE Core
+    intro: HVE Core flagship collection.
+    descriptions:
+      - channel: stable
+        text: Test
+"@ | Set-Content -Path (Join-Path $script:collectionsDir 'core-manifest.yml')
+
+        # README template (required for README generation); reuse the real template.
+        $readmeTemplateSource = Join-Path (Get-Item "$PSScriptRoot/../../..").FullName 'extension/templates/README.template.md'
+        Copy-Item -Path $readmeTemplateSource -Destination (Join-Path $script:templatesDir 'README.template.md') -Force
+
         $script:ghDir = Join-Path $script:tempDir '.github'
         New-Item -ItemType Directory -Path (Join-Path $script:ghDir 'agents') -Force | Out-Null
         New-Item -ItemType Directory -Path (Join-Path $script:ghDir 'prompts') -Force | Out-Null
@@ -2904,7 +3112,7 @@ description: "Dependent prompt"
     }
 }
 
-Describe 'Invoke-ExtensionCollectionsGeneration - collection manifest errors' {
+Describe 'Invoke-ExtensionCollectionsGeneration - core manifest errors' {
     BeforeAll {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
 
@@ -2928,24 +3136,21 @@ Describe 'Invoke-ExtensionCollectionsGeneration - collection manifest errors' {
         Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    It 'Throws when collection id is empty' {
+    It 'Throws when the core manifest is missing' {
+        $collectionsDir = Join-Path $script:tempDir 'collections'
+        Remove-Item -Path "$collectionsDir/*" -Force -ErrorAction SilentlyContinue
+
+        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*does not exist*'
+    }
+
+    It 'Throws when the core manifest defines no collections metadata' {
         $collectionsDir = Join-Path $script:tempDir 'collections'
         Remove-Item -Path "$collectionsDir/*" -Force -ErrorAction SilentlyContinue
         @"
-id:
-name: empty-id
-"@ | Set-Content -Path (Join-Path $collectionsDir 'empty.collection.yml')
+schemaVersion: `"1.0`"
+"@ | Set-Content -Path (Join-Path $collectionsDir 'core-manifest.yml')
 
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*Collection id is required*'
-    }
-
-    It 'Throws when collection manifest is not a hashtable' {
-        $collectionsDir = Join-Path $script:tempDir 'collections'
-        Remove-Item -Path "$collectionsDir/*" -Force -ErrorAction SilentlyContinue
-        # YAML that parses as a scalar string
-        'just a string' | Set-Content -Path (Join-Path $collectionsDir 'bad.collection.yml')
-
-        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*must be a hashtable*'
+        { Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir } | Should -Throw '*does not define collections metadata*'
     }
 }
 
@@ -2989,50 +3194,27 @@ Describe 'Invoke-ExtensionCollectionsGeneration - README generation' {
 "@ | Set-Content -Path (Join-Path $templatesDir 'README.template.md')
         }
 
-        # Collection with a .collection.md body file
+        # Central manifest: README bodies are projected from each collection's intro.
         @"
-id: readme-test
-name: README Test
-displayName: HVE Core - README Test
-description: Test readme generation
-"@ | Set-Content -Path (Join-Path $collectionsDir 'readme-test.collection.yml')
-
-        'Body content for readme test.' | Set-Content -Path (Join-Path $collectionsDir 'readme-test.collection.md')
-
-        # hve-core needed for the defaults
-        @"
-id: hve-core
-name: HVE Core
-displayName: HVE Core
-description: All artifacts
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core.collection.yml')
-
-        'HVE Core body content.' | Set-Content -Path (Join-Path $collectionsDir 'hve-core.collection.md')
-
-        # hve-core-all collection with body
-        @"
-id: hve-core-all
-name: All
-displayName: HVE Core - All
-description: All combined
-"@ | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.yml')
-
-        'HVE Core All body content.' | Set-Content -Path (Join-Path $collectionsDir 'hve-core-all.collection.md')
-
-        # Collection without .collection.md body
-        @"
-id: no-readme
-name: No README
-displayName: HVE Core - No README
-description: Collection without body
-"@ | Set-Content -Path (Join-Path $collectionsDir 'no-readme.collection.yml')
+schemaVersion: `"1.0`"
+collections:
+  hve-core:
+    name: HVE Core
+    intro: HVE Core body content.
+  hve-core-all:
+    name: All
+    intro: HVE Core All body content.
+  readme-test:
+    name: README Test
+    intro: Body content for readme test.
+"@ | Set-Content -Path (Join-Path $collectionsDir 'core-manifest.yml')
     }
 
     AfterAll {
         Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    It 'Generates README files for collections with .collection.md' {
+    It 'Generates a README for a non-default collection from its intro' {
         $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
         $readmePath = Join-Path $script:tempDir 'extension/README.readme-test.md'
         Test-Path $readmePath | Should -BeTrue
@@ -3054,12 +3236,6 @@ description: Collection without body
         Test-Path $readmePath | Should -BeTrue
         $content = Get-Content -Path $readmePath -Raw
         $content | Should -Match 'HVE Core All body content'
-    }
-
-    It 'Skips README generation when .collection.md is missing' {
-        $null = Invoke-ExtensionCollectionsGeneration -RepoRoot $script:tempDir
-        $readmePath = Join-Path $script:tempDir 'extension/README.no-readme.md'
-        Test-Path $readmePath | Should -BeFalse
     }
 }
 

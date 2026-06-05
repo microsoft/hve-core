@@ -24,6 +24,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/CoreManifestHelpers.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot '../lib/Modules/CIHelpers.psm1') -Force
 
 #region Validation Helpers
@@ -222,6 +223,34 @@ function Find-AgentReferenceLineNumber {
     return 0
 }
 
+function Test-DictionaryKey {
+    <#
+    .SYNOPSIS
+        Checks whether a dictionary-like object contains a key.
+
+    .DESCRIPTION
+        YAML parsing can return OrderedDictionary instances, which implement
+        IDictionary but do not expose ContainsKey().
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter()]
+        [AllowNull()]
+        [object]$InputObject,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Name
+    )
+
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        return $InputObject.Contains($Name)
+    }
+
+    return $false
+}
+
 function Test-AgentHandoffNameReferences {
     <#
     .SYNOPSIS
@@ -290,7 +319,7 @@ function Test-AgentHandoffNameReferences {
             continue
         }
 
-        if ($data.ContainsKey('name')) {
+        if (Test-DictionaryKey -InputObject $data -Name 'name') {
             $rawName = $data.name
             if ($null -ne $rawName -and -not [string]::IsNullOrWhiteSpace([string]$rawName)) {
                 [void]$inventory.Add([string]$rawName)
@@ -298,7 +327,7 @@ function Test-AgentHandoffNameReferences {
         }
 
         $agentRefs = @()
-        if ($data.ContainsKey('agents') -and $data.agents) {
+        if ((Test-DictionaryKey -InputObject $data -Name 'agents') -and $data.agents) {
             foreach ($v in $data.agents) {
                 if ($v -is [string] -and -not [string]::IsNullOrWhiteSpace($v)) {
                     $agentRefs += [string]$v
@@ -307,9 +336,9 @@ function Test-AgentHandoffNameReferences {
         }
 
         $handoffRefs = @()
-        if ($data.ContainsKey('handoffs') -and $data.handoffs) {
+        if ((Test-DictionaryKey -InputObject $data -Name 'handoffs') -and $data.handoffs) {
             foreach ($h in $data.handoffs) {
-                if ($h -is [System.Collections.IDictionary] -and $h.ContainsKey('agent')) {
+                if ((Test-DictionaryKey -InputObject $h -Name 'agent')) {
                     $val = [string]$h.agent
                     if (-not [string]::IsNullOrWhiteSpace($val)) {
                         $handoffRefs += $val
@@ -330,7 +359,7 @@ function Test-AgentHandoffNameReferences {
     foreach ($relativePath in ($fileData.Keys | Sort-Object)) {
         $entry = $fileData[$relativePath]
         $allRefs = @()
-        foreach ($r in $entry.AgentRefs)   { $allRefs += @{ Value = $r; Section = 'agents' } }
+        foreach ($r in $entry.AgentRefs) { $allRefs += @{ Value = $r; Section = 'agents' } }
         foreach ($r in $entry.HandoffRefs) { $allRefs += @{ Value = $r; Section = 'handoffs' } }
 
         foreach ($ref in $allRefs) {
@@ -424,7 +453,35 @@ function Invoke-CollectionValidation {
     }
 
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
-    $collectionFiles = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File
+    $coreManifestPath = Join-Path -Path $collectionsDir -ChildPath 'core-manifest.yml'
+    if (-not (Test-Path -Path $coreManifestPath -PathType Leaf)) {
+        throw "core manifest not found at '$coreManifestPath'"
+    }
+    $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+
+    # Paths of artifacts the manifest tombstones (maturity removed/deprecated). These are
+    # intentionally excluded from every projected collection, so they must be exempt from
+    # the on-disk orphan check even though they no longer appear in any rendered manifest.
+    $tombstonedManifestPaths = @{}
+    foreach ($kindSection in @('agents', 'prompts', 'instructions', 'skills')) {
+        $section = Get-CoreManifestProperty -InputObject $coreManifest -Name $kindSection
+        foreach ($itemPath in (Get-CoreManifestKeys -InputObject $section)) {
+            $itemNode = Get-CoreManifestProperty -InputObject $section -Name $itemPath
+            $itemMaturity = [string](Get-CoreManifestProperty -InputObject $itemNode -Name 'maturity')
+            if ($null -eq (Get-CoreManifestMaturityRank -Maturity $itemMaturity)) {
+                $normalizedItemPath = ConvertTo-CoreManifestRelativePath -Path ([string]$itemPath)
+                $tombstonedManifestPaths[$normalizedItemPath] = $true
+            }
+        }
+    }
+
+    $collectionFiles = @(ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -All -RepoRoot $RepoRoot | Sort-Object { $_.id } | ForEach-Object {
+        [pscustomobject]@{
+            Name     = "$($_.id).collection.yml"
+            FullName = Join-Path -Path $collectionsDir -ChildPath "$($_.id).collection.yml"
+            Manifest = $_
+        }
+    })
 
     if ($collectionFiles.Count -eq 0) {
         Write-Host ' WARN No collection manifests found in collections/' -ForegroundColor Yellow
@@ -460,41 +517,55 @@ function Invoke-CollectionValidation {
     foreach ($file in $collectionFiles) {
         $baseName = $file.Name -replace '\.collection\.yml$', ''
         $collectionLabel = $baseName
-        $companionPath = Join-Path -Path $collectionsDir -ChildPath "$baseName.collection.md"
-        if (-not (Test-Path -Path $companionPath)) {
-            Write-Host " WARN $($file.Name): missing companion '$baseName.collection.md'" -ForegroundColor Yellow
-            Add-ValidationResult -Collection $collectionLabel -ErrorType 'MissingCompanionCollectionMd' -Message "missing companion '$baseName.collection.md'" -Severity 'Warning'
+
+        $mdContent = New-CollectionReadmeBodyFromCore -CoreManifest $coreManifest -CollectionId $baseName -RepoRoot $RepoRoot
+        $hasBegin = $mdContent.Contains($CollectionMdBeginMarker)
+        $hasEnd = $mdContent.Contains($CollectionMdEndMarker)
+
+        if ($hasBegin -xor $hasEnd) {
+            Write-Host "  WARN $($file.Name): projected README body has mismatched auto-generation markers" -ForegroundColor Yellow
+            Add-ValidationResult -Collection $collectionLabel -ErrorType 'MismatchedAutoGenerationMarkers' -Message 'projected README body has mismatched auto-generation markers' -Severity 'Warning'
         }
 
-        if (Test-Path -Path $companionPath) {
-            $mdContent = Get-Content -Path $companionPath -Raw
-            $hasBegin = $mdContent.Contains($CollectionMdBeginMarker)
-            $hasEnd = $mdContent.Contains($CollectionMdEndMarker)
-
-            if ($hasBegin -xor $hasEnd) {
-                Write-Host "  WARN $($file.Name): $baseName.collection.md has mismatched auto-generation markers" -ForegroundColor Yellow
-                Add-ValidationResult -Collection $collectionLabel -ErrorType 'MismatchedAutoGenerationMarkers' -Message "$baseName.collection.md has mismatched auto-generation markers" -Severity 'Warning'
-            }
-
-            if ($hasBegin -and $hasEnd) {
-                $beginIdx = $mdContent.IndexOf($CollectionMdBeginMarker)
-                $endIdx = $mdContent.IndexOf($CollectionMdEndMarker)
-                if ($endIdx -le $beginIdx) {
-                    Write-Host "  WARN $($file.Name): $baseName.collection.md has markers in wrong order" -ForegroundColor Yellow
-                    Add-ValidationResult -Collection $collectionLabel -ErrorType 'CollectionMarkersWrongOrder' -Message "$baseName.collection.md has markers in wrong order" -Severity 'Warning'
-                }
+        if ($hasBegin -and $hasEnd) {
+            $beginIdx = $mdContent.IndexOf($CollectionMdBeginMarker)
+            $endIdx = $mdContent.IndexOf($CollectionMdEndMarker)
+            if ($endIdx -le $beginIdx) {
+                Write-Host "  WARN $($file.Name): projected README body has markers in wrong order" -ForegroundColor Yellow
+                Add-ValidationResult -Collection $collectionLabel -ErrorType 'CollectionMarkersWrongOrder' -Message 'projected README body has markers in wrong order' -Severity 'Warning'
             }
         }
 
-        $manifest = Get-CollectionManifest -CollectionPath $file.FullName
+        $manifest = if ($file.PSObject.Properties.Name -contains 'Manifest') { $file.Manifest } else { Get-CollectionManifest -CollectionPath $file.FullName }
         $fileErrors = @()
         $seenItemKeys = @{}
 
         # Required fields
-        $requiredFields = @('id', 'name', 'description', 'items')
+        $requiredFields = @('id', 'name', 'descriptions', 'items')
         foreach ($field in $requiredFields) {
-            if (-not $manifest.ContainsKey($field) -or $null -eq $manifest[$field]) {
+            if (-not (Test-DictionaryKey -InputObject $manifest -Name $field) -or $null -eq $manifest[$field]) {
                 $fileErrors += @{ ErrorType = 'MissingRequiredField'; Message = "missing required field '$field'" }
+            }
+        }
+
+        # 'descriptions' must be a non-empty array of { channel, text } entries
+        if ((Test-DictionaryKey -InputObject $manifest -Name 'descriptions') -and $null -ne $manifest['descriptions']) {
+            $descriptions = $manifest['descriptions']
+            if ($descriptions -isnot [System.Collections.IEnumerable] -or $descriptions -is [string]) {
+                $fileErrors += @{ ErrorType = 'InvalidDescriptions'; Message = "'descriptions' must be an array of { channel, text } entries" }
+            }
+            elseif (@($descriptions).Count -eq 0) {
+                $fileErrors += @{ ErrorType = 'InvalidDescriptions'; Message = "'descriptions' must contain at least one entry" }
+            }
+            else {
+                foreach ($entry in $descriptions) {
+                    if ($entry -isnot [System.Collections.IDictionary] -or
+                        [string]::IsNullOrWhiteSpace([string]$entry['channel']) -or
+                        [string]::IsNullOrWhiteSpace([string]$entry['text'])) {
+                        $fileErrors += @{ ErrorType = 'InvalidDescriptions'; Message = "each 'descriptions' entry must define non-empty 'channel' and 'text'" }
+                        break
+                    }
+                }
             }
         }
 
@@ -526,12 +597,13 @@ function Invoke-CollectionValidation {
 
         # Prerelease description presence (warning)
         $hasPrereleaseDescription = $false
-        if ($manifest.ContainsKey('descriptions') -and $manifest.descriptions) {
-            $descriptions = $manifest.descriptions
-            if ($descriptions -is [System.Collections.IDictionary] -and $descriptions.Contains('prerelease')) {
-                $prereleaseValue = [string]$descriptions['prerelease']
-                if (-not [string]::IsNullOrWhiteSpace($prereleaseValue)) {
+        if ((Test-DictionaryKey -InputObject $manifest -Name 'descriptions') -and $manifest.descriptions -is [System.Collections.IEnumerable] -and
+            $manifest.descriptions -isnot [string]) {
+            foreach ($entry in $manifest.descriptions) {
+                if ($entry -is [System.Collections.IDictionary] -and [string]$entry['channel'] -eq 'prerelease' -and
+                    -not [string]::IsNullOrWhiteSpace([string]$entry['text'])) {
                     $hasPrereleaseDescription = $true
+                    break
                 }
             }
         }
@@ -542,7 +614,7 @@ function Invoke-CollectionValidation {
 
         # Validate collection-level maturity if present
         $collMaturity = $null
-        if ($manifest.ContainsKey('maturity') -and -not [string]::IsNullOrWhiteSpace([string]$manifest.maturity)) {
+        if ((Test-DictionaryKey -InputObject $manifest -Name 'maturity') -and -not [string]::IsNullOrWhiteSpace([string]$manifest.maturity)) {
             $collMaturity = [string]$manifest.maturity
             if ($allowedMaturities -notcontains $collMaturity) {
                 $fileErrors += @{ ErrorType = 'InvalidCollectionMaturity'; Message = "invalid collection maturity '$collMaturity' (allowed: $($allowedMaturities -join ', '))" }
@@ -556,7 +628,7 @@ function Invoke-CollectionValidation {
             $kind = $item.kind
             $absolutePath = Join-Path -Path $RepoRoot -ChildPath $itemPath
             $itemMaturity = $null
-            if ($item.ContainsKey('maturity')) {
+            if (Test-DictionaryKey -InputObject $item -Name 'maturity') {
                 $itemMaturity = [string]$item.maturity
             }
             if ([string]::IsNullOrWhiteSpace($itemMaturity)) {
@@ -777,10 +849,13 @@ function Invoke-CollectionValidation {
             $inThemed    = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId }).Count -gt 0
 
             if (-not $inCanonical) {
-                # Skip orphan failure when all themed occurrences are tombstoned (maturity:'removed').
+                # Skip orphan failure when all themed occurrences are tombstoned (maturity:'removed'),
+                # or when the manifest itself tombstones the artifact (removed/deprecated), in which
+                # case it is intentionally projected into no collection at all.
                 $themedActive  = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -ne 'removed' }).Count -gt 0
                 $themedRemoved = @($occurrences | Where-Object { $_.CollectionId -ne $canonicalCollectionId -and $_.Maturity -eq 'removed' }).Count -gt 0
-                if ($themedRemoved -and -not $themedActive) {
+                $manifestTombstoned = $tombstonedManifestPaths.ContainsKey($artifact.path)
+                if ($manifestTombstoned -or ($themedRemoved -and -not $themedActive)) {
                     Write-Verbose "Skipping orphan check for tombstoned item '$diskKey'"
                 } else {
                     Write-Host "  FAIL orphan: '$diskKey' is on disk but absent from '$canonicalCollectionId'" -ForegroundColor Red

@@ -5,7 +5,7 @@
 <#
 .SYNOPSIS
     Regression tests asserting that items tombstoned with `maturity: removed`
-    in any `collections/*.collection.yml` do not appear anywhere under
+    in `collections/core-manifest.yml` do not appear anywhere under
     `plugins/` (file paths or text content).
 
 .DESCRIPTION
@@ -25,18 +25,33 @@ BeforeAll {
     $script:CollectionsRoot = Join-Path $script:RepoRoot 'collections'
 
     $script:RemovedItems = @()
-    $collectionFiles = Get-ChildItem -Path $script:CollectionsRoot -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue
-    foreach ($file in $collectionFiles) {
-        $manifest = Get-Content -Path $file.FullName -Raw | ConvertFrom-Yaml
-        if ($null -eq $manifest -or $null -eq $manifest.items) { continue }
-        foreach ($item in $manifest.items) {
-            $effective = Resolve-CollectionItemMaturity -Maturity $item.maturity
-            if ($effective -eq 'removed') {
-                $script:RemovedItems += [pscustomobject]@{
-                    Collection = $file.Name
-                    Path       = $item.path
-                    Leaf       = Split-Path -Path $item.path -Leaf
-                    Kind       = $item.kind
+    $coreManifestPath = Join-Path -Path $script:CollectionsRoot -ChildPath 'core-manifest.yml'
+    if (Test-Path -Path $coreManifestPath) {
+        $coreManifest = Get-Content -Path $coreManifestPath -Raw | ConvertFrom-Yaml
+        $artifactKinds = [ordered]@{
+            agents       = 'agent'
+            prompts      = 'prompt'
+            instructions = 'instruction'
+            skills       = 'skill'
+        }
+        foreach ($kindKey in $artifactKinds.Keys) {
+            $artifactMap = $coreManifest[$kindKey]
+            if ($null -eq $artifactMap) { continue }
+            foreach ($entry in $artifactMap.GetEnumerator()) {
+                $item = $entry.Value
+                if ($null -eq $item) { continue }
+                $effective = Resolve-CollectionItemMaturity -Maturity $item.maturity
+                if ($effective -ne 'removed') { continue }
+                $itemPath = [string]$item.path
+                if ([string]::IsNullOrWhiteSpace($itemPath)) { $itemPath = [string]$entry.Key }
+                $collections = if ($item.collections) { @($item.collections) } else { @('(none)') }
+                foreach ($collection in $collections) {
+                    $script:RemovedItems += [pscustomobject]@{
+                        Collection = $collection
+                        Path       = $itemPath
+                        Leaf       = Split-Path -Path $itemPath -Leaf
+                        Kind       = $artifactKinds[$kindKey]
+                    }
                 }
             }
         }
@@ -63,7 +78,7 @@ Describe 'Removed maturity exclusion from plugins' {
             return
         }
         if ($script:RemovedItems.Count -eq 0) {
-            Set-ItResult -Skipped -Because 'no removed items declared in any collection manifest'
+            Set-ItResult -Skipped -Because 'no removed items declared in core-manifest.yml'
             return
         }
         if ($script:PluginFiles.Count -eq 0) {
@@ -95,7 +110,7 @@ Describe 'Removed maturity exclusion from plugins' {
             return
         }
         if ($script:RemovedItems.Count -eq 0) {
-            Set-ItResult -Skipped -Because 'no removed items declared in any collection manifest'
+            Set-ItResult -Skipped -Because 'no removed items declared in core-manifest.yml'
             return
         }
 

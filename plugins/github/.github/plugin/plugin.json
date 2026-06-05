@@ -1,6 +1,6 @@
 {
   "name": "github",
-  "description": "Experimental: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+  "description": "Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/github/"

@@ -380,7 +380,7 @@ display:
         $output | Should -Match 'maturity: preview'
     }
 
-    It 'Omits maturity when no source declares it' {
+    It 'Emits stable maturity when no source declares it' {
         $aggregateYaml = @"
 id: hve-core-all
 name: HVE Core All
@@ -409,7 +409,8 @@ display:
         Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
 
         $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
-        $output | Should -Not -Match 'maturity:'
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: preview'
     }
 
     It 'Inherits source collection-level maturity when item-level is absent' {
@@ -474,7 +475,8 @@ display:
         Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
 
         $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
-        $output | Should -Not -Match 'maturity:'
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: experimental'
     }
 
     It 'Strictest source maturity wins across multiple source collections' {
@@ -560,7 +562,8 @@ display:
         Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
 
         $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
-        $output | Should -Not -Match 'maturity:'
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: experimental'
     }
 }
 

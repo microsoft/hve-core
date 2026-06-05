@@ -43,7 +43,7 @@ The project is organized into these main areas:
 * Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates, typically organized into `{collection-id}` subdirectories.
-* Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
+* Collections (`collections/`) - The `core-manifest.yml` single source of truth defining bundled sets of agents, prompts, instructions, and skills.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
 ### Scripts Organization
@@ -111,12 +111,12 @@ All tracking files use markdown format with frontmatter and follow patterns from
 By convention, custom agents are organized under `.github/agents/{collection-id}/`. Each collection typically places its agents in a dedicated subdirectory (e.g., `.github/agents/hve-core/`, `.github/agents/ado/`). Subagents are typically organized under `.github/agents/{collection-id}/subagents/`.
 Parent agents reference subagents using glob paths like `.github/agents/**/researcher-subagent.agent.md` so resolution works regardless of nesting depth.
 
-Collection manifests in `collections/` define bundles of agents, prompts, instructions, and skills:
+Collections are defined entirely in `collections/core-manifest.yml`, the single source of truth for bundles of agents, prompts, instructions, and skills:
 
-* Each collection has a YAML file (`*.collection.yml`) listing items with `path` and `kind` fields, and a markdown file (`*.collection.md`) describing the collection.
-* Collections must include all subagent dependencies used by their referenced custom agents. When a parent agent declares subagents in its `agents:` frontmatter, those subagent files must appear in the collection YAML.
-* When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update all affected `collections/*.collection.yml` and `collections/*.collection.md` files.
-* After any change to collection YAML or markdown files, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
+* `core-manifest.yml` records each artifact's path, kind, per-collection membership, and maturity, plus per-collection metadata (`intro`, `notice`, `display`, descriptions). The `*.collection.yml` / `*.collection.md` files are no longer committed; consumers project them in-memory from the manifest.
+* Collections must include all subagent dependencies used by their referenced custom agents. When a parent agent declares subagents in its `agents:` frontmatter, those subagent files must appear in the manifest with the same collection membership.
+* When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update `collections/core-manifest.yml` only.
+* After any change to `core-manifest.yml`, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
 * Run `npm run plugin:validate` to confirm collection metadata is correct.
 <!-- </project-structure> -->
 

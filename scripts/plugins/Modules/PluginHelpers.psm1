@@ -9,6 +9,7 @@
 #Requires -Version 7.0
 
 Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CoreManifestHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
 # Pure Functions (no file system side effects)
@@ -157,8 +158,8 @@ function New-PluginManifestContent {
 
     .PARAMETER Collection
     Collection manifest hashtable passed to Resolve-CollectionDescription.
-    Must contain a 'description' key and may contain a 'descriptions' map
-    with 'stable' and 'prerelease' overrides.
+    Must contain a 'description' key and may contain a 'descriptions' array
+    of '{ channel, text }' entries with 'stable' and 'prerelease' overrides.
 
     .PARAMETER Channel
     Release channel ('Stable' or 'PreRelease') used to pick the description
@@ -253,7 +254,8 @@ function New-PluginReadmeContent {
 
     .PARAMETER Items
     Array of processed item objects. Each object must have Name, Description,
-    and Kind properties.
+    and Kind properties, and an optional Maturity property used to drive the
+    per-artifact maturity disclaimer.
 
     .PARAMETER Maturity
         Optional collection-level maturity string. When 'experimental', an
@@ -323,6 +325,37 @@ function New-PluginReadmeContent {
     if ($Collection.ContainsKey('notice') -and -not [string]::IsNullOrWhiteSpace($Collection.notice)) {
         [void]$sb.AppendLine()
         [void]$sb.AppendLine($Collection.notice.TrimEnd())
+    }
+
+    # Inject a consumer-facing maturity disclaimer driven by the per-artifact
+    # maturity tiers actually present in this bundle. This is distinct from the
+    # collection-level maturity notice above and from per-collection CAUTION
+    # admonitions: it tells consumers exactly which stability tiers ship and warns
+    # plainly when any unstable (preview or experimental) assets are included.
+    $presentTiers = @(
+        $Items |
+            ForEach-Object { ([string]$_.Maturity).Trim().ToLowerInvariant() } |
+            Where-Object { $_ -in @('stable', 'preview', 'experimental') } |
+            Select-Object -Unique
+    )
+    $hasStable = $presentTiers -contains 'stable'
+    $hasPreview = $presentTiers -contains 'preview'
+    $hasExperimental = $presentTiers -contains 'experimental'
+
+    if ($hasPreview -or $hasExperimental) {
+        $tierLabels = [System.Collections.Generic.List[string]]::new()
+        if ($hasStable) { [void]$tierLabels.Add('stable') }
+        if ($hasPreview) { [void]$tierLabels.Add('preview') }
+        if ($hasExperimental) { [void]$tierLabels.Add('experimental') }
+        $tierList = [string]::Join(', ', $tierLabels)
+
+        $unstableLabels = [System.Collections.Generic.List[string]]::new()
+        if ($hasPreview) { [void]$unstableLabels.Add('preview') }
+        if ($hasExperimental) { [void]$unstableLabels.Add('experimental') }
+        $unstableList = [string]::Join(' and ', $unstableLabels)
+
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Maturity** `u{2014} This bundle includes $tierList assets. The $unstableList assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.")
     }
 
     # Inject collection description content as an Overview section.
@@ -825,6 +858,7 @@ function Write-PluginDirectory {
             Name        = $itemName -replace '\.md$', ''
             Description = $description
             Kind        = $kind
+            Maturity    = [string]$item.maturity
         }
 
         # Update counts and collect parent directories for manifest paths
@@ -912,9 +946,10 @@ function Write-PluginDirectory {
 
     # Generate README.md
     $readmePath = Join-Path -Path $pluginRoot -ChildPath 'README.md'
-    $collectionMdPath = Join-Path -Path $RepoRoot -ChildPath "collections/$collectionId.collection.md"
-    $collectionContent = if (Test-Path -Path $collectionMdPath) {
-        Get-Content -Path $collectionMdPath -Raw
+    $coreManifestPath = Join-Path -Path $RepoRoot -ChildPath 'collections/core-manifest.yml'
+    $collectionContent = if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        New-CollectionReadmeBodyFromCore -CoreManifest $coreManifest -CollectionId $collectionId -RepoRoot $RepoRoot
     } else { $null }
     $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity -CollectionContent $collectionContent -Channel $Channel
     [void]$generatedFiles.Add($readmePath)

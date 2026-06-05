@@ -6,7 +6,7 @@
   "required": [
     "id",
     "name",
-    "description",
+    "descriptions",
     "items"
   ],
   "properties": {
@@ -20,19 +20,19 @@
       "minLength": 1,
       "description": "Human-readable display name."
     },
-    "description": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Brief description of the collection purpose."
-    },
     "descriptions": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "stable": { "type": "string", "minLength": 1 },
-        "prerelease": { "type": "string", "minLength": 1 }
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["channel", "text"],
+        "properties": {
+          "channel": { "type": "string", "enum": ["stable", "prerelease"] },
+          "text": { "type": "string", "minLength": 1 }
+        }
       },
-      "description": "Optional per-channel description overrides. Falls back to 'description' when omitted."
+      "description": "Per-channel description text. Each entry pairs a release channel ('stable' or 'prerelease') with its description text."
     },
     "displayNames": {
       "type": "object",

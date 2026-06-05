@@ -672,7 +672,7 @@ function Copy-CollectionArtifacts {
     $preparedPkgJson = Get-Content -Path (Join-Path $ExtensionDirectory "package.json") -Raw | ConvertFrom-Json
 
     $maturityMap = @{}
-    if ($PreRelease -and -not [string]::IsNullOrWhiteSpace($CollectionManifestPath) -and (Test-Path $CollectionManifestPath)) {
+    if ($PreRelease -and -not [string]::IsNullOrWhiteSpace($CollectionManifestPath)) {
         try {
             $manifest = Get-CollectionManifest -CollectionPath $CollectionManifestPath
             $maturityMap = Build-CollectionMaturityMap -CollectionManifest $manifest
