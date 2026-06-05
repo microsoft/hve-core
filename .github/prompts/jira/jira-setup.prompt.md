@@ -49,6 +49,8 @@ Authentication is selected automatically by the Jira skill:
 * The `~/.jira.env` file lives in the user's home directory, outside any repository, so it cannot be accidentally committed.
 * Do NOT write credentials to `.vscode/mcp.json` or any other tracked file.
 * Do NOT modify shell profile files (`.zshrc`, `.bashrc`, `.profile`) without explicit user confirmation.
+* After sourcing `~/.jira.env`, do NOT run commands that dump the full environment (`printenv` without a filter, `env`, `set`, `export -p`, `echo $JIRA_API_TOKEN`, `echo $JIRA_PAT`). Only `printenv | grep -i JIRA` with masked display is allowed.
+* Never include raw credential values, full HTTP request headers, or `curl -v` / `--trace` output in chat responses, even when troubleshooting.
 
 ### Credential Security Warning
 
@@ -260,7 +262,8 @@ set -a && source ~/.jira.env && set +a && python3 .github/skills/jira/jira/scrip
 * Must NOT modify shell profile files without explicit user confirmation.
 * Must NOT rely on `export` commands in the agent's terminal as the primary configuration method (terminal sessions are isolated from the user).
 * Must NOT solicit credentials through chat messages or the ask-questions tool. Always direct the user to edit the file in the editor.
-* MUST set `chmod 600` on `~/.jira.env` after creation to restrict file permissions to the owner.
+* Must NOT run unfiltered environment dumps (`env`, `set`, `export -p`, `printenv` without grep) after sourcing `~/.jira.env`.
+* Must NOT include raw credentials, `Authorization` headers, or verbose HTTP traces in chat output.
 
 ## Completion Criteria
 
