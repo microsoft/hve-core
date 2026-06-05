@@ -4,7 +4,6 @@ version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "shapely>=2.0",
-    "scipy>=1.11",
     "networkx>=3.0",
     "keyring>=24.0",
 ]

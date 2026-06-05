@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["shapely>=2.0", "scipy>=1.11", "networkx>=3.0", "keyring>=24.0"]
+# dependencies = ["shapely>=2.0", "networkx>=3.0", "keyring>=24.0"]
 # ///
 """Mural REST API client and CLI.
 
@@ -12,7 +12,7 @@ The auth surface covers env-var resolution, token-store I/O, PKCE, the
 loopback OAuth ``auth login`` / ``logout`` / ``status`` subcommands. Mural REST
 resource subcommands (workspace, room, mural, widget) live in this same module.
 
-Runtime third-party dependencies are ``shapely``, ``scipy``, and ``networkx``;
+Runtime third-party dependencies are ``shapely`` and ``networkx``;
 ``shapely`` requires GEOS >= 3.11 to be present on the host. Test seams are
 exposed via private parameters (``_http``, ``_now``, ``_open_browser``,
 ``_server_factory``) so unit tests can substitute fakes without

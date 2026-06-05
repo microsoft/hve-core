@@ -403,8 +403,9 @@ def cluster_widgets(
     Projects each widget's bounding-box center (computed via
     ``_shape_to_rect`` so the rotation-aware policy of the spatial module
     is respected) into a 2D point, then runs a density-based clustering
-    pass using a ``scipy.spatial.cKDTree`` for ``eps_px``-radius
-    neighborhood queries. Empty input returns ``[]``. Noise points (those
+    pass using a ``shapely.strtree.STRtree`` box query refined by
+    Euclidean distance for ``eps_px``-radius neighborhood queries. Empty
+    input returns ``[]``. Noise points (those
     with fewer than ``min_samples`` neighbors within ``eps_px``) are
     omitted; setting ``min_samples=1`` keeps isolated widgets as
     singletons. Each returned cluster is a sorted list of widget ids; the
@@ -419,7 +420,8 @@ def cluster_widgets(
         raise ValueError(f"eps_px must be > 0; got {eps_px!r}")
     if min_samples < 1:
         raise ValueError(f"min_samples must be >= 1; got {min_samples!r}")
-    from scipy.spatial import cKDTree
+    from shapely.geometry import Point, box
+    from shapely.strtree import STRtree
 
     ids: list[str] = []
     points: list[tuple[float, float]] = []
@@ -432,8 +434,20 @@ def cluster_widgets(
                 rect["y"] + rect["h"] / 2.0,
             )
         )
-    tree = cKDTree(points)
-    neighbors = tree.query_ball_point(points, r=eps_px)
+    tree = STRtree([Point(px, py) for px, py in points])
+    eps_sq = eps_px * eps_px
+    neighbors: list[list[int]] = []
+    for cx, cy in points:
+        candidates = tree.query(box(cx - eps_px, cy - eps_px, cx + eps_px, cy + eps_px))
+        nbrs: list[int] = []
+        for j in candidates:
+            j_int = int(j)
+            jx, jy = points[j_int]
+            dx = jx - cx
+            dy = jy - cy
+            if dx * dx + dy * dy <= eps_sq:
+                nbrs.append(j_int)
+        neighbors.append(nbrs)
 
     unclassified = -2
     noise = -1
