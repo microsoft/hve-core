@@ -1,6 +1,6 @@
 {
   "name": "design-thinking",
-  "description": "Experimental: Design Thinking coaching identity and methodology across nine methods. Available only via pre-release channel. Breaking changes possible. Feedback: github.com/microsoft/hve-core/issues",
+  "description": "Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/design-thinking/"

@@ -167,6 +167,37 @@ BeforeAll {
         Set-Content -Path $fullPath -Value "---`ndescription: test agent`n---`n$Body"
     }
 
+    function Set-CoreManifestAgentReferences {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$RootPath,
+
+            [Parameter(Mandatory = $true)]
+            [string]$Path,
+
+            [Parameter()]
+            [string[]]$RequiresAgents = @(),
+
+            [Parameter()]
+            [object[]]$Handoffs = @(),
+
+            [Parameter()]
+            [string]$Body = ''
+        )
+
+        $frontmatter = [ordered]@{ description = 'test agent' }
+        if ($RequiresAgents.Count -gt 0) {
+            $frontmatter.agents = @($RequiresAgents)
+        }
+        if ($Handoffs.Count -gt 0) {
+            $frontmatter.handoffs = @($Handoffs)
+        }
+
+        $yaml = (ConvertTo-Yaml -Data $frontmatter).TrimEnd()
+        $fullPath = Join-Path $RootPath $Path
+        Set-Content -Path $fullPath -Value "---`n$yaml`n---`n$Body"
+    }
+
     function Format-CoreManifestMaturityViolation {
         param(
             [Parameter(Mandatory = $true)]
@@ -362,10 +393,34 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $result.ErrorCount | Should -Be 0
     }
 
+    It 'T1a: fails when a manifest entry declares requires' {
+        $manifest = New-CoreManifestFixture
+        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.Errors | Should -Contain "agents entry '$script:sourceAgent' must not define 'requires'; declare subagent dependencies in the asset frontmatter 'agents' list instead."
+    }
+
+    It 'T1b: fails when a manifest entry declares handoffs' {
+        $manifest = New-CoreManifestFixture
+        $manifest.agents[$script:sourceAgent].handoffs = @(
+            [ordered]@{ agent = 'Exp Agent'; label = 'Continue' }
+        )
+        Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
+
+        $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
+
+        $result.Success | Should -BeFalse
+        $result.Errors | Should -Contain "agents entry '$script:sourceAgent' must not define 'handoffs'; declare handoffs in the asset frontmatter instead."
+    }
+
     It 'T2: fails when a stable agent requires an experimental agent' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Exp Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -379,7 +434,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         $manifest.agents[$script:sourceAgent].maturity = 'experimental'
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Exp Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -392,7 +447,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         $manifest.agents[$script:sourceAgent].maturity = 'experimental'
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Stable Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Stable Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -404,7 +459,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
     It 'T5: fails when a stable agent hands off to an experimental agent' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].handoffs = @(
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -Handoffs @(
             [ordered]@{ agent = 'Exp Agent'; prompt = 'follow up manually'; label = 'Continue' }
         )
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
@@ -420,7 +475,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
         Add-CoreManifestPrompt -RootPath $script:repoRoot -Manifest $manifest -Path '.github/prompts/test/expprompt.prompt.md' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].handoffs = @(
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -Handoffs @(
             [ordered]@{ agent = 'Stable Agent'; prompt = '/expprompt'; label = 'Run' }
         )
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
@@ -436,7 +491,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/stable.agent.md' -Name 'Stable Agent' -Maturity 'stable'
         Add-CoreManifestPrompt -RootPath $script:repoRoot -Manifest $manifest -Path '.github/prompts/test/expprompt.prompt.md' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].handoffs = @(
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -Handoffs @(
             [ordered]@{ agent = 'Stable Agent'; prompt = 'expprompt by hand'; label = 'Run' }
         )
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
@@ -494,7 +549,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
     It 'T11: skips a deprecated target maturity' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/dep.agent.md' -Name 'Dep Agent' -Maturity 'deprecated'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Dep Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Dep Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -506,7 +561,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
     It 'T12: skips a removed target maturity' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/gone.agent.md' -Name 'Gone Agent' -Maturity 'removed'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Gone Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Gone Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -518,7 +573,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
     It 'T13: fails when a stable agent requires a preview agent' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/prev.agent.md' -Name 'Prev Agent' -Maturity 'preview'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Prev Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Prev Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -532,7 +587,7 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         $manifest.agents[$script:sourceAgent].maturity = 'preview'
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp.agent.md' -Name 'Exp Agent' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp Agent') }
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Exp Agent')
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath
@@ -546,11 +601,9 @@ Describe 'Invoke-CoreManifestValidation maturity dependency rule' {
         $manifest = New-CoreManifestFixture
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp-a.agent.md' -Name 'Exp A' -Maturity 'experimental'
         Add-CoreManifestAgent -RootPath $script:repoRoot -Manifest $manifest -Path '.github/agents/test/exp-b.agent.md' -Name 'Exp B' -Maturity 'experimental'
-        $manifest.agents[$script:sourceAgent].requires = [ordered]@{ agents = @('Exp A', 'Exp B') }
-        $manifest.agents[$script:sourceAgent].handoffs = @(
+        Set-CoreManifestAgentReferences -RootPath $script:repoRoot -Path $script:sourceAgent -RequiresAgents @('Exp A', 'Exp B') -Handoffs @(
             [ordered]@{ agent = 'Exp A'; prompt = 'follow up manually'; label = 'Continue' }
-        )
-        Set-CoreManifestAgentBody -RootPath $script:repoRoot -Path $script:sourceAgent -Body '#file:.github/instructions/test/test.instructions.md'
+        ) -Body '#file:.github/instructions/test/test.instructions.md'
         Write-CoreManifestFixture -ManifestPath $script:manifestPath -Manifest $manifest
 
         $result = Invoke-CoreManifestValidation -RepoRoot $script:repoRoot -ManifestPath $script:manifestPath

@@ -12,19 +12,25 @@ Describe 'Resolve-CollectionDescription' -Tag 'Unit' {
             Should -Not -BeNullOrEmpty
     }
 
-    It 'Returns descriptions.prerelease on PreRelease channel when present' {
+    It 'Returns prerelease entry on PreRelease channel when present' {
         $manifest = @{
             description  = 'Default'
-            descriptions = @{ stable = 'Stable override'; prerelease = 'Pre override' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable override' }
+                @{ channel = 'prerelease'; text = 'Pre override' }
+            )
         }
         $result = Resolve-CollectionDescription -CollectionManifest $manifest -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Pre override'
     }
 
-    It 'Returns descriptions.stable on Stable channel when present' {
+    It 'Returns stable entry on Stable channel when present' {
         $manifest = @{
             description  = 'Default'
-            descriptions = @{ stable = 'Stable override'; prerelease = 'Pre override' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable override' }
+                @{ channel = 'prerelease'; text = 'Pre override' }
+            )
         }
         $result = Resolve-CollectionDescription -CollectionManifest $manifest -Channel 'Stable' -DefaultDescription 'Fallback'
         $result | Should -Be 'Stable override'
@@ -33,7 +39,9 @@ Describe 'Resolve-CollectionDescription' -Tag 'Unit' {
     It 'Falls back to top-level description when channel-specific entry is missing' {
         $manifest = @{
             description  = 'Top-level description'
-            descriptions = @{ stable = 'Stable only' }
+            descriptions = @(
+                @{ channel = 'stable'; text = 'Stable only' }
+            )
         }
         $result = Resolve-CollectionDescription -CollectionManifest $manifest -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Top-level description'
@@ -48,7 +56,9 @@ Describe 'Resolve-CollectionDescription' -Tag 'Unit' {
     It 'Treats whitespace-only channel value as missing and falls back to top-level description' {
         $manifest = @{
             description  = 'Top-level description'
-            descriptions = @{ prerelease = '   ' }
+            descriptions = @(
+                @{ channel = 'prerelease'; text = '   ' }
+            )
         }
         $result = Resolve-CollectionDescription -CollectionManifest $manifest -Channel 'PreRelease' -DefaultDescription 'Fallback'
         $result | Should -Be 'Top-level description'

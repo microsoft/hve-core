@@ -1,15 +1,11 @@
 <!-- markdownlint-disable-file -->
 # GitHub Backlog Management
 
-Experimental: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues
+Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
 ## Overview
 
 Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
-
-## Channel distribution
-
-Plugins (the `plugins/<id>/` committed tree and the `.github/plugin/marketplace.json` entry) ship the PreRelease description text only. The `.vsix` extension package ships either Stable or PreRelease text depending on which channel was packaged. `descriptions.prerelease` is required for any collection that ships a plugin.
 
 ## Included Artifacts
 
@@ -17,30 +13,30 @@ Plugins (the `plugins/<id>/` committed tree and the `.github/plugin/marketplace.
 
 ### Chat Agents
 
-| Name                       | Description                                                                       |
-|----------------------------|-----------------------------------------------------------------------------------|
-| **github-backlog-manager** | GitHub backlog orchestrator for triage, discovery, sprint planning, and execution |
+| Name                       | Description                                                                                                            |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------|
+| **github-backlog-manager** | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution |
 
 ### Prompts
 
-| Name                       | Description                                                                                                         |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------|
-| **github-add-issue**       | Create a GitHub issue using discovered repository templates and conversational field collection                     |
-| **github-discover-issues** | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                    |
-| **github-execute-backlog** | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file |
-| **github-sprint-plan**     | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                           |
-| **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                     |
-| **github-triage-issues**   | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                |
+| Name                       | Description                                                                                                                                      |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| **github-add-issue**       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
+| **github-discover-issues** | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
+| **github-execute-backlog** | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
+| **github-sprint-plan**     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                                                  |
+| **github-triage-issues**   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
 
 ### Instructions
 
 | Name                                | Description                                                                                                                                                                                                                                                 |
 |-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **github/community-interaction**    | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
-| **github/github-backlog-discovery** | GitHub issue backlog discovery: artifact-driven, user-centric, search-based                                                                                                                                                                                 |
-| **github/github-backlog-planning**  | GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence                                                                                                                                                   |
-| **github/github-backlog-triage**    | GitHub issue backlog triage: label suggestion, milestone assignment, and duplicate detection                                                                                                                                                                |
-| **github/github-backlog-update**    | GitHub issue backlog execution: consumes planning handoffs and runs issue operations                                                                                                                                                                        |
+| **github/github-backlog-discovery** | Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery                                                                                                                                          |
+| **github/github-backlog-planning**  | Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence                                                                                                              |
+| **github/github-backlog-triage**    | Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection                                                                                                                             |
+| **github/github-backlog-update**    | Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations                                                                                                                                           |
 | **shared/hve-core-location**        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills
@@ -56,6 +52,40 @@ Plugins (the `plugins/<id>/` committed tree and the `.github/plugin/marketplace.
 ```bash
 copilot plugin install github@hve-core
 ```
+
+## Agents
+
+| Agent                  | Description                                                                                                                                                   |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| github-backlog-manager | Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core |
+
+## Commands
+
+| Command                | Description                                                                                                                                      |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| github-add-issue       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
+| github-discover-issues | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
+| github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
+| github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
+| github-suggest         | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
+| github-triage-issues   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
+
+## Instructions
+
+| Instruction                           | Description                                                                                                                                                                                                                                                 |
+|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| community-interaction.instructions    | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
+| github-backlog-discovery.instructions | Discovery protocol for GitHub backlog management - artifact-driven, user-centric, and search-based issue discovery                                                                                                                                          |
+| github-backlog-planning.instructions  | Reference specification for GitHub backlog management tooling - planning files, search protocols, similarity assessment, and state persistence                                                                                                              |
+| github-backlog-triage.instructions    | Triage workflow for GitHub issue backlog management - automated label suggestion, milestone assignment, and duplicate detection                                                                                                                             |
+| github-backlog-update.instructions    | Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations                                                                                                                                           |
+| hve-core-location.instructions        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+
+## Skills
+
+| Skill            | Description                                                                                                                   |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| gh-code-scanning | Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core |
 
 ---
 

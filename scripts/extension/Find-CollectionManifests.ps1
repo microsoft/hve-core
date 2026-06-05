@@ -23,6 +23,7 @@ $ErrorActionPreference = 'Stop'
 
 # Import CI helpers for output writing
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../collections/Modules/CoreManifestHelpers.psm1") -Force
 
 #region Functions
 
@@ -31,8 +32,8 @@ function Find-CollectionManifestsCore {
     .SYNOPSIS
         Discovers collection manifest files and builds a GitHub Actions matrix.
     .DESCRIPTION
-        Reads *.collection.yml files from the specified directory, parses each with
-        ConvertFrom-Yaml, and filters out collections whose maturity is deprecated
+        Reads collection metadata from core-manifest.yml in the specified directory,
+        and filters out collections whose maturity is deprecated
         or removed. Per-item maturity gating (stable/preview/experimental) is
         enforced downstream by Prepare-Extension via Get-AllowedMaturities;
         collections themselves are not channel-gated as a whole.
@@ -55,9 +56,9 @@ function Find-CollectionManifestsCore {
     $channel = $Channel.Trim()
     if (-not $channel) { $channel = 'Stable' }
 
-    $collectionFiles = Get-ChildItem -Path $CollectionsDir -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue | Sort-Object Name
-    if (-not $collectionFiles -or $collectionFiles.Count -eq 0) {
-        Write-Warning "No collection manifest files found in $CollectionsDir"
+    $coreManifestPath = Join-Path -Path $CollectionsDir -ChildPath 'core-manifest.yml'
+    if (-not (Test-Path -Path $coreManifestPath -PathType Leaf)) {
+        Write-Warning "No core manifest found in $CollectionsDir"
         return [PSCustomObject]@{
             MatrixJson  = '{"include":[]}'
             MatrixItems = @()
@@ -65,16 +66,17 @@ function Find-CollectionManifestsCore {
         }
     }
 
+    $repoRoot = Split-Path -Path $CollectionsDir -Parent
+    $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+    $collections = @(ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -All -RepoRoot $repoRoot | Sort-Object { $_.id })
+
     $matrixItems = @()
     $skipped = @()
 
-    foreach ($file in $collectionFiles) {
-        $content = Get-Content -Path $file.FullName -Raw
-        $manifest = ConvertFrom-Yaml -Yaml $content
-
+    foreach ($manifest in $collections) {
         $id = [string]$manifest.id
-        $name = if ($manifest.ContainsKey('name')) { [string]$manifest.name } else { $id }
-        $maturity = if ($manifest.ContainsKey('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
+        $name = if ($manifest.Contains('name') -and -not [string]::IsNullOrWhiteSpace([string]$manifest.name)) { [string]$manifest.name } else { $id }
+        $maturity = if ($manifest.Contains('maturity') -and $manifest.maturity) { [string]$manifest.maturity } else { 'stable' }
 
         # Always skip removed
         if ($maturity -eq 'removed') {
@@ -97,7 +99,7 @@ function Find-CollectionManifestsCore {
         $matrixItems += @{
             id       = $id
             name     = $name
-            manifest = $file.FullName -replace '\\', '/'
+            manifest = (Join-Path -Path $CollectionsDir -ChildPath "$id.collection.yml") -replace '\\', '/'
             maturity = $maturity
         }
     }

@@ -12,55 +12,55 @@
     {
       "name": "ado",
       "source": "ado",
-      "description": "Experimental: Azure DevOps work item management, build monitoring, and pull request creation. May change. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "coding-standards",
       "source": "coding-standards",
-      "description": "Experimental: Coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, Terraform. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "data-science",
       "source": "data-science",
-      "description": "Experimental: Eval dataset creation, data spec generation, Jupyter notebooks, and Streamlit dashboards. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: Eval datasets, data specs, Jupyter notebooks, and Streamlit dashboards. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "design-thinking",
       "source": "design-thinking",
-      "description": "Experimental: Design Thinking coaching identity and methodology across nine methods. Available only via pre-release channel. Breaking changes possible. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "github",
       "source": "github",
-      "description": "Experimental: GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "hve-core",
       "source": "hve-core",
-      "description": "Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "hve-core-all",
       "source": "hve-core-all",
-      "description": "Experimental: Full bundle of all HVE Core agents, prompts, instructions, and skills. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: Full bundle of all HVE Core agents, prompts, instructions, and skills. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "project-planning",
       "source": "project-planning",
-      "description": "Experimental: PRDs, BRDs, ADRs, and architecture diagrams. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: PRDs, BRDs, ADRs, and architecture diagrams. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "security",
       "source": "security",
-      "description": "Experimental: Security review, planning, incident response, risk assessment, and vulnerability analysis. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+      "description": "Preview & Experimental: Security review, planning, incident response, and risk assessment. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     }
   ]

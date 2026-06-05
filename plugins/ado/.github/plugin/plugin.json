@@ -1,6 +1,6 @@
 {
   "name": "ado",
-  "description": "Experimental: Azure DevOps work item management, build monitoring, and pull request creation. May change. Feedback: github.com/microsoft/hve-core/issues",
+  "description": "Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/ado/"

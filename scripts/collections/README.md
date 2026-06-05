@@ -21,6 +21,16 @@ and plugin generation.
 * PowerShell 7.0+
 * PowerShell-Yaml module (`Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7`)
 
+## Maintainer Note: Channel Distribution
+
+This note is for maintainers and is intentionally kept out of the generated
+consumer-facing collection READMEs.
+
+Plugins (the `plugins/<id>/` committed tree and the `.github/plugin/marketplace.json`
+entry) ship the PreRelease description text only. The `.vsix` extension package
+ships either Stable or PreRelease text depending on which channel was packaged.
+`descriptions.prerelease` is required for any collection that ships a plugin.
+
 ## Adding a New Collection
 
 1. Add the collection metadata to `collections/core-manifest.yml` under

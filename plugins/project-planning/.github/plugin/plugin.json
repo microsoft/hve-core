@@ -1,6 +1,6 @@
 {
   "name": "project-planning",
-  "description": "Experimental: PRDs, BRDs, ADRs, and architecture diagrams. AS-IS. Feedback: github.com/microsoft/hve-core/issues",
+  "description": "Preview & Experimental: PRDs, BRDs, ADRs, and architecture diagrams. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/hve-core/",

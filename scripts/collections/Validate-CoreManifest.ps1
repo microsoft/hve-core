@@ -103,7 +103,6 @@ function Invoke-CoreManifestValidation {
         Add-Error "Top-level section 'collections' must not be empty."
     }
 
-    $knownAgentNames = @(Get-CoreManifestAgentDisplayNames -RepoRoot $RepoRoot)
     $discoveredArtifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     foreach ($discoveredArtifact in (Get-CoreManifestArtifactFiles -RepoRoot $RepoRoot)) {
         [void]$discoveredArtifacts.Add($discoveredArtifact)
@@ -142,7 +141,7 @@ function Invoke-CoreManifestValidation {
                 Add-Error "$sectionName entry '$artifactKey' path '$entryPath' must be repo-relative and must not traverse outside the repo."
             }
 
-            $referenceMetadataResult = Test-CoreManifestReferenceMetadata -Section $sectionName -ArtifactKey $artifactKey -Entry $entry -KnownAgentNames $knownAgentNames
+            $referenceMetadataResult = Test-CoreManifestReferenceMetadata -Section $sectionName -ArtifactKey $artifactKey -Entry $entry
             foreach ($referenceError in @($referenceMetadataResult.Errors)) {
                 Add-Error $referenceError
             }
@@ -192,7 +191,6 @@ function Invoke-CoreManifestValidation {
                 Section     = $sectionName
                 Maturity    = $entryMaturity
                 Collections = @($nonEmptyCollections)
-                Entry       = $entry
                 SourceFile  = $sourceFile
             }
         }
@@ -210,24 +208,21 @@ function Invoke-CoreManifestValidation {
         }
 
         $edges = [System.Collections.Generic.List[hashtable]]::new()
-        $sourceEntry = $sourceMetadata.Entry
+        $sourceFrontmatter = Get-CoreManifestAssetFrontmatter -SourcePath $sourceMetadata.SourceFile
 
-        $requires = Get-CoreManifestProperty -InputObject $sourceEntry -Name 'requires'
-        if ($null -ne $requires) {
-            $requiredAgents = Get-CoreManifestProperty -InputObject $requires -Name 'agents'
-            foreach ($agentReference in @($requiredAgents)) {
-                if ([string]::IsNullOrWhiteSpace([string]$agentReference)) {
-                    continue
-                }
+        $requiredAgents = Get-CoreManifestProperty -InputObject $sourceFrontmatter -Name 'agents'
+        foreach ($agentReference in @($requiredAgents)) {
+            if ([string]::IsNullOrWhiteSpace([string]$agentReference)) {
+                continue
+            }
 
-                $target = Resolve-CoreManifestReferenceTarget -Reference ([string]$agentReference) -ReferenceKind 'agent' -AgentNameIndex $agentNameIndex -MaturityMap $maturityMap
-                if (-not [string]::IsNullOrWhiteSpace($target)) {
-                    $edges.Add(@{ Target = $target; EdgeType = 'requires' })
-                }
+            $target = Resolve-CoreManifestReferenceTarget -Reference ([string]$agentReference) -ReferenceKind 'agent' -AgentNameIndex $agentNameIndex -MaturityMap $maturityMap
+            if (-not [string]::IsNullOrWhiteSpace($target)) {
+                $edges.Add(@{ Target = $target; EdgeType = 'requires' })
             }
         }
 
-        $handoffs = Get-CoreManifestProperty -InputObject $sourceEntry -Name 'handoffs'
+        $handoffs = Get-CoreManifestProperty -InputObject $sourceFrontmatter -Name 'handoffs'
         foreach ($handoff in @($handoffs)) {
             if ($null -eq $handoff) {
                 continue
