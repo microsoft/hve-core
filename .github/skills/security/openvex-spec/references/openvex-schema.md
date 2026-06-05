@@ -14,7 +14,7 @@ The top-level object containing metadata and a collection of VEX statements.
 |----------------|----------|----------|----------------------------------------------------------------------------------------------------------|
 | `@context`     | Yes      | string   | The URL linking to the OpenVEX context definition. Set to `https://openvex.dev/ns/v0.2.0`.                                        |
 | `@id`          | Yes      | string   | IRI identifying the document (for example, `https://github.com/microsoft/hve-core/security/vex/2026-05-14`). |
-| `author`       | Yes      | string   | Individual or organization that authored the document. Should be machine-readable (IRI, email etc.). Author must be an individual or an organization directly involved in the vulnerability assessment process.
+| `author`       | Yes      | string   | Individual or organization that authored the document. Should be machine-readable (IRI, email etc.). Author must be an individual or an organization directly involved in the vulnerability assessment process. |
 | `role`         | No       | string   | Role of the document author (for example, `Document Creator`).                                           |
 | `timestamp`    | Yes      | string   | ISO 8601 datetime when the document was issued.                                                          |
 | `last_updated` | No       | string   | ISO 8601 datetime of the last modification.                                                              |
@@ -157,4 +157,3 @@ precedence. The `products` field has no document-level equivalent and must appea
 ---
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-
