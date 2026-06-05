@@ -24,7 +24,8 @@
     "**/Cargo.lock",
     "CHANGELOG.md",
     "logs/**",
-    "docs/docusaurus/build/**"
+    "docs/docusaurus/build/**",
+    "evals/beval/**/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -62,11 +63,11 @@
     "general-technical"
   ],
   "words": [
-    "ˈpræksɪs",
     "agentic",
     "atheris",
     "behaviour",
     "behavioural",
+    "beval",
     "brainwriting",
     "clusterfuzzlite",
     "collab",
@@ -79,22 +80,23 @@
     "hideable",
     "idor",
     "learning",
+    "parseable",
     "skillmd",
     "smol",
     "subcat",
     "uncited",
     "vally",
     "whiteboarding",
+    "wireframes",
     "ystatement",
-    "ˈpræksɪs",
-    "πρᾶξις",
-    "agentic",
     "sssc",
     "SSSC",
     "SLSA",
     "Sigstore",
     "cosign",
-    "scorecard"
+    "scorecard",
+    "ˈpræksɪs",
+    "πρᾶξις"
   ],
   "reporters": [
     "default",

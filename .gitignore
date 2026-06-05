@@ -473,3 +473,6 @@ dependency-pinning-artifacts/
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
 docs/docusaurus/node_modules/
+
+# Beval evaluation results
+evals/beval/**/results/
