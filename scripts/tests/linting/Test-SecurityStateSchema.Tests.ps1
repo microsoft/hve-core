@@ -39,7 +39,7 @@ Describe 'Canonical security-state schema validates fixture corpus' {
 }
 
 Describe 'Cross-schema parity for disclaimerShownAt' {
-    It 'security-state and rai-state declare byte-identical disclaimerShownAt definitions' {
+    It 'security-state and rai-state declare structurally identical disclaimerShownAt definitions' {
         $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
         $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
         $secProp = $sec.properties.disclaimerShownAt | ConvertTo-Json -Depth 10 -Compress
