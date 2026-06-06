@@ -57,6 +57,7 @@
   "raiEnabled": true,
   "raiScope": "delegated",
   "raiTier": "comprehensive",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["llm-summarizer", "embedding-index", "agentic-orchestrator"]
 }

@@ -28,6 +28,7 @@
   "raiEnabled": true,
   "raiScope": "embedded",
   "raiTier": "standard",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["recommendation-service"]
 }
