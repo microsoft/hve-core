@@ -148,12 +148,11 @@ Task Reviewer categorizes findings by impact:
 
 ## Common Pitfalls
 
-| Pitfall                | Solution                                                                                                              |
-|------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| No artifacts found     | Complete implementation first; verify changes log exists                                                              |
-| Research not linked    | Ensure plan references research document                                                                              |
-| Too many findings      | Break implementation into smaller phases                                                                              |
-| Pester test counts off | Expand `-ForEach` parametrization arity before flagging suite size; effective case count is not raw `It` block count. |
+| Pitfall             | Solution                                                 |
+|---------------------|----------------------------------------------------------|
+| No artifacts found  | Complete implementation first; verify changes log exists |
+| Research not linked | Ensure plan references research document                 |
+| Too many findings   | Break implementation into smaller phases                 |
 
 ## Next Steps
 
