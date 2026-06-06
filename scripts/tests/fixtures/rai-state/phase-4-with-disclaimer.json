@@ -1,0 +1,95 @@
+{
+  "projectSlug": "example-project",
+  "raiPlanFile": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
+  "currentPhase": 4,
+  "entryMode": "from-security-plan",
+  "securityPlanRef": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "assessmentDepth": "comprehensive",
+  "standardsMapped": true,
+  "securityModelAnalysisStarted": true,
+  "raiThreatCount": 2,
+  "impactAssessmentGenerated": false,
+  "evidenceRegisterComplete": false,
+  "handoffGenerated": { "ado": false, "github": false },
+  "gateResults": {
+    "prohibitedUsesGate": {
+      "status": "passed",
+      "sourceFrameworks": ["embedded-prohibited-uses", "security-plan"],
+      "notes": "No prohibited-use indicators were found during classification."
+    }
+  },
+  "riskClassification": {
+    "framework": {
+      "id": "microsoft-rai-impact",
+      "name": "Microsoft RAI Impact Assessment",
+      "version": "1.0",
+      "source": "embedded",
+      "replaceDefaultIndicators": false,
+      "replaceDefaultFramework": false
+    },
+    "indicators": {
+      "safety_reliability": {
+        "method": "binary",
+        "nistSource": ["MAP 1.1"],
+        "activated": true,
+        "observation": "Workflow automation affects operational reliability decisions.",
+        "result": "activated"
+      },
+      "rights_fairness_privacy": {
+        "method": "binary",
+        "nistSource": ["MAP 2.3"],
+        "activated": false,
+        "observation": "No sensitive demographic attributes are collected.",
+        "result": "not-activated"
+      },
+      "security_explainability": {
+        "method": "binary",
+        "nistSource": ["GOV 1.5"],
+        "activated": true,
+        "observation": "Generated recommendations require explainability and abuse-case analysis.",
+        "result": "activated"
+      }
+    },
+    "activatedCount": 2,
+    "riskScore": 0.67,
+    "suggestedDepthTier": "comprehensive"
+  },
+  "runningObservations": [],
+  "principleTracker": {
+    "validReliable": { "suggestedStatus": "partial", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 0, "nistSubcat": "MAP 1.1", "openObservations": ["Confirm evaluation data freshness."] },
+    "safe": { "suggestedStatus": "gap-identified", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 0, "nistSubcat": "MAP 1.2", "openObservations": ["Document human override path."] },
+    "secureResilient": { "suggestedStatus": "gap-identified", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 0, "nistSubcat": "GOV 1.5", "openObservations": ["Review prompt injection controls."] },
+    "accountableTransparent": { "suggestedStatus": "partial", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "GOV 2.1", "openObservations": [] },
+    "explainableInterpretable": { "suggestedStatus": "partial", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "MAP 2.2", "openObservations": [] },
+    "privacyEnhanced": { "suggestedStatus": "partial", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "MAP 2.3", "openObservations": [] },
+    "fairBiasManaged": { "suggestedStatus": "partial", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "MAP 5.1", "openObservations": [] }
+  },
+  "referencesProcessed": [
+    {
+      "filePath": ".copilot-tracking/security-plans/example-project/security-plan.md",
+      "type": "standard",
+      "sourceDescription": "Source security plan",
+      "processedInPhase": 4,
+      "status": "processed"
+    }
+  ],
+  "nextActions": ["Map RAI threats to mitigations"],
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "userPreferences": {
+    "autonomyTier": "partial",
+    "outputDetailLevel": "detailed",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": { "transparencyNote": true, "monitoringSummary": false, "artifactSigning": false }
+  },
+  "phaseGates": {
+    "phase1": { "gate": "summary-and-advance" },
+    "phase2": { "gate": "hard", "confirmedAt": "2025-01-02T00:00:00Z" },
+    "phase3": { "gate": "hard", "confirmedAt": "2025-01-03T00:00:00Z" },
+    "phase4": { "gate": "summary-and-advance" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  }
+}

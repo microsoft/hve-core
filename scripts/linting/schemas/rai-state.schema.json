@@ -23,7 +23,10 @@
     "referencesProcessed",
     "nextActions",
     "signingRequested",
-    "userPreferences"
+    "signingManifestPath",
+    "disclaimerShownAt",
+    "userPreferences",
+    "phaseGates"
   ],
   "properties": {
     "projectSlug": {
@@ -166,10 +169,47 @@
     },
     "userPreferences": {
       "$ref": "#/$defs/userPreferences"
+    },
+    "phaseGates": {
+      "type": "object",
+      "required": ["phase1", "phase2", "phase3", "phase4", "phase5", "phase6"],
+      "properties": {
+        "phase1": { "$ref": "#/$defs/summaryGate" },
+        "phase2": { "$ref": "#/$defs/hardGate" },
+        "phase3": { "$ref": "#/$defs/hardGate" },
+        "phase4": { "$ref": "#/$defs/summaryGate" },
+        "phase5": { "$ref": "#/$defs/summaryGate" },
+        "phase6": { "$ref": "#/$defs/hardGate" }
+      },
+      "additionalProperties": false,
+      "description": "Per-phase gate model: phases 2, 3, and 6 are hard gates requiring explicit user confirmation; phases 1, 4, and 5 are summary-and-advance gates"
     }
   },
   "additionalProperties": false,
   "$defs": {
+    "hardGate": {
+      "type": "object",
+      "required": ["gate", "confirmedAt"],
+      "properties": {
+        "gate": { "const": "hard" },
+        "confirmedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the user confirmed the gate, or null before confirmation"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Hard gate requiring explicit user confirmation before advancing"
+    },
+    "summaryGate": {
+      "type": "object",
+      "required": ["gate"],
+      "properties": {
+        "gate": { "const": "summary-and-advance" }
+      },
+      "additionalProperties": false,
+      "description": "Summary-and-advance gate that presents a summary and continues unless the user objects"
+    },
     "prohibitedUsesGate": {
       "type": "object",
       "required": ["status"],

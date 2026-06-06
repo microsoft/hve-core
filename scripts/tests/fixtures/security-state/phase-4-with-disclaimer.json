@@ -1,0 +1,48 @@
+{
+  "projectSlug": "example-project",
+  "securityPlanFile": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "currentPhase": 4,
+  "entryMode": "from-prd",
+  "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2026-05-09T15:10:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
+  "bucketsCompleted": ["identity", "data", "compute", "network"],
+  "standardsMapped": ["owasp-top-10", "nist-ssdf"],
+  "riskSurfaceStarted": true,
+  "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": ["node.js", "typescript", "azure-functions", "cosmos-db"],
+    "deploymentModel": "cloud-native",
+    "dataClassification": "confidential",
+    "complianceTargets": ["soc2", "iso-27001"]
+  },
+  "referencesProcessed": [
+    {
+      "filePath": "README.md",
+      "type": "standard",
+      "processedInPhase": 1,
+      "sourceDescription": "Repository overview",
+      "status": "processed"
+    },
+    {
+      "filePath": "SECURITY.md",
+      "type": "standard",
+      "processedInPhase": 3,
+      "sourceDescription": "Security policy",
+      "status": "processed"
+    }
+  ],
+  "nextActions": ["Confirm Phase 4 hard gate before advancing to Phase 5"],
+  "userPreferences": { "autonomyTier": "guided" },
+  "raiEnabled": true,
+  "raiScope": "delegated",
+  "raiTier": "standard",
+  "raiPlannerDispatched": true,
+  "aiComponents": ["llm-summarizer"]
+}

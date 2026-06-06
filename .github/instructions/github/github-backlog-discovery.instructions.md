@@ -158,19 +158,27 @@ Apply to artifact-driven discovery (Path B) only.
 
 #### Hierarchy Grouping
 
-Group related requirements into parent-child structures. When a requirement decomposes into more than 5 sub-requirements, create an epic-level tracking issue as the parent and link individual issues as sub-issues.
+Group related requirements into parent-child structures using the Issue Type Strategy from *github-backlog-planning.instructions.md*:
+
+* Create a Feature issue when two or more related work items share a logical grouping or must be completed together.
+* Multi-level nesting (Feature → Feature → Task) is supported when sub-groups naturally exist within a larger capability.
+* Do not create a Feature wrapper for a single Task.
+* Feature issue bodies should list their children in a **Children** section for navigability.
 
 Issue title conventions:
 
 * Feature and enhancement titles follow conventional commit format (for example, `feat(scope): description`).
 * Assign labels per the Label Taxonomy Reference in *github-backlog-planning.instructions.md*.
 * Assign milestones per the Milestone Discovery Protocol in *github-backlog-planning.instructions.md*.
+* Assign issue types per the Issue Type Strategy in *github-backlog-planning.instructions.md* when the organization supports them.
 
 #### New Issue Construction
 
-* Populate acceptance criteria as markdown checkbox lists when extracted from documents.
+* Structure issue bodies per the Issue Body Template in *github-backlog-planning.instructions.md*. Every new issue must include an **Acceptance Criteria** section with checkbox items.
+* Populate acceptance criteria from document requirements when available. When no explicit criteria exist in the source, derive them from the issue's scope and expected deliverables.
 * Use `{{TEMP-N}}` placeholders for issues not yet created, per the Temporary ID Mapping convention in #file:./github-backlog-planning.instructions.md.
 * Include source references (document path and section) in issue body content only when the referenced path is committed to the repository. When referencing other planned issues, use `{{TEMP-N}}` placeholders (resolved to actual issue numbers during execution) or descriptive phrases. Apply the Content Sanitization Guards from #file:./github-backlog-planning.instructions.md before composing any GitHub-bound content.
+* Include a **Related** section with parent references, dependencies, and domain context as applicable.
 
 #### Existing Issue Handling
 
@@ -221,6 +229,8 @@ These sections in *github-backlog-planning.instructions.md* inform discovery ope
 | Milestone Discovery Protocol    | Phase 2         | Role-based milestone classification for assignment     |
 | Label Taxonomy Reference        | Phase 2         | Label selection and title pattern mapping              |
 | Human Review Triggers           | Phase 3         | Additional conditions for pausing execution            |
+| Issue Body Template             | Phase 2         | Standard body structure for new issues                 |
+| Issue Type Strategy             | Phase 2         | Type classification and hierarchy rules                |
 
 ---
 

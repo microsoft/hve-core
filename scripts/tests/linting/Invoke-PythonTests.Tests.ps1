@@ -18,14 +18,16 @@
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Invoke-PythonTests.ps1'
 
-    # Create stub function for pytest so it can be mocked even when not installed
+    # Create stub functions so they can be mocked even when not installed
     function global:pytest { '' }
+    function global:uv { '' }
 
     . $script:ScriptPath
 }
 
 AfterAll {
     Remove-Item -Path 'Function:\pytest' -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\uv' -Force -ErrorAction SilentlyContinue
 }
 
 #region Parameter Validation Tests
@@ -35,6 +37,7 @@ Describe 'Invoke-PythonTests Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-ChildItem { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Push-Location {}
             Mock Pop-Location {}
         }
@@ -50,6 +53,7 @@ Describe 'Invoke-PythonTests Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-ChildItem { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Push-Location {}
             Mock Pop-Location {}
         }
@@ -64,6 +68,7 @@ Describe 'Invoke-PythonTests Parameter Validation' -Tag 'Unit' {
         BeforeEach {
             Mock Get-ChildItem { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Push-Location {}
             Mock Pop-Location {}
         }
@@ -94,7 +99,9 @@ Describe 'pytest Tool Availability' -Tag 'Unit' {
                 })
             }
             Mock Get-Command { $null } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
+            Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
         }
 
         It 'Returns failure when pytest not available' {
@@ -124,6 +131,7 @@ Describe 'pytest Tool Availability' -Tag 'Unit' {
             Mock Pop-Location {}
             Mock Get-ChildItem { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
         }
 
         It 'Proceeds when pytest available' {
@@ -143,6 +151,7 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
             Mock Pop-Location {}
             Mock Get-ChildItem { @() }
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
         }
 
         It 'Returns success with zero skills' {
@@ -164,6 +173,7 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
             Mock Push-Location {}
             Mock Pop-Location {}
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Get-ChildItem {
                 @([PSCustomObject]@{
                     FullName = (Join-Path $script:NoTestsSkillDir 'pyproject.toml')
@@ -171,6 +181,7 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
                 })
             }
             Mock Test-Path { $false } -ParameterFilter { $Path -like '*tests' }
+            Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
             Mock pytest { $global:LASTEXITCODE = 0; '' }
         }
 
@@ -190,6 +201,7 @@ Describe 'Python Skill Discovery for Testing' -Tag 'Unit' {
             Mock Push-Location {}
             Mock Pop-Location {}
             Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
             Mock Get-ChildItem {
                 @([PSCustomObject]@{
                     FullName = (Join-Path $TestDrive 'node_modules/pkg/pyproject.toml')
@@ -218,6 +230,7 @@ Describe 'Pytest Execution' -Tag 'Unit' {
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
         Mock Get-ChildItem {
             @([PSCustomObject]@{
                 FullName = (Join-Path $script:SkillDir 'pyproject.toml')
@@ -225,6 +238,7 @@ Describe 'Pytest Execution' -Tag 'Unit' {
             })
         }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
+        Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
     }
 
     Context 'Tests pass' {
@@ -334,6 +348,71 @@ Describe 'Pytest Execution' -Tag 'Unit' {
             $result.passed | Should -Be 2
         }
     }
+
+    Context 'Locked uv project' {
+        BeforeEach {
+            Mock Get-Command { [PSCustomObject]@{ Source = 'uv' } } -ParameterFilter { $Name -eq 'uv' }
+            Mock Test-Path { $true } -ParameterFilter { $Path -like '*uv.lock' }
+            Mock uv {
+                if ($args[0] -eq 'sync') {
+                    $global:LASTEXITCODE = 0
+                    return 'synced'
+                }
+
+                $global:LASTEXITCODE = 0
+                return '3 passed'
+            }
+        }
+
+        It 'Uses uv runner for locked project' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.details[0].runner | Should -Be 'uv'
+        }
+
+        It 'Returns success when uv pytest passes' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.success | Should -BeTrue
+            $result.passed | Should -Be 1
+        }
+
+        It 'Runs uv sync before pytest' {
+            Invoke-PythonTests -RepoRoot $TestDrive
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'sync' -and $args[1] -eq '--locked' -and $args[2] -eq '--dev' } -Times 1
+        }
+
+        It 'Runs pytest through uv' {
+            Invoke-PythonTests -RepoRoot $TestDrive
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' -and $args[1] -eq 'pytest' -and $args[2] -eq 'tests/' } -Times 1
+        }
+    }
+
+    Context 'Locked uv project sync failure' {
+        BeforeEach {
+            Mock Get-Command { [PSCustomObject]@{ Source = 'uv' } } -ParameterFilter { $Name -eq 'uv' }
+            Mock Test-Path { $true } -ParameterFilter { $Path -like '*uv.lock' }
+            Mock uv {
+                $global:LASTEXITCODE = 1
+                'sync failed'
+            }
+        }
+
+        It 'Returns failure when uv sync fails' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.success | Should -BeFalse
+        }
+
+        It 'Records sync phase failure details' {
+            $result = Invoke-PythonTests -RepoRoot $TestDrive
+            $result.details[0].runner | Should -Be 'uv'
+            $result.details[0].phase | Should -Be 'sync'
+            $result.details[0].passed | Should -BeFalse
+        }
+
+        It 'Does not run pytest after failed sync' {
+            Invoke-PythonTests -RepoRoot $TestDrive
+            Should -Invoke -CommandName uv -ParameterFilter { $args[0] -eq 'run' } -Times 0
+        }
+    }
 }
 
 #endregion
@@ -349,6 +428,7 @@ Describe 'Output Persistence' -Tag 'Unit' {
         Mock Push-Location {}
         Mock Pop-Location {}
         Mock Get-Command { [PSCustomObject]@{ Source = 'pytest' } } -ParameterFilter { $Name -eq 'pytest' }
+        Mock Get-Command { $null } -ParameterFilter { $Name -eq 'uv' }
         Mock Get-ChildItem {
             @([PSCustomObject]@{
                 FullName = (Join-Path $script:OutputSkillDir 'pyproject.toml')
@@ -356,6 +436,7 @@ Describe 'Output Persistence' -Tag 'Unit' {
             })
         }
         Mock Test-Path { $true } -ParameterFilter { $Path -like '*tests' }
+        Mock Test-Path { $false } -ParameterFilter { $Path -like '*uv.lock' }
         Mock pytest { $global:LASTEXITCODE = 0; 'passed' }
     }
 

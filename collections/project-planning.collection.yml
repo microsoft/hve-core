@@ -91,7 +91,44 @@ items:
   - path: .github/prompts/security/sssc-from-security-plan.prompt.md
     kind: prompt
     maturity: experimental
+  # Skills
+  - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
   # Instructions
+  - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-byo-template.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-handoff.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-identity.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/project-planning/adr-standards.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
@@ -146,11 +183,17 @@ items:
   - path: .github/instructions/security/sssc-handoff.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/shared/coaching-patterns.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/disclaimer-language.instructions.md
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # Skills
+  - path: .github/skills/project-planning/adr-author
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

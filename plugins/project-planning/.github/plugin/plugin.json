@@ -12,5 +12,9 @@
   "commands": [
     "commands/rai-planning/",
     "commands/security/"
+  ],
+  "skills": [
+    "skills/experimental/",
+    "skills/project-planning/"
   ]
 }
