@@ -1,0 +1,62 @@
+{
+  "projectSlug": "example-project",
+  "securityPlanFile": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "currentPhase": 6,
+  "entryMode": "from-prd",
+  "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2026-05-09T15:10:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": "2026-05-09T17:45:00Z" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": "2026-05-09T19:20:00Z" }
+  },
+  "bucketsCompleted": ["identity", "data", "compute", "network", "supply-chain", "observability"],
+  "standardsMapped": ["owasp-top-10", "owasp-llm", "nist-ssdf", "cis-benchmarks"],
+  "riskSurfaceStarted": true,
+  "handoffGenerated": { "ado": true, "github": true },
+  "context": {
+    "techStack": ["node.js", "typescript", "azure-functions", "cosmos-db", "openai"],
+    "deploymentModel": "cloud-native",
+    "dataClassification": "confidential",
+    "complianceTargets": ["soc2", "iso-27001", "hipaa"]
+  },
+  "referencesProcessed": [
+    {
+      "filePath": "README.md",
+      "type": "standard",
+      "processedInPhase": 1,
+      "sourceDescription": "Repository overview",
+      "status": "processed"
+    },
+    {
+      "filePath": "SECURITY.md",
+      "type": "standard",
+      "processedInPhase": 3,
+      "sourceDescription": "Security policy",
+      "status": "processed"
+    },
+    {
+      "filePath": "CONTRIBUTING.md",
+      "type": "standard",
+      "processedInPhase": 5,
+      "sourceDescription": "Contribution guidelines",
+      "status": "processed"
+    },
+    {
+      "filePath": "CODE_OF_CONDUCT.md",
+      "type": "standard",
+      "processedInPhase": 6,
+      "sourceDescription": "Code of conduct",
+      "status": "processed"
+    }
+  ],
+  "nextActions": [],
+  "userPreferences": { "autonomyTier": "full" },
+  "raiEnabled": true,
+  "raiScope": "delegated",
+  "raiTier": "comprehensive",
+  "raiPlannerDispatched": true,
+  "aiComponents": ["llm-summarizer", "embedding-index", "agentic-orchestrator"]
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/security-state.schema.json",
+  "title": "Security Planner State Schema",
+  "description": "Schema for Security Planner state.json files under .copilot-tracking/security-plans/{project-slug}/",
+  "type": "object",
+  "required": [
+    "projectSlug",
+    "securityPlanFile",
+    "currentPhase",
+    "entryMode",
+    "phaseGates",
+    "bucketsCompleted",
+    "standardsMapped",
+    "riskSurfaceStarted",
+    "handoffGenerated",
+    "context",
+    "referencesProcessed",
+    "nextActions",
+    "disclaimerShownAt",
+    "userPreferences",
+    "raiEnabled",
+    "raiScope",
+    "raiTier",
+    "raiPlannerDispatched",
+    "aiComponents"
+  ],
+  "properties": {
+    "projectSlug": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Kebab-case project identifier used as the directory name"
+    },
+    "securityPlanFile": {
+      "type": "string",
+      "description": "Relative path to the security plan markdown file"
+    },
+    "currentPhase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 6,
+      "description": "Current assessment phase (1-6)"
+    },
+    "entryMode": {
+      "type": "string",
+      "enum": ["capture", "from-prd"],
+      "description": "How the assessment was initiated"
+    },
+    "disclaimerShownAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when disclaimer was displayed, or null if not yet shown"
+    },
+    "phaseGates": {
+      "type": "object",
+      "required": ["phase1", "phase2", "phase3", "phase4", "phase5", "phase6"],
+      "properties": {
+        "phase1": { "$ref": "#/$defs/hardGate" },
+        "phase2": { "$ref": "#/$defs/summaryGate" },
+        "phase3": { "$ref": "#/$defs/summaryGate" },
+        "phase4": { "$ref": "#/$defs/hardGate" },
+        "phase5": { "$ref": "#/$defs/summaryGate" },
+        "phase6": { "$ref": "#/$defs/hardGate" }
+      },
+      "additionalProperties": false,
+      "description": "Tiered gate status per phase. Phases 1, 4, 6 are hard gates requiring explicit user confirmation; Phases 2, 3, 5 are summary-and-advance gates."
+    },
+    "bucketsCompleted": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Operational buckets completed during Phase 2"
+    },
+    "standardsMapped": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Standards mapped during Phase 3 (e.g., OWASP Top 10, NIST SSDF)"
+    },
+    "riskSurfaceStarted": {
+      "type": "boolean",
+      "description": "Whether Phase 4 risk surface analysis has begun"
+    },
+    "handoffGenerated": {
+      "type": "object",
+      "required": ["ado", "github"],
+      "properties": {
+        "ado": {
+          "type": "boolean",
+          "description": "Whether ADO backlog handoff has been generated"
+        },
+        "github": {
+          "type": "boolean",
+          "description": "Whether GitHub Issues backlog handoff has been generated"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Platform-specific handoff generation status"
+    },
+    "context": {
+      "type": "object",
+      "required": ["techStack", "deploymentModel", "dataClassification", "complianceTargets"],
+      "properties": {
+        "techStack": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Technology stack components"
+        },
+        "deploymentModel": {
+          "type": "string",
+          "description": "Deployment model (e.g., cloud-native, on-premises, hybrid)"
+        },
+        "dataClassification": {
+          "type": "string",
+          "description": "Highest data classification handled by the system"
+        },
+        "complianceTargets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Compliance frameworks the system targets"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Security-specific project context discovered during Phase 1"
+    },
+    "referencesProcessed": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/referenceEntry" },
+      "description": "User-supplied reference content processed during the assessment"
+    },
+    "nextActions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Pending actions for the current phase"
+    },
+    "userPreferences": {
+      "type": "object",
+      "required": ["autonomyTier"],
+      "properties": {
+        "autonomyTier": {
+          "type": "string",
+          "enum": ["guided", "partial", "full"],
+          "description": "How much autonomy the agent has in proceeding between phases"
+        }
+      },
+      "additionalProperties": false
+    },
+    "raiEnabled": {
+      "type": "boolean",
+      "description": "Whether an RAI assessment is enabled alongside the security plan"
+    },
+    "raiScope": {
+      "type": "string",
+      "enum": ["none", "embedded", "delegated"],
+      "description": "Scope of RAI coverage within or adjacent to this security plan"
+    },
+    "raiTier": {
+      "type": "string",
+      "enum": ["none", "basic", "standard", "comprehensive"],
+      "description": "RAI assessment depth tier when raiEnabled is true"
+    },
+    "raiPlannerDispatched": {
+      "type": "boolean",
+      "description": "Whether a dispatch to the RAI Planner has been issued"
+    },
+    "aiComponents": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "AI/ML components identified during scoping"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "raiEnabled": { "const": false } }
+      },
+      "then": {
+        "properties": {
+          "raiScope": { "const": "none" },
+          "raiTier": { "const": "none" },
+          "raiPlannerDispatched": { "const": false },
+          "aiComponents": { "maxItems": 0 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "hardGate": {
+      "type": "object",
+      "required": ["gate", "confirmedAt"],
+      "properties": {
+        "gate": {
+          "type": "string",
+          "const": "hard",
+          "description": "Hard gate requiring explicit user confirmation before advancing"
+        },
+        "confirmedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp recorded when the user explicitly approves phase advancement, or null until confirmation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "summaryGate": {
+      "type": "object",
+      "required": ["gate"],
+      "properties": {
+        "gate": {
+          "type": "string",
+          "const": "summary-and-advance",
+          "description": "Summary-and-advance gate; planner surfaces a brief summary and proceeds unless the user objects"
+        }
+      },
+      "additionalProperties": false
+    },
+    "referenceEntry": {
+      "type": "object",
+      "required": ["filePath", "type", "processedInPhase", "sourceDescription", "status"],
+      "properties": {
+        "filePath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Workspace-relative path to the processed reference file"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["standard", "security-plan", "prd", "brd", "output-format"],
+          "description": "Category of the reference content"
+        },
+        "processedInPhase": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Phase in which the reference was processed, or null if pending"
+        },
+        "sourceDescription": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short human-readable label describing the reference source"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processed", "error"],
+          "description": "Processing status of the reference"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

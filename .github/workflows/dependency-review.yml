@@ -60,11 +60,25 @@ jobs:
           # pkg:pypi/charset-normalizer is MIT licensed but some older wheel
           # metadata declares a compound SPDX expression; the action treats
           # compound expressions as a mismatch against allow-licenses.
+          # pkg:pypi/shapely declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only); shapely's distributed code is
+          # BSD-3-Clause and the LGPL component refers to bundled GEOS headers.
+          # The mural skill keyring/cryptography stack below ships permissive
+          # licenses (Apache-2.0, MIT, BSD-3-Clause, PSF-2.0) per each
+          # project's source repository, but PyPI metadata reports "unknown"
+          # so the action requires explicit allowlisting.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
+            pkg:pypi/shapely,
+            pkg:pypi/backports-tarfile,
+            pkg:pypi/cryptography,
+            pkg:pypi/jaraco-classes,
+            pkg:pypi/jaraco-context,
+            pkg:pypi/jaraco-functools,
+            pkg:pypi/keyrings-alt,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
             pkg:npm/hve-core
