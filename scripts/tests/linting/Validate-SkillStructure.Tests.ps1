@@ -1540,6 +1540,42 @@ select = ["E", "F"]
             $result.Errors | Should -Contain "pyproject.toml missing [tool.pytest.ini_options] section in 'py-no-pytest' (tests/ directory exists)"
         }
 
+        It 'Errors when tests/ exists but [tool.ruff.lint].select missing isort ("I")' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-isort' -FrontmatterContent @"
+---
+name: py-no-isort
+description: 'Python skill with tests dir but missing isort rule'
+---
+# Test
+"@
+            $testsDir = Join-Path $dir.FullName 'tests'
+            New-Item -ItemType Directory -Path $testsDir -Force | Out-Null
+            Set-Content -Path (Join-Path $testsDir 'test_example.py') -Value '# test'
+            Set-Content -Path (Join-Path $testsDir 'fuzz_harness.py') -Value '# fuzz'
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-isort"
+version = "0.0.0"
+
+[dependency-groups]
+dev = ["ruff", "pytest"]
+fuzz = ["atheris>=3.0"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "pyproject.toml [tool.ruff.lint].select must include 'I' (isort) in 'py-no-isort' (tests/ directory exists)"
+        }
+
         It 'Passes when pyproject.toml has all required sections' {
             $dir = New-TestSkillDirectory -SkillName 'py-complete' -WithPyprojectToml -FrontmatterContent @"
 ---

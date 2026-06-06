@@ -297,3 +297,88 @@ Describe 'Output Persistence' -Tag 'Unit' {
 }
 
 #endregion
+
+#region Import-Order Detection (I001) Guard
+
+# Defense-in-depth: ensure that when a Python skill enables the isort rule ('I')
+# and ships an import-order violation, Invoke-PythonLint surfaces it as a
+# failure. Guards against silent regressions where the rule selection is
+# stripped or the lint runner stops invoking ruff against test fixtures.
+# Untagged so it runs in the default Pester suite (which excludes 'Integration'
+# and 'Slow'); skips at runtime when no real ruff binary is available.
+Describe 'Invoke-PythonLint Import-Order Detection (I001 Guard)' {
+    BeforeAll {
+        # Drop the global ruff stub from the file's top-level BeforeAll so we
+        # invoke a real ruff binary, not the no-op function.
+        Remove-Item -Path 'Function:\ruff' -Force -ErrorAction SilentlyContinue
+
+        # Resolve a real ruff binary: prefer one already on PATH, else borrow
+        # one from any existing skill venv in this repo so the test mirrors how
+        # Invoke-PythonLint discovers ruff in CI.
+        $script:RealRuffPath = $null
+        $globalRuff = Get-Command ruff -ErrorAction SilentlyContinue
+        if ($globalRuff) {
+            $script:RealRuffPath = $globalRuff.Source
+        }
+        else {
+            $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '../../..')
+            $candidate = Get-ChildItem -Path (Join-Path $repoRoot '.github/skills') `
+                -Recurse -Force -File -Filter 'ruff' -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\.venv/bin/ruff$' } |
+                Select-Object -First 1
+            if ($candidate) {
+                $script:RealRuffPath = $candidate.FullName
+            }
+        }
+    }
+
+    It 'Reports failure when a skill ships an I001 import-order violation' {
+        if (-not $script:RealRuffPath) {
+            Set-ItResult -Skipped -Because 'no ruff binary available on PATH or in any skill .venv'
+        }
+
+        $skillDir = Join-Path $TestDrive 'i001-guard-skill'
+        $venvBinDir = Join-Path $skillDir '.venv/bin'
+        New-Item -ItemType Directory -Path $venvBinDir -Force | Out-Null
+
+        # Plant pyproject.toml that explicitly enables the isort rule.
+        Set-Content -Path (Join-Path $skillDir 'pyproject.toml') -Value @"
+[project]
+name = "i001-guard-skill"
+version = "0.0.0"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["I"]
+"@
+
+        # Plant a Python file whose imports are unsorted (triggers I001).
+        $scriptsDir = Join-Path $skillDir 'scripts'
+        New-Item -ItemType Directory -Path $scriptsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $scriptsDir 'bad_imports.py') -Value @"
+import sys
+import os
+"@
+
+        # Stage a real ruff binary at the skill's expected venv path so
+        # Invoke-PythonLint resolves and invokes it just as in production.
+        $stagedRuff = Join-Path $venvBinDir 'ruff'
+        try {
+            New-Item -ItemType SymbolicLink -Path $stagedRuff -Target $script:RealRuffPath -Force | Out-Null
+        }
+        catch {
+            Copy-Item -Path $script:RealRuffPath -Destination $stagedRuff -Force
+        }
+
+        $result = Invoke-PythonLint -RepoRoot $TestDrive
+        $result.success | Should -BeFalse
+        $result.skillsChecked | Should -Be 1
+        ($result.details | Where-Object { -not $_.passed }).output | Should -Match 'I001'
+    }
+}
+
+#endregion

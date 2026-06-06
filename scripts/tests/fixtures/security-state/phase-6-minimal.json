@@ -1,0 +1,33 @@
+{
+  "projectSlug": "example-project",
+  "securityPlanFile": "security/plan.md",
+  "currentPhase": 6,
+  "entryMode": "from-prd",
+  "disclaimerShownAt": null,
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T12:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": "2025-03-01T09:00:00Z" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": "2025-04-01T10:00:00Z" }
+  },
+  "bucketsCompleted": ["networking", "identity"],
+  "standardsMapped": ["OWASP Top 10", "NIST SSDF"],
+  "riskSurfaceStarted": true,
+  "handoffGenerated": { "ado": true, "github": true },
+  "context": {
+    "techStack": ["python", "azure"],
+    "deploymentModel": "hybrid",
+    "dataClassification": "restricted",
+    "complianceTargets": ["SOC2", "ISO27001"]
+  },
+  "referencesProcessed": [ { "filePath": "docs/architecture.md", "type": "standard", "processedInPhase": 2, "sourceDescription": "Architecture", "status": "processed" } ],
+  "nextActions": [],
+  "userPreferences": { "autonomyTier": "full" },
+  "raiEnabled": true,
+  "raiScope": "delegated",
+  "raiTier": "comprehensive",
+  "raiPlannerDispatched": true,
+  "aiComponents": ["ml-inference", "nlp-indexer"]
+}

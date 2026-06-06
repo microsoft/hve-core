@@ -1,0 +1,40 @@
+{
+  "projectSlug": "example-project",
+  "ssscPlanFile": ".copilot-tracking/sssc-plans/example-project/sssc-plan.md",
+  "currentPhase": 1,
+  "entryMode": "capture",
+  "scopingComplete": false,
+  "assessmentComplete": false,
+  "standardsMapped": false,
+  "gapAnalysisComplete": false,
+  "backlogGenerated": false,
+  "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": [],
+    "packageManagers": [],
+    "ciPlatform": "",
+    "releaseStrategy": "",
+    "complianceTargets": []
+  },
+  "referencesProcessed": [],
+  "nextActions": [],
+  "userPreferences": {
+    "autonomyTier": "guided",
+    "outputDetailLevel": "standard",
+    "targetSystem": "github",
+    "audienceProfile": "technical",
+    "includeOptionalArtifacts": { "sbom": false, "scorecardProjection": false, "artifactSigning": false }
+  },
+  "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": null },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  }
+}
