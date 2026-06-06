@@ -1,0 +1,51 @@
+{
+  "projectSlug": "example-project",
+  "ssscPlanFile": ".copilot-tracking/sssc-plans/example-project/sssc-plan.md",
+  "currentPhase": 1,
+  "entryMode": "from-security-plan",
+  "securityPlannerLink": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "raiPlannerLink": null,
+  "scopingComplete": true,
+  "assessmentComplete": false,
+  "standardsMapped": false,
+  "gapAnalysisComplete": false,
+  "backlogGenerated": false,
+  "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": ["PowerShell", "Node.js"],
+    "packageManagers": ["npm"],
+    "ciPlatform": "github-actions",
+    "releaseStrategy": "tagged extension packages",
+    "complianceTargets": ["OpenSSF Scorecard", "SLSA"],
+    "deploymentTargets": ["vs-code-marketplace"]
+  },
+  "referencesProcessed": [
+    {
+      "filePath": ".copilot-tracking/security-plans/example-project/security-plan.md",
+      "type": "security-plan",
+      "sourceDescription": "Source security plan",
+      "processedInPhase": 1,
+      "status": "processed"
+    }
+  ],
+  "nextActions": ["Run supply chain capability assessment"],
+  "userPreferences": {
+    "autonomyTier": "partial",
+    "outputDetailLevel": "standard",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": { "sbom": true, "scorecardProjection": false, "artifactSigning": false }
+  },
+  "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T00:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  }
+}
