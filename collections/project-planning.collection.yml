@@ -91,7 +91,32 @@ items:
   - path: .github/prompts/security/sssc-from-security-plan.prompt.md
     kind: prompt
     maturity: experimental
+  # Skills
+  - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
   # Instructions
+  - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/project-planning/adr-byo-template.instructions.md
     kind: instruction
     maturity: experimental

@@ -25,6 +25,9 @@ items:
     kind: skill
   - path: .github/skills/experimental/vscode-playwright
     kind: skill
+  - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
   # Prompts
   - path: .github/prompts/experimental/cspell-config.prompt.md
     kind: prompt
@@ -40,6 +43,27 @@ items:
     maturity: experimental
   - path: .github/instructions/experimental/pptx.instructions.md
     kind: instruction
+  - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
 display:
