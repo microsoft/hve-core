@@ -354,6 +354,7 @@ paket-files/
 **/.hypothesis/
 **/.pytest_cache/
 **/.ruff_cache/
+.github/skills/experimental/mural/tests/corpus/[0-9a-f]*
 *.pyc
 venv/
 .venv/

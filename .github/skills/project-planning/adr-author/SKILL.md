@@ -24,11 +24,11 @@ Entry mode and output template are independent: a `from-planner-handoff` session
 
 Lifecycle at a glance:
 
-| Mode                   | Phase sequence                                              | Output                                              |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `capture`              | Frame → Decide → Govern                                     | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern             | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern       | First ADR + `.adr-config.yml` per the BYO contract  |
+| Mode                   | Phase sequence                                        | Output                                              |
+|------------------------|-------------------------------------------------------|-----------------------------------------------------|
+| `capture`              | Frame → Decide → Govern                               | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern       | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern | First ADR + `.adr-config.yml` per the BYO contract  |
 
 The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `adr-identity.instructions.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
 
@@ -166,7 +166,7 @@ All scripts treat their working directory as untrusted input and reject paths th
 The ADR Creator agent enforces a phase→section load contract per `adr-identity.instructions.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
 
 | Phase  | Section anchor | Required `phaseSkillsLoaded` entry |
-| ------ | -------------- | ---------------------------------- |
+|--------|----------------|------------------------------------|
 | Frame  | `#frame`       | `adr-author#frame`                 |
 | Decide | `#decide`      | `adr-author#decide`                |
 | Govern | `#govern`      | `adr-author#govern`                |

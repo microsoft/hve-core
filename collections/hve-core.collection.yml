@@ -103,10 +103,34 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/pull-request.instructions.md
     kind: instruction
+  - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
 display:
   ordering: manual

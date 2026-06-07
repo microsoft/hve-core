@@ -20,7 +20,6 @@ BeforeAll {
     $script:Tier1Text = '> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.'
     $script:CheckboxText = '> - [ ] Reviewed and validated by a human reviewer'
     $script:DisclaimerText = '> **Disclaimer** — This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice.'
-    $script:SsscDisclaimerText = '> **Disclaimer** — This SSSC agent is an assistive tool only. It does not provide security, legal, or compliance advice.'
 
     # Create valid footer-with-review.yml
     $script:FooterConfigContent = @"
@@ -53,7 +52,7 @@ artifact-classification:
     artifacts:
       - rai-review-summary
 
-  rai-handoff-with-disclaimer:
+  human-facing-with-disclaimer:
     required-footers:
       - ai-content-note
       - human-review-checkbox
@@ -61,51 +60,30 @@ artifact-classification:
     disclaimer-ref: rai-full-disclaimer
     artifacts:
       - handoff-summary
-
-  sssc-handoff-with-disclaimer:
-    scope:
-      - .github/instructions/security/sssc-*.instructions.md
-    required-footers:
-      - ai-content-note
-      - human-review-checkbox
-    requires-disclaimer: true
-    disclaimer-ref: sssc-full-disclaimer
-    artifacts:
-      - sssc-handoff-summary
 "@
 
-    # Create valid disclaimers.yml
-    $script:DisclaimerConfigContent = @"
-version: "1.0"
+    # Create valid disclaimer-language.instructions.md (markdown source of truth)
+    $script:DisclaimerSourceContent = @"
+---
+description: "Test disclaimer source"
+---
 
-disclaimers:
-  rai-planner:
-    id: rai-full-disclaimer
-    label: "RAI Planner Full Disclaimer"
-    applies-to:
-      - handoff-summary
-    text: >-
-      > **Disclaimer** — This agent is an assistive tool only. It does not
-      provide legal, regulatory, or compliance advice.
+# Disclaimer Language
 
-  sssc-planner:
-    id: sssc-full-disclaimer
-    label: "SSSC Planner Full Disclaimer"
-    applies-to:
-      - sssc-handoff-summary
-    text: >-
-      > **Disclaimer** — This SSSC agent is an assistive tool only. It does
-      not provide security, legal, or compliance advice.
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** This agent is an assistive tool only. It does not provide legal, regulatory, or compliance advice.
 "@
 
     $script:FooterConfigPath = Join-Path $script:ConfigDir 'footer-with-review.yml'
-    $script:DisclaimerConfigPath = Join-Path $script:ConfigDir 'disclaimers.yml'
     Set-Content -Path $script:FooterConfigPath -Value $script:FooterConfigContent -Encoding utf8
-    Set-Content -Path $script:DisclaimerConfigPath -Value $script:DisclaimerConfigContent -Encoding utf8
 
-    # Pre-create bad config files for negative tests (avoids Pester-context YAML parsing issues)
-    $script:BadDisclaimerSectionPath = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
-    [System.IO.File]::WriteAllText($script:BadDisclaimerSectionPath, "version: '1.0'`nplaceholder: true`n")
+    $script:DisclaimerSourceDir = Join-Path $script:TempTestDir '.github/instructions/shared'
+    New-Item -ItemType Directory -Path $script:DisclaimerSourceDir -Force | Out-Null
+    $script:DisclaimerSourcePath = Join-Path $script:DisclaimerSourceDir 'disclaimer-language.instructions.md'
+    $script:DisclaimerSourceRelative = '.github/instructions/shared/disclaimer-language.instructions.md'
+    Set-Content -Path $script:DisclaimerSourcePath -Value $script:DisclaimerSourceContent -Encoding utf8
 }
 
 AfterAll {
@@ -133,34 +111,129 @@ Describe 'Import-FooterConfig' -Tag 'Unit' {
     }
 }
 
-Describe 'Import-DisclaimerConfig' -Tag 'Unit' {
-    It 'Loads a valid disclaimer config' {
-        $config = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
-        $config.version | Should -Be '1.0'
+Describe 'Import-DisclaimerSource' -Tag 'Unit' {
+    It 'Loads a valid disclaimer markdown source' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.version | Should -Be 'markdown-source'
         $config.disclaimers | Should -Not -BeNullOrEmpty
+        $config.disclaimers['rai-planner'].id | Should -Be 'rai-full-disclaimer'
+        $config.disclaimers['rai-planner'].label | Should -Be 'RAI Planning Disclaimer'
+    }
+
+    It 'Extracts disclaimer prose with the **Disclaimer** prefix stripped' {
+        $config = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
+        $config.disclaimers['rai-planner'].text | Should -BeLike 'This agent is an assistive tool only*'
     }
 
     It 'Throws when file does not exist' {
-        { Import-DisclaimerConfig -ConfigPath (Join-Path $script:TempTestDir 'nonexistent.yml') } | Should -Throw '*not found*'
+        { Import-DisclaimerSource -SourcePath (Join-Path $script:TempTestDir 'nonexistent.md') } | Should -Throw '*not found*'
     }
 
-    It 'Throws when version is missing' {
-        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-version.yml'
-        @"
-disclaimers:
-  rai-planner:
-    id: test
-"@ | Set-Content -Path $badConfig -Encoding utf8
-        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'version'*"
+    It 'Throws when markdown contains no disclaimer sections' {
+        $badSource = Join-Path $script:TempTestDir 'no-sections.md'
+        Set-Content -Path $badSource -Value "# Empty`n`nNo H2 sections here." -Encoding utf8
+        { Import-DisclaimerSource -SourcePath $badSource } | Should -Throw '*No disclaimer sections*'
     }
 
-    It 'Throws when disclaimers section is missing' {
-        $badConfig = Join-Path $script:TempTestDir 'bad-disclaimer-section.yml'
-        @"
-version: '1.0'
-placeholder: true
-"@ | Set-Content -Path $badConfig -Encoding utf8
-        { Import-DisclaimerConfig -ConfigPath $badConfig } | Should -Throw "*missing 'disclaimers'*"
+    It 'Retains prose verbatim when the **Disclaimer:** prefix is absent' {
+        $source = Join-Path $script:TempTestDir 'no-prefix.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> This text has no bolded prefix and should be retained verbatim.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'This text has no bolded prefix and should be retained verbatim.'
+    }
+
+    It 'Joins multi-line CAUTION blockquote prose with single spaces' {
+        $source = Join-Path $script:TempTestDir 'multi-line.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** First sentence continues
+> across multiple
+> blockquote lines.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'First sentence continues across multiple blockquote lines.'
+    }
+
+    It 'Uses only the first CAUTION block when an H2 section contains multiple' {
+        $source = Join-Path $script:TempTestDir 'multi-caution.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** First caution wins.
+
+Some prose between blocks.
+
+> [!CAUTION]
+> **Disclaimer:** Second caution is ignored.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers['rai-planner'].text | Should -Be 'First caution wins.'
+    }
+
+    It 'Parses multiple H2 sections into distinct planner keys using the first heading word as slug' {
+        $source = Join-Path $script:TempTestDir 'multi-section.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+> [!CAUTION]
+> **Disclaimer:** RAI text.
+
+## Security Engineering
+
+> [!CAUTION]
+> **Disclaimer:** Security text.
+
+## SSSC
+
+> [!CAUTION]
+> **Disclaimer:** SSSC text.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.Keys | Sort-Object | Should -Be @('rai-planner', 'security-planner', 'sssc-planner')
+        $config.disclaimers['security-planner'].id | Should -Be 'security-full-disclaimer'
+        $config.disclaimers['security-planner'].label | Should -Be 'Security Engineering Disclaimer'
+        $config.disclaimers['sssc-planner'].text | Should -Be 'SSSC text.'
+    }
+
+    It 'Silently skips H2 sections that contain no CAUTION blockquote' {
+        $source = Join-Path $script:TempTestDir 'empty-section.md'
+        $content = @"
+# Disclaimer Language
+
+## RAI Planning
+
+Some prose with no caution block here.
+
+## Security Engineering
+
+> [!CAUTION]
+> **Disclaimer:** Security text only.
+"@
+        Set-Content -Path $source -Value $content -Encoding utf8
+        $config = Import-DisclaimerSource -SourcePath $source
+        $config.disclaimers.ContainsKey('rai-planner') | Should -BeFalse
+        $config.disclaimers.Keys | Should -Be @('security-planner')
+        $config.disclaimers['security-planner'].text | Should -Be 'Security text only.'
     }
 }
 
@@ -224,7 +297,7 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
         $refs[0].Tier | Should -Be 'agentic'
     }
 
-    It 'Finds rai-handoff-with-disclaimer artifact references' {
+    It 'Finds human-facing-with-disclaimer artifact references' {
         $refs = Find-ArtifactReferences -ArtifactClassification $script:FooterConfig.'artifact-classification' -RelativePath 'rai-planning/handoff-summary.md'
         $refs.Count | Should -Be 1
         $refs[0].RequiresDisclaimer | Should -BeTrue
@@ -256,7 +329,7 @@ Describe 'Find-ArtifactReferences' -Tag 'Unit' {
 Describe 'Test-AIArtifactCompliance' -Tag 'Unit' {
     BeforeAll {
         $script:FooterConfig = Import-FooterConfig -ConfigPath $script:FooterConfigPath
-        $script:DisclaimerConfig = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
+        $script:DisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
     }
 
     Context 'Agentic tier (Tier 1 only)' {
@@ -339,7 +412,7 @@ $($script:Tier1Text)
         }
     }
 
-    Context 'Rai-handoff-with-disclaimer tier (Tier 1 + checkbox + disclaimer)' {
+    Context 'Human-facing-with-disclaimer tier (Tier 1 + checkbox + disclaimer)' {
         It 'Passes when all three elements are present' {
             $filePath = Join-Path $script:InstructionDir 'handoff-summary.instructions.md'
             $content = @"
@@ -385,56 +458,6 @@ $($script:CheckboxText)
         }
     }
 
-    Context 'SSSC handoff with disclaimer tier (Tier 1 + checkbox + SSSC disclaimer)' {
-        It 'Passes when all three elements are present in an SSSC handoff' {
-            $ssscDir = Join-Path $script:TempTestDir '.github/instructions/security'
-            New-Item -ItemType Directory -Path $ssscDir -Force | Out-Null
-            $filePath = Join-Path $ssscDir 'sssc-handoff-summary.instructions.md'
-            $content = @"
----
-description: SSSC handoff
----
-
-# Template for sssc-handoff-summary
-
-Content here.
-
-$($script:Tier1Text)
-
-$($script:CheckboxText)
-
-$($script:SsscDisclaimerText)
-"@
-            Set-Content -Path $filePath -Value $content -Encoding utf8
-            $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:FooterConfig -DisclaimerConfig $script:DisclaimerConfig -RepoRoot $script:TempTestDir
-            $result.Passed | Should -BeTrue
-        }
-
-        It 'Fails when SSSC disclaimer is missing from an SSSC handoff' {
-            $ssscDir = Join-Path $script:TempTestDir '.github/instructions/security'
-            New-Item -ItemType Directory -Path $ssscDir -Force | Out-Null
-            $filePath = Join-Path $ssscDir 'sssc-handoff-summary.instructions.md'
-            $content = @"
----
-description: SSSC handoff
----
-
-# Template for sssc-handoff-summary
-
-Content here.
-
-$($script:Tier1Text)
-
-$($script:CheckboxText)
-"@
-            Set-Content -Path $filePath -Value $content -Encoding utf8
-            $result = Test-AIArtifactCompliance -FilePath $filePath -FooterConfig $script:FooterConfig -DisclaimerConfig $script:DisclaimerConfig -RepoRoot $script:TempTestDir
-            $result.Passed | Should -BeFalse
-            $result.Issues | Should -HaveCount 1
-            $result.Issues[0] | Should -BeLike '*SSSC*Disclaimer*'
-        }
-    }
-
     Context 'Files without artifact references' {
         It 'Skips files with no matching artifacts' {
             $filePath = Join-Path $script:InstructionDir 'unrelated.instructions.md'
@@ -456,7 +479,7 @@ description: Unrelated instruction
 Describe 'Test-AIArtifactValidation' -Tag 'Unit' {
     BeforeAll {
         $script:FooterConfig = Import-FooterConfig -ConfigPath $script:FooterConfigPath
-        $script:DisclaimerConfig = Import-DisclaimerConfig -ConfigPath $script:DisclaimerConfigPath
+        $script:DisclaimerConfig = Import-DisclaimerSource -SourcePath $script:DisclaimerSourcePath
     }
 
     BeforeEach {
@@ -501,7 +524,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
 
             $result.TotalFiles | Should -BeGreaterOrEqual 2
             $result.FilesWithArtifacts | Should -BeGreaterOrEqual 2
@@ -528,7 +551,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -ExcludePaths @('**/excluded/**')
 
             $excludedResults = $result.Results | Where-Object { $_.RelativePath -like '*excluded*' }
@@ -550,7 +573,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -FailOnMissing
 
             $result.HasFailures | Should -BeTrue
@@ -569,7 +592,7 @@ $($script:Tier1Text)
             $result = Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml'
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md'
 
             $result.HasFailures | Should -BeFalse
         }
@@ -592,7 +615,7 @@ $($script:Tier1Text)
             Test-AIArtifactValidation `
                 -Paths @('.github/instructions') `
                 -FooterConfigPath '.github/config/footer-with-review.yml' `
-                -DisclaimerConfigPath '.github/config/disclaimers.yml' `
+                -DisclaimerSourcePath '.github/instructions/shared/disclaimer-language.instructions.md' `
                 -OutputPath $outputPath
 
             $outputFullPath | Should -Exist
