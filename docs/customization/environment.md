@@ -65,6 +65,18 @@ to add Terraform:
 }
 ```
 
+### Lockfile
+
+When the dev container builds, it generates a `devcontainer-lock.json` file in
+the same directory as `devcontainer.json`. This lockfile pins each feature to an
+exact version and OCI SHA-256 digest, providing reproducible builds and
+supply-chain integrity verification. The lockfile is committed to source control
+and validated by CI.
+
+After modifying features in `devcontainer.json`, rebuild the dev container to
+regenerate `devcontainer-lock.json` and commit both files together. PR validation
+fails if the lockfile is missing or out of sync with `devcontainer.json`.
+
 ### Adding VS Code Extensions
 
 Include team-specific extensions in the `customizations.vscode.extensions`

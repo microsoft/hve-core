@@ -79,6 +79,9 @@ jobs:
                     .devcontainer/devcontainer.json)
                       echo "| \`$file\` | Config | High |"
                       ;;
+                    .devcontainer/devcontainer-lock.json)
+                      echo "| \`$file\` | Lockfile | Medium |"
+                      ;;
                     .github/workflows/copilot-setup-steps.yml)
                       echo "| \`$file\` | Setup Steps | Medium |"
                       ;;

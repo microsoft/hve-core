@@ -55,6 +55,7 @@ flowchart TD
 | `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing                          |
 | `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                                    |
 | `devcontainer-change-log.yml`        | Push to main/develop    | Logs devcontainer infrastructure file changes to the step summary |
+| `devcontainer-lockfile-check.yml`    | Reusable                | Validates devcontainer lockfile integrity and SHA-256 pinning     |
 | `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main                      |
 | `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management                               |
 | `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis                               |
@@ -100,6 +101,7 @@ Individual validation workflows called by orchestration workflows:
 | `docusaurus-tests.yml`                | Docusaurus test suite            | N/A (npm test)                      |
 | `model-validation.yml`                | Model reference validation       | `npm run lint:models`               |
 | `ai-artifact-validation.yml`          | AI artifact structure validation | `npm run lint:ai-artifacts`         |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity  | N/A (bash + jq direct)              |
 | `action-version-consistency-scan.yml` | Action version consistency       | `npm run lint:version-consistency`  |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
@@ -130,6 +132,7 @@ flowchart LR
 
     subgraph "Security"
         DPC[dependency-pinning-check]
+        DCL[devcontainer-lockfile-check]
         NA[npm-audit]
         CQL[codeql]
         GLS[gitleaks-scan]
@@ -150,8 +153,9 @@ flowchart LR
 | skill-validation         | `skill-validation.yml`        | Skill directory structure      |
 | link-lang-check          | `link-lang-check.yml`         | Link accessibility             |
 | markdown-link-check      | `markdown-link-check.yml`     | Broken links                   |
-| dependency-pinning-check | `dependency-pinning-scan.yml` | Dependency pinning             |
-| npm-audit                | Inline                        | npm dependency vulnerabilities |
+| dependency-pinning-check      | `dependency-pinning-scan.yml`      | Dependency pinning             |
+| devcontainer-lockfile-check   | `devcontainer-lockfile-check.yml`  | Devcontainer lockfile integrity|
+| npm-audit                     | Inline                             | npm dependency vulnerabilities |
 | codeql                   | `codeql-analysis.yml`         | Code security patterns         |
 | copyright-headers        | `copyright-headers.yml`       | Copyright header compliance    |
 | plugin-validation        | `plugin-validation.yml`       | Plugin and collection metadata |
