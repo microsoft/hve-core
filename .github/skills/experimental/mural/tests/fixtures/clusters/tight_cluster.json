@@ -1,0 +1,12 @@
+{
+  "params": {
+    "eps_px": 120.0,
+    "min_samples": 2
+  },
+  "widgets": [
+    {"id": "t1", "type": "shape", "x": 0.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "t2", "type": "shape", "x": 30.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "t3", "type": "shape", "x": 0.0, "y": 30.0, "width": 10.0, "height": 10.0},
+    {"id": "t4", "type": "shape", "x": 30.0, "y": 30.0, "width": 10.0, "height": 10.0}
+  ]
+}

@@ -130,11 +130,11 @@ concepts:
 
 **Multi-Line Format**: Use YAML folded block (`>-`) for description and prompt fields to maintain readability. Literal blocks (`|-`) and single-line strings are acceptable alternatives.
 
-**Quality Rules**: No extra fields beyond these four, strict adherence to lo-fi prompt patterns, artifact consumed by `generate-dalle-images.ps1` or M365 Copilot image generation
+**Quality Rules**: No extra fields beyond these four, strict adherence to lo-fi prompt patterns, artifact ready for optional image generation with M365 Copilot or modern GPT image models such as `gpt-image-2`
 
 ## Image Prompt Generation
 
-Visualization prompts target M365 Copilot or DALL-E generation with deliberate lo-fi enforcement.
+Visualization prompts target M365 Copilot or modern GPT image models such as `gpt-image-2` with deliberate lo-fi enforcement.
 
 **Style Directives** (required in all prompts):
 
@@ -326,7 +326,7 @@ Method 5 enforces deliberate roughness to focus validation on core assumptions, 
 **Files**:
 
 * `concepts.yml` — (Required) Structured concept definitions with name, description, file, prompt fields
-* `{concept-name}.png` — (Optional) Generated concept visualization images, typically created between Method 5 and Method 6 using `generate-dalle-images.ps1` or M365 Copilot. Not required for Method 6 handoff.
+* `{concept-name}.png` — (Optional) Generated concept visualization images, typically created between Method 5 and Method 6 using M365 Copilot or modern GPT image models such as `gpt-image-2`. Not required for Method 6 handoff.
 * `stakeholder-alignment.md` — (Recommended) Silent Review results, D/F/V evaluation, resonance assessment documentation
 * `method-06-handoff.md` — (Required) Prioritized concepts (1-2 selected) with evaluation rationale and constraint context for prototyping
 

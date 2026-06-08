@@ -20,6 +20,7 @@ Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This c
 | **jira-discover-issues** | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review |
 | **jira-execute-backlog** | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                              |
 | **jira-prd-to-wit**      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                 |
+| **jira-setup**           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                   |
 | **jira-triage-issues**   | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                |
 
 ### Instructions

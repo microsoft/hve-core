@@ -716,6 +716,9 @@ Some HVE-Core agents integrate with external services via MCP (Model Context Pro
 | task-researcher        | context7, microsoft-docs | Documentation lookup                 |
 | dt-coach               | figma                    | FigJam board export for DT artifacts |
 
+⚠️ Jira agents (jira-backlog-manager, jira-prd-to-wit) use environment variables
+   instead of MCP. Run /jira-setup in Copilot Chat to configure Jira credentials.
+
 Would you like to configure MCP servers? (yes/no)
 ```
 <!-- </mcp-guidance-prompt> -->
