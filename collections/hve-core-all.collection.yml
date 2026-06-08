@@ -256,6 +256,8 @@ items:
   kind: prompt
 - path: .github/prompts/jira/jira-prd-to-wit.prompt.md
   kind: prompt
+- path: .github/prompts/jira/jira-setup.prompt.md
+  kind: prompt
 - path: .github/prompts/jira/jira-triage-issues.prompt.md
   kind: prompt
 - path: .github/prompts/rai-planning/rai-capture.prompt.md

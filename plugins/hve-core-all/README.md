@@ -126,6 +126,7 @@ Use this edition when you want access to everything without choosing a focused c
 | **jira-discover-issues**                        | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review      |
 | **jira-execute-backlog**                        | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                                   |
 | **jira-prd-to-wit**                             | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                      |
+| **jira-setup**                                  | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                        |
 | **jira-triage-issues**                          | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                     |
 | **prompt-analyze**                              | Evaluates prompt engineering artifacts against quality criteria and reports findings                                                             |
 | **prompt-build**                                | Build or improve prompt engineering artifacts following quality criteria                                                                         |
@@ -426,6 +427,7 @@ copilot plugin install hve-core-all@hve-core
 | jira-discover-issues                        | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review                       |
 | jira-execute-backlog                        | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                                                    |
 | jira-prd-to-wit                             | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                                       |
+| jira-setup                                  | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                                         |
 | jira-triage-issues                          | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                                      |
 | rai-capture                                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                                   |
 | rai-plan-from-prd                           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                                   |
