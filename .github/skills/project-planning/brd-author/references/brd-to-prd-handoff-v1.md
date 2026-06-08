@@ -11,7 +11,7 @@ This document defines the `BRD_TO_PRD_HANDOFF_V1` payload produced by the BRD Bu
 The payload gives the PRD Builder (or any downstream consumer such as a release manager or auditing tool) a single, self-describing manifest that:
 
 * identifies which BRD is being handed off and at what version;
-* documents the signoff status and stakeholders;
+* documents the signoff status and approvers;
 * enumerates the requirement counts the PRD must trace back to;
 * points at the BRD artifact, the traceability matrix, and the quality report that justified the gate decision;
 * surfaces business goals the PRD must continue to satisfy;
@@ -132,11 +132,11 @@ Integer counts of artifacts in the BRD at signoff. Each value MUST be ≥ 0.
 
 * `matrix_ref` (string, required) — Workspace-relative path to the traceability matrix (Markdown or CSV) covering BG ↔ FR ↔ AC linkage.
 * `fr_to_ac_coverage_pct` (number, required, 0.0–100.0).
-* `fr_to_bg_coverage_pct` (number, required, 0.0–100.0).
+* `fr_to_bg_coverage_pct` (number, required, 0.0–100.0). Target is `100.0%`; any gap requires an active waiver under `signoff.waivers[]`.
 
 ### `business_goals` (array, required, length ≥ 1)
 
-* `id` (string, required) — Business goal identifier (for example `BG-01`).
+* `id` (string, required) — Business goal identifier (for example `BG-001`).
 * `statement` (string, required) — Verbatim business-goal statement.
 * `priority` (string, required) — One of `MUST`, `SHOULD`, `COULD`, `WONT`. MoSCoW labels per the `prioritization-schemes` skill.
 * `kpi` (string, required) — The KPI used to evidence the goal at outcome time. Free text.
@@ -171,9 +171,10 @@ Free-form orchestrator notes intended for the PRD Builder (for example "treat pa
 6. When `signoff.status` is `WAIVED`, `signoff.waivers` MUST be present and have length ≥ 1.
 7. `counts.business_goals` MUST equal the length of `business_goals`.
 8. `traceability.fr_to_ac_coverage_pct` MUST be ≥ 80.0 unless an active waiver in `signoff.waivers` covers FR↔AC gap.
-9. Every `business_goals[].smart_status` MUST be `PASS` when `signoff.status` is `SIGNED_OFF`.
-10. Every `known_open_items[].id` MUST be unique within the payload.
-11. Every `waivers[].id` MUST be unique within the payload.
+9. `traceability.fr_to_bg_coverage_pct` MUST equal `100.0` unless an active waiver in `signoff.waivers` covers the FR-to-BG gap.
+10. Every `business_goals[].smart_status` MUST be `PASS` when `signoff.status` is `SIGNED_OFF`.
+11. Every `known_open_items[].id` MUST be unique within the payload.
+12. Every `waivers[].id` MUST be unique within the payload.
 
 ## Example payload
 
@@ -194,7 +195,7 @@ signoff:
       role: Business Sponsor
       decision: APPROVED
       decided_at: "2026-05-12T08:45:00Z"
-      comments: Confident in the prioritization; tracking BG-04 timeline closely.
+      comments: Confident in the prioritization; tracking BG-004 timeline closely.
     - name: Marcus Lee
       role: Engineering Lead
       decision: APPROVED_WITH_COMMENTS
@@ -222,22 +223,22 @@ traceability:
   fr_to_ac_coverage_pct: 95.8
   fr_to_bg_coverage_pct: 100.0
 business_goals:
-  - id: BG-01
+  - id: BG-001
     statement: Reduce average claim adjudication time by 30% within 12 months of launch.
     priority: MUST
     kpi: 30-day rolling average adjudication time (target ≤ 70% of baseline).
     smart_status: PASS
-  - id: BG-02
+  - id: BG-002
     statement: Achieve a 4.4/5 customer satisfaction score for the claims experience within 12 months of launch.
     priority: MUST
     kpi: Post-claim CSAT survey rolling average (target ≥ 4.4/5).
     smart_status: PASS
-  - id: BG-03
+  - id: BG-003
     statement: Reduce claims rework rate by 25% by end of fiscal year.
     priority: SHOULD
     kpi: Quarterly rework-rate report from operations.
     smart_status: PASS
-  - id: BG-04
+  - id: BG-004
     statement: Comply with regional data residency requirements in all launch markets by general availability.
     priority: MUST
     kpi: Region-by-region residency audit attestation at GA.

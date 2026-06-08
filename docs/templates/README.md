@@ -1,6 +1,6 @@
 ---
 title: Templates
-description: Reusable document templates for architecture decisions, business requirements, root cause analysis, security planning, and user journey mapping
+description: Reusable document templates for architecture decisions, root cause analysis, security planning, and user journey mapping
 sidebar_position: 1
 author: Microsoft
 ms.date: 2026-03-08
@@ -8,7 +8,6 @@ ms.topic: overview
 keywords:
   - templates
   - architecture decision record
-  - business requirements
   - root cause analysis
   - security plan
   - user journey
@@ -22,7 +21,6 @@ Standardized templates for common documentation tasks. Each template provides a 
 | Template                                     | Purpose                                                          |
 |----------------------------------------------|------------------------------------------------------------------|
 | [ADR Template](adr-template-solutions.md)    | Record architecture decisions with context, options, and outcome |
-| [Business Requirements](brd-template.md)     | Capture business requirements with scope and success criteria    |
 | [RAI Assessment](rai-plan-template.md)       | RAI assessment output structure                                  |
 | [Root Cause Analysis](rca-template.md)       | Investigate incidents with timeline, analysis, and action items  |
 | [Security Plan](security-plan-template.md)   | Define security controls, threat models, and compliance measures |

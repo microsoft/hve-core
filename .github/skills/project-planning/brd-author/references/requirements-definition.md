@@ -1,5 +1,5 @@
 ---
-description: 'Unified requirements-definition vocabulary, formats, and quality rubrics for the BRD Builder workflow - FR/AC/NFR/CON/BR taxonomy and canonical statement form, Given/When/Then and alternative acceptance-criteria formats with an original CC BY 4.0 atomicity checklist, ISO 29148 §5.2.5 individual-requirement 0-3 scoring, ISO/IEC 25010 NFR category presence (DD-12), SMART business-goal rubric (DD-08), and ISTQB testability heuristics, all cited by name without redistributing third-party text - Brought to you by microsoft/hve-core'
+description: 'Unified requirements-definition vocabulary, formats, and quality rubrics for the BRD Builder workflow - FR/AC/NFR/CON/BR taxonomy, acceptance criteria, and quality heuristics - Brought to you by microsoft/hve-core'
 ---
 
 # Requirements Definition — Skill Entry
@@ -10,12 +10,12 @@ This skill is the single requirements-definition bundle the BRD Builder loads wh
 
 * Requirement vocabulary - the five-namespace taxonomy (FR functional requirement, AC acceptance criterion, NFR non-functional requirement, CON constraint, BR business rule) and the canonical statement form used before an identifier is assigned.
 * Acceptance-criteria authoring - Given/When/Then as the default format, the accepted alternative formats, and an original Microsoft atomicity checklist (CC BY 4.0) applied to every criterion.
-* Quality assessment - the three Define-phase rubrics (ISO 29148 §5.2.5 0-3 individual-requirement scoring, ISO/IEC 25010 NFR category presence per DD-12, SMART business-goal rubric per DD-08) plus ISTQB testability heuristics.
+* Quality assessment - the three Define-phase rubrics (ISO 29148 §5.2.5 0-3 individual-requirement scoring, ISO/IEC 25010 NFR category presence, SMART business-goal rubric) plus ISTQB testability heuristics.
 
 The skill is consumed by:
 
 * the `brd-author` skill (template population, Define-phase rewriting, per-partition acceptance-criteria sections, and self-scoring);
-* the `BRD Standards Assessor` subagent (plan-mode rubric at Define exit, mid-Define on demand, and post-Govern drift detection);
+* the BRD Quality Reviewer (plan-mode rubric at Define exit, mid-Define on demand, and post-Govern drift detection);
 * the BRD-phase instruction files for Discover, Define, and Govern.
 
 This file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The atomicity checklist in `references/atomicity-checklist.md` is also original Microsoft content under CC BY 4.0. External frameworks listed in the [cite-only registry](#cite-only-registry) are referenced by name and clause or section only; their prose is not embedded.
@@ -29,16 +29,16 @@ Apply this skill in the following situations:
 * Rewriting a candidate requirement into the [canonical statement form](#canonical-statement-form), or splitting a compound statement into atomic requirements.
 * Deciding whether a candidate requirement belongs in the BRD or should be deferred to the downstream PRD.
 * Writing or reviewing acceptance criteria for any captured requirement, or translating a stakeholder's free-form success statement into a structured triplet or equivalent format.
-* Generating per-partition acceptance-criteria sections inside a Govern-phase work-item payload (`WI-BRD-{NNN}` for ADO, `{{BRD-TEMP-N}}` for GitHub).
+* Preparing acceptance-criteria sections for the approved BRD and downstream PRD handoff.
 * Scoring a BRD draft against the nine ISO 29148 §5.2.5 individual-requirement characteristics ahead of the Define → Govern gate.
-* Checking that every ISO/IEC 25010 quality characteristic is represented by at least one NFR before exiting Define (per DD-12).
-* Refining a Discover-phase business-goal draft into a SMART goal during Define (per DD-08).
+* Checking that every ISO/IEC 25010 quality characteristic is represented by at least one NFR before exiting Define.
+* Refining a Discover-phase business-goal draft into a SMART goal during Define.
 * Asking whether a requirement is testable, and if not, what minimum information would make it testable (per ISTQB testability).
-* Producing the combined quality score the `BRD Standards Assessor` subagent emits in `BRD_STANDARD_FINDINGS_V1`.
+* Producing the combined quality score the BRD Quality Reviewer emits in `BRD_STANDARD_FINDINGS_V1`.
 
 ## Requirement Categories
 
-The BRD Builder classifies every captured requirement under the shared five-namespace taxonomy: `FR` (functional requirement), `AC` (acceptance criterion), `NFR` (non-functional requirement), `CON` (constraint), and `BR` (business rule). This section defines the four categories assigned during capture (FR, NFR, CON, BR); acceptance criteria (`AC`) attach to functional requirements and are defined in the [Acceptance Criteria](#acceptance-criteria) section. Identifier prefixes for all five namespaces are owned by the [`traceability-naming`](traceability-naming.md) skill.
+The BRD Builder classifies every captured requirement under the shared five-namespace taxonomy: `FR` (functional requirement), `AC` (acceptance criterion), `NFR` (non-functional requirement), `CON` (constraint), and `BR` (business rule). This section defines the four categories assigned during capture (FR, NFR, CON, BR); acceptance criteria (`AC`) attach to functional requirements and are defined in the [Acceptance Criteria](#acceptance-criteria) section. Identifier prefixes and digit rules for all five namespaces are owned by [id-schema.md](id-schema.md).
 
 ### Functional Requirement (FR)
 
@@ -79,7 +79,7 @@ Common constraint origins:
 * Integration with a fixed external system (protocol, schema, SLA).
 * Budget, timeline, or staffing boundary recorded as in-scope for the BRD.
 
-Constraints are stated in the present tense and identify the imposing source so downstream readers can validate whether the source remains in force.
+Constraints are stated in the present tense and identify the imposing source so downstream readers can validate whether the source remains in force. Each `CON-###` item records imposing source, affected boundary, non-negotiability, category, and impact.
 
 ### Business Rule (BR)
 
@@ -93,7 +93,7 @@ Common business-rule origins:
 * Organizational policy or operating procedure (approval thresholds, segregation-of-duties rules).
 * Contractual or service-level commitment the solution must continuously honor.
 
-Business rules are recorded under the `BR-###` namespace owned by [`traceability-naming`](traceability-naming.md); a functional requirement may declare the rules it enforces through an optional `enforces: [BR-###]` field.
+Business rules are recorded under the `BR-###` namespace owned by [id-schema.md](id-schema.md); a functional requirement may declare the rules it enforces through an optional `enforces: [BR-###]` field.
 
 ## Canonical Statement Form
 
@@ -108,7 +108,7 @@ Each requirement is atomic: one subject, one behavior or property, one condition
 
 Each requirement carries:
 
-* a stable identifier owned by [`traceability-naming`](traceability-naming.md);
+* a stable identifier owned by [id-schema.md](id-schema.md);
 * a rationale linking it back to the originating business goal or stakeholder need;
 * a verification approach owned by the [Acceptance Criteria](#acceptance-criteria) section below.
 
@@ -167,9 +167,9 @@ Scored per individual requirement. The BRD Builder recognizes the nine §5.2.5 i
 8. *Correct* - the requirement accurately reflects the underlying stakeholder intent and is free of factual, semantic, or scope errors.
 9. *Conforming* - the requirement follows the format, structure, and language standards established for the BRD's requirement set, including the canonical statement form and the BRD glossary.
 
-The 0-3 anchor scale used by the `BRD Standards Assessor` subagent is defined in [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md). See [requirements-quality-rubric.md](requirements-quality-rubric.md) for the combined scoring sheet the subagent emits. Cross-cutting traceability is enforced by the [`traceability-naming`](traceability-naming.md) skill rather than scored here.
+The 0-3 anchor scale used by the BRD Quality Reviewer is defined in [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md). See [requirements-quality-rubric.md](requirements-quality-rubric.md) for the combined scoring sheet the reviewer emits. Cross-cutting traceability is enforced by [traceability-naming.md](traceability-naming.md) rather than scored here.
 
-### Dimension 2 - NFR Category Presence (ISO/IEC 25010, per DD-12)
+### Dimension 2 - NFR Category Presence
 
 Scored per BRD draft, not per requirement. The BRD Builder treats ISO/IEC 25010's eight product-quality characteristics as a presence checklist. For each category, the rubric asks a single question: *is at least one non-functional requirement in the BRD that targets this category?*
 
@@ -184,9 +184,9 @@ The eight categories are:
 * Maintainability
 * Portability
 
-Per DD-12, the Define → Govern hard gate does not require every category to be populated; missing categories are flagged qualitatively in the assessor's narrative but do not block exit by themselves. The BRD Builder does not enumerate ISO 25010 sub-characteristics for scoring; sub-characteristics are listed in [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md) for awareness only.
+The Define to Govern hard gate does not require every category to be populated; missing categories are flagged qualitatively in the reviewer's narrative but do not block exit by themselves. The BRD Builder does not enumerate ISO 25010 sub-characteristics for scoring; sub-characteristics are listed in [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md) for awareness only.
 
-### Dimension 3 - Business-Goal SMART (per DD-08)
+### Dimension 3 - Business-Goal SMART
 
 Scored per business goal, not per requirement. Each goal is evaluated against the SMART attributes (Specific, Measurable, Achievable, Relevant, Time-bound). Each attribute carries an anchor description in [smart-rubric.md](smart-rubric.md). A goal passes when all five attributes pass; any single attribute failure marks the goal as not-SMART.
 
@@ -201,11 +201,11 @@ Independent of the three scoring dimensions, the BRD Builder applies ISTQB-deriv
 The frameworks and standards below are referenced by the BRD Builder by name and clause or section only. Their text is not embedded in this repository. When the workflow needs to point a stakeholder at a source, it links to the upstream publisher.
 
 * IIBA BABOK v3 - Business Analysis Body of Knowledge, requirements classification taxonomy and elicitation techniques.
-* ISO/IEC/IEEE 29148:2018 - Systems and software engineering: life cycle processes: requirements engineering, including the nine §5.2.5 individual-requirement characteristics. See [iso-29148-pointer.md](iso-29148-pointer.md) and [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md).
-* ISO/IEC 25010:2011 (and successor revisions) - product-quality model, eight quality characteristics (DD-12 category presence). See [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md).
-* Volere Requirements Specification Template - shell template and requirement-shell concept. See [volere-pointer.md](volere-pointer.md).
+* ISO/IEC/IEEE 29148:2018 - Systems and software engineering: life cycle processes: requirements engineering, including the nine §5.2.5 individual-requirement characteristics. See [standards-excerpts.md](standards-excerpts.md#isoiecieee-291482018) and [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md).
+* ISO/IEC 25010:2011 and successor revisions - product-quality model, eight quality characteristics. See [standards-excerpts.md](standards-excerpts.md#isoiec-250102023) and [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md).
+* Volere Requirements Specification Template - shell template and requirement-shell concept. See [standards-excerpts.md](standards-excerpts.md#volere-requirements-specification-template).
 * PMI Business Analysis for Practitioners - PMI BA Practice Guide.
-* Karl Wiegers, *Software Requirements* (Microsoft Press) and Process Impact templates. See [wiegers-templates.md](wiegers-templates.md).
+* Karl Wiegers, *Software Requirements* (Microsoft Press) and Process Impact templates. See [standards-excerpts.md](standards-excerpts.md#karl-wiegers--software-requirements).
 * arc42 - architecture documentation template, §1 (Introduction and Goals), §10 (Quality Requirements).
 * joelparkerhenderson/business-requirements-document - community BRD reference.
 * OMG BPMN 2.0 / DMN 1.4 / UML 2.5 - notation standards owned by the [`process-modeling`](process-modeling.md) skill.
@@ -232,25 +232,24 @@ Use this quick-select when classifying or assessing a candidate item:
 9. Assessing the BRD as a whole? Apply the ISO 25010 category-presence checklist in [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md). Record presence (true/false) per category; missing categories are flagged but do not by themselves block Define → Govern.
 10. Assessing a business goal? Apply the SMART rubric in [smart-rubric.md](smart-rubric.md). All five attributes must pass; any failure blocks Define → Govern.
 11. Suspect a requirement is not testable? Apply the ISTQB heuristics in [istqb-testability.md](istqb-testability.md) before scoring, then return to Dimension 1.
-12. Producing the combined assessor output? Use the unified rubric in [requirements-quality-rubric.md](requirements-quality-rubric.md) to populate `BRD_STANDARD_FINDINGS_V1`.
+12. Producing the combined reviewer output? Use the unified rubric in [requirements-quality-rubric.md](requirements-quality-rubric.md) to populate `BRD_STANDARD_FINDINGS_V1`.
 
 ## References
 
 Internal:
 
-* [iso-29148-pointer.md](iso-29148-pointer.md) - cite-only summary of ISO/IEC/IEEE 29148:2018 and outbound link.
+* [standards-excerpts.md](standards-excerpts.md) - cite-only registry for ISO/IEC/IEEE 29148:2018, ISO/IEC 25010, Volere, Wiegers, and other standards.
 * [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md) - cite-only summary of the nine ISO 29148 §5.2.5 individual-requirement characteristics and 0-3 anchor descriptions.
-* [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md) - cite-only summary of the eight ISO/IEC 25010 quality characteristics presented as a category-presence checklist per DD-12.
-* [volere-pointer.md](volere-pointer.md) - cite-only summary of the Volere Requirements Specification Template and outbound link.
-* [smart-rubric.md](smart-rubric.md) - SMART rubric per DD-08, with per-attribute anchor descriptions and binary pass/fail for the Define → Govern hard gate.
+* [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md) - cite-only summary of the eight ISO/IEC 25010 quality characteristics presented as a category-presence checklist.
+* [smart-rubric.md](smart-rubric.md) - SMART rubric with per-attribute anchor descriptions and binary pass/fail for the Define to Govern hard gate.
 * [istqb-testability.md](istqb-testability.md) - cite-only testability heuristics from the ISTQB Glossary.
-* [requirements-quality-rubric.md](requirements-quality-rubric.md) - combined HVE-Core rubric used by the `BRD Standards Assessor` subagent.
+* [requirements-quality-rubric.md](requirements-quality-rubric.md) - combined HVE-Core rubric used by the BRD Quality Reviewer.
 * [given-when-then.md](given-when-then.md) - canonical Given/When/Then pattern with generic examples and Cucumber attribution.
 * [atomicity-checklist.md](atomicity-checklist.md) - original Microsoft atomicity checklist (CC BY 4.0).
-* [wiegers-templates.md](wiegers-templates.md) - cite-only pointer to Karl Wiegers, *Software Requirements*.
-* [`traceability-naming`](traceability-naming.md) - requirement identifier schema and traceability matrix.
-* [`prioritization-schemes`](prioritization-schemes.md) - priority taxonomy referenced when authoring requirements.
-* [`process-modeling`](process-modeling.md) - BPMN / DMN / UML notation guidance.
+* [id-schema.md](id-schema.md) - canonical requirement, business-goal, and design-decision identifier schema.
+* [traceability-naming.md](traceability-naming.md) - requirement identifier routing and traceability matrix conventions.
+* [prioritization-schemes.md](prioritization-schemes.md) - MoSCoW priority taxonomy referenced when authoring requirements.
+* [process-modeling.md](process-modeling.md) - optional process, decision, and structural diagram guidance.
 
 External (cite-only, no embedded text):
 

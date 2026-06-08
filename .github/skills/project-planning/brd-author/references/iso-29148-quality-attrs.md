@@ -1,10 +1,10 @@
 ---
-description: 'Cite-only summary of the nine ISO/IEC/IEEE 29148:2018 §5.2.5 individual-requirement characteristics the BRD Builder uses, with the 0-3 anchor scale the BRD Standards Assessor applies at Define exit - Brought to you by microsoft/hve-core'
+description: 'Cite-only summary of the nine ISO/IEC/IEEE 29148:2018 §5.2.5 individual-requirement characteristics the BRD Builder uses, with the 0-3 anchor scale the BRD Quality Reviewer applies at Define exit - Brought to you by microsoft/hve-core'
 ---
 
 # ISO/IEC/IEEE 29148:2018 - Individual-Requirement Quality Characteristics (Cite-Only)
 
-This document is a cite-only summary. It names the nine ISO/IEC/IEEE 29148:2018 §5.2.5 individual-requirement characteristics the BRD Builder applies, defines each one in original Microsoft prose, and supplies the 0-3 anchor scale the `BRD Standards Assessor` subagent uses. It does not redistribute ISO/IEC/IEEE 29148:2018 text.
+This document is a cite-only summary. It names the nine ISO/IEC/IEEE 29148:2018 §5.2.5 individual-requirement characteristics the BRD Builder applies, defines each one in original Microsoft prose, and supplies the 0-3 anchor scale the `BRD Quality Reviewer` subagent uses. It does not redistribute ISO/IEC/IEEE 29148:2018 text.
 
 ## What This Document Is
 
@@ -118,7 +118,7 @@ A requirement is *conforming* when it follows the format, structure, and languag
 The Define → Govern hard gate uses these thresholds:
 
 * Every requirement must score at least 2 on *unambiguous*, *verifiable*, *singular*, and *necessary*; a score below 2 on any of those four blocks the gate. These four characteristics are the most expensive to repair downstream and the most frequently cited in the requirements-engineering literature as the hardest to retrofit.
-* The other five characteristics (*appropriate*, *complete*, *feasible*, *correct*, *conforming*) are reported but do not by themselves block the gate; the `BRD Standards Assessor` subagent surfaces them in the narrative.
+* The other five characteristics (*appropriate*, *complete*, *feasible*, *correct*, *conforming*) are reported but do not by themselves block the gate; the `BRD Quality Reviewer` subagent surfaces them in the narrative.
 * Traceability is no longer assessed under this rubric. Cross-cutting traceability is enforced by the [`traceability-naming`](traceability-naming.md) skill (identifier schema, backward and forward links, traceability matrix).
 
 ## Sources

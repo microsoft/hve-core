@@ -2,9 +2,8 @@
 name: BRD Builder
 description: "Business Requirements Document builder with guided Q&A and reference integration"
 agents:
-  - BRD Standards Assessor
+  - BRD Quality Reviewer
   - Researcher Subagent
-  - Arch Diagram Builder
 ---
 
 # BRD Builder Instructions
@@ -39,13 +38,22 @@ Discover exits only through the brd-author Discover hard gate: scope is bounded,
 
 Load `brd-author#define` first. Author full BRD content using the canonical templates and the FR/AC/NFR/CON/BR taxonomy (see Requirement Quality), then build and verify traceability links across requirements and acceptance criteria.
 
-Dispatch the `BRD Standards Assessor` subagent to grade the draft. A single invocation returns a `BRD_STANDARD_FINDINGS_V1` payload and an aggregated `BRD_QUALITY_REPORT_V1` payload; treat both as the evidence for the Define gate. Define does not exit until the quality report's gate decision permits advancement.
+Dispatch the `BRD Quality Reviewer` subagent to grade the draft. A single invocation returns a `BRD_STANDARD_FINDINGS_V1` payload and an aggregated `BRD_QUALITY_REPORT_V1` payload; treat both as the evidence for the Define gate. Define does not exit until the quality report's gate decision permits advancement.
 
-Reuse the Arch Diagram Builder agent to produce process and structural diagrams for the current-state, future-state, and data-flow sections rather than authoring diagrams inline.
+Author ordinary BRD process diagrams inline through the canonical BRD template guidance. The Arch Diagram Builder can provide optional infrastructure context when a BRD section needs architecture-specific interpretation, but it is not required for the BRD workflow.
 
 ### Govern
 
 Load `brd-author#govern` first. Finalize the BRD for approval with version and lineage metadata, disposition any remaining quality findings, and produce the `BRD_TO_PRD_HANDOFF_V1` payload for downstream consumers. Enforce supersession lineage: a replacement BRD records both `supersedes` and `superseded_by` links, and historical artifacts are preserved rather than deleted.
+
+Before emitting `BRD_TO_PRD_HANDOFF_V1`, compute and record the handoff evidence from the final BRD:
+
+1. Calculate the BRD file SHA-256 and record the source path, version, lifecycle status, and lineage fields.
+2. Count business goals, functional requirements, acceptance criteria, non-functional requirements, constraints, and business rules from the canonical identifiers in the BRD.
+3. Compute traceability metrics, including FR-to-AC coverage and FR-to-BG coverage, from the author-maintained traceability matrix.
+4. Link the latest `BRD_QUALITY_REPORT_V1` evidence used for the Govern decision.
+5. Record approver signoff, approval date, and any waiver entries that justify unresolved coverage or quality gaps.
+6. Emit the handoff only after the quality report, signoff, counts, metrics, SHA-256, and waivers are internally consistent.
 
 ## File Management
 
@@ -57,12 +65,12 @@ File locations:
 
 * BRD file: `docs/brds/<kebab-case-name>-brd.md`
 * State file: `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`
-* Template: `docs/templates/brd-template.md` (if available in the repository or extension/plugin context)
+* Template: `.github/skills/project-planning/brd-author/templates/brd-full.md`
 
 File creation process:
 
-1. Read the BRD template from `docs/templates/brd-template.md`. If the template is not found, use the section structure defined in this agent as the BRD skeleton.
-2. Create BRD file at `docs/brds/<kebab-case-name>-brd.md` using the template structure (or the agent-defined skeleton if the template was unavailable).
+1. Read the BRD template from `.github/skills/project-planning/brd-author/templates/brd-full.md`. If the canonical template cannot be read, halt and report the missing artifact.
+2. Create BRD file at `docs/brds/<kebab-case-name>-brd.md` using the canonical template structure.
 3. Create state file at `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`.
 4. Initialize BRD by replacing `{{placeholder}}` values with known content.
 5. Announce creation to user and explain next steps.

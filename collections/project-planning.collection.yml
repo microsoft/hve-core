@@ -57,7 +57,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
     kind: agent
-  - path: .github/agents/project-planning/subagents/brd-standards-assessor.agent.md
+  - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
     kind: agent
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md

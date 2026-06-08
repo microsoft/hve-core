@@ -1,29 +1,31 @@
 ---
-description: 'Operational BRD quality rubric used by the BRD Standards Assessor subagent and the Define-phase exit gate - maps the requirements-quality 0-3 attribute scoring to the BRD author status taxonomy (RISK, CAUTION, COVERED, NOT_APPLICABLE) and defines anchor descriptions for every score level - Brought to you by microsoft/hve-core'
+description: 'Operational BRD quality scoring rubric used by BRD Quality Reviewer to map requirement quality evidence to status taxonomy - Brought to you by microsoft/hve-core'
 ---
 
 # BRD Author Quality Rubric
 
-This file is the operational rubric the `BRD Standards Assessor` subagent applies at the Define-phase exit gate, on mid-Define on-demand assessments, and during Govern drift checks. It is intentionally narrow: it specifies the scoring scale, the status taxonomy the BRD Builder surfaces to authors, and the gate decision rule. The underlying attribute definitions (ISO 29148 individual-requirement characteristics, ISO/IEC 25010 NFR categories, SMART business-goal pass/fail, ISTQB testability heuristics) are owned by the `requirements-definition` skill bundle and cited from there rather than duplicated here.
+This file is the operational scoring rubric the `BRD Quality Reviewer` subagent applies at Define exit, during mid-Define on-demand assessments, and during Govern drift checks. It is intentionally narrow: it specifies the scoring scale and the status taxonomy the BRD Builder surfaces to authors. The paired `BRD_QUALITY_REPORT_V1` payload owns gate decisions and threshold-to-decision rules.
 
-For the source-of-truth attribute definitions and the assessor's emitted findings schema, see [requirements-quality-rubric.md](requirements-quality-rubric.md).
+The underlying attribute definitions (ISO 29148 individual-requirement characteristics, ISO/IEC 25010 NFR categories, SMART business-goal pass/fail, ISTQB testability heuristics) are owned by the `requirements-definition` skill bundle and cited from there rather than duplicated here.
+
+For the source-of-truth attribute definitions and the reviewer's emitted findings schema, see [requirements-quality-rubric.md](requirements-quality-rubric.md).
 
 ## Status taxonomy
 
-Every assessor finding rolls up to exactly one of four statuses. The status is the only verdict authors and orchestrators read; the underlying scores live in the `BRD_STANDARD_FINDINGS_V1` payload for tooling.
+Every reviewer finding rolls up to exactly one of four statuses. The status is the only verdict authors and orchestrators read; the underlying scores live in the `BRD_STANDARD_FINDINGS_V1` payload for tooling.
 
-| Status           | Author meaning                                                                                       | Gate effect             |
-|------------------|------------------------------------------------------------------------------------------------------|-------------------------|
-| `COVERED`        | The requirement, business goal, or NFR category meets the rubric's minimum bar.                      | Allow                   |
-| `CAUTION`        | The item is acceptable for Define exit but carries a non-blocking concern worth surfacing.           | Allow with comment      |
-| `RISK`           | The item fails the rubric's minimum bar; Define exit is blocked until the item is repaired or waived.| Block                   |
-| `NOT_APPLICABLE` | The item is intentionally out of scope for this BRD and is excluded from scoring.                    | Allow; record rationale |
+| Status           | Author meaning                                                                            | Report input                                            |
+|------------------|-------------------------------------------------------------------------------------------|---------------------------------------------------------|
+| `COVERED`        | The requirement, business goal, or NFR category meets the rubric's minimum bar.           | Counts toward passing evidence.                         |
+| `CAUTION`        | The item carries a concern worth surfacing but does not itself fail the rubric.            | Counts toward review-needed evidence.                   |
+| `RISK`           | The item fails the rubric's minimum bar and needs repair or waiver.                        | Counts toward failing evidence.                         |
+| `NOT_APPLICABLE` | The item is intentionally out of scope for this BRD and is excluded from scoring.          | Excluded from threshold calculations; rationale remains. |
 
-The assessor also emits a per-payload `gate_decision` (`approve`, `approve_with_comments`, or `block`) computed from the rules in the next section.
+Findings emit statuses only. They do not emit `gate_decision`, `gate_decisions`, `define_exit`, or `govern_exit` fields.
 
 ## Per-requirement scoring scale
 
-For each FR, NFR, and CON, the assessor scores the nine ISO/IEC/IEEE 29148:2018 §5.2.5 characteristics on a 0–3 anchor scale and then maps the row to a single status. The scale is the same scale used by [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md); the anchor descriptions here govern the BRD Builder's interpretation.
+For each FR, NFR, and CON, the reviewer scores the nine ISO/IEC/IEEE 29148:2018 §5.2.5 characteristics on a 0–3 anchor scale and then maps the row to a single status. The scale is the same scale used by [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md); the anchor descriptions here govern the BRD Builder's interpretation.
 
 | Score | Anchor name      | Anchor description                                                                                                                          |
 |-------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -34,18 +36,20 @@ For each FR, NFR, and CON, the assessor scores the nine ISO/IEC/IEEE 29148:2018 
 
 Score-to-status mapping per individual attribute:
 
-| Score | Maps to status              |
-|-------|-----------------------------|
-| `0`   | `RISK` if attribute is `unambiguous`, `verifiable`, `singular`, or `necessary`; else `CAUTION`. |
-| `1`   | `CAUTION`                   |
-| `2`   | `COVERED`                   |
-| `3`   | `COVERED`                   |
+| Score | Maps to status |
+|-------|----------------|
+| `0`   | `RISK`         |
+| `1`   | `CAUTION`      |
+| `2`   | `COVERED`      |
+| `3`   | `COVERED`      |
 
 A requirement's row-level status is the worst (highest severity) status across its nine attribute statuses. `RISK` > `CAUTION` > `COVERED`.
 
+Score `1` is caution in the rubric. The quality report separately applies threshold rules: ISO 29148 core attributes below `2` (`necessary`, `unambiguous`, `singular`, and `verifiable`) block through `BRD_QUALITY_REPORT_V1.gate_decisions`.
+
 ## Per-BRD NFR category scoring
 
-For each of the eight ISO/IEC 25010 product-quality categories ([iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md)), the assessor emits a single status:
+For each of the eight ISO/IEC 25010 product-quality categories ([iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md)), the reviewer emits a single status:
 
 | Observation                                                                                | Status            |
 |--------------------------------------------------------------------------------------------|-------------------|
@@ -53,11 +57,11 @@ For each of the eight ISO/IEC 25010 product-quality categories ([iso-25010-nfr-t
 | No NFR targets the category, and the BRD frontmatter does not declare it out of scope.     | `CAUTION`         |
 | The BRD frontmatter explicitly declares the category out of scope with a written rationale.| `NOT_APPLICABLE`  |
 
-ISO 25010 absence is intentionally a `CAUTION`, not a `RISK`, per DD-12: NFR completeness flags Define exit but does not block it.
+ISO 25010 absence is intentionally a `CAUTION`, not a `RISK`, per DD-012: NFR completeness flags the report but does not itself fail rubric scoring.
 
 ## Per-business-goal SMART scoring
 
-For each business goal, the assessor evaluates the five SMART attributes per [smart-rubric.md](smart-rubric.md) as `pass` or `fail`, then maps the row:
+For each business goal, the reviewer evaluates the five SMART attributes per [smart-rubric.md](smart-rubric.md) as `pass` or `fail`, then maps the row:
 
 | Observation                                       | Status   |
 |---------------------------------------------------|----------|
@@ -65,24 +69,21 @@ For each business goal, the assessor evaluates the five SMART attributes per [sm
 | Exactly one attribute `fail`.                     | `CAUTION`|
 | Two or more attributes `fail`.                    | `RISK`   |
 
-The per-BRD goal-level decision (`business_goal_smart_status` in the frontmatter overlay per DD-08) is the worst status across all goals.
+The per-BRD goal-level status (`business_goal_smart_status` in the frontmatter overlay per DD-008) is the worst status across all goals.
 
-## Define-to-Govern gate decision rule
+## Quality report decision inputs
 
-The Define → Govern transition is decided by combining the three scored dimensions per the rule below. Any blocking condition forces `gate_decision = block`; any flagging condition forces `gate_decision = approve_with_comments` if no blocking condition is present.
+The `BRD Quality Reviewer` sends scoring signals to the paired `BRD_QUALITY_REPORT_V1` payload. The report, not this rubric, combines those signals into `gate_decisions.define_exit` and `gate_decisions.govern_exit`.
 
-| Condition                                                                                                                   | Effect        |
-|-----------------------------------------------------------------------------------------------------------------------------|---------------|
-| Any requirement row carries status `RISK`.                                                                                  | Block         |
-| Any business goal row carries status `RISK`.                                                                                | Block         |
-| Coverage of FR → AC links drops below the threshold declared in the BRD frontmatter (`fr_to_ac_coverage_threshold_pct`).    | Block         |
-| Any requirement row carries status `CAUTION`.                                                                               | Approve with comment |
-| Any business goal row carries status `CAUTION`.                                                                             | Approve with comment |
-| One or more ISO 25010 NFR categories carry status `CAUTION`.                                                                | Approve with comment |
-| ISTQB testability heuristics flagged one or more requirements during diagnostic review.                                     | Approve with comment |
-| All rows are `COVERED` or `NOT_APPLICABLE` and coverage thresholds are met.                                                 | Approve       |
+| Signal                                                                                                                      | Status evidence              |
+|-----------------------------------------------------------------------------------------------------------------------------|------------------------------|
+| Requirement rows with `RISK`, `CAUTION`, `COVERED`, or `NOT_APPLICABLE` status                                             | Row-level quality evidence   |
+| Business goal rows with `RISK`, `CAUTION`, or `COVERED` status                                                             | SMART quality evidence       |
+| FR-to-AC coverage percentage and configured `fr_to_ac_coverage_threshold_pct`                                               | Coverage threshold evidence  |
+| ISO 25010 NFR category presence or absence                                                                                  | NFR coverage evidence        |
+| ISTQB testability notes attached to requirements                                                                            | Diagnostic evidence          |
 
-The orchestrator records the decision in the `BRD_TO_PRD_HANDOFF_V1` payload's `quality_report.govern_exit_decision` field per the [handoff-payload-schema.md](handoff-payload-schema.md) (Step 2.6 reference).
+The quality report records the resulting decision and the orchestrator later carries the Govern decision into the `BRD_TO_PRD_HANDOFF_V1` payload's `quality_report.govern_exit_decision` field per [handoff-payload-schema.md](handoff-payload-schema.md).
 
 ## Govern drift detection
 
@@ -92,13 +93,14 @@ During Govern, the same rubric is re-applied on a cadence defined by the orchest
 * A business goal row that was previously `COVERED` becomes `CAUTION` or `RISK`.
 * An NFR category that was previously `COVERED` becomes `CAUTION`.
 
-Drift events set `assessment_outcome = drift` on the findings payload and surface a Govern alert; they do not, by themselves, move the BRD back out of Govern.
+Drift events set `assessment_outcome = drift` on the findings payload and surface a Govern alert. The quality report decides whether that drift blocks, warns, or remains informational.
 
-## Authoring conventions for assessor findings
+## Authoring conventions for reviewer findings
 
 * Always emit per-row status alongside the underlying numeric scores so authors and tooling can both consume the result.
-* Always include a one-line `reason` per `RISK` and `CAUTION` row that names the specific attribute or category causing the verdict; the orchestrator surfaces this verbatim in the gate report.
+* Always include a concise finding description per `RISK` and `CAUTION` row that names the specific attribute or category causing the status.
 * Never aggregate the three dimensions into a single composite number; report them as three independent verdicts.
+* Never include gate decision fields in findings; `BRD_QUALITY_REPORT_V1` owns gate decisions.
 * Refer to attribute and category definitions by linking to `requirements-definition` reference anchors; do not paraphrase the definitions in the findings payload.
 
 ## License

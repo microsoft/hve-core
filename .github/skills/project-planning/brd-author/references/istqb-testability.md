@@ -16,7 +16,7 @@ The heuristics below are original HVE-Core paraphrases informed by, but not quot
 
 Apply these heuristics during Define-phase requirement rewriting, *before* scoring the requirement against the ISO 29148 *verifiable* attribute in [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md). The heuristics are diagnostic; they suggest the smallest edit that would restore testability. They are not themselves scored and they do not appear in the combined Define-exit rubric.
 
-The heuristics are also used by the `BRD Standards Assessor` subagent when it explains a low *verifiable* score in its narrative.
+The heuristics are also used by the `BRD Quality Reviewer` subagent when it explains a low *verifiable* score in its narrative.
 
 ## The Five Heuristics
 

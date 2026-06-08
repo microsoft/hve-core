@@ -325,7 +325,11 @@ function Invoke-PluginGeneration {
                     }
 
                     $generatedBlock = $artifactSections.ToString().TrimEnd()
-                    $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+                    $intro = $parsed.Intro.TrimEnd()
+                    if ($intro -notmatch '(?m)^## Included Artifacts\s*$') {
+                        $intro = "$intro`n`n## Included Artifacts"
+                    }
+                    $updatedCollectionMd = "$intro`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
                     if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
                         $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
                     }

@@ -1,14 +1,37 @@
 ---
-description: 'Five-tier requirement identifier schema (FR / AC / NFR / CON / BR) with regex validation patterns, example identifiers, and .brd-config.yml prefix-override semantics for the HVE-Core BRD Builder - Brought to you by microsoft/hve-core'
+description: 'Canonical BRD requirement, business-goal, and design-decision identifier schema with frontmatter prefix rules - Brought to you by microsoft/hve-core'
 ---
 
-# Five-Tier Identifier Schema
+# BRD Identifier Schema
 
-This reference defines the canonical five-tier identifier schema used by the HVE-Core BRD Builder template. The schema is consumed by the `BRD Standards Assessor` subagent (coverage math, prefix-consistency checks) and by any downstream tooling that parses a BRD draft.
+This reference is the canonical identifier source for the BRD author bundle. It defines five requirement tiers and two adjacent identifier families used by the canonical BRD template, traceability matrix, quality review, and Govern handoff.
 
-The five namespaces are *structural* and are not collapsible. Only the prefix strings themselves are overridable. See [Override Semantics](#override-semantics) below.
+The five requirement namespaces are structural and are not collapsible. Only the requirement prefix strings are configurable, and they are configured in BRD YAML frontmatter under `requirement_id_prefixes`.
 
-## The Five Namespaces
+## Identifier Families
+
+### Requirement Tiers
+
+| Tier | Default prefix | Captures                                                | Required pattern |
+|------|----------------|---------------------------------------------------------|------------------|
+| FR   | `FR`           | Functional requirements, observable solution behaviors  | `PREFIX-\d{3,}` |
+| AC   | `AC`           | Acceptance criteria, testable conditions on FRs         | `PREFIX-\d{3,}` |
+| NFR  | `NFR`          | Non-functional requirements and quality properties      | `PREFIX-\d{3,}` |
+| CON  | `CON`          | Imposed constraints on solution or delivery boundaries  | `PREFIX-\d{3,}` |
+| BR   | `BR`           | Standing business rules the solution must uphold        | `PREFIX-\d{3,}` |
+
+### Adjacent Identifiers
+
+Adjacent identifiers are not requirement tiers, but they participate in traceability and handoff records:
+
+| Family | Default prefix | Captures                                           | Required pattern |
+|--------|----------------|----------------------------------------------------|------------------|
+| BG     | `BG`           | Business goals and outcomes                       | `BG-\d{3,}`     |
+| DD     | `DD`           | Design decisions recorded in the BRD decision log | `DD-\d{3,}`     |
+
+Examples: `FR-001`, `AC-001`, `NFR-001`, `CON-001`, `BR-001`, `BG-001`, and `DD-008`.
+
+## Requirement Tier Definitions
 
 ### FR - Functional Requirements
 
@@ -32,7 +55,7 @@ Each AC references the FR(s) it covers in its metadata block (for example, `cove
 
 ### NFR - Non-Functional Requirements
 
-`NFR-###` identifies a non-functional requirement: a measurable quality property of the solution, organized under the ISO/IEC 25010 quality characteristics taxonomy referenced by the [`requirements-definition`](requirements-definition.md#quality-dimensions-and-rubrics) skill (DD-12).
+`NFR-###` identifies a non-functional requirement: a measurable quality property of the solution, organized under the ISO/IEC 25010 quality characteristics taxonomy referenced by the [`requirements-definition`](requirements-definition.md#quality-dimensions-and-rubrics) skill.
 
 * Default prefix: `NFR-`
 * Regex (default prefix): `^NFR-\d{3,}$`
@@ -48,7 +71,7 @@ The NFR namespace is partitioned by ISO/IEC 25010 category headings inside the B
 * Regex (default prefix): `^CON-\d{3,}$`
 * Examples: `CON-001` (a mandated cloud platform), `CON-007` (a fixed go-live date)
 
-Constraints are distinct from business rules (`BR-###`): a constraint bounds how the solution may be built or delivered, while a business rule is a standing policy the solution must uphold. Each constraint records its imposing source so downstream readers can validate whether the source remains in force.
+Constraints are distinct from business rules (`BR-###`): a constraint bounds how the solution may be built or delivered, while a business rule is a standing policy the solution must uphold. Each constraint records imposing source, affected boundary, non-negotiability, category, and impact.
 
 ### BR - Business Rules
 
@@ -58,51 +81,71 @@ Constraints are distinct from business rules (`BR-###`): a constraint bounds how
 * Regex (default prefix): `^BR-\d{3,}$`
 * Examples: `BR-001` (a regulatory data-residency rule), `BR-014` (an organizational approval-threshold policy)
 
-An FR may optionally declare which business rules it enforces via an `enforces: [BR-###]` field in its metadata block. In v1 of the schema this is an authoring convention only; the `BRD Standards Assessor` does not currently validate the `enforces` field. See the parent SKILL's *Optional Authoring Convention: `enforces`* section.
+An FR may optionally declare which business rules it enforces via an `enforces: [BR-###]` field in its metadata block. The BR-to-FR table in [traceability-matrix.md](traceability-matrix.md) is the human-readable reverse view.
 
-## Override Semantics
+## Adjacent Family Definitions
 
-The `.brd-config.yml` file at the BRD draft's root may declare a `requirement_id_prefixes` block to override the *prefix strings* used by a specific project. The *count* of namespaces (always five) is not configurable.
+### BG - Business Goal
+
+`BG-###` identifies a SMART business goal or outcome. BG identifiers support FR-to-BG traceability and the `business_goals[]` handoff payload.
+
+* Regex: `^BG-\d{3,}$`
+* Examples: `BG-001`, `BG-002`, `BG-010`
+
+Every FR should support at least one BG. The Govern handoff target for FR-to-BG coverage is `100.0%`; gaps require an active waiver.
+
+### DD - Design Decision
+
+`DD-###` identifies a decision recorded in the BRD's design decision log. DD identifiers are defined further in [design-decisions.md](design-decisions.md).
+
+* Regex: `^DD-\d{3,}$`
+* Examples: `DD-001`, `DD-008`, `DD-021`
+
+Use DD identifiers when a choice affects scope, taxonomy, traceability, prioritization, or downstream interpretation.
+
+## Frontmatter Prefix Semantics
+
+The BRD frontmatter `requirement_id_prefixes` block declares the prefix strings used by a specific BRD. The count and meaning of requirement namespaces are not configurable.
 
 ### Default Configuration
 
-When `.brd-config.yml` is absent or omits the `requirement_id_prefixes` block, the BRD Builder applies the defaults:
+When the BRD omits the `requirement_id_prefixes` block, the BRD Builder applies the defaults:
 
 ```yaml
 requirement_id_prefixes:
-  fr: "FR-"
-  ac: "AC-"
-  nfr: "NFR-"
-  con: "CON-"
-  br: "BR-"
+  fr: "FR"
+  ac: "AC"
+  nfr: "NFR"
+  con: "CON"
+  br: "BR"
 ```
 
 ### Per-Project Override Example
 
-A project that prefers a domain-specific prefix may override any subset of the five:
+A BRD that prefers domain-specific requirement prefixes may override any subset of the five:
 
 ```yaml
 requirement_id_prefixes:
-  fr: "FEAT-"
-  ac: "TEST-"
-  nfr: "QUAL-"
-  con: "BOUND-"
-  br: "POL-"
+  fr: "FEAT"
+  ac: "TEST"
+  nfr: "QUAL"
+  con: "BOUND"
+  br: "POL"
 ```
 
-Under this configuration, identifiers in the BRD draft would read `FEAT-001`, `TEST-017`, `QUAL-023`, `BOUND-005`, `POL-014`. The `BRD Standards Assessor` reads the configured prefixes and applies the regex `^<prefix>\d{3,}$` per namespace.
+Under this configuration, identifiers in the BRD draft would read `FEAT-001`, `TEST-017`, `QUAL-023`, `BOUND-005`, `POL-014`. The BRD Quality Reviewer reads the configured prefixes and applies the regex `^<prefix>-\d{3,}$` per namespace.
 
 ### What Is and Is Not Overridable
 
 | Aspect of the schema                                               | Overridable?         |
 |--------------------------------------------------------------------|----------------------|
-| The five-namespace separation (FR / AC / NFR / CON / BR conceptually) | **No** - structural  |
-| The prefix string applied to each namespace                        | **Yes** - via config |
+| The five-namespace separation (FR / AC / NFR / CON / BR conceptually) | **No** - structural       |
+| The prefix string applied to each requirement namespace             | **Yes** - via frontmatter |
 | The zero-padded numeric suffix format (minimum three digits)       | **No** - structural  |
 | The within-BRD sequential numbering rule                           | **No** - structural  |
 | Whether identifiers must be unique within a BRD draft              | **No** - structural  |
 
-Attempting to collapse two namespaces into one (for example, by setting `fr` and `nfr` to the same prefix) is rejected by the `BRD Standards Assessor` because it makes coverage math and category-presence checks ambiguous.
+Attempting to collapse two namespaces into one (for example, by setting `fr` and `nfr` to the same prefix) is rejected because it makes coverage math and category-presence checks ambiguous.
 
 ## Validation Patterns
 
@@ -115,6 +158,8 @@ Tooling that needs to classify an identifier in a BRD draft applies the regex pe
 | NFR       | `^NFR-\d{3,}$` | `NFR-001`, `NFR-050` | `NFR-50`, `NF-001`          |
 | CON       | `^CON-\d{3,}$` | `CON-001`, `CON-007` | `CON-1`, `CONS-001`         |
 | BR        | `^BR-\d{3,}$`  | `BR-001`, `BR-014`   | `BR-1`, `BRA-001`           |
+| BG        | `^BG-\d{3,}$`  | `BG-001`, `BG-010`   | `BG-1`, `BG-01`             |
+| DD        | `^DD-\d{3,}$`  | `DD-001`, `DD-008`   | `DD-1`, `DD-08`             |
 
 Numeric suffixes are at least three digits to keep alphabetic sort and numeric sort aligned in the BRD's table-of-contents view.
 
@@ -122,8 +167,9 @@ Numeric suffixes are at least three digits to keep alphabetic sort and numeric s
 
 * Parent skill: [`../SKILL.md`](../SKILL.md)
 * Sibling reference: [`traceability-matrix.md`](traceability-matrix.md)
-* External cite-only: ISO/IEC/IEEE 29148:2018 §6.2.3 (traceability) - [https://www.iso.org/standard/72089.html](https://www.iso.org/standard/72089.html)
-* External cite-only: ISO/IEC 25010 (NFR quality model) - [https://www.iso.org/standard/35733.html](https://www.iso.org/standard/35733.html)
+* Sibling reference: [`traceability-naming.md`](traceability-naming.md)
+* Sibling reference: [`design-decisions.md`](design-decisions.md)
+* Standards registry: [standards-excerpts.md](standards-excerpts.md#isoiecieee-291482018)
 
 > Brought to you by microsoft/hve-core
 

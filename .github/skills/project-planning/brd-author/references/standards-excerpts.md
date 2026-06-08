@@ -59,7 +59,7 @@ The registry mirrors the cite-only posture established by the ADR Planner standa
 * **Publisher** — ISO / IEC.
 * **Edition / year** — Second edition, 2023-11 (supersedes ISO/IEC 25010:2011).
 * **URL** — [https://www.iso.org/standard/78176.html](https://www.iso.org/standard/78176.html)
-* **Why the BRD Builder cites it** — Source standard for the product-quality model whose category names anchor the NFR section of the canonical BRD template and the `requirements-definition` NFR presence rubric (DD-12).
+* **Why the BRD Builder cites it** — Source standard for the product-quality model whose category names anchor the NFR section of the canonical BRD template and the `requirements-definition` NFR presence rubric.
 
 ### ISTQB Glossary of Testing Terms
 
@@ -75,7 +75,7 @@ The registry mirrors the cite-only posture established by the ADR Planner standa
 * **Publisher** — *Management Review*, AMA Forum, November 1981.
 * **Edition / year** — Original article: George T. Doran, "There's a S.M.A.R.T. way to write management's goals and objectives".
 * **URL** — [https://web.archive.org/web/20250908010801/https://community.mis.temple.edu/mis0855002fall2015/files/2015/10/S.M.A.R.T-Way-Management-Review.pdf](https://web.archive.org/web/20250908010801/https://community.mis.temple.edu/mis0855002fall2015/files/2015/10/S.M.A.R.T-Way-Management-Review.pdf)
-* **Why the BRD Builder cites it** — Origin of the SMART acronym applied by the `requirements-definition` SMART rubric and by the Business Goals section of the canonical BRD template (DD-08).
+* **Why the BRD Builder cites it** — Origin of the SMART acronym applied by the `requirements-definition` SMART rubric and by the Business Goals section of the canonical BRD template.
 
 ### MoSCoW prioritization
 

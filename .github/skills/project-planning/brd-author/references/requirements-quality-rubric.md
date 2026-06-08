@@ -1,27 +1,28 @@
 ---
-description: 'Combined HVE-Core quality rubric the BRD Standards Assessor subagent applies at Define exit - 0-3 ISO 29148 §5.2.5 characteristic scoring per requirement, ISO/IEC 25010 NFR category-presence per BRD per DD-12, and SMART pass/fail per business goal per DD-08, plus the Define-to-Govern gate decision rule - Brought to you by microsoft/hve-core'
+description: 'Combined HVE-Core quality scoring rubric BRD Quality Reviewer applies for ISO 29148, ISO 25010, SMART goals, and CON checks - Brought to you by microsoft/hve-core'
 ---
 
 # HVE-Core BRD Quality Rubric
 
-This document is the single combined rubric the `BRD Standards Assessor` subagent (Step 4.2) applies at Define exit, mid-Define on demand, and post-Govern drift detection. It composes three independent scoring dimensions and one diagnostic heuristic set into the payload schema emitted in `BRD_STANDARD_FINDINGS_V1`. All third-party standards (ISO/IEC/IEEE 29148:2018, ISO/IEC 25010, ISTQB Glossary) are cited by name only; the rubric itself is original Microsoft content.
+This document is the single combined scoring rubric the `BRD Quality Reviewer` subagent applies at Define exit, mid-Define on demand, and post-Govern drift detection. It composes three independent scoring dimensions, one CON-specific quality check set, and one diagnostic heuristic set into the payload schema emitted in `BRD_STANDARD_FINDINGS_V1`. The paired `BRD_QUALITY_REPORT_V1` payload owns gate decisions and threshold-to-decision rules. All third-party standards (ISO/IEC/IEEE 29148:2018, ISO/IEC 25010, ISTQB Glossary) are cited by name only; the rubric itself is original Microsoft content.
 
 ## Rubric Structure
 
 The rubric composes the artifacts shipped in this skill:
 
-| Dimension                              | Scope               | Scoring                   | Source                                                                         |
-|----------------------------------------|---------------------|---------------------------|--------------------------------------------------------------------------------|
-| ISO 29148 §5.2.5 characteristic scoring | per requirement     | 0-3 per characteristic    | [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md)                       |
-| ISO/IEC 25010 category presence        | per BRD             | boolean per category      | [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md)                         |
-| SMART business-goal evaluation         | per business goal   | binary pass / fail        | [smart-rubric.md](smart-rubric.md)                                             |
-| ISTQB testability (diagnostic)         | per requirement     | not scored                | [istqb-testability.md](istqb-testability.md)                                   |
+| Dimension                               | Scope                 | Scoring                | Source                                                   |
+|-----------------------------------------|-----------------------|------------------------|----------------------------------------------------------|
+| ISO 29148 §5.2.5 characteristic scoring | per requirement       | 0-3 per characteristic | [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md) |
+| CON-specific quality checks             | per `CON-###` item    | 0-3 per check          | This rubric                                              |
+| ISO/IEC 25010 category presence         | per BRD               | boolean per category   | [iso-25010-nfr-taxonomy.md](iso-25010-nfr-taxonomy.md)   |
+| SMART business-goal evaluation          | per business goal     | binary pass / fail     | [smart-rubric.md](smart-rubric.md)                       |
+| ISTQB testability (diagnostic)          | per requirement       | not scored             | [istqb-testability.md](istqb-testability.md)             |
 
-The three scored dimensions are reported independently in the assessor's findings; they do not aggregate into a single number.
+The scored dimensions are reported independently in the reviewer's findings; they do not aggregate into a single number.
 
 ## Per-Requirement Scoring Sheet
 
-For each FR, NFR, and CON in the BRD, the assessor emits the following row:
+For each FR, NFR, and CON in the BRD, the reviewer emits the following row:
 
 | Field                    | Type                          | Source                                                                       |
 |--------------------------|-------------------------------|------------------------------------------------------------------------------|
@@ -37,9 +38,34 @@ For each FR, NFR, and CON in the BRD, the assessor emits the following row:
 | `conforming`             | integer 0-3                   | [iso-29148-quality-attrs.md §9](iso-29148-quality-attrs.md#9-conforming)     |
 | `testability_notes`      | string (optional)             | [istqb-testability.md](istqb-testability.md)                                 |
 
+Score `1` is caution in the rubric. The quality report applies blocking threshold rules for core ISO 29148 attributes below `2`: `necessary`, `unambiguous`, `singular`, and `verifiable`.
+
+## Per-Constraint Quality Sheet
+
+For each `CON-###` item in the BRD, the reviewer emits the ISO 29148 row above and evaluates the following CON-specific checks. These checks keep constraints separate from business rules and non-functional requirements.
+
+| Field                         | Type        | Scoring guidance                                                                                           |
+|-------------------------------|-------------|------------------------------------------------------------------------------------------------------------|
+| `imposing_source`             | integer 0-3 | Scores whether the constraint names the source imposing it, such as law, regulation, platform, contract, policy, or architecture. |
+| `affected_boundary`           | integer 0-3 | Scores whether the affected system, process, data, geography, organization, or integration boundary is explicit. |
+| `non_negotiability`           | integer 0-3 | Scores whether the statement explains why the constraint is non-negotiable or identifies who can approve changes. |
+| `category`                    | integer 0-3 | Scores whether the constraint category is clear, such as regulatory, technical, operational, contractual, security, or data. |
+| `separation_from_br_nfr`      | integer 0-3 | Scores whether the item is a true imposed boundary rather than a standing business rule (`BR-###`) or quality requirement (`NFR-###`). |
+
+CON-specific score anchors:
+
+| Score | Anchor name  | Status contribution |
+|-------|--------------|---------------------|
+| `0`   | Absent       | `RISK`              |
+| `1`   | Implied      | `CAUTION`           |
+| `2`   | Explicit     | `COVERED`           |
+| `3`   | Traceable    | `COVERED`           |
+
+A `CON-###` row-level status is the worst status across the ISO 29148 attributes and CON-specific checks.
+
 ## Per-BRD NFR Category Sheet
 
-The assessor emits a single category-presence row per BRD:
+The reviewer emits a single category-presence row per BRD:
 
 | Field                    | Type                          | Source                                                                       |
 |--------------------------|-------------------------------|------------------------------------------------------------------------------|
@@ -55,7 +81,7 @@ The assessor emits a single category-presence row per BRD:
 
 ## Per-Business-Goal SMART Sheet
 
-For each business goal in the BRD, the assessor emits the following row:
+For each business goal in the BRD, the reviewer emits the following row:
 
 | Field             | Type                                  | Source                                                                       |
 |-------------------|---------------------------------------|------------------------------------------------------------------------------|
@@ -68,29 +94,30 @@ For each business goal in the BRD, the assessor emits the following row:
 | `goal_verdict`    | enum (`pass`, `fail`)                 | any single attribute `fail` → `goal_verdict = fail`                          |
 | `fail_reasons`    | string (optional)                     | populated when `goal_verdict = fail`                                         |
 
-## Define → Govern Gate Decision Rule
+## Quality Report Decision Inputs
 
-The Define → Govern hard gate is decided by combining the three dimensions per the rule below. The gate blocks if any blocking condition is met.
+The `BRD Quality Reviewer` emits scoring signals into `BRD_STANDARD_FINDINGS_V1`. The paired `BRD_QUALITY_REPORT_V1` payload converts those signals into Define-exit and Govern-exit gate decisions.
 
-| Condition                                                                                                            | Effect on gate  |
-|----------------------------------------------------------------------------------------------------------------------|-----------------|
-| Any requirement scores below 2 on `unambiguous`, `verifiable`, `singular`, or `necessary`                            | Block           |
-| Any business goal has `goal_verdict = fail`                                                                          | Block           |
-| One or more ISO 25010 NFR categories are absent (boolean false)                                                      | Flag (no block) |
-| Any of `appropriate`, `complete`, `feasible`, `correct`, `conforming` scores below 2 on one or more requirements     | Flag (no block) |
-| ISTQB testability notes attached to one or more requirements                                                         | Flag (no block) |
+| Signal                                                                                                         | Emitted evidence                                      |
+|----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| Requirement ISO 29148 scores, including `correct`                                                              | Per-requirement scoring and findings                  |
+| CON-specific scores for imposing source, affected boundary, non-negotiability, category, and separation         | Per-constraint scoring and findings                   |
+| Business goal SMART results                                                                                    | Per-goal pass/fail and findings                       |
+| ISO 25010 NFR category presence                                                                                | Per-category booleans and missing-category narrative  |
+| ISTQB testability notes attached to one or more requirements                                                    | Diagnostic notes                                      |
+| FR-to-AC and FR-to-BG coverage metrics                                                                         | Coverage summaries used by the quality report         |
 
-The assessor surfaces every condition it observes in the `BRD_STANDARD_FINDINGS_V1` narrative; blocking conditions also set the payload's `gate_decision` to `block` so the orchestrator halts the Define → Govern transition.
+The reviewer surfaces every scoring issue it observes in the `BRD_STANDARD_FINDINGS_V1` narrative. It does not write gate decision fields into findings.
 
 ## Govern Drift Detection
 
-The same rubric is re-applied during Govern when the assessor is invoked for drift detection. A drift event is recorded when any of the following changes occur between the last passing run and the current run:
+The same rubric is re-applied during Govern when the reviewer is invoked for drift detection. A drift event is recorded when any of the following changes occur between the last passing run and the current run:
 
 * A requirement that previously scored at least 2 on `unambiguous`, `verifiable`, `singular`, or `necessary` drops below 2.
 * A business goal that previously had `goal_verdict = pass` flips to `fail`.
 * An NFR category that was previously present becomes absent.
 
-Drift events trigger an `assessment_outcome = drift` payload but do not by themselves move the BRD out of Govern; the orchestrator decides the response based on the drift narrative.
+Drift events trigger `assessment_outcome = drift` in the findings payload but do not by themselves move the BRD out of Govern; the quality report decides the response based on the drift narrative and active thresholds.
 
 ## Sources
 

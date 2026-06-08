@@ -1,5 +1,5 @@
 ---
-description: 'Stakeholder identification and engagement vocabulary for the BRD Builder - Mendelow Power/Interest grid, RACI accountability variants, and a cite-only pointer to IIBA BABOK v3 - Brought to you by microsoft/hve-core'
+description: 'Stakeholder identification and engagement vocabulary for the BRD Builder - Mendelow Power/Interest grid and RACI accountability variants - Brought to you by microsoft/hve-core'
 ---
 
 # Stakeholder Analysis — Skill Entry
@@ -10,7 +10,7 @@ This skill establishes how the BRD Builder identifies, classifies, and engages t
 
 * the Mendelow Power/Interest grid for engagement strategy;
 * RACI and its widely used variants for accountability assignment;
-* IIBA BABOK v3 as a cite-only authority for the broader business-analysis vocabulary.
+* IIBA BABOK v3 through the central cite-only standards registry for broader business-analysis vocabulary.
 
 The skill is consumed by:
 
@@ -38,7 +38,7 @@ The BRD Builder picks one of the three patterns below based on the question bein
 |-----------------------------------------------------------------------------|-------------------------------------------|----------------------------------------------------------------|
 | How should we engage this stakeholder cohort across the BRD cycle?          | Mendelow Power/Interest grid              | [mendelow-matrix.md](mendelow-matrix.md) |
 | Who is accountable, responsible, consulted, or informed for this item?      | RACI (or a variant: RASCI, RACI-VS, DACI) | [raci-patterns.md](raci-patterns.md)     |
-| Where does the broader BA vocabulary for stakeholders live authoritatively? | IIBA BABOK v3 (cite-only)                 | [babok-pointer.md](babok-pointer.md)     |
+| Where does the broader BA vocabulary for stakeholders live authoritatively? | IIBA BABOK v3 (cite-only)                 | [standards-excerpts.md](standards-excerpts.md#iiba-babok-guide-v3) |
 
 The three patterns are complementary. A given stakeholder typically has a Mendelow quadrant assignment that drives engagement cadence and a RACI letter (or variant) for each requirement, decision, or process step they touch. BABOK is named when a reader asks for the upstream definition of the vocabulary; its text is never embedded.
 
@@ -63,13 +63,13 @@ The variant is selected per partition based on whether the matrix records day-to
 
 ### BABOK v3 (Cite-Only)
 
-The IIBA Business Analysis Body of Knowledge v3 is the canonical industry reference for stakeholder analysis vocabulary. Per [babok-pointer.md](babok-pointer.md), the BRD Builder names BABOK and links to the publisher when a reader asks for the upstream definition; no BABOK text is embedded.
+The IIBA Business Analysis Body of Knowledge v3 is the canonical industry reference for stakeholder analysis vocabulary. Per [standards-excerpts.md](standards-excerpts.md#iiba-babok-guide-v3), the BRD Builder names BABOK and links to the publisher when a reader asks for the upstream definition; no BABOK text is embedded.
 
 ## Cite-Only Registry
 
 The frameworks below are referenced by the BRD Builder by name only. Their text is not embedded in this repository. When the workflow needs to point a reader at a source, it links to the upstream publisher.
 
-* IIBA BABOK v3 - Business Analysis Body of Knowledge, Stakeholders and Stakeholder Analysis vocabulary. See [babok-pointer.md](babok-pointer.md).
+* IIBA BABOK v3 - Business Analysis Body of Knowledge, Stakeholders and Stakeholder Analysis vocabulary. See [standards-excerpts.md](standards-excerpts.md#iiba-babok-guide-v3).
 * PMI *Business Analysis for Practitioners* - PMI BA Practice Guide, stakeholder identification and engagement planning. Referenced by name only; no embedded text.
 
 DO NOT QUOTE prose definitions, lists, or tables from any framework above. When a paraphrase is needed, write it as original Microsoft content and cite the framework by name.
@@ -91,7 +91,7 @@ Internal:
 
 * [mendelow-matrix.md](mendelow-matrix.md) - Power/Interest grid with original HVE-Core engagement captions.
 * [raci-patterns.md](raci-patterns.md) - RACI, RASCI, RACI-VS, and DACI variants tabulated with definitions and selection guidance.
-* [babok-pointer.md](babok-pointer.md) - Cite-only pointer to IIBA BABOK v3.
+* [standards-excerpts.md](standards-excerpts.md) - Cite-only registry for IIBA BABOK v3 and related standards.
 * [`requirements-definition`](requirements-definition.md) - Foundational requirements vocabulary (FR / AC / NFR / CON / BR) used alongside stakeholder assignments.
 * [`traceability-naming`](traceability-naming.md) - Identifier schema used to anchor RACI rows to requirements, decisions, and processes.
 

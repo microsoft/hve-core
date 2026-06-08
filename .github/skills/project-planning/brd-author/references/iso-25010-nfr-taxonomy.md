@@ -1,10 +1,10 @@
 ---
-description: 'Cite-only summary of ISO/IEC 25010 product-quality model - the eight quality characteristics presented as a Define-exit category-presence checklist per DD-12, with sub-characteristics listed for awareness only - Brought to you by microsoft/hve-core'
+description: 'Cite-only summary of ISO/IEC 25010 product-quality model - the eight quality characteristics presented as a Define-exit category-presence checklist per DD-012, with sub-characteristics listed for awareness only - Brought to you by microsoft/hve-core'
 ---
 
 # ISO/IEC 25010 - NFR Category-Presence Checklist (Cite-Only)
 
-This document is a cite-only summary. It names the eight ISO/IEC 25010 product-quality characteristics the BRD Builder treats as non-functional-requirement (NFR) categories, defines each category in original Microsoft prose, and supplies the binary presence checklist the `BRD Standards Assessor` subagent uses at Define exit per DD-12. It does not redistribute ISO/IEC 25010 text.
+This document is a cite-only summary. It names the eight ISO/IEC 25010 product-quality characteristics the BRD Builder treats as non-functional-requirement (NFR) categories, defines each category in original Microsoft prose, and supplies the binary presence checklist the `BRD Quality Reviewer` subagent uses at Define exit per DD-012. It does not redistribute ISO/IEC 25010 text.
 
 ## What This Document Is
 
@@ -14,9 +14,9 @@ The BRD Builder adopts the eight top-level characteristics as a category-presenc
 It does not score sub-characteristics.
 The full standard remains paywalled and cite-only; see [https://www.iso.org/standard/35733.html](https://www.iso.org/standard/35733.html) for the authoritative text.
 
-## DD-12 Posture
+## DD-012 Posture
 
-Per DD-12, the BRD Builder treats ISO/IEC 25010 as a *category-presence checklist*, not a per-attribute enumeration. The Define-exit question for each category is binary: *is at least one NFR in the BRD that targets this category?*
+Per DD-012, the BRD Builder treats ISO/IEC 25010 as a *category-presence checklist*, not a per-attribute enumeration. The Define-exit question for each category is binary: *is at least one NFR in the BRD that targets this category?*
 
 * No N/A justification is required for categories with zero NFRs. The assessor flags missing categories qualitatively in its narrative.
 * Missing categories do not by themselves block the Define → Govern gate. The gate blockers are scored at the requirement level under [iso-29148-quality-attrs.md](iso-29148-quality-attrs.md) and at the business-goal level under [smart-rubric.md](smart-rubric.md).
@@ -90,7 +90,7 @@ Presence indicator: at least one NFR names a target environment, install constra
 
 ## Define-Exit Checklist
 
-The `BRD Standards Assessor` subagent emits this checklist as part of `BRD_STANDARD_FINDINGS_V1`:
+The `BRD Quality Reviewer` subagent emits this checklist as part of `BRD_STANDARD_FINDINGS_V1`:
 
 | Category               | Present (true / false) | Notes |
 |------------------------|------------------------|-------|
@@ -103,7 +103,7 @@ The `BRD Standards Assessor` subagent emits this checklist as part of `BRD_STAND
 | Maintainability        |                        |       |
 | Portability            |                        |       |
 
-Per DD-12, this checklist is informational; it does not by itself decide the Define → Govern gate.
+Per DD-012, this checklist is informational; it does not by itself decide the Define → Govern gate.
 
 ## Why Cite-Only
 

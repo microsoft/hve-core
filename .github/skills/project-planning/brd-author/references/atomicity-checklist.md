@@ -4,7 +4,7 @@ description: 'Original Microsoft atomicity checklist used by the BRD Builder ass
 
 # Acceptance Criterion Atomicity Checklist
 
-This checklist is the authoritative rubric the BRD Builder's `BRD Standards Assessor` subagent applies to every candidate acceptance criterion before it is recorded in a BRD draft or emitted into a per-partition handoff payload. It is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+This checklist is the authoritative rubric the BRD Builder's `BRD Quality Reviewer` subagent applies to every candidate acceptance criterion before it is recorded in a BRD draft or emitted into a per-partition handoff payload. It is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 The checklist is format-neutral: it applies equally to a Given/When/Then triplet, a flat checklist entry, a rule-with-examples row, and a non-functional threshold statement.
 

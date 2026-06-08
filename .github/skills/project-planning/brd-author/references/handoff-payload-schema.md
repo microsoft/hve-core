@@ -1,12 +1,12 @@
 ---
-description: 'BRD-author view of the BRD-to-PRD handoff payload contract - the brd-author scope statement, business goals, stakeholders, requirements, traceability matrix, open questions, and assumptions that the BRD Builder orchestrator emits at Govern exit for consumption by the PRD Builder - Brought to you by microsoft/hve-core'
+description: 'BRD-author view of the BRD-to-PRD handoff payload contract emitted at Govern exit for PRD Builder consumption - Brought to you by microsoft/hve-core'
 ---
 
 # BRD-to-PRD Handoff Payload — BRD Author View
 
-This document is the brd-author skill's authoritative description of the payload the BRD Builder orchestrator emits at Govern exit and that the PRD Builder accepts via its `from-brd-handoff` entry mode. The payload itself is governed by the schema in [brd-to-prd-handoff-v1.md](brd-to-prd-handoff-v1.md); this file restates the schema in the BRD author's vocabulary so the canonical template, the orchestrator's exit gate, and the `BRD Standards Assessor` subagent all reference a single contract.
+This document is the brd-author skill's authoritative description of the payload the BRD Builder emits at Govern exit and that the PRD Builder accepts via its `from-brd-handoff` entry mode. The payload itself is governed by the schema in [brd-to-prd-handoff-v1.md](brd-to-prd-handoff-v1.md); this file restates the schema in the BRD author's vocabulary so the canonical template, Govern exit gate, and BRD Quality Reviewer all reference a single contract.
 
-The brd-author bundle is the sole writer of the `brd:`, `business_goals:`, `partitions:`, `known_open_items:`, and `prd_consumer_notes:` fields. The `quality_report:`, `counts:`, `traceability:`, and `signoff:` fields are written by the orchestrator and assessor pipeline; this view documents them for completeness so the template author knows what downstream consumers will receive.
+The brd-author bundle feeds the `brd:`, `business_goals:`, `partitions:`, `known_open_items:`, and `prd_consumer_notes:` fields. The `quality_report:`, `counts:`, `traceability:`, and `signoff:` fields are assembled at Govern exit from the approved BRD, final quality report, traceability matrix, and signoff evidence.
 
 ## Required versus optional
 
@@ -25,7 +25,6 @@ The fields below are the ones an author or BRD template placeholder feeds direct
 | `brd_artifact_sha256`  | `brd.artifact_sha256`                      | string (64 lowercase hex)     | yes      | Orchestrator (computed at signoff)                      |
 | `scope_statement`      | `prd_consumer_notes` (preface paragraph)   | string                        | yes      | BRD §Scope of Work                                      |
 | `business_goals[]`     | `business_goals[]`                         | array, length ≥ 1             | yes      | BRD §Business Goals                                     |
-| `stakeholders[]`       | `business_goals[].kpi` cross-refs          | array                         | yes      | BRD §Stakeholders                                       |
 | `requirements[]`       | `counts.{functional,non_functional,…}`     | array (FR + NFR + CON)        | yes      | BRD §FR + §NFR + §Constraints                           |
 | `traceability_matrix`  | `traceability.matrix_ref`                  | string (workspace-relative)   | yes      | BRD §Traceability Matrix or sibling matrix artifact     |
 | `open_questions[]`     | `known_open_items[]`                       | array                         | yes (may be empty) | BRD §Open Questions                            |
@@ -60,40 +59,36 @@ known_open_items:                       # required (may be empty)
     summary: <OPEN_ITEM_SUMMARY>
     rationale_for_deferral: <DEFERRAL_RATIONALE>
     target_phase: <PRD|Implementation|Operations|Future-Release>
-prd_consumer_notes: |                   # optional, free text; conventionally hosts
-                                        # the BRD scope statement and assumptions
-  scope_statement: <SCOPE_STATEMENT>
-  assumptions:
-    - <ASSUMPTION_STATEMENT>
+prd_consumer_notes: <CONSUMER_NOTES>    # optional string with scope and assumptions notes
 ```
 
 ## Field rules the brd-author is responsible for
 
-* `brd.id` MUST be allocated by `scripts/update_lineage.py allocate` (Step 2.8) and recorded in the BRD frontmatter overlay before Govern exit.
+* `brd.id` MUST be recorded in the BRD frontmatter overlay before Govern exit.
 * `brd.version` MUST advance to `1.0.0` or higher at signoff; drafts (`0.x.y`) are rejected by upstream validation.
 * `business_goals[].id` MUST match the `BG-###` namespace described in [`traceability-naming`](traceability-naming.md).
 * `business_goals[].priority` MUST be drawn from the MoSCoW labels defined in [`prioritization-schemes`](prioritization-schemes.md).
-* `business_goals[].smart_status` is written by the `BRD Standards Assessor` subagent per [quality-rubric.md](quality-rubric.md); the brd-author MUST NOT emit a goal whose statement does not meet the SMART rubric before requesting signoff.
+* `business_goals[].smart_status` is verified by the BRD Quality Reviewer per [quality-rubric.md](quality-rubric.md); the brd-author MUST NOT emit a goal whose statement does not meet the SMART rubric before requesting signoff.
 * `known_open_items[].target_phase` MUST be one of the four upstream-allowed values; deferring to anything else is rejected.
 * `partitions[]` MUST be present when the BRD declares partitions in its frontmatter overlay; otherwise it MUST be omitted.
-* `prd_consumer_notes` MUST be valid YAML if the BRD chooses to express scope statement and assumptions as a nested mapping; otherwise it MAY be a plain string.
+* `prd_consumer_notes` is a plain string. Use concise prose for scope and assumption notes instead of nested YAML.
 
 ## Fields the orchestrator and assessor write (informational)
 
 These fields are not authored from the BRD template, but the template's quality fields determine the values written by the pipeline. They are listed here so the BRD author can predict what consumers will see.
 
-* `signoff.{status,approvers,waivers}` — written by the orchestrator from the Govern approval workflow.
-* `quality_report.{report_ref,overall_status,govern_exit_decision}` — written by the orchestrator from the final `BRD Standards Assessor` run.
-* `counts.{functional_requirements,non_functional_requirements,business_rules,constraints,acceptance_criteria,business_goals}` — written by the orchestrator from a structural pass over the BRD artifact.
-* `traceability.{matrix_ref,fr_to_ac_coverage_pct,fr_to_bg_coverage_pct}` — written by the orchestrator from the traceability matrix snapshot at signoff.
+* `signoff.{status,approvers,waivers}` - assembled from Govern approval evidence.
+* `quality_report.{report_ref,overall_status,govern_exit_decision}` - assembled from the final BRD Quality Reviewer output.
+* `counts.{functional_requirements,non_functional_requirements,business_rules,constraints,acceptance_criteria,business_goals}` - computed from a structural pass over the BRD artifact.
+* `traceability.{matrix_ref,fr_to_ac_coverage_pct,fr_to_bg_coverage_pct}` - computed from the traceability matrix snapshot at signoff.
 
 ## Validation surface
 
 The brd-author bundle's contribution to the payload is validated by:
 
-1. `scripts/validate_frontmatter.py` (Step 2.7) — confirms `brd_id`, `version`, `title`, `business_goal_ids`, and `business_goal_smart_status` are present and well-formed on the BRD source.
-2. The orchestrator's pre-handoff structural check — confirms `business_goals[].id` cardinality matches the BRD's §Business Goals section.
-3. The upstream `BRD_TO_PRD_HANDOFF_V1` schema validator owned by [brd-quality-formats](brd-quality-formats.md) — final authority on the assembled payload.
+1. Frontmatter pre-validation confirms `brd_id`, `version`, `title`, `business_goal_ids`, `business_goal_smart_status`, `fr_to_ac_coverage_threshold_pct`, and `requirement_id_prefixes` are present and well-formed on the BRD source.
+2. The pre-handoff structural check confirms counts, `business_goals[].id` cardinality, and traceability metrics match the BRD and matrix snapshot.
+3. The upstream `BRD_TO_PRD_HANDOFF_V1` schema validator owned by [brd-quality-formats](brd-quality-formats.md) is the final authority on the assembled payload.
 
 ## License
 

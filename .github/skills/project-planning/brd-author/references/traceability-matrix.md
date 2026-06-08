@@ -1,12 +1,12 @@
 ---
-description: 'BRD traceability matrix template with required FR-to-AC coverage, optional FR-to-business-goal mapping, informational business-rule-to-FR mapping, and the FR-to-AC coverage column that supports the BRD Standards Assessor coverage math - Brought to you by microsoft/hve-core'
+description: 'Author-maintained BRD traceability matrix template with FR-to-AC, FR-to-BG, and BR-to-FR coverage formulas - Brought to you by microsoft/hve-core'
 ---
 
 # Traceability Matrix Template
 
 This reference defines the shape of the traceability matrix section that appears in every HVE-Core BRD draft. The matrix records the relationships between the five identifier tiers ([FR / AC / NFR / CON / BR](id-schema.md)) and the business goals captured in the BRD's Goals section.
 
-The matrix is consumed by the `BRD Standards Assessor` subagent at the Define→Govern transition. The FR↔AC coverage column in particular is the source of truth for the assessor's coverage-percentage calculation.
+The matrix is authored and maintained in the BRD. The BRD Quality Reviewer verifies the matrix at the Define-to-Govern transition, and the Govern handoff uses it as the source for FR-to-AC and FR-to-BG coverage metrics.
 
 ## Relationship Classes
 
@@ -14,15 +14,15 @@ The matrix records three classes of relationship, each with a different enforcem
 
 | Class           | Pair      | Posture       | Enforcement                                                          |
 |-----------------|-----------|---------------|----------------------------------------------------------------------|
-| Required        | FR ↔ AC   | Gate-blocking | Every FR must have ≥1 AC; coverage % gates Define→Govern             |
-| Optional        | FR ↔ BG   | Recommended   | Recording the goal each FR supports is encouraged but not blocking   |
-| Informational   | BR ↔ FR   | Advisory      | Recording which FRs enforce which business rules aids policy review  |
+| Required        | FR to AC | Gate-blocking | Every FR must have at least one AC; coverage gates Define and Govern |
+| Govern target   | FR to BG | Waivable      | Every FR should support at least one BG; Govern target is 100%       |
+| Informational   | BR to FR | Advisory      | Recording which FRs enforce which business rules aids policy review  |
 
 The three classes share the same matrix section but are presented as separate tables to keep each table single-purpose and easy to scan.
 
-## Required Table: FR ↔ AC Coverage
+## Required Table: FR-to-AC Coverage
 
-This table is the source of truth for the assessor's coverage math. One row per FR; the *Acceptance Criteria* column lists every AC identifier that covers that FR; the *Coverage* column records the count of ACs covering that FR.
+This table is the source of truth for acceptance-criteria coverage. One row per FR; the *Acceptance Criteria* column lists every AC identifier that covers that FR; the *Coverage* column records the count of ACs covering that FR.
 
 ```markdown
 | FR ID  | FR Title (short)               | Acceptance Criteria      | Coverage |
@@ -33,18 +33,20 @@ This table is the source of truth for the assessor's coverage math. One row per 
 | FR-004 | Export approved timesheet      | (none)                   | 0        |
 ```
 
-### Coverage % Calculation (Supports DD-09)
+### Coverage Calculation
 
-The coverage percentage the `BRD Standards Assessor` reports is computed from this table:
+The FR-to-AC coverage percentage is computed from this table:
 
 $$\text{coverage \%} = \frac{\text{count of FRs with Coverage} \geq 1}{\text{count of FRs in BRD}} \times 100$$
 
-In the worked example above, three of four FRs carry at least one AC, so coverage is 75 %.
+If the BRD has zero FR rows, report `0.0%` coverage. Treat the result as a caution when the BRD is intentionally non-functional-only and as blocking when the active threshold requires functional scope.
+
+In the worked example above, three of four FRs carry at least one AC, so coverage is `75.0%`.
 
 The current rubric posture:
 
-* **Hard gate at Define→Govern**: ≥ 80 % FR↔AC coverage.
-* **Warning at Govern**: < 100 % FR↔AC coverage emits a non-blocking reviewer-warning recorded in `BRD_QUALITY_REPORT_V1.warnings[]`.
+* Hard gate at Define to Govern: greater than or equal to `fr_to_ac_coverage_threshold_pct`, default `80.0`.
+* Warning at Govern: less than `100.0%` FR-to-AC coverage emits a reviewer warning recorded in `BRD_QUALITY_REPORT_V1.warnings[]`.
 
 ### Row and Column Conventions
 
@@ -54,24 +56,30 @@ The current rubric posture:
 * The *Coverage* column is the integer count of ACs in the cell to its left; `(none)` counts as zero.
 * FRs are listed in numeric order of FR ID, not in section order or priority order.
 
-## Optional Table: FR ↔ Business Goal
+## Govern Target Table: FR-to-Business Goal
 
 This table records which business goal each FR exists to advance. It supports backwards traceability ("why does this FR exist?") and helps reviewers spot FRs that have drifted away from any captured goal.
 
 ```markdown
 | FR ID  | Business Goal(s) Supported     |
 |--------|--------------------------------|
-| FR-001 | BG-01, BG-03                   |
-| FR-002 | BG-01                          |
-| FR-003 | BG-02                          |
+| FR-001 | BG-001, BG-003                 |
+| FR-002 | BG-001                         |
+| FR-003 | BG-002                         |
 | FR-004 | (none)                         |
 ```
 
-The `BG-` prefix is the BRD's business-goal identifier prefix; goals themselves are captured in the BRD's Goals section under the SMART rubric owned by the [`requirements-definition`](requirements-definition.md#quality-dimensions-and-rubrics) skill.
+The `BG-###` identifier family is defined in [id-schema.md](id-schema.md). Goals themselves are captured in the BRD's Goals section under the SMART rubric owned by [requirements-definition.md](requirements-definition.md#quality-dimensions-and-rubrics).
 
-An FR row with `(none)` in this column is permitted but is surfaced by the assessor as an informational note (not a warning or gate). It usually indicates either a missing goal in the Goals section or an FR that has expanded beyond its originating goal.
+### FR-to-BG Coverage Calculation
 
-## Informational Table: BR ↔ FR
+The FR-to-BG coverage percentage is computed from this table:
+
+$$\text{coverage \%} = \frac{\text{count of FRs with at least one BG link}}{\text{count of FRs in BRD}} \times 100$$
+
+If the BRD has zero FR rows, report `0.0%` coverage. Govern target is `100.0%`. Any gap requires an active waiver in `signoff.waivers[]` before `BRD_TO_PRD_HANDOFF_V1` is emitted.
+
+## Informational Table: BR-to-FR
 
 This table records which FRs enforce which business rules. It is the reverse view of the optional `enforces:` metadata field documented in [`id-schema.md`](id-schema.md) and the parent SKILL.
 
@@ -83,7 +91,7 @@ This table records which FRs enforce which business rules. It is the reverse vie
 | BR-014 | Data residency: EU users data stored in EU  | (none)          |
 ```
 
-The *Enforcing FR(s)* column lists FRs that exist to enforce the business rule. A `(none)` entry is a signal for the reviewer: either an FR is missing, or the business rule is enforced by a non-functional control (a security NFR, an infrastructure constraint, or an operational procedure) and is not the BRD's responsibility to implement directly. In v1 of the schema the `BRD Standards Assessor` does not gate on this table; it is included for human reviewer use.
+The *Enforcing FR(s)* column lists FRs that exist to enforce the business rule. A `(none)` entry is a signal for the reviewer: either an FR is missing, or the business rule is enforced by a non-functional control, an imposed constraint, or an operational procedure outside the BRD's implementation scope.
 
 ## Matrix Section Layout
 
@@ -91,9 +99,9 @@ The traceability matrix section of a BRD draft is laid out in this order:
 
 1. `## Traceability Matrix` heading.
 2. Optional one-paragraph reading note (for example, "Coverage is computed from the FR↔AC table below.").
-3. `### FR ↔ AC Coverage` (required table).
-4. `### FR ↔ Business Goal` (optional table; section header is still rendered with `(no entries)` body when the project chooses to omit it).
-5. `### BR ↔ FR Enforcement` (informational table; same `(no entries)` treatment when omitted).
+3. `### FR-to-AC Coverage` (required table).
+4. `### FR-to-Business Goal` (Govern target table).
+5. `### BR-to-FR Enforcement` (informational table; same `(no entries)` treatment when omitted).
 
 Sub-section headings are fixed strings so the assessor can locate the FR↔AC coverage table by heading text without parsing the whole BRD.
 
@@ -101,7 +109,7 @@ Sub-section headings are fixed strings so the assessor can locate the FR↔AC co
 
 * Parent skill: [`../SKILL.md`](../SKILL.md)
 * Sibling reference: [`id-schema.md`](id-schema.md)
-* External cite-only: ISO/IEC/IEEE 29148:2018 §6.2.3 (traceability) - [https://www.iso.org/standard/72089.html](https://www.iso.org/standard/72089.html)
+* Standards registry: [standards-excerpts.md](standards-excerpts.md#isoiecieee-291482018)
 
 > Brought to you by microsoft/hve-core
 

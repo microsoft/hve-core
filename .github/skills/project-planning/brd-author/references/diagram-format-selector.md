@@ -1,5 +1,5 @@
 ---
-description: 'Mermaid-first format selector matrix for BRD diagrams with draw.io and ASCII fallbacks across BPMN, DMN, and UML notation families - Brought to you by microsoft/hve-core'
+description: 'Mermaid-first format selector matrix for BRD diagrams with ASCII and none options - Brought to you by microsoft/hve-core'
 ---
 
 # Diagram Format Selector
@@ -8,32 +8,30 @@ This file gives the BRD Builder a single matrix for choosing how to render a dia
 
 ## Selection Principle
 
-The BRD Builder prefers diagrams that live next to the prose they describe. The selection follows three rules in order:
+The BRD Builder prefers diagrams that live next to the prose they describe. Diagram references are optional. The selection follows three rules in order:
 
 1. **Mermaid first.** If Mermaid has a diagram type that expresses the chosen notation at the required fidelity, embed Mermaid inline in the BRD markdown.
-2. **draw.io fallback.** If the requirement needs BPMN or DMN constructs Mermaid cannot render (collaboration pools with message flows, full DMN decision-requirements diagrams, advanced gateways), author the diagram in draw.io, save as `.drawio.svg`, and reference it from the BRD with an image link.
-3. **ASCII for low fidelity only.** ASCII blocks are reserved for early Discover-phase sketches captured in conversation transcripts. Every ASCII sketch carried into Define is upgraded to Mermaid (or draw.io) before Define exit.
+2. **ASCII for low fidelity only.** ASCII blocks are reserved for early Discover-phase sketches captured in conversation transcripts or console-only review.
+3. **No diagram.** If a diagram would add ceremony without clarifying the requirement, set `diagram_format: none` and keep the process prose explicit.
 
-A diagram is never embedded as a binary screenshot; the BRD must contain either a Mermaid block (rendered by GitHub and most markdown viewers) or a vector `.drawio.svg` (editable round-trip in draw.io).
+A diagram is never embedded as a binary screenshot. When a diagram is present, the BRD contains either a Mermaid block or a plain-text ASCII block.
 
 ## Format Selector Matrix
 
 | notation | use_when | tooling | embed_method |
 | --- | --- | --- | --- |
-| BPMN 2.0 - lane swimlane with sequential activities and exclusive or parallel gateways | A single pool, up to four lanes, no message flows between pools | Mermaid `flowchart` (with subgraphs as lanes) | Fenced ```` ```mermaid ```` block inline in the BRD section |
-| BPMN 2.0 - choreography of two or more participants with message flows, intermediate events, or compensation | Collaboration across pools, message exchange, timer or compensation events | draw.io with the bpmn.io shape library | `.drawio.svg` saved under the BRD asset folder and linked from the BRD section |
-| DMN 1.4 - single decision driven by a small input set | Up to one decision node and up to two input data nodes, no business knowledge model | Markdown decision table augmented by a Mermaid `flowchart` showing the inputs feeding the decision | Mermaid block plus a sibling markdown table inline in the BRD section |
-| DMN 1.4 - decision requirements diagram with multiple decisions, knowledge sources, or business knowledge models | Two or more decisions, knowledge sources, or knowledge models that interact | draw.io with a DMN shape library | `.drawio.svg` saved under the BRD asset folder and linked from the BRD section |
+| BPMN-style lane flow with sequential activities and exclusive or parallel gateways | A single process view, up to four lanes | Mermaid `flowchart` with subgraphs as lanes | Fenced ```` ```mermaid ```` block inline in the BRD section |
+| Decision logic driven by a small input set | One decision with a compact set of inputs | Markdown decision table augmented by a Mermaid `flowchart` | Mermaid block plus a sibling markdown table inline in the BRD section |
 | UML 2.5.1 - class or component structure | Up to roughly twelve classes or components with attributes and relationships | Mermaid `classDiagram` or `flowchart` for components | Fenced ```` ```mermaid ```` block inline in the BRD section |
 | UML 2.5.1 - sequence interaction | Two to six lifelines with synchronous, asynchronous, or return messages | Mermaid `sequenceDiagram` | Fenced ```` ```mermaid ```` block inline in the BRD section |
 | UML 2.5.1 - state machine | Finite states with named transitions, optional composite states | Mermaid `stateDiagram-v2` | Fenced ```` ```mermaid ```` block inline in the BRD section |
 | UML 2.5.1 - use case | Actors and use cases with associations, includes, and extends | Mermaid `flowchart` with actor and use-case styling | Fenced ```` ```mermaid ```` block inline in the BRD section |
-| Any notation - early conversational sketch before a tool is opened | A stakeholder describes the flow verbally in chat or in a working draft | ASCII block characters | Fenced ```` ```text ```` block in the working draft, tagged with `TODO: upgrade to Mermaid before Define exit` |
+| Any notation - early conversational sketch before a tool is opened | A stakeholder describes the flow verbally in chat or in a working draft | ASCII block characters | Fenced ```` ```text ```` block in the working draft |
+| Any notation - no diagram needed | The prose is clearer than a diagram or no renderer is available | None | `diagram_format: none` with explicit process prose |
 
 ## Embed Conventions
 
 * Mermaid blocks live in the BRD markdown immediately under the requirement or section heading they illustrate, with a one-sentence caption above the fenced block.
-* `.drawio.svg` assets live under `docs/brds/<brd-id>/assets/` and are referenced with relative markdown image links. The `.drawio.svg` format preserves an editable round-trip in draw.io while still rendering as a static SVG on GitHub.
 * ASCII sketches use box-drawing characters from the ASCII range only (`+`, `-`, `|`, `>`, `<`, `o`) so they remain legible in plain-text consoles and review tools.
 * Every diagram, regardless of format, references the requirement identifier or section identifier it supports (for example, `<!-- supports: FR-014, FR-015 -->`) so the [`traceability-naming`](traceability-naming.md) matrix can join diagrams to requirements.
 
@@ -42,9 +40,9 @@ A diagram is never embedded as a binary screenshot; the BRD must contain either 
 The BRD Builder rejects:
 
 * Binary screenshots of whiteboards, modeling tools, or rendered diagrams pasted into the BRD without an editable source.
-* Mermaid blocks larger than roughly twenty-five nodes or six lanes; refactor into multiple smaller diagrams or escalate to draw.io.
-* draw.io exports saved as raster `.png` or `.jpg`; only `.drawio.svg` is accepted because it preserves the editable source.
-* ASCII diagrams in the published BRD; ASCII is a transient sketch format and is upgraded before Define exit.
+* Mermaid blocks larger than roughly twenty-five nodes or six lanes; refactor into multiple smaller diagrams or use prose with `diagram_format: none`.
+* External diagram exports as required BRD inputs.
+* ASCII diagrams in the approved BRD when a Mermaid diagram would be clearer for the intended reviewers.
 
 ## License
 

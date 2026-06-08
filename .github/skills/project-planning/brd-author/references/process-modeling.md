@@ -11,7 +11,7 @@ This skill tells the BRD Builder when a written requirement is better expressed 
 The skill is consumed by:
 
 * the `BRD Author` skill during the Define phase when capturing flows, decisions, or structural relationships;
-* the `BRD Standards Assessor` subagent when verifying that complex behavior has a visual representation;
+* the BRD Quality Reviewer when verifying that complex behavior has a visual representation;
 * the BRD-phase instruction file for Define when the conversation reaches a process-heavy requirement.
 
 This file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The OMG specifications listed in the [cite-only registry](#cite-only-registry) are referenced by name and version only; their prose, notation glyph definitions, and metamodel diagrams are not embedded.
@@ -32,32 +32,30 @@ Do not add a diagram for one-actor, one-step behaviors that read cleanly as a nu
 
 The BRD Builder selects a notation family from the candidate triggered by the requirement. Each family is owned by an OMG specification; the BRD Builder does not invent notation.
 
-* **Process and orchestration** - a sequence of activities across roles, gateways, events, and message flows. Use **BPMN 2.0**. See [bpmn-pointer.md](bpmn-pointer.md).
-* **Decision logic** - a determination produced from a set of inputs by a documented rule, often expressed as a decision table. Use **DMN 1.4**. See [dmn-pointer.md](dmn-pointer.md).
-* **Structural, behavioral, or interaction modeling** outside of process flow - classes, components, sequence, state, use case. Use **UML 2.5.1**. See [uml-pointer.md](uml-pointer.md).
+* **Process and orchestration** - a sequence of activities across roles, gateways, events, and message flows. Use BPMN vocabulary when helpful; cite [standards-excerpts.md](standards-excerpts.md#omg-bpmn-202) for the upstream standard.
+* **Decision logic** - a determination produced from a set of inputs by a documented rule, often expressed as a decision table. Use DMN vocabulary when helpful; cite [standards-excerpts.md](standards-excerpts.md#omg-dmn-15) for the upstream standard.
+* **Structural, behavioral, or interaction modeling** outside of process flow - classes, components, sequence, state, use case. Use UML vocabulary when helpful; cite [standards-excerpts.md](standards-excerpts.md#omg-uml-251) for the upstream standard.
 
 When a requirement combines categories (for example, a BPMN process whose gateway is driven by a DMN decision table), each category is modeled in its own notation and the two diagrams are cross-referenced by requirement identifier.
 
 ## Format Selection
 
 After the notation family is chosen, the rendering format is selected with the original HVE-Core matrix in [diagram-format-selector.md](diagram-format-selector.md).
-The matrix is **Mermaid first**: every diagram that Mermaid can express is embedded inline in the BRD markdown.
-**draw.io (`.drawio.svg`)** is the documented fallback for BPMN or DMN constructs Mermaid cannot render.
-**ASCII** is reserved for low-fidelity sketches captured during early Discover-phase conversations and is upgraded to Mermaid before Define exit.
+The matrix is Mermaid first: every diagram that Mermaid can express is embedded inline in the BRD markdown. ASCII is reserved for low-fidelity sketches captured during early Discover-phase conversations. If neither Mermaid nor ASCII is appropriate, set `diagram_format: none` and describe the process in prose.
 
 The selector resolves three questions in order:
 
-1. Does Mermaid have a diagram type that expresses the chosen notation at the required fidelity? If yes, embed Mermaid in the BRD markdown.
-2. If Mermaid is insufficient, does the requirement need full BPMN or DMN expressiveness? If yes, author the diagram in draw.io, export to `.drawio.svg`, and reference it from the BRD.
-3. If neither is appropriate (early sketch, console-only review, no rendering environment), capture an ASCII block and tag it for promotion to Mermaid.
+1. Does Mermaid have a diagram type that expresses the process at the required fidelity? If yes, embed Mermaid in the BRD markdown.
+2. Is this an early sketch, console-only review, or no-rendering environment? If yes, capture an ASCII block and tag it for promotion to Mermaid when useful.
+3. If neither format is appropriate, set `diagram_format: none` and keep the requirement prose explicit enough for review.
 
 ## Cite-Only Registry
 
 The notation specifications below are referenced by name and version only. Their text, glyph definitions, and metamodel diagrams are not embedded in this repository.
 
-* OMG BPMN 2.0 - Business Process Model and Notation. See [bpmn-pointer.md](bpmn-pointer.md).
-* OMG DMN 1.4 - Decision Model and Notation. See [dmn-pointer.md](dmn-pointer.md).
-* OMG UML 2.5.1 - Unified Modeling Language. See [uml-pointer.md](uml-pointer.md).
+* OMG BPMN 2.0 - Business Process Model and Notation. See [standards-excerpts.md](standards-excerpts.md#omg-bpmn-202).
+* OMG DMN 1.5 - Decision Model and Notation. See [standards-excerpts.md](standards-excerpts.md#omg-dmn-15).
+* OMG UML 2.5.1 - Unified Modeling Language. See [standards-excerpts.md](standards-excerpts.md#omg-uml-251).
 
 DO NOT QUOTE prose definitions, syntax tables, glyph descriptions, or metamodel diagrams from any specification above. When a paraphrase is needed, write it as original Microsoft content and cite the specification by name, version, and section.
 
@@ -65,10 +63,8 @@ DO NOT QUOTE prose definitions, syntax tables, glyph descriptions, or metamodel 
 
 Internal:
 
-* [diagram-format-selector.md](diagram-format-selector.md) - original HVE-Core Mermaid-first selector matrix with draw.io and ASCII fallbacks.
-* [bpmn-pointer.md](bpmn-pointer.md) - cite-only summary of OMG BPMN 2.0 and outbound link.
-* [dmn-pointer.md](dmn-pointer.md) - cite-only summary of OMG DMN 1.4 and outbound link.
-* [uml-pointer.md](uml-pointer.md) - cite-only summary of OMG UML 2.5.1 and outbound link.
+* [diagram-format-selector.md](diagram-format-selector.md) - HVE-Core selector matrix for Mermaid, ASCII, or no diagram.
+* [standards-excerpts.md](standards-excerpts.md) - cite-only registry for OMG BPMN, DMN, and UML standards.
 * [`requirements-definition`](requirements-definition.md) - vocabulary the diagrammed behavior is captured in.
 * [`traceability-naming`](traceability-naming.md) - identifiers used to cross-reference diagrams and requirements.
 
