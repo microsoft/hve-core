@@ -51,6 +51,29 @@ Classify risk level using the active framework's risk indicators. The default NI
 
 * Artifacts: Risk classification screening summary in `system-definition-pack.md`
 
+#### Mural Board Bootstrap (optional)
+
+Offer to seed a Mural board reflecting Phase 2 risk classification when the user wants a visible team artifact. Inputs: `workspace`, `room`, `source_mural`, `project_slug`, optional `title`, optional `archive_mural_id`. Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`; do not restate the six patterns here.
+
+Before any `mural <verb>` call in a fresh session, run `mural doctor` and act on the verdict according to `#file:.github/instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the Phase 2 board contract: choose the element type for each generated item using the explicit widget-type decision rule in `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose the source artifacts into expected A1/A2/A3 row counts, resolve the target parent area or placeholder anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
+
+Verb sequence:
+
+1. `mural mural get` to verify reachability of `source_mural`.
+2. `mural template instantiate` (Path A) OR `mural mural duplicate` (Path B) to create the working board.
+3. `mural area list` to resolve A1, A2, A3 by title substring.
+4. `mural tag create` to re-assert the reserved tag manifest (`authored-by-ai`, `rai-phase2`).
+5. `mural area probe` before any parented `mural widget create-bulk` call.
+6. `mural widget create-bulk` per area, decomposing source rows: A1 from numbered sections in `system-definition-pack.md`; A2 from AI component table rows in §2; A3 from bullets in `stakeholder-impact-map.md`.
+7. `mural widget update-bulk` for anchor inheritance: copy `(x, y, w, h, style.backgroundColor)` from per-area placeholder anchors onto the new widgets.
+8. `mural widget delete` for consumed anchors only.
+9. `mural widget list-with-context` for readback verification.
+10. State write-back to `state.json` `mural` block: set `working_mural_id`, set `seeded_at`, clear prior `defective` markers; archive the prior broken board via `mural mural archive` when `archive_mural_id` is supplied.
+
+Cardinality assertion: for each of A1, A2, A3, assert `count(seeded widgets in area where the authored-by-ai tag is present) >= count(source rows)`. Any shortfall is a defect; surface per-area expected and observed counts in the report.
+
+When the decision rule selects sticky-note widgets, cap sticky text at 8 words. Tag values are capped at 25 characters.
+
 ### Phase 3: RAI Standards Mapping (NIST Govern + Measure)
 
 Map the AI system's components and behaviors to NIST AI RMF 1.0 trustworthiness characteristics: Valid and Reliable, Safe, Secure and Resilient, Accountable and Transparent, Explainable and Interpretable, Privacy-Enhanced, and Fair with Harmful Bias Managed. When a custom framework is active (`replaceDefaultFramework: true`), use the active framework's characteristic names instead. Identify applicable regulatory jurisdictions and suggest framework priorities. Cross-reference with NIST AI RMF subcategories when NIST is active; use the custom framework's phase mappings otherwise. Update the `principleTracker` for each mapped characteristic and display per-characteristic status in the Phase 3 summary.

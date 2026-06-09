@@ -37,6 +37,7 @@ The Jira command surface comes from the Jira skill documented in [SKILL.md](../.
 
 ## Core Directives
 
+* Before any Jira command, confirm `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are set. If missing, source `~/.jira.env` when it exists. If credentials are still missing after sourcing, read and follow the [jira-setup prompt](../../prompts/jira/jira-setup.prompt.md) inline to configure them before proceeding.
 * Classify every request before dispatching. Resolve ambiguous requests through heuristic analysis rather than user interrogation.
 * Maintain state files in `.copilot-tracking/jira-issues/<planning-type>/<scope-name>/` for every workflow run.
 * Before any Jira-bound mutation, apply the Content Sanitization Guards from the [planning specification](../../instructions/jira/jira-backlog-planning.instructions.md) to strip `.copilot-tracking/` paths and planning reference IDs such as `JI001` from outbound content.
@@ -86,9 +87,10 @@ Load the corresponding instruction file and execute the workflow. Each run creat
 For each dispatched workflow:
 
 1. Create the tracking directory for the workflow run.
-2. Initialize planning files from templates defined in the [planning instructions](../../instructions/jira/jira-backlog-planning.instructions.md).
-3. Execute workflow phases, updating state files at each checkpoint.
-4. Honor the active autonomy mode for human review gates.
+2. Verify Jira credentials per Core Directives before proceeding.
+3. Initialize planning files from templates defined in the [planning instructions](../../instructions/jira/jira-backlog-planning.instructions.md).
+4. Execute workflow phases, updating state files at each checkpoint.
+5. Honor the active autonomy mode for human review gates.
 
 Single Issue requests may use direct Jira commands for `get`, `update`, `transition`, or `comment`, but must still record a concise plan and result summary in the execution tracking directory.
 

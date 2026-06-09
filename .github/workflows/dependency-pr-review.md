@@ -49,8 +49,9 @@ safe-outputs:
 # Dependabot PR Review
 
 Review pull requests authored by Dependabot that bump dependency versions.
-Approve the PR when the version bump is safe, or leave a comment explaining
-concerns that require human review.
+Post a `COMMENT` review summarizing safety check results, or `REQUEST_CHANGES`
+when findings require human action. This workflow never approves PRs: humans
+remain the merge gate.
 
 ## Activation Guard
 
@@ -80,9 +81,14 @@ For each dependency change, verify:
 * The bump does not introduce a known vulnerability (check Dependabot's own assessment).
 * Devcontainer and `copilot-setup-steps.yml` remain synchronized when both are affected.
 
-### Approval Criteria
+### Verdict Selection
 
-**Approve** the PR when ALL of these conditions are met:
+This workflow does not approve PRs. GitHub Actions identities are not permitted
+to approve pull requests, and human merge approval should remain explicit.
+Choose between two verdicts, reserving `REQUEST_CHANGES` for true blockers so the
+bot never blocks a PR that only needs human eyes.
+
+**`COMMENT`** (clean confirmation) when ALL of these are true:
 
 * The change is a patch or minor version bump.
 * License compatibility is maintained.
@@ -90,27 +96,41 @@ For each dependency change, verify:
 * No environment synchronization violations exist.
 * Dependabot reports no known vulnerabilities.
 
-**Comment without approving** when ANY of these conditions are true:
+The review body should briefly confirm that safety checks passed so the human
+reviewer can merge with confidence.
 
-* The change is a major version bump (potential breaking changes require human review).
-* A license change is detected but appears permissive (needs human confirmation).
+**`COMMENT`** (flag for human attention, do not block) when ANY of these are
+true:
+
+* The change is a major version bump (breaking changes require human review).
 * The changelog mentions breaking changes or deprecations.
-* Environment synchronization between `.devcontainer/` and `copilot-setup-steps.yml` needs verification.
+* A license change is detected and appears permissive.
+* Environment synchronization between `.devcontainer/` and
+  `copilot-setup-steps.yml` needs verification.
 
-**Request changes** only when:
+Call out the specific signal(s) in the review body so the human reviewer knows
+where to focus.
+
+**`REQUEST_CHANGES`** when ANY of these are true:
 
 * The dependency introduces a license incompatible with MIT.
 * SHA pinning is missing for a GitHub Actions reference.
-* A clear environment synchronization violation exists.
+* A clear environment synchronization violation between `.devcontainer/` and
+  `copilot-setup-steps.yml` exists.
+* Dependabot reports a known vulnerability the bump fails to resolve.
+
+State the specific finding(s) and the action required to resolve them in the
+review body or inline comments.
 
 ## Review Output
 
-Submit a single review with the appropriate verdict. Include:
+Submit a single review with the appropriate verdict (`COMMENT` or
+`REQUEST_CHANGES`, never `APPROVE`). Include:
 
 * A summary of dependencies updated with version ranges.
 * The bump classification (patch, minor, or major) for each dependency.
 * Any findings from the safety checks.
-* For approvals, a brief confirmation that all safety checks passed.
+* For clean `COMMENT` reviews, a brief confirmation that all safety checks passed.
 
 Use inline `create-pull-request-review-comment` for findings tied to specific lines.
 
@@ -118,7 +138,7 @@ Use inline `create-pull-request-review-comment` for findings tied to specific li
 
 * Only process PRs authored by `dependabot[bot]`.
 * Do not duplicate vulnerability scanning already done by Dependabot or CodeQL.
-* Do not merge the PR; approval alone is sufficient.
+* Never approve or merge the PR; humans remain the merge gate.
 * Maximum 5 inline review comments.
 * Keep review comments actionable and specific.
 

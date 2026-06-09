@@ -5,6 +5,12 @@ agent: security-planner
 
 # Security Plan from PRD/BRD
 
+## Startup
+
+Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+
+After the disclaimer, display the framework attribution `OWASP ASVS • OWASP Top 10 • NIST SSDF`. Display both the disclaimer and the attribution before any questions or analysis.
+
 Activate the Security Planner in **from-prd mode** to bootstrap a security plan from existing product definition artifacts.
 
 ## Inputs
