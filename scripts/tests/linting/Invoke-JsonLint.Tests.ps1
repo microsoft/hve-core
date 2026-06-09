@@ -166,19 +166,21 @@ Describe 'Invoke-JsonLintCore' -Tag 'Unit' {
 Describe 'Repository JSON validity' -Tag 'Integration' {
     It 'All schema and fixture JSON files parse strictly' {
         $repoRoot = Join-Path $PSScriptRoot '../../..'
-        $targets = @('scripts/linting/schemas', 'scripts/tests/fixtures') | ForEach-Object {
+        $targets = @('scripts/linting/schemas', 'scripts/tests/Fixtures') | ForEach-Object {
             Join-Path $repoRoot $_
         }
 
         $failures = @()
         foreach ($target in $targets) {
             if (-not (Test-Path $target)) { continue }
-            Get-ChildItem -Path $target -File -Recurse -Filter '*.json' | ForEach-Object {
-                $issue = Test-JsonFile -Path $_.FullName
-                if ($null -ne $issue) {
-                    $failures += "$($issue.File): $($issue.Message)"
+            Get-ChildItem -Path $target -File -Recurse -Filter '*.json' |
+                Where-Object { $_.Name -notlike 'invalid-*.json' } |
+                ForEach-Object {
+                    $issue = Test-JsonFile -Path $_.FullName
+                    if ($null -ne $issue) {
+                        $failures += "$($issue.File): $($issue.Message)"
+                    }
                 }
-            }
         }
 
         $failures | Should -BeNullOrEmpty
