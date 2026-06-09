@@ -1,5 +1,5 @@
 ---
-description: "Shared diff computation protocol for code review agents - branch detection, scope locking, large diff handling, and non-source artifact filtering - Brought to you by microsoft/hve-core"
+description: "Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering"
 applyTo: "**/.github/agents/coding-standards/**, **/.github/prompts/coding-standards/**"
 ---
 
