@@ -22,6 +22,7 @@
     "raiEnabled",
     "raiScope",
     "raiTier",
+    "raiRecommendationShown",
     "raiPlannerDispatched",
     "aiComponents"
   ],
@@ -158,9 +159,13 @@
       "enum": ["none", "basic", "standard", "comprehensive"],
       "description": "RAI assessment depth tier when raiEnabled is true"
     },
+    "raiRecommendationShown": {
+      "type": "boolean",
+      "description": "Whether the RAI assessment recommendation has been presented to the user in the handoff summary"
+    },
     "raiPlannerDispatched": {
       "type": "boolean",
-      "description": "Whether a dispatch to the RAI Planner has been issued"
+      "description": "Whether the user has actually started the RAI Planner handoff (not merely been shown the recommendation)"
     },
     "aiComponents": {
       "type": "array",
@@ -178,6 +183,7 @@
         "properties": {
           "raiScope": { "const": "none" },
           "raiTier": { "const": "none" },
+          "raiRecommendationShown": { "const": false },
           "raiPlannerDispatched": { "const": false },
           "aiComponents": { "maxItems": 0 }
         }
