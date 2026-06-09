@@ -1,0 +1,61 @@
+#Requires -Modules Pester
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+<#
+.SYNOPSIS
+    Asserts tiered phase gates, `disclaimerShownAt`, and `referencesProcessed` defaults
+    in the inline JSON-literal state block of both planner identity files.
+.NOTES
+    Effective case count: 8 (4 `It` blocks x `-ForEach $script:identityFiles` arity 2).
+#>
+
+$script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+
+$script:identityFiles = @(
+    (Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'),
+    (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
+)
+
+Describe 'Inline planner state schema defaults' {
+    BeforeAll {
+        function Get-InlineStateJson {
+            param([string]$Path)
+            $content = Get-Content -Path $Path -Raw
+            if ($content -notmatch '(?s)```json\s*\r?\n(\{.*?\})\s*\r?\n```') {
+                throw "No ``````json block found in $Path"
+            }
+            return $Matches[1] | ConvertFrom-Json
+        }
+    }
+
+    It 'Identity <_> defines disclaimerShownAt as null' -ForEach $script:identityFiles {
+        $state = Get-InlineStateJson -Path $_
+        $state.PSObject.Properties.Name | Should -Contain 'disclaimerShownAt'
+        $state.disclaimerShownAt | Should -BeNullOrEmpty
+    }
+
+    It 'Identity <_> defines tiered hard gates on phases 1, 4, 6 with confirmedAt null' -ForEach $script:identityFiles {
+        $state = Get-InlineStateJson -Path $_
+        foreach ($phase in 'phase1','phase4','phase6') {
+            $gate = $state.phaseGates.$phase
+            $gate | Should -Not -BeNullOrEmpty -Because "$phase must be present in phaseGates"
+            $gate.gate | Should -Be 'hard'
+            $gate.confirmedAt | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'Identity <_> defines summary-and-advance gates on phases 2, 3, 5' -ForEach $script:identityFiles {
+        $state = Get-InlineStateJson -Path $_
+        foreach ($phase in 'phase2','phase3','phase5') {
+            $gate = $state.phaseGates.$phase
+            $gate | Should -Not -BeNullOrEmpty
+            $gate.gate | Should -Be 'summary-and-advance'
+        }
+    }
+
+    It 'Identity <_> defines referencesProcessed as empty array' -ForEach $script:identityFiles {
+        $state = Get-InlineStateJson -Path $_
+        $state.PSObject.Properties.Name | Should -Contain 'referencesProcessed'
+        @($state.referencesProcessed).Count | Should -Be 0
+    }
+}

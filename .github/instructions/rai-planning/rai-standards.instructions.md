@@ -1,5 +1,5 @@
 ---
-description: 'Embedded RAI standards for Phase 3: NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, and framework isolation architecture - Brought to you by microsoft/hve-core'
+description: 'Embedded RAI standards for Phase 3: NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, and framework isolation architecture'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

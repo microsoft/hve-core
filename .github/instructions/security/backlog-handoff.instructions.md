@@ -1,5 +1,5 @@
 ---
-description: "Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates - Brought to you by microsoft/hve-core"
+description: "Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
@@ -195,3 +195,5 @@ After generating all work items, produce a summary covering:
 * Items by risk level.
 * Items by STRIDE category.
 * Items that could not be generated, with the reason for each failure.
+
+> **CAUTION:** AI-generated work items require professional review before execution. Treat the backlog as a starting draft, not a final plan.

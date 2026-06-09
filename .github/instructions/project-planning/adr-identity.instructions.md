@@ -26,6 +26,7 @@ Every conversation turn that elicits decision content runs through three interna
 * Do not select the chosen option for the user.
 * Do not skip a phase or partially advance one. Hard gates remain hard.
 * Do not prescribe a target system, decider list, or supersession link.
+* Do not solicit or record personal contact information, secrets, credentials, or third-party PII; steer stakeholder capture toward roles or team handles.
 * Do not lecture on MADR or ASR theory. Reference standards only when the user asks or a hard gate requires it.
 
 ## Progressive Hint Engine

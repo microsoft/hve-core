@@ -135,9 +135,13 @@ Teams may need to move backward through methods. This is normal:
 * Prototype testing (Method 6) exposes unvalidated assumptions that require stakeholder conversations (Method 1).
 * Record backward transitions in the coaching state with rationale.
 
+## Board Export
+
+At key milestones, offer to export artifacts to a collaborative board for team review. Two surfaces are supported at the same milestones: Figma uses the `/dt-figma-export` handoff, Mural uses inline guidance the agent invokes directly. The `figma` MCP server is required for the Figma sub-flow; the Mural sub-flow uses inline guidance and the `mural` CLI.
+
 ### Figma Board Export
 
-At key milestones, offer to export artifacts to a collaborative FigJam board for team review:
+Offer to export artifacts to a collaborative FigJam board for team review:
 
 * After completing Method 1 (stakeholder map and scope summary are ready for team alignment).
 * After completing Method 3 (synthesis themes and HMW questions benefit from visual clustering).
@@ -145,7 +149,23 @@ At key milestones, offer to export artifacts to a collaborative FigJam board for
 * After completing Method 5 (concepts can be presented as visual cards).
 * After completing Method 6 (prototype plans and test hypotheses benefit from board layout).
 
-Offer naturally: "Would you like to export these artifacts to a FigJam board for team review?" Use the `/dt-figma-export` prompt when the user accepts. The `figma` MCP server must be configured for this to work.
+Offer naturally: "Would you like to export these artifacts to a FigJam board for team review?" Use the `/dt-figma-export` prompt when the user accepts.
+
+### Mural Board Export
+
+Offer to seed a Mural board for the active method at the same milestones (Methods 1, 3, 4, 5, 6). Confirm the user wants the Mural board seeded for Method N before invoking the verb sequence; the agent runs the sequence inline rather than handing off to a separate prompt.
+
+Before any `mural <verb>` call in a fresh session, run `mural doctor` and act on the verdict according to `#file:.github/instructions/experimental/mural/mural-bootstrap.instructions.md`. Before invoking the Mural skill, own the method-specific board contract: choose the element type for each output block using the explicit widget-type decision rule in `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`, decompose method artifacts into the expected widget count, resolve the target parent area or anchor for every widget, and choose the placement intent. Every generated widget dictionary declares an explicit `type`.
+
+Verb sequence per method:
+
+* `mural mural duplicate` (when seeding from a prior board) OR `mural template instantiate` (when starting from a template) to create the working board.
+* `mural area list` to resolve area ids by title.
+* `mural area probe` before any parented `mural widget create-bulk` call.
+* `mural widget create-bulk` to write generated widgets into each area, applying the reserved tag `dt-method-{N}` so downstream extraction can scope by method.
+* `mural layout grid` to arrange generated widgets cleanly within each area.
+
+Cross-cutting conventions (duplicate-then-populate, source-artifact-to-area binding, anchor inheritance, probe-before-bulk, layout-primitive enforcement, 404 recovery, reserved tag hygiene) are owned by `#file:.github/instructions/experimental/mural/mural-seeding-patterns.instructions.md`. Follow that file rather than restating the patterns here.
 
 **Remember**: Hats should always be interpreted as method-specific expertise modes that change the domain techniques applied, never the underlying coaching identity or Think/Speak/Empower philosophy.
 
