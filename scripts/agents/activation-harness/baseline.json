@@ -54,7 +54,7 @@
   "GovernEntry": {
     "ScenarioName": "GovernEntry",
     "AgentBytes": 10096,
-    "ColdStartBytes": 93565,
+    "ColdStartBytes": 93535,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -82,15 +82,15 @@
       },
       {
         "Path": ".github/skills/project-planning/adr-author/SKILL.md",
-        "Bytes": 13561
+        "Bytes": 13531
       }
     ],
-    "Hash": "c1431bb18bbe08e7e7c6602c137f51e5440f9e74d1a41373a6889ca4ddce9500"
+    "Hash": "8c30014845d6df6853f69fe7cb210f495910bccc9464b62af3606d51c1ddb568"
   },
   "AdoptTemplate": {
     "ScenarioName": "AdoptTemplate",
     "AgentBytes": 10096,
-    "ColdStartBytes": 100559,
+    "ColdStartBytes": 100529,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
@@ -122,9 +122,9 @@
       },
       {
         "Path": ".github/skills/project-planning/adr-author/SKILL.md",
-        "Bytes": 13561
+        "Bytes": 13531
       }
     ],
-    "Hash": "0433ca0318fbe9ceadb5bc904fcb5a37161fc66a455cf01e4772ff2bbf6f9628"
+    "Hash": "fbf486cab4fb03fa741a0d75e7aea1d3a878d68e906137cabdba83c32ff2d6bb"
   }
 }

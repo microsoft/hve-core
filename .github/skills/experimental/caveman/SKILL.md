@@ -42,12 +42,12 @@ Stop Caveman when the user says "stop caveman", "normal mode", "verbose again", 
 
 ## Intensity Levels
 
-| Level            | Behavior                                                          |
-|------------------|-------------------------------------------------------------------|
-| `lite`           | Drop filler and hedging. Keep articles and full sentences.        |
-| `full` (default) | Drop articles. Sentence fragments allowed. Short synonyms.        |
-| `ultra`          | Telegraphic. One-word answers when sufficient. Arrows for flow.   |
-| `wenyan`         | Classical Chinese (文言) register layered on `full` compression.   |
+| Level            | Behavior                                                         |
+|------------------|------------------------------------------------------------------|
+| `lite`           | Drop filler and hedging. Keep articles and full sentences.       |
+| `full` (default) | Drop articles. Sentence fragments allowed. Short synonyms.       |
+| `ultra`          | Telegraphic. One-word answers when sufficient. Arrows for flow.  |
+| `wenyan`         | Classical Chinese (文言) register layered on `full` compression. |
 
 If the user requests `/caveman` without a level, default to `full`. `/caveman wenyan` applies the wenyan register at `full` compression. Combine with another level for stronger compression, e.g. `/caveman wenyan ultra`.
 
