@@ -67,7 +67,7 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 | Goal                         | Go here                                                              |
 |------------------------------|----------------------------------------------------------------------|
-| Getting Started                | [docs/getting-started/start-here.md](docs/getting-started/README.md) |
+| Getting Started              | [docs/getting-started/start-here.md](docs/getting-started/README.md) |
 | Understand all setup options | [docs/getting-started/install.md](docs/getting-started/install.md)   |
 | Learn the core methodology   | [docs/rpi/README.md](docs/rpi/README.md)                             |
 | Browse docs by topic         | [docs/README.md](docs/README.md)                                     |
