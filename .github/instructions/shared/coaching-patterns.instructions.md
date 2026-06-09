@@ -1,5 +1,5 @@
 ---
-description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods - Brought to you by microsoft/hve-core"
+description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods"
 applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**'
 ---
 

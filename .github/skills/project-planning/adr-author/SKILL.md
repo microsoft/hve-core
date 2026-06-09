@@ -37,7 +37,7 @@ The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`)
 Activities:
 
 - **Scope** — capture the decision in one or two sentences; bound it to a single project.
-- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned).
+- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned). Prefer a role or team handle over a personal name, and never record personal contact details, secrets, credentials, or third-party or customer PII in any ADR field.
 - **Drivers** — list decision drivers (functional needs, business goals).
 - **Constraints** — list non-negotiables (regulatory, platform, contractual, time).
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.

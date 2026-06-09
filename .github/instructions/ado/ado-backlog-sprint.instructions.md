@@ -1,5 +1,5 @@
 ---
-description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection - Brought to you by microsoft/hve-core"
+description: "Sprint planning workflow for Azure DevOps iterations with coverage analysis, capacity tracking, and gap detection"
 applyTo: '**/.copilot-tracking/workitems/sprint/**'
 ---
 

@@ -72,9 +72,9 @@ jobs:
           fi
           curl -sSfL "${GITHUB_RELEASES_URL}/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" -o /tmp/actionlint.tar.gz
           echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf /tmp/actionlint.tar.gz actionlint
-          sudo install actionlint /usr/local/bin/actionlint
-          rm actionlint /tmp/actionlint.tar.gz
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          sudo install /tmp/actionlint /usr/local/bin/actionlint
+          rm /tmp/actionlint.tar.gz /tmp/actionlint
           actionlint --version
 
       - name: Install PowerShell modules
