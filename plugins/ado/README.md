@@ -20,17 +20,17 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Prompts
 
-| Name                                            | Description                                                                                                                                 |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
-| **ado-create-pull-request**                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages. |
-| **ado-discover-work-items**                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
-| **ado-get-build-info**                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                        |
-| **ado-get-my-work-items**                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
-| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
-| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                       |
-| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
-| **ado-update-wit-items**                        | Prompt to update work items based on planning files                                                                                         |
+| Name                                            | Description                                                                                                       |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                 |
+| **ado-create-pull-request**                     | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                  |
+| **ado-discover-work-items**                     | Discover Azure DevOps work items via user queries, artifact analysis, or search                                   |
+| **ado-get-build-info**                          | Retrieve Azure DevOps build status and logs for a pull request or build number                                    |
+| **ado-get-my-work-items**                       | Retrieve your assigned Azure DevOps work items into a planning file                                               |
+| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                    |
+| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps             |
+| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection |
+| **ado-update-wit-items**                        | Update Azure DevOps work items from planning files                                                                |
 
 ### Instructions
 
@@ -69,17 +69,17 @@ copilot plugin install ado@hve-core
 
 ## Commands
 
-| Command                                     | Description                                                                                                                                 |
-|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| ado-create-pull-request                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages. |
-| ado-get-build-info                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                        |
-| ado-get-my-work-items                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
-| ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
-| ado-update-wit-items                        | Prompt to update work items based on planning files                                                                                         |
-| ado-add-work-item                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
-| ado-discover-work-items                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
-| ado-sprint-plan                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                       |
-| ado-triage-work-items                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
+| Command                                     | Description                                                                                                       |
+|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| ado-create-pull-request                     | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                  |
+| ado-get-build-info                          | Retrieve Azure DevOps build status and logs for a pull request or build number                                    |
+| ado-get-my-work-items                       | Retrieve your assigned Azure DevOps work items into a planning file                                               |
+| ado-process-my-work-items-for-task-planning | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                    |
+| ado-update-wit-items                        | Update Azure DevOps work items from planning files                                                                |
+| ado-add-work-item                           | Create a single Azure DevOps work item with conversational field collection and parent validation                 |
+| ado-discover-work-items                     | Discover Azure DevOps work items via user queries, artifact analysis, or search                                   |
+| ado-sprint-plan                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps             |
+| ado-triage-work-items                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection |
 
 ## Instructions
 

@@ -185,5 +185,14 @@ items:
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # Telemetry
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  - path: .github/instructions/security/security-planner-telemetry.instructions.md
+    kind: instruction
+  - path: .github/instructions/security/sssc-planner-telemetry.instructions.md
+    kind: instruction
+  - path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
+    kind: instruction
 display:
   ordering: manual

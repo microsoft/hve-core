@@ -1,12 +1,12 @@
 {
   "CleanWorkspace": {
     "ScenarioName": "CleanWorkspace",
-    "AgentBytes": 10057,
-    "ColdStartBytes": 39572,
+    "AgentBytes": 10842,
+    "ColdStartBytes": 40357,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10057
+        "Bytes": 10842
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
@@ -17,20 +17,24 @@
         "Bytes": 5228
       }
     ],
-    "Hash": "7b9e351174aad4424a0bc9946eb5f98372a2dcb2c51d5792853f1af1405f408b"
+    "Hash": "89eb49c9fe3a1c4c9972aeb5625fe5c9fa0c38727e85be5750820be2cd968278"
   },
   "SteadyState": {
     "ScenarioName": "SteadyState",
-    "AgentBytes": 10057,
-    "ColdStartBytes": 79965,
+    "AgentBytes": 10842,
+    "ColdStartBytes": 82272,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10057
+        "Bytes": 10842
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 8909
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
+        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -49,20 +53,24 @@
         "Bytes": 5228
       }
     ],
-    "Hash": "669a652ba5238bb4988989e7d198a1b45d53eecb6dfa4092948a9033d95dab63"
+    "Hash": "cab824f5a1348b311acaf757a6a0e6543b847027044082632517f39d309993e7"
   },
   "GovernEntry": {
     "ScenarioName": "GovernEntry",
-    "AgentBytes": 10057,
-    "ColdStartBytes": 93496,
+    "AgentBytes": 10842,
+    "ColdStartBytes": 95803,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10057
+        "Bytes": 10842
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 8909
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
+        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -85,20 +93,24 @@
         "Bytes": 13531
       }
     ],
-    "Hash": "92e8ee5e40eeea5525fd06db132b020050f383b0cd284f4f15b7d9fefe702ddd"
+    "Hash": "1510fe103ba4a1c42849c4e16e71bcb4dc33d4381b092a8b5287497c2306ab3c"
   },
   "AdoptTemplate": {
     "ScenarioName": "AdoptTemplate",
-    "AgentBytes": 10057,
-    "ColdStartBytes": 100490,
+    "AgentBytes": 10842,
+    "ColdStartBytes": 102797,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10057
+        "Bytes": 10842
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 8909
+      },
+      {
+        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
+        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -125,6 +137,6 @@
         "Bytes": 13531
       }
     ],
-    "Hash": "7ac429535f3fb13e7ee7ed33150691935d1c208aa106f213b2358a179434a163"
+    "Hash": "38d65b6a43c783144ccb2979e7afc84aa0f6e8c3dc310fcecf0fb71476a07b74"
   }
 }

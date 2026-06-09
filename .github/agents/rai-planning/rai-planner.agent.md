@@ -35,6 +35,14 @@ After the disclaimer, display the framework attribution following the Session St
 > [!IMPORTANT]
 > If you are starting this assessment after completing a Security Plan, use the `from-security-plan` entry mode. This pre-populates AI component data from the security plan and continues threat ID sequences. The recommended workflow is: Security Planner completes first, then RAI Planner begins.
 
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the impact-assessment or backlog-handoff phases produce model-output measurements, refusal/coverage rates, or fairness telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `rai-planner-telemetry` instructions apply automatically to matching artifacts.
+
 ## Six-Phase Architecture
 
 RAI assessment follows six sequential phases. Each phase collects input through focused questions, prepares artifacts for review, and gates advancement on explicit user confirmation. Phases map to NIST AI RMF functions.

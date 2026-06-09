@@ -37,19 +37,19 @@ Create architecture decision records (MADR v4 + Y-Statement) with phase-gated co
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                     |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **incident-response**           | Incident response workflow for Azure operations scenarios                                                                                       |
-| **rai-capture**                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **risk-register**               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                 |
-| **security-capture**            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                    |
-| **security-plan-from-prd**      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                             |
-| **sssc-capture**                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
-| **sssc-from-brd**               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                               |
-| **sssc-from-prd**               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                               |
-| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                         |
+| Name                            | Description                                                                                                                                  |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **incident-response**           | Run an incident response workflow for Azure operations scenarios                                                                             |
+| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
+| **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
+| **sssc-capture**                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
+| **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
+| **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
 
 ### Instructions
 
@@ -63,13 +63,16 @@ Create architecture decision records (MADR v4 + Y-Statement) with phase-gated co
 | **experimental/mural/mural-writeback-hygiene** | Writeback hygiene rules for Mural: tags, hyperlinks, and parentId are the only stable channels; reserved tags are protected; tag manifests are re-applied defensively.                                                                                      |
 | **experimental/mural/mural-writing-style**     | Asymmetric writing style for Mural: outbound (writing into Mural) is sticky-concise; inbound (extracting from Mural) is context-hydrated.                                                                                                                   |
 | **project-planning/adr-byo-template**          | BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator                                                                                               |
+| **project-planning/adr-creation-telemetry**    | ADR Planner telemetry overlay applying telemetry-foundations vocabulary to ADR artifacts                                                                                                                                                                    |
 | **project-planning/adr-handoff**               | ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates                                                                                                      |
 | **project-planning/adr-identity**              | ADR Creator identity, three-phase state machine, six-step per-turn protocol, autonomy tiers, and canonical state.json schema for Architecture Decision Record authoring sessions                                                                            |
 | **project-planning/adr-standards**             | Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions                                                                   |
+| **project-planning/prd-builder-telemetry**     | PRD Builder telemetry overlay applying telemetry-foundations vocabulary to PRD artifacts                                                                                                                                                                    |
 | **rai-planning/rai-backlog-handoff**           | RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation                                                                                                                                               |
 | **rai-planning/rai-capture-coaching**          | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods                                                                                                                                                 |
 | **rai-planning/rai-identity**                  | RAI Planner identity, 6-phase orchestration, state management, and session recovery                                                                                                                                                                         |
 | **rai-planning/rai-impact-assessment**         | RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation                                                                                                                            |
+| **rai-planning/rai-planner-telemetry**         | RAI Planner telemetry overlay applying telemetry-foundations vocabulary to RAI plan artifacts                                                                                                                                                               |
 | **rai-planning/rai-risk-classification**       | Risk classification screening for Phase 2: prohibited uses gate, risk indicator assessment, and depth tier assignment                                                                                                                                       |
 | **rai-planning/rai-security-model**            | RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol                                                                                                                         |
 | **rai-planning/rai-standards**                 | Embedded RAI standards for Phase 3: NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, and framework isolation architecture                                                                                                             |
@@ -91,10 +94,11 @@ Create architecture decision records (MADR v4 + Y-Statement) with phase-gated co
 
 ### Skills
 
-| Name           | Description                                                                                                                                                                                                                                                                             |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **adr-author** | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
-| **mural**      | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                   |
+| Name                      | Description                                                                                                                                                                                                                                                                             |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **adr-author**            | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
+| **mural**                 | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                   |
+| **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                      |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
@@ -130,19 +134,19 @@ copilot plugin install project-planning@hve-core
 
 ## Commands
 
-| Command                     | Description                                                                                                                                     |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| security-plan-from-prd      | Initiate security planning from PRD/BRD artifacts using the Security Planner agent in from-prd mode                                             |
-| security-capture            | Initiate security planning from existing notes or knowledge using the Security Planner agent in capture mode                                    |
-| incident-response           | Incident response workflow for Azure operations scenarios - Brought to you by microsoft/hve-core                                                |
-| risk-register               | Creates a concise and well-structured qualitative risk register using a Probability × Impact (P×I) risk matrix.                                 |
-| rai-capture                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| rai-plan-from-prd           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| rai-plan-from-security-plan | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| sssc-capture                | Initiate supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
-| sssc-from-prd               | Initiate supply chain security planning from existing PRD artifacts using the SSSC Planner agent in from-prd mode                               |
-| sssc-from-brd               | Initiate supply chain security planning from existing BRD artifacts using the SSSC Planner agent in from-brd mode                               |
-| sssc-from-security-plan     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                         |
+| Command                     | Description                                                                                                                                  |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| security-plan-from-prd      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
+| security-capture            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
+| incident-response           | Run an incident response workflow for Azure operations scenarios                                                                             |
+| risk-register               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| rai-capture                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| rai-plan-from-prd           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| rai-plan-from-security-plan | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| sssc-capture                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
+| sssc-from-prd               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
+| sssc-from-brd               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
+| sssc-from-security-plan     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
 
 ## Instructions
 
@@ -181,13 +185,17 @@ copilot plugin install project-planning@hve-core
 | disclaimer-language.instructions     | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
 | hve-core-location.instructions       | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | story-quality.instructions           | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
+| prd-builder-telemetry.instructions   | PRD Builder telemetry overlay applying telemetry-foundations vocabulary to PRD artifacts                                                                                                                                                                    |
+| adr-creation-telemetry.instructions  | ADR Planner telemetry overlay applying telemetry-foundations vocabulary to ADR artifacts                                                                                                                                                                    |
+| rai-planner-telemetry.instructions   | RAI Planner telemetry overlay applying telemetry-foundations vocabulary to RAI plan artifacts                                                                                                                                                               |
 
 ## Skills
 
-| Skill      | Description                                                                                                                                                                                                                                                                             |
-|------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| mural      | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. - Brought to you by microsoft/hve-core                                                            |
-| adr-author | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
+| Skill                 | Description                                                                                                                                                                                                                                                                             |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| mural                 | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. - Brought to you by microsoft/hve-core                                                            |
+| telemetry-foundations | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                      |
+| adr-author            | Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core. |
 
 ---
 

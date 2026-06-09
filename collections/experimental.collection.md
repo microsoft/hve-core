@@ -18,7 +18,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 | Name               | Description                                                                                          |
 |--------------------|------------------------------------------------------------------------------------------------------|
-| **cspell-config**  | Creates or updates the project cspell configuration with project-specific words and ignores          |
+| **cspell-config**  | Create or update the project cspell configuration with project words and ignores                     |
 | **graph-research** | Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting |
 
 ### Instructions

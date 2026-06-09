@@ -33,6 +33,14 @@ Display the SSSC Planning CAUTION block from #file:../../instructions/shared/dis
 
 After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-standards.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
 
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the gap-analysis or backlog phases produce supply-chain provenance events, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `sssc-planner-telemetry` instructions apply automatically to matching artifacts.
+
 ## Six-Phase Architecture
 
 Supply chain security planning follows six sequential phases. Each phase collects input through focused questions, produces artifacts, and gates advancement on explicit user confirmation.

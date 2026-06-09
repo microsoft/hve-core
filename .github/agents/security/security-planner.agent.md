@@ -32,6 +32,14 @@ Phase-based conversational security planning agent that guides users through com
 
 Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
 
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the security-model or operational-buckets phases produce security-event emission, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `security-planner-telemetry` instructions apply automatically to matching artifacts.
+
 ## Six-Phase Architecture
 
 Security planning follows six sequential phases. Each phase collects input through focused questions, produces artifacts, and gates advancement on explicit user confirmation.

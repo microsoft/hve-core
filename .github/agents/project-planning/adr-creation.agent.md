@@ -34,6 +34,14 @@ Entry-mode selection happens on the first turn (after disclaimer) and is persist
 - `from-planner-handoff`: Inbound handoff from another planner (Task Planner, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
 - `adopt-template`: Bring-your-own template ingestion; produces the first ADR plus `.adr-config.yml` per the BYO contract.
 
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the Decide or Govern phase produce ADRs whose decision drivers include observability, audit, or SLO, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `adr-creation-telemetry` instructions apply automatically to matching artifacts.
+
 ## Lifecycle Dispatch
 
 Every phase entry begins with a mandatory `read_file` of the indicated SKILL.md anchor and instruction file before any user-facing work. If a load fails, halt and report the missing artifact instead of improvising.

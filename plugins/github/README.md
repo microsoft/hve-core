@@ -19,14 +19,14 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 
 ### Prompts
 
-| Name                       | Description                                                                                                                                      |
-|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| **github-add-issue**       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
-| **github-discover-issues** | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
-| **github-execute-backlog** | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
-| **github-sprint-plan**     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
-| **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                                                  |
-| **github-triage-issues**   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
+| Name                       | Description                                                                                                         |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------|
+| **github-add-issue**       | Create a GitHub issue using discovered repository templates and conversational field collection                     |
+| **github-discover-issues** | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                    |
+| **github-execute-backlog** | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file |
+| **github-sprint-plan**     | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                           |
+| **github-suggest**         | Resume GitHub backlog management workflow after session restore                                                     |
+| **github-triage-issues**   | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                |
 
 ### Instructions
 
@@ -61,14 +61,14 @@ copilot plugin install github@hve-core
 
 ## Commands
 
-| Command                | Description                                                                                                                                      |
-|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| github-add-issue       | Create a GitHub issue using discovered repository templates and conversational field collection                                                  |
-| github-discover-issues | Discover GitHub issues through user-centric queries, artifact-driven analysis, or search-based exploration and produce planning files for review |
-| github-triage-issues   | Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection                             |
-| github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file                              |
-| github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, identifying gaps, and organizing work into a prioritized sprint backlog              |
-| github-suggest         | Resume GitHub backlog management workflow after session restore - Brought to you by microsoft/hve-core                                           |
+| Command                | Description                                                                                                         |
+|------------------------|---------------------------------------------------------------------------------------------------------------------|
+| github-add-issue       | Create a GitHub issue using discovered repository templates and conversational field collection                     |
+| github-discover-issues | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                    |
+| github-triage-issues   | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                |
+| github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file |
+| github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                           |
+| github-suggest         | Resume GitHub backlog management workflow after session restore                                                     |
 
 ## Instructions
 

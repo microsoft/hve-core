@@ -24,29 +24,30 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 
 ### Prompts
 
-| Name                                | Description                                                                                                                |
-|-------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| **dt-canonical-deck**               | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build |
-| **dt-figma-export**                 | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server  |
-| **dt-handoff-implementation-space** | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                               |
-| **dt-handoff-problem-space**        | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher          |
-| **dt-handoff-solution-space**       | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher         |
-| **dt-method-04-convergence**        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                          |
-| **dt-method-04-ideation**           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                              |
-| **dt-method-05-concepts**           | Concept articulation for Design Thinking Method 5b from brainstorming themes                                               |
-| **dt-method-05-evaluation**         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                              |
-| **dt-method-06-building**           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                         |
-| **dt-method-06-planning**           | Concept analysis and prototype approach design for Design Thinking Method 6a                                               |
-| **dt-method-06-testing**            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                          |
-| **dt-method-next**                  | Assess DT project state and recommend next method with sequencing validation                                               |
-| **dt-resume-coaching**              | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                                |
-| **dt-start-project**                | Start a new Design Thinking coaching project with state initialization and first coaching interaction                      |
+| Name                                | Description                                                                                                        |
+|-------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| **dt-canonical-deck**               | Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build    |
+| **dt-figma-export**                 | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                   |
+| **dt-handoff-implementation-space** | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                       |
+| **dt-handoff-problem-space**        | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher  |
+| **dt-handoff-solution-space**       | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher |
+| **dt-method-04-convergence**        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                  |
+| **dt-method-04-ideation**           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                      |
+| **dt-method-05-concepts**           | Concept articulation for Design Thinking Method 5b from brainstorming themes                                       |
+| **dt-method-05-evaluation**         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                      |
+| **dt-method-06-building**           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                 |
+| **dt-method-06-planning**           | Concept analysis and prototype approach design for Design Thinking Method 6a                                       |
+| **dt-method-06-testing**            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                  |
+| **dt-method-next**                  | Assess DT project state and recommend next method with sequencing validation                                       |
+| **dt-resume-coaching**              | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                        |
+| **dt-start-project**                | Start a new Design Thinking coaching project with state initialization and first coaching interaction              |
 
 ### Instructions
 
 | Name                                                     | Description                                                                                                                                                                                                                                                 |
 |----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **design-thinking/dt-canonical-deck**                    | Opt-in canonical deck and customer-card workflow for DT coaching                                                                                                                                                                                            |
+| **design-thinking/dt-coach-telemetry**                   | Design Thinking Coach telemetry overlay applying telemetry-foundations vocabulary to DT session artifacts                                                                                                                                                   |
 | **design-thinking/dt-coaching-identity**                 | Design Thinking coach identity, philosophy, and user interaction requirements for consistent coaching                                                                                                                                                       |
 | **design-thinking/dt-coaching-state**                    | Coaching state schema for Design Thinking session persistence, method progress tracking, and session recovery                                                                                                                                               |
 | **design-thinking/dt-curriculum-01-scoping**             | DT Curriculum Module 1: Scope Conversations - concepts, techniques, checks, and exercises                                                                                                                                                                   |
@@ -91,6 +92,12 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **design-thinking/dt-subagent-handoff**                  | DT subagent handoff workflow: readiness assessment, artifact compilation, and handoff validation via subagent dispatch                                                                                                                                      |
 | **shared/hve-core-location**                             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
+### Skills
+
+| Name                      | Description                                                                                                                        |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
 ## Install
@@ -108,23 +115,23 @@ copilot plugin install design-thinking@hve-core
 
 ## Commands
 
-| Command                         | Description                                                                                                                                                       |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core                      |
-| dt-resume-coaching              | Resume a Design Thinking coaching session - reads coaching state and re-establishes context - Brought to you by microsoft/hve-core                                |
-| dt-method-next                  | Assess DT project state and recommend next method with sequencing validation - Brought to you by microsoft/hve-core                                               |
-| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                                                                      |
-| dt-handoff-problem-space        | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher                                                 |
-| dt-handoff-solution-space       | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher                                                |
-| dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core                              |
-| dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering - Brought to you by microsoft/hve-core                                          |
-| dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes - Brought to you by microsoft/hve-core                                               |
-| dt-method-05-evaluation         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c - Brought to you by microsoft/hve-core                                              |
-| dt-method-06-planning           | Concept analysis and prototype approach design for Design Thinking Method 6a - Brought to you by microsoft/hve-core                                               |
-| dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b - Brought to you by microsoft/hve-core                                         |
-| dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c - Brought to you by microsoft/hve-core                                          |
-| dt-canonical-deck               | Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core |
-| dt-figma-export                 | Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core  |
+| Command                         | Description                                                                                                        |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| dt-start-project                | Start a new Design Thinking coaching project with state initialization and first coaching interaction              |
+| dt-resume-coaching              | Resume a Design Thinking coaching session - reads coaching state and re-establishes context                        |
+| dt-method-next                  | Assess DT project state and recommend next method with sequencing validation                                       |
+| dt-handoff-implementation-space | Compiles DT Methods 7-9 outputs into an RPI-ready handoff artifact targeting Task Researcher                       |
+| dt-handoff-problem-space        | Problem Space exit handoff - compiles DT Methods 1-3 outputs into an RPI-ready artifact targeting Task Researcher  |
+| dt-handoff-solution-space       | Solution Space exit handoff - compiles DT Methods 4-6 outputs into an RPI-ready artifact targeting Task Researcher |
+| dt-method-04-ideation           | Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation                      |
+| dt-method-04-convergence        | Theme discovery for Design Thinking Method 4c through philosophy-based clustering                                  |
+| dt-method-05-concepts           | Concept articulation for Design Thinking Method 5b from brainstorming themes                                       |
+| dt-method-05-evaluation         | Stakeholder alignment and three-lens evaluation for Design Thinking Method 5c                                      |
+| dt-method-06-planning           | Concept analysis and prototype approach design for Design Thinking Method 6a                                       |
+| dt-method-06-building           | Scrappy prototype building with fidelity enforcement for Design Thinking Method 6b                                 |
+| dt-method-06-testing            | Hypothesis-driven testing and constraint validation for Design Thinking Method 6c                                  |
+| dt-canonical-deck               | Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build    |
+| dt-figma-export                 | Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server                   |
 
 ## Instructions
 
@@ -174,6 +181,13 @@ copilot plugin install design-thinking@hve-core
 | dt-curriculum-09-handoff.instructions             | DT Curriculum Module 9: Iteration at Scale - concepts, techniques, checks, and exercises                                                                                                                                                                    |
 | dt-curriculum-scenario-manufacturing.instructions | Manufacturing reference scenario for DT learning - factory floor improvement project used across all 9 curriculum modules                                                                                                                                   |
 | hve-core-location.instructions                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| dt-coach-telemetry.instructions                   | Design Thinking Coach telemetry overlay applying telemetry-foundations vocabulary to DT session artifacts                                                                                                                                                   |
+
+## Skills
+
+| Skill                 | Description                                                                                                                        |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| telemetry-foundations | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling |
 
 ---
 

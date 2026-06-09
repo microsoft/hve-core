@@ -31,24 +31,24 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Prompts
 
-| Name                   | Description                                                                                                              |
-|------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| **checkpoint**         | Save or restore conversation context using memory files                                                                  |
-| **doc-ops-update**     | Invoke doc-ops agent for documentation quality assurance and updates                                                     |
-| **git-commit**         | Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit |
-| **git-commit-message** | Generates a commit message following the commit-message.instructions.md rules based on all changes in the branch         |
-| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with consistent conflict handling.                             |
-| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)                                            |
-| **prompt-analyze**     | Evaluates prompt engineering artifacts against quality criteria and reports findings                                     |
-| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria                                                 |
-| **prompt-refactor**    | Refactors and cleans up prompt engineering artifacts through iterative improvement                                       |
-| **pull-request**       | Generates pull request descriptions from branch diffs                                                                    |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                         |
-| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                                             |
-| **task-implement**     | Locates and executes implementation plans using Task Implementor                                                         |
-| **task-plan**          | Initiates implementation planning based on user context or research documents                                            |
-| **task-research**      | Initiates research for implementation planning based on user requirements                                                |
-| **task-review**        | Initiates implementation review based on user context or automatic artifact discovery                                    |
+| Name                   | Description                                                                        |
+|------------------------|------------------------------------------------------------------------------------|
+| **checkpoint**         | Save or restore conversation context using memory files                            |
+| **doc-ops-update**     | Run the doc-ops agent for documentation quality assurance and updates              |
+| **git-commit**         | Stage all changes, generate a conventional commit message, and commit              |
+| **git-commit-message** | Generate a conventional commit message from all branch changes                     |
+| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling   |
+| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)      |
+| **prompt-analyze**     | Evaluate prompt engineering artifacts against quality criteria and report findings |
+| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria           |
+| **prompt-refactor**    | Refactor and clean up prompt engineering artifacts through iterative improvement   |
+| **pull-request**       | Generate pull request descriptions from branch diffs                               |
+| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks   |
+| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts       |
+| **task-implement**     | Locate and execute implementation plans using Task Implementor                     |
+| **task-plan**          | Initiate implementation planning from user context or research documents           |
+| **task-research**      | Initiate research for implementation planning from user requirements               |
+| **task-review**        | Initiate implementation review from user context or artifact discovery             |
 
 ### Instructions
 
@@ -66,14 +66,16 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **hve-core/markdown**                          | Markdown authoring conventions for all .md files                                                                                                                                                                                                            |
 | **hve-core/prompt-builder**                    | Authoring standards for prompts, agents, instructions, and skills                                                                                                                                                                                           |
 | **hve-core/pull-request**                      | Pull request description generation and creation via diff analysis, subagent review, and MCP tools                                                                                                                                                          |
+| **hve-core/task-implementor-telemetry**        | Task Implementor telemetry overlay applying telemetry-foundations vocabulary to implementation change artifacts                                                                                                                                             |
 | **hve-core/writing-style**                     | Writing style conventions for voice, tone, and language in markdown content                                                                                                                                                                                 |
 | **shared/hve-core-location**                   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills
 
-| Name             | Description                                                                                                                                                                                                                                                                                                                                                                  |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **mural**        | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                                                                                                        |
-| **pr-reference** | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| Name                      | Description                                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **mural**                 | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                                                                                                        |
+| **pr-reference**          | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                                                                                                           |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
