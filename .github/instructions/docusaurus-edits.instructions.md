@@ -1,5 +1,5 @@
 ---
-description: "Conventions for creating and editing Docusaurus documentation pages in the HVE-Core site"
+description: "Docusaurus documentation page authoring conventions for the HVE-Core site"
 applyTo: 'docs/**'
 ---
 

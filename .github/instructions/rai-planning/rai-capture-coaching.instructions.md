@@ -1,5 +1,5 @@
 ---
-description: "Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods - Brought to you by microsoft/hve-core"
+description: "Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods"
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 
