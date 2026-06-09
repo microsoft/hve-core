@@ -91,6 +91,12 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **design-thinking/dt-subagent-handoff**                  | DT subagent handoff workflow: readiness assessment, artifact compilation, and handoff validation via subagent dispatch                                                                                                                                      |
 | **shared/hve-core-location**                             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
+### Skills
+
+| Name           | Description                                                                                                             |
+|----------------|-------------------------------------------------------------------------------------------------------------------------|
+| **demo-setup** | Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->
 
 ## Install
@@ -174,6 +180,12 @@ copilot plugin install design-thinking@hve-core
 | dt-curriculum-09-handoff.instructions             | DT Curriculum Module 9: Iteration at Scale - concepts, techniques, checks, and exercises                                                                                                                                                                    |
 | dt-curriculum-scenario-manufacturing.instructions | Manufacturing reference scenario for DT learning - factory floor improvement project used across all 9 curriculum modules                                                                                                                                   |
 | hve-core-location.instructions                    | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+
+## Skills
+
+| Skill      | Description                                                                                                                                                    |
+|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| demo-setup | Repeatable HVE Core demo setup that simulates DT Coach sessions with a customer persona and scaffolds a hi-fi prototype - Brought to you by microsoft/hve-core |
 
 ---
 
