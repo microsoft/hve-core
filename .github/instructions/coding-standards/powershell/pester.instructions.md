@@ -1,5 +1,5 @@
 ---
-description: "Instructions for Pester testing conventions - Brought to you by microsoft/hve-core"
+description: "Instructions for Pester testing conventions"
 applyTo: '**/*.Tests.ps1'
 ---
 

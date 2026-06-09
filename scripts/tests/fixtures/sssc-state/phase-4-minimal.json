@@ -1,0 +1,49 @@
+{
+  "projectSlug": "example-project",
+  "ssscPlanFile": ".copilot-tracking/sssc-plans/example-project/sssc-plan.md",
+  "currentPhase": 4,
+  "entryMode": "capture",
+  "scopingComplete": true,
+  "assessmentComplete": true,
+  "standardsMapped": true,
+  "gapAnalysisComplete": false,
+  "backlogGenerated": false,
+  "handoffGenerated": { "ado": false, "github": false },
+  "context": {
+    "techStack": ["PowerShell", "Node.js"],
+    "packageManagers": ["npm"],
+    "ciPlatform": "github-actions",
+    "releaseStrategy": "tagged extension packages",
+    "complianceTargets": ["OpenSSF Scorecard", "SLSA"],
+    "deploymentTargets": ["vs-code-marketplace"]
+  },
+  "referencesProcessed": [
+    {
+      "filePath": ".github/instructions/security/sssc-standards.instructions.md",
+      "type": "standard",
+      "sourceDescription": "Embedded SSSC standards",
+      "processedInPhase": 3,
+      "status": "processed"
+    }
+  ],
+  "nextActions": ["Compare assessment results against target standards"],
+  "userPreferences": {
+    "autonomyTier": "guided",
+    "outputDetailLevel": "standard",
+    "targetSystem": "github",
+    "audienceProfile": "technical",
+    "includeOptionalArtifacts": { "sbom": false, "scorecardProjection": true, "artifactSigning": false }
+  },
+  "ssscEnabled": true,
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T00:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": null },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  }
+}

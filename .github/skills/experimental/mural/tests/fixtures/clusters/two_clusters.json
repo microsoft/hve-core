@@ -1,0 +1,13 @@
+{
+  "params": {
+    "eps_px": 120.0,
+    "min_samples": 2
+  },
+  "widgets": [
+    {"id": "a1", "type": "shape", "x": 0.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "a2", "type": "shape", "x": 50.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "b1", "type": "shape", "x": 1000.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "b2", "type": "shape", "x": 1050.0, "y": 0.0, "width": 10.0, "height": 10.0},
+    {"id": "b3", "type": "shape", "x": 1100.0, "y": 0.0, "width": 10.0, "height": 10.0}
+  ]
+}
