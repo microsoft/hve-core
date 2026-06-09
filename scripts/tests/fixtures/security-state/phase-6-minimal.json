@@ -28,6 +28,7 @@
   "raiEnabled": true,
   "raiScope": "delegated",
   "raiTier": "comprehensive",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["ml-inference", "nlp-indexer"]
 }

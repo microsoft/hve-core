@@ -195,3 +195,5 @@ After generating all work items, produce a summary covering:
 * Items by risk level.
 * Items by STRIDE category.
 * Items that could not be generated, with the reason for each failure.
+
+> **CAUTION:** AI-generated work items require professional review before execution. Treat the backlog as a starting draft, not a final plan.

@@ -43,6 +43,7 @@
   "raiEnabled": true,
   "raiScope": "delegated",
   "raiTier": "standard",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["llm-summarizer"]
 }

@@ -165,7 +165,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/sssc-plans/{
 
 Phases 1, 4, and 6 use `hard` gates requiring explicit user confirmation (timestamped in `confirmedAt`); phases 2, 3, and 5 use `summary-and-advance` gates that present a summary and continue without blocking.
 
-Each `referencesProcessed` entry has the shape `{ "filePath": "<workspace-relative>", "processedInPhase": <1-6 integer>, "sourceDescription": "<short label>" }` — for example, `{ "filePath": ".copilot-tracking/prd-sessions/2026-05-09/prd.md", "processedInPhase": 1, "sourceDescription": "PRD seed for tech stack and compliance targets" }`.
+Each `referencesProcessed` entry has the shape `{ "filePath": "<workspace-relative>", "type": "<standard|security-plan|prd|brd|sbom|scorecard-result|output-format>", "sourceDescription": "<short label>", "processedInPhase": <1-6 integer or null>, "status": "<pending|processed|error>" }` — for example, `{ "filePath": ".copilot-tracking/prd-sessions/2026-05-09/prd.md", "type": "prd", "sourceDescription": "PRD seed for tech stack and compliance targets", "processedInPhase": 1, "status": "processed" }`.
 
 ### Six-Step State Protocol
 
