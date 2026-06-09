@@ -90,4 +90,9 @@ The agent constructs an unparameterized query and the injection destroys the dat
 
 ---
 
+Content derived from works by the OWASP Foundation, licensed under CC BY-NC-SA 4.0
+(<https://creativecommons.org/licenses/by-nc-sa/4.0/>).
+Modifications: Restructured into agent-consumable reference format with added
+detection and remediation guidance.
+
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

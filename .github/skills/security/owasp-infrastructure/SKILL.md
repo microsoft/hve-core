@@ -12,7 +12,7 @@ metadata:
   content_based_on: "https://owasp.org/www-project-top-10-infrastructure-security-risks/"
 ---
 
-# OWASP Infrastructure Top 10 — Skill Entry
+# OWASP® Infrastructure Top 10 — Skill Entry
 
 This `SKILL.md` is the **entrypoint** for the OWASP Infrastructure Top 10 skill.
 
@@ -40,6 +40,17 @@ infrastructure security risks.
 * `references/` — the Infrastructure Top 10 normative documents.
   * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP Infrastructure Security numbering.
+
+## Third-Party Attribution
+
+Copyright © OWASP Foundation.
+OWASP® Top 10 Infrastructure Security Risks (2024) content is derived from works by the
+OWASP Foundation, licensed under CC BY-SA 4.0
+(<https://creativecommons.org/licenses/by-sa/4.0/>).
+Source: <https://owasp.org/www-project-top-10-infrastructure-security-risks/>
+Modifications: Vulnerability descriptions restructured into agent-consumable reference
+documents with added detection and remediation guidance.
+OWASP® is a registered trademark of the OWASP Foundation. Use does not imply endorsement.
 
 ---
 
