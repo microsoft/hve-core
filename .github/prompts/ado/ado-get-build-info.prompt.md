@@ -1,5 +1,5 @@
 ---
-description: "Retrieve Azure DevOps build information for a Pull Request or specific Build Number."
+description: "Retrieve Azure DevOps build status and logs for a pull request or build number"
 agent: ADO Backlog Manager
 ---
 

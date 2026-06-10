@@ -1,6 +1,6 @@
 ---
 name: Report Generator
-description: "Collates verified security skill assessment findings and generates a comprehensive vulnerability report written to .copilot-tracking/security/ - Brought to you by microsoft/hve-core"
+description: "Collates verified security skill findings into a comprehensive vulnerability report"
 tools:
   - edit/createDirectory
   - edit/createFile

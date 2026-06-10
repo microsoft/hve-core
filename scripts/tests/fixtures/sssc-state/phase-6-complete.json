@@ -1,0 +1,65 @@
+{
+  "projectSlug": "example-project",
+  "ssscPlanFile": ".copilot-tracking/sssc-plans/example-project/sssc-plan.md",
+  "currentPhase": 6,
+  "entryMode": "from-security-plan",
+  "securityPlannerLink": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "raiPlannerLink": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
+  "scopingComplete": true,
+  "assessmentComplete": true,
+  "standardsMapped": true,
+  "gapAnalysisComplete": true,
+  "backlogGenerated": true,
+  "handoffGenerated": { "ado": true, "github": true },
+  "context": {
+    "techStack": ["PowerShell", "Node.js"],
+    "packageManagers": ["npm"],
+    "ciPlatform": "github-actions",
+    "releaseStrategy": "tagged extension packages",
+    "complianceTargets": ["OpenSSF Scorecard", "SLSA"],
+    "deploymentTargets": ["vs-code-marketplace", "github-releases"]
+  },
+  "referencesProcessed": [
+    {
+      "filePath": ".copilot-tracking/security-plans/example-project/security-plan.md",
+      "type": "security-plan",
+      "sourceDescription": "Source security plan",
+      "processedInPhase": 1,
+      "status": "processed"
+    },
+    {
+      "filePath": "artifacts/example-project-sbom.json",
+      "type": "sbom",
+      "sourceDescription": "Generated SBOM reference",
+      "processedInPhase": 5,
+      "status": "processed"
+    },
+    {
+      "filePath": "artifacts/scorecard-result.json",
+      "type": "scorecard-result",
+      "sourceDescription": "OpenSSF Scorecard result",
+      "processedInPhase": 4,
+      "status": "processed"
+    }
+  ],
+  "nextActions": [],
+  "userPreferences": {
+    "autonomyTier": "full",
+    "outputDetailLevel": "detailed",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": { "sbom": true, "scorecardProjection": true, "artifactSigning": true }
+  },
+  "ssscEnabled": true,
+  "signingRequested": true,
+  "signingManifestPath": ".copilot-tracking/sssc-plans/example-project/sssc-manifest.json",
+  "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "phaseGates": {
+    "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T00:00:00Z" },
+    "phase2": { "gate": "summary-and-advance" },
+    "phase3": { "gate": "summary-and-advance" },
+    "phase4": { "gate": "hard", "confirmedAt": "2025-01-04T00:00:00Z" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": "2025-01-06T00:00:00Z" }
+  }
+}

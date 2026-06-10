@@ -1,6 +1,6 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
 license: MIT
 metadata:
@@ -715,6 +715,9 @@ Some HVE-Core agents integrate with external services via MCP (Model Context Pro
 | github-backlog-manager | github                   | GitHub backlog management            |
 | task-researcher        | context7, microsoft-docs | Documentation lookup                 |
 | dt-coach               | figma                    | FigJam board export for DT artifacts |
+
+⚠️ Jira agents (jira-backlog-manager, jira-prd-to-wit) use environment variables
+   instead of MCP. Run /jira-setup in Copilot Chat to configure Jira credentials.
 
 Would you like to configure MCP servers? (yes/no)
 ```

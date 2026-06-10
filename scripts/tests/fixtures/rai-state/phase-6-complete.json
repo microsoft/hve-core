@@ -1,0 +1,84 @@
+{
+  "projectSlug": "example-project",
+  "raiPlanFile": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
+  "currentPhase": 6,
+  "entryMode": "from-security-plan",
+  "securityPlanRef": ".copilot-tracking/security-plans/example-project/security-plan.md",
+  "assessmentDepth": "comprehensive",
+  "standardsMapped": true,
+  "securityModelAnalysisStarted": true,
+  "raiThreatCount": 3,
+  "impactAssessmentGenerated": true,
+  "evidenceRegisterComplete": true,
+  "handoffGenerated": { "ado": true, "github": true },
+  "gateResults": {
+    "prohibitedUsesGate": {
+      "status": "passed",
+      "sourceFrameworks": ["embedded-prohibited-uses", "nist-ai-rmf"],
+      "notes": "Assessment completed with no prohibited-use findings."
+    }
+  },
+  "riskClassification": {
+    "framework": {
+      "id": "microsoft-rai-impact",
+      "name": "Microsoft RAI Impact Assessment",
+      "version": "1.0",
+      "source": "embedded",
+      "replaceDefaultIndicators": false,
+      "replaceDefaultFramework": false
+    },
+    "indicators": {
+      "safety_reliability": { "method": "binary", "nistSource": ["MAP 1.1"], "activated": true, "observation": "Operational decisions depend on model outputs.", "result": "activated" },
+      "rights_fairness_privacy": { "method": "binary", "nistSource": ["MAP 2.3"], "activated": false, "observation": "No sensitive demographic attributes are used.", "result": "not-activated" },
+      "security_explainability": { "method": "binary", "nistSource": ["GOV 1.5"], "activated": true, "observation": "Recommendations require clear explanation and security controls.", "result": "activated" }
+    },
+    "activatedCount": 2,
+    "riskScore": 0.67,
+    "suggestedDepthTier": "comprehensive"
+  },
+  "runningObservations": [],
+  "principleTracker": {
+    "validReliable": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 2, "nistSubcat": "MAP 1.1", "openObservations": [] },
+    "safe": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 2, "nistSubcat": "MAP 1.2", "openObservations": [] },
+    "secureResilient": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 1, "controlsEvaluated": 2, "nistSubcat": "GOV 1.5", "openObservations": [] },
+    "accountableTransparent": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 1, "nistSubcat": "GOV 2.1", "openObservations": [] },
+    "explainableInterpretable": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 1, "nistSubcat": "MAP 2.2", "openObservations": [] },
+    "privacyEnhanced": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 1, "nistSubcat": "MAP 2.3", "openObservations": [] },
+    "fairBiasManaged": { "suggestedStatus": "addressed", "mappedInPhase3": true, "threatsIdentified": 0, "controlsEvaluated": 1, "nistSubcat": "MAP 5.1", "openObservations": [] }
+  },
+  "referencesProcessed": [
+    {
+      "filePath": ".copilot-tracking/security-plans/example-project/security-plan.md",
+      "type": "standard",
+      "sourceDescription": "Source security plan",
+      "processedInPhase": 4,
+      "status": "processed"
+    },
+    {
+      "filePath": ".github/instructions/rai-planning/rai-standards.instructions.md",
+      "type": "standard",
+      "sourceDescription": "Embedded RAI standards",
+      "processedInPhase": 3,
+      "status": "processed"
+    }
+  ],
+  "nextActions": [],
+  "signingRequested": true,
+  "signingManifestPath": ".copilot-tracking/rai-plans/example-project/rai-manifest.json",
+  "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "userPreferences": {
+    "autonomyTier": "full",
+    "outputDetailLevel": "detailed",
+    "targetSystem": "both",
+    "audienceProfile": "mixed",
+    "includeOptionalArtifacts": { "transparencyNote": true, "monitoringSummary": true, "artifactSigning": true }
+  },
+  "phaseGates": {
+    "phase1": { "gate": "summary-and-advance" },
+    "phase2": { "gate": "hard", "confirmedAt": "2025-01-02T00:00:00Z" },
+    "phase3": { "gate": "hard", "confirmedAt": "2025-01-03T00:00:00Z" },
+    "phase4": { "gate": "summary-and-advance" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": "2025-01-06T00:00:00Z" }
+  }
+}

@@ -9,8 +9,9 @@
     Validates AI artifact footer and disclaimer presence in instruction templates.
 
 .DESCRIPTION
-    Reads footer-with-review.yml and disclaimers.yml config files as the single source
-    of truth, then scans instruction files for required footer text based on artifact
+    Reads footer-with-review.yml for footer text and artifact-classification rules, and
+    parses shared/disclaimer-language.instructions.md as the canonical disclaimer source.
+    Scans instruction files for required footer and disclaimer text based on artifact
     classification rules. Outputs results as JSON and sets CI environment variables on
     failure.
 
@@ -23,8 +24,9 @@
 .PARAMETER FooterConfigPath
     Path to the footer-with-review.yml config file.
 
-.PARAMETER DisclaimerConfigPath
-    Path to the disclaimers.yml config file.
+.PARAMETER DisclaimerSourcePath
+    Path to the shared disclaimer-language instructions markdown file. The validator
+    parses H2 sections and their CAUTION blockquote bodies to derive disclaimer text.
 
 .PARAMETER FailOnMissing
     When specified, treats missing footers and disclaimers as validation failures.
@@ -51,7 +53,7 @@ param(
     [string]$FooterConfigPath = '.github/config/footer-with-review.yml',
 
     [Parameter(Mandatory = $false)]
-    [string]$DisclaimerConfigPath = '.github/config/disclaimers.yml',
+    [string]$DisclaimerSourcePath = '.github/instructions/shared/disclaimer-language.instructions.md',
 
     [Parameter(Mandatory = $false)]
     [switch]$FailOnMissing,
@@ -107,40 +109,78 @@ function Import-FooterConfig {
     return $config
 }
 
-function Import-DisclaimerConfig {
+function Import-DisclaimerSource {
     <#
     .SYNOPSIS
-    Loads and validates disclaimers.yml.
+    Parses the shared disclaimer-language instructions markdown as the canonical disclaimer source.
 
-    .PARAMETER ConfigPath
-    Absolute path to the disclaimer config YAML file.
+    .DESCRIPTION
+    Reads the markdown file, splits on H2 headings to identify planner sections,
+    and extracts the verbatim disclaimer prose from each section's CAUTION blockquote.
+    The first word of each heading (lowercased) maps to the planner key and disclaimer id
+    convention: 'RAI Planning' -> 'rai-planner' / 'rai-full-disclaimer'.
+
+    .PARAMETER SourcePath
+    Absolute path to the disclaimer-language.instructions.md markdown file.
 
     .OUTPUTS
-    [hashtable] Parsed disclaimer config.
+    [hashtable] Parsed config shaped as @{ version; source; disclaimers = @{ key = @{ id; label; text } } }.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [string]$ConfigPath
+        [string]$SourcePath
     )
 
-    if (-not (Test-Path $ConfigPath)) {
-        throw "Disclaimer config not found: $ConfigPath"
+    if (-not (Test-Path $SourcePath)) {
+        throw "Disclaimer source not found: $SourcePath"
     }
 
-    $content = Get-Content -Path $ConfigPath -Raw -Encoding utf8
-    $config = ConvertFrom-Yaml -Yaml $content
+    $raw = Get-Content -Path $SourcePath -Raw -Encoding utf8
+    # Strip YAML frontmatter
+    $body = $raw -replace '(?s)\A---.*?\r?\n---\s*\r?\n', ''
 
-    if (-not $config.version) {
-        throw "Disclaimer config missing 'version' field: $ConfigPath"
-    }
-    if (-not $config.disclaimers) {
-        throw "Disclaimer config missing 'disclaimers' section: $ConfigPath"
+    $disclaimers = @{}
+    $sectionRegex = [regex]'(?ms)^##[ \t]+(?<heading>[^\r\n]+?)[ \t]*\r?\n(?<body>.*?)(?=^##[ \t]|\z)'
+    $cautionRegex = [regex]'(?m)^>[ \t]*\[!CAUTION\][ \t]*\r?\n(?<block>(?:^>.*\r?\n?)+)'
+    $prefixRegex = [regex]'^\*\*Disclaimer:?\*\*[\s:\-\u2014]*'
+
+    foreach ($match in $sectionRegex.Matches($body)) {
+        $heading = $match.Groups['heading'].Value.Trim()
+        $sectionBody = $match.Groups['body'].Value
+
+        $cautionMatch = $cautionRegex.Match($sectionBody)
+        if (-not $cautionMatch.Success) { continue }
+
+        $blockLines = $cautionMatch.Groups['block'].Value -split '\r?\n'
+        $proseParts = foreach ($line in $blockLines) {
+            $stripped = $line -replace '^>[ \t]?', ''
+            if ($stripped.Trim().Length -gt 0) { $stripped.Trim() }
+        }
+        $prose = ($proseParts -join ' ').Trim()
+        $prose = $prefixRegex.Replace($prose, '', 1)
+        if ([string]::IsNullOrWhiteSpace($prose)) { continue }
+
+        $slug = ($heading -split '\s+' | Select-Object -First 1).ToLowerInvariant()
+        $key = "$slug-planner"
+        $disclaimers[$key] = @{
+            id    = "$slug-full-disclaimer"
+            label = "$heading Disclaimer"
+            text  = $prose
+        }
     }
 
-    return $config
+    if ($disclaimers.Count -eq 0) {
+        throw "No disclaimer sections found in source: $SourcePath"
+    }
+
+    return @{
+        version     = 'markdown-source'
+        source      = $SourcePath
+        disclaimers = $disclaimers
+    }
 }
 
 function Get-FooterSearchText {
@@ -318,7 +358,7 @@ function Test-AIArtifactCompliance {
     Parsed footer-with-review.yml config.
 
     .PARAMETER DisclaimerConfig
-    Parsed disclaimers.yml config.
+    Parsed disclaimer source (see Import-DisclaimerSource).
 
     .PARAMETER RepoRoot
     Repository root for relative path display.
@@ -422,8 +462,8 @@ function Test-AIArtifactValidation {
     .PARAMETER FooterConfigPath
     Path to footer-with-review.yml relative to repo root.
 
-    .PARAMETER DisclaimerConfigPath
-    Path to disclaimers.yml relative to repo root.
+    .PARAMETER DisclaimerSourcePath
+    Path to the shared disclaimer-language instructions markdown file, relative to repo root.
 
     .PARAMETER FailOnMissing
     When set, missing footers cause a non-zero exit code.
@@ -447,7 +487,7 @@ function Test-AIArtifactValidation {
         [string]$FooterConfigPath,
 
         [Parameter(Mandatory = $true)]
-        [string]$DisclaimerConfigPath,
+        [string]$DisclaimerSourcePath,
 
         [Parameter(Mandatory = $false)]
         [switch]$FailOnMissing,
@@ -464,7 +504,7 @@ function Test-AIArtifactValidation {
 
     # Load configs
     $footerConfig = Import-FooterConfig -ConfigPath (Join-Path $repoRoot $FooterConfigPath)
-    $disclaimerConfig = Import-DisclaimerConfig -ConfigPath (Join-Path $repoRoot $DisclaimerConfigPath)
+    $disclaimerConfig = Import-DisclaimerSource -SourcePath (Join-Path $repoRoot $DisclaimerSourcePath)
 
     # Collect instruction files
     $allFiles = @()
@@ -616,7 +656,7 @@ if ($MyInvocation.InvocationName -ne '.') {
             -Paths $Paths `
             -ExcludePaths $ExcludePaths `
             -FooterConfigPath $FooterConfigPath `
-            -DisclaimerConfigPath $DisclaimerConfigPath `
+            -DisclaimerSourcePath $DisclaimerSourcePath `
             -FailOnMissing:$FailOnMissing `
             -OutputPath $OutputPath
 

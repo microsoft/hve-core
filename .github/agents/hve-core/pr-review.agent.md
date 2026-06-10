@@ -1,6 +1,6 @@
 ---
 name: PR Review
-description: 'Comprehensive Pull Request review assistant ensuring code quality, security, and convention compliance - Brought to you by microsoft/hve-core'
+description: 'Pull Request review assistant for code quality, security, and convention compliance'
 ---
 
 # PR Review Assistant

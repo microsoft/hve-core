@@ -24,7 +24,8 @@
     "**/Cargo.lock",
     "CHANGELOG.md",
     "logs/**",
-    "docs/docusaurus/build/**"
+    "docs/docusaurus/build/**",
+    "dependency-pinning-artifacts/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -74,6 +75,8 @@
     "evals",
     "fetchone",
     "figjam",
+    "graphify",
+    "graphifyy",
     "hideable",
     "idor",
     "learning",
@@ -83,6 +86,7 @@
     "uncited",
     "vally",
     "whiteboarding",
+    "ystatement",
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic",

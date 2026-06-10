@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate supply chain security planning from existing knowledge using the
+  Start supply chain security planning from existing knowledge using the
   SSSC Planner agent in capture mode
 agent: SSSC Planner
 ---

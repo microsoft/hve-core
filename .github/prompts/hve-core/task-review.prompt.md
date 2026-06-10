@@ -1,5 +1,5 @@
 ---
-description: "Initiates implementation review based on user context or automatic artifact discovery - Brought to you by microsoft/hve-core"
+description: "Initiate implementation review from user context or artifact discovery"
 agent: Task Reviewer
 argument-hint: "[plan=...] [changes=...] [research=...] [scope=...]"
 ---
