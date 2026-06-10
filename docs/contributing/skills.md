@@ -102,7 +102,7 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 | Property | Value                                                                                                   |
 |----------|---------------------------------------------------------------------------------------------------------|
 | Purpose  | Concise explanation of skill functionality                                                              |
-| Format   | Single sentence without the attribution suffix in source frontmatter                                    |
+| Format   | Single sentence without the attribution suffix in source frontmatter; generation tooling strips any suffix from descriptions |
 | Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                                    |
 
 ### Frontmatter Example
