@@ -7,7 +7,7 @@
     open-ended discovery before any mention of option lists. Per-planner
     identity files inherit the cadence from this base.
 .NOTES
-    Effective case count: 1 (1 `It` block × `-ForEach $script:files` arity 1).
+    Effective case count: 1 (1 `It` block x `-ForEach $script:files` arity 1).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
