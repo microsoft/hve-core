@@ -67,6 +67,10 @@ jobs:
           # licenses (Apache-2.0, MIT, BSD-3-Clause, PSF-2.0) per each
           # project's source repository, but PyPI metadata reports "unknown"
           # so the action requires explicit allowlisting.
+          # pkg:npm/lightningcss (and its optional platform-specific binaries)
+          # is MPL-2.0 licensed; it is pulled in transitively by
+          # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
+          # copyleft and safe to consume as a dependency.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -81,6 +85,18 @@ jobs:
             pkg:pypi/keyrings-alt,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
+            pkg:npm/lightningcss,
+            pkg:npm/lightningcss-android-arm64,
+            pkg:npm/lightningcss-darwin-arm64,
+            pkg:npm/lightningcss-darwin-x64,
+            pkg:npm/lightningcss-freebsd-x64,
+            pkg:npm/lightningcss-linux-arm-gnueabihf,
+            pkg:npm/lightningcss-linux-arm64-gnu,
+            pkg:npm/lightningcss-linux-arm64-musl,
+            pkg:npm/lightningcss-linux-x64-gnu,
+            pkg:npm/lightningcss-linux-x64-musl,
+            pkg:npm/lightningcss-win32-arm64-msvc,
+            pkg:npm/lightningcss-win32-x64-msvc,
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3
