@@ -1,0 +1,82 @@
+{
+  "projectSlug": "example-project",
+  "raiPlanFile": ".copilot-tracking/rai-plans/example-project/rai-plan.md",
+  "currentPhase": 1,
+  "entryMode": "capture",
+  "assessmentDepth": "standard",
+  "standardsMapped": false,
+  "securityModelAnalysisStarted": false,
+  "raiThreatCount": 0,
+  "impactAssessmentGenerated": false,
+  "evidenceRegisterComplete": false,
+  "handoffGenerated": { "ado": false, "github": false },
+  "gateResults": {
+    "prohibitedUsesGate": { "status": "pending" }
+  },
+  "riskClassification": {
+    "framework": {
+      "id": "microsoft-rai-impact",
+      "name": "Microsoft RAI Impact Assessment",
+      "version": "1.0",
+      "source": "embedded",
+      "replaceDefaultIndicators": false,
+      "replaceDefaultFramework": false
+    },
+    "indicators": {
+      "safety_reliability": {
+        "method": "binary",
+        "nistSource": [],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "rights_fairness_privacy": {
+        "method": "binary",
+        "nistSource": [],
+        "activated": false,
+        "observation": null,
+        "result": null
+      },
+      "security_explainability": {
+        "method": "binary",
+        "nistSource": [],
+        "activated": false,
+        "observation": null,
+        "result": null
+      }
+    },
+    "activatedCount": 0,
+    "riskScore": null,
+    "suggestedDepthTier": "standard"
+  },
+  "runningObservations": [],
+  "principleTracker": {
+    "validReliable": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "safe": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "secureResilient": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "accountableTransparent": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "explainableInterpretable": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "privacyEnhanced": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] },
+    "fairBiasManaged": { "suggestedStatus": "not-yet-covered", "mappedInPhase3": false, "threatsIdentified": 0, "controlsEvaluated": 0, "nistSubcat": "", "openObservations": [] }
+  },
+  "referencesProcessed": [],
+  "nextActions": [],
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
+  "userPreferences": {
+    "autonomyTier": "guided",
+    "outputDetailLevel": "standard",
+    "targetSystem": "github",
+    "audienceProfile": "technical",
+    "includeOptionalArtifacts": { "transparencyNote": false, "monitoringSummary": false, "artifactSigning": false }
+  },
+  "phaseGates": {
+    "phase1": { "gate": "summary-and-advance" },
+    "phase2": { "gate": "hard", "confirmedAt": null },
+    "phase3": { "gate": "hard", "confirmedAt": null },
+    "phase4": { "gate": "summary-and-advance" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  }
+}

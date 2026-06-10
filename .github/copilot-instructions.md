@@ -117,6 +117,7 @@ Collection manifests in `collections/` define bundles of agents, prompts, instru
 * Collections must include all subagent dependencies used by their referenced custom agents. When a parent agent declares subagents in its `agents:` frontmatter, those subagent files must appear in the collection YAML.
 * When adding, updating, or removing prompt instructions, custom agents, subagents, or skills, update all affected `collections/*.collection.yml` and `collections/*.collection.md` files.
 * After any change to collection YAML or markdown files, run `npm run plugin:generate` to regenerate plugin outputs under `plugins/`. Do not edit `plugins/` files directly.
+* After any change to collection YAML or markdown files, also run `npm run extension:prepare` and `npm run extension:prepare:prerelease` to regenerate the per-collection extension READMEs and `package.*.json` manifests under `extension/`. Both regenerators are idempotent and exit 0 when inputs are unchanged.
 * Run `npm run plugin:validate` to confirm collection metadata is correct.
 <!-- </project-structure> -->
 

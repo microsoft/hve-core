@@ -1,5 +1,5 @@
 ---
-description: 'Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review'
+description: 'Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files'
 agent: Jira Backlog Manager
 argument-hint: "[project=...] [documents=...] [jql=...] [searchTerms=...]"
 ---

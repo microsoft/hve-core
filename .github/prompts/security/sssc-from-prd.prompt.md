@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate supply chain security planning from existing PRD artifacts using the
+  Start supply chain security planning from PRD artifacts using the
   SSSC Planner agent in from-prd mode
 agent: SSSC Planner
 ---
@@ -13,9 +13,7 @@ Display the SSSC Planning CAUTION block from #file:../../instructions/shared/dis
 
 After the disclaimer, display the framework attribution `OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM`. Display both the disclaimer and the attribution before any questions or analysis.
 
-Activate the SSSC Planner in **from-prd mode** to bootstrap a supply chain security assessment from existing product definition artifacts.
-
-Activate the SSSC Planner in **from-prd mode** for project slug `${input:project-slug}`.
+Activate the SSSC Planner in **from-prd mode** for project slug `${input:project-slug}` to bootstrap a supply chain security assessment from existing product definition artifacts.
 
 ## Inputs
 

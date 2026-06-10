@@ -313,7 +313,7 @@ description: 'Skill with optional dirs'
 
 # Dirs Skill
 "@
-            $dir = New-TestSkillDirectory -SkillName 'dirs-skill' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples')
+            $dir = New-TestSkillDirectory -SkillName 'dirs-skill' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples','tests', 'templates')
             # Add both script types so scripts/ passes validation
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.sh') -Value '#!/bin/bash'
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.ps1') -Value 'Write-Host "hello"'
@@ -545,7 +545,7 @@ description: 'Skill with recognized dirs'
 
 # Recognized Dirs
 "@
-            $dir = New-TestSkillDirectory -SkillName 'recognized-dirs' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples')
+            $dir = New-TestSkillDirectory -SkillName 'recognized-dirs' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples','tests', 'templates')
             # Add both script types so scripts/ passes validation
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.sh') -Value '#!/bin/bash'
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.ps1') -Value 'Write-Host "hello"'
@@ -565,6 +565,22 @@ description: 'Skill with co-located tests directory'
 # Tests Dir Skill
 "@
             $dir = New-TestSkillDirectory -SkillName 'tests-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('tests')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+        
+        It 'Does not warn about templates/ subdirectory' {
+            $frontmatter = @"
+---
+name: templates-dir-skill
+description: 'Skill with co-located templates directory'
+---
+
+# Templates Dir Skill
+"@
+            $dir = New-TestSkillDirectory -SkillName 'templates-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('templates')
 
             $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
             $result.IsValid | Should -BeTrue
@@ -1538,6 +1554,42 @@ select = ["E", "F"]
             $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
             $result.IsValid | Should -BeFalse
             $result.Errors | Should -Contain "pyproject.toml missing [tool.pytest.ini_options] section in 'py-no-pytest' (tests/ directory exists)"
+        }
+
+        It 'Errors when tests/ exists but [tool.ruff.lint].select missing isort ("I")' {
+            $dir = New-TestSkillDirectory -SkillName 'py-no-isort' -FrontmatterContent @"
+---
+name: py-no-isort
+description: 'Python skill with tests dir but missing isort rule'
+---
+# Test
+"@
+            $testsDir = Join-Path $dir.FullName 'tests'
+            New-Item -ItemType Directory -Path $testsDir -Force | Out-Null
+            Set-Content -Path (Join-Path $testsDir 'test_example.py') -Value '# test'
+            Set-Content -Path (Join-Path $testsDir 'fuzz_harness.py') -Value '# fuzz'
+            Set-Content -Path (Join-Path $dir.FullName 'pyproject.toml') -Value @"
+[project]
+name = "no-isort"
+version = "0.0.0"
+
+[dependency-groups]
+dev = ["ruff", "pytest"]
+fuzz = ["atheris>=3.0"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+"@
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:PythonTestDir
+            $result.IsValid | Should -BeFalse
+            $result.Errors | Should -Contain "pyproject.toml [tool.ruff.lint].select must include 'I' (isort) in 'py-no-isort' (tests/ directory exists)"
         }
 
         It 'Passes when pyproject.toml has all required sections' {

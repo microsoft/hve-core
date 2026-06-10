@@ -1,5 +1,5 @@
 ---
-description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods - Brought to you by microsoft/hve-core"
+description: "Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods"
 applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**'
 ---
 
@@ -125,11 +125,11 @@ After initial context capture, ask the user about output preferences:
 
 "How would you like the assessment outputs formatted?
 
-* **Detail level**: summary (key points only), standard (balanced), or comprehensive (full analysis with evidence chains)?
+* **Detail level**: minimal (key points only), standard (balanced), or detailed (full analysis with evidence chains)?
 * **Target system**: ADO, GitHub, or both for work item creation?
 * **Audience**: technical team, executive stakeholders, or mixed audience?
 * **Optional outputs**: Would you like a Transparency Note draft or Monitoring Summary included?"
 
-Record responses in `userPreferences`. Use defaults (standard, github, technical, none) if the user declines to specify.
+Record responses under the planner's `userPreferences` object, limited to the preference fields that planner's state schema defines. A planner whose state schema does not define a given preference field (for example, a planner that defines only `autonomyTier`) omits that preference rather than writing an unsupported field, and skips the questions that map to unsupported fields. Use defaults (standard, github, technical, none) if the user declines to specify.
 
-Planner-specific instructions define when in the workflow to ask this question and which state field stores the responses.
+Planner-specific instructions define when in the workflow to ask this question and which state fields store the responses.

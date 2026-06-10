@@ -1,6 +1,6 @@
 ---
 name: Meeting Analyst
-description: "Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp - Brought to you by microsoft/hve-core"
+description: "Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp"
 handoffs:
   - label: "📋 Create PRD"
     agent: PRD Builder

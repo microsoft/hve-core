@@ -1,0 +1,42 @@
+name: GitHub Code Scanning
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  security-events: read
+
+jobs:
+  scan:
+    name: Fetch Code Scanning Alerts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OWNER: ${{ github.repository_owner }}
+      REPO: ${{ github.event.repository.name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Fetch code scanning alerts
+        shell: pwsh
+        run: |
+          $alerts = & .github/skills/github/gh-code-scanning/scripts/Get-CodeScanningAlerts.ps1 `
+            -Owner $env:OWNER `
+            -Repo $env:REPO `
+            -OutputFormat Json
+          $alerts | Set-Content alerts.json -Encoding utf8
+
+      - name: Upload alerts artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: gh-code-scanning-alerts
+          path: alerts.json
+          retention-days: 30

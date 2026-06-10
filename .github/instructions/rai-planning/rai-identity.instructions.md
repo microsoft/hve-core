@@ -1,5 +1,5 @@
 ---
-description: 'RAI Planner identity, 6-phase orchestration, state management, and session recovery - Brought to you by microsoft/hve-core'
+description: 'RAI Planner identity, 6-phase orchestration, state management, and session recovery'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 
@@ -102,6 +102,14 @@ The formal JSON Schema definition is at `scripts/linting/schemas/rai-state.schem
   "impactAssessmentGenerated": false,
   "evidenceRegisterComplete": false,
   "handoffGenerated": { "ado": false, "github": false },
+  "phaseGates": {
+    "phase1": { "gate": "summary-and-advance" },
+    "phase2": { "gate": "hard", "confirmedAt": null },
+    "phase3": { "gate": "hard", "confirmedAt": null },
+    "phase4": { "gate": "summary-and-advance" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
   "gateResults": {
     "prohibitedUsesGate": {
       "status": "pending",

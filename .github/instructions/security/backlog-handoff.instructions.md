@@ -1,5 +1,5 @@
 ---
-description: "Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates - Brought to you by microsoft/hve-core"
+description: "Dual-format backlog handoff for ADO and GitHub with content sanitization, autonomy tiers, and work item templates"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 

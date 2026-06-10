@@ -39,9 +39,9 @@ copilot plugin install gitlab@hve-core
 
 ## Skills
 
-| Skill  | Description                                                                                         |
-|--------|-----------------------------------------------------------------------------------------------------|
-| gitlab | Manage GitLab merge requests and pipelines with a Python CLI - Brought to you by microsoft/hve-core |
+| Skill  | Description                                                  |
+|--------|--------------------------------------------------------------|
+| gitlab | Manage GitLab merge requests and pipelines with a Python CLI |
 
 ---
 
