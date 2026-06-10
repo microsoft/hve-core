@@ -1,5 +1,5 @@
 ---
-description: "Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages."
+description: "Create an Azure DevOps pull request with generated description, linked work items, and reviewers"
 agent: ADO Backlog Manager
 ---
 

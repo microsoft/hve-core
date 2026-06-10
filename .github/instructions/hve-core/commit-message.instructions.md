@@ -1,5 +1,5 @@
 ---
-description: 'Required instructions for creating all commit messages - Brought to you by microsoft/hve-core'
+description: 'Commit message format and conventions'
 ---
 
 # Commit Message Guidelines

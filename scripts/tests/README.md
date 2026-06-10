@@ -115,6 +115,11 @@ tests/
 Test files use the `.Tests.ps1` suffix convention for automatic discovery by
 Pester.
 
+Planner-related tests are split intentionally: rule-validator suites (state
+schema, cadence ordering, startup blocks, risk-grid grammar) live under
+`linting/` alongside other linter tests, while artifact-signing and runtime
+concerns (e.g. `Sign-PlannerArtifacts.Tests.ps1`) live under `security/`.
+
 ## Related Documentation
 
 * [Testing Architecture](../../docs/architecture/testing.md) for Pester

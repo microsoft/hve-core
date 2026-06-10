@@ -1,7 +1,7 @@
 ---
 name: security-review-web
 agent: Security Reviewer
-description: "Runs an OWASP Top 10 web vulnerability assessment without codebase profiling - Brought to you by microsoft/hve-core"
+description: "Run an OWASP Top 10 web vulnerability assessment without codebase profiling"
 argument-hint: "[scope=path/to/component]"
 ---
 

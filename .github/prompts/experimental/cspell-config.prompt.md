@@ -1,6 +1,6 @@
 ---
 agent: "agent"
-description: "Creates or updates the project cspell configuration with project-specific words and ignores"
+description: "Create or update the project cspell configuration with project words and ignores"
 ---
 
 # Update cspell configuration with project-specific words and ignores

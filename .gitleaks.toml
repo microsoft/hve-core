@@ -1,0 +1,23 @@
+# Gitleaks configuration for hve-core.
+#
+# Extends the built-in gitleaks ruleset and allowlists the fake secrets that
+# live in security test fixtures. These fixtures intentionally embed
+# secret-shaped strings to exercise secret-detection logic, so they are not
+# real credentials.
+#
+# Using a path-based allowlist keeps this durable: editing, moving, or removing
+# a fixture no longer requires a new commit-pinned entry in .gitleaksignore,
+# because allowlisting is matched against the file path rather than a
+# commitSHA:file:rule:line fingerprint.
+
+title = "hve-core gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake secrets in security test fixtures (PowerShell + Python skill tests)"
+paths = [
+  '''scripts/tests/security/.*\.Tests\.ps1$''',
+  '''\.github/skills/.*/tests/.*\.py$''',
+]

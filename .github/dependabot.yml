@@ -31,6 +31,9 @@ updates:
       github-actions:
         patterns:
           - "*"
+    ignore:
+      # Managed via .github/aw/actions-lock.json; let `gh aw` own these bumps.
+      - dependency-name: "github/gh-aw-actions/**"
     labels:
       - "dependencies"
       - "github-actions"

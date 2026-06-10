@@ -1,6 +1,6 @@
 ---
 name: Task Challenger
-description: 'Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading - Brought to you by microsoft/hve-core'
+description: 'Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading'
 disable-model-invocation: true
 tools: [read, search, edit/createFile, edit/editFiles, execute/runInTerminal, execute/getTerminalOutput]
 handoffs:

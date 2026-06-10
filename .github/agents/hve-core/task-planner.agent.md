@@ -1,6 +1,6 @@
 ---
 name: Task Planner
-description: 'Implementation planner for creating actionable implementation plans - Brought to you by microsoft/hve-core'
+description: 'Implementation planner that creates actionable, step-by-step plans'
 disable-model-invocation: true
 agents:
   - Researcher Subagent

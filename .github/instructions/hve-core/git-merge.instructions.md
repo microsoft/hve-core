@@ -1,5 +1,5 @@
 ---
-description: "Required protocol for Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls."
+description: "Git merge, rebase, and rebase --onto workflows with conflict handling and stop controls"
 ---
 
 # Git Merge & Rebase Instructions

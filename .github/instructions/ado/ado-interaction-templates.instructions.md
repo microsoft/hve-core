@@ -1,5 +1,5 @@
 ---
-description: "Work item description and comment templates for consistent Azure DevOps content formatting - Brought to you by microsoft/hve-core"
+description: "Work item description and comment templates for consistent Azure DevOps content formatting"
 applyTo: '**/.github/instructions/ado/**'
 ---
 
