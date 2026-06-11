@@ -73,7 +73,7 @@ Most skills are pure authoring or validation helpers with no independent Respons
 | User authentication            | None at the framework level; some skills authenticate to third-party services and carry a skill-specific threat model | Manages identity, tenant scope, and access controls                                                                                     |
 | Telemetry and feedback         | None at the artifact level; CI logs only                                                                              | Collects user interaction telemetry per the [host's telemetry and privacy docs](https://code.visualstudio.com/docs/configure/telemetry) |
 | Persistent memory              | Authors agents that write to memory; does not store memory itself                                                     | Stores, retains, and exposes the memory layer                                                                                           |
-| Attribution                    | Embeds "Brought to you by microsoft/hve-core" attribution where convention                                            | Surfaces attribution to the user through the chat session                                                                               |
+| Attribution                    | Carries attribution through per-file copyright notices and SPDX license headers, and an optional attribution line where convention | Surfaces any attribution line to the user through the chat session                                                                      |
 
 ### Use cases
 
@@ -81,11 +81,11 @@ Most skills are pure authoring or validation helpers with no independent Respons
 
 HVE Core is built for these situations:
 
-* **Faster starts for engineers and field teams.** Agents and prompts capture common workflows (research, planning, implementation, review, discovery) so starting a task with Copilot takes less setup.
+* **Faster starts for engineers, field teams, and other GitHub Copilot users.** Agents and prompts capture common workflows (research, planning, implementation, review, discovery) so starting a task with Copilot takes less setup.
 * **Consistent coding standards through Copilot.** Per-language instructions and code-review agents bring shared guidance into Copilot when you work in C#, Python, PowerShell, Rust, Bash, Bicep, Terraform, and related stacks.
 * **Help with governance-aware planning.** The RAI Planner, Security Planner, and SSSC Planner help teams structure assessments aligned with the NIST AI RMF, STRIDE, and the OpenSSF Scorecard family. These agents produce drafts; a qualified person must review and approve every output.
-* **Backlog help for Azure DevOps, GitHub Issues, and Jira.** Agents can search, draft, triage, and prepare updates for a human to review and approve.
-* **Design Thinking facilitation in customer work.** Coaching agents support a structured Design Thinking workflow. The Customer Card Render skill makes synthetic personas for stakeholder communication, under the limits in Appendix 5.
+* **Backlog help for Azure DevOps, GitHub Issues, GitLab, and Jira.** Agents can search, draft, triage, and prepare updates for a human to review and approve.
+* **Design Thinking facilitation in solution development work.** Coaching agents support a structured Design Thinking workflow. The Customer Card Render skill makes synthetic personas for stakeholder communication, under the limits in Appendix 5.
 * **Project-planning drafts.** Agents help draft architecture decision records, business and product requirements documents, user journeys, and architecture diagrams for a human to refine.
 * **Documentation upkeep.** Agents help keep docs in sync, check links, and apply consistent style across markdown.
 
@@ -93,7 +93,6 @@ HVE Core is built for these situations:
 
 HVE Core is a set of files, not a managed service. You stay responsible for the AI platform, the data that flows through it, and any action a person takes based on agent output. Do not use HVE Core files in these ways without your own design, testing, and human oversight:
 
-* **Customer-facing chat.** No agent is built or tested for direct end-user use. Agents are tools for the engineer or analyst at the keyboard.
 * **Automated decisions in regulated areas.** Agent recommendations are advisory. Do not use them to decide finance, medical, legal, employment, education, housing, or insurance matters without qualified human review.
 * **Guessing personal traits.** Do not repurpose agents to infer protected characteristics about people from stray data.
 * **Assessing developer performance.** Do not repurpose HVE Core telemetry, code-review verdicts, or agent activity logs to rate, rank, or evaluate the people doing the work. These signals describe artifacts and workflows, not individual performance.
@@ -146,7 +145,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 * **Read an agent's description before loading it.** Each agent file documents its purpose, inputs, outputs, and limits. Skipping this is the most common cause of surprises.
 * **Treat decision-shaping output as a draft.** Planning agents, code-review agents that gate pull requests, and customer-handoff agents produce drafts. Do not turn a draft into a binding decision without qualified human review.
 * **Check saved memory before sharing a workspace.** Agents that write to the memory layer carry context across sessions. Inspect and clear it through the host's controls before sharing a workspace, screenshot, or recording.
-* **Keep the attribution footer on copies.** When you copy a file into a fork or customer repository, keep the "Brought to you by microsoft/hve-core" line and record the source version.
+* **Preserve attribution on copies.** When you copy a file into a fork or customer repository, keep its copyright notice and SPDX license header, and record the source version. If an attribution line is present, keep it.
 * **Report concerns through GitHub issues.** Bugs, behavior concerns, accessibility problems, and Responsible AI questions go through the public issue tracker.
 
 ## Evaluation of HVE Core
