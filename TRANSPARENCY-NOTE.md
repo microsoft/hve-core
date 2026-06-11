@@ -16,7 +16,7 @@ estimated_reading_time: 14
 
 A Transparency Note explains how an AI-related system works, the choices its maintainers made, and the limits to keep in mind when you decide whether and how to use it. The goal is to help you understand what the system can and cannot do, where a human needs to stay in control, and how to use it responsibly.
 
-This note covers HVE Core: the files in the `microsoft/hve-core` repository. It does not cover the AI platforms that run those files, such as GitHub Copilot Chat in Visual Studio Code, the GitHub Copilot CLI, Microsoft Foundry, or third-party model hosts. Each of those has its own documentation and Transparency Note.
+This note covers HVE Core: the files in the `microsoft/hve-core` repository. It does not cover the AI platforms that run those files, such as GitHub Copilot Chat in Visual Studio Code, the GitHub Copilot CLI, Microsoft Foundry, third-party model hosts, or other IDEs. Each of those has its own documentation and Transparency Note.
 
 ## The basics of HVE Core
 
