@@ -16,7 +16,7 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-0-10
+ms.date: 2026-06-10
 ms.topic: how-to
 estimated_reading_time: 8
 ---
@@ -133,7 +133,7 @@ Instructions and skills serve different activation contexts. Instructions guide 
 
 ## Authoring a Custom Skill
 
-You extend the standards agent by creating a SKILL.md file under skills/coding-standards/ in your repository. The agent activates it by matching the skill's name or description against the languages, frameworks, or file types present in the diff.
+You extend the standards agent by creating a SKILL.md file under .github/skills/coding-standards/ in your repository. The agent activates it by matching the skill's name or description against the languages, frameworks, or file types present in the diff.
 
 ### Skill Stacking
 
@@ -158,10 +158,10 @@ flowchart TD
 
 ### Directory Structure
 
-Place custom skills under `skills/coding-standards/{your-collection}/{skill-name}/`:
+Place custom skills under `.github/skills/coding-standards/{your-collection}/{skill-name}/`
 
 ```text
-skills/coding-standards/
+.github/skills/coding-standards/
 └── contoso/
     └── python-enterprise/
         ├── SKILL.md
@@ -218,21 +218,21 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 2. Make a change to a file that matches the skill's target language.
 3. Run `/code-review-full` or invoke the Code Review Standards agent directly.
 4. Verify that findings cite your skill's `name` in their Skill field.
-5. If the skill does not activate, verify that the `description` clearly mentions the language, framework, or file extension present in the diff. Placement under `skills/coding-standards/` is recommended for organization but does not control activation.
+5. If the skill does not activate, verify that the `description` clearly mentions the language, framework, or file extension present in the diff. Placement under `.github/skills/coding-standards/` is recommended for organization but does not control activation.
 
 ## Enterprise Scenarios
 
 ### Overlay Company Standards on Built-in Skills
 
-A financial services team installs the `coding-standards` collection and adds `skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The standards agent loads both `python-foundational` and `python-finserv` for every Python diff, producing a unified report.
+A financial services team installs the `coding-standards` collection and adds `.github/skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The standards agent loads both `python-foundational` and `python-finserv` for every Python diff, producing a unified report.
 
 ### Add Coverage for an Unsupported Language
 
-A team working in Go creates `skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The standards agent selects and loads it for any `.go` files in the diff based on semantic matching.
+A team working in Go creates `.github/skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The standards agent selects and loads it for any `.go` files in the diff based on semantic matching.
 
 ### Scope a Skill to a Specific Framework
 
-A frontend team authors `skills/coding-standards/northwind/react-standards/SKILL.md` with its description mentioning "React components, hooks, and JSX patterns." The agent loads it only when `.tsx` or `.jsx` files appear in the diff, leaving unrelated reviews unaffected.
+A frontend team authors `.github/skills/coding-standards/northwind/react-standards/SKILL.md` with its description mentioning "React components, hooks, and JSX patterns." The agent loads it only when `.tsx` or `.jsx` files appear in the diff, leaving unrelated reviews unaffected.
 
 ## Reference
 
