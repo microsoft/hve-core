@@ -4,6 +4,14 @@
   "currentPhase": 1,
   "entryMode": "capture",
   "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "session-start-disclaimer",
+      "shownAt": "2026-05-09T14:32:00Z",
+      "source": ".github/instructions/security/security-identity.instructions.md",
+      "details": { "phase": "phase1" }
+    }
+  ],
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": null },
     "phase2": { "gate": "summary-and-advance" },

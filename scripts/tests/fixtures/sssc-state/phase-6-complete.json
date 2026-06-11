@@ -54,6 +54,14 @@
   "signingRequested": true,
   "signingManifestPath": ".copilot-tracking/sssc-plans/example-project/sssc-manifest.json",
   "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2025-01-01T00:00:00Z",
+      "source": ".github/instructions/security/sssc-identity.instructions.md",
+      "details": { "phase": "phase6" }
+    }
+  ],
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": "2025-01-01T00:00:00Z" },
     "phase2": { "gate": "summary-and-advance" },

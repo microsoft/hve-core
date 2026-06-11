@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
-    Asserts tiered phase gates, `disclaimerShownAt`, and `referencesProcessed` defaults
+    Asserts tiered phase gates, notice fields, and `referencesProcessed` defaults
     in the inline JSON-literal state block of both planner identity files.
 .NOTES
-    Effective case count: 8 (4 `It` blocks x `-ForEach $script:identityFiles` arity 2).
+    Effective case count: 10 (5 `It` blocks x `-ForEach $script:identityFiles` arity 2).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -32,6 +32,12 @@ Describe 'Inline planner state schema defaults' {
         $state = Get-InlineStateJson -Path $_
         $state.PSObject.Properties.Name | Should -Contain 'disclaimerShownAt'
         $state.disclaimerShownAt | Should -BeNullOrEmpty
+    }
+
+    It 'Identity <_> defines noticeLog as empty array' -ForEach $script:identityFiles {
+        $state = Get-InlineStateJson -Path $_
+        $state.PSObject.Properties.Name | Should -Contain 'noticeLog'
+        @($state.noticeLog).Count | Should -Be 0
     }
 
     It 'Identity <_> defines tiered hard gates on phases 1, 4, 6 with confirmedAt null' -ForEach $script:identityFiles {
