@@ -37,7 +37,7 @@ HVE Core does not run any AI model itself. It does not train models, host infere
 2. The trust people place in files that carry Microsoft branding through this repository and the official VS Code extension.
 3. The saved-memory feature and the customer-handoff steps that some agents drive.
 
-The appendices at the end add detail for the agents that most influence downstream decisions, plus the synthetic-persona skill that carries the most direct Responsible AI weight (the Customer Card Render skill).
+The appendices at the end add detail for the agents that most influence downstream decisions.
 
 ### Key terms
 
