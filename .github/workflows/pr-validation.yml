@@ -271,6 +271,14 @@ jobs:
       upload-sarif: true
       upload-artifact: false
 
+  devcontainer-lockfile-check:
+    name: Devcontainer Lockfile Integrity
+    uses: ./.github/workflows/devcontainer-lockfile-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+
   workflow-permissions-check:
     name: Workflow Permissions Check
     uses: ./.github/workflows/workflow-permissions-scan.yml

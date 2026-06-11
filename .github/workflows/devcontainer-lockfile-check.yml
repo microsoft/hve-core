@@ -1,0 +1,80 @@
+name: Devcontainer Lockfile Integrity
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on lockfile integrity violations'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-lockfile:
+    name: Validate Devcontainer Lockfile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate lockfile integrity
+        id: validate
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          LOCK=".devcontainer/devcontainer-lock.json"
+          CONFIG=".devcontainer/devcontainer.json"
+          ERRORS=0
+
+          # 1. Lockfile must exist
+          if [[ ! -f "$LOCK" ]]; then
+            echo "::error file=$CONFIG::devcontainer-lock.json is missing — rebuild the dev container to generate it"
+            exit 1
+          fi
+
+          # 2. Every feature must have resolved + integrity with sha256
+          MISSING_SHA=$(jq -r '.features | to_entries[]
+            | select(.value.resolved == null or .value.integrity == null
+              or (.value.integrity | startswith("sha256:") | not))
+            | .key' "$LOCK")
+          if [[ -n "$MISSING_SHA" ]]; then
+            while IFS= read -r key; do
+              echo "::error file=$LOCK::Feature missing SHA-256 integrity: $key"
+            done <<< "$MISSING_SHA"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          # 3. Feature keys in lockfile must cover devcontainer.json features
+          CONFIG_KEYS=$(jq -r '.features | keys[] | ascii_downcase' "$CONFIG" | sort)
+          LOCK_KEYS=$(jq -r '.features | keys[] | ascii_downcase' "$LOCK" | sort)
+          MISSING_KEYS=$(comm -23 <(echo "$CONFIG_KEYS") <(echo "$LOCK_KEYS"))
+          if [[ -n "$MISSING_KEYS" ]]; then
+            while IFS= read -r key; do
+              echo "::error file=$LOCK::Lockfile missing entry for feature: $key"
+            done <<< "$MISSING_KEYS"
+            ERRORS=$((ERRORS + 1))
+          fi
+
+          if [[ "$ERRORS" -gt 0 ]]; then
+            echo "LOCKFILE_FAILED=true" >> "$GITHUB_ENV"
+          else
+            echo "✓ Lockfile covers all features with SHA-256 integrity"
+          fi
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Check results
+        if: ${{ !inputs.soft-fail }}
+        shell: bash
+        run: |
+          if [[ "${LOCKFILE_FAILED:-}" == "true" ]]; then
+            echo "::error::Devcontainer lockfile integrity check failed"
+            exit 1
+          fi
