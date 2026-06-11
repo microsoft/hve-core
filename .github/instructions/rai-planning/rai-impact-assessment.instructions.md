@@ -1,5 +1,5 @@
 ---
-description: 'RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation - Brought to you by microsoft/hve-core'
+description: 'RAI impact assessment for Phase 5: control surface taxonomy, evidence register, tradeoff documentation, and work item generation'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

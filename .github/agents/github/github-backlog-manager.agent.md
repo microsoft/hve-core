@@ -1,6 +1,6 @@
 ---
 name: GitHub Backlog Manager
-description: "Orchestrator agent for GitHub backlog management workflows including triage, discovery, sprint planning, and execution - Brought to you by microsoft/hve-core"
+description: "GitHub backlog orchestrator for triage, discovery, sprint planning, and execution"
 tools:
   - github/*
   - search

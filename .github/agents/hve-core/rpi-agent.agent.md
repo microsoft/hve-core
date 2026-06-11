@@ -1,6 +1,6 @@
 ---
 name: RPI Agent
-description: 'Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases, using specialized subagents when task difficulty warrants them - Brought to you by microsoft/hve-core'
+description: 'Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents'
 argument-hint: 'Autonomous RPI agent. Uses subagents when task difficulty warrants them.'
 disable-model-invocation: true
 agents:

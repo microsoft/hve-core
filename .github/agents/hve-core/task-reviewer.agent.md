@@ -1,6 +1,6 @@
 ---
 name: Task Reviewer
-description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core'
+description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance'
 disable-model-invocation: true
 agents:
   - RPI Validator

@@ -1,5 +1,5 @@
 ---
-description: "Prompt to update work items based on planning files"
+description: "Update Azure DevOps work items from planning files"
 agent: ADO Backlog Manager
 ---
 

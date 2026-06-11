@@ -1,10 +1,9 @@
 ---
 name: SSSC Planner
 description: >-
-  Guides users through a six-phase assessment of their repository's supply chain
-  security posture against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards,
-  producing a prioritized backlog referencing reusable workflows from hve-core
-  and microsoft/physical-ai-toolchain.
+  Six-phase repository supply chain security assessment against OpenSSF
+  Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized
+  backlog of reusable workflows.
 agents:
   - Researcher Subagent
 handoffs:
@@ -33,6 +32,14 @@ Phase-based conversational supply chain security planning agent that guides user
 Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
 After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-standards.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
+
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the gap-analysis or backlog phases produce supply-chain provenance events, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `sssc-planner-telemetry` instructions apply automatically to matching artifacts.
 
 ## Six-Phase Architecture
 
@@ -100,7 +107,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 6: Review and Handoff
 
-Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `scripts/security/Sign-PlannerArtifacts.ps1` via `execute/runInTerminal` with `-SessionPath '.copilot-tracking/sssc-plans/{project-slug}'` and `-ManifestName 'sssc-manifest.json'` to generate a SHA-256 manifest and optionally sign with cosign.
+Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run sssc:sign -- -SessionPath '.copilot-tracking/sssc-plans/{project-slug}' -ManifestName 'sssc-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign.
 
 Human-review exit reminder: a qualified supply chain security reviewer signs off on the final assessment, Scorecard projections, and backlog handoff artifacts before backlog creation.
 
@@ -170,6 +177,9 @@ State JSON schema for `state.json`:
   },
   "referencesProcessed": [],
   "nextActions": [],
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
   "userPreferences": {
     "autonomyTier": "partial",
     "outputDetailLevel": "standard",

@@ -7,6 +7,20 @@ applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans
 
 Planning agents that generate assessments requiring professional review display a CAUTION block during startup. Each section contains the verbatim disclaimer for the corresponding planner. Prompt files and agents reference the appropriate section via `#file:` to ensure consistent presentation across all entry points.
 
+<!--
+Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
+
+- Each planner gets exactly one H2 section. The first whitespace-delimited word of the heading, lowercased, is the slug. Examples: "RAI Planning" -> "rai"; "Security Planning" -> "security"; "SSSC Planning" -> "sssc".
+- The slug derives three downstream identifiers used by ai-artifact footer validation:
+  - planner key: `{slug}-planner`
+  - disclaimer id: `{slug}-full-disclaimer`
+  - disclaimer label: `{heading} Disclaimer` (full heading, not slug)
+- Each H2 section must contain exactly one `> [!CAUTION]` blockquote. Only the first CAUTION block in a section is extracted; additional CAUTION blocks within the same H2 are ignored.
+- The CAUTION block's prose should begin with `**Disclaimer:**` (the trailing colon is optional). This prefix is stripped before the text is matched against artifact footers; prose without it is retained verbatim.
+- Multi-line blockquote prose is joined with single spaces. Keep wrapping natural for source readability.
+-->
+
+
 ## RAI Planning
 
 > [!CAUTION]

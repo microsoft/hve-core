@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.rs'
-description: 'Required instructions for Rust test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
+description: 'Rust test code authoring conventions'
 ---
 
 # Rust Test Instructions

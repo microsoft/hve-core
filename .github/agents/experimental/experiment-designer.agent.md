@@ -1,6 +1,6 @@
 ---
 name: Experiment Designer
-description: "Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning - Brought to you by microsoft/hve-core"
+description: "Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning"
 ---
 
 # Experiment Designer

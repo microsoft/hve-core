@@ -1,6 +1,6 @@
 ---
 name: owasp-mcp
-description: OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments - Brought to you by microsoft/hve-core.
+description: OWASP MCP Top 10 knowledge base for identifying, assessing, and remediating Model Context Protocol security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
