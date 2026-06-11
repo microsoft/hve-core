@@ -108,7 +108,3 @@ Follow these conventions when extending this skill:
 * Before adding a new checklist item, confirm it does not duplicate an existing bullet in any section. Place it in the section that matches its primary concern. If it spans concerns, prefer the more specific section.
 * Name new reference files after the topic they cover (e.g., `async-patterns.md`). Include a frontmatter `description` that states which sections the file supports. Add a row to the References table in SKILL.md.
 * Checklist items and examples must be portable across codebases. Use generic module names and describe anti-patterns by their behavior, not by specific directory or file names.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -100,7 +100,3 @@ containers belonging to other clients.
 * Isolate tenant networks in multi-tenant environments.
 * Define and enforce ingress and egress network policies.
 * Schedule recurring external and internal network scans to detect configuration drift.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

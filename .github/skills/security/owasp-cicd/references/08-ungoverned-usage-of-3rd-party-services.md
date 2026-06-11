@@ -112,7 +112,3 @@ production repositories, inject backdoors, and trigger deployment pipelines.
 * Establish expiry dates on all third-party access grants and implement periodic re-certification.
 * Rotate all credentials that third-party services have had access to after removing unnecessary
   integrations.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

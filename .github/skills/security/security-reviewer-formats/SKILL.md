@@ -32,7 +32,3 @@ a focused area of the reporting pipeline.
   * `finding-formats.md` — serialization and collection formats for findings exchange between subagents.
   * `completion-formats.md` — status updates, completion summaries, and the minimal profile stub.
   * `severity-definitions.md` — severity level table shared across all assessments.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

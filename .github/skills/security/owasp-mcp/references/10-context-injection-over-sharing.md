@@ -80,7 +80,3 @@ Tenant A's internal documents appear in Tenant B's retrieval outputs.
 * Introduce TTL policies and auto-purge logic.
 * Rotate keys and invalidate context stores if contamination is confirmed.
 * Review access control around vector databases and embeddings.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

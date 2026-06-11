@@ -102,7 +102,3 @@ they use to access production cloud environments.
 * Replace all shared accounts with dedicated, individually-scoped accounts.
 * Establish automated workflows to disable external collaborator access upon contract expiry.
 * Implement periodic access reviews with mandatory re-certification of identity permissions.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

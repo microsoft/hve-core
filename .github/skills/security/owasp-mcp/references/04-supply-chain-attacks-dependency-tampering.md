@@ -90,7 +90,3 @@ methods that call destructive APIs.
 * Rotate all credentials that may have been exposed.
 * Audit build pipelines and package registries for tampering.
 * Enforce signing and provenance checks across all dependency ingestion paths.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
