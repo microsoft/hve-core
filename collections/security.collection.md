@@ -18,6 +18,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
 | **report-generator**      | Collates verified security skill findings into a comprehensive vulnerability report                                                                                         |
 | **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
+| **security-auditor**      | Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact                                                              |
 | **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                           |
 | **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |
 | **skill-assessor**        | Assesses a single security skill against the codebase and returns structured findings                                                                                       |
@@ -32,6 +33,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **security-audit-from-plan**    | Audits an existing security plan against current repo state and produces a gap-analysis artifact                                             |
 | **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
 | **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
 | **security-review**             | Run an OWASP vulnerability assessment against the current codebase                                                                           |

@@ -1,7 +1,7 @@
 ---
 name: security-audit-from-plan
 agent: Security Auditor
-description: "Audits an existing security plan against current repo state and produces a gap-analysis artifact - Brought to you by microsoft/hve-core"
+description: "Audits an existing security plan against current repo state and produces a gap-analysis artifact"
 argument-hint: "[projectSlug=<slug>] [planPath=.copilot-tracking/security-plans/<slug>] [scope=path/to/dir] [priorReport=path]"
 ---
 

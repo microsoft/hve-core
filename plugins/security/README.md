@@ -26,6 +26,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
 | **report-generator**      | Collates verified security skill findings into a comprehensive vulnerability report                                                                                         |
 | **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
+| **security-auditor**      | Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact                                                              |
 | **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                           |
 | **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |
 | **skill-assessor**        | Assesses a single security skill against the codebase and returns structured findings                                                                                       |
@@ -40,6 +41,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
 | **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | **risk-register**               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| **security-audit-from-plan**    | Audits an existing security plan against current repo state and produces a gap-analysis artifact                                             |
 | **security-capture**            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
 | **security-plan-from-prd**      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
 | **security-review**             | Run an OWASP vulnerability assessment against the current codebase                                                                           |
@@ -114,6 +116,7 @@ copilot plugin install security@hve-core
 | rai-planner           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
 | researcher-subagent   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
 | security-reviewer     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |
+| security-auditor      | Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact                                                              |
 | codebase-profiler     | Scans the repository to build a technology profile and select applicable security skills                                                                                    |
 | finding-deep-verifier | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                      |
 | report-generator      | Collates verified security skill findings into a comprehensive vulnerability report                                                                                         |
@@ -131,6 +134,7 @@ copilot plugin install security@hve-core
 | security-review-llm         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                  |
 | security-review-web         | Run an OWASP Top 10 web vulnerability assessment without codebase profiling                                                                  |
 | security-review-sbd         | Run a Secure by Design principles assessment per UK and Australian government guidance                                                       |
+| security-audit-from-plan    | Audits an existing security plan against current repo state and produces a gap-analysis artifact                                             |
 | sssc-capture                | Start supply chain security planning from existing knowledge using the SSSC Planner agent in capture mode                                    |
 | sssc-from-prd               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
 | sssc-from-brd               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |

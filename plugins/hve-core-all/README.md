@@ -65,6 +65,7 @@ Use this edition when you want access to everything without choosing a focused c
 | **researcher-subagent**          | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                                              |
 | **rpi-agent**                    | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                                                                                    |
 | **rpi-validator**                | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                                  |
+| **security-auditor**             | Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact                                                                                           |
 | **security-planner**             | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                                                        |
 | **security-reviewer**            | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                                                |
 | **skill-assessor**               | Assesses a single security skill against the codebase and returns structured findings                                                                                                                    |
@@ -137,6 +138,7 @@ Use this edition when you want access to everything without choosing a focused c
 | **rai-plan-from-security-plan**                 | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | **risk-register**                               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
 | **rpi**                                         | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                                                             |
+| **security-audit-from-plan**                    | Audits an existing security plan against current repo state and produces a gap-analysis artifact                                             |
 | **security-capture**                            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
 | **security-plan-from-prd**                      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
 | **security-review**                             | Run an OWASP vulnerability assessment against the current codebase                                                                           |
@@ -383,6 +385,7 @@ copilot plugin install hve-core-all@hve-core
 | system-architecture-reviewer | System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment                                                                                                         |
 | ux-ui-designer               | UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements                                                                                                |
 | rai-planner                  | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff                                   |
+| security-auditor             | Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact                                                                                           |
 | security-planner             | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                                                        |
 | security-reviewer            | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                                                |
 | sssc-planner                 | Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows.                              |
@@ -456,6 +459,7 @@ copilot plugin install hve-core-all@hve-core
 | rai-plan-from-security-plan                 | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
 | incident-response                           | Run an incident response workflow for Azure operations scenarios                                                                             |
 | risk-register                               | Create a qualitative risk register using a Probability × Impact (P×I) matrix                                                                 |
+| security-audit-from-plan                    | Audits an existing security plan against current repo state and produces a gap-analysis artifact                                             |
 | security-capture                            | Start security planning from existing notes using the Security Planner agent (capture mode)                                                  |
 | security-plan-from-prd                      | Start security planning from PRD/BRD artifacts using the Security Planner agent (from-prd mode)                                              |
 | security-review-llm                         | Run OWASP LLM and Agentic vulnerability assessments with codebase profiling                                                                  |

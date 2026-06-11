@@ -1,6 +1,6 @@
 ---
 name: Security Auditor
-description: "Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact - Brought to you by microsoft/hve-core"
+description: "Audits an existing security plan against a fresh current-state assessment and produces a gap-analysis artifact"
 agents:
   - Security Reviewer
 tools:
