@@ -18,27 +18,27 @@
     "@docusaurus/core": "3.10.1",
     "@docusaurus/faster": "3.10.1",
     "@docusaurus/preset-classic": "3.10.1",
-    "@easyops-cn/docusaurus-search-local": "0.55.1",
-    "@mdx-js/react": "3.0.0",
-    "clsx": "2.0.0",
-    "prism-react-renderer": "2.3.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "remark-github-blockquote-alert": "2.0.1"
+    "@easyops-cn/docusaurus-search-local": "0.55.2",
+    "@mdx-js/react": "3.1.1",
+    "clsx": "2.1.1",
+    "prism-react-renderer": "2.4.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "remark-github-blockquote-alert": "2.1.0"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",
     "@docusaurus/types": "3.10.1",
-    "@happy-dom/jest-environment": "20.8.8",
+    "@happy-dom/jest-environment": "20.10.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@types/jest": "30.0.0",
     "@types/jest-axe": "3.5.9",
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.17",
     "identity-obj-proxy": "3.0.0",
-    "jest": "30.2.0",
+    "jest": "30.4.2",
     "jest-axe": "10.0.0",
-    "ts-jest": "29.4.6"
+    "ts-jest": "29.4.11"
   },
   "browserslist": {
     "production": [
