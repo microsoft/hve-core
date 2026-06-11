@@ -105,7 +105,7 @@ HVE Core is a set of files, not a managed service. You stay responsible for the 
 * **Customer-facing chat.** No agent is built or tested for direct end-user use. Agents are tools for the engineer or analyst at the keyboard.
 * **Automated decisions in regulated areas.** Agent recommendations are advisory. Do not use them to decide finance, medical, legal, employment, education, housing, or insurance matters without qualified human review.
 * **Guessing personal traits.** Do not repurpose agents to infer protected characteristics about people from stray data.
-* **Surveillance.** Do not use HVE Core files to monitor people without consent where consent is required.
+* **Assessing developer performance.** Do not repurpose HVE Core telemetry, code-review verdicts, or agent activity logs to rate, rank, or evaluate the people doing the work. These signals describe artifacts and workflows, not individual performance.
 * **Synthetic media of real people without disclosure.** Customer Card Render makes synthetic personas only and keeps a low-fidelity style. Do not reconfigure it to render real, identifiable people or to drop the synthetic-media disclosure.
 * **Evading safety controls.** Do not modify files to weaken the host platform's safety features.
 * **Sole basis for high-stakes calls.** Agent output is not tuned to be the only input to a decision that significantly affects a person.
