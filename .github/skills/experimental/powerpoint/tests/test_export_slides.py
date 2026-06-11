@@ -10,6 +10,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from export_slides import (
+    EXIT_FAILURE,
+    EXIT_SUCCESS,
     configure_logging,
     convert_pptx_to_pdf,
     create_parser,
@@ -18,6 +20,7 @@ from export_slides import (
     parse_slide_numbers,
     run,
 )
+from pdf_safety import PdfSafetyError
 
 
 class TestParseSlideNumbers:
@@ -224,7 +227,7 @@ class TestFilterPdfPages:
         mock_fitz.open.side_effect = [mock_doc, mock_new_doc]
 
         pdf_path = tmp_path / "full.pdf"
-        pdf_path.write_bytes(b"%PDF")
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
         out_path = tmp_path / "filtered.pdf"
 
         result = filter_pdf_pages(pdf_path, [1, 3], out_path)
@@ -240,3 +243,86 @@ class TestConfigureLogging:
 
     def test_non_verbose(self):
         configure_logging(verbose=False)
+
+
+class TestFilterPdfPagesMalformed:
+    """Integration tests confirming malformed PDFs short-circuit before fitz parses.
+
+    These tests do not mock ``fitz``: the ``pdf_safety`` validation
+    layer must reject the input and surface :class:`PdfSafetyError`
+    so the caller (typically :func:`run`) can translate the failure
+    into an exit code.
+    """
+
+    def test_rejects_truncated_pdf(self, malformed_pdf_dir, tmp_path):
+        out_path = tmp_path / "out.pdf"
+        with pytest.raises(PdfSafetyError):
+            filter_pdf_pages(malformed_pdf_dir / "truncated.pdf", [1], out_path)
+
+    def test_rejects_non_pdf_input(self, malformed_pdf_dir, tmp_path):
+        out_path = tmp_path / "out.pdf"
+        with pytest.raises(PdfSafetyError):
+            filter_pdf_pages(malformed_pdf_dir / "not_a_pdf.bin", [1], out_path)
+
+    def test_rejects_empty_pdf(self, malformed_pdf_dir, tmp_path):
+        out_path = tmp_path / "out.pdf"
+        with pytest.raises(PdfSafetyError):
+            filter_pdf_pages(malformed_pdf_dir / "empty.pdf", [1], out_path)
+
+
+class TestRunFilterMalformed:
+    """End-to-end tests that ``run`` translates safety errors into exit codes.
+
+    Pin the script-level contract that malformed intermediate PDFs
+    surface as non-zero exit codes when ``--slides`` filtering is
+    requested.
+    """
+
+    def test_malformed_intermediate_pdf_returns_exit_failure(
+        self, mocker, malformed_pdf_dir, tmp_path
+    ):
+        # Make LibreOffice succeed but produce a malformed intermediate PDF.
+        mocker.patch(
+            "export_slides.convert_pptx_to_pdf",
+            return_value=malformed_pdf_dir / "truncated.pdf",
+        )
+        pptx_file = tmp_path / "deck.pptx"
+        pptx_file.write_bytes(b"PK\x03\x04")
+
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pptx_file),
+                "--output",
+                str(tmp_path / "out.pdf"),
+                "--slides",
+                "1",
+            ]
+        )
+        assert run(args) == EXIT_FAILURE
+
+    def test_valid_pdf_with_filter_returns_exit_success(
+        self, mocker, tmp_path
+    ):
+        mocker.patch(
+            "export_slides.convert_pptx_to_pdf",
+            return_value=tmp_path / "deck.pdf",
+        )
+        mocker.patch("export_slides.filter_pdf_pages")
+        pptx_file = tmp_path / "deck.pptx"
+        pptx_file.write_bytes(b"PK\x03\x04")
+
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pptx_file),
+                "--output",
+                str(tmp_path / "out.pdf"),
+                "--slides",
+                "1,3",
+            ]
+        )
+        assert run(args) == EXIT_SUCCESS
+

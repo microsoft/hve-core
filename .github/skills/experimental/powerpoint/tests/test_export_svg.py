@@ -7,7 +7,9 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
 from export_svg import (
+    PyMuPDFError,
     create_parser,
     export_pdf_to_svg,
     find_libreoffice,
@@ -159,7 +161,7 @@ class TestExportPdfToSvg:
         mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
 
         pdf = tmp_path / "slides.pdf"
-        pdf.write_bytes(b"fake")
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
         out = tmp_path / "svg"
 
         result = export_pdf_to_svg(pdf, out)
@@ -182,7 +184,7 @@ class TestExportPdfToSvg:
         mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
 
         pdf = tmp_path / "slides.pdf"
-        pdf.write_bytes(b"fake")
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
         out = tmp_path / "svg"
 
         result = export_pdf_to_svg(pdf, out, slides=[1, 3])
@@ -204,7 +206,7 @@ class TestExportPdfToSvg:
         mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
 
         pdf = tmp_path / "slides.pdf"
-        pdf.write_bytes(b"fake")
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
         out = tmp_path / "svg"
 
         result = export_pdf_to_svg(pdf, out, slides=[1, 5, 10])
@@ -225,3 +227,26 @@ class TestFindLibreofficePathlib:
         )
         result = find_libreoffice()
         assert result == "/usr/bin/soffice"
+
+
+class TestExportPdfToSvgMalformed:
+    """Integration tests confirming malformed PDFs surface as ``PyMuPDFError``.
+
+    ``export_pdf_to_svg`` wraps any ``PdfSafetyError`` from the
+    validation layer as ``PyMuPDFError`` with a ``"PDF safety check
+    failed"`` prefix. These tests pin that contract using on-disk
+    malformed fixtures with no ``fitz`` mock — the safety layer must
+    reject the input before MuPDF sees any bytes.
+    """
+
+    def test_rejects_truncated_pdf(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PyMuPDFError, match="PDF safety check failed"):
+            export_pdf_to_svg(malformed_pdf_dir / "truncated.pdf", tmp_path / "svg")
+
+    def test_rejects_non_pdf_input(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PyMuPDFError, match="PDF safety check failed"):
+            export_pdf_to_svg(malformed_pdf_dir / "not_a_pdf.bin", tmp_path / "svg")
+
+    def test_rejects_empty_pdf(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PyMuPDFError, match="PDF safety check failed"):
+            export_pdf_to_svg(malformed_pdf_dir / "empty.pdf", tmp_path / "svg")

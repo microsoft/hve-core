@@ -10,8 +10,10 @@ import sys
 from unittest.mock import MagicMock
 
 import pytest
+from pdf_safety import PdfRenderError, PdfSafetyError
 from render_pdf_images import (
     EXIT_FAILURE,
+    EXIT_SUCCESS,
     configure_logging,
     create_parser,
     main,
@@ -98,7 +100,7 @@ class TestRenderPages:
         from render_pdf_images import render_pages
 
         pdf_path = tmp_path / "test.pdf"
-        pdf_path.write_bytes(b"fake pdf")
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
         output_dir = tmp_path / "output"
 
         count = render_pages(pdf_path, output_dir, 150)
@@ -121,7 +123,7 @@ class TestRenderPages:
         from render_pdf_images import render_pages
 
         pdf_path = tmp_path / "test.pdf"
-        pdf_path.write_bytes(b"fake pdf")
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
         output_dir = tmp_path / "output"
 
         count = render_pages(pdf_path, output_dir, 150)
@@ -143,7 +145,7 @@ class TestRenderPages:
         from render_pdf_images import render_pages as rp
 
         pdf_path = tmp_path / "test.pdf"
-        pdf_path.write_bytes(b"fake pdf")
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
         output_dir = tmp_path / "output"
 
         count = rp(pdf_path, output_dir, 150, slide_numbers=[5, 10])
@@ -170,7 +172,7 @@ class TestRenderPages:
         from render_pdf_images import render_pages as rp
 
         pdf_path = tmp_path / "test.pdf"
-        pdf_path.write_bytes(b"fake pdf")
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
         output_dir = tmp_path / "output"
 
         count = rp(pdf_path, output_dir, 150, slide_numbers=[1, 2])
@@ -313,3 +315,150 @@ class TestMainRenderPdf:
         mocker.patch.object(sys, "stderr", MagicMock())
         result = main()
         assert result == EXIT_FAILURE
+
+
+class TestRenderPagesMalformed:
+    """Integration tests confirming malformed PDFs short-circuit before fitz parsing.
+
+    ``render_pages`` raises :class:`PdfSafetyError` on safety-layer
+    failures so callers (e.g. :func:`run`) can translate the failure
+    into an exit code. ``fitz`` is not mocked — the ``pdf_safety``
+    layer must reject the input first.
+    """
+
+    def test_rejects_truncated_pdf(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PdfSafetyError):
+            render_pages(
+                malformed_pdf_dir / "truncated.pdf", tmp_path / "out", 150
+            )
+
+    def test_rejects_non_pdf_input(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PdfSafetyError):
+            render_pages(
+                malformed_pdf_dir / "not_a_pdf.bin", tmp_path / "out", 150
+            )
+
+    def test_rejects_empty_pdf(self, malformed_pdf_dir, tmp_path):
+        with pytest.raises(PdfSafetyError):
+            render_pages(
+                malformed_pdf_dir / "empty.pdf", tmp_path / "out", 150
+            )
+
+    def test_render_failure_raises_pdf_render_error(self, mocker, tmp_path):
+        """A per-page ``get_pixmap`` C-level error surfaces as ``PdfRenderError``.
+
+        Mocks ``fitz.open`` to return a valid one-page document whose
+        first page raises ``RuntimeError`` from ``get_pixmap``. The
+        ``render_pages`` handler must wrap that as ``PdfRenderError``
+        (a :class:`PdfSafetyError` subclass) and propagate.
+        """
+        mock_page = MagicMock()
+        mock_page.get_pixmap.side_effect = RuntimeError("simulated render failure")
+        mock_doc = MagicMock()
+        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_fitz = MagicMock()
+        mock_fitz.open.return_value = mock_doc
+        mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
+
+        pdf_path = tmp_path / "test.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
+        output_dir = tmp_path / "output"
+
+        with pytest.raises(PdfRenderError):
+            render_pages(pdf_path, output_dir, 150)
+        mock_page.get_pixmap.assert_called_once()
+
+
+class TestRunMalformed:
+    """End-to-end tests that ``run`` translates safety errors into exit codes.
+
+    Pin the script-level contract that malformed PDFs surface as
+    non-zero exit codes, so CI/operators see the failure. These tests
+    would have caught the silent-EXIT_SUCCESS regression where
+    ``run`` discarded the helper's return value.
+    """
+
+    def test_malformed_pdf_returns_exit_failure(
+        self, malformed_pdf_dir, tmp_path
+    ):
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(malformed_pdf_dir / "truncated.pdf"),
+                "--output-dir",
+                str(tmp_path / "out"),
+            ],
+        )
+        assert run(args) == EXIT_FAILURE
+
+    def test_non_pdf_input_returns_exit_failure(
+        self, malformed_pdf_dir, tmp_path
+    ):
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(malformed_pdf_dir / "not_a_pdf.bin"),
+                "--output-dir",
+                str(tmp_path / "out"),
+            ],
+        )
+        # not_a_pdf.bin has a .bin suffix; copy to a .pdf path so the
+        # extension gate does not pre-empt the safety layer.
+        pdf_copy = tmp_path / "not_a_pdf.pdf"
+        pdf_copy.write_bytes((malformed_pdf_dir / "not_a_pdf.bin").read_bytes())
+        args.input = pdf_copy
+        assert run(args) == EXIT_FAILURE
+
+    def test_per_page_render_failure_returns_exit_failure(
+        self, mocker, tmp_path
+    ):
+        mock_page = MagicMock()
+        mock_page.get_pixmap.side_effect = RuntimeError("simulated render failure")
+        mock_doc = MagicMock()
+        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_fitz = MagicMock()
+        mock_fitz.open.return_value = mock_doc
+        mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
+
+        pdf_path = tmp_path / "test.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
+
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pdf_path),
+                "--output-dir",
+                str(tmp_path / "out"),
+            ],
+        )
+        assert run(args) == EXIT_FAILURE
+
+    def test_valid_pdf_returns_exit_success(self, mocker, tmp_path):
+        mock_pix = MagicMock()
+        mock_page = MagicMock()
+        mock_page.get_pixmap.return_value = mock_pix
+        mock_doc = MagicMock()
+        mock_doc.__iter__ = MagicMock(return_value=iter([mock_page]))
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_fitz = MagicMock()
+        mock_fitz.open.return_value = mock_doc
+        mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
+
+        pdf_path = tmp_path / "ok.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
+
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pdf_path),
+                "--output-dir",
+                str(tmp_path / "out"),
+            ],
+        )
+        assert run(args) == EXIT_SUCCESS

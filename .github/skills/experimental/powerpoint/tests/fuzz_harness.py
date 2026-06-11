@@ -4,12 +4,20 @@
 
 Runs as a pytest test when Atheris is not installed (CI default).
 Runs as an Atheris coverage-guided fuzz target when executed directly.
+
+The ``pdf_safety`` target exists specifically to exercise the PyMuPDF /
+MuPDF C parser under coverage-guided mutation. Property-based coverage
+of the same surface lives in ``tests/test_fuzz_pdf_safety.py``; the two
+harnesses are complementary -- Hypothesis bounds the Python contract,
+Atheris bounds the C-extension attack surface.
 """
 
 from __future__ import annotations
 
 import sys
+import tempfile
 from contextlib import suppress
+from pathlib import Path
 
 try:
     import atheris
@@ -19,6 +27,7 @@ except ImportError:
     FUZZING = False
 
 from extract_content import _has_formatting_variation
+from pdf_safety import PdfSafetyError, safe_open_pdf
 from pptx_colors import hex_brightness, resolve_color
 from validate_deck import max_severity
 
@@ -105,11 +114,41 @@ def fuzz_has_formatting_variation(data):
     _has_formatting_variation(runs)
 
 
+def fuzz_safe_open_pdf(data):
+    """Fuzz safe_open_pdf with arbitrary byte payloads.
+
+    Writes the input bytes to a temporary file and exercises the full
+    validation + ``fitz.open`` path of :func:`safe_open_pdf`. To stress
+    the MuPDF C parser, roughly half of inputs are prefixed with the
+    PDF magic bytes so they bypass the cheap header check and
+    reach ``fitz.open``.
+
+    Only :class:`PdfSafetyError` subclasses are expected. Anything else
+    propagates and Atheris records a crash.
+    """
+    fdp = atheris.FuzzedDataProvider(data)
+    prepend_magic = fdp.ConsumeBool()
+    payload = fdp.ConsumeBytes(8 * 1024)
+    if prepend_magic:
+        payload = b"%PDF-1.4\n" + payload
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as fh:
+        fh.write(payload)
+        tmp_path = Path(fh.name)
+    try:
+        with suppress(PdfSafetyError):
+            with safe_open_pdf(tmp_path) as _doc:
+                pass
+    finally:
+        with suppress(OSError):
+            tmp_path.unlink()
+
+
 FUZZ_TARGETS = [
     fuzz_resolve_color,
     fuzz_hex_brightness,
     fuzz_max_severity,
     fuzz_has_formatting_variation,
+    fuzz_safe_open_pdf,
 ]
 
 

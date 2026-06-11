@@ -19,6 +19,8 @@ import logging
 import sys
 from pathlib import Path
 
+from pdf_safety import PdfRenderError, PdfSafetyError, safe_open_pdf
+
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_ERROR = 2
@@ -87,36 +89,46 @@ def render_pages(
 
     Returns:
         Number of pages rendered.
+
+    Raises:
+        PdfSafetyError: For any size, format, page-count, parse, or per-page
+            render failure. The caller (typically :func:`run`) is responsible
+            for translating the failure into a process exit code.
     """
     try:
-        import fitz  # noqa: PLC0415 — PyMuPDF
+        import fitz  # noqa: F401, PLC0415 — PyMuPDF availability check
     except ImportError:
         logger.error("PyMuPDF is required. Install via: pip install pymupdf")
         sys.exit(EXIT_FAILURE)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    doc = fitz.open(str(pdf_path))
-    page_count = len(doc)
 
-    if slide_numbers and len(slide_numbers) != page_count:
-        logger.warning(
-            "Slide numbers count (%d) does not match PDF page count (%d). "
-            "Falling back to sequential numbering.",
-            len(slide_numbers),
-            page_count,
-        )
-        slide_numbers = None
+    with safe_open_pdf(pdf_path) as doc:
+        page_count = len(doc)
 
-    for i, page in enumerate(doc):
-        pix = page.get_pixmap(dpi=dpi)
-        num = slide_numbers[i] if slide_numbers else i + 1
-        output_file = output_dir / f"slide-{num:03d}.jpg"
-        pix.save(str(output_file))
-        logger.debug("Rendered page %d -> %s", i + 1, output_file.name)
+        if slide_numbers and len(slide_numbers) != page_count:
+            logger.warning(
+                "Slide numbers count (%d) does not match PDF page count (%d). "
+                "Falling back to sequential numbering.",
+                len(slide_numbers),
+                page_count,
+            )
+            slide_numbers = None
 
-    doc.close()
-    logger.info("Rendered %d pages to %s", page_count, output_dir)
-    return page_count
+        for i, page in enumerate(doc):
+            try:
+                pix = page.get_pixmap(dpi=dpi)
+            except Exception as exc:  # MuPDF can raise generic RuntimeError
+                raise PdfRenderError(
+                    f"render failed on page {i + 1}"
+                ) from exc
+            num = slide_numbers[i] if slide_numbers else i + 1
+            output_file = output_dir / f"slide-{num:03d}.jpg"
+            pix.save(str(output_file))
+            logger.debug("Rendered page %d -> %s", i + 1, output_file.name)
+
+        logger.info("Rendered %d pages to %s", page_count, output_dir)
+        return page_count
 
 
 def run(args: argparse.Namespace) -> int:
@@ -136,7 +148,14 @@ def run(args: argparse.Namespace) -> int:
     if args.slide_numbers:
         slide_numbers = parse_slide_numbers(args.slide_numbers)
 
-    render_pages(pdf_path, output_dir, args.dpi, slide_numbers)
+    try:
+        render_pages(pdf_path, output_dir, args.dpi, slide_numbers)
+    except PdfSafetyError as exc:
+        # PdfSafetyError covers PdfParseError (open-time failures) and
+        # PdfRenderError (per-page get_pixmap failures); both are runtime
+        # errors and exit EXIT_FAILURE per scripts coding standards.
+        logger.error("PDF safety check failed for %s: %s", pdf_path, exc)
+        return EXIT_FAILURE
     return EXIT_SUCCESS
 
 

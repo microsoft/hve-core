@@ -8,7 +8,9 @@ dependencies = [
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
     "cairosvg",
     "Pillow",
-    "pymupdf",
+    # MuPDF C library — pin to track security fixes; review on every minor bump.
+    # Update policy: re-check NVD + OSV advisories quarterly and on any pip-audit alert.
+    "pymupdf>=1.27.1,<2.0",
     "github-copilot-sdk",
 ]
 
