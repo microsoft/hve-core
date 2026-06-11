@@ -55,6 +55,7 @@ const config = {
   },
 
   markdown: {
+    format: 'detect',
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },

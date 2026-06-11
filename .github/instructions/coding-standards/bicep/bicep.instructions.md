@@ -1,6 +1,6 @@
 ---
 applyTo: '**/bicep/**'
-description: 'Instructions for Bicep infrastructure as code implementation - Brought to you by microsoft/hve-core'
+description: 'Bicep infrastructure-as-code authoring conventions'
 ---
 # Bicep Instructions
 

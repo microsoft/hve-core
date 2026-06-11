@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate supply chain security planning from existing BRD artifacts using the
+  Start supply chain security planning from BRD artifacts using the
   SSSC Planner agent in from-brd mode
 agent: SSSC Planner
 ---

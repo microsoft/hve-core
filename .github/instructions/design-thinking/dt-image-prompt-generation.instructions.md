@@ -9,7 +9,7 @@ applyTo: "**/.copilot-tracking/dt/**/method-05**/concepts.yml"
 
 During **Method 5b (Concept Articulation)**, write visualization prompts that transform user concepts into lo-fi sketches for stakeholder evaluation.
 
-Prompts are authored as part of YAML concept cards and optionally processed by `generate-dalle-images.ps1` or M365 Copilot between Method 5b and 5c.
+Prompts are authored as part of YAML concept cards and optionally used with M365 Copilot or modern image models such as `gpt-image-2` between Method 5b and 5c.
 
 **When to Offer Image Generation:**
 
@@ -29,8 +29,9 @@ Transform concept into visualization prompt using this sequence:
 
 1. **Identify Core Interaction**: What single action or outcome does this concept test?
 2. **Extract Visual Elements**: Who (stakeholder archetype), what (tool/object), where (environmental context from Methods 3-4)
-3. **Apply Lo-Fi Enforcement**: Add all 5 required style directive layers
-4. **Validate 15-Second Test**: Could this be sketched on a napkin in 15 seconds?
+3. **Constrain Text**: Use only short, quoted labels when text is essential
+4. **Apply Lo-Fi Enforcement**: Add all 5 required style directive layers
+5. **Validate 15-Second Test**: Could this be sketched on a napkin in 15 seconds?
 
 **Concept → Prompt Workflow:**
 
@@ -66,6 +67,7 @@ Minimal lines, plain white background, black-and-white line art, no shading.
 * **Single Scenario**: One interaction per concept, not multiple use cases
 * **Optional Context**: Environmental details only when relevant to constraints from Methods 3-4
 * **Terminal Reinforcement**: Combine 3-5 lo-fi descriptors in closing sentence
+* **Text Constraint**: Any on-image text must be short, quoted, and label-like; avoid sentences or dense UI copy
 
 **Subject, Context, Style, Focus, Exclusions:**
 
@@ -112,9 +114,8 @@ Minimal lines, plain white background, black-and-white line art, no shading.
 
 **Between Methods 5 and 6** — Images Generated (Optional):
 
-* Batch processing: Run `generate-dalle-images.ps1` with `concepts.yml`
-* Interactive: Use M365 Copilot to generate images one-at-a-time
-* Review generated PNGs and regenerate if DALL-E violates lo-fi standards
+* Optional generation: Use M365 Copilot or a modern image model to generate images from `concepts.yml` prompts
+* Review generated PNGs and regenerate if outputs violate lo-fi standards, changing one prompt constraint at a time
 
 **Method 5c (Concept Evaluation)** — Images Used for Alignment:
 

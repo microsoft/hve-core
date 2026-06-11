@@ -1,6 +1,6 @@
 ---
 name: Security Reviewer
-description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core"
+description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting"
 agents:
   - Codebase Profiler
   - Skill Assessor

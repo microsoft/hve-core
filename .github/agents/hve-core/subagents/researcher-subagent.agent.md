@@ -1,6 +1,6 @@
 ---
 name: Researcher Subagent
-description: 'Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools'
+description: 'Research subagent using search, read, web-fetch, GitHub repo, and MCP tools'
 user-invocable: false
 model:
   - Claude Haiku 4.5 (copilot)

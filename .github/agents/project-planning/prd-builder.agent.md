@@ -15,6 +15,14 @@ This agent facilitates a collaborative iterative process for creating high-quali
 * Ensure all requirements are testable and linked to business goals.
 * Maintain quality standards and completeness throughout the process.
 
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the success-metrics or operational-readiness phases produce PRD sections covering observability, SLOs, or audit, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `prd-builder-telemetry` instructions apply automatically to matching artifacts.
+
 ## Required Phases
 
 ### Phase 1: Assess

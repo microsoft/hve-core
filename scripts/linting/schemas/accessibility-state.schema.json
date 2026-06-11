@@ -1,0 +1,502 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/hve-core/schemas/accessibility-state.schema.json",
+  "title": "Accessibility Planner State Schema",
+  "description": "Schema for Accessibility Planner state.json files under .copilot-tracking/accessibility/{project-slug}/",
+  "type": "object",
+  "required": [
+    "project",
+    "phase",
+    "frameworkSelections",
+    "controlMappings",
+    "riskClassification",
+    "evidenceRegister",
+    "gates",
+    "planRiskAssessment"
+  ],
+  "properties": {
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "discovery",
+        "framework-selection",
+        "standards-mapping",
+        "plan-risk-assessment",
+        "impact-evidence",
+        "backlog-handoff"
+      ],
+      "description": "Current planner phase"
+    },
+    "frameworkSelections": {
+      "type": "object",
+      "description": "Map of framework id to selection state. Default framework ids: wcag-22, aria-apg, coga, section-508, en-301-549. User-imported skills supply their own ids; selection is always explicit (no auto-include).",
+      "patternProperties": {
+        "^[a-z0-9]+(-[a-z0-9]+)*$": {
+          "$ref": "#/$defs/frameworkSelectionEntry"
+        }
+      },
+      "additionalProperties": false
+    },
+    "controlMappings": {
+      "type": "array",
+      "description": "Per-framework control coverage records",
+      "items": {
+        "$ref": "#/$defs/controlMapping"
+      }
+    },
+    "riskClassification": {
+      "$ref": "#/$defs/riskClassification"
+    },
+    "evidenceRegister": {
+      "type": "array",
+      "description": "Evidence inventory; shape is compatible with security planner evidence records so SSSC and RAI can cross-reference entries by stable id and sourceUri",
+      "items": {
+        "$ref": "#/$defs/evidenceEntry"
+      }
+    },
+    "gates": {
+      "type": "object",
+      "description": "Per-phase gate state; one key per value of the phase enum",
+      "required": [
+        "discovery",
+        "framework-selection",
+        "standards-mapping",
+        "plan-risk-assessment",
+        "impact-evidence",
+        "backlog-handoff"
+      ],
+      "properties": {
+        "discovery": { "$ref": "#/$defs/gateEntry" },
+        "framework-selection": { "$ref": "#/$defs/gateEntry" },
+        "standards-mapping": { "$ref": "#/$defs/gateEntry" },
+        "plan-risk-assessment": { "$ref": "#/$defs/gateEntry" },
+        "impact-evidence": { "$ref": "#/$defs/gateEntry" },
+        "backlog-handoff": { "$ref": "#/$defs/gateEntry" }
+      },
+      "additionalProperties": false
+    },
+    "planRiskAssessment": {
+      "$ref": "#/$defs/planRiskAssessment"
+    },
+    "disclaimerShownAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when planner disclaimer was displayed"
+    },
+    "noticeLog": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/noticeLogEntry" },
+      "description": "Timestamped audit log of user-facing disclaimers, framework attributions, and professional-review reminders"
+    },
+    "raiPlanRef": {
+      "type": ["string", "null"],
+      "description": "URI of related RAI plan when AI-generated UI surfaces are present"
+    },
+    "securityPlanRef": {
+      "type": ["string", "null"],
+      "description": "URI of related security plan when paired"
+    },
+    "ssscPlanRef": {
+      "type": ["string", "null"],
+      "description": "URI of related SSSC plan when paired"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "noticeLogEntry": {
+      "type": "object",
+      "required": ["noticeType", "shownAt", "source"],
+      "properties": {
+        "noticeType": {
+          "type": "string",
+          "enum": [
+            "session-start-disclaimer",
+            "framework-attribution",
+            "exit-reminder",
+            "handoff-disclaimer",
+            "professional-review-reminder"
+          ],
+          "description": "Category of notice shown to the user"
+        },
+        "shownAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the notice was shown"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Instruction file or canonical text source for the notice"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Planner-specific metadata such as phase, framework id, or output artifact path"
+        }
+      },
+      "additionalProperties": false
+    },
+    "phaseName": {
+      "type": "string",
+      "enum": [
+        "discovery",
+        "framework-selection",
+        "standards-mapping",
+        "plan-risk-assessment",
+        "impact-evidence",
+        "backlog-handoff"
+      ]
+    },
+    "surface": {
+      "type": "string",
+      "enum": ["web", "mobile", "desktop", "document", "voice"]
+    },
+    "regulatoryScope": {
+      "type": "string",
+      "enum": ["us-section-508", "eu-eaa", "uk-eqa", "ca-aoda", "other"]
+    },
+    "project": {
+      "type": "object",
+      "required": ["slug", "name", "entryMode"],
+      "properties": {
+        "slug": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Kebab-case project identifier used as the directory name"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable project name"
+        },
+        "repo": {
+          "type": ["string", "null"],
+          "description": "Repository identifier (owner/name or remote URI)"
+        },
+        "entryMode": {
+          "type": "string",
+          "enum": ["capture", "from-prd", "from-brd", "from-security-plan", "from-rai-plan"],
+          "description": "How the assessment was initiated"
+        },
+        "surfaces": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/surface" },
+          "description": "Delivery surfaces in scope"
+        },
+        "audiences": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Audience or persona identifiers in scope"
+        },
+        "regulatoryScope": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/regulatoryScope" },
+          "description": "Applicable regulatory regimes"
+        },
+        "aiGeneratedSurfaces": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the project includes AI-generated UI, alt text, or captions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "frameworkSelectionEntry": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the framework is active in this assessment"
+        },
+        "skillPath": {
+          "type": "string",
+          "description": "Relative path to SKILL.md under .github/skills/accessibility/<id>/"
+        },
+        "level": {
+          "type": ["string", "null"],
+          "enum": [null, "A", "AA", "AAA"],
+          "description": "Conformance level (applies to wcag-22 and similar W3C frameworks; null otherwise)"
+        },
+        "version": {
+          "type": ["string", "null"],
+          "description": "Framework version pinned for this assessment"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the framework has been explicitly excluded"
+        },
+        "disabledReason": {
+          "type": ["string", "null"],
+          "description": "Required when disabled=true: rationale for exclusion"
+        },
+        "disabledAtPhase": {
+          "anyOf": [
+            { "$ref": "#/$defs/phaseName" },
+            { "type": "null" }
+          ],
+          "description": "Required when disabled=true: phase in which the framework was excluded"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": { "disabled": { "const": true } },
+            "required": ["disabled"]
+          },
+          "then": {
+            "required": ["disabledReason", "disabledAtPhase"],
+            "properties": {
+              "disabledReason": { "type": "string", "minLength": 1 },
+              "disabledAtPhase": { "$ref": "#/$defs/phaseName" }
+            }
+          }
+        }
+      ]
+    },
+    "controlMapping": {
+      "type": "object",
+      "required": ["frameworkId", "controlId", "surfaces", "status"],
+      "properties": {
+        "frameworkId": {
+          "type": "string",
+          "description": "Framework id matching a key in frameworkSelections"
+        },
+        "controlId": {
+          "type": "string",
+          "description": "Stable control identifier within the framework (e.g., SC 1.1.1, 508 E207.2)"
+        },
+        "surfaces": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/surface" },
+          "description": "Surfaces this control applies to in the current scope"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "covered", "partial", "gap", "not-applicable"],
+          "description": "Coverage status for the control"
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Stable evidence ids from evidenceRegister supporting this mapping"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Free-form analyst notes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "riskClassification": {
+      "type": "object",
+      "required": ["tier", "screeningSignals"],
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": ["basic", "standard", "comprehensive"],
+          "description": "Assessment depth tier"
+        },
+        "screeningSignals": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Signals captured during discovery that informed tier selection"
+        },
+        "escalations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/escalation" },
+          "description": "Phase or control escalations triggered by classification"
+        }
+      },
+      "additionalProperties": false
+    },
+    "escalation": {
+      "type": "object",
+      "required": ["target", "reason"],
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Planner or control surface being escalated to (e.g., rai-planner, coga-blocking-controls)"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why the escalation was raised"
+        },
+        "raisedAtPhase": {
+          "$ref": "#/$defs/phaseName"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceEntry": {
+      "type": "object",
+      "required": ["id", "type", "sourceUri", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable evidence id referenced from controlMappings.evidence and cross-planner reports"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "control-implementation",
+            "audit-result",
+            "test-result",
+            "attestation",
+            "screenshot",
+            "document",
+            "external"
+          ],
+          "description": "Evidence record category"
+        },
+        "frameworkId": {
+          "type": ["string", "null"],
+          "description": "Owning framework id when evidence is framework-specific"
+        },
+        "controlId": {
+          "type": ["string", "null"],
+          "description": "Owning control id when evidence is control-specific"
+        },
+        "sourceUri": {
+          "type": "string",
+          "description": "Stable URI for the evidence (file path, URL, or system identifier)"
+        },
+        "collectedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when evidence was collected"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "verified", "expired", "superseded"],
+          "description": "Verification lifecycle status"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Free-form analyst notes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "gateEntry": {
+      "type": "object",
+      "required": ["confirmed"],
+      "properties": {
+        "confirmed": {
+          "type": "boolean",
+          "description": "Whether the gate has been confirmed for the phase"
+        },
+        "confirmedAt": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the gate was confirmed"
+        },
+        "confirmedBy": {
+          "type": ["string", "null"],
+          "description": "Identifier of the user or agent that confirmed the gate"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Free-form gate notes"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": { "confirmed": { "const": true } },
+            "required": ["confirmed"]
+          },
+          "then": {
+            "required": ["confirmedAt", "confirmedBy"],
+            "properties": {
+              "confirmedAt": { "type": "string", "format": "date-time" },
+              "confirmedBy": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "planRiskAssessment": {
+      "type": "object",
+      "required": ["tradeoffs", "watchlist", "deferredMitigations"],
+      "properties": {
+        "tradeoffs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tradeoffEntry" },
+          "description": "Recorded tradeoffs between accessibility and competing concerns"
+        },
+        "watchlist": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/watchlistEntry" },
+          "description": "Items requiring ongoing monitoring after handoff"
+        },
+        "deferredMitigations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/deferredMitigationEntry" },
+          "description": "Mitigations explicitly deferred with rationale and revisit plan"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tradeoffEntry": {
+      "type": "object",
+      "required": ["id", "description", "decision"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "dimensions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Dimensions in tension (e.g., performance, security, privacy)"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["accept", "mitigate", "transfer", "reject"]
+        },
+        "rationale": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "watchlistEntry": {
+      "type": "object",
+      "required": ["id", "description", "trigger"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "trigger": {
+          "type": "string",
+          "description": "Condition that reopens this item"
+        },
+        "owner": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "deferredMitigationEntry": {
+      "type": "object",
+      "required": ["id", "description", "deferredReason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "deferredReason": { "type": "string", "minLength": 1 },
+        "revisitPhase": {
+          "anyOf": [
+            { "$ref": "#/$defs/phaseName" },
+            { "type": "null" }
+          ]
+        },
+        "controlId": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,5 +1,5 @@
 ---
-description: "Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection - Brought to you by microsoft/hve-core"
+description: "Triage workflow for Azure DevOps work items with field classification, iteration assignment, and duplicate detection"
 applyTo: '**/.copilot-tracking/workitems/triage/**'
 ---
 

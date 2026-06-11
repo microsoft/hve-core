@@ -27,7 +27,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 
@@ -60,13 +60,43 @@ jobs:
           # pkg:pypi/charset-normalizer is MIT licensed but some older wheel
           # metadata declares a compound SPDX expression; the action treats
           # compound expressions as a mismatch against allow-licenses.
+          # pkg:pypi/shapely declares a compound SPDX expression
+          # (BSD-3-Clause AND LGPL-2.1-only); shapely's distributed code is
+          # BSD-3-Clause and the LGPL component refers to bundled GEOS headers.
+          # The mural skill keyring/cryptography stack below ships permissive
+          # licenses (Apache-2.0, MIT, BSD-3-Clause, PSF-2.0) per each
+          # project's source repository, but PyPI metadata reports "unknown"
+          # so the action requires explicit allowlisting.
+          # pkg:npm/lightningcss (and its optional platform-specific binaries)
+          # is MPL-2.0 licensed; it is pulled in transitively by
+          # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
+          # copyleft and safe to consume as a dependency.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
+            pkg:pypi/shapely,
+            pkg:pypi/backports-tarfile,
+            pkg:pypi/cryptography,
+            pkg:pypi/jaraco-classes,
+            pkg:pypi/jaraco-context,
+            pkg:pypi/jaraco-functools,
+            pkg:pypi/keyrings-alt,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
+            pkg:npm/lightningcss,
+            pkg:npm/lightningcss-android-arm64,
+            pkg:npm/lightningcss-darwin-arm64,
+            pkg:npm/lightningcss-darwin-x64,
+            pkg:npm/lightningcss-freebsd-x64,
+            pkg:npm/lightningcss-linux-arm-gnueabihf,
+            pkg:npm/lightningcss-linux-arm64-gnu,
+            pkg:npm/lightningcss-linux-arm64-musl,
+            pkg:npm/lightningcss-linux-x64-gnu,
+            pkg:npm/lightningcss-linux-x64-musl,
+            pkg:npm/lightningcss-win32-arm64-msvc,
+            pkg:npm/lightningcss-win32-x64-msvc,
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3

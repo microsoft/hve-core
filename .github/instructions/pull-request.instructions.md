@@ -1,5 +1,5 @@
 ---
-description: 'Repository-specific pull request conventions for hve-core including template mapping, change detection, and maturity tracking - Brought to you by microsoft/hve-core'
+description: 'hve-core pull request conventions: template mapping, change detection, and maturity tracking'
 applyTo: '**/.copilot-tracking/pr/**'
 ---
 
