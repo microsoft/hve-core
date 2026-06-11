@@ -169,9 +169,7 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
         total_pages = len(doc)
         for page_num in pages:
             if 1 <= page_num <= total_pages:
-                new_doc.insert_pdf(
-                    doc, from_page=page_num - 1, to_page=page_num - 1
-                )
+                new_doc.insert_pdf(doc, from_page=page_num - 1, to_page=page_num - 1)
             else:
                 logger.warning(
                     "Slide %d out of range (1-%d), skipping",

@@ -328,21 +328,15 @@ class TestRenderPagesMalformed:
 
     def test_rejects_truncated_pdf(self, malformed_pdf_dir, tmp_path):
         with pytest.raises(PdfSafetyError):
-            render_pages(
-                malformed_pdf_dir / "truncated.pdf", tmp_path / "out", 150
-            )
+            render_pages(malformed_pdf_dir / "truncated.pdf", tmp_path / "out", 150)
 
     def test_rejects_non_pdf_input(self, malformed_pdf_dir, tmp_path):
         with pytest.raises(PdfSafetyError):
-            render_pages(
-                malformed_pdf_dir / "not_a_pdf.bin", tmp_path / "out", 150
-            )
+            render_pages(malformed_pdf_dir / "not_a_pdf.bin", tmp_path / "out", 150)
 
     def test_rejects_empty_pdf(self, malformed_pdf_dir, tmp_path):
         with pytest.raises(PdfSafetyError):
-            render_pages(
-                malformed_pdf_dir / "empty.pdf", tmp_path / "out", 150
-            )
+            render_pages(malformed_pdf_dir / "empty.pdf", tmp_path / "out", 150)
 
     def test_render_failure_raises_pdf_render_error(self, mocker, tmp_path):
         """A per-page ``get_pixmap`` C-level error surfaces as ``PdfRenderError``.
@@ -379,9 +373,7 @@ class TestRunMalformed:
     ``run`` discarded the helper's return value.
     """
 
-    def test_malformed_pdf_returns_exit_failure(
-        self, malformed_pdf_dir, tmp_path
-    ):
+    def test_malformed_pdf_returns_exit_failure(self, malformed_pdf_dir, tmp_path):
         parser = create_parser()
         args = parser.parse_args(
             [
@@ -393,9 +385,7 @@ class TestRunMalformed:
         )
         assert run(args) == EXIT_FAILURE
 
-    def test_non_pdf_input_returns_exit_failure(
-        self, malformed_pdf_dir, tmp_path
-    ):
+    def test_non_pdf_input_returns_exit_failure(self, malformed_pdf_dir, tmp_path):
         parser = create_parser()
         args = parser.parse_args(
             [
@@ -412,9 +402,7 @@ class TestRunMalformed:
         args.input = pdf_copy
         assert run(args) == EXIT_FAILURE
 
-    def test_per_page_render_failure_returns_exit_failure(
-        self, mocker, tmp_path
-    ):
+    def test_per_page_render_failure_returns_exit_failure(self, mocker, tmp_path):
         mock_page = MagicMock()
         mock_page.get_pixmap.side_effect = RuntimeError("simulated render failure")
         mock_doc = MagicMock()

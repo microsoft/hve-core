@@ -119,9 +119,7 @@ def render_pages(
             try:
                 pix = page.get_pixmap(dpi=dpi)
             except Exception as exc:  # MuPDF can raise generic RuntimeError
-                raise PdfRenderError(
-                    f"render failed on page {i + 1}"
-                ) from exc
+                raise PdfRenderError(f"render failed on page {i + 1}") from exc
             num = slide_numbers[i] if slide_numbers else i + 1
             output_file = output_dir / f"slide-{num:03d}.jpg"
             pix.save(str(output_file))

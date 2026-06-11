@@ -302,9 +302,7 @@ class TestRunFilterMalformed:
         )
         assert run(args) == EXIT_FAILURE
 
-    def test_valid_pdf_with_filter_returns_exit_success(
-        self, mocker, tmp_path
-    ):
+    def test_valid_pdf_with_filter_returns_exit_success(self, mocker, tmp_path):
         mocker.patch(
             "export_slides.convert_pptx_to_pdf",
             return_value=tmp_path / "deck.pdf",
@@ -325,4 +323,3 @@ class TestRunFilterMalformed:
             ]
         )
         assert run(args) == EXIT_SUCCESS
-

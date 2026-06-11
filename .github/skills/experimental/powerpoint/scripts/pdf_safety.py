@@ -91,9 +91,7 @@ def validate_pdf_path(path: Path, max_bytes: int = MAX_PDF_BYTES) -> None:
         PdfTooLargeError: If the file size exceeds ``max_bytes``.
     """
     if not path.is_file():
-        raise PdfInvalidFormatError(
-            f"PDF path is not a regular file: {path}"
-        )
+        raise PdfInvalidFormatError(f"PDF path is not a regular file: {path}")
 
     size = path.stat().st_size
     if size > max_bytes:
@@ -104,9 +102,7 @@ def validate_pdf_path(path: Path, max_bytes: int = MAX_PDF_BYTES) -> None:
     with path.open("rb") as fh:
         prefix = fh.read(len(PDF_MAGIC_BYTES))
     if prefix != PDF_MAGIC_BYTES:
-        raise PdfInvalidFormatError(
-            f"PDF magic bytes missing (got {prefix!r}): {path}"
-        )
+        raise PdfInvalidFormatError(f"PDF magic bytes missing (got {prefix!r}): {path}")
 
 
 @contextmanager
@@ -144,15 +140,12 @@ def safe_open_pdf(
         try:
             doc = fitz.open(str(path))
         except Exception as exc:
-            raise PdfParseError(
-                f"PyMuPDF failed to open PDF: {path}"
-            ) from exc
+            raise PdfParseError(f"PyMuPDF failed to open PDF: {path}") from exc
 
         page_count = len(doc)
         if page_count > max_pages:
             raise PdfTooManyPagesError(
-                f"PDF page count {page_count} exceeds limit of "
-                f"{max_pages}: {path}"
+                f"PDF page count {page_count} exceeds limit of {max_pages}: {path}"
             )
 
         yield doc
