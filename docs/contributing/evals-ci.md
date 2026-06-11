@@ -105,7 +105,7 @@ Commit the new spec alongside the artifact change. The PR comment summary in `ev
 
 ## Stimulus presence linter
 
-[scripts/evals/Test-StimulusPresence.ps1](../../scripts/evals/Test-StimulusPresence.ps1) is the gate that fails an `eval-presence` job when a changed AI artifact lacks an eval spec backlink. It reads the manifest produced by [scripts/evals/Get-ChangedAIArtifact.ps1](../../scripts/evals/Get-ChangedAIArtifact.ps1) and builds a coverage index from every `evals/**/*.yaml` spec.
+[scripts/evals/Test-StimulusPresence.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Test-StimulusPresence.ps1) is the gate that fails an `eval-presence` job when a changed AI artifact lacks an eval spec backlink. It reads the manifest produced by [scripts/evals/Get-ChangedAIArtifact.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Get-ChangedAIArtifact.ps1) and builds a coverage index from every `evals/**/*.yaml` spec.
 
 Each changed artifact is matched against the `stimuli[].tags.<kind> = <slug>` backlinks in that index. Deleted artifacts (manifest status `D`) are skipped because coverage cannot be required for removed files.
 
@@ -147,16 +147,16 @@ The validator accepts numeric values in `[0.0, 1.0]`; out-of-range or non-numeri
 
 Content moderation runs in two complementary CI lanes, each scoped to a different surface.
 
-| Lane              | Job in [`pr-validation.yml`](../../.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                | Surface                                                                   |
+| Lane              | Job in [`pr-validation.yml`](https://github.com/microsoft/hve-core/blob/main/.github/workflows/pr-validation.yml) | Script                                                                                       | Toolchain                                | Surface                                                                   |
 |-------------------|-------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|------------------------------------------|---------------------------------------------------------------------------|
-| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](../../scripts/evals/Test-EvalSpecText.ps1)             | Node (alex.js, retext-profanities)       | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
-| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](../../scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`) | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
+| Markdown corpus   | `eval-lint`                                                             | [scripts/evals/Test-EvalSpecText.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Test-EvalSpecText.ps1)             | Node (alex.js, retext-profanities)       | `.github/{agents,prompts,instructions,skills}/**/*.md` and `docs/**/*.md` |
+| Eval-spec stimuli | `content-moderation`                                                    | [scripts/evals/Invoke-CorpusModeration.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Invoke-CorpusModeration.ps1) | Python + Detoxify (`unitary/toxic-bert`) | Stimulus text and expected-output fixtures inside `evals/**/*.yaml`       |
 
 The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
 The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies (`scripts/evals/moderation/requirements.txt`) via `uv pip install`, caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
 
-`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
+`Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
 
 Local opt-in for the Detoxify lane:
 
@@ -196,7 +196,7 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 
 ### Baseline-equivalence specs
 
-`eval:lint:vally` runs `vally lint --eval-spec evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](../../evals/baseline-equivalence/) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
+`eval:lint:vally` runs `vally lint --eval-spec evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](https://github.com/microsoft/hve-core/tree/main/evals/baseline-equivalence/) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
 
 ```pwsh
 vally lint --eval-spec evals/baseline-equivalence/baseline/eval.yaml
@@ -204,7 +204,7 @@ vally lint --eval-spec evals/baseline-equivalence/customized/eval.yaml
 vally lint --eval-spec evals/baseline-equivalence/compare.eval.yml
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](pathname://../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+[scripts/evals/Invoke-BaselineEquivalence.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](https://github.com/microsoft/hve-core/blob/main/evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
 
 ## Running Pester Tests Locally
 
@@ -236,10 +236,10 @@ This is the only viable mock boundary for cross-process invocation. Apply the sa
 When authoring new Pester suites for the evals scripts, three patterns recur often enough to call out:
 
 * Define helper functions inside `BeforeAll { function ... }` so Pester promotes them to the containing `Describe` scope for all `It` blocks. Functions defined directly inside `Describe` (outside `BeforeAll`) do not survive the fresh runspaces Pester uses for each `It`.
-* When the command under test is invoked through `pwsh -File` or `Start-Process` (so the parent runspace cannot install a `Mock`), declare a bare function at file scope in the test (or in a fixture script the child loads). The PATH-shim pattern above is one instance of this; the [scripts/tests/evals/fixtures/stub-vally.ps1](../../scripts/tests/evals/fixtures/stub-vally.ps1) fixture is another.
+* When the command under test is invoked through `pwsh -File` or `Start-Process` (so the parent runspace cannot install a `Mock`), declare a bare function at file scope in the test (or in a fixture script the child loads). The PATH-shim pattern above is one instance of this; the [scripts/tests/evals/fixtures/stub-vally.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/evals/fixtures/stub-vally.ps1) fixture is another.
 * When a stub or script under test needs to signal a non-zero exit while `$ErrorActionPreference = 'Stop'` is in effect, write the diagnostic with `[Console]::Error.WriteLine(...)` and then call `exit <code>` explicitly. `throw` short-circuits the runspace before the intended exit code is set, which causes the parent process to observe exit 1 instead of the contract code.
 
-The stub-vally fixture demonstrates the third pattern in practice. [scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](../../scripts/tests/evals/Invoke-VallyEvals.Tests.ps1) drives [scripts/evals/Invoke-VallyEvals.ps1](../../scripts/evals/Invoke-VallyEvals.ps1) against the fixture by passing `-VallyCommand $script:StubPath` and setting `$env:STUB_VALLY_MODE` to `pass`, `fail`, or `crash` per scenario. Per-spec overrides flow through `$env:STUB_VALLY_MODES_JSON`.
+The stub-vally fixture demonstrates the third pattern in practice. [scripts/tests/evals/Invoke-VallyEvals.Tests.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/tests/evals/Invoke-VallyEvals.Tests.ps1) drives [scripts/evals/Invoke-VallyEvals.ps1](https://github.com/microsoft/hve-core/blob/main/scripts/evals/Invoke-VallyEvals.ps1) against the fixture by passing `-VallyCommand $script:StubPath` and setting `$env:STUB_VALLY_MODE` to `pass`, `fail`, or `crash` per scenario. Per-spec overrides flow through `$env:STUB_VALLY_MODES_JSON`.
 
 This lets the stub-mode aggregation tests exercise the real driver code paths (the manifest loop, threshold override, and summary writer) without invoking the `vally` CLI or paying Copilot SDK costs.
 
