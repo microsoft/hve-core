@@ -214,6 +214,8 @@ For AI artifact documentation (agents, prompts, instructions, skills), see the [
 
 HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
 
+> **Transparency Note updates:** If your change adds or modifies a skill or agent that generates media, personas, or likenesses, or that introduces an external service dependency or a new decision-shaping behavior, update [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md) (and the relevant appendix).
+
 ### Getting Started with AI Artifacts
 
 Start with the [AI Artifacts Contributing Hub](./docs/contributing/README.md) for an overview of all artifact types and contribution standards.
