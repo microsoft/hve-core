@@ -113,7 +113,7 @@ Human-review exit reminder: a qualified supply chain security reviewer signs off
 
 Gate: hard — stop, surface a structured confirmation prompt that references state.phaseGates.phase6.confirmedAt, and wait for explicit user approval before advancing. Record the ISO-8601 timestamp in state.phaseGates.phase6.confirmedAt once the user approves.
 
-If the assessment surfaced architectural decisions worth preserving — signing strategy, build-isolation topology, registry or distribution choices, SBOM tooling — you may want to capture them as ADRs via `@adr-creation`.
+If the assessment surfaced architectural decisions worth preserving, such as signing strategy, build-isolation topology, registry or distribution choices, or SBOM tooling, you may want to capture them as ADRs via the ADR Creator agent.
 
 ## Entry Modes
 

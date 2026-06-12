@@ -17,7 +17,7 @@ BeforeAll {
     # Import LintingHelpers for mocking
     Import-Module (Join-Path $PSScriptRoot '../../linting/Modules/LintingHelpers.psm1') -Force
 
-    $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Linting'
+    $script:FixtureDir = Join-Path $PSScriptRoot '../fixtures/Linting'
 }
 
 AfterAll {
@@ -106,10 +106,10 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
         BeforeEach {
             # Create test files including fixture path
             $script:IncludeFile = Join-Path $script:TempDir 'docs' 'readme.md'
-            $script:ExcludeFile = Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures' 'test.md'
+            $script:ExcludeFile = Join-Path $script:TempDir 'scripts' 'tests' 'fixtures' 'test.md'
             
             New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'docs') -Force | Out-Null
-            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'scripts' 'tests' 'Fixtures') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $script:TempDir 'scripts' 'tests' 'fixtures') -Force | Out-Null
             Set-Content -Path $script:IncludeFile -Value '# Include This'
             Set-Content -Path $script:ExcludeFile -Value '# Exclude Fixture'
 
@@ -122,7 +122,7 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
                 elseif ($args -contains 'ls-files') {
                     $global:LASTEXITCODE = 0
                     # Return both fixture and non-fixture files
-                    return @('docs/readme.md', 'scripts/tests/Fixtures/test.md')
+                    return @('docs/readme.md', 'scripts/tests/fixtures/test.md')
                 }
             }
         }
@@ -131,8 +131,8 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
             # Act
             $result = Get-MarkdownTarget -InputPath $script:TempDir
             
-            # Assert - Should exclude files in scripts/tests/Fixtures/
-            $fixtureFiles = $result | Where-Object { $_ -like '*Fixtures*' }
+            # Assert - Should exclude files in scripts/tests/fixtures/
+            $fixtureFiles = $result | Where-Object { $_ -like '*fixtures*' }
             $fixtureFiles | Should -BeNullOrEmpty
         }
 
@@ -147,12 +147,12 @@ Describe 'Get-MarkdownTarget' -Tag 'Unit' {
 
         It 'Correctly applies the notlike filter pattern' {
             # Test the exact filter pattern used in the code
-            $testPaths = @('docs/readme.md', 'scripts/tests/Fixtures/test.md', 'src/guide.md')
-            $filtered = $testPaths | Where-Object { $_ -notlike 'scripts/tests/Fixtures/*' }
+            $testPaths = @('docs/readme.md', 'scripts/tests/fixtures/test.md', 'src/guide.md')
+            $filtered = $testPaths | Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
             
             $filtered | Should -Contain 'docs/readme.md'
             $filtered | Should -Contain 'src/guide.md'
-            $filtered | Should -Not -Contain 'scripts/tests/Fixtures/test.md'
+            $filtered | Should -Not -Contain 'scripts/tests/fixtures/test.md'
         }
     }
 }
@@ -229,7 +229,7 @@ Describe 'Get-RelativePrefix' -Tag 'Unit' {
 Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
     Context 'Config file loading' {
         BeforeAll {
-            $script:ConfigPath = Join-Path $PSScriptRoot '../Fixtures/Linting/link-check-config.json'
+            $script:ConfigPath = Join-Path $PSScriptRoot '../fixtures/Linting/link-check-config.json'
         }
 
         It 'Config fixture file exists' {
@@ -298,7 +298,7 @@ Describe 'Markdown-Link-Check Integration' -Tag 'Integration' {
 Describe 'Invoke-MarkdownLinkCheck' -Tag 'Unit' {
     BeforeAll {
         $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
-        $script:FixtureConfig = Join-Path $PSScriptRoot '../Fixtures/Linting/link-check-config.json'
+        $script:FixtureConfig = Join-Path $PSScriptRoot '../fixtures/Linting/link-check-config.json'
     }
 
     Context 'No markdown files found' {

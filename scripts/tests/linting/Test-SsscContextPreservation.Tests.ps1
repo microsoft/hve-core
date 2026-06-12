@@ -39,7 +39,7 @@ BeforeAll {
     }
 }
 
-Describe 'SSSC inline state schema stays consistent across copies' {
+Describe 'SSSC inline state schema stays consistent across copies' -Tag 'Unit' {
     It '<Name> context contains exactly the canonical key set' -TestCases $script:stateSchemaFiles {
         param($Name, $Path)
 

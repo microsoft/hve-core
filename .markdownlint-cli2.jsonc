@@ -7,7 +7,7 @@
     "evals/results/**",
     "vally-results/**",
     "venv/**",
-    "scripts/tests/Fixtures/**",
+    "scripts/tests/fixtures/**",
     "scripts/tests/linting/fixtures/**",
     "extension/README.md",
     "extension/README.*.md",

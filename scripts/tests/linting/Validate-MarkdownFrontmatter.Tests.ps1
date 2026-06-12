@@ -12,7 +12,7 @@ BeforeAll {
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
     $script:SchemaDir = Join-Path $PSScriptRoot '../../linting/schemas'
-    $script:FixtureDir = Join-Path $PSScriptRoot '../Fixtures/Frontmatter'
+    $script:FixtureDir = Join-Path $PSScriptRoot '../fixtures/Frontmatter'
     $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 }
 
