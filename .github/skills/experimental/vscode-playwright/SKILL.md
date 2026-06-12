@@ -1,6 +1,6 @@
 ---
 name: vscode-playwright
-description: 'VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core'
+description: 'VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation'
 license: MIT
 compatibility: 'Requires VS Code CLI (code or code-insiders), Playwright MCP tools, and curl'
 metadata:

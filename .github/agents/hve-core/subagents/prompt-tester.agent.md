@@ -1,6 +1,6 @@
 ---
 name: Prompt Tester
-description: 'Tests prompt files by following them literally in a sandbox environment when creating or improving prompts, instructions, agents, or skills without improving or interpreting beyond face value'
+description: 'Tests prompt files by following them literally in a sandbox, without interpreting beyond face value'
 user-invocable: false
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: "Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration"
+description: "Discover Azure DevOps work items via user queries, artifact analysis, or search"
 agent: ADO Backlog Manager
 argument-hint: "project=... [documents=...] [searchTerms=...]"
 ---

@@ -13,11 +13,18 @@
     lenient ConvertFrom-Json silently accepts.
 
     By default it lints schema and fixture JSON under scripts/linting/schemas and
-    scripts/tests/fixtures. Supports changed-files-only mode for PR validation and
+    scripts/tests/Fixtures. Supports changed-files-only mode for PR validation and
     exports JSON results for CI integration.
+
+    Fixtures whose file name matches an ExcludePatterns entry (by default any
+    invalid-*.json) are skipped, since some fixtures are intentionally malformed to
+    exercise parser error handling.
 
 .PARAMETER Paths
     Directories (or files) to lint. Defaults to the schema and fixture trees.
+
+.PARAMETER ExcludePatterns
+    File-name wildcard patterns to skip. Defaults to intentionally-invalid fixtures.
 
 .PARAMETER ChangedFilesOnly
     Validate only changed JSON files within the target paths.
@@ -42,7 +49,10 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/fixtures'),
+    [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/Fixtures'),
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$ExcludePatterns = @('invalid-*.json'),
 
     [Parameter(Mandatory = $false)]
     [switch]$ChangedFilesOnly,
@@ -126,7 +136,10 @@ function Invoke-JsonLintCore {
     [OutputType([void])]
     param(
         [Parameter(Mandatory = $false)]
-        [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/fixtures'),
+        [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/Fixtures'),
+
+        [Parameter(Mandatory = $false)]
+        [string[]]$ExcludePatterns = @('invalid-*.json'),
 
         [Parameter(Mandatory = $false)]
         [switch]$ChangedFilesOnly,
@@ -170,6 +183,13 @@ function Invoke-JsonLintCore {
                     ForEach-Object { $_.FullName }
             )
         }
+    }
+
+    if ($ExcludePatterns -and $ExcludePatterns.Count -gt 0) {
+        $filesToAnalyze = @($filesToAnalyze | Where-Object {
+                $leaf = Split-Path $_ -Leaf
+                -not @($ExcludePatterns | Where-Object { $leaf -like $_ }).Count
+            })
     }
 
     $filesToAnalyze = @($filesToAnalyze | Sort-Object -Unique)
@@ -262,7 +282,7 @@ function Invoke-JsonLintCore {
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-JsonLintCore -Paths $Paths -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -OutputPath $OutputPath
+        Invoke-JsonLintCore -Paths $Paths -ExcludePatterns $ExcludePatterns -ChangedFilesOnly:$ChangedFilesOnly -BaseBranch $BaseBranch -OutputPath $OutputPath
         exit 0
     }
     catch {

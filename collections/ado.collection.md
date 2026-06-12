@@ -8,24 +8,24 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Chat Agents
 
-| Name                    | Description                                                                                                                                               |
-|-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **ado-backlog-manager** | Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
-| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                                                                 |
+| Name                    | Description                                                                                                          |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------|
+| **ado-backlog-manager** | Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution |
+| **ado-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Azure DevOps work item hierarchies                            |
 
 ### Prompts
 
-| Name                                            | Description                                                                                                                                 |
-|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                                           |
-| **ado-create-pull-request**                     | Generate pull request description, discover related work items, identify reviewers, and create Azure DevOps pull request with all linkages. |
-| **ado-discover-work-items**                     | Discover Azure DevOps work items through user-centric queries, artifact-driven analysis, or search-based exploration                        |
-| **ado-get-build-info**                          | Retrieve Azure DevOps build information for a Pull Request or specific Build Number.                                                        |
-| **ado-get-my-work-items**                       | Retrieve user's current Azure DevOps work items and organize them into planning file definitions                                            |
-| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                                              |
-| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps                                       |
-| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection                           |
-| **ado-update-wit-items**                        | Prompt to update work items based on planning files                                                                                         |
+| Name                                            | Description                                                                                                       |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| **ado-add-work-item**                           | Create a single Azure DevOps work item with conversational field collection and parent validation                 |
+| **ado-create-pull-request**                     | Create an Azure DevOps pull request with generated description, linked work items, and reviewers                  |
+| **ado-discover-work-items**                     | Discover Azure DevOps work items via user queries, artifact analysis, or search                                   |
+| **ado-get-build-info**                          | Retrieve Azure DevOps build status and logs for a pull request or build number                                    |
+| **ado-get-my-work-items**                       | Retrieve your assigned Azure DevOps work items into a planning file                                               |
+| **ado-process-my-work-items-for-task-planning** | Process retrieved work items for task planning and generate task-planning-logs.md handoff file                    |
+| **ado-sprint-plan**                             | Plan an Azure DevOps sprint by analyzing iteration coverage, capacity, dependencies, and backlog gaps             |
+| **ado-triage-work-items**                       | Triage untriaged Azure DevOps work items with field classification, iteration assignment, and duplicate detection |
+| **ado-update-wit-items**                        | Update Azure DevOps work items from planning files                                                                |
 
 ### Instructions
 
@@ -43,8 +43,8 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 
 ### Skills
 
-| Name             | Description                                                                                                                                                                                                                                                                                                                                                                  |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **pr-reference** | Generates PR reference XML containing commit history and unified diffs between branches with extension and path filtering. Includes utilities to list changed files by type and read diff chunks. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| Name             | Description                                                                                                                                                                                                                                                                                      |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **pr-reference** | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

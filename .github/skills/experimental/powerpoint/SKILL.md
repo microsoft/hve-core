@@ -1,6 +1,6 @@
 ---
 name: powerpoint
-description: 'PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling - Brought to you by microsoft/hve-core'
+description: 'PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling'
 license: MIT
 compatibility: 'Requires uv, Python 3.11+, PowerShell 7+, and LibreOffice'
 metadata:

@@ -3,7 +3,7 @@ title: Peer Directory Clone Installation
 description: Install HVE Core as a sibling directory for local VS Code development
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-11
 ms.topic: how-to
 keywords:
   - peer directory
@@ -100,7 +100,6 @@ Create or update `.vscode/settings.json` in your project:
   "chat.instructionsFilesLocations": {
     "../hve-core/.github/instructions/ado": true,
     "../hve-core/.github/instructions/coding-standards": true,
-    "../hve-core/.github/instructions/design-thinking": true,
     "../hve-core/.github/instructions/github": true,
     "../hve-core/.github/instructions/hve-core": true,
     "../hve-core/.github/instructions/shared": true

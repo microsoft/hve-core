@@ -1,6 +1,6 @@
 ---
 name: Task Implementor
-description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core'
+description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
 disable-model-invocation: true
 agents:
   - Phase Implementor
@@ -27,6 +27,14 @@ Every implementation produces self-sufficient, working code aligned with impleme
 * Follow commit-message conventions from `.github/instructions/hve-core/commit-message.instructions.md`.
 * Reference relevant guidance in `.github/instructions/**` before editing code.
 * Run subagents for inline research when context is missing.
+
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever implementing tasks that touch production code paths produce code, configuration, or schema changes that emit telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `task-implementor-telemetry` instructions apply automatically to matching artifacts.
 
 ## Subagent Delegation
 

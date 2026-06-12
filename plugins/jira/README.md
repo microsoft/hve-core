@@ -13,20 +13,20 @@ Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This c
 
 ### Chat Agents
 
-| Name                     | Description                                                                                                               |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| **jira-backlog-manager** | Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions |
-| **jira-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira                       |
+| Name                     | Description                                                                                         |
+|--------------------------|-----------------------------------------------------------------------------------------------------|
+| **jira-backlog-manager** | Jira backlog orchestrator for discovery, triage, execution, and single-issue actions                |
+| **jira-prd-to-wit**      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira |
 
 ### Prompts
 
-| Name                     | Description                                                                                                                                 |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| **jira-discover-issues** | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review |
-| **jira-execute-backlog** | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                              |
-| **jira-prd-to-wit**      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                 |
-| **jira-setup**           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                   |
-| **jira-triage-issues**   | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                |
+| Name                     | Description                                                                                                    |
+|--------------------------|----------------------------------------------------------------------------------------------------------------|
+| **jira-discover-issues** | Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files             |
+| **jira-execute-backlog** | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file |
+| **jira-prd-to-wit**      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                    |
+| **jira-setup**           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                      |
+| **jira-triage-issues**   | Triage Jira issues with field recommendations, duplicate detection, and optional updates                       |
 
 ### Instructions
 
@@ -55,20 +55,20 @@ copilot plugin install jira@hve-core
 
 ## Agents
 
-| Agent                | Description                                                                                                                                                      |
-|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jira-backlog-manager | Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions - Brought to you by microsoft/hve-core |
-| jira-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira - Brought to you by microsoft/hve-core                       |
+| Agent                | Description                                                                                         |
+|----------------------|-----------------------------------------------------------------------------------------------------|
+| jira-backlog-manager | Jira backlog orchestrator for discovery, triage, execution, and single-issue actions                |
+| jira-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira |
 
 ## Commands
 
-| Command              | Description                                                                                                                                 |
-|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| jira-discover-issues | Discover Jira issues through user-centric queries, artifact-driven analysis, or JQL-based exploration and produce planning files for review |
-| jira-execute-backlog | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file                              |
-| jira-prd-to-wit      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                                                 |
-| jira-setup           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                                                   |
-| jira-triage-issues   | Triage Jira issues with bounded JQL, field recommendations, duplicate detection, and optional execution of confirmed updates                |
+| Command              | Description                                                                                                    |
+|----------------------|----------------------------------------------------------------------------------------------------------------|
+| jira-discover-issues | Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files             |
+| jira-execute-backlog | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file |
+| jira-prd-to-wit      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                    |
+| jira-setup           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                      |
+| jira-triage-issues   | Triage Jira issues with field recommendations, duplicate detection, and optional updates                       |
 
 ## Instructions
 
@@ -83,9 +83,9 @@ copilot plugin install jira@hve-core
 
 ## Skills
 
-| Skill | Description                                                                                                                                                                                                                                                                                                                                  |
-|-------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jira  | Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. - Brought to you by microsoft/hve-core |
+| Skill | Description                                                                                                                                                                                                                                                                                           |
+|-------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| jira  | Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. |
 
 ---
 

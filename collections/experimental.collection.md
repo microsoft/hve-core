@@ -8,17 +8,17 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 
 ### Chat Agents
 
-| Name                    | Description                                                                                                                                                       |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **experiment-designer** | Conversational coach that guides users through designing a Minimum Viable Experiment (MVE) with structured hypothesis formation, vetting, and experiment planning |
-| **pptx**                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                                                                   |
-| **pptx-subagent**       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation                                            |
+| Name                    | Description                                                                                                            |
+|-------------------------|------------------------------------------------------------------------------------------------------------------------|
+| **experiment-designer** | Coach for designing a Minimum Viable Experiment (MVE) with hypothesis formation, vetting, and experiment planning      |
+| **pptx**                | Creates, updates, and manages PowerPoint slide decks using YAML-driven content with python-pptx                        |
+| **pptx-subagent**       | Executes PowerPoint skill operations including content extraction, YAML creation, deck building, and visual validation |
 
 ### Prompts
 
 | Name               | Description                                                                                          |
 |--------------------|------------------------------------------------------------------------------------------------------|
-| **cspell-config**  | Creates or updates the project cspell configuration with project-specific words and ignores          |
+| **cspell-config**  | Create or update the project cspell configuration with project words and ignores                     |
 | **graph-research** | Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting |
 
 ### Instructions
@@ -45,7 +45,7 @@ Experimental and preview artifacts not yet promoted to stable collections. Items
 | **mural**                | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation. |
 | **powerpoint**           | PowerPoint slide deck generation and management using python-pptx with YAML-driven content and styling                                                                                |
 | **tts-voiceover**        | Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control                                                                   |
-| **video-to-gif**         | Video-to-GIF conversion skill with FFmpeg two-pass optimization                                                                                                                       |
+| **video-to-gif**         | Video-to-GIF conversion with FFmpeg two-pass optimization                                                                                                                             |
 | **vscode-playwright**    | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation                                                                                      |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

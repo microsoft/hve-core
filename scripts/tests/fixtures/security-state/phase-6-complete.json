@@ -4,6 +4,14 @@
   "currentPhase": 6,
   "entryMode": "from-prd",
   "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2026-05-09T14:32:00Z",
+      "source": ".github/instructions/security/identity.instructions.md",
+      "details": { "phase": "phase6" }
+    }
+  ],
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": "2026-05-09T15:10:00Z" },
     "phase2": { "gate": "summary-and-advance" },

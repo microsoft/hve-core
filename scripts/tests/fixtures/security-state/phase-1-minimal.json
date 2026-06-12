@@ -1,9 +1,17 @@
 {
   "projectSlug": "example-project",
-  "securityPlanFile": "security/plan.md",
+  "securityPlanFile": ".copilot-tracking/security-plans/example-project/security-plan.md",
   "currentPhase": 1,
   "entryMode": "capture",
-  "disclaimerShownAt": null,
+  "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2026-05-09T14:32:00Z",
+      "source": ".github/instructions/security/identity.instructions.md",
+      "details": { "phase": "phase1" }
+    }
+  ],
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": null },
     "phase2": { "gate": "summary-and-advance" },
@@ -17,14 +25,14 @@
   "riskSurfaceStarted": false,
   "handoffGenerated": { "ado": false, "github": false },
   "context": {
-    "techStack": ["dotnet"],
-    "deploymentModel": "cloud-native",
-    "dataClassification": "internal",
+    "techStack": [],
+    "deploymentModel": "",
+    "dataClassification": "",
     "complianceTargets": []
   },
   "referencesProcessed": [],
-  "nextActions": [],
-  "userPreferences": { "autonomyTier": "guided" },
+  "nextActions": ["Complete scoping interview"],
+  "userPreferences": { "autonomyTier": "partial" },
   "raiEnabled": false,
   "raiScope": "none",
   "raiTier": "none",

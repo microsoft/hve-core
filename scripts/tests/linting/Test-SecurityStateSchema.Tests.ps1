@@ -4,7 +4,7 @@
 <#
 .SYNOPSIS
     Validates the canonical Security Planner state schema against the fixture corpus
-    and asserts cross-schema parity for `disclaimerShownAt` against the sister RAI schema.
+    and asserts cross-schema parity for notice fields against the sister RAI schema.
 #>
 
 # Enumerated at discovery time so -ForEach receives the fixture corpus before BeforeAll runs.
@@ -45,6 +45,24 @@ Describe 'Cross-schema parity for disclaimerShownAt' {
         $secProp = $sec.properties.disclaimerShownAt | ConvertTo-Json -Depth 10 -Compress
         $raiProp = $rai.properties.disclaimerShownAt | ConvertTo-Json -Depth 10 -Compress
         $secProp | Should -Be $raiProp -Because 'disclaimerShownAt definitions must remain in lockstep across schemas'
+    }
+}
+
+Describe 'Cross-schema parity for noticeLog' {
+    It 'security-state and rai-state declare byte-identical noticeLog definitions' {
+        $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
+        $secProp = $sec.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $raiProp = $rai.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $secProp | Should -Be $raiProp -Because 'noticeLog definitions must remain in lockstep across schemas'
+    }
+
+    It 'security-state and rai-state declare byte-identical noticeLogEntry definitions' {
+        $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
+        $secDef = $sec.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $raiDef = $rai.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $secDef | Should -Be $raiDef -Because 'noticeLogEntry definitions must remain in lockstep across schemas'
     }
 }
 

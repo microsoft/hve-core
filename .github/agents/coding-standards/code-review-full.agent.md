@@ -1,6 +1,6 @@
 ---
 name: Code Review Full
-description: "Orchestrator that runs functional and standards code reviews via subagents and produces a merged report - Brought to you by microsoft/hve-core"
+description: "Orchestrator that runs functional and standards code reviews via subagents and produces a merged report"
 disable-model-invocation: true
 agents:
   - Code Review Functional
@@ -92,6 +92,14 @@ Step 2b (all batches complete): replace the running table with a 3-column summar
 ## Read Discipline
 
 Read every external file exactly once using a single full-range `read_file` call. Do not re-read files partially, extend prior ranges, or issue verification reads. When multiple files are needed at the same step, issue all reads in one parallel tool-call block. This rule applies to diff content, instructions files, findings JSON, and review-artifact protocols throughout all steps.
+
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the standards-review or full-review phases produce review findings that touch observability, logging, or metrics, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `code-review-telemetry` instructions apply automatically to matching artifacts.
 
 ## Required Steps
 

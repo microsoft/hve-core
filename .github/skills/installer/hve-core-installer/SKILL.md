@@ -1,6 +1,6 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
 license: MIT
 metadata:

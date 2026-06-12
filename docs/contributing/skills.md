@@ -64,7 +64,7 @@ Skill files are typically organized in a collection subdirectory by convention:
 ├── references/                 # Additional documentation (optional)
 │   └── REFERENCE.md            # Detailed technical reference
 ├── assets/                     # Static resources (optional)
-│   └── templates/              # Document or configuration templates
+├── templates/                  # Document or configuration templates (optional)
 ├── examples/
 │   └── README.md               # Usage examples (recommended)
 └── tests/
@@ -83,7 +83,7 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 * Use lowercase kebab-case for directory names: `video-to-gif`
 * Main definition file MUST be named `SKILL.md`
 * Script names should describe their action: `convert.sh`, `validate.ps1`
-* Only recognized subdirectories are allowed: `scripts`, `references`, `assets`, `examples`, `tests`,`templates` (the `tests` directory is excluded from extension and CLI outputs)
+* Only recognized subdirectories are allowed: `scripts`, `references`, `assets`, `examples`, `tests`, `templates` (the `tests` directory is excluded from extension and CLI outputs)
 
 ## Frontmatter Requirements
 
@@ -534,7 +534,7 @@ Before submitting your skill, verify:
 * [ ] Directory at `.github/skills/<skill-name>/`
 * [ ] SKILL.md present with valid frontmatter
 * [ ] If `scripts/` directory exists: at least one `.ps1` file present (`.sh` recommended)
-* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`, `tests`,`templates`)
+* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`, `tests`, `templates`)
 * [ ] Examples README (recommended)
 
 ### Frontmatter

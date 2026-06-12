@@ -1,6 +1,6 @@
 ---
 name: tts-voiceover
-description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control - Brought to you by microsoft/hve-core'
+description: 'Text-to-speech voice-over generation from YAML speaker notes using Azure Speech SDK with SSML pronunciation control'
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"

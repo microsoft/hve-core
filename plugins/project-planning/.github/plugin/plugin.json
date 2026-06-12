@@ -14,7 +14,9 @@
     "commands/security/"
   ],
   "skills": [
+    "skills/accessibility/",
     "skills/experimental/",
-    "skills/project-planning/"
+    "skills/project-planning/",
+    "skills/shared/"
   ]
 }
