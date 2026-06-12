@@ -3,7 +3,7 @@ title: Multi-Root Workspace Installation
 description: Set up your enterprise fork of HVE Core using VS Code multi-root workspaces
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-11
 ms.topic: how-to
 keywords:
   - multi-root workspace
@@ -124,7 +124,6 @@ Use the absolute clone path:
     "chat.instructionsFilesLocations": {
       "/workspaces/hve-core/.github/instructions/ado": true,
       "/workspaces/hve-core/.github/instructions/coding-standards": true,
-      "/workspaces/hve-core/.github/instructions/design-thinking": true,
       "/workspaces/hve-core/.github/instructions/github": true,
       "/workspaces/hve-core/.github/instructions/hve-core": true,
       "/workspaces/hve-core/.github/instructions/shared": true,
