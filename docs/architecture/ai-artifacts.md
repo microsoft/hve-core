@@ -3,7 +3,7 @@ title: AI Artifacts Architecture
 description: Prompt, agent, and instruction delegation model for Copilot customizations
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-10
 ms.topic: concept
 ---
 
@@ -448,6 +448,23 @@ items:
 ```
 
 Every collection that references the artifact must carry the same marker. The artifact file itself stays under its original `.github/{type}/{collection-id}/` location, preserving git history, cross-references, and the option to reinstate it by changing a single field.
+
+### Reactivating a Removed Artifact
+
+To reactivate a previously removed artifact:
+
+1. Remove the `maturity: removed` field from the artifact's entry in the relevant `collections/*.collection.yml` file.
+
+2. If the underlying artifact file was deleted, restore it (for example, using `git checkout -- <path/to/file>`).
+
+3. Run `npm run plugin:generate` to regenerate plugin outputs and update the `hve-core-all` collection.
+
+4. Verify that the artifact reappears:
+
+   * In the relevant plugin manifests
+   * In `collections/hve-core-all.collection.yml`
+
+5. Run `npm run lint:all` and `npm run test:ps` to confirm the reactivation is clean.
 
 ### Automatic Exclusion
 
