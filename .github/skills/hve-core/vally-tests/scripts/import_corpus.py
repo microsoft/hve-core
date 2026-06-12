@@ -209,6 +209,9 @@ def safety_check(
         try:
             Path(tmp.name).unlink(missing_ok=True)
         except OSError:
+            # Best-effort cleanup: the temp file lives in the OS temp dir and a
+            # failed unlink (e.g. lingering handle on Windows) is non-fatal, so
+            # swallow the error rather than masking the subprocess result.
             pass
     output = ((result.stdout or "") + (result.stderr or "")).strip()
     match = SAFETY_CATEGORY_RE.search(output)
