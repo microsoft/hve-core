@@ -3,7 +3,7 @@ title: Git-Ignored Folder Installation
 description: Install HVE Core in a git-ignored folder for devcontainer environments
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-11
 ms.topic: how-to
 keywords:
   - git-ignored
@@ -115,7 +115,6 @@ Create or update `.vscode/settings.json`:
   "chat.instructionsFilesLocations": {
     ".hve-core/.github/instructions/ado": true,
     ".hve-core/.github/instructions/coding-standards": true,
-    ".hve-core/.github/instructions/design-thinking": true,
     ".hve-core/.github/instructions/github": true,
     ".hve-core/.github/instructions/hve-core": true,
     ".hve-core/.github/instructions/shared": true
@@ -179,7 +178,6 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
         "chat.instructionsFilesLocations": {
           ".hve-core/.github/instructions/ado": true,
           ".hve-core/.github/instructions/coding-standards": true,
-          ".hve-core/.github/instructions/design-thinking": true,
           ".hve-core/.github/instructions/github": true,
           ".hve-core/.github/instructions/hve-core": true,
           ".hve-core/.github/instructions/shared": true

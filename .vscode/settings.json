@@ -28,6 +28,10 @@
     {
       "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
       "url": "./scripts/linting/schemas/rai-state.schema.json"
+    },
+    {
+      "fileMatch": [".copilot-tracking/accessibility/*/state.json"],
+      "url": "./scripts/linting/schemas/accessibility-state.schema.json"
     }
   ],
   "chat.instructionsFilesLocations": {

@@ -1,5 +1,5 @@
 ---
-description: 'Required instructions for anything related to Azure Devops or ado build information including status, logs, or details from provided pullrequest (PR), build Id, or branch name.'
+description: 'Azure DevOps build information: status, logs, and details from a PR, build ID, or branch name'
 applyTo: '**/.copilot-tracking/pr/*-build-*.md'
 ---
 

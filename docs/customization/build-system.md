@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-06
 ms.topic: how-to
 keywords:
   - build system
@@ -137,7 +137,13 @@ The `lint:all` script chains every linter in a fixed sequence:
 8. `lint:marketplace` validates marketplace manifest
 9. `lint:version-consistency` checks GitHub Action version alignment
 10. `lint:permissions` validates workflow permissions
-11. `validate:skills` verifies skill directory structure
+11. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
+12. `lint:ps-module-pins` checks PowerShell module versions are pinned
+13. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
+14. `validate:skills` verifies skill directory structure
+15. `lint:ai-artifacts` validates planner AI artifacts
+16. `lint:models` validates model references against the catalog
+17. `eval:lint` lints eval suites under `evals/`
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:

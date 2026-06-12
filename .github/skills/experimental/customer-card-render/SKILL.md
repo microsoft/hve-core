@@ -1,6 +1,6 @@
 ---
 name: customer-card-render
-description: 'Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline - Brought to you by microsoft/hve-core'
+description: 'Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline'
 license: MIT
 compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill'
 metadata:

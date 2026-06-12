@@ -1,6 +1,6 @@
 ---
 name: python-foundational
-description: "Foundational Python best practices, idioms, and code quality fundamentals - Brought to you by microsoft/hve-core"
+description: "Foundational Python best practices, idioms, and code quality fundamentals"
 license: MIT
 user-invocable: false
 metadata:

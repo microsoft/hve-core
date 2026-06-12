@@ -1,6 +1,6 @@
 ---
 name: owasp-cicd
-description: OWASP CI/CD Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in continuous integration and continuous delivery environments - Brought to you by microsoft/hve-core.
+description: OWASP CI/CD Top 10 knowledge base for identifying, assessing, and remediating CI/CD pipeline security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:

@@ -1,0 +1,35 @@
+# DT section map (Layer-B default). Each method 1..9 declares one or more
+# named sections; the design-thinking board bootstrap flow creates one area per section and tags it
+# with dt-section:<name>. Override via --override-path / override_path with
+# the same shape; entries deep-merge by (method, section).
+methods:
+  1:
+    sections:
+      scope: {x: 0, y: 0, width: 4000, height: 3000, layout: free}
+  2:
+    sections:
+      research-plan: {x: 0, y: 3200, width: 4000, height: 3000, layout: free}
+      observations: {x: 4200, y: 3200, width: 4000, height: 3000, layout: free}
+  3:
+    sections:
+      affinity: {x: 0, y: 6400, width: 8000, height: 4000, layout: free}
+      insights: {x: 8200, y: 6400, width: 4000, height: 4000, layout: column}
+  4:
+    sections:
+      brainstorm: {x: 0, y: 10600, width: 8000, height: 4000, layout: free}
+  5:
+    sections:
+      concepts: {x: 0, y: 14800, width: 8000, height: 4000, layout: row}
+  6:
+    sections:
+      lo-fi-prototypes: {x: 0, y: 19000, width: 8000, height: 4000, layout: free}
+  7:
+    sections:
+      hi-fi-prototypes: {x: 0, y: 23200, width: 8000, height: 4000, layout: free}
+  8:
+    sections:
+      test-plan: {x: 0, y: 27400, width: 4000, height: 3000, layout: free}
+      test-results: {x: 4200, y: 27400, width: 4000, height: 3000, layout: column}
+  9:
+    sections:
+      iteration: {x: 0, y: 30600, width: 8000, height: 4000, layout: free}

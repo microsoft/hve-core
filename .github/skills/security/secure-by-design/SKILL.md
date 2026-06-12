@@ -1,6 +1,6 @@
 ---
 name: secure-by-design
-description: Secure by Design principles knowledge base for assessing adherence to security-first design, development, and deployment practices across the software lifecycle - Brought to you by microsoft/hve-core.
+description: Secure by Design principles knowledge base for assessing security-first design, development, and deployment across the software lifecycle.
 license: OGL-UK-3.0 AND CC-BY-4.0
 user-invocable: false
 metadata:

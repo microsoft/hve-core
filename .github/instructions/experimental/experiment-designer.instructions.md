@@ -1,5 +1,5 @@
 ---
-description: "MVE domain knowledge and coaching conventions for the Experiment Designer agent - Brought to you by microsoft/hve-core"
+description: "MVE domain knowledge and coaching conventions for the Experiment Designer agent"
 applyTo: '**/.copilot-tracking/mve/**'
 ---
 

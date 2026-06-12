@@ -69,5 +69,10 @@ items:
     maturity: experimental
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  # Telemetry overlays
+  - path: .github/instructions/coding-standards/code-review-telemetry.instructions.md
+    kind: instruction
 display:
   ordering: alpha

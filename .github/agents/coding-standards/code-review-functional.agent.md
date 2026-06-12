@@ -1,6 +1,6 @@
 ---
 name: Code Review Functional
-description: 'Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps - Brought to you by microsoft/hve-core'
+description: 'Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps'
 ---
 
 # Code Review Functional Agent

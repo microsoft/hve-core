@@ -1,6 +1,6 @@
 ---
 name: Skill Assessor
-description: "Assesses a single security knowledge skill against the codebase, reading vulnerability references and returning structured findings - Brought to you by microsoft/hve-core"
+description: "Assesses a single security skill against the codebase and returns structured findings"
 tools:
   - search/codebase
   - search/fileSearch

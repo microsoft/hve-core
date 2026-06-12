@@ -195,5 +195,10 @@ items:
     maturity: preview
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
+  # Telemetry
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  - path: .github/instructions/design-thinking/dt-coach-telemetry.instructions.md
+    kind: instruction
 display:
   ordering: alpha
