@@ -136,9 +136,7 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser(
         prog="scan_sensitive_content",
-        description=(
-            "Scan ADR/handoff content for high-confidence PII and public-repository internal URLs."
-        ),
+        description=("Scan ADR/handoff content for high-confidence PII and public-repository internal URLs."),
     )
     parser.add_argument(
         "paths",
