@@ -33,8 +33,8 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _NullBackend,
     _state,
 )
-from ._constants import _LINE_RE, ENV_NONINTERACTIVE
-from ._credentials import _resolve_credential_file
+from ._constants import _KNOWN_CREDENTIAL_KEYS, _LINE_RE, ENV_NONINTERACTIVE
+from ._credentials import _resolve_credential_file, _service_name_for
 from ._exceptions import MuralError
 from ._protocols import CredentialBackend
 
@@ -230,6 +230,28 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
     elif selector == "auto":
         try:
             selected = KeyringBackend()
+            service = _service_name_for(profile)
+            keyring_populated = False
+            for key in _KNOWN_CREDENTIAL_KEYS:
+                value = selected.get(service, key)
+                if value:
+                    keyring_populated = True
+                    break
+            if not keyring_populated:
+                file_backend = FileBackend(file_path)
+                if file_path.exists():
+                    _check_credential_file_perms(file_path, os.environ)
+                file_entries = file_backend._read_all()
+                file_populated = any(file_entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS)
+                if file_populated:
+                    if profile not in _state.seen_fallback_warn():
+                        _state.seen_fallback_warn().add(profile)
+                        _emit(
+                            f"keyring backend available but empty for profile {profile!r}; "
+                            f"using file backend at {file_path}",
+                            level=logging.WARNING,
+                        )
+                    selected = file_backend
         except _KeyringUnavailable as exc:
             if profile not in _state.seen_fallback_warn():
                 _state.seen_fallback_warn().add(profile)
