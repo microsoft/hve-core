@@ -122,7 +122,8 @@ Create or update `.vscode/settings.json`:
   "chat.agentSkillsLocations": {
     ".hve-core/.github/skills": true,
     ".hve-core/.github/skills/shared": true,
-    ".hve-core/.github/skills/coding-standards": true
+    ".hve-core/.github/skills/coding-standards": true,
+    ".hve-core/.github/skills/design-thinking": true
   }
 }
 ```
@@ -185,7 +186,8 @@ Add to `.devcontainer/devcontainer.json` so HVE Core is cloned on container crea
         "chat.agentSkillsLocations": {
           ".hve-core/.github/skills": true,
           ".hve-core/.github/skills/shared": true,
-          ".hve-core/.github/skills/coding-standards": true
+          ".hve-core/.github/skills/coding-standards": true,
+          ".hve-core/.github/skills/design-thinking": true
         }
       }
     }

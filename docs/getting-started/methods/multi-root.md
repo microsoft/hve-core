@@ -133,6 +133,7 @@ Use the absolute clone path:
       "/workspaces/hve-core/.github/skills": true,
       "/workspaces/hve-core/.github/skills/shared": true,
       "/workspaces/hve-core/.github/skills/coding-standards": true,
+      "/workspaces/hve-core/.github/skills/design-thinking": true,
       "My Project/.github/skills": true
     }
   },

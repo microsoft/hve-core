@@ -36,7 +36,7 @@ argument-hint: "[project-slug=...]"
   * `session_log`: recent session summaries
   * `artifacts`: list of generated artifacts with paths
 * Scan the project directory for artifact subdirectories matching `method-{NN}-*/` patterns
-* Assess method completeness by comparing artifacts against exit signals from `.github/instructions/design-thinking/dt-method-sequencing.instructions.md`
+* Assess method completeness by comparing artifacts against exit signals from `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md`
 
 ### 3. Determine Next Method Recommendation
 
@@ -49,8 +49,10 @@ Apply progression logic:
   * At space boundaries (3→4, 6→7): verify readiness signals before suggesting transition
   
 * **Backward iteration (secondary path):**
+  * Before recommending a backward transition, use `read_file` on `.github/skills/design-thinking/dt-coaching-foundation/references/method-sequencing.md` and quote the matching return-path rule in the recommendation.
   * If current method reveals gaps in prior work → suggest returning to earlier method with rationale
   * Common patterns: prototype issues → Method 2/3, brainstorming failure → Method 3, concept misalignment → Method 1
+  * Always name the source method, target method, and the sequencing rule that authorizes the transition.
   
 * **Lateral transitions:**
   * If all 9 methods complete → suggest iteration on Method 9 or handoff to RPI workflow
@@ -88,7 +90,7 @@ After presenting the recommendation, wait for user confirmation of the suggested
 
 * Updating `coaching-state.md` with new `current.method` value
 * Adding transition log entry with rationale and date
-* Loading the target method instruction file for method-specific knowledge
+* Loading the target method skill for method-specific knowledge
 * Beginning active coaching at the appropriate phase within the target method
 
 ---

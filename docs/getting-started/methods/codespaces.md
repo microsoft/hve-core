@@ -103,7 +103,8 @@ Add the clone command and VS Code settings:
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true
         }
       }
     }
@@ -171,7 +172,8 @@ git push
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true
         }
       }
     }
@@ -232,6 +234,7 @@ git push
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
           ".github/skills": true
         }
       }
@@ -307,8 +310,10 @@ For projects needing HVE Core in both local devcontainers and Codespaces:
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
           "../hve-core/.github/skills": true,
-          "../hve-core/.github/skills/shared": true
+          "../hve-core/.github/skills/shared": true,
+          "../hve-core/.github/skills/design-thinking": true
         }
       }
     }
