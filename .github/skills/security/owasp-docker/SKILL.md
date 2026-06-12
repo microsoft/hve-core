@@ -1,6 +1,6 @@
 ---
 name: owasp-docker
-description: OWASP Docker Top 6 vulnerability knowledge base for identifying, assessing, and remediating security risks in containerized Docker environments - Brought to you by microsoft/hve-core.
+description: OWASP Docker Top 6 knowledge base for identifying, assessing, and remediating Docker container security risks.
 license: CC-BY-NC-SA-4.0
 user-invocable: false
 # OWASP source content licensed CC-BY-NC-SA-4.0: incompatible with extension distribution. Listed in collections with `maturity: removed` so it is excluded from every channel and from auto-discovered manifests.

@@ -1,6 +1,6 @@
 ---
 name: owasp-agentic
-description: OWASP Agentic Security Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in AI agent systems - Brought to you by microsoft/hve-core.
+description: OWASP Agentic Security Top 10 knowledge base for identifying, assessing, and remediating AI agent system security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:

@@ -1,0 +1,55 @@
+# Mural destination registry (Decision D1).
+# Open registry of named adapters for extractor writeback. Layer B agents read this file
+# at invocation time. Adding a new destination is an entry here plus a Slot 2 handoff
+# wiring change; the extractor core does not change.
+#
+# Schema:
+#   destinations: list
+#     - id:           string   # adapter id; becomes the `destination:<id>` reserved tag value
+#       intent:       enum     # one of: capture, synthesize, action, archive
+#       target:       string   # glob describing the artifact the adapter writes to
+#       loop_closure: string   # how items committed via this adapter return to source
+#       v1_retro:     bool     # true if enabled in the v1 retro wedge
+---
+destinations:
+  - id: backlog-item
+    intent: action
+    target: '**/{ado,jira,github}/work-items/**'
+    loop_closure: 'State transition observed (e.g., Closed / Done / closed) on the linked work item.'
+    v1_retro: true
+
+  - id: instructions-file
+    intent: synthesize
+    target: '**/.github/instructions/**/*.instructions.md'
+    loop_closure: 'Manual or sample-based confirmation that downstream code follows the instruction.'
+    v1_retro: true
+
+  - id: adr
+    intent: synthesize
+    target: 'docs/architecture/decisions/**/*.md'
+    loop_closure: 'ADR status check: Accepted and not Superseded.'
+    v1_retro: true
+
+  - id: living-document
+    intent: capture
+    target: '**/{problem-statements,journey-maps,risk-registers}/**/*.md'
+    loop_closure: 'Last-updated within the configured freshness window for the document type.'
+    v1_retro: false
+
+  - id: powerpoint-deck
+    intent: synthesize
+    target: '**/.copilot-tracking/ppt/**'
+    loop_closure: 'Export confirmation; downstream stakeholder-distribution telemetry deferred.'
+    v1_retro: false
+
+  - id: next-workshop-seed
+    intent: capture
+    target: '**/.copilot-tracking/mural/seeds/**'
+    loop_closure: 'Seed bundle observed in the downstream workshop''s outbound (Slot 1) input.'
+    v1_retro: false
+
+  - id: unactioned
+    intent: archive
+    target: '**/.copilot-tracking/mural/unactioned/**'
+    loop_closure: 'Rationale survived review (no-op with audit; reviewer attestation).'
+    v1_retro: true

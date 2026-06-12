@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate supply chain security planning from existing PRD artifacts using the
+  Start supply chain security planning from PRD artifacts using the
   SSSC Planner agent in from-prd mode
 agent: SSSC Planner
 ---

@@ -1,6 +1,6 @@
 ---
 name: security-reviewer-formats
-description: Format specifications and data contracts for the security reviewer orchestrator and its subagents - Brought to you by microsoft/hve-core.
+description: Format specifications and data contracts for the security reviewer orchestrator and its subagents.
 license: MIT
 user-invocable: false
 metadata:

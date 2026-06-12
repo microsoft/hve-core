@@ -24,11 +24,11 @@ Entry mode and output template are independent: a `from-planner-handoff` session
 
 Lifecycle at a glance:
 
-| Mode                   | Phase sequence                                              | Output                                              |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `capture`              | Frame → Decide → Govern                                     | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern             | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern       | First ADR + `.adr-config.yml` per the BYO contract  |
+| Mode                   | Phase sequence                                        | Output                                              |
+|------------------------|-------------------------------------------------------|-----------------------------------------------------|
+| `capture`              | Frame → Decide → Govern                               | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern       | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern | First ADR + `.adr-config.yml` per the BYO contract  |
 
 The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `adr-identity.instructions.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
 
@@ -37,7 +37,7 @@ The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`)
 Activities:
 
 - **Scope** — capture the decision in one or two sentences; bound it to a single project.
-- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned).
+- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned). Prefer a role or team handle over a personal name, and never record personal contact details, secrets, credentials, or third-party or customer PII in any ADR field.
 - **Drivers** — list decision drivers (functional needs, business goals).
 - **Constraints** — list non-negotiables (regulatory, platform, contractual, time).
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.
@@ -167,7 +167,7 @@ All scripts treat their working directory as untrusted input and reject paths th
 The ADR Creator agent enforces a phase→section load contract per `adr-identity.instructions.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
 
 | Phase  | Section anchor | Required `phaseSkillsLoaded` entry |
-| ------ | -------------- | ---------------------------------- |
+|--------|----------------|------------------------------------|
 | Frame  | `#frame`       | `adr-author#frame`                 |
 | Decide | `#decide`      | `adr-author#decide`                |
 | Govern | `#govern`      | `adr-author#govern`                |

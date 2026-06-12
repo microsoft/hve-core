@@ -1,7 +1,7 @@
 ---
 name: security-review-llm
 agent: Security Reviewer
-description: "Runs OWASP LLM and Agentic vulnerability assessments with codebase profiling for context - Brought to you by microsoft/hve-core"
+description: "Run OWASP LLM and Agentic vulnerability assessments with codebase profiling"
 argument-hint: "[scope=path/to/component]"
 ---
 

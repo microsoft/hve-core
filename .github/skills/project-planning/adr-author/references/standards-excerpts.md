@@ -26,7 +26,7 @@ Markdown Any Decision Records (MADR) is a lean ADR template optimized for collab
 
 ## Y-Statement
 
-The Y-Statement is a six-slot single-sentence decision capture formula authored by Olaf Zimmermann and Uwe Zdun. It condenses an architectural decision into: use case, concern, chosen option, rejected alternatives, target quality, and accepted downside. The `adr-author` skill uses the Y-Statement as the primary output of `capture` entry mode for low-stakes or reversible decisions where a full MADR long-form would be over-investment.
+The Y-Statement is a six-slot single-sentence decision capture formula authored by Olaf Zimmermann and Uwe Zdun. It captures an architectural decision across six ordered slots, rendered in HVE's own wording: the use case, the concern in tension, the chosen option, the rejected alternatives, the target quality, and the accepted downside. The `adr-author` skill uses the Y-Statement as the primary output of `capture` entry mode for low-stakes or reversible decisions where a full MADR long-form would be over-investment.
 
 - Citation: Olaf Zimmermann and Uwe Zdun, "Y-Statements: A Light Template for Architectural Decision Capturing", published via the Architectural Decision Records community materials (ozimmer.ch / SATURN tutorials, 2018-onward).
 - Purpose in `capture` mode: produce a single durable sentence that records the decision and its tradeoff without demanding an options analysis.
@@ -52,7 +52,7 @@ The Microsoft code-with-engineering-playbook documents the team practice of main
 The following sources inform the practice but MUST NOT be embedded verbatim in skill outputs or templates. Reference them by citation only.
 
 - Michael Nygard, "Documenting Architecture Decisions" (2011) — the foundational ADR essay that established the Context / Decision / Status / Consequences shape later refined by MADR.
-- IEEE 42010:2022 — "Software, systems and enterprise — Architecture description". Standardizes architecture description elements including architecture decisions and their rationale.
+- ISO/IEC/IEEE 42010:2022, "Software, systems and enterprise — Architecture description". ISO catalog: <https://www.iso.org/standard/74393.html>. Cite only; do not quote.
 - arc42 §9 — "Architecture Decisions" section of the arc42 documentation template, providing a lightweight rationale-capture pattern complementary to MADR.
 - joelparkerhenderson/architecture-decision-record — community catalog of ADR templates and examples. Licensed under CC-BY-SA; embedding text would impose share-alike obligations on hve-core and is therefore prohibited. Cite by URL only.
 

@@ -1,5 +1,5 @@
 ---
-description: 'Generates pull request descriptions from branch diffs - Brought to you by microsoft/hve-core'
+description: 'Generate pull request descriptions from branch diffs'
 agent: agent
 argument-hint: "[branch=origin/main] [createPullRequest=false] [excludeMarkdown={true|false}]"
 ---

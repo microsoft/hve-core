@@ -1,5 +1,5 @@
 ---
-description: 'Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations'
+description: 'GitHub issue backlog execution: consumes planning handoffs and runs issue operations'
 applyTo: '**/.copilot-tracking/github-issues/**/handoff-logs.md'
 ---
 
