@@ -21,7 +21,7 @@ BeforeAll {
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
 }
 
-Describe 'Canonical security-state schema validates fixture corpus' {
+Describe 'Canonical security-state schema validates fixture corpus' -Tag 'Unit' {
     It 'Schema file parses as JSON' {
         { Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json } | Should -Not -Throw
     }
@@ -38,7 +38,7 @@ Describe 'Canonical security-state schema validates fixture corpus' {
     }
 }
 
-Describe 'Cross-schema parity for disclaimerShownAt' {
+Describe 'Cross-schema parity for disclaimerShownAt' -Tag 'Unit' {
     It 'security-state and rai-state declare structurally identical disclaimerShownAt definitions' {
         $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
         $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
@@ -48,7 +48,7 @@ Describe 'Cross-schema parity for disclaimerShownAt' {
     }
 }
 
-Describe 'Cross-schema parity for noticeLog' {
+Describe 'Cross-schema parity for noticeLog' -Tag 'Unit' {
     It 'security-state and rai-state declare byte-identical noticeLog definitions' {
         $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
         $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
@@ -66,7 +66,7 @@ Describe 'Cross-schema parity for noticeLog' {
     }
 }
 
-Describe 'RAI-disabled invariant' {
+Describe 'RAI-disabled invariant' -Tag 'Unit' {
     It 'rejects a disabled state with inconsistent RAI fields' {
         $fixturePath = Join-Path $script:repoRoot 'scripts/tests/fixtures/security-state/phase-1-minimal.json'
         $base = Get-Content -Path $fixturePath -Raw | ConvertFrom-Json

@@ -12,7 +12,7 @@ BeforeAll {
     Import-Module (Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1') -Force
     Save-CIEnvironment
 
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 }
 
 AfterAll {
