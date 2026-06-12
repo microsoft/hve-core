@@ -6,22 +6,10 @@ tags:
 - complete
 - bundle
 items:
-- path: .github/agents/accessibility/accessibility-planner.agent.md
-  kind: agent
-  maturity: experimental
-- path: .github/agents/accessibility/accessibility-reviewer.agent.md
-  kind: agent
-  maturity: experimental
-- path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
-  kind: agent
-  maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-accessibility.agent.md
-  kind: agent
-  maturity: experimental
 - path: .github/agents/coding-standards/code-review-full.agent.md
   kind: agent
   maturity: experimental
@@ -214,6 +202,9 @@ items:
 - path: .github/prompts/experimental/cspell-config.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/experimental/graph-research.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/github/github-add-issue.prompt.md
   kind: prompt
 - path: .github/prompts/github/github-discover-issues.prompt.md
@@ -264,6 +255,8 @@ items:
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-prd-to-wit.prompt.md
+  kind: prompt
+- path: .github/prompts/jira/jira-setup.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-triage-issues.prompt.md
   kind: prompt
@@ -350,6 +343,8 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/bicep/bicep.instructions.md
   kind: instruction
+- path: .github/instructions/coding-standards/code-review-telemetry.instructions.md
+  kind: instruction
 - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
   kind: instruction
   maturity: experimental
@@ -376,137 +371,32 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/uv-projects.instructions.md
   kind: instruction
-- path: .github/instructions/design-thinking/dt-canonical-deck.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-image-prompt-generation.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-04-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-05-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-06-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-09-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-implement-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-planning-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-review-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
-  kind: instruction
-  maturity: preview
 - path: .github/instructions/experimental/experiment-designer.instructions.md
   kind: instruction
+- path: .github/instructions/experimental/graphify.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/experimental/pptx.instructions.md
   kind: instruction
 - path: .github/instructions/github/community-interaction.instructions.md
@@ -529,6 +419,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/pull-request.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/task-implementor-telemetry.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/jira/jira-backlog-discovery.instructions.md
@@ -540,6 +432,22 @@ items:
 - path: .github/instructions/jira/jira-backlog-update.instructions.md
   kind: instruction
 - path: .github/instructions/jira/jira-wit-planning.instructions.md
+  kind: instruction
+- path: .github/instructions/project-planning/adr-byo-template.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/project-planning/adr-creation-telemetry.instructions.md
+  kind: instruction
+- path: .github/instructions/project-planning/adr-handoff.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/project-planning/adr-identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/project-planning/adr-standards.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/project-planning/prd-builder-telemetry.instructions.md
   kind: instruction
 - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
   kind: instruction
@@ -553,6 +461,8 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
+  kind: instruction
 - path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
   kind: instruction
   maturity: experimental
@@ -574,6 +484,8 @@ items:
 - path: .github/instructions/security/security-model.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/security-planner-telemetry.instructions.md
+  kind: instruction
 - path: .github/instructions/security/sssc-assessment.instructions.md
   kind: instruction
   maturity: experimental
@@ -589,6 +501,8 @@ items:
 - path: .github/instructions/security/sssc-identity.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/sssc-planner-telemetry.instructions.md
+  kind: instruction
 - path: .github/instructions/security/sssc-standards.instructions.md
   kind: instruction
   maturity: experimental
@@ -605,6 +519,8 @@ items:
   kind: instruction
   maturity: experimental
 - path: .github/instructions/shared/story-quality.instructions.md
+  kind: instruction
+- path: .github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md
   kind: instruction
 - path: .github/skills/accessibility/aria-apg
   kind: skill
@@ -624,8 +540,23 @@ items:
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
+- path: .github/skills/design-thinking/dt-coaching-foundation
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-curriculum
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-methods
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-rpi-integration
+  kind: skill
+  maturity: preview
 - path: .github/skills/experimental/customer-card-render
   kind: skill
+- path: .github/skills/experimental/mural
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/powerpoint
   kind: skill
 - path: .github/skills/experimental/tts-voiceover
@@ -644,6 +575,9 @@ items:
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
+- path: .github/skills/project-planning/adr-author
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
@@ -672,6 +606,8 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/shared/pr-reference
+  kind: skill
+- path: .github/skills/shared/telemetry-foundations
   kind: skill
 display:
   featured: true

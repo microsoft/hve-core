@@ -267,56 +267,8 @@ function Invoke-PluginGeneration {
         # Generate plugin directory structure (overwrites in place)
         $filteredCollection = Select-CollectionItemsByChannel -Collection $collection -Channel $Channel
 
-        $result = Write-PluginDirectory -Collection $filteredCollection `
-            -PluginsDir $pluginsDir `
-            -RepoRoot $RepoRoot `
-            -Version $repoVersion `
-            -Maturity $collectionMaturity `
-            -DryRun:$DryRun `
-            -SymlinkCapable:$symlinkCapable
-
-        # Orphan cleanup in Refresh mode
-        if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
-            $generatedFiles = $result.GeneratedFiles
-            $existingFiles = [System.Collections.Generic.List[string]]::new()
-            $scanQueue = [System.Collections.Generic.Queue[string]]::new()
-            $scanQueue.Enqueue($pluginDir)
-            while ($scanQueue.Count -gt 0) {
-                $currentDir = $scanQueue.Dequeue()
-                foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
-                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
-                        $scanQueue.Enqueue($entry.FullName)
-                    }
-                    else {
-                        $existingFiles.Add($entry.FullName)
-                    }
-                }
-            }
-            foreach ($existingFile in $existingFiles) {
-                if (-not $generatedFiles.Contains($existingFile)) {
-                    if ($DryRun) {
-                        Write-Host "  [DRY RUN] Would remove orphan: $existingFile" -ForegroundColor Yellow
-                    }
-                    else {
-                        Remove-Item -LiteralPath $existingFile -Force -ErrorAction Stop
-                        Write-Verbose "Removed orphan file: $existingFile"
-                    }
-                }
-            }
-            # Remove empty directories bottom-up
-            if (-not $DryRun) {
-                Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
-                    Where-Object { -not $_.LinkType } |
-                    Sort-Object { $_.FullName.Length } -Descending |
-                    Where-Object { @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0 } |
-                    ForEach-Object {
-                        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-                        Write-Verbose "Removed empty directory: $($_.FullName)"
-                    }
-            }
-        }
-
-        #region Update collection.md artifact tables
+        # Refresh collection.md before generating the plugin README so the
+        # embedded Overview block uses current artifact descriptions.
         if (-not $DryRun) {
             $collectionMdPath = Join-Path $collectionsDir "$id.collection.md"
             if (Test-Path $collectionMdPath) {
@@ -382,7 +334,55 @@ function Invoke-PluginGeneration {
                 }
             }
         }
-        #endregion
+
+        $result = Write-PluginDirectory -Collection $filteredCollection `
+            -PluginsDir $pluginsDir `
+            -RepoRoot $RepoRoot `
+            -Version $repoVersion `
+            -Maturity $collectionMaturity `
+            -DryRun:$DryRun `
+            -SymlinkCapable:$symlinkCapable
+
+        # Orphan cleanup in Refresh mode
+        if ($Refresh -and (Test-Path -LiteralPath $pluginDir)) {
+            $generatedFiles = $result.GeneratedFiles
+            $existingFiles = [System.Collections.Generic.List[string]]::new()
+            $scanQueue = [System.Collections.Generic.Queue[string]]::new()
+            $scanQueue.Enqueue($pluginDir)
+            while ($scanQueue.Count -gt 0) {
+                $currentDir = $scanQueue.Dequeue()
+                foreach ($entry in Get-ChildItem -LiteralPath $currentDir -Force) {
+                    if ($entry.PSIsContainer -and -not $entry.LinkType) {
+                        $scanQueue.Enqueue($entry.FullName)
+                    }
+                    else {
+                        $existingFiles.Add($entry.FullName)
+                    }
+                }
+            }
+            foreach ($existingFile in $existingFiles) {
+                if (-not $generatedFiles.Contains($existingFile)) {
+                    if ($DryRun) {
+                        Write-Host "  [DRY RUN] Would remove orphan: $existingFile" -ForegroundColor Yellow
+                    }
+                    else {
+                        Remove-Item -LiteralPath $existingFile -Force -ErrorAction Stop
+                        Write-Verbose "Removed orphan file: $existingFile"
+                    }
+                }
+            }
+            # Remove empty directories bottom-up
+            if (-not $DryRun) {
+                Get-ChildItem -LiteralPath $pluginDir -Recurse -Directory |
+                    Where-Object { -not $_.LinkType } |
+                    Sort-Object { $_.FullName.Length } -Descending |
+                    Where-Object { @(Get-ChildItem -LiteralPath $_.FullName).Count -eq 0 } |
+                    ForEach-Object {
+                        Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
+                        Write-Verbose "Removed empty directory: $($_.FullName)"
+                    }
+            }
+        }
 
         $itemCount = $filteredCollection.items.Count
         $totalAgents += $result.AgentCount

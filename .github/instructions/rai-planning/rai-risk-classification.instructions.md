@@ -1,5 +1,5 @@
 ---
-description: 'Risk classification screening for Phase 2: prohibited uses gate, risk indicator assessment, and depth tier assignment - Brought to you by microsoft/hve-core'
+description: 'Risk classification screening for Phase 2: prohibited uses gate, risk indicator assessment, and depth tier assignment'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

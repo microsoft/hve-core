@@ -3,7 +3,6 @@
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
   "version": "3.3.101",
   "agents": [
-    "agents/accessibility/",
     "agents/hve-core/",
     "agents/hve-core/subagents/",
     "agents/project-planning/",
@@ -16,6 +15,8 @@
   ],
   "skills": [
     "skills/accessibility/",
+    "skills/experimental/",
+    "skills/project-planning/",
     "skills/shared/"
   ]
 }

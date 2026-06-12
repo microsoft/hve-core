@@ -1,6 +1,6 @@
 ---
 name: Prompt Builder
-description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
+description: 'Prompt engineering assistant for creating and validating prompts, agents, and instructions'
 disable-model-invocation: true
 agents:
   - Prompt Tester

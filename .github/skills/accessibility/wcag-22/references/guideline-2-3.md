@@ -46,7 +46,3 @@ Motion animation triggered by interaction can be disabled, unless the animation 
 * Confirm the user can disable scroll-linked or parallax animations through a setting where the OS preference is unavailable.
 
 Source: <https://www.w3.org/TR/WCAG22/#animation-from-interactions>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

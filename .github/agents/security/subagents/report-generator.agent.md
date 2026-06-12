@@ -1,6 +1,6 @@
 ---
 name: Report Generator
-description: "Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory"
+description: "Collates verified security skill findings into a comprehensive vulnerability report"
 tools:
   - edit/createDirectory
   - edit/createFile
@@ -31,42 +31,26 @@ Collate verified findings from all skill assessments into a single vulnerability
 * Report date in ISO 8601 format (YYYY-MM-DD).
 * Comma-separated list of skill names assessed.
 * (Optional) Mode: `audit`, `diff`, or `plan`. Determines report format and filename pattern. Defaults to `audit`.
-* (Optional) Domain: `security` or `accessibility`. Determines report directory, filename pattern, and report format. Defaults to `security`.
-* (Optional) Repository slug used in accessibility filenames (lowercase repository name with non-alphanumeric characters replaced by hyphens). Required when Domain is `accessibility`.
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
 
 ## Constants
 
-Report directory (security domain): `.copilot-tracking/security`
+Report directory: `.copilot-tracking/security`
 
-Report directory (accessibility domain): `.copilot-tracking/accessibility`
+Report filename pattern (audit): `security-report-{{NNN}}.md`
 
-Report filename pattern (security, audit): `security-report-{{NNN}}.md`
+Report filename pattern (diff): `security-report-diff-{{NNN}}.md`
 
-Report filename pattern (security, diff): `security-report-diff-{{NNN}}.md`
+Report filename pattern (plan): `plan-risk-assessment-{{NNN}}.md`
 
-Report filename pattern (security, plan): `plan-risk-assessment-{{NNN}}.md`
+Report path pattern (audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
 
-Report filename pattern (accessibility, audit): `accessibility-report-{{REPO}}-{{YYYYMMDD}}.md`
+Report path pattern (diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
 
-Report filename pattern (accessibility, diff): `accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
+Report path pattern (plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
 
-Report filename pattern (accessibility, plan): `accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
-
-Report path pattern (security, audit): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-{{NNN}}.md`
-
-Report path pattern (security, diff): `.copilot-tracking/security/{{YYYY-MM-DD}}/security-report-diff-{{NNN}}.md`
-
-Report path pattern (security, plan): `.copilot-tracking/security/{{YYYY-MM-DD}}/plan-risk-assessment-{{NNN}}.md`
-
-Report path pattern (accessibility, audit): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-{{REPO}}-{{YYYYMMDD}}.md`
-
-Report path pattern (accessibility, diff): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
-
-Report path pattern (accessibility, plan): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
-
-Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, incremented based on existing reports for the same date and mode (security domain only). `{{REPO}}` is the repository slug. `{{YYYYMMDD}}` is the report date with hyphens removed.
+Where `{{NNN}}` is a zero-padded three-digit sequence number starting at `001`, incremented based on existing reports for the same date and mode.
 
 ## Report Formats
 
@@ -80,12 +64,10 @@ Read the `security-reviewer-formats` skill for full format specifications before
 
 ### Pre-requisite: Setup
 
-1. Resolve the report directory based on Domain: `.copilot-tracking/security` when Domain is `security`, `.copilot-tracking/accessibility` when Domain is `accessibility`. Create the directory if it does not exist.
+1. Create the `.copilot-tracking/security` directory if it does not exist.
 2. Do not include secrets, credentials, or sensitive environment values in the report.
 
 ### Step 1: Determine Sequence Number
-
-Applies to security domain only. Accessibility-domain filenames embed the repository slug and date, so no sequence number is computed; skip this step and use the resolved date directly when Domain is `accessibility`.
 
 1. Select the filename prefix based on mode:
    * When mode is `audit`: search for `security-report-*.md`.
@@ -143,14 +125,11 @@ Applies to security domain only. Accessibility-domain filenames embed the reposi
 
 ### Step 4: Write Report File
 
-1. Select the report format and filename pattern based on mode and Domain:
-   * When Domain is `security` and mode is `audit`: assemble the report following VULN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-{NNN}.md`.
-   * When Domain is `security` and mode is `diff`: assemble the report following VULN_REPORT_V1 with diff mode qualifiers and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-diff-{NNN}.md`.
-   * When Domain is `security` and mode is `plan`: assemble the report following PLAN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/plan-risk-assessment-{NNN}.md`.
-   * When Domain is `accessibility` and mode is `audit`: assemble the report following VULN_REPORT_V1 with accessibility terminology (success criteria, conformance levels, assistive-technology impacts) and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-{REPO}-{YYYYMMDD}.md`.
-   * When Domain is `accessibility` and mode is `diff`: assemble the report following VULN_REPORT_V1 with accessibility terminology and diff mode qualifiers and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-report-diff-{REPO}-{YYYYMMDD}.md`.
-   * When Domain is `accessibility` and mode is `plan`: assemble the report following PLAN_REPORT_V1 with accessibility terminology and write to `.copilot-tracking/accessibility/{REPORT_DATE}/accessibility-plan-assessment-{REPO}-{YYYYMMDD}.md`.
-2. Write the assembled report to the resolved path where `{REPORT_DATE}` is the resolved date, `{NNN}` is the resolved sequence number (security domain only), `{REPO}` is the repository slug (accessibility domain only), and `{YYYYMMDD}` is the report date with hyphens removed (accessibility domain only).
+1. Select the report format and filename pattern based on mode:
+   * When mode is `audit`: assemble the report following VULN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-{NNN}.md`.
+   * When mode is `diff`: assemble the report following VULN_REPORT_V1 with diff mode qualifiers and write to `.copilot-tracking/security/{REPORT_DATE}/security-report-diff-{NNN}.md`.
+   * When mode is `plan`: assemble the report following PLAN_REPORT_V1 and write to `.copilot-tracking/security/{REPORT_DATE}/plan-risk-assessment-{NNN}.md`.
+2. Write the assembled report to the resolved path where `{REPORT_DATE}` and `{NNN}` are the resolved date and sequence number.
 3. Print a one-line confirmation: "Report saved → {resolved_report_path}".
 
 ## Response Format

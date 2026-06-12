@@ -302,7 +302,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Dialog and supporting patterns, 
 * Exactly one `<main>` (or `role="main"`) appears on the page.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

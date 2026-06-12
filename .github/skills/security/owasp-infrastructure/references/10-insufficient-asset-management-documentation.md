@@ -88,7 +88,3 @@ Damaged systems are rebuilt without extended disruption.
 * Schedule recurring inventory audits and automated vulnerability scanning.
 * Create and maintain documentation for all IT processes, responsibilities, and configurations.
 * Assign ownership for inventory accuracy and documentation currency.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

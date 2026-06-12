@@ -118,7 +118,3 @@ infrastructure.
 * Extend log retention periods to meet organizational incident investigation requirements.
 * Ensure programmatic access is logged and monitored at parity with human access.
 * Conduct periodic log coverage reviews to catch newly-added systems or configuration drifts.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

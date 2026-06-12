@@ -142,7 +142,3 @@ Source: ETSI / CEN / CENELEC, EN 301 549 V3.2.1, <https://www.etsi.org/deliver/e
 Use the roll-up table to identify the EN 301 549 clauses that apply to a given product context (web, document, software, hardware, voice, video, support, or relay/emergency). Follow each reference link to the per-clause-group file for the paraphrased requirement, applicability scope, WCAG cross-reference, and assessment heuristics. When a row carries a `sc-<n>-<m>-<k>` cross-reference, consult the sibling [`wcag-22`](../wcag-22/SKILL.md) skill for the underlying technical detail — Clauses 9, 10, and 11 inherit WCAG 2.1 Level A and AA wholesale into web, non-web document, and software contexts respectively, so most accessibility implementation work happens against the WCAG criterion text with the EN 301 549 clause adding only the regulatory framing.
 
 For the precise normative wording of any clause, consult the official ETSI document at <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>. The paraphrased summaries in this skill are not a substitute for the upstream standard when a regulator, procurement authority, or court requires verbatim conformance text.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

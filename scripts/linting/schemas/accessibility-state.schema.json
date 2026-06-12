@@ -12,7 +12,8 @@
     "riskClassification",
     "evidenceRegister",
     "gates",
-    "planRiskAssessment"
+      "planRiskAssessment",
+      "noticeLog"
   ],
   "properties": {
     "project": {
@@ -179,7 +180,7 @@
         },
         "entryMode": {
           "type": "string",
-          "enum": ["capture", "from-prd", "from-security-plan", "from-rai-plan"],
+          "enum": ["capture", "from-prd", "from-brd", "from-security-plan", "from-rai-plan"],
           "description": "How the assessment was initiated"
         },
         "surfaces": {
@@ -297,7 +298,7 @@
     },
     "riskClassification": {
       "type": "object",
-      "required": ["tier", "screeningSignals"],
+        "required": ["screeningSignals"],
       "properties": {
         "tier": {
           "type": "string",

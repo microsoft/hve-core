@@ -1,6 +1,6 @@
 ---
 name: owasp-mcp
-description: OWASP MCP Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in Model Context Protocol environments - Brought to you by microsoft/hve-core.
+description: OWASP MCP Top 10 knowledge base for identifying, assessing, and remediating Model Context Protocol security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -39,7 +39,3 @@ that an agent can query to identify, assess, and remediate MCP security risks.
 - `references/` — the MCP Top 10 normative documents.
   - `00-vulnerability-index.md` — index of all vulnerability identifiers, severities, and cross-references.
   - `01` through `10` — one document per vulnerability aligned with OWASP MCP numbering.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

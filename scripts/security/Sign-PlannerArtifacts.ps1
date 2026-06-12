@@ -61,6 +61,11 @@
 .NOTES
     The manifest excludes its own file and any cosign signature files (.sig, .bundle) from the
     hash inventory to avoid circular references.
+
+    Under the BySessionPath parameter set, the manifest's projectSlug field is populated from
+    the session directory leaf rather than a canonical project slug. The field name is retained
+    for back-compatibility with existing RAI manifest consumers; callers that distinguish
+    between project slug and session label should rely on sessionPath instead.
 #>
 
 [CmdletBinding(DefaultParameterSetName = 'ByProjectSlug')]

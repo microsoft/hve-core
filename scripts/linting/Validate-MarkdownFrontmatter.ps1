@@ -29,7 +29,8 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
-        'scripts/tests/Fixtures/**',
+        'scripts/tests/fixtures/**',
+        'scripts/tests/linting/fixtures/**',
         'extension/README.md',
         'extension/README.*.md',
         'extension/templates/README.template.md',

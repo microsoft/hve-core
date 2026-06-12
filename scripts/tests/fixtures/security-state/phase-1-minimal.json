@@ -36,6 +36,7 @@
   "raiEnabled": false,
   "raiScope": "none",
   "raiTier": "none",
+  "raiRecommendationShown": false,
   "raiPlannerDispatched": false,
   "aiComponents": []
 }

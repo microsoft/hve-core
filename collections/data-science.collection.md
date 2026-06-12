@@ -11,30 +11,30 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Chat Agents
 
-| Name                         | Description                                                                                                                                                                                                                                                           |
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **eval-dataset-creator**     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                                                                                                               |
-| **gen-data-spec**            | Generate comprehensive data dictionaries, machine-readable data profiles, and objective summaries for downstream analysis (EDA notebooks, dashboards) through guided discovery                                                                                        |
-| **gen-jupyter-notebook**     | Create structured exploratory data analysis Jupyter notebooks from available data sources and generated data dictionaries                                                                                                                                             |
-| **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                                                                                                                              |
-| **rai-planner**              | Responsible AI assessment planning agent with 6-phase conversational workflow. Guides planning against NIST AI RMF 1.0 as the default evaluation framework. Prepares RAI security model, impact assessment, control surface catalog, and dual-format backlog handoff. |
-| **researcher-subagent**      | Research subagent using search tools, read tools, fetch web page, github repo, and mcp tools                                                                                                                                                                          |
-| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                                                                                                                         |
+| Name                         | Description                                                                                                                                                            |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **eval-dataset-creator**     | Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation                                                                |
+| **gen-data-spec**            | Generate data dictionaries, machine-readable data profiles, and summaries for downstream EDA notebooks and dashboards                                                  |
+| **gen-jupyter-notebook**     | Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries                                                                       |
+| **gen-streamlit-dashboard**  | Develop a multi-page Streamlit dashboard                                                                                                                               |
+| **rai-planner**              | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff |
+| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                            |
+| **test-streamlit-dashboard** | Automated testing for Streamlit dashboards using Playwright with issue tracking and reporting                                                                          |
 
 ### Prompts
 
-| Name                            | Description                                                                                                                                     |
-|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-capture**                 | Initiate responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
-| **rai-plan-from-prd**           | Initiate responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
-| **rai-plan-from-security-plan** | Initiate responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
-| **synth-data-generate**         | Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships                                       |
+| Name                            | Description                                                                                                                                  |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| **rai-capture**                 | Start responsible AI assessment planning from existing knowledge using the RAI Planner agent in capture mode                                 |
+| **rai-plan-from-prd**           | Start responsible AI assessment planning from PRD/BRD artifacts using the RAI Planner agent in from-prd mode                                 |
+| **rai-plan-from-security-plan** | Start responsible AI assessment planning from a completed Security Plan using the RAI Planner agent in from-security-plan mode (recommended) |
+| **synth-data-generate**         | Generate synthetic data for any subject with realistic patterns and relationships                                                            |
 
 ### Instructions
 
 | Name                                     | Description                                                                                                                                                                                                                                                 |
 |------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **coding-standards/python-script**       | Instructions for Python scripting implementation                                                                                                                                                                                                            |
+| **coding-standards/python-script**       | Python scripting conventions                                                                                                                                                                                                                                |
 | **coding-standards/uv-projects**         | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | **rai-planning/rai-backlog-handoff**     | RAI review and backlog handoff for Phase 6: review rubric, RAI review summary, dual-format backlog generation                                                                                                                                               |
 | **rai-planning/rai-capture-coaching**    | Exploration-first questioning techniques for RAI capture mode adapted from Design Thinking research methods                                                                                                                                                 |

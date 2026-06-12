@@ -1,5 +1,5 @@
 ---
-description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core"
+description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
@@ -147,6 +147,8 @@ Derive the risk rating by locating the Likelihood row and the Impact column in t
 ### Assessment Guidance
 
 Likelihood and Impact are assessed collaboratively with the user during Phase 4 questioning. Use ❓ for unassessed values. Each threat must have at least one mitigation strategy, and each mitigation should reference at least one standards control.
+
+Before finalizing ratings, confirm with the user that the resulting Critical/High/Medium/Low/Informational distribution reflects their risk appetite. These buckets derive from two coarse three-point axes assessed subjectively, so treat them as directional priorities rather than calibrated scores.
 
 ## Data Flow Analysis
 

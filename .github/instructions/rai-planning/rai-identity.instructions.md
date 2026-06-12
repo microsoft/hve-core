@@ -138,6 +138,14 @@ State persists across sessions in a JSON file at `.copilot-tracking/rai-plans/{p
   "impactAssessmentGenerated": false,
   "evidenceRegisterComplete": false,
   "handoffGenerated": { "ado": false, "github": false },
+  "phaseGates": {
+    "phase1": { "gate": "summary-and-advance" },
+    "phase2": { "gate": "hard", "confirmedAt": null },
+    "phase3": { "gate": "hard", "confirmedAt": null },
+    "phase4": { "gate": "summary-and-advance" },
+    "phase5": { "gate": "summary-and-advance" },
+    "phase6": { "gate": "hard", "confirmedAt": null }
+  },
   "gateResults": {
     "prohibitedUsesGate": {
       "status": "pending",

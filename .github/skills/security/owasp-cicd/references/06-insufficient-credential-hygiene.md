@@ -110,7 +110,3 @@ discovers the credentials and uses them to access the production database.
 * Rebuild container images to eliminate secrets from intermediate layers using multi-stage builds.
 * Establish and enforce a credential rotation policy with automated tracking and alerting.
 * Replace shared credentials with dedicated, individually-scoped credentials.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

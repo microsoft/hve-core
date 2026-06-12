@@ -548,6 +548,4 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * Chain agents together for complex tasks
 * Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
 
----
-
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

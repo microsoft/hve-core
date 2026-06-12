@@ -1,6 +1,6 @@
 ---
 name: Codebase Profiler
-description: "Scans the repository to build a technology profile and identify which security skills apply to the codebase"
+description: "Scans the repository to build a technology profile and select applicable security skills"
 tools:
   - search/changes
   - search/codebase
@@ -34,7 +34,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Read the applicable accessibility skill by name (e.g., `wcag-22`, `aria-apg`, `coga`, `section-508`, `en-301-549`).
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`).
 
 ### Technology Signals
 
@@ -81,66 +81,6 @@ secure-by-design:
   - "CI/CD pipeline configuration (GitHub Actions, Azure Pipelines, Jenkins)"
   - "Infrastructure as code (Terraform, Bicep, CloudFormation)"
   - "Deployment configuration (Dockerfile, Kubernetes manifests)"
-wcag-22:
-  - "HTML/JS/CSS files"
-  - "Web UI components (React, Vue, Angular, Svelte, Blazor)"
-  - "Server-side templates (Razor, JSX, ERB, Twig, Jinja, Handlebars)"
-  - "Static site generators (Next.js, Nuxt, Astro, Hugo, Jekyll)"
-  - "Forms, navigation, media, or canvas/SVG markup"
-aria-apg:
-  - "Custom interactive components (dialogs, menus, comboboxes, tabs, treeviews, carousels)"
-  - "role=\"...\" or aria-* attribute usage"
-  - "Headless UI libraries (Radix UI, Headless UI, Reach UI, Reakit)"
-  - "Custom widget code that re-implements native control behavior"
-coga:
-  - "Form-heavy or wizard-driven user flows"
-  - "Long-form content, documentation portals, or e-learning surfaces"
-  - "Time-limited interactions (sessions, transactions, OTP entry)"
-  - "Error recovery, confirmation, or undo patterns"
-section-508:
-  - "US federal or federally-funded delivery context"
-  - "Public-facing government web content or ICT procurement"
-  - "Authoring tools, electronic documents (PDF, DOCX, PPTX), or hardware/software ICT"
-  - "Section 508, Revised 508 Standards, or VPAT references in repo docs"
-en-301-549:
-  - "European Union public sector delivery context"
-  - "Mobile applications (Android, iOS) targeting EU users"
-  - "Documents, software, hardware, or ICT services subject to EN 301 549"
-  - "EAA (European Accessibility Act) or EN 301 549 references in repo docs"
-```
-
-### Accessibility Profile Fields
-
-Accessibility skills require additional context beyond the general technology signals. Capture the following fields from the scan and surface them in the profile under the technology summary or applicable skills sections.
-
-```yaml
-uiFrameworkFamily:
-  - "web-spa"            # React, Vue, Angular, Svelte, Blazor WASM, etc.
-  - "web-ssr"            # Next.js, Nuxt, Remix, Astro, Razor Pages, Django, Rails, etc.
-  - "web-static"         # Hugo, Jekyll, plain HTML
-  - "native-mobile"      # Android (Kotlin/Java), iOS (Swift/Obj-C)
-  - "cross-platform-mobile" # React Native, Flutter, MAUI, Xamarin
-  - "desktop"            # Electron, WPF, WinUI, Qt, GTK
-  - "document-authoring" # PDF/DOCX/PPTX generators
-  - "cli-only"           # No GUI surface
-wcagVersionTarget:
-  - "2.0"
-  - "2.1"
-  - "2.2"
-  - "unspecified"
-assistiveTechnologyTargets:
-  - "screen-reader"      # NVDA, JAWS, VoiceOver, TalkBack, Narrator
-  - "voice-control"      # Voice Access, Voice Control, Dragon
-  - "switch-control"
-  - "screen-magnifier"
-  - "keyboard-only"
-mobileTargetPlatforms:
-  - "android"
-  - "ios"
-  - "none"
-componentLibrary:
-  - "<name and version of UI component library, e.g. MUI 5, Fluent UI 9, shadcn/ui, Chakra, Bootstrap 5, Material 3, Ionic>"
-  - "none"
 ```
 
 ## Codebase Profile Format
@@ -166,10 +106,6 @@ Return the profile using this structure. Replace each placeholder with discovere
 ### Applicable Skills
 
 <SKILL_LIST>
-
-### Accessibility Profile
-
-<ACCESSIBILITY_PROFILE>
 ```
 
 Where:
@@ -181,7 +117,6 @@ Where:
 * DIRECTORIES: Bullet list of key directories with brief descriptions. In plan mode, directories referenced in the plan or omitted when the plan contains no directory references.
 * TECH_SUMMARY: Two to four sentence overview of the technology stack. In plan mode, summarize the technology landscape described by the plan.
 * SKILL_LIST: YAML-style list where each item is a skill name with a brief justification for inclusion.
-* ACCESSIBILITY_PROFILE: YAML-style block surfacing the accessibility profile fields (`uiFrameworkFamily`, `wcagVersionTarget`, `assistiveTechnologyTargets`, `mobileTargetPlatforms`, `componentLibrary`) with discovered or inferred values. Omit this section entirely when no accessibility skill is applicable. In plan mode, mark values as theoretical when derived from plan text.
 
 ## Required Steps
 
@@ -212,12 +147,7 @@ Run parallel file searches to discover technology signals across the full codeba
    * "LLM API calls OR prompt templates OR OpenAI OR Anthropic OR langchain"
    * "MCP server OR MCP client OR MCP tool definition"
    * "agent pipeline OR multi-agent OR tool-use loop OR memory store"
-6. Search for accessibility-relevant UI signals:
-   * `**/*.html`, `**/*.jsx`, `**/*.tsx`, `**/*.vue`, `**/*.svelte`, `**/*.razor`, `**/*.cshtml`, `**/*.erb`, `**/*.twig`, `**/*.j2`, `**/*.hbs`
-   * `**/AndroidManifest.xml`, `**/Info.plist`, `**/pubspec.yaml`, `**/MainActivity.*`, `**/AppDelegate.*`
-   * Component-library manifests: package.json entries for `@mui/*`, `@fluentui/*`, `@chakra-ui/*`, `@radix-ui/*`, `@headlessui/*`, `bootstrap`, `ionic`, `flutter`, `react-native-*`
-   * Run semantic searches for ARIA, focus, contrast, and assistive-technology patterns: "aria-* attributes OR role attribute OR tabindex OR focus management"; "alt text OR aria-label OR aria-describedby OR semantic landmark"; "screen reader OR a11y OR accessibility test"
-7. Merge all search results into a unified file inventory.
+6. Merge all search results into a unified file inventory.
 
 #### Diff Mode
 

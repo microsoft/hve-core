@@ -28,7 +28,7 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 
 ### Phase 1: Discovery (`discovery`)
 
-* Entry: agent invoked via entry prompt (`capture`, `from-prd`, `from-security-plan`, or `from-rai-plan` mode)
+* Entry: agent invoked via entry prompt (`capture`, `from-prd`, `from-brd`, `from-security-plan`, or `from-rai-plan` mode)
 * Activities: identify project scope, delivery surfaces (`web`, `mobile`, `desktop`, `document`, `voice`), target audiences and personas, regulatory drivers (`us-section-508`, `eu-eaa`, `uk-eqa`, `ca-aoda`, `other`), existing accessibility posture (prior audits, conformance reports, accessibility statements), whether the project includes AI-generated UI, alt text, or captions
 * Exit: scoping questions answered or explicitly skipped; `project` block populated; `riskClassification.screeningSignals` seeded
 * Artifacts: `state.json` `project` and `riskClassification.screeningSignals` populated
@@ -69,13 +69,13 @@ Each phase has entry criteria, activities, exit criteria, artifacts produced, an
 ### Phase 6: Backlog Handoff (`backlog-handoff`)
 
 * Entry: Phase 5 complete (evidence register populated)
-* Activities: apply the review rubric and emit dual-format ADO + GitHub backlog work items per `accessibility-backlog-handoff.instructions.md`; cross-link VPAT and EAA evidence entries to the SSSC Planner state when a `ssscPlanRef` is set; emit the disclaimer block (the L7 lever pins the disclaimer text to this file only)
+* Activities: apply the review rubric and emit dual-format ADO + GitHub backlog work items per `accessibility-backlog-handoff.instructions.md`; cross-link VPAT and EAA evidence entries to the SSSC Planner state when a `ssscPlanRef` is set; emit the Phase 6 professional-review reminder and include the disclaimer block in generated handoff artifacts
 * Exit: backlog work items reviewed by the user and handoff artifacts written
 * Artifacts: dual-format backlog files plus disclaimer block; `state.json` `gates.backlog-handoff.confirmed = true`
 
 ## Entry Modes
 
-Four entry modes determine Phase 1 initialization. All modes converge at Phase 2 once discovery completes. The mode values match the `project.entryMode` enum in the state schema.
+Five entry modes determine Phase 1 initialization. All modes converge at Phase 2 once discovery completes. The mode values match the `project.entryMode` enum in the state schema.
 
 ### `capture`
 
@@ -84,6 +84,10 @@ Fresh assessment. Initialize a new `state.json` with `project.entryMode = "captu
 ### `from-prd`
 
 PRD-seeded assessment. Scan `.copilot-tracking/` for PRD artifacts. Extract project scope, target users, delivery surfaces, regulatory drivers, and any accessibility commitments. Pre-populate Phase 1 state fields in `project`. Present extracted information to the user for confirmation or refinement before advancing.
+
+### `from-brd`
+
+BRD-seeded assessment. Scan `.copilot-tracking/` for BRD artifacts. Extract business capabilities, stakeholder groups, delivery channels, regulatory drivers, procurement or contractual accessibility commitments, and any non-functional requirements that affect accessibility scope. Pre-populate Phase 1 state fields in `project`. Present extracted information to the user for confirmation or refinement before advancing.
 
 ### `from-security-plan`
 
@@ -124,8 +128,8 @@ On first invocation, create the project directory and `state.json` with discover
 * `controlMappings`, `evidenceRegister`, `riskClassification.screeningSignals`, `planRiskAssessment.tradeoffs`, `planRiskAssessment.watchlist`, `planRiskAssessment.deferredMitigations` initialised to empty arrays
 * `riskClassification.tier` left unset until Phase 4
 * `gates` initialised with all six phase keys set to `{ "confirmed": false }`
-* `disclaimerShownAt` initialised to `null`
-* `noticeLog` initialised to an empty array and appended when the Phase 6 handoff disclaimer or a professional-review reminder is emitted
+* `disclaimerShownAt` initialised to `null`, then set when the session-start disclaimer is displayed per the shared base cadence
+* `noticeLog` initialised to an empty array and appended when the session-start disclaimer, Phase 6 output disclaimer, or a professional-review reminder is emitted
 
 ### State Transitions
 
@@ -171,7 +175,9 @@ Evidence-register entries are reusable across planners by stable `id` and `sourc
 
 ## Disclaimer Handling
 
-The planner emits the user-facing disclaimer block only at Phase 6 (Backlog Handoff). The disclaimer text and emission rules live in `accessibility-backlog-handoff.instructions.md`. The planner records the emission timestamp in `state.disclaimerShownAt` so resumed sessions do not re-display it, and appends a `noticeLog` entry with `noticeType: "handoff-disclaimer"` for auditability.
+The planner follows the shared base's Session Start Display cadence. On the first turn of every session, emit the canonical accessibility disclaimer block from `accessibility-backlog-handoff.instructions.md` before Phase 1 work begins. Record the timestamp in `state.disclaimerShownAt` and append a `noticeLog` entry with `noticeType: "session-start-disclaimer"`.
+
+During Phase 6 (Backlog Handoff), include the same disclaimer block in generated handoff artifacts and surface the professional-review reminder before presenting the final handoff summary. Append a `noticeLog` entry with `noticeType: "handoff-disclaimer"` when the block is written to handoff artifacts and `noticeType: "professional-review-reminder"` when the reminder is displayed.
 
 This file intentionally does not restate disclaimer text. The L7 lever pins the disclaimer copy to a single source-of-truth file so wording changes do not fan out across the accessibility instruction set.
 

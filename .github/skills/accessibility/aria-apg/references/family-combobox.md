@@ -136,7 +136,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Combobox and Listbox patterns, <
 * `aria-disabled="true"` on options that cannot currently be selected.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/listbox/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -33,23 +33,31 @@
   "referencesProcessed": [
     {
       "filePath": "README.md",
+      "type": "standard",
       "processedInPhase": 1,
-      "sourceDescription": "Repository overview"
+      "sourceDescription": "Repository overview",
+      "status": "processed"
     },
     {
       "filePath": "SECURITY.md",
+      "type": "standard",
       "processedInPhase": 3,
-      "sourceDescription": "Security policy"
+      "sourceDescription": "Security policy",
+      "status": "processed"
     },
     {
       "filePath": "CONTRIBUTING.md",
+      "type": "standard",
       "processedInPhase": 5,
-      "sourceDescription": "Contribution guidelines"
+      "sourceDescription": "Contribution guidelines",
+      "status": "processed"
     },
     {
       "filePath": "CODE_OF_CONDUCT.md",
+      "type": "standard",
       "processedInPhase": 6,
-      "sourceDescription": "Code of conduct"
+      "sourceDescription": "Code of conduct",
+      "status": "processed"
     }
   ],
   "nextActions": [],
@@ -57,6 +65,7 @@
   "raiEnabled": true,
   "raiScope": "delegated",
   "raiTier": "comprehensive",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["llm-summarizer", "embedding-index", "agentic-orchestrator"]
 }

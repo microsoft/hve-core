@@ -9,13 +9,11 @@ agent: SSSC Planner
 
 ## Startup
 
-Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
 After the disclaimer, display the framework attribution `OpenSSF Scorecard • SLSA Build Levels • OpenSSF Best Practices Badge • Sigstore • SBOM`. Display both the disclaimer and the attribution before any questions or analysis.
 
-Activate the SSSC Planner in **from-security-plan mode** to extend an existing Security Planner assessment with supply chain security coverage.
-
-Activate the SSSC Planner in **from-security-plan mode** for project slug `${input:project-slug}`.
+Activate the SSSC Planner in **from-security-plan mode** for project slug `${input:project-slug}` to extend an existing Security Planner assessment with supply chain security coverage.
 
 ## Inputs
 

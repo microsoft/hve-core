@@ -1,5 +1,5 @@
 ---
-description: 'Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation - Brought to you by microsoft/hve-core'
+description: 'Divergent ideation for Design Thinking Method 4b with constraint-informed solution generation'
 agent: dt-coach
 argument-hint: "project-slug=... [constraintContext=...] [divergentTarget=...]"
 ---

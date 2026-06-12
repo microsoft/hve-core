@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -7,7 +7,7 @@
     open-ended discovery before any mention of option lists. Per-planner
     identity files inherit the cadence from this base.
 .NOTES
-    Effective case count: 1 (1 `It` block × `-ForEach $script:files` arity 1).
+    Effective case count: 1 (1 `It` block x `-ForEach $script:files` arity 1).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -15,7 +15,7 @@ $script:files = @(
     (Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md')
 )
 
-Describe 'Cadence Rule 5 enforces discovery-first ordering' {
+Describe 'Cadence Rule 5 enforces discovery-first ordering' -Tag 'Unit' {
     BeforeAll {
         function Get-Rule5Text {
             param([string]$Path)

@@ -27,7 +27,6 @@ Work item hierarchy maps from the security plan structure:
 * User Story: Per security concern or control.
 * Task: Implementation steps for a user story.
 * Bug: Existing vulnerabilities requiring remediation.
-
 ## Content Sanitization Protocol
 
 Content sanitization follows the five-rule protocol in `.github/skills/shared/backlog-templates/SKILL.md` under "Content Sanitization Protocol". Security-specific standards identifiers that must be preserved verbatim per rule 4: OWASP control IDs (for example, `A01:2025`), NIST CSF subcategory IDs (for example, `PR.AC-1`), CIS control numbers, threat IDs from the security model. Debug-mode output remains under `.copilot-tracking/security-plans/{slug}/debug/`.

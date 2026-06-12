@@ -1,4 +1,4 @@
-﻿#Requires -Modules Pester
+#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 <#
@@ -6,7 +6,7 @@
     Asserts tiered phase gates, notice fields, and `referencesProcessed` defaults
     in the inline JSON-literal state block of both planner identity files.
 .NOTES
-    Effective case count: 10 (5 `It` blocks × `-ForEach $script:identityFiles` arity 2).
+    Effective case count: 10 (5 `It` blocks x `-ForEach $script:identityFiles` arity 2).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -16,7 +16,7 @@ $script:identityFiles = @(
     (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
 )
 
-Describe 'Inline planner state schema defaults' {
+Describe 'Inline planner state schema defaults' -Tag 'Unit' {
     BeforeAll {
         function Get-InlineStateJson {
             param([string]$Path)

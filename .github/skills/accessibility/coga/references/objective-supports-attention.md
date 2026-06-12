@@ -71,7 +71,3 @@ Pages overloaded with information overwhelm users. Showing only what is needed f
 * Confirm content is not repeated within the same page.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-5>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

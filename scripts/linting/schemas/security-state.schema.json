@@ -4,7 +4,7 @@
   "title": "Security Planner State Schema",
   "description": "Schema for Security Planner state.json files under .copilot-tracking/security-plans/{project-slug}/",
   "type": "object",
-    "required": [
+  "required": [
     "projectSlug",
     "securityPlanFile",
     "currentPhase",
@@ -23,6 +23,7 @@
     "raiEnabled",
     "raiScope",
     "raiTier",
+    "raiRecommendationShown",
     "raiPlannerDispatched",
     "aiComponents"
   ],
@@ -164,9 +165,13 @@
       "enum": ["none", "basic", "standard", "comprehensive"],
       "description": "RAI assessment depth tier when raiEnabled is true"
     },
+    "raiRecommendationShown": {
+      "type": "boolean",
+      "description": "Whether the RAI assessment recommendation has been presented to the user in the handoff summary"
+    },
     "raiPlannerDispatched": {
       "type": "boolean",
-      "description": "Whether a dispatch to the RAI Planner has been issued"
+      "description": "Whether the user has actually started the RAI Planner handoff (not merely been shown the recommendation)"
     },
     "aiComponents": {
       "type": "array",
@@ -175,6 +180,22 @@
     }
   },
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "raiEnabled": { "const": false } }
+      },
+      "then": {
+        "properties": {
+          "raiScope": { "const": "none" },
+          "raiTier": { "const": "none" },
+          "raiRecommendationShown": { "const": false },
+          "raiPlannerDispatched": { "const": false },
+          "aiComponents": { "maxItems": 0 }
+        }
+      }
+    }
+  ],
   "$defs": {
     "noticeLogEntry": {
       "type": "object",
@@ -240,23 +261,33 @@
     },
     "referenceEntry": {
       "type": "object",
-      "required": ["filePath", "processedInPhase", "sourceDescription"],
+      "required": ["filePath", "type", "processedInPhase", "sourceDescription", "status"],
       "properties": {
         "filePath": {
           "type": "string",
           "minLength": 1,
           "description": "Workspace-relative path to the processed reference file"
         },
+        "type": {
+          "type": "string",
+          "enum": ["standard", "security-plan", "prd", "brd", "output-format"],
+          "description": "Category of the reference content"
+        },
         "processedInPhase": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 1,
           "maximum": 6,
-          "description": "Phase in which the reference was processed"
+          "description": "Phase in which the reference was processed, or null if pending"
         },
         "sourceDescription": {
           "type": "string",
           "minLength": 1,
           "description": "Short human-readable label describing the reference source"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "processed", "error"],
+          "description": "Processing status of the reference"
         }
       },
       "additionalProperties": false

@@ -86,7 +86,3 @@ management traffic, and implement regular monitoring and logging of network devi
 * Patch and update all management hardware and software on a defined schedule.
 * Establish recurring access rights reviews with documented approval workflows.
 * Enable comprehensive logging and alerting on management component activities.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

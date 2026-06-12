@@ -33,13 +33,17 @@
   "referencesProcessed": [
     {
       "filePath": "README.md",
+      "type": "standard",
       "processedInPhase": 1,
-      "sourceDescription": "Repository overview"
+      "sourceDescription": "Repository overview",
+      "status": "processed"
     },
     {
       "filePath": "SECURITY.md",
+      "type": "standard",
       "processedInPhase": 3,
-      "sourceDescription": "Security policy"
+      "sourceDescription": "Security policy",
+      "status": "processed"
     }
   ],
   "nextActions": ["Confirm Phase 4 hard gate before advancing to Phase 5"],
@@ -47,6 +51,7 @@
   "raiEnabled": true,
   "raiScope": "delegated",
   "raiTier": "standard",
+  "raiRecommendationShown": true,
   "raiPlannerDispatched": true,
   "aiComponents": ["llm-summarizer"]
 }

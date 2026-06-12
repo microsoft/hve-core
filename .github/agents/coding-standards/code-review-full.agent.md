@@ -1,11 +1,10 @@
 ---
 name: Code Review Full
-description: "Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report"
+description: "Orchestrator that runs functional and standards code reviews via subagents and produces a merged report"
 disable-model-invocation: true
 agents:
   - Code Review Functional
   - Code Review Standards
-  - Code Review Accessibility
 ---
 
 # Code Review Full Agent
@@ -14,7 +13,6 @@ Orchestrator that runs a two-phase code review on code changes by delegating to 
 
 1. Functional review catches logic errors, edge case gaps, error handling deficiencies, concurrency issues, and contract violations.
 2. Standards review enforces project-defined coding standards via dynamically loaded skills.
-3. Accessibility review catches conformance barriers across UI, markup, and document surfaces via dynamically loaded accessibility skills. It self-scopes from the changed files and skips when no UI surface is present.
 
 ## Inputs
 
@@ -45,11 +43,10 @@ Emit immediately after subagents are dispatched. When a subagent is unavailable,
 ```markdown
 **🔍 Code Review Full, Step 2: Parallel reviews dispatched**
 
-| Reviewer      | Status                 |
-|---------------|------------------------|
-| Functional    | ⏳ Running / ⏭️ Skipped |
-| Standards     | ⏳ Running / ⏭️ Skipped |
-| Accessibility | ⏳ Running / ⏭️ Skipped |
+| Reviewer   | Status                 |
+|------------|------------------------|
+| Functional | ⏳ Running / ⏭️ Skipped |
+| Standards  | ⏳ Running / ⏭️ Skipped |
 ```
 
 ### Step 2b Announcement
@@ -59,14 +56,11 @@ Emit after both subagents complete:
 ```markdown
 **🔍 Code Review Full, Step 2: Both reviews complete**
 
-| Reviewer      | Findings                                       | Verdict |
-|---------------|------------------------------------------------|---------|
-| Functional    | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
-| Standards     | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
-| Accessibility | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+| Reviewer   | Findings                                       | Verdict |
+|------------|------------------------------------------------|---------|
+| Functional | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
+| Standards  | <N> Critical · <N> High · <N> Medium · <N> Low | <emoji> |
 ```
-
-When the Accessibility reviewer self-skips because the diff contains no UI, markup, or document surface, show its findings as `0 Critical · 0 High · 0 Medium · 0 Low` with an `✅` verdict and a `(no UI surface in diff)` note.
 
 ### L/XL Batch Announcement Variant
 
@@ -98,6 +92,14 @@ Step 2b (all batches complete): replace the running table with a 3-column summar
 ## Read Discipline
 
 Read every external file exactly once using a single full-range `read_file` call. Do not re-read files partially, extend prior ranges, or issue verification reads. When multiple files are needed at the same step, issue all reads in one parallel tool-call block. This rule applies to diff content, instructions files, findings JSON, and review-artifact protocols throughout all steps.
+
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the standards-review or full-review phases produce review findings that touch observability, logging, or metrics, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the `code-review-telemetry` instructions apply automatically to matching artifacts.
 
 ## Required Steps
 
@@ -171,7 +173,6 @@ Check agent availability before invoking:
 
 * If `Code Review Functional` is not available, skip the functional review and note: "Code Review Functional agent not available, skipping functional review."
 * If `Code Review Standards` is not available, skip the standards review and note: "Code Review Standards agent not available, skipping standards review."
-* If `Code Review Accessibility` is not available, skip the accessibility review and note: "Code Review Accessibility agent not available, skipping accessibility review."
 
 #### 2A: Build prompts
 
@@ -181,9 +182,8 @@ Construct the full prompt string for each available subagent **before dispatchin
 
 * Functional prompt: `"A diff-state.json path is provided — read diff-state.json once for metadata, then read the diff from diffPatchPath once. Write findings as structured JSON to <findingsFolder>/functional-findings.json. Do not write markdown findings. Lane: focus on logic errors, edge cases, error handling, concurrency, and contract violations. Do not flag coding style, naming conventions, or skill-backed standards — the Standards agent covers those."`
 * Standards prompt: `"A diff-state.json path is provided — read diff-state.json once for metadata, then read the diff from diffPatchPath once. Write findings as structured JSON to <findingsFolder>/standards-findings.json. Do not write markdown findings. Lane: focus on coding standards violations traceable to loaded skills. Do not flag logic errors, edge cases, or behavioral bugs unless they violate a loaded skill rule — the Functional agent covers those."`
-* Accessibility prompt: `"A diff-state.json path is provided — read diff-state.json once for metadata, then determine which accessibility specs are in scope from the changed files and extensions before reading anything else. If the diff contains no user-facing UI, markup, or document surface, write an empty findings report to <findingsFolder>/accessibility-findings.json noting 'No accessibility-relevant surface in diff' and return. Otherwise read the diff from diffPatchPath once, load only the relevant accessibility SKILL.md files, and write findings as structured JSON to <findingsFolder>/accessibility-findings.json. Do not write markdown findings. Lane: focus on accessibility conformance barriers traceable to a loaded accessibility skill and success criterion. Do not flag logic errors or general coding-standard violations — the Functional and Standards agents cover those."`
 
-**L / XL (batched file path):** Dispatch one Functional + Standards + Accessibility trio per batch. Each batch subagent receives its `diff-state-batch-N.json` (scoped file list for reporting) and reads the full diff from `diffPatchPath` for cross-file context. The Functional subagent writes to `<findingsFolder>/functional-findings-batch-N.json`, the Standards subagent writes to `<findingsFolder>/standards-findings-batch-N.json`, and the Accessibility subagent writes to `<findingsFolder>/accessibility-findings-batch-N.json`. Append the same lane directives from the XS/S/M prompts above to each batch prompt.
+**L / XL (batched file path):** Dispatch one Functional + Standards pair per batch. Each batch subagent receives its `diff-state-batch-N.json` (scoped file list for reporting) and reads the full diff from `diffPatchPath` for cross-file context. The Functional subagent writes to `<findingsFolder>/functional-findings-batch-N.json` and the Standards subagent writes to `<findingsFolder>/standards-findings-batch-N.json`. Append the same lane directives from the XS/S/M prompts above to each batch prompt.
 
 **Standards prompt additions (all sizes):**
 
@@ -196,7 +196,7 @@ Construct the full prompt string for each available subagent **before dispatchin
 
 #### 2B: Dispatch both subagents in parallel
 
-**Issue all available `runSubagent` calls in a single tool-call block so they execute concurrently.** Do not wait for one subagent to finish before dispatching the others. For L/XL reviews, issue all batch trios in a single tool-call block.
+**Issue both `runSubagent` calls in a single tool-call block so they execute concurrently.** Do not wait for one subagent to finish before dispatching the other. For L/XL reviews, issue all batch pairs in a single tool-call block.
 
 Wait for all dispatched subagents to complete, then emit the **Step 2b Announcement**.
 
@@ -212,13 +212,12 @@ Read all findings, the review-artifacts protocol, and the output format template
 
 * `<findingsFolder>/functional-findings.json`
 * `<findingsFolder>/standards-findings.json`
-* `<findingsFolder>/accessibility-findings.json` (skip if the accessibility reviewer was unavailable; an empty findings array indicates a self-skip with no UI surface)
 * #file:../../instructions/coding-standards/code-review/review-artifacts.instructions.md (for the persistence protocol — read exactly once here; do not re-read later)
 * `docs/templates/full-review-output-format.md` (for the JSON schema, report skeleton, and persist-and-present rules — read exactly once here). If the file is not found, apply a best-effort structure using the section names and field definitions in this agent as guidance and note: "⚠️ Report template not found — output structure may vary."
 
-Issue all `read_file` calls in one tool-call block. Do not read any of these files a second time during this step. Do not read source files, diff content, diff-state.json, or agent definition files during Step 3 — all information needed for the merge is contained in the findings JSON files, the review-artifacts protocol, and the output format template.
+Issue all four `read_file` calls in one tool-call block. Do not read any of these files a second time during this step. Do not read source files, diff content, diff-state.json, or agent definition files during Step 3 — all information needed for the merge is contained in the findings JSON files, the review-artifacts protocol, and the output format template.
 
-For L or XL batch reviews, read `functional-findings-batch-N.json`, `standards-findings-batch-N.json`, and `accessibility-findings-batch-N.json` for each batch and concatenate findings arrays within each reviewer before applying transformation rules.
+For L or XL batch reviews, read `functional-findings-batch-N.json` and `standards-findings-batch-N.json` for each batch and concatenate findings arrays within each reviewer before applying transformation rules.
 
 #### Output Format Reference
 
@@ -228,16 +227,16 @@ Read `docs/templates/full-review-output-format.md` for the Subagent Findings JSO
 
 These rules operate on the JSON `findings` arrays from both subagents. **Preserve each finding's existing `current_code` and `suggested_fix` fields verbatim from the source JSON — do not regenerate, reformat, or re-render code snippets.**
 
-1. Concatenate all `findings` arrays and sort by severity (Critical, High, Medium, Low). Assign new sequential `number` values starting from 1.
-2. Append `[Functional]`, `[Standards]`, or `[Accessibility]` to the end of each finding's `title` to indicate the originating subagent (for example, `Missing null check [Functional]`). Preserve the `skill` and `category` fields from each subagent's output. Omit skill/category fields only when the subagent did not provide them.
-3. Deduplicate: if two or more subagents produced findings referencing the same `file` and the same function or symbol name (or overlapping `lines` when no function name is apparent), keep one finding, note each agent that identified it, use the more detailed `suggested_fix`, and the highest severity. Match on function/symbol name first; fall back to `lines` overlap only when the finding lacks a clear function scope. Do not dedup an accessibility finding against a functional or standards finding unless both cite the same underlying defect; an accessibility barrier and a logic bug at the same location are distinct findings.
-4. Union all `changed_files` arrays. Where a file appears in more than one, use the highest `risk` and sum `issue_count`. After merging, verify each file's `issue_count` by counting findings that reference it. All counts reflect post-deduplication totals.
-6. Concatenate all `positive_changes` arrays and all `testing_recommendations` arrays, deduplicating equivalent entries.
+1. Concatenate both `findings` arrays and sort by severity (Critical, High, Medium, Low). Assign new sequential `number` values starting from 1.
+2. Append `[Functional]` or `[Standards]` to the end of each finding's `title` to indicate the originating subagent (for example, `Missing null check [Functional]`). Preserve the `skill` and `category` fields from each subagent's output. Omit skill/category fields only when the subagent did not provide them.
+3. Deduplicate: if both subagents produced findings referencing the same `file` and the same function or symbol name (or overlapping `lines` when no function name is apparent), keep one finding, note both agents identified it, use the more detailed `suggested_fix`, and the higher severity. Match on function/symbol name first; fall back to `lines` overlap only when the finding lacks a clear function scope.
+4. Union both `changed_files` arrays. Where a file appears in both, use the higher `risk` and sum `issue_count`. After merging, verify each file's `issue_count` by counting findings that reference it. All counts reflect post-deduplication totals.
+6. Concatenate both `positive_changes` arrays and both `testing_recommendations` arrays, deduplicating equivalent entries.
 7. Use the standards subagent's `recommended_actions`. If the standards subagent was skipped, use the functional subagent's; omit if both are absent.
-8. Union all `out_of_scope_observations` arrays. Deduplicate entries with the same `file` and concern.
+8. Union both `out_of_scope_observations` arrays. Deduplicate entries with the same `file` and concern.
 9. Use the standards subagent's `risk_assessment`. If skipped, derive from the functional subagent's highest-severity finding.
 10. When a story was provided and the standards subagent produced `acceptance_criteria_coverage`, pass it through.
-11. Use the strictest `verdict` value across all subagents that ran: `request_changes` > `approve_with_comments` > `approve`. When only one subagent ran, use that subagent's verdict. A self-skipped accessibility reviewer (empty findings, `approve`) does not weaken the merged verdict. Severity floor: if any Critical-severity findings exist, verdict must be `request_changes`.
+11. Use the stricter of the two `verdict` values: `request_changes` > `approve_with_comments` > `approve`. When only one subagent ran, use that subagent's verdict. Severity floor: if any Critical-severity findings exist, verdict must be `request_changes`.
 
 #### Report Skeleton and Persistence
 

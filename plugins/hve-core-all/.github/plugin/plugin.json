@@ -35,11 +35,13 @@
   "skills": [
     "skills/accessibility/",
     "skills/coding-standards/",
+    "skills/design-thinking/",
     "skills/experimental/",
     "skills/github/",
     "skills/gitlab/",
     "skills/installer/",
     "skills/jira/",
+    "skills/project-planning/",
     "skills/security/",
     "skills/shared/"
   ]

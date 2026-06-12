@@ -9,11 +9,11 @@ Governs conversational behavior during the `capture` entry mode of the Accessibi
 
 ## Capture Mode Purpose
 
-Capture is one of four entry modes declared by `accessibility-identity.instructions.md`. The four modes differ by source of prior context, not by phase sequencing:
+Capture is one of five entry modes declared by `accessibility-identity.instructions.md`. The five modes differ by source of prior context, not by phase sequencing:
 
 * `capture`: fresh assessment with no upstream artifact. The planner has no pre-seeded surfaces, audiences, regulatory drivers, or audit history. The coaching techniques in this file apply in full.
 * `from-prd`: PRD-seeded assessment. Capture coaching applies only to gaps left by the PRD scan; do not re-ask items the PRD already answered.
-* `from-brd`: BRD-seeded assessment. Capture coaching applies to surfaces and personas absent from the business requirements document.
+* `from-brd`: BRD-seeded assessment. Capture coaching applies only to accessibility scope missing from the business requirements document; do not re-ask business capabilities, stakeholder groups, delivery channels, regulatory drivers, or contractual accessibility commitments the BRD already answered.
 * `from-security-plan`: assessment paired with an existing security plan. Capture coaching applies to accessibility-specific scope not covered by the security plan inventory.
 * `from-rai-plan`: assessment paired with an existing responsible-AI plan. Capture coaching applies to accommodation context not captured by the RAI persona analysis.
 

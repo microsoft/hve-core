@@ -66,7 +66,3 @@ The video player UI shall expose discoverable controls that let the user turn ca
 * Where caption styling (font size, colour, background opacity) is configurable, confirm the styling controls are reachable from the same player UI surface and that the chosen styling persists across sessions.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/> (Clause 7.3).
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

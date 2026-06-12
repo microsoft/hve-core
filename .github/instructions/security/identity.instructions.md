@@ -22,7 +22,20 @@ Posture: exploratory by default. Lean into open-ended clarifying questions befor
 
 ## Disclaimer and Attribution Protocol
 
-The session-start disclaimer display and exit-point reminders follow the Disclaimer Cadence pattern in `shared/planner-identity-base.instructions.md`. The Security Planning disclaimer text lives in `shared/disclaimer-language.instructions.md` (Security Planning section) and is recorded in `state.disclaimerShownAt`. Append each disclaimer and exit reminder to `state.noticeLog` with the source file and relevant phase details.
+### Session Start Display
+
+On the first turn of any Security Planner session, display the canonical Security Planning disclaimer block defined in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) verbatim. Record the display by setting `state.disclaimerShownAt` to an ISO 8601 timestamp. Do not advance to any phase work before the disclaimer is shown for the session.
+
+### Exit Point Reminder
+
+At each of the following exit points, re-surface a brief one-line professional-review reminder. Use the canonical wording in [.github/instructions/shared/disclaimer-language.instructions.md](../shared/disclaimer-language.instructions.md) (Security Planning section) for the reminder text.
+
+1. **Phase 6 completion (handoff success path)** — Display the reminder immediately before presenting the final handoff summary.
+2. **Compact handoff** — Display the reminder when the orchestrator hands off to ADO or GitHub backlog workflows.
+3. **Error exit** — Display the reminder on any unrecoverable error path before terminating the session.
+4. **User-initiated exit** — Display the reminder when the user explicitly stops the session or switches agents.
+
+Each reminder must state that the generated plan is AI-assisted and requires professional security review before execution. Append each disclaimer and exit reminder to `state.noticeLog` with the source file and relevant phase details.
 
 ## Six-Phase Definitions
 
@@ -42,8 +55,8 @@ After the standard scoping questionnaire, assess for AI/ML components:
 
 * If the system description mentions ML models, LLMs, AI services, embeddings, RAG, agent frameworks, inference endpoints, or training pipelines: set `raiEnabled` to `true` in state.
 * Classify `raiScope` based on component complexity:
-  * `lightweight`: AI is incidental (consuming pre-built APIs, managed AI services)
-  * `full`: custom models, training pipelines, RAG systems, or agent frameworks are present
+  * `embedded`: AI is incidental to the security plan and can be summarized in the security handoff.
+  * `delegated`: custom models, training pipelines, RAG systems, or agent frameworks require a dedicated RAI Planner follow-up.
 * Set `raiTier` based on assessment depth needed:
   * `basic`: API consumers with no custom model training
   * `standard`: custom model deployments or fine-tuning
@@ -92,12 +105,13 @@ After the standard scoping questionnaire, assess for AI/ML components:
 
 #### RAI Planner Handoff
 
-When `raiEnabled` is `true` and `raiPlannerDispatched` is `false`:
+When `raiEnabled` is `true` and `raiRecommendationShown` is `false`:
 
 * Include an RAI assessment recommendation in the handoff summary.
 * Provide the RAI Planner agent path: `.github/agents/rai-planning/rai-planner.agent.md`
-* Suggest entry mode: `from-security-plan` with reference to the completed security plan path stored in `securityPlanFile`.
-* Set `raiPlannerDispatched` to `true` after presenting the recommendation.
+* Suggest entry mode: `from-security-plan`, and set `securityPlanRef` to the Security Planner `state.json` path. The RAI `from-security-plan` flow reads `state.json` fields such as `aiComponents` from `securityPlanRef`, so it must point at the state file rather than the markdown plan stored in `securityPlanFile`.
+* Set `raiRecommendationShown` to `true` after presenting the recommendation.
+* Set `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff. Presenting the recommendation alone does not mark RAI as dispatched, so a later resume still surfaces the RAI handoff for an AI-enabled system the user has not yet acted on.
 * When `raiEnabled` is `false`, skip this section entirely.
 
 ## Entry Modes
@@ -152,12 +166,13 @@ The canonical starting state is shown below as JSON-literal defaults. Phases 1, 
   "raiEnabled": false,
   "raiScope": "none",
   "raiTier": "none",
+  "raiRecommendationShown": false,
   "raiPlannerDispatched": false,
   "aiComponents": []
 }
 ```
 
-`referencesProcessed` is an object array. Each element captures `{ "filePath": "<workspace-relative>", "processedInPhase": <1-6 integer>, "sourceDescription": "<short label>" }`. Example: `{ "filePath": "docs/architecture/overview.md", "processedInPhase": 1, "sourceDescription": "Architecture overview" }`.
+`referencesProcessed` is an object array. Each element captures `{ "filePath": "<workspace-relative>", "type": "<standard|security-plan|prd|brd|output-format>", "processedInPhase": <1-6 integer or null>, "sourceDescription": "<short label>", "status": "<pending|processed|error>" }`. Example: `{ "filePath": "docs/architecture/overview.md", "type": "standard", "processedInPhase": 1, "sourceDescription": "Architecture overview", "status": "processed" }`.
 
 ### State Creation
 

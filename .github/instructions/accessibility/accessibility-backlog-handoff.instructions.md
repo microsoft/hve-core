@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/accessibility/**'
 
 # Accessibility Backlog Handoff
 
-Phase 6 of the Accessibility Planner. Renders the Phase 5 `workItemSeeds`, `evidenceRegister`, `tradeoffLog`, and `crossPlannerRefs` into formatted backlog work items for Azure DevOps, GitHub, or both. Applies the review rubric, derives suggested priorities, attaches autonomy tiers, sanitizes internal tracking content, and emits the planning disclaimer block pinned to this file (L7 disclaimer lever).
+Phase 6 of the Accessibility Planner. Renders the Phase 5 `workItemSeeds`, `evidenceRegister`, `tradeoffLog`, and `crossPlannerRefs` into formatted backlog work items for Azure DevOps, GitHub, or both. Applies the review rubric, derives suggested priorities, attaches autonomy tiers, sanitizes internal tracking content, and includes the planning disclaimer block pinned to this file (L7 disclaimer lever) in generated handoff artifacts.
 
 This phase consumes state produced by `accessibility-impact-assessment.instructions.md` and writes handoff artifacts under `.copilot-tracking/`. The phase exits when the user confirms the rendered backlog and the planner sets `gates.backlog-handoff.confirmed = true`.
 
@@ -17,7 +17,7 @@ Phase 6 executes a fixed six-step sequence. Steps run in order; each step gates 
 2. **Resolve target system** — Read `userPreferences.targetSystem` if set. When unset, ask the user whether to render `ado`, `github`, or `both`. Persist the response under `userPreferences.targetSystem`.
 3. **Run the review rubric** — Walk the checkpoints and quality checklist below. Record findings into the Accessibility Review Summary template. Block the rest of the phase if any checkpoint is Not Met.
 4. **Render work items** — Apply the dual-format templates to every seed in `workItemSeeds`. Derive suggested priority and autonomy tier per the mapping table. Attach evidence cross-links, tradeoff cross-links, and cross-planner refs.
-5. **Sanitize and emit** — Apply the content sanitization protocol, write ADO output to `.copilot-tracking/workitems/backlog/{project-slug}-a11y/work-items.md` and GitHub output to `.copilot-tracking/github-issues/discovery/{project-slug}-a11y/issues-plan.md`, then emit the handoff summary and the disclaimer block.
+5. **Sanitize and emit** — Apply the content sanitization protocol, write ADO output to `.copilot-tracking/workitems/backlog/{project-slug}-a11y/work-items.md` and GitHub output to `.copilot-tracking/github-issues/discovery/{project-slug}-a11y/issues-plan.md`, include the disclaimer block in the generated artifacts, then emit the professional-review reminder and handoff summary.
 6. **Finalize state** — Update `state.json` per the Final State Update section. Set `gates.backlog-handoff.confirmed = true` only after the user explicitly confirms the rendered backlog.
 
 The phase is non-destructive. Re-running Phase 6 regenerates output files in place but preserves any user-supplied content under a `## User Notes` heading at the bottom of each output file.
@@ -294,7 +294,11 @@ After generating all work items, produce a handoff summary covering totals, cros
 
 ## Planning Disclaimer
 
-The L7 disclaimer lever pins the accessibility planning disclaimer to this file. The text below is the canonical accessibility disclaimer; do not edit `shared/disclaimer-language.instructions.md` to add an accessibility variant. Emit this block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file. Set `state.disclaimerShownAt` to the ISO 8601 timestamp at first emission and append a `state.noticeLog` entry with `noticeType: "handoff-disclaimer"`, `source: ".github/instructions/accessibility/accessibility-backlog-handoff.instructions.md"`, and output artifact details.
+The L7 disclaimer lever pins the accessibility planning disclaimer to this file. The text below is the canonical accessibility disclaimer; do not edit `shared/disclaimer-language.instructions.md` to add an accessibility variant.
+
+Emit this block verbatim at session start before Phase 1 work begins. Set `state.disclaimerShownAt` to the ISO 8601 timestamp and append a `state.noticeLog` entry with `noticeType: "session-start-disclaimer"` and `source: ".github/instructions/accessibility/accessibility-backlog-handoff.instructions.md"`.
+
+Also include this block verbatim at the end of every handoff summary, every ADO output file, and every GitHub output file. Append a `state.noticeLog` entry with `noticeType: "handoff-disclaimer"`, `source: ".github/instructions/accessibility/accessibility-backlog-handoff.instructions.md"`, and output artifact details for each generated artifact.
 
 ```markdown
 > [!CAUTION]
@@ -319,7 +323,7 @@ Phase 6 closes when every criterion below is true. The planner does not set `gat
 
 ## Final State Update
 
-On phase close, update `state.json` with the artifacts produced and gate confirmation.
+On phase close, update `state.json` with the artifacts produced and gate confirmation. Preserve an existing `disclaimerShownAt` value from the session-start display; set it during Phase 6 only if it is still `null` because an older state predates the session-start cadence.
 
 ```json
 {
@@ -330,7 +334,7 @@ On phase close, update `state.json` with the artifacts produced and gate confirm
       "confirmedAt": "{ISO 8601 timestamp}"
     }
   },
-  "disclaimerShownAt": "{ISO 8601 timestamp}",
+  "disclaimerShownAt": "{session-start ISO 8601 timestamp}",
   "noticeLog": [
     {
       "noticeType": "handoff-disclaimer",

@@ -260,7 +260,3 @@ Units of measurement must match the user's locale. Showing imperial units to a m
 * Confirm unit abbreviations are unambiguous (for example, distinguishing kilometres from kilobytes).
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-4>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -61,7 +61,3 @@ If a keyboard shortcut is implemented using only letter (including upper- and lo
 * Confirm modifier-key combinations (Ctrl, Alt, Cmd) used as shortcuts are not affected by this criterion but are still documented.
 
 Source: <https://www.w3.org/TR/WCAG22/#character-key-shortcuts>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

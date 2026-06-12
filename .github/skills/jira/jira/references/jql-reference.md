@@ -91,10 +91,4 @@ the next action:
 * `comment` to add a note
 * `transition` to move workflow state
 * `update` to modify fields with JSON
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
  

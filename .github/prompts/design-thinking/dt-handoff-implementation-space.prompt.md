@@ -21,6 +21,15 @@ This is the final DT exit point: the richest handoff carrying cumulative artifac
 
 ## Required Steps
 
+### Step 0: Load Handoff Knowledge
+
+Before compiling any artifacts, use `read_file` on each of the following:
+
+* `.github/skills/design-thinking/dt-rpi-integration/SKILL.md` (router for handoff sub-files).
+* `.github/skills/design-thinking/dt-rpi-integration/references/rpi-handoff-contract.md` (exit-point taxonomy, tiered schema, quality markers).
+* `.github/skills/design-thinking/dt-rpi-integration/references/subagent-handoff.md` (readiness assessment and compilation workflow).
+* `.github/skills/design-thinking/dt-rpi-integration/references/rpi-research-context.md` (Task Researcher framing for the receiving end).
+
 ### Step 1: Read Coaching State
 
 1. Use `${input:project-slug}` as the project directory identifier.
@@ -107,7 +116,7 @@ If critical gaps exist (signals marked `unknown` or `conflicting`), present find
 
 ### Step 4: Produce Handoff Artifact
 
-Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary-implementation-space.md` following the exit-point artifact schema from the DT-RPI handoff contract.
+Create the handoff summary file at `.copilot-tracking/dt/{project-slug}/handoff-summary-implementation-space.md` following the `implementation-spec-ready` exit-point schema in `.github/skills/design-thinking/dt-rpi-integration/references/rpi-handoff-contract.md`.
 
 Include the YAML header. The `tier` field extends the base DT-RPI handoff contract schema to capture exit granularity:
 
