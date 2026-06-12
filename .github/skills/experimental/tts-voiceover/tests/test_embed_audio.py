@@ -97,6 +97,44 @@ class TestAddNarrationTiming:
         assert "old-content" not in xml_str
         assert 'spid="10"' in xml_str
 
+    def test_add_narration_timing_uses_hardened_xml_parser(self, mocker):
+        """_add_narration_timing must pass a hardened XMLParser to etree.fromstring."""
+        from lxml import etree
+
+        original_fromstring = etree.fromstring
+
+        captured: list = []
+
+        def capturing_fromstring(text, parser=None, *args, **kwargs):
+            captured.append(parser)
+            return original_fromstring(text, parser, *args, **kwargs)
+
+        mocker.patch("embed_audio.etree.fromstring", side_effect=capturing_fromstring)
+        mock_slide = MagicMock()
+
+        ns = "http://schemas.openxmlformats.org/presentationml/2006/main"
+        mock_slide._element = etree.Element(f"{{{ns}}}sld")
+
+        _add_narration_timing(mock_slide, shape_id=1, duration_ms=1000)
+
+        assert captured, "etree.fromstring was never called"
+        parser = captured[0]
+        assert parser is not None, (
+            "_add_narration_timing must pass a parser to etree.fromstring"
+        )
+        # lxml.etree.XMLParser does not expose resolve_entities as a readable
+        # attribute, so verify the security property behaviourally: a parser
+        # with resolve_entities=False must not expand entity references.
+        xxe_probe = (
+            b'<?xml version="1.0"?>'
+            b'<!DOCTYPE root [<!ENTITY probe "expanded">]>'
+            b"<root>&probe;</root>"
+        )
+        probe_root = etree.fromstring(xxe_probe, parser)
+        assert "expanded" not in etree.tostring(probe_root, encoding="unicode"), (
+            "parser must have resolve_entities=False"
+        )
+
 
 class TestEmbedSlideAudio:
     """Tests for embed_slide_audio."""
