@@ -40,6 +40,9 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/accessibility/accessibility-planner.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
