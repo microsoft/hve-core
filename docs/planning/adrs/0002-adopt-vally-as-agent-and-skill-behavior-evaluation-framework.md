@@ -25,10 +25,11 @@ tags:
   - "ci"
   - "vally"
 affected_components:
-  - "evals/README.md"
+  - "evals/"
   - ".vally.yaml"
-  - "scripts/evals/moderation/moderate.py"
-  - ".github/skills/hve-core/vally-tests/SKILL.md"
+  - "scripts/evals/"
+  - "scripts/evals/moderation/"
+  - ".github/skills/hve-core/vally-tests/"
   - ".github/agents/hve-core/subagents/vally-test-author.agent.md"
   - ".github/agents/content-policy-citation.agent.md"
   - ".github/workflows/evals-agent-matrix.yml"
@@ -54,15 +55,15 @@ success_criteria:
   - metric: "baseline-equivalence-divergence"
     target: "zero undocumented divergences between the customization layer and the underlying Copilot baseline"
     measurement_window: "per-PR for baseline-equivalence suite"
-    source: "Planned baseline-equivalence suite README (evals/baseline-equivalence)"
+    source: "baseline-equivalence comparison contract"
   - metric: "eval-ci-gating"
     target: "the evaluation matrix runs in PR CI and blocks merge on authoritative-gate failures"
     measurement_window: "every PR run"
-    source: "Planned evals agent-matrix CI workflow (.github/workflows)"
+    source: "PR evaluation matrix workflow design"
   - metric: "corpus-moderation-enforcement"
     target: "generated test corpora pass the moderation pipeline before use, with refusal-taxonomy categories enforced"
     measurement_window: "per corpus generation"
-    source: "Planned corpus moderation pipeline (scripts/evals/moderation)"
+    source: "corpus moderation pipeline design"
 decisionMetadata:
   driverToTriggerMap:
     "Regression safety": "ASR-maintainability-eval-suite"
@@ -102,7 +103,6 @@ authoring skill at `.github/skills/hve-core/vally-tests/`, a
 `.github/workflows/pr-validation.yml`. How should hve-core standardize
 behavioral evaluation of its AI artifacts?
 
-> Source: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`, Frame-phase scope, drivers, constraints, and ASR triggers.
 > Source: `evals/README.md`, six-suite evaluation architecture.
 > Source: `evals/baseline-equivalence/README.md`, baseline-equivalence comparison contract.
 
@@ -329,10 +329,11 @@ No data migration is required: removing the framework leaves the underlying AI c
 
 ## Affected Components
 
-* evals/README.md
+* evals/
 * .vally.yaml
-* scripts/evals/moderation/moderate.py
-* .github/skills/hve-core/vally-tests/SKILL.md
+* scripts/evals/
+* scripts/evals/moderation/
+* .github/skills/hve-core/vally-tests/
 * .github/agents/hve-core/subagents/vally-test-author.agent.md
 * .github/agents/content-policy-citation.agent.md
 * .github/workflows/evals-agent-matrix.yml
@@ -340,11 +341,11 @@ No data migration is required: removing the framework leaves the underlying AI c
 
 ## More Information
 
-* Session state: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`
 * Suite architecture: `evals/README.md` and the `evals/` suite tree
 * Central config: `./.vally.yaml`
-* Orchestration and moderation: `scripts/evals/moderation/moderate.py` (PowerShell and Python)
-* Authoring skill: `.github/skills/hve-core/vally-tests/SKILL.md`
+* Orchestration: `scripts/evals/` (PowerShell and Python)
+* Moderation pipeline: `scripts/evals/moderation/`
+* Authoring skill: `.github/skills/hve-core/vally-tests/`
 * Test-author subagent: `.github/agents/hve-core/subagents/vally-test-author.agent.md`
 * Content-policy agent: `.github/agents/content-policy-citation.agent.md`
 * Evaluation matrix workflow: `.github/workflows/evals-agent-matrix.yml`
