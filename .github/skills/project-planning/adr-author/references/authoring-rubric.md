@@ -54,12 +54,12 @@ Under `autonomyTier` `full` and `deep`, any failed required check is a hard refu
 
 ## Tier behavior
 
-| Tier     | Required checks                       | Warnings only                          |
-|----------|---------------------------------------|----------------------------------------|
-| `draft`  | None (informational)                  | All                                    |
-| `guided` | Categories 1, 2, 7                    | Categories 3, 4, 5, 6                  |
-| `full`   | Categories 1, 2, 3, 4, 5, 6, 7        | None                                   |
-| `deep`   | Categories 1, 2, 3, 4, 5, 6, 7 + web-research provenance on prior-art findings | None |
+| Tier     | Required checks                                                                | Warnings only         |
+|----------|--------------------------------------------------------------------------------|-----------------------|
+| `draft`  | None (informational)                                                           | All                   |
+| `guided` | Categories 1, 2, 7                                                             | Categories 3, 4, 5, 6 |
+| `full`   | Categories 1, 2, 3, 4, 5, 6, 7                                                 | None                  |
+| `deep`   | Categories 1, 2, 3, 4, 5, 6, 7 + web-research provenance on prior-art findings | None                  |
 
 ## Failure protocol
 

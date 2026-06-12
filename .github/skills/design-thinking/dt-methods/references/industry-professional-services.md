@@ -17,21 +17,21 @@ Load this file when the team identifies professional services as their industry 
 
 Bridge DT language and professional services language bidirectionally. Use professional services terms when coaching professional services teams.
 
-| DT Concept                | Professional Services Term                                              |
-|---------------------------|-------------------------------------------------------------------------|
-| Stakeholder map           | Engagement team roster, client steering committee, relationship sponsor  |
-| Pain point                | Utilization drag, realization rate, write-off, scope creep, client churn |
-| User journey              | Engagement lifecycle (pursuit-proposal-delivery-close-renewal)           |
-| Observation / field study | Engagement shadow, court observation, partner meeting observation, "second chair" |
-| Prototype                 | Pilot engagement, accelerator, lab, sandbox client, alpha methodology    |
-| Iteration                 | Engagement retro, methodology refresh, knowledge harvest cycle           |
-| Empathy                   | Client voice, frontline staff experience, junior attrition signal        |
-| Success metric            | Utilization %, realization rate, billable hours, gross margin per engagement, win rate, NPS |
-| Workflow mapping          | Matter lifecycle, engagement workflow, knowledge capture and review process |
+| DT Concept                | Professional Services Term                                                                               |
+|---------------------------|----------------------------------------------------------------------------------------------------------|
+| Stakeholder map           | Engagement team roster, client steering committee, relationship sponsor                                  |
+| Pain point                | Utilization drag, realization rate, write-off, scope creep, client churn                                 |
+| User journey              | Engagement lifecycle (pursuit-proposal-delivery-close-renewal)                                           |
+| Observation / field study | Engagement shadow, court observation, partner meeting observation, "second chair"                        |
+| Prototype                 | Pilot engagement, accelerator, lab, sandbox client, alpha methodology                                    |
+| Iteration                 | Engagement retro, methodology refresh, knowledge harvest cycle                                           |
+| Empathy                   | Client voice, frontline staff experience, junior attrition signal                                        |
+| Success metric            | Utilization %, realization rate, billable hours, gross margin per engagement, win rate, NPS              |
+| Workflow mapping          | Matter lifecycle, engagement workflow, knowledge capture and review process                              |
 | Risk assumption           | Professional liability (E&O), independence violation, conflict of interest, malpractice, reputation risk |
-| Constraint-driven design  | Ethical wall, conflict check, independence requirement, billing code, WBS, scope statement, SOW |
-| Alert system concept      | Conflict-check hit, budget burn alert, scope-creep flag                  |
-| Integration timing        | Audit busy season (year-end), tax filing deadlines, billing cycle, fiscal-year sales push |
+| Constraint-driven design  | Ethical wall, conflict check, independence requirement, billing code, WBS, scope statement, SOW          |
+| Alert system concept      | Conflict-check hit, budget burn alert, scope-creep flag                                                  |
+| Integration timing        | Audit busy season (year-end), tax filing deadlines, billing cycle, fiscal-year sales push                |
 
 ## Constraints and Considerations
 

@@ -23,11 +23,11 @@ by `_entry` which routes `data[0] % 3` to one of three targets.
 `{target_index}_{description}` where `target_index` matches the `FUZZ_TARGETS`
 array position:
 
-| Index | Target                        |
-|-------|-------------------------------|
-| 0     | `_fuzz_validate_frontmatter`  |
-| 1     | `_fuzz_normalize_template`    |
-| 2     | `_fuzz_update_lineage_slug`   |
+| Index | Target                       |
+|-------|------------------------------|
+| 0     | `_fuzz_validate_frontmatter` |
+| 1     | `_fuzz_normalize_template`   |
+| 2     | `_fuzz_update_lineage_slug`  |
 
 The first byte selects the target; the remaining bytes are the input payload.
 

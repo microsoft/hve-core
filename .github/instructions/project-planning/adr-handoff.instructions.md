@@ -25,9 +25,9 @@ Instructions for the ADR Creator Govern-phase exit. After an architectural decis
 
 The selected tier governs every external write and handoff in the Govern phase. Frame and Decide are unaffected and always run with full coaching cadence.
 
-| Tier      | Govern-phase behavior                                                                                                      |
-|-----------|----------------------------------------------------------------------------------------------------------------------------|
-| `manual`  | Present each generated artifact and require explicit approval before external writes or `state.handoffs[]` appends.        |
+| Tier      | Govern-phase behavior                                                                                                       |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------|
+| `manual`  | Present each generated artifact and require explicit approval before external writes or `state.handoffs[]` appends.         |
 | `partial` | Present all Govern artifacts as one bundle and require batch approval before external writes or `state.handoffs[]` appends. |
 | `full`    | Generate and write all Govern artifacts without per-artifact approval while still respecting every disclaimer and gate.     |
 

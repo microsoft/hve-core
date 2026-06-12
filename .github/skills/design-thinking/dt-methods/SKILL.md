@@ -20,33 +20,33 @@ Entrypoint for Design Thinking method coaching knowledge. The `dt-coach` agent l
 
 ## Method references
 
-| Method | Name | Core reference | Deep reference |
-| --- | --- | --- | --- |
-| 1 | Scope Conversations | [method-01-scope.md](references/method-01-scope.md) | [method-01-deep.md](references/method-01-deep.md) |
-| 2 | Design Research | [method-02-research.md](references/method-02-research.md) | [method-02-deep.md](references/method-02-deep.md) |
-| 3 | Input Synthesis | [method-03-synthesis.md](references/method-03-synthesis.md) | [method-03-deep.md](references/method-03-deep.md) |
-| 4 | Brainstorming | [method-04-brainstorming.md](references/method-04-brainstorming.md) | [method-04-deep.md](references/method-04-deep.md) |
-| 5 | User Concepts | [method-05-concepts.md](references/method-05-concepts.md) | [method-05-deep.md](references/method-05-deep.md) |
-| 6 | Low-Fidelity Prototypes | [method-06-lofi-prototypes.md](references/method-06-lofi-prototypes.md) | [method-06-deep.md](references/method-06-deep.md) |
-| 7 | High-Fidelity Prototypes | [method-07-hifi-prototypes.md](references/method-07-hifi-prototypes.md) | [method-07-deep.md](references/method-07-deep.md) |
-| 8 | User Testing | [method-08-testing.md](references/method-08-testing.md) | [method-08-deep.md](references/method-08-deep.md) |
-| 9 | Iteration at Scale | [method-09-iteration.md](references/method-09-iteration.md) | [method-09-deep.md](references/method-09-deep.md) |
+| Method | Name                     | Core reference                                                          | Deep reference                                    |
+|--------|--------------------------|-------------------------------------------------------------------------|---------------------------------------------------|
+| 1      | Scope Conversations      | [method-01-scope.md](references/method-01-scope.md)                     | [method-01-deep.md](references/method-01-deep.md) |
+| 2      | Design Research          | [method-02-research.md](references/method-02-research.md)               | [method-02-deep.md](references/method-02-deep.md) |
+| 3      | Input Synthesis          | [method-03-synthesis.md](references/method-03-synthesis.md)             | [method-03-deep.md](references/method-03-deep.md) |
+| 4      | Brainstorming            | [method-04-brainstorming.md](references/method-04-brainstorming.md)     | [method-04-deep.md](references/method-04-deep.md) |
+| 5      | User Concepts            | [method-05-concepts.md](references/method-05-concepts.md)               | [method-05-deep.md](references/method-05-deep.md) |
+| 6      | Low-Fidelity Prototypes  | [method-06-lofi-prototypes.md](references/method-06-lofi-prototypes.md) | [method-06-deep.md](references/method-06-deep.md) |
+| 7      | High-Fidelity Prototypes | [method-07-hifi-prototypes.md](references/method-07-hifi-prototypes.md) | [method-07-deep.md](references/method-07-deep.md) |
+| 8      | User Testing             | [method-08-testing.md](references/method-08-testing.md)                 | [method-08-deep.md](references/method-08-deep.md) |
+| 9      | Iteration at Scale       | [method-09-iteration.md](references/method-09-iteration.md)             | [method-09-deep.md](references/method-09-deep.md) |
 
 ## Industry context references
 
 Load the matching reference when the team identifies its industry context.
 
-| Reference | When to load |
-| --- | --- |
-| [industry-energy.md](references/industry-energy.md) | Energy-sector vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-financial-services.md](references/industry-financial-services.md) | Financial services vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-healthcare.md](references/industry-healthcare.md) | Healthcare vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-manufacturing.md](references/industry-manufacturing.md) | Manufacturing vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-nonprofit-social-impact.md](references/industry-nonprofit-social-impact.md) | Nonprofit and social impact vocabulary, constraints, empathy tools, and reference scenario. |
+| Reference                                                                                         | When to load                                                                                      |
+|---------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| [industry-energy.md](references/industry-energy.md)                                               | Energy-sector vocabulary, constraints, empathy tools, and reference scenario.                     |
+| [industry-financial-services.md](references/industry-financial-services.md)                       | Financial services vocabulary, constraints, empathy tools, and reference scenario.                |
+| [industry-healthcare.md](references/industry-healthcare.md)                                       | Healthcare vocabulary, constraints, empathy tools, and reference scenario.                        |
+| [industry-manufacturing.md](references/industry-manufacturing.md)                                 | Manufacturing vocabulary, constraints, empathy tools, and reference scenario.                     |
+| [industry-nonprofit-social-impact.md](references/industry-nonprofit-social-impact.md)             | Nonprofit and social impact vocabulary, constraints, empathy tools, and reference scenario.       |
 | [industry-pharmaceuticals-life-sciences.md](references/industry-pharmaceuticals-life-sciences.md) | Pharmaceuticals and life sciences vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-professional-services.md](references/industry-professional-services.md) | Professional services vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-public-sector.md](references/industry-public-sector.md) | Public sector and government vocabulary, constraints, empathy tools, and reference scenario. |
-| [industry-retail-cpg.md](references/industry-retail-cpg.md) | Retail and consumer goods vocabulary, constraints, empathy tools, and reference scenario. |
+| [industry-professional-services.md](references/industry-professional-services.md)                 | Professional services vocabulary, constraints, empathy tools, and reference scenario.             |
+| [industry-public-sector.md](references/industry-public-sector.md)                                 | Public sector and government vocabulary, constraints, empathy tools, and reference scenario.      |
+| [industry-retail-cpg.md](references/industry-retail-cpg.md)                                       | Retail and consumer goods vocabulary, constraints, empathy tools, and reference scenario.         |
 
 ## Skill layout
 

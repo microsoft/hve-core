@@ -15,15 +15,15 @@ The dt-coach loads these references at handoff points where Design Thinking coac
 
 ## Integration references
 
-| Reference                                                  | When to load                                                                                         |
-|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| [Handoff contract](references/rpi-handoff-contract.md)     | Exit points, artifact schemas, RPI input contracts, and quality markers for lateral DT-to-RPI handoff |
-| [Research context](references/rpi-research-context.md)     | DT-aware Task Researcher framing for handoffs from the DT coach                                        |
-| [Planning context](references/rpi-planning-context.md)     | DT-aware Task Planner context for plans originating from DT artifacts                                  |
-| [Implement context](references/rpi-implement-context.md)   | DT-aware Task Implementor context applying fidelity and stakeholder constraints                        |
-| [Review context](references/rpi-review-context.md)         | DT-aware Task Reviewer criteria for evaluating Design Thinking artifacts                               |
-| [Subagent handoff](references/subagent-handoff.md)         | Readiness assessment, artifact compilation, and validation via subagent dispatch                      |
-| [Image prompt generation](references/image-prompt-generation.md) | Method 5 concept visualization with lo-fi prompt enforcement                                     |
+| Reference                                                        | When to load                                                                                          |
+|------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| [Handoff contract](references/rpi-handoff-contract.md)           | Exit points, artifact schemas, RPI input contracts, and quality markers for lateral DT-to-RPI handoff |
+| [Research context](references/rpi-research-context.md)           | DT-aware Task Researcher framing for handoffs from the DT coach                                       |
+| [Planning context](references/rpi-planning-context.md)           | DT-aware Task Planner context for plans originating from DT artifacts                                 |
+| [Implement context](references/rpi-implement-context.md)         | DT-aware Task Implementor context applying fidelity and stakeholder constraints                       |
+| [Review context](references/rpi-review-context.md)               | DT-aware Task Reviewer criteria for evaluating Design Thinking artifacts                              |
+| [Subagent handoff](references/subagent-handoff.md)               | Readiness assessment, artifact compilation, and validation via subagent dispatch                      |
+| [Image prompt generation](references/image-prompt-generation.md) | Method 5 concept visualization with lo-fi prompt enforcement                                          |
 
 ## Skill layout
 

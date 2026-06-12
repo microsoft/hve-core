@@ -34,7 +34,7 @@
     "lint:models": "pwsh -NoProfile -File scripts/linting/Test-ModelReferences.ps1 -OutputPath logs/model-validation-results.json",
     "lint:models:refresh": "pwsh -NoProfile -File scripts/linting/Update-ModelCatalog.ps1",
     "lint:all": "npm run format:tables && npm run lint:md && npm run lint:ps && npm run lint:yaml && npm run lint:json && npm run lint:links && npm run lint:frontmatter && npm run lint:adr-consistency && npm run lint:collections-metadata && npm run lint:marketplace && npm run lint:version-consistency && npm run lint:permissions && npm run lint:dependency-pinning && npm run lint:ps-module-pins && npm run lint:py && npm run validate:skills && npm run lint:ai-artifacts && npm run lint:models && npm run eval:lint:vally && npm run eval:lint:schema && npm run eval:lint:text && npm run eval:lint:safety",
-    "format:tables": "markdown-table-formatter \"**/*.md\"",
+    "format:tables": "pwsh -NoProfile -File scripts/linting/Format-MarkdownTables.ps1",
     "extension:prepare": "pwsh ./scripts/extension/Prepare-Extension.ps1",
     "extension:prepare:prerelease": "pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease",
     "extension:package": "pwsh ./scripts/extension/Package-Extension.ps1",

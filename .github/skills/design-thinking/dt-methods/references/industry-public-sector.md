@@ -17,21 +17,21 @@ Load this file when the team identifies public sector or government as their ind
 
 Bridge DT language and government language bidirectionally. Use government terms when coaching government teams.
 
-| DT Concept                | Government Term                                              |
-|---------------------------|--------------------------------------------------------------|
+| DT Concept                | Government Term                                               |
+|---------------------------|---------------------------------------------------------------|
 | Stakeholder map           | RACI chart, organization chart, cross-agency workgroup roster |
 | Pain point                | Service gap, process inefficiency, compliance violation       |
 | User journey              | Service blueprint, customer journey, constituent experience   |
-| Observation / field study | Ride-along, case study, site visit, constituent interview    |
-| Prototype                 | Pilot project, demonstration site, test-and-learn initiative |
+| Observation / field study | Ride-along, case study, site visit, constituent interview     |
+| Prototype                 | Pilot project, demonstration site, test-and-learn initiative  |
 | Iteration                 | PDSA cycle (Plan-Do-Study-Act), continuous improvement cycle  |
-| Empathy                   | Constituent voice, lived experience, equity lens             |
-| Success metric            | SLA (Service Level Agreement), KPI, compliance rate          |
-| Workflow mapping          | Service blueprint, process flow, business process model      |
+| Empathy                   | Constituent voice, lived experience, equity lens              |
+| Success metric            | SLA (Service Level Agreement), KPI, compliance rate           |
+| Workflow mapping          | Service blueprint, process flow, business process model       |
 | Risk assumption           | Root cause analysis, compliance gap, failure mode analysis    |
 | Constraint-driven design  | Regulatory requirement, policy mandate, appropriation limit   |
-| Accessibility             | Section 508 compliance, WCAG 2.0 AA conformance              |
-| Privacy/data              | PII handling, SORN requirement, Privacy Impact Assessment    |
+| Accessibility             | Section 508 compliance, WCAG 2.0 AA conformance               |
+| Privacy/data              | PII handling, SORN requirement, Privacy Impact Assessment     |
 | Solution adoption         | Change management, workforce communication, training rollout  |
 
 ## Constraints and Considerations

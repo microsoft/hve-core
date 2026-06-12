@@ -17,21 +17,21 @@ Load this file when the team identifies nonprofit, nongovernmental organization,
 
 Bridge DT language and nonprofit/social impact language bidirectionally. Use sector-specific terms when coaching nonprofit teams.
 
-| DT Concept                | Nonprofit and Social Impact Term                                   |
-|---------------------------|-------------------------------------------------------------------|
-| Stakeholder map           | Stakeholder analysis, community advisory board, theory of change actor map |
-| Pain point                | Unmet need, service gap, equity gap, beneficiary friction, "voice gap" |
-| User journey              | Service journey, beneficiary lifecycle, donor journey (cultivation-solicitation-stewardship) |
-| Observation / field study | Site visit, program observation, community listening, asset mapping, ride-along |
-| Prototype                 | Pilot program, demonstration project, learning cohort, design lab, prototype intervention |
-| Iteration                 | Program cycle, grant cycle, learning agenda, adaptive management cycle (USAID CLA) |
-| Empathy                   | Community co-design, lived experience, field-based perspective, frontline staff reality |
-| Success metric            | Outputs vs. outcomes vs. impact (logic model), reach, depth, equity, dollars-per-outcome, beneficiary dignity score, donor retention |
-| Workflow mapping          | Beneficiary flow, donor cultivation pipeline, program delivery process, grant cycle workflow |
-| Risk assumption           | Safeguarding risk, do-no-harm violation, mission drift, reputational risk, donor pullout, equity risk |
+| DT Concept                | Nonprofit and Social Impact Term                                                                                                          |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| Stakeholder map           | Stakeholder analysis, community advisory board, theory of change actor map                                                                |
+| Pain point                | Unmet need, service gap, equity gap, beneficiary friction, "voice gap"                                                                    |
+| User journey              | Service journey, beneficiary lifecycle, donor journey (cultivation-solicitation-stewardship)                                              |
+| Observation / field study | Site visit, program observation, community listening, asset mapping, ride-along                                                           |
+| Prototype                 | Pilot program, demonstration project, learning cohort, design lab, prototype intervention                                                 |
+| Iteration                 | Program cycle, grant cycle, learning agenda, adaptive management cycle (USAID CLA)                                                        |
+| Empathy                   | Community co-design, lived experience, field-based perspective, frontline staff reality                                                   |
+| Success metric            | Outputs vs. outcomes vs. impact (logic model), reach, depth, equity, dollars-per-outcome, beneficiary dignity score, donor retention      |
+| Workflow mapping          | Beneficiary flow, donor cultivation pipeline, program delivery process, grant cycle workflow                                              |
+| Risk assumption           | Safeguarding risk, do-no-harm violation, mission drift, reputational risk, donor pullout, equity risk                                     |
 | Constraint-driven design  | Grant deliverable, logframe, results framework, restricted vs. unrestricted funding, donor reporting, safeguarding policy, IRB compliance |
-| Alert system concept      | Safeguarding incident, beneficiary complaint, audit finding, donor escalation, equity incident |
-| Integration timing        | Grant cycle, fiscal year, fundraising calendar (year-end, GivingTuesday), election and legislative cycle |
+| Alert system concept      | Safeguarding incident, beneficiary complaint, audit finding, donor escalation, equity incident                                            |
+| Integration timing        | Grant cycle, fiscal year, fundraising calendar (year-end, GivingTuesday), election and legislative cycle                                  |
 
 ## Constraints and Considerations
 

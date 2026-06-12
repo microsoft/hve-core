@@ -17,21 +17,21 @@ Load this file when the team identifies retail or consumer goods as their indust
 
 Bridge DT language and retail language bidirectionally. Use retail terms when coaching retail teams.
 
-| DT Concept                | Retail/CPG Term                                                  |
-|---------------------------|------------------------------------------------------------------|
-| Stakeholder map           | RACI matrix, cross-functional brand-merchandising-supply alignment |
-| Pain point                | Friction in path-to-purchase, conversion blocker, abandonment driver |
-| User journey              | Shopper journey, omnichannel path-to-purchase, fulfillment lifecycle (BOPIS, ship-from-store, delivery) |
-| Observation / field study | Store walk, mystery shop, shop-along, intercept interview, associate shadow, returns desk observation |
-| Prototype                 | In-store pilot, planogram test, A/B test, controlled market test, visual mockup in-situ |
-| Iteration                 | Test-and-learn, planogram refresh, range review, seasonal reset, promo tuning |
-| Empathy                   | Shopper insight, Voice of Customer (VoC), frontline associate voice, returns analysis |
+| DT Concept                | Retail/CPG Term                                                                                                                                                                           |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stakeholder map           | RACI matrix, cross-functional brand-merchandising-supply alignment                                                                                                                        |
+| Pain point                | Friction in path-to-purchase, conversion blocker, abandonment driver                                                                                                                      |
+| User journey              | Shopper journey, omnichannel path-to-purchase, fulfillment lifecycle (BOPIS, ship-from-store, delivery)                                                                                   |
+| Observation / field study | Store walk, mystery shop, shop-along, intercept interview, associate shadow, returns desk observation                                                                                     |
+| Prototype                 | In-store pilot, planogram test, A/B test, controlled market test, visual mockup in-situ                                                                                                   |
+| Iteration                 | Test-and-learn, planogram refresh, range review, seasonal reset, promo tuning                                                                                                             |
+| Empathy                   | Shopper insight, Voice of Customer (VoC), frontline associate voice, returns analysis                                                                                                     |
 | Success metric            | Conversion rate, basket size, AOV (average order value), sell-through %, GMROI, comp sales, NPS, OSAT, OTIF (on-time-in-full), on-shelf availability, inventory turns, labor productivity |
-| Workflow mapping          | Process flow, value stream mapping, customer journey orchestration, fulfillment flow |
-| Risk assumption           | Cannibalization (new SKU hurting existing), brand dilution, margin erosion, supply availability |
-| Constraint-driven design  | Brand guidelines (visual, tone, claims), planogram space constraints, vendor lead times (6-12 months) |
-| Alert system concept      | Out-of-stock exception, low-inventory alert, price-match notification, loss-prevention flag |
-| Integration timing        | Seasonal reset window, Black Friday/Cyber Monday planning window (code/merchandise freezes Oct-Jan) |
+| Workflow mapping          | Process flow, value stream mapping, customer journey orchestration, fulfillment flow                                                                                                      |
+| Risk assumption           | Cannibalization (new SKU hurting existing), brand dilution, margin erosion, supply availability                                                                                           |
+| Constraint-driven design  | Brand guidelines (visual, tone, claims), planogram space constraints, vendor lead times (6-12 months)                                                                                     |
+| Alert system concept      | Out-of-stock exception, low-inventory alert, price-match notification, loss-prevention flag                                                                                               |
+| Integration timing        | Seasonal reset window, Black Friday/Cyber Monday planning window (code/merchandise freezes Oct-Jan)                                                                                       |
 
 ## Constraints and Considerations
 

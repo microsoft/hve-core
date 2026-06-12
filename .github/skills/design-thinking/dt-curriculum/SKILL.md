@@ -22,17 +22,17 @@ context as they advance from the Problem Space to the Implementation Space.
 Load the module that matches the method the learner is studying. Load the manufacturing
 scenario alongside any module that uses scenario-based checks or exercises.
 
-| Reference | When to load |
-|-----------|--------------|
-| [curriculum-01-scoping.md](references/curriculum-01-scoping.md) | Teaching Method 1: Scope Conversations (Problem Space). |
-| [curriculum-02-research.md](references/curriculum-02-research.md) | Teaching Method 2: Design Research (Problem Space). |
-| [curriculum-03-synthesis.md](references/curriculum-03-synthesis.md) | Teaching Method 3: Synthesis (Problem Space). |
-| [curriculum-04-brainstorming.md](references/curriculum-04-brainstorming.md) | Teaching Method 4: Brainstorming (Solution Space). |
-| [curriculum-05-concepts.md](references/curriculum-05-concepts.md) | Teaching Method 5: User Concepts (Solution Space). |
-| [curriculum-06-prototypes.md](references/curriculum-06-prototypes.md) | Teaching Method 6: Low-Fidelity Prototypes (Solution Space). |
-| [curriculum-07-testing.md](references/curriculum-07-testing.md) | Teaching Method 7: High-Fidelity Prototypes (Implementation Space). |
-| [curriculum-08-iteration.md](references/curriculum-08-iteration.md) | Teaching Method 8: User Testing (Implementation Space). |
-| [curriculum-09-handoff.md](references/curriculum-09-handoff.md) | Teaching Method 9: Iteration at Scale (Implementation Space). |
+| Reference                                                                               | When to load                                                                          |
+|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| [curriculum-01-scoping.md](references/curriculum-01-scoping.md)                         | Teaching Method 1: Scope Conversations (Problem Space).                               |
+| [curriculum-02-research.md](references/curriculum-02-research.md)                       | Teaching Method 2: Design Research (Problem Space).                                   |
+| [curriculum-03-synthesis.md](references/curriculum-03-synthesis.md)                     | Teaching Method 3: Synthesis (Problem Space).                                         |
+| [curriculum-04-brainstorming.md](references/curriculum-04-brainstorming.md)             | Teaching Method 4: Brainstorming (Solution Space).                                    |
+| [curriculum-05-concepts.md](references/curriculum-05-concepts.md)                       | Teaching Method 5: User Concepts (Solution Space).                                    |
+| [curriculum-06-prototypes.md](references/curriculum-06-prototypes.md)                   | Teaching Method 6: Low-Fidelity Prototypes (Solution Space).                          |
+| [curriculum-07-testing.md](references/curriculum-07-testing.md)                         | Teaching Method 7: High-Fidelity Prototypes (Implementation Space).                   |
+| [curriculum-08-iteration.md](references/curriculum-08-iteration.md)                     | Teaching Method 8: User Testing (Implementation Space).                               |
+| [curriculum-09-handoff.md](references/curriculum-09-handoff.md)                         | Teaching Method 9: Iteration at Scale (Implementation Space).                         |
 | [curriculum-scenario-manufacturing.md](references/curriculum-scenario-manufacturing.md) | Alongside any module using scenario-based comprehension checks or practice exercises. |
 
 ## Skill layout
