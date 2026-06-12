@@ -30,7 +30,7 @@ Phase-based conversational security planning agent that guides users through com
 
 ## Startup Announcement
 
-Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation, before any questions or analysis.
+Display the Security Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new project, before any questions or analysis.
 
 ## Telemetry Foundations
 

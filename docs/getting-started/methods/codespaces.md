@@ -3,7 +3,7 @@ title: GitHub Codespaces Installation
 description: Install HVE Core in GitHub Codespaces using postCreateCommand
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-11
 ms.topic: how-to
 keywords:
   - codespaces
@@ -96,7 +96,6 @@ Add the clone command and VS Code settings:
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
@@ -104,7 +103,8 @@ Add the clone command and VS Code settings:
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true
         }
       }
     }
@@ -165,7 +165,6 @@ git push
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
@@ -173,7 +172,8 @@ git push
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true
         }
       }
     }
@@ -214,7 +214,6 @@ git push
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true,
@@ -235,6 +234,7 @@ git push
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
           ".github/skills": true
         }
       }
@@ -279,13 +279,11 @@ For projects needing HVE Core in both local devcontainers and Codespaces:
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true,
           "../hve-core/.github/instructions/ado": true,
           "../hve-core/.github/instructions/coding-standards": true,
-          "../hve-core/.github/instructions/design-thinking": true,
           "../hve-core/.github/instructions/github": true,
           "../hve-core/.github/instructions/hve-core": true,
           "../hve-core/.github/instructions/shared": true
@@ -312,8 +310,10 @@ For projects needing HVE Core in both local devcontainers and Codespaces:
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
           "../hve-core/.github/skills": true,
-          "../hve-core/.github/skills/shared": true
+          "../hve-core/.github/skills/shared": true,
+          "../hve-core/.github/skills/design-thinking": true
         }
       }
     }
