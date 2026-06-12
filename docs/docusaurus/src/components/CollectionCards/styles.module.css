@@ -1,5 +1,7 @@
 .collectionCard {
-  display: block;
+  display: inline-flex;
+  flex-direction: column;
+  align-self: flex-start;
   position: relative;
   background: var(--ifm-card-background-color);
   border: 1px solid transparent;
@@ -10,6 +12,11 @@
 
 .collectionCard:hover .collectionName {
   text-decoration: underline;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
 }
 
 .collectionHeader {
@@ -27,12 +34,6 @@
   color: var(--ifm-color-primary);
   text-decoration: none;
   margin: 0;
-}
-
-.collectionName::after {
-  content: '';
-  position: absolute;
-  inset: 0;
 }
 
 .collectionName:hover {
@@ -79,9 +80,54 @@
 .artifactCount {
   font-size: 0.8rem;
   color: var(--ms-learn-text-subtle);
-  margin: 0;
+  margin: 0 0 0.75rem; 
 }
 
 .artifactCount strong {
   color: var(--ifm-font-color-base);
+}
+
+/* DISCLOSURE BLOCK STYLES */
+
+.disclosureContainer {
+  margin-top:  0.75rem; 
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ifm-color-emphasis-200);
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toggleButton:hover {
+  text-decoration: underline;
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.extendedDescription {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ms-learn-text-subtle);
+  line-height: 1.5;
+  background: var(--ifm-color-emphasis-100);
+  padding: 0.75rem;
+  border-radius: 2px;
+}
+
+.extendedDescription p {
+  margin: 0;
 }
