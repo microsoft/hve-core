@@ -23,51 +23,6 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 > * Star the project or add it to your favorites
 > * Mention the project to your peer studio crews and tell your work friends/colleagues
 
-## Build and Validation Requirements
-
-This project uses several tools to maintain code quality and consistency:
-
-### Required Tools
-
-| Tool                      | Purpose                                    |
-|---------------------------|--------------------------------------------||
-| markdownlint-cli2         | Validates markdown formatting and style    |
-| cspell                    | Spell checking across all file types       |
-| markdown-table-formatter  | Ensures consistent table formatting        |
-| markdown-link-check       | Validates markdown links are not broken    |
-| PowerShell 7              | Runs linting, validation, and test scripts |
-| PSScriptAnalyzer (module) | PowerShell static analysis                 |
-| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
-| Pester (module)           | PowerShell test framework                  |
-
-### Validation Commands
-
-Run these npm scripts to validate your changes before submitting:
-
-```bash
-npm run lint:all                  # Run all linters
-npm run lint:md                   # Run markdownlint
-npm run lint:ps                   # Run PowerShell analyzer
-npm run lint:yaml                 # Run YAML linter
-npm run lint:frontmatter          # Validate markdown frontmatter
-npm run lint:links                # Check link language paths
-npm run lint:md-links             # Check markdown links
-npm run lint:collections-metadata # Validate collection metadata
-npm run lint:marketplace          # Validate marketplace metadata
-npm run lint:version-consistency  # Check action version consistency
-npm run validate:copyright        # Validate copyright headers
-npm run validate:skills           # Validate skill directory structure
-npm run spell-check               # Run cspell
-npm run format:tables             # Format markdown tables
-npm run test:ps                   # Run PowerShell tests
-```
-
-For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
-
-### Development Environment
-
-We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
-
 ## Table of Contents
 
 * [Build and Validation Requirements](#build-and-validation-requirements)
@@ -110,6 +65,51 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   * [Commit Message Examples](#commit-message-examples)
   * [Release Validation](#release-validation)
 * [Attribution](#attribution)
+
+## Build and Validation Requirements
+
+This project uses several tools to maintain code quality and consistency:
+
+### Required Tools
+
+| Tool                      | Purpose                                    |
+|---------------------------|--------------------------------------------|
+| markdownlint-cli2         | Validates markdown formatting and style    |
+| cspell                    | Spell checking across all file types       |
+| markdown-table-formatter  | Ensures consistent table formatting        |
+| markdown-link-check       | Validates markdown links are not broken    |
+| PowerShell 7              | Runs linting, validation, and test scripts |
+| PSScriptAnalyzer (module) | PowerShell static analysis                 |
+| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
+| Pester (module)           | PowerShell test framework                  |
+
+### Validation Commands
+
+Run these npm scripts to validate your changes before submitting:
+
+```bash
+npm run lint:all                  # Run all linters
+npm run lint:md                   # Run markdownlint
+npm run lint:ps                   # Run PowerShell analyzer
+npm run lint:yaml                 # Run YAML linter
+npm run lint:frontmatter          # Validate markdown frontmatter
+npm run lint:links                # Check link language paths
+npm run lint:md-links             # Check markdown links
+npm run lint:collections-metadata # Validate collection metadata
+npm run lint:marketplace          # Validate marketplace metadata
+npm run lint:version-consistency  # Check action version consistency
+npm run validate:copyright        # Validate copyright headers
+npm run validate:skills           # Validate skill directory structure
+npm run spell-check               # Run cspell
+npm run format:tables             # Format markdown tables
+npm run test:ps                   # Run PowerShell tests
+```
+
+For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
+
+### Development Environment
+
+We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
 
 ## Code of Conduct
 
