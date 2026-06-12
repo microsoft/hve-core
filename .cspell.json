@@ -25,7 +25,8 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
-    "dependency-pinning-artifacts/**"
+    "dependency-pinning-artifacts/**",
+    "evals/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
@@ -65,8 +66,10 @@
   "words": [
     "ˈpræksɪs",
     "agentic",
+    "aoda",
     "atheris",
     "behaviour",
+    "beval",
     "behavioural",
     "brainwriting",
     "clusterfuzzlite",
@@ -80,11 +83,13 @@
     "hideable",
     "idor",
     "learning",
+    "prval",
     "skillmd",
     "smol",
     "subcat",
     "uncited",
     "vally",
+    "vyta",
     "whiteboarding",
     "ystatement",
     "ˈpræksɪs",
@@ -95,7 +100,8 @@
     "SLSA",
     "Sigstore",
     "cosign",
-    "scorecard"
+    "scorecard",
+    "watchlist"
   ],
   "reporters": [
     "default",

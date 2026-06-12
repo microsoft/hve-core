@@ -177,6 +177,9 @@ State JSON schema for `state.json`:
   },
   "referencesProcessed": [],
   "nextActions": [],
+  "signingRequested": false,
+  "signingManifestPath": null,
+  "disclaimerShownAt": null,
   "userPreferences": {
     "autonomyTier": "partial",
     "outputDetailLevel": "standard",

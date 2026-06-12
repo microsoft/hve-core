@@ -64,6 +64,7 @@
   "signingRequested": false,
   "signingManifestPath": null,
   "disclaimerShownAt": null,
+  "noticeLog": [],
   "userPreferences": {
     "autonomyTier": "guided",
     "outputDetailLevel": "standard",

@@ -5,6 +5,7 @@
     ".copilot-tracking/**",
     "logs/**",
     "evals/results/**",
+    "vally-results/**",
     "venv/**",
     "scripts/tests/Fixtures/**",
     "scripts/tests/linting/fixtures/**",

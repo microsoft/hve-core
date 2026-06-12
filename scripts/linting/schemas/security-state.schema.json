@@ -18,6 +18,7 @@
     "referencesProcessed",
     "nextActions",
     "disclaimerShownAt",
+    "noticeLog",
     "userPreferences",
     "raiEnabled",
     "raiScope",
@@ -52,6 +53,11 @@
       "type": ["string", "null"],
       "format": "date-time",
       "description": "ISO 8601 timestamp when disclaimer was displayed, or null if not yet shown"
+    },
+    "noticeLog": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/noticeLogEntry" },
+      "description": "Timestamped audit log of user-facing disclaimers, framework attributions, and professional-review reminders"
     },
     "phaseGates": {
       "type": "object",
@@ -191,6 +197,39 @@
     }
   ],
   "$defs": {
+    "noticeLogEntry": {
+      "type": "object",
+      "required": ["noticeType", "shownAt", "source"],
+      "properties": {
+        "noticeType": {
+          "type": "string",
+          "enum": [
+            "session-start-disclaimer",
+            "framework-attribution",
+            "exit-reminder",
+            "handoff-disclaimer",
+            "professional-review-reminder"
+          ],
+          "description": "Category of notice shown to the user"
+        },
+        "shownAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when the notice was shown"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Instruction file or canonical text source for the notice"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Planner-specific metadata such as phase, framework id, or output artifact path"
+        }
+      },
+      "additionalProperties": false
+    },
     "hardGate": {
       "type": "object",
       "required": ["gate", "confirmedAt"],

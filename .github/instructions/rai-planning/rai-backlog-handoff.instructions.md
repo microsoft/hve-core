@@ -134,149 +134,19 @@ Tags applied to work items for tracking and filtering across backlog systems.
 
 ## Target System Selection
 
-When generating work items, select the template based on `userPreferences.targetSystem`:
-
-* **ado** — Use the ADO Work Item Template with HTML description format.
-* **github** — Use the GitHub Issue Template with YAML metadata and markdown body.
-* **both** — Generate both ADO and GitHub templates for dual-system environments.
-
-Default to the format specified in user preferences. If no preference was set, ask the user which system(s) to target.
+Target system selection (ADO, GitHub, both) follows the canonical convention in `.github/skills/shared/backlog-templates/SKILL.md` under the Overview's Output Targets table. RAI emits work items to `.copilot-tracking/rai-plans/{slug}/backlog-handoff.md` as the neutral intermediate, with platform-specific files derived per the skill's Per-Platform Field Mappings.
 
 ## Dual-Format Backlog Templates
 
-Both ADO and GitHub formats can be generated simultaneously based on `userPreferences.targetSystem`. Both formats are compatible with the Security Planner backlog handoff for cross-referencing.
-
-### ADO Work Item Template
-
-Assign sequential IDs within the RAI plan using the format `WI-RAI-{NNN}` (for example, WI-RAI-001, WI-RAI-002). This convention is distinct from the Security Planner `WI-SEC-{NNN}` format to prevent ID collisions.
-
-Required fields per work item:
-
-* ID: `WI-RAI-{NNN}`
-* Type: User Story / Task / Bug
-* Title: `[RAI] {concise description}`
-* Description: HTML-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
-* Priority: Immediate / Near-term / Planned / Backlog
-* Suggested Remediation Horizon: Pre-Production / Early Operations / Ongoing Governance
-* Tags: From the RAI Tags table.
-* Parent: Reference to epic or feature when applicable.
-* Security Cross-Reference: `T-{BUCKET}-{NNN}` when overlapping with Security Planner.
-* RAI Owner: (Optional) Role accountable for this item (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement." Supports traceability required by ISO 42001 and NIST AI RMF Govern 1.1.
-
-HTML template for description fields:
-
-```html
-<div>
-  <h3>RAI Control: {control_name}</h3>
-  <p><strong>NIST Characteristic:</strong> {characteristic}</p>
-  <p><strong>Threat:</strong> {threat_id} - {threat_description}</p>
-  <p><strong>Control Surface:</strong> {prevent|detect|respond} - {control_details}</p>
-  <p><strong>Evidence:</strong> {evidence_status}</p>
-  <p><strong>Suggested Remediation Horizon:</strong> {horizon}</p>
-  <h4>Implementation</h4>
-  <p>{implementation_details}</p>
-  <h4>Acceptance Criteria</h4>
-  <ul>
-    <li>{criterion_1}</li>
-    <li>{criterion_2}</li>
-  </ul>
-  <blockquote>
-  <p><strong>Note</strong> — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.</p>
-  <ul><li><input type="checkbox" disabled /> Reviewed and validated by a qualified human reviewer</li></ul>
-  </blockquote>
-</div>
-```
-
-Work item hierarchy maps from the RAI assessment structure:
-
-* Epic: NIST Characteristic (one per characteristic with findings).
-* Feature: Control Category (Prevent, Detect, Respond per characteristic).
-* User Story: Specific control or mitigation.
-* Task: Implementation steps for a user story.
-* Bug: Suggested RAI area requiring attention.
-
-Execution follows `ado-update-wit-items.instructions.md`.
-
-### GitHub Issue Template
-
-Assign temporary IDs using the format `{{RAI-TEMP-N}}`, replaced with real issue numbers on creation. This convention is distinct from the Security Planner `{{SEC-TEMP-N}}` format.
-
-Required fields per issue:
-
-* Title: `[RAI-{Characteristic}] {concise description}`
-* Labels: From the RAI Tags table (without `rai:` prefix for GitHub labels).
-* Milestone: Linked to assessment phase.
-* Body: Markdown-formatted with sections for Context, NIST Characteristic, Related Threat, Control Surface, Acceptance Criteria.
-* Security Cross-Reference: Link to Security Planner issue when overlapping.
-* RAI Owner: (Optional) Role accountable for this issue (for example, "ML Engineering Lead"). Default: "TBD — assign during backlog refinement."
-
-Include a YAML metadata block at the top of the issue body:
-
-```yaml
----
-rai_characteristic: {characteristic}
-threat_id: T-RAI-{NNN}
-suggested_priority: {Immediate|Near-term|Planned|Backlog}
-suggested_horizon: {Pre-Production|Early Operations|Ongoing Governance}
-category: {Remediation|Control Implementation|Monitoring Setup|Documentation|Enhancement}
-depth_tier: {Basic|Standard|Comprehensive}
-security_cross_ref: {WI-SEC-{NNN} or empty}
----
-```
-
-Markdown template for issue body:
-
-```markdown
-## RAI Control: {control_name}
-
-**NIST Characteristic:** {characteristic}
-**Threat:** {threat_id} - {threat_description}
-**Control Surface:** {prevent|detect|respond} - {control_details}
-**Suggested Priority:** {priority_level}
-**Suggested Remediation Horizon:** {horizon}
-
-### Implementation
-
-{implementation_details}
-
-### Acceptance Criteria
-
-* [ ] {criterion_1}
-* [ ] {criterion_2}
-
-> **Note** — The author created this content with assistance from AI. All outputs should be reviewed and validated before use.
-> - [ ] Reviewed and validated by a qualified human reviewer
-```
-
-Execution follows `github-backlog-update.instructions.md`.
+Both ADO and GitHub formats follow the canonical templates, field blocks, augmentation keys, title prefix, and temporary-ID conventions defined in `.github/skills/shared/backlog-templates/SKILL.md`. Read the RAI entries under "ADO Work Item Template", "GitHub Issue Template", and "Work Item ID Naming Convention" at emission time. RAI tag vocabulary lives in the tags section above. Execution follows `ado-update-wit-items.instructions.md` for ADO and `github-backlog-update.instructions.md` for GitHub.
 
 ## Content Sanitization Protocol
 
-Strip internal tracking paths and sensitive assessment details from work item output before handoff to external systems.
-
-Sanitization rules:
-
-1. Replace `.copilot-tracking/` paths with descriptive text (for example, "RAI plan artifacts").
-2. Replace full file system paths with relative references.
-3. Remove state JSON content or references.
-4. Remove internal tracking IDs that are not work item IDs.
-5. Preserve standards references (NIST AI RMF trustworthiness characteristics, NIST AI RMF IDs) in all cases.
-
-After generating each work item, scan the output for `.copilot-tracking/`. If found, strip the path and log the sanitization action.
-
-Debug mode: Retain full paths in `.copilot-tracking/rai-plans/{slug}/debug/` output only. Paths never appear in external-facing work items.
+Content sanitization follows the five-rule protocol in `.github/skills/shared/backlog-templates/SKILL.md` under 'Content Sanitization Protocol'. RAI-specific standards identifiers that must be preserved verbatim per rule 4: NIST AI RMF 1.0 subcategory IDs (for example, `MAP-1.1`, `MEASURE-2.3`, `MANAGE-1.2`, `GOVERN-3.1`), characteristic names, and any regulatory mapping references (EU AI Act articles, ISO/IEC 42001 clauses) when present. Debug-mode output remains under `.copilot-tracking/rai-plans/{slug}/debug/`.
 
 ## Three-Tier Autonomy Model
 
-Three tiers control how RAI work items reach the target backlog system.
-
-| Tier    | Description                                              | Applies When                                                 |
-|---------|----------------------------------------------------------|--------------------------------------------------------------|
-| Full    | Agent creates work items without human approval          | Enhancement items (Backlog priority), documentation updates  |
-| Partial | Agent drafts work items for human review before creation | Control implementation (Planned–Near-term), monitoring setup |
-| Manual  | Agent provides recommendations; human creates items      | Remediation (Immediate–Near-term), tradeoff decisions        |
-
-Ask the user in Phase 6 which tier they prefer. Default to Partial on first use. Store the selected preference in the session state JSON under `userPreferences.autonomyTier`.
+The three-tier autonomy model is defined canonically in `.github/skills/shared/backlog-templates/SKILL.md` under 'Autonomy-Tier Enumeration'. RAI uses the divergent vocabulary `Full` / `Partial` / `Manual` (see the cross-reference table in the skill). Default tier on first use is `Partial`. Persist the selected tier in session state under `userPreferences.autonomyTier`. Ask the user in Phase 6 which tier they prefer.
 
 ## Suggested Priority Derivation
 

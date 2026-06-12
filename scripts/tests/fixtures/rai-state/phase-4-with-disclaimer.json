@@ -77,6 +77,14 @@
   "signingRequested": false,
   "signingManifestPath": null,
   "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2025-01-01T00:00:00Z",
+      "source": ".github/instructions/rai-planning/rai-identity.instructions.md",
+      "details": { "phase": "phase4" }
+    }
+  ],
   "userPreferences": {
     "autonomyTier": "partial",
     "outputDetailLevel": "detailed",

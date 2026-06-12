@@ -179,6 +179,9 @@ items:
     kind: instruction
     maturity: experimental
   # Shared Instructions
+  - path: .github/instructions/shared/planner-identity-base.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/shared/coaching-patterns.instructions.md
     kind: instruction
   - path: .github/instructions/shared/disclaimer-language.instructions.md
@@ -188,6 +191,9 @@ items:
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
+  - path: .github/skills/shared/backlog-templates
+    kind: skill
+    maturity: experimental
   - path: .github/instructions/security/security-planner-telemetry.instructions.md
     kind: instruction
   - path: .github/instructions/security/sssc-planner-telemetry.instructions.md

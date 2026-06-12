@@ -305,6 +305,24 @@ items:
 - path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/instructions/accessibility/accessibility-backlog-handoff.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-capture-coaching.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-framework-selection.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-impact-assessment.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md
@@ -628,6 +646,9 @@ items:
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
+- path: .github/instructions/shared/planner-identity-base.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
 - path: .github/skills/accessibility/aria-apg

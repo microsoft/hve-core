@@ -3,16 +3,16 @@
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
-    Asserts Cadence Rule 5 in both planner identity files leads with open-ended
-    discovery before any mention of option lists.
+    Asserts Cadence Rule 5 in the shared planner identity base leads with
+    open-ended discovery before any mention of option lists. Per-planner
+    identity files inherit the cadence from this base.
 .NOTES
-    Effective case count: 2 (1 `It` block x `-ForEach $script:files` arity 2).
+    Effective case count: 1 (1 `It` block x `-ForEach $script:files` arity 1).
 #>
 
 $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $script:files = @(
-    (Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'),
-    (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
+    (Join-Path $script:repoRoot '.github/instructions/shared/planner-identity-base.instructions.md')
 )
 
 Describe 'Cadence Rule 5 enforces discovery-first ordering' {

@@ -4,6 +4,20 @@
   "currentPhase": 4,
   "entryMode": "from-prd",
   "disclaimerShownAt": "2026-05-09T14:32:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "session-start-disclaimer",
+      "shownAt": "2026-05-09T14:32:00Z",
+      "source": ".github/instructions/security/security-identity.instructions.md",
+      "details": { "phase": "phase1" }
+    },
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2026-05-09T16:20:00Z",
+      "source": ".github/instructions/security/security-identity.instructions.md",
+      "details": { "phase": "phase4" }
+    }
+  ],
   "phaseGates": {
     "phase1": { "gate": "hard", "confirmedAt": "2026-05-09T15:10:00Z" },
     "phase2": { "gate": "summary-and-advance" },
