@@ -138,7 +138,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Grid, Spinbutton, and Slider pat
 * The lower thumb's `aria-valuemax` updates to the upper thumb's current value (and vice versa) so that the bounds prevent the thumbs from crossing.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/slider-multithumb/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

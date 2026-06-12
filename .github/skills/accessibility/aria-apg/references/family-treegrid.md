@@ -76,7 +76,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Treegrid and related patterns, <
 * `aria-expanded` is set on a link that controls disclosure of a related region, although that combination usually indicates the element should be a button instead.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/link/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

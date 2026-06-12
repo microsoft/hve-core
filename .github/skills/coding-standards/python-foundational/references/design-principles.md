@@ -119,5 +119,3 @@ A task asks to deduplicate a validation function used in two endpoints.
 A disproportionate response: introducing a cross-module event system where endpoints emit validation events, a central dispatcher routes them, and a shared handler processes them. This adds three new modules, an event schema, and a registration mechanism to solve a problem that a single shared function would handle.
 
 A proportionate response: extracting the duplicated validation into a helper function in the same package and calling it from both endpoints.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

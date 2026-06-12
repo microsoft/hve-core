@@ -186,7 +186,3 @@ Accessibility features that present information audibly or otherwise differently
 * Document the privacy preservation approach as part of the conformance report.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

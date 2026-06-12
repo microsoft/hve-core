@@ -170,5 +170,3 @@ Internal:
 
 * [references/pii-denylist.md](references/pii-denylist.md) - authoritative PII denylist with redaction strategies.
 * [references/proposed-additions.md](references/proposed-additions.md) - intake for new vocabulary proposals.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

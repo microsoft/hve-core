@@ -173,7 +173,3 @@ The keyboard focus indicator meets defined minimum size, contrast, and area requ
 * Confirm 3:1 contrast between focused and unfocused states.
 
 Source: <https://www.w3.org/TR/WCAG22/#focus-appearance>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

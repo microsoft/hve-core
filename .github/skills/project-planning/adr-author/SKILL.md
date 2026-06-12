@@ -176,5 +176,3 @@ The agent loads sections via `read_file` against this skill file and records the
 ---
 
 > Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

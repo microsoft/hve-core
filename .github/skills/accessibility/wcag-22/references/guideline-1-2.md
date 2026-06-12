@@ -126,7 +126,3 @@ An alternative for live audio-only content that conveys equivalent information i
 * Confirm live audio-only programmes (radio-style streams, telephony bridges) offer a real-time captioning or transcription channel.
 
 Source: <https://www.w3.org/TR/WCAG22/#audio-only-live>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

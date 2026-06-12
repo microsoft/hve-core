@@ -278,7 +278,3 @@ The default human language of the document shall be programmatically identified 
 * Verify automated authoring pipelines emit the language tag rather than relying on viewer defaults.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

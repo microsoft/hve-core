@@ -908,7 +908,3 @@ Status messages (success, error, progress, in-page notifications) shall be progr
 * Confirm urgency and politeness levels (`aria-live="polite"` vs `assertive`) match the message importance.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

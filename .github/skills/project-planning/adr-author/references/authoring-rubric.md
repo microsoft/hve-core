@@ -67,5 +67,3 @@ Under `autonomyTier` `full` and `deep`, any failed required check is a hard refu
 2. Map back to the originating phase (Frame / Investigate / Decide / Govern).
 3. Re-enter that phase with the failure as targeted input; do not re-run earlier phases.
 4. Re-run the rubric. Maximum two retries before escalating to the user under `full` and `deep`.
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

@@ -195,7 +195,3 @@ Requires form fields to carry visible, programmatically associated labels and an
 * Confirm that required-field indicators are announced by assistive technology and not communicated only through colour or symbols.
 
 Source: <https://www.access-board.gov/ict/#e205-electronic-content>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

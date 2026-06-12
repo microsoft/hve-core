@@ -195,7 +195,3 @@ Requires software to avoid auto-playing animations that may disorient users with
 * Provide an in-application setting to disable decorative motion independent of the OS preference.
 
 Source: <https://www.access-board.gov/ict/#e207-software>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

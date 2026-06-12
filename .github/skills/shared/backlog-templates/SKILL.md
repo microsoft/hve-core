@@ -223,5 +223,3 @@ Rules:
 * Cross-planner references use the target planner's full ID, prefixed with the relationship type: `Accessibility-Ref: WI-A11Y-{NNN}`, `Security-Ref: WI-SEC-{NNN}`, `RAI-Ref: WI-RAI-{NNN}`, `SSSC-Ref: WI-SSSC-{NNN}`.
 
 Internal reference IDs (`T-{BUCKET}-{NNN}` for threats, `EV-A11Y-{NNN}` for evidence, `SEED-A11Y-{NNN}` for seeds, `TO-A11Y-{NNN}` for tradeoffs) remain scoped to their owning planner and are out of scope for this skill.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

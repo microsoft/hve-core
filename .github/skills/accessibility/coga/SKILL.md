@@ -85,7 +85,3 @@ Cross-skill use is the common case: a COGA finding usually cites both the patter
 
 * `SKILL.md` — this file (skill entrypoint and 53-row roll-up table).
 * `references/` — one markdown file per COGA objective. Each file contains a paraphrased description of every pattern within the objective, a `Design patterns` list of implementation approaches, an `Assessment heuristics` list for evaluation, and a canonical W3C source URL anchor.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -121,7 +121,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Menu and Menubar patterns, <http
 * `aria-multiselectable="true"` may appear on the parent menu when grouped multi-selection is supported across items.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-editor/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

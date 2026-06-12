@@ -82,7 +82,3 @@ If a page includes a help mechanism (contact info, contact link, self-help, FAQ,
 * Confirm help links or contact widgets appear in a consistent location across all pages where they exist.
 
 Source: <https://www.w3.org/TR/WCAG22/#consistent-help>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

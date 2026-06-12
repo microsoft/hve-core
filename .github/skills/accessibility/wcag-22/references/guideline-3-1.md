@@ -82,7 +82,3 @@ A mechanism is available for identifying specific pronunciation of words where p
 * Confirm homographs or pronunciation-sensitive terms include pronunciation hints (audio, IPA, or ruby annotation).
 
 Source: <https://www.w3.org/TR/WCAG22/#pronunciation>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

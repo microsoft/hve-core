@@ -44,5 +44,3 @@ The skill provides a single `_redact(text)` helper that masks the items in the i
 * #file:.github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
 * #file:.github/skills/experimental/mural/SECURITY.md
 * #file:.github/skills/experimental/mural/scripts/mural/_transport.py
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

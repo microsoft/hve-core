@@ -182,5 +182,3 @@ python scripts/jira.py comments PROJ-123 PROJ-456 --fields _issue,author.display
 | Transition not found       | The requested workflow transition is unavailable | Re-run the command with the transition name returned in the error output                                          |
 | JSON payload error         | Invalid JSON was passed to `create` or `update`  | Validate the payload and retry with well-formed JSON                                                              |
 | Network connection error   | Jira instance URL is unreachable                 | Verify the base URL and local network access                                                                      |
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

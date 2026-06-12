@@ -155,7 +155,3 @@ Icons help recognition only when they are familiar and consistently meaningful. 
 * Confirm uncommon icons are accompanied by inline text the first time they appear.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-1>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

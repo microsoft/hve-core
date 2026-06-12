@@ -122,7 +122,3 @@ Where ICT enables real-time communication to emergency services, it shall suppor
 * Document the supported emergency modalities, the regions in which they have been validated, and any known network conditions in which fallback occurs.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/> (Clause 6.6).
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -105,7 +105,3 @@ Documentation handed to users through the support channel — knowledge-base art
 * Audit the support knowledge base on a regular cadence using the same accessibility tooling applied to the main product documentation.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

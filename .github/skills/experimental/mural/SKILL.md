@@ -410,5 +410,3 @@ The following items were intentionally deferred from the v1 full-scope delivery 
 ## License
 
 This skill is distributed under the MIT License. See the repository [LICENSE](../../../../LICENSE) file for the full text.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

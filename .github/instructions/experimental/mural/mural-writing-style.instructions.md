@@ -64,5 +64,3 @@ Stickies are shorthand for a conversation that happened in the room. Outbound wr
 * English-only for tag text and reserved-tag prefixes.
 * Sticky text follows the workshop's working language; the skill does not translate.
 * No emoji in tag text (emoji in sticky text is allowed when the workshop authored it).
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

@@ -51,7 +51,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Tabs family, <https://www.w3.org
 * Only the active tab is in the page tab sequence (`tabindex="0"`); inactive tabs use `tabindex="-1"`.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/tabs/examples/tabs-automatic/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

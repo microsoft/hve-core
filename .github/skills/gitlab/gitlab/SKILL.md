@@ -132,5 +132,3 @@ python scripts/gitlab.py job-log 67890
 
 GitLab uses MR IIDs such as `!42` inside a project. This skill expects the
 numeric IID, not the global merge request ID.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

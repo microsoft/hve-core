@@ -72,5 +72,3 @@ The retro v1 wedge ships with the first three adapters (`backlog-item`, `instruc
 ## Override file
 
 Repos that need to hide or override registry entries can supply `destinations/dt-sections.yml` (deep-merge override; not populated by default). Agents read both files and merge entries by `id`.
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
