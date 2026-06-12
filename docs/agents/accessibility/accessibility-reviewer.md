@@ -13,7 +13,7 @@ tags:
   - agents
   - accessibility
 author: Microsoft
-ms.date: 2026-05-28
+ms.date: 2026-06-12
 ms.topic: concept
 estimated_reading_time: 6
 ---
@@ -80,11 +80,11 @@ If a subagent response is incomplete or malformed, the orchestrator retries once
 
 ## Outputs
 
-The reviewer writes a consolidated report under `.copilot-tracking/accessibility-reviews/`. Report filenames encode the mode and a dated sequence:
+The reviewer writes a consolidated report under `.copilot-tracking/accessibility-reviews/{{YYYY-MM-DD}}/`. Report filenames encode the review mode and a three-digit sequence:
 
-* `audit-{{YYYY-MM-DD}}-{{NNN}}.md`
-* `diff-{{YYYY-MM-DD}}-{{NNN}}.md`
-* `plan-{{YYYY-MM-DD}}-{{NNN}}.md`
+* `accessibility-report-{{NNN}}.md` for audit mode
+* `accessibility-report-diff-{{NNN}}.md` for diff mode
+* `accessibility-plan-risk-assessment-{{NNN}}.md` for plan mode
 
 The report includes summary counts, the list of assessed skills, a severity breakdown, and any excluded skills with reasons.
 
