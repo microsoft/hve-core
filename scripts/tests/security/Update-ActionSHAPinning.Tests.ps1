@@ -13,7 +13,7 @@ BeforeAll {
     Save-CIEnvironment
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 
     # Mock response helpers
     function script:New-MockGitHubGraphQLResponse {

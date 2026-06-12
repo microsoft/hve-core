@@ -166,7 +166,7 @@ Describe 'Invoke-JsonLintCore' -Tag 'Unit' {
 Describe 'Repository JSON validity' -Tag 'Integration' {
     It 'All schema and fixture JSON files parse strictly' {
         $repoRoot = Join-Path $PSScriptRoot '../../..'
-        $targets = @('scripts/linting/schemas', 'scripts/tests/Fixtures') | ForEach-Object {
+        $targets = @('scripts/linting/schemas', 'scripts/tests/fixtures') | ForEach-Object {
             Join-Path $repoRoot $_
         }
 

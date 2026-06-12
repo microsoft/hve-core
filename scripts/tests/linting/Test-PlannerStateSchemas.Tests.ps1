@@ -10,8 +10,7 @@
     schemas must declare `noticeLog` as an array of typed notice entries and keep it in required
     where the planner has a required disclaimer timestamp.
 .NOTES
-    Effective case count: 8 (2 inline-default + 4 canonical-schema + 2 required-key checks),
-    not parametrized; each identity / schema pair is asserted in its own `It` block by design.
+    Each identity / schema pair is asserted in its own `It` block by design.
 #>
 
 BeforeAll {
@@ -120,9 +119,43 @@ Describe 'Canonical state schemas declare noticeLog audit entries' {
         $schema.required | Should -Contain 'noticeLog'
     }
 
-    It 'accessibility-state.schema.json declares optional noticeLog correctly' {
+    It 'accessibility-state.schema.json declares noticeLog correctly' {
         $schema = Get-Content -Path $script:accessibilitySchema -Raw | ConvertFrom-Json
         Assert-NoticeLogSchema -Schema $schema
-        $schema.required | Should -Not -Contain 'noticeLog'
+        $schema.required | Should -Contain 'noticeLog'
+    }
+}
+
+Describe 'Cross-schema parity for noticeLog audit entries' -Tag 'Unit' {
+    It 'sssc-state and rai-state declare byte-identical noticeLog definitions' {
+        $sssc = Get-Content -Path $script:ssscSchema -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchema -Raw | ConvertFrom-Json
+        $ssscProp = $sssc.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $raiProp = $rai.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $ssscProp | Should -Be $raiProp -Because 'sssc-state noticeLog definitions must remain in lockstep with rai-state'
+    }
+
+    It 'accessibility-state and rai-state declare byte-identical noticeLog definitions' {
+        $accessibility = Get-Content -Path $script:accessibilitySchema -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchema -Raw | ConvertFrom-Json
+        $accessibilityProp = $accessibility.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $raiProp = $rai.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $accessibilityProp | Should -Be $raiProp -Because 'accessibility-state noticeLog definitions must remain in lockstep with rai-state'
+    }
+
+    It 'sssc-state and rai-state declare byte-identical noticeLogEntry definitions' {
+        $sssc = Get-Content -Path $script:ssscSchema -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchema -Raw | ConvertFrom-Json
+        $ssscDef = $sssc.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $raiDef = $rai.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $ssscDef | Should -Be $raiDef -Because 'sssc-state noticeLogEntry definitions must remain in lockstep with rai-state'
+    }
+
+    It 'accessibility-state and rai-state declare byte-identical noticeLogEntry definitions' {
+        $accessibility = Get-Content -Path $script:accessibilitySchema -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchema -Raw | ConvertFrom-Json
+        $accessibilityDef = $accessibility.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $raiDef = $rai.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $accessibilityDef | Should -Be $raiDef -Because 'accessibility-state noticeLogEntry definitions must remain in lockstep with rai-state'
     }
 }

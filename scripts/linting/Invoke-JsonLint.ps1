@@ -13,7 +13,7 @@
     lenient ConvertFrom-Json silently accepts.
 
     By default it lints schema and fixture JSON under scripts/linting/schemas and
-    scripts/tests/Fixtures. Supports changed-files-only mode for PR validation and
+    scripts/tests/fixtures. Supports changed-files-only mode for PR validation and
     exports JSON results for CI integration.
 
     Fixtures whose file name matches an ExcludePatterns entry (by default any
@@ -49,7 +49,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/Fixtures'),
+    [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/fixtures'),
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePatterns = @('invalid-*.json'),
@@ -136,7 +136,7 @@ function Invoke-JsonLintCore {
     [OutputType([void])]
     param(
         [Parameter(Mandatory = $false)]
-        [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/Fixtures'),
+        [string[]]$Paths = @('scripts/linting/schemas', 'scripts/tests/fixtures'),
 
         [Parameter(Mandatory = $false)]
         [string[]]$ExcludePatterns = @('invalid-*.json'),
