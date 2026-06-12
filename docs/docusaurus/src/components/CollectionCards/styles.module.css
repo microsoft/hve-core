@@ -56,18 +56,18 @@
 }
 
 .maturityStable {
-  background: var(--ifm-color-success-contrast-background);
-  color: var(--ifm-color-success-dark);
+  background: #e6f6e6;
+  color: #006b00;
 }
 
 .maturityPreview {
-  background: var(--ifm-color-warning-contrast-background);
-  color: var(--ifm-color-warning-dark);
+  background: #fff8e6;
+  color: #7a4f00;
 }
 
 .maturityExperimental {
-  background: var(--ifm-color-info-contrast-background);
-  color: var(--ifm-color-info-dark);
+  background: #eef9fd;
+  color: #005f73;
 }
 
 .collectionDescription {
