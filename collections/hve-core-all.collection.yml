@@ -107,6 +107,9 @@ items:
 - path: .github/agents/rai-planning/rai-planner.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/security/security-auditor.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
   kind: agent
   maturity: experimental
@@ -273,6 +276,9 @@ items:
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/risk-register.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/security-audit-from-plan.prompt.md
   kind: prompt
   maturity: experimental
 - path: .github/prompts/security/security-capture.prompt.md

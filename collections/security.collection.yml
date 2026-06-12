@@ -31,6 +31,9 @@ items:
   - path: .github/agents/security/security-reviewer.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/security/security-auditor.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/codebase-profiler.agent.md
     kind: agent
     maturity: experimental
@@ -96,6 +99,10 @@ items:
     kind: prompt
     maturity: experimental
   - path: .github/prompts/security/security-review-sbd.prompt.md
+    kind: prompt
+    maturity: experimental
+  # Security Auditor Prompts
+  - path: .github/prompts/security/security-audit-from-plan.prompt.md
     kind: prompt
     maturity: experimental
   # SSSC Planner Prompts
