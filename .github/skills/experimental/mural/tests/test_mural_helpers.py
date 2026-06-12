@@ -778,10 +778,14 @@ def test_build_shape_body_requires_shape(mural_module: Any) -> None:
 def test_build_arrow_body_happy(mural_module: Any) -> None:
     args = _ns(x1=0, y1=1, x2=2, y2=3, style=None)
     assert mural_module._build_arrow_body(args) == {
-        "x1": 0.0,
-        "y1": 1.0,
-        "x2": 2.0,
-        "y2": 3.0,
+        "x": 0.0,
+        "y": 1.0,
+        "width": 2.0,
+        "height": 2.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 2.0, "y": 2.0},
+        ],
     }
 
 

@@ -475,11 +475,23 @@ def _build_shape_body(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _build_arrow_body(args: argparse.Namespace) -> dict[str, Any]:
+    x1 = _coerce_xy(getattr(args, "x1", None), "--x1")
+    y1 = _coerce_xy(getattr(args, "y1", None), "--y1")
+    x2 = _coerce_xy(getattr(args, "x2", None), "--x2")
+    y2 = _coerce_xy(getattr(args, "y2", None), "--y2")
+    origin_x = min(x1, x2)
+    origin_y = min(y1, y2)
+    width = max(abs(x2 - x1), 1.0)
+    height = max(abs(y2 - y1), 1.0)
     body: dict[str, Any] = {
-        "x1": _coerce_xy(getattr(args, "x1", None), "--x1"),
-        "y1": _coerce_xy(getattr(args, "y1", None), "--y1"),
-        "x2": _coerce_xy(getattr(args, "x2", None), "--x2"),
-        "y2": _coerce_xy(getattr(args, "y2", None), "--y2"),
+        "x": origin_x,
+        "y": origin_y,
+        "width": width,
+        "height": height,
+        "points": [
+            {"x": x1 - origin_x, "y": y1 - origin_y},
+            {"x": x2 - origin_x, "y": y2 - origin_y},
+        ],
     }
     if getattr(args, "style", None):
         body["style"] = _parse_json_arg(args.style, "--style")
