@@ -6,6 +6,7 @@ tools:
   - read
   - search
 model:
+  - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
   - GPT-5.4 mini (copilot)
 ---

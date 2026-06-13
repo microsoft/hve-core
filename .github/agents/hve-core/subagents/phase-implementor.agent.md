@@ -2,6 +2,10 @@
 name: Phase Implementor
 description: 'Executes a single implementation phase from a plan with full codebase access and change tracking'
 user-invocable: false
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Phase Implementor

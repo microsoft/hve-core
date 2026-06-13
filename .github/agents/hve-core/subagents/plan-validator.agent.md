@@ -3,6 +3,7 @@ name: Plan Validator
 description: 'Validates implementation plans against research documents with severity-graded findings'
 user-invocable: false
 model:
+  - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
   - GPT-5.4 mini (copilot)
 ---
