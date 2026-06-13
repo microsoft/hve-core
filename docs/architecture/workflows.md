@@ -310,7 +310,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:collections-metadata`    | `Validate-Collections.ps1`                  | plugin-validation.yml         |
 | `lint:marketplace`             | `Validate-Marketplace.ps1`                  | plugin-validation.yml         |
 | `lint:version-consistency`     | `Test-ActionVersionConsistency.ps1`         | Local                         |
-| `lint:all`                     | Chains all linters                          | Local                         |
+| `lint:all`                     | Chains all linters (incl. `eval:lint`)      | Local                         |
 | `format:tables`                | `markdown-table-formatter`                  | table-format.yml              |
 | `test:ps`                      | `Invoke-PesterTests.ps1`                    | pester-tests.yml              |
 | `validate:skills`              | `Validate-SkillStructure.ps1`               | skill-validation.yml          |
@@ -328,6 +328,12 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:permissions`             | `Test-WorkflowPermissions.ps1`              | workflow-permissions-scan.yml |
 | `lint:dependency-pinning`      | `Test-DependencyPinning.ps1`                | dependency-pinning-scan.yml   |
 | `test:py`                      | `pytest`                                    | pytest-tests.yml              |
+| `eval:lint`                    | `vally lint --eval-spec evals/`             | Local                         |
+| `eval:run`                     | Runs all eval suites                        | Local                         |
+| `eval:run:skills`              | `vally eval --suite skill-quality`          | Local                         |
+| `eval:run:agents`              | `vally eval --suite agent-behavior`         | Local                         |
+| `eval:run:scripts`             | `vally eval --suite script-validation`      | Local                         |
+| `eval:compare`                 | `vally compare`                             | Local                         |
 
 ## Related Documentation
 

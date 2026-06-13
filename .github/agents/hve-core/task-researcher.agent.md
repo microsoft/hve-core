@@ -1,6 +1,6 @@
 ---
 name: Task Researcher
-description: 'Task research specialist for comprehensive project analysis - Brought to you by microsoft/hve-core'
+description: 'Task research specialist for comprehensive project analysis'
 disable-model-invocation: true
 agents:
   - Researcher Subagent

@@ -133,7 +133,7 @@ function Get-MarkdownTarget {
 
             Write-Verbose "Searching in: $searchPath"
             $trackedFiles = git ls-files $searchPath 2>$null |
-    Where-Object { $_ -notlike 'scripts/tests/Fixtures/*' }
+    Where-Object { $_ -notlike 'scripts/tests/fixtures/*' }
 
 
 

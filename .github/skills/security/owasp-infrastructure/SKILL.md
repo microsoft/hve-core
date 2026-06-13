@@ -1,6 +1,6 @@
 ---
 name: owasp-infrastructure
-description: OWASP Infrastructure Top 10 vulnerability knowledge base for identifying, assessing, and remediating security risks in internal IT infrastructure environments - Brought to you by microsoft/hve-core.
+description: OWASP Infrastructure Top 10 knowledge base for identifying, assessing, and remediating internal IT infrastructure security risks.
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -40,7 +40,3 @@ infrastructure security risks.
 * `references/` — the Infrastructure Top 10 normative documents.
   * `00-vulnerability-index.md` — index of all vulnerability identifiers, categories, and cross-references.
   * `01` through `10` — one document per vulnerability aligned with OWASP Infrastructure Security numbering.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -1,6 +1,6 @@
 ---
 name: Plan Validator
-description: 'Validates implementation plans against research documents, updating the Planning Log Discrepancy Log section with severity-graded findings - Brought to you by microsoft/hve-core'
+description: 'Validates implementation plans against research documents with severity-graded findings'
 user-invocable: false
 model:
   - Claude Haiku 4.5 (copilot)

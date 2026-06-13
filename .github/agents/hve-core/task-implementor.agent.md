@@ -1,6 +1,6 @@
 ---
 name: Task Implementor
-description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records - Brought to you by microsoft/hve-core'
+description: 'Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records'
 disable-model-invocation: true
 agents:
   - Phase Implementor

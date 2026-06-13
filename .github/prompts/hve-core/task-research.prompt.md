@@ -1,5 +1,5 @@
 ---
-description: "Initiates research for implementation planning based on user requirements - Brought to you by microsoft/hve-core"
+description: "Initiate research for implementation planning from user requirements"
 agent: Task Researcher
 argument-hint: "topic=... [chat={true|false}]"
 ---

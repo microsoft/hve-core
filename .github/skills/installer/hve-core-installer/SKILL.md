@@ -1,6 +1,6 @@
 ---
 name: hve-core-installer
-description: 'Decision-driven installer for HVE-Core with 6 clone-based installation methods, extension quick-install, environment detection, and agent customization workflows - Brought to you by microsoft/hve-core'
+description: 'Decision-driven HVE-Core installer with multiple clone-based and extension install methods, environment detection, and agent customization'
 compatibility: 'Requires VS Code or VS Code Insiders. Clone-based methods require git on PATH and network access.'
 license: MIT
 metadata:
@@ -413,7 +413,6 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   "chat.instructionsFilesLocations": {
     "<PREFIX>/.github/instructions/ado": true,
     "<PREFIX>/.github/instructions/coding-standards": true,
-    "<PREFIX>/.github/instructions/design-thinking": true,
     "<PREFIX>/.github/instructions/github": true,
     "<PREFIX>/.github/instructions/hve-core": true,
     "<PREFIX>/.github/instructions/shared": true
@@ -421,7 +420,8 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
     "<PREFIX>/.github/skills/shared": true,
-    "<PREFIX>/.github/skills/coding-standards": true
+    "<PREFIX>/.github/skills/coding-standards": true,
+    "<PREFIX>/.github/skills/design-thinking": true
   }
 }
 ```
@@ -502,7 +502,6 @@ Add to devcontainer.json:
         "chat.instructionsFilesLocations": {
           "/workspaces/hve-core/.github/instructions/ado": true,
           "/workspaces/hve-core/.github/instructions/coding-standards": true,
-          "/workspaces/hve-core/.github/instructions/design-thinking": true,
           "/workspaces/hve-core/.github/instructions/github": true,
           "/workspaces/hve-core/.github/instructions/hve-core": true,
           "/workspaces/hve-core/.github/instructions/shared": true
@@ -510,7 +509,8 @@ Add to devcontainer.json:
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
           "/workspaces/hve-core/.github/skills/shared": true,
-          "/workspaces/hve-core/.github/skills/coding-standards": true
+          "/workspaces/hve-core/.github/skills/coding-standards": true,
+          "/workspaces/hve-core/.github/skills/design-thinking": true
         }
       }
     }
@@ -715,6 +715,9 @@ Some HVE-Core agents integrate with external services via MCP (Model Context Pro
 | github-backlog-manager | github                   | GitHub backlog management            |
 | task-researcher        | context7, microsoft-docs | Documentation lookup                 |
 | dt-coach               | figma                    | FigJam board export for DT artifacts |
+
+⚠️ Jira agents (jira-backlog-manager, jira-prd-to-wit) use environment variables
+   instead of MCP. Run /jira-setup in Copilot Chat to configure Jira credentials.
 
 Would you like to configure MCP servers? (yes/no)
 ```
@@ -1292,7 +1295,3 @@ Use these exact emojis for consistency:
 **Success:** Environment detected, method selected, HVE-Core directories validated (agents, prompts, instructions, skills), settings configured, user directed to reload.
 
 **Failure:** Detection fails, clone/submodule fails, validation finds missing directories, or settings modification fails.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

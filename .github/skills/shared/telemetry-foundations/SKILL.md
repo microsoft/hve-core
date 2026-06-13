@@ -1,6 +1,6 @@
 ---
 name: telemetry-foundations
-description: 'Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling - Brought to you by microsoft/hve-core'
+description: 'Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling'
 ---
 
 # Telemetry Foundations
@@ -170,7 +170,3 @@ Internal:
 
 * [references/pii-denylist.md](references/pii-denylist.md) - authoritative PII denylist with redaction strategies.
 * [references/proposed-additions.md](references/proposed-additions.md) - intake for new vocabulary proposals.
-
-> Brought to you by microsoft/hve-core
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

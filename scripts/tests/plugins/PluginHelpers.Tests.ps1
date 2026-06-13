@@ -79,6 +79,21 @@ Describe 'New-PluginReadmeContent - CollectionContent H1 stripping' {
         $result | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
         $result | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
         $result | Should -Match '## Included Artifacts'
+        $includedArtifactMatches = [regex]::Matches($result, '(?m)^## Included Artifacts$')
+        $includedArtifactMatches.Count | Should -Be 1
+        $result | Should -Not -Match '(?m)^## Agents$'
+    }
+
+    It 'Does not duplicate sections when CollectionContent already holds rendered artifacts' {
+        $content = "# Test Collection`n`nBody text.`n`n## Included Artifacts`n`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`n### Chat Agents`n`n| Agent | Description |`n|-------|-------------|`n| test-agent | desc |`n`n<!-- END AUTO-GENERATED ARTIFACTS -->`n"
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $content
+        [regex]::Matches($result, '(?m)^## Included Artifacts\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^## Overview\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^## Install\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^# ').Count | Should -Be 1
+        [regex]::Matches($result, '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->').Count | Should -Be 1
+        $result | Should -Not -Match '(?m)^## Agents\r?$'
+        $result | Should -Not -Match '(?m)^## Commands\r?$'
     }
 
     It 'Emits Overview section when CollectionContent has body text' {

@@ -1,5 +1,5 @@
 ---
-description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis - Brought to you by microsoft/hve-core"
+description: "STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 
@@ -15,7 +15,7 @@ Apply all six STRIDE categories to each component within a bucket. Evaluate cate
 
 Pretending to be something or someone else.
 
-* Guiding question: "Can an attacker impersonate a user, service, or component?"
+* User-facing question: "Where do we verify identity claims in this bucket, and what would change if those checks failed or were bypassed?"
 * Commonly affected buckets: identity/auth, web, messaging
 * Typical mitigations: strong authentication, certificate validation, mutual TLS, token verification
 
@@ -23,7 +23,7 @@ Pretending to be something or someone else.
 
 Modifying data or code without authorization.
 
-* Guiding question: "Can data be modified in transit or at rest?"
+* User-facing question: "Which data flows or stored artifacts in this bucket would cause the greatest harm if silently modified, and how would we detect the modification?"
 * Commonly affected buckets: data, build, devops, messaging
 * Typical mitigations: integrity checks, digital signatures, access controls, immutable infrastructure
 
@@ -31,7 +31,7 @@ Modifying data or code without authorization.
 
 Denying an action occurred without proof to the contrary.
 
-* Guiding question: "Can a user deny performing an action?"
+* User-facing question: "Which actions in this bucket need to be irrefutably attributable to a specific user, service, or build step, and what audit evidence do we currently retain?"
 * Commonly affected buckets: data, messaging, identity/auth
 * Typical mitigations: audit logging, non-repudiation controls, tamper-proof logs, centralized log aggregation
 
@@ -39,7 +39,7 @@ Denying an action occurred without proof to the contrary.
 
 Exposing data to unauthorized parties.
 
-* Guiding question: "Can sensitive data leak to unauthorized parties?"
+* User-facing question: "What sensitive data flows through or is stored in this bucket, and which paths could expose it to an unintended audience?"
 * Commonly affected buckets: data, web, build, infra
 * Typical mitigations: encryption at rest and in transit, access controls, data classification, secure defaults
 
@@ -47,7 +47,7 @@ Exposing data to unauthorized parties.
 
 Making a resource unavailable to legitimate users.
 
-* Guiding question: "Can the system be made unavailable?"
+* User-facing question: "Which components in this bucket would cause the most user-visible impact if exhausted, throttled, or crashed, and what limits or fallbacks exist today?"
 * Commonly affected buckets: infra, web, messaging
 * Typical mitigations: rate limiting, resource quotas, redundancy, auto-scaling, circuit breakers
 
@@ -55,7 +55,7 @@ Making a resource unavailable to legitimate users.
 
 Gaining unauthorized access levels beyond assigned permissions.
 
-* Guiding question: "Can an attacker escalate their permissions?"
+* User-facing question: "Where could a low-trust principal in this bucket gain capabilities reserved for a higher-trust role, and what gates that boundary?"
 * Commonly affected buckets: identity/auth, infra, devops
 * Typical mitigations: least privilege, RBAC/ABAC, privilege separation, input validation, boundary enforcement
 
@@ -136,16 +136,19 @@ When `raiEnabled` is true, AI-specific threats in existing buckets use `T-{BUCKE
 
 ### Risk Matrix
 
-Calculate risk from the combination of Likelihood and Impact:
+Derive the risk rating by locating the Likelihood row and the Impact column in the named-bucket grid below. Buckets are `Critical`, `High`, `Medium`, `Low`, and `Informational`; no numeric multiplication is used.
 
-* High x High = **Critical**
-* High x Medium or Medium x High = **High**
-* Medium x Medium = **Medium**
-* Low x any or any x Low = **Low**
+|                    | Impact: Low   | Impact: Medium | Impact: High |
+|--------------------|---------------|----------------|--------------|
+| Likelihood: High   | Low           | High           | Critical     |
+| Likelihood: Medium | Low           | Medium         | High         |
+| Likelihood: Low    | Informational | Low            | Low          |
 
 ### Assessment Guidance
 
 Likelihood and Impact are assessed collaboratively with the user during Phase 4 questioning. Use ❓ for unassessed values. Each threat must have at least one mitigation strategy, and each mitigation should reference at least one standards control.
+
+Before finalizing ratings, confirm with the user that the resulting Critical/High/Medium/Low/Informational distribution reflects their risk appetite. These buckets derive from two coarse three-point axes assessed subjectively, so treat them as directional priorities rather than calibrated scores.
 
 ## Data Flow Analysis
 

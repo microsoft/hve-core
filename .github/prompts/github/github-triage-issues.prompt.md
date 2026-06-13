@@ -1,5 +1,5 @@
 ---
-description: 'Triage GitHub issues not yet triaged with automated label suggestions, milestone assignment, and duplicate detection'
+description: 'Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection'
 agent: GitHub Backlog Manager
 model: Claude Haiku 4.5 (copilot)
 ---

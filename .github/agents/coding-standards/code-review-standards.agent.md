@@ -1,6 +1,6 @@
 ---
 name: Code Review Standards
-description: "Skills-based code reviewer for local changes and PRs - applies project-defined coding standards via dynamic skill loading - Brought to you by microsoft/hve-core"
+description: "Skills-based code reviewer applying project-defined coding standards to local changes and PRs"
 ---
 
 # Code Review Standards

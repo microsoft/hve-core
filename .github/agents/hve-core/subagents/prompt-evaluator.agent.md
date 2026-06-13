@@ -1,6 +1,6 @@
 ---
 name: Prompt Evaluator
-description: 'Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and categorized remediation guidance'
+description: 'Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance'
 user-invocable: false
 model:
   - Claude Haiku 4.5 (copilot)

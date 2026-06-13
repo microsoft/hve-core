@@ -1,6 +1,6 @@
 ---
 name: Network ISA-95 Planner
-description: 'ISA-95-aligned network planning assistant for secure edge Kubernetes to Azure connectivity, remediation roadmaps, and beginner-friendly guidance - Brought to you by microsoft/hve-core'
+description: 'ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity and remediation roadmaps'
 disable-model-invocation: true
 tools:
   - agent

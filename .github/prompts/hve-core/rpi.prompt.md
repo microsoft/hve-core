@@ -1,5 +1,5 @@
 ---
-description: "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks - Brought to you by microsoft/hve-core"
+description: "Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks"
 agent: RPI Agent
 argument-hint: "task=... [continue={1|2|3|all}] [suggest]"
 ---

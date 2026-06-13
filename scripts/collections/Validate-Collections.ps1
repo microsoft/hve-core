@@ -203,8 +203,9 @@ function Invoke-CollectionValidation {
     # Sub-domain folders that group artifacts shared across multiple themed collections
     # but are intentionally not collections themselves.
     $sharedSubdomainFolders = @{
-        'shared'       = $true
-        'rai-planning' = $true
+        'shared'        = $true
+        'rai-planning'  = $true
+        'accessibility' = $true
     }
 
     foreach ($file in $collectionFiles) {

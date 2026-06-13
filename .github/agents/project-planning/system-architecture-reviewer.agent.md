@@ -1,6 +1,6 @@
 ---
 name: System Architecture Reviewer
-description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment - Brought to you by microsoft/hve-core'
+description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment'
 handoffs:
   - label: "📐 Create ADR"
     agent: ADR Creation

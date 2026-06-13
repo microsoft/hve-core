@@ -1,6 +1,6 @@
 ---
 name: ADR Creator
-description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff - Brought to you by microsoft/hve-core'
+description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff'
 agents:
   - Researcher Subagent
 handoffs:

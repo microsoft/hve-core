@@ -1,5 +1,5 @@
 ---
-description: "Required instructions for GitHub Actions workflow files in hve-core repository"
+description: "GitHub Actions workflow conventions for hve-core"
 applyTo: '**/.github/workflows/*.yml'
 
 ---

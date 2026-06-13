@@ -51,7 +51,7 @@ Assess which Badge tier the repository would qualify for after completing all wo
 
 Write ADO-formatted work items to `.copilot-tracking/workitems/backlog/{project-slug}-sssc/work-items.md`.
 
-Apply the ADO work item template from `sssc-backlog.instructions.md` with:
+Apply the ADO work item template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC ADO field block enumerated under "ADO Work Item Template" in that skill, with:
 
 * HTML-formatted description fields
 * `WI-SSSC-{NNN}` sequential IDs
@@ -65,7 +65,7 @@ Set `state.json` field `handoffGenerated.ado` to `true` after writing.
 
 Write GitHub-formatted issues to `.copilot-tracking/github-issues/discovery/{project-slug}-sssc/issues-plan.md`.
 
-Apply the GitHub issue template from `sssc-backlog.instructions.md` with:
+Apply the GitHub issue template per the convention in `.github/skills/shared/backlog-templates/SKILL.md`, including the SSSC YAML augmentation keys enumerated under "GitHub Issue Template" in that skill, with:
 
 * YAML metadata blocks
 * `{{SSSC-TEMP-N}}` temporary IDs

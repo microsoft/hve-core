@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.sh'
-description: 'Instructions for bash script implementation - Brought to you by microsoft/hve-core'
+description: 'Bash script authoring conventions'
 ---
 
 # Bash Script Instructions

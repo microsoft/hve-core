@@ -1,6 +1,6 @@
 ---
 name: Code Review Full
-description: "Orchestrator that runs functional and standards code reviews via subagents and produces a merged report - Brought to you by microsoft/hve-core"
+description: "Orchestrator that runs functional and standards code reviews via subagents and produces a merged report"
 disable-model-invocation: true
 agents:
   - Code Review Functional

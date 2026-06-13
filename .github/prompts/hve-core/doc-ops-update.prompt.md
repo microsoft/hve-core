@@ -1,5 +1,5 @@
 ---
-description: 'Invoke doc-ops agent for documentation quality assurance and updates'
+description: 'Run the doc-ops agent for documentation quality assurance and updates'
 agent: Doc Ops
 argument-hint: '[scope=all|docs|root|scripts] [validate-only={true|false}]'
 ---

@@ -162,7 +162,7 @@ $DependencyPatterns = @{
 
     'shell-downloads'  = @{
         FilePatterns    = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
-        ExcludePatterns = @('Fixtures')
+        ExcludePatterns = @('fixtures')
         ValidationFunc  = 'Test-ShellDownloadSecurity'
         Description     = 'Shell script downloads must include checksum verification'
     }

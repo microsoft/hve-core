@@ -1,6 +1,6 @@
 ---
 name: customer-card-render
-description: 'Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline - Brought to you by microsoft/hve-core'
+description: 'Generate customer-card PowerPoint content YAML from Design Thinking canonical artifacts and build using the shared PowerPoint skill pipeline'
 license: MIT
 compatibility: 'Requires Python 3.11+, uv, and the experimental powerpoint skill'
 metadata:
@@ -124,7 +124,7 @@ The PowerShell orchestrator manages virtual environment setup and dependency ins
 
 ## DT Coach Integration
 
-The `dt-canonical-deck` prompt and `dt-canonical-deck.instructions.md` provide opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
+The `dt-canonical-deck` prompt and the `dt-coaching-foundation` skill's `canonical-deck` reference provide opt-in workflow integration for the Design Thinking coaching agent. When a user opts in, the coaching agent offers to build customer cards at method exit points. The two-command flow above runs as part of that workflow with `--canonical-dir` and `--output-dir` resolved from the active DT project slug in `.copilot-tracking/dt/`.
 
 Canonical artifacts are produced by the DT coach and live under `.copilot-tracking/dt/<project-slug>/canonical/`.
 
@@ -161,5 +161,3 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 | PPTX build fails after generate | PowerPoint skill missing or path incorrect | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/`          |
 
 > Brought to you by microsoft/hve-core
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.

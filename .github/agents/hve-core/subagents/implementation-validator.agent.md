@@ -1,6 +1,6 @@
 ---
 name: Implementation Validator
-description: 'Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings - Brought to you by microsoft/hve-core'
+description: 'Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings'
 user-invocable: false
 tools:
   - read

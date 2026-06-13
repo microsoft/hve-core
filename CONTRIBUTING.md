@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-05-13
+ms.date: 2026-06-04
 ms.topic: guide
 keywords:
   - contributing
@@ -22,51 +22,6 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 >
 > * Star the project or add it to your favorites
 > * Mention the project to your peer studio crews and tell your work friends/colleagues
-
-## Build and Validation Requirements
-
-This project uses several tools to maintain code quality and consistency:
-
-### Required Tools
-
-| Tool                      | Purpose                                    |
-|---------------------------|--------------------------------------------||
-| markdownlint-cli2         | Validates markdown formatting and style    |
-| cspell                    | Spell checking across all file types       |
-| markdown-table-formatter  | Ensures consistent table formatting        |
-| markdown-link-check       | Validates markdown links are not broken    |
-| PowerShell 7              | Runs linting, validation, and test scripts |
-| PSScriptAnalyzer (module) | PowerShell static analysis                 |
-| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
-| Pester (module)           | PowerShell test framework                  |
-
-### Validation Commands
-
-Run these npm scripts to validate your changes before submitting:
-
-```bash
-npm run lint:all                  # Run all linters
-npm run lint:md                   # Run markdownlint
-npm run lint:ps                   # Run PowerShell analyzer
-npm run lint:yaml                 # Run YAML linter
-npm run lint:frontmatter          # Validate markdown frontmatter
-npm run lint:links                # Check link language paths
-npm run lint:md-links             # Check markdown links
-npm run lint:collections-metadata # Validate collection metadata
-npm run lint:marketplace          # Validate marketplace metadata
-npm run lint:version-consistency  # Check action version consistency
-npm run validate:copyright        # Validate copyright headers
-npm run validate:skills           # Validate skill directory structure
-npm run spell-check               # Run cspell
-npm run format:tables             # Format markdown tables
-npm run test:ps                   # Run PowerShell tests
-```
-
-For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
-
-### Development Environment
-
-We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
 
 ## Table of Contents
 
@@ -110,6 +65,51 @@ We strongly recommend using the provided DevContainer, which comes pre-configure
   * [Commit Message Examples](#commit-message-examples)
   * [Release Validation](#release-validation)
 * [Attribution](#attribution)
+
+## Build and Validation Requirements
+
+This project uses several tools to maintain code quality and consistency:
+
+### Required Tools
+
+| Tool                      | Purpose                                    |
+|---------------------------|--------------------------------------------|
+| markdownlint-cli2         | Validates markdown formatting and style    |
+| cspell                    | Spell checking across all file types       |
+| markdown-table-formatter  | Ensures consistent table formatting        |
+| markdown-link-check       | Validates markdown links are not broken    |
+| PowerShell 7              | Runs linting, validation, and test scripts |
+| PSScriptAnalyzer (module) | PowerShell static analysis                 |
+| PowerShell-Yaml (module)  | YAML validation via PowerShell             |
+| Pester (module)           | PowerShell test framework                  |
+
+### Validation Commands
+
+Run these npm scripts to validate your changes before submitting:
+
+```bash
+npm run lint:all                  # Run all linters
+npm run lint:md                   # Run markdownlint
+npm run lint:ps                   # Run PowerShell analyzer
+npm run lint:yaml                 # Run YAML linter
+npm run lint:frontmatter          # Validate markdown frontmatter
+npm run lint:links                # Check link language paths
+npm run lint:md-links             # Check markdown links
+npm run lint:collections-metadata # Validate collection metadata
+npm run lint:marketplace          # Validate marketplace metadata
+npm run lint:version-consistency  # Check action version consistency
+npm run validate:copyright        # Validate copyright headers
+npm run validate:skills           # Validate skill directory structure
+npm run spell-check               # Run cspell
+npm run format:tables             # Format markdown tables
+npm run test:ps                   # Run PowerShell tests
+```
+
+For additional validation commands specific to AI artifacts (agents, prompts, instructions, skills), see [Common Standards](./docs/contributing/ai-artifacts-common.md).
+
+### Development Environment
+
+We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
 
 ## Code of Conduct
 
@@ -189,7 +189,7 @@ Enhancement suggestions are tracked as [GitHub Issues](https://github.com/micros
 * Use a **clear and descriptive title** for the issue to identify the suggestion.
 * Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](http://git.gnome.org/browse/byzanz/) on Linux.
+* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](https://gitlab.gnome.org/Archive/byzanz) on Linux.
 * **Explain why this enhancement would be useful** to most HVE Core users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
 ### Your First Code Contribution
@@ -213,6 +213,8 @@ For AI artifact documentation (agents, prompts, instructions, skills), see the [
 ## AI Artifact Contributions
 
 HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
+
+> **Transparency Note updates:** If your change adds or modifies a skill or agent that generates media, personas, or likenesses, or that introduces an external service dependency or a new decision-shaping behavior, update [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md) (and the relevant appendix).
 
 ### Getting Started with AI Artifacts
 
