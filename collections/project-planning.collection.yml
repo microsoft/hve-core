@@ -215,6 +215,21 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # BRD Skills
+  - path: .github/skills/project-planning/brd-author
+    kind: skill
+  - path: .github/skills/project-planning/brd-quality-formats
+    kind: skill
+  - path: .github/skills/project-planning/prioritization-schemes
+    kind: skill
+  - path: .github/skills/project-planning/process-modeling
+    kind: skill
+  - path: .github/skills/project-planning/requirements-definition
+    kind: skill
+  - path: .github/skills/project-planning/stakeholder-analysis
+    kind: skill
+  - path: .github/skills/project-planning/traceability-naming
+    kind: skill
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations
     kind: skill

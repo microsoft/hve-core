@@ -590,6 +590,20 @@ items:
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental
+- path: .github/skills/project-planning/brd-author
+  kind: skill
+- path: .github/skills/project-planning/brd-quality-formats
+  kind: skill
+- path: .github/skills/project-planning/prioritization-schemes
+  kind: skill
+- path: .github/skills/project-planning/process-modeling
+  kind: skill
+- path: .github/skills/project-planning/requirements-definition
+  kind: skill
+- path: .github/skills/project-planning/stakeholder-analysis
+  kind: skill
+- path: .github/skills/project-planning/traceability-naming
+  kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
