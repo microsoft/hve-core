@@ -83,15 +83,6 @@ Subagent result handling:
 * When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
 * Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
 
-### Model Selection for Subagents
-
-Apply cost-first model selection: use a fast model for tasks that do not write code, and inherit the session model for code generation.
-
-* Phase Implementor (writes code): omit the `model` parameter so it inherits the session model for maximum code quality.
-* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
-* If a research task requires deep code-level analysis: omit `model` to inherit the session model.
-* When the cost tier constraint prevents downgrading below the session model, omit `model` and let the platform resolve it.
-
 ## Required Artifacts
 
 | Artifact               | Path Pattern                                                        | Required |
