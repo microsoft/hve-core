@@ -10,7 +10,7 @@ The registry mirrors the cite-only posture established by the ADR Planner standa
 
 ## How to use this file
 
-* Cite an entry from a BRD authoring artifact (SKILL.md, template, instruction, agent prompt) by linking to the anchor below — for example `[ISO/IEC/IEEE 29148:2018](references/standards-excerpts.md#isoiecieee-291482018)`.
+* Cite an entry from a BRD authoring artifact (SKILL.md, template, instruction, agent prompt) by linking to the anchor below, for example [ISO/IEC/IEEE 29148:2018](#isoiecieee-291482018).
 * Never copy the upstream definition, clause, or table into the BRD or into any HVE-Core artifact. Cite the standard name and clause number only.
 * When a new standard becomes relevant to BRD authoring, add it here first, then reference the new anchor from the artifact that needs it.
 * When a standard is superseded (for example, ISO/IEC 25010:2011 → ISO/IEC 25010:2023), update the existing entry in place and note the prior edition in the summary so cross-references still resolve.
@@ -35,7 +35,7 @@ The registry mirrors the cite-only posture established by the ADR Planner standa
 
 * **Publisher** — Project Management Institute (PMI).
 * **Edition / year** — Second edition, 2024.
-* **URL** — [https://www.pmi.org/standards/business-analysis-for-practitioners](https://www.pmi.org/standards/business-analysis-for-practitioners)
+* **URL** — [https://www.pmi.org/standards/business-analysis](https://www.pmi.org/standards/business-analysis)
 * **Why the BRD Builder cites it** — Reference text for Define-phase elicitation, stakeholder analysis, and traceability practices that the BRD Builder paraphrases in its Discover and Define guidance.
 
 ### Karl Wiegers — Software Requirements
@@ -81,7 +81,7 @@ The registry mirrors the cite-only posture established by the ADR Planner standa
 
 * **Publisher** — DSDM Consortium (now the Agile Business Consortium).
 * **Edition / year** — Originated in the Dynamic Systems Development Method, mid-1990s; current treatment in the DSDM Handbook (2014, with periodic updates).
-* **URL** — [https://www.agilebusiness.org/dsdm-project-framework/moscow-prioririsation.html](https://www.agilebusiness.org/dsdm-project-framework/moscow-prioririsation.html)
+* **URL** — [https://www.agilebusiness.org/dsdm-project-framework/moscow-prioritisation.html](https://www.agilebusiness.org/dsdm-project-framework/moscow-prioritisation.html)
 * **Why the BRD Builder cites it** — Origin of the Must / Should / Could / Won't prioritization labels paraphrased in the `prioritization-schemes` skill and used in BRD business-goal and requirement priority fields.
 
 ### INVEST checklist (Bill Wake)

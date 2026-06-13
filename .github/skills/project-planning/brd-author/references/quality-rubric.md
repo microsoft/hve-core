@@ -1,12 +1,12 @@
 ---
-description: 'Operational BRD quality rubric used by the brd-standard-assessor subagent and the Define-phase exit gate - maps the requirements-quality 0-3 attribute scoring to the BRD author status taxonomy (RISK, CAUTION, COVERED, NOT_APPLICABLE) and defines anchor descriptions for every score level - Brought to you by microsoft/hve-core'
+description: 'Operational BRD quality rubric used by the brd-standard-assessor subagent and the Define-phase exit gate - maps the requirements-definition 0-3 attribute scoring to the BRD author status taxonomy (RISK, CAUTION, COVERED, NOT_APPLICABLE) and defines anchor descriptions for every score level - Brought to you by microsoft/hve-core'
 ---
 
 # BRD Author Quality Rubric
 
 This file is the operational rubric the `brd-standard-assessor` subagent applies at the Define-phase exit gate, on mid-Define on-demand assessments, and during Govern drift checks. It is intentionally narrow: it specifies the scoring scale, the status taxonomy the BRD Builder surfaces to authors, and the gate decision rule. The underlying attribute definitions (ISO 29148 individual-requirement characteristics, ISO/IEC 25010 NFR categories, SMART business-goal pass/fail, ISTQB testability heuristics) are owned by the `requirements-definition` skill bundle and cited from there rather than duplicated here.
 
-For the source-of-truth attribute definitions and the assessor's emitted findings schema, see [requirements-quality/references/quality-rubric.md](../../requirements-quality/references/quality-rubric.md).
+For the source-of-truth attribute definitions and the assessor's emitted findings schema, see [requirements-definition/references/quality-rubric.md](../../requirements-definition/references/quality-rubric.md).
 
 ## Status taxonomy
 
@@ -23,7 +23,7 @@ The assessor also emits a per-payload `gate_decision` (`approve`, `approve_with_
 
 ## Per-requirement scoring scale
 
-For each FR, NFR, and CON, the assessor scores the nine ISO/IEC/IEEE 29148:2018 §5.2.5 characteristics on a 0–3 anchor scale and then maps the row to a single status. The scale is the same scale used by [requirements-quality/references/iso-29148-quality-attrs.md](../../requirements-quality/references/iso-29148-quality-attrs.md); the anchor descriptions here govern the BRD Builder's interpretation.
+For each FR, NFR, and CON, the assessor scores the nine ISO/IEC/IEEE 29148:2018 §5.2.5 characteristics on a 0–3 anchor scale and then maps the row to a single status. The scale is the same scale used by [requirements-definition/references/iso-29148-quality-attrs.md](../../requirements-definition/references/iso-29148-quality-attrs.md); the anchor descriptions here govern the BRD Builder's interpretation.
 
 | Score | Anchor name      | Anchor description                                                                                                                          |
 |-------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -45,7 +45,7 @@ A requirement's row-level status is the worst (highest severity) status across i
 
 ## Per-BRD NFR category scoring
 
-For each of the eight ISO/IEC 25010 product-quality categories ([requirements-quality/references/iso-25010-nfr-taxonomy.md](../../requirements-quality/references/iso-25010-nfr-taxonomy.md)), the assessor emits a single status:
+For each of the eight ISO/IEC 25010 product-quality categories ([requirements-definition/references/iso-25010-nfr-taxonomy.md](../../requirements-definition/references/iso-25010-nfr-taxonomy.md)), the assessor emits a single status:
 
 | Observation                                                                                | Status            |
 |--------------------------------------------------------------------------------------------|-------------------|
@@ -57,7 +57,7 @@ ISO 25010 absence is intentionally a `CAUTION`, not a `RISK`, per DD-12: NFR com
 
 ## Per-business-goal SMART scoring
 
-For each business goal, the assessor evaluates the five SMART attributes per [requirements-quality/references/smart-rubric.md](../../requirements-quality/references/smart-rubric.md) as `pass` or `fail`, then maps the row:
+For each business goal, the assessor evaluates the five SMART attributes per [requirements-definition/references/smart-rubric.md](../../requirements-definition/references/smart-rubric.md) as `pass` or `fail`, then maps the row:
 
 | Observation                                       | Status   |
 |---------------------------------------------------|----------|
