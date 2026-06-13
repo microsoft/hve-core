@@ -107,6 +107,7 @@ Create or update `.vscode/settings.json`:
     "lib/hve-core/.github/skills": true,
     "lib/hve-core/.github/skills/shared": true,
     "lib/hve-core/.github/skills/coding-standards": true,
+    "lib/hve-core/.github/skills/design-thinking": true,
     ".github/skills": true
   }
 }

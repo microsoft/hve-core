@@ -117,7 +117,3 @@ Per-criterion assessment heuristics, common failure patterns, and scope notes li
 
 * `SKILL.md` — this file (skill entrypoint and roll-up table).
 * `references/` — one markdown file per WCAG 2.2 guideline. Each file contains the guideline statement, a paraphrased intent for every success criterion under that guideline, and a canonical W3C source URL.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -180,7 +180,3 @@ Additional content triggered by hover or focus is dismissible, hoverable (the po
 * Confirm the overlay persists until the triggering condition ends or the user dismisses it.
 
 Source: <https://www.w3.org/TR/WCAG22/#content-on-hover-or-focus>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

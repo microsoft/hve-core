@@ -71,7 +71,3 @@ Users should never have to perform mental arithmetic or transcribe information a
 * Confirm users are never asked to perform arithmetic the system can perform.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-6>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

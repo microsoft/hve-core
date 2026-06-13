@@ -26,7 +26,3 @@ Every non-text element exposed in the user interface needs a programmatically as
 * Confirm that CAPTCHAs offer at least two alternative modalities (visual plus audio, plus a non-cognitive option where feasible).
 
 Source: <https://www.w3.org/TR/WCAG22/#non-text-content>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

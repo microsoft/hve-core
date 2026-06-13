@@ -56,7 +56,3 @@ Use these heuristics when applying the Section 508 standard against an ICT artif
 * For documentation and support under E208, audit each support channel (phone, chat, email, training) for an equivalent accessible path before treating documentation alone as compliant.
 * When a clause is marked `n/a` for WCAG cross-reference, treat the Access Board URL as the authoritative source and rely on procurement and policy controls rather than automated WCAG tooling.
 * Record every E207.2 exception with a documented rationale, a mitigation plan, and a review date so the exception does not silently expand over time.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

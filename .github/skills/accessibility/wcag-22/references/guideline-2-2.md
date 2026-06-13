@@ -83,7 +83,3 @@ Users are warned about the duration of any user inactivity that could cause data
 * Confirm draft-saving behaviour is documented to the user.
 
 Source: <https://www.w3.org/TR/WCAG22/#timeouts>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

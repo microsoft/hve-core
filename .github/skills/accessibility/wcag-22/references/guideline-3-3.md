@@ -122,7 +122,3 @@ A cognitive function test is not required for any step in an authentication proc
 * Confirm AAA flows do not include puzzle-based or transcription-based authentication challenges.
 
 Source: <https://www.w3.org/TR/WCAG22/#accessible-authentication-enhanced>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

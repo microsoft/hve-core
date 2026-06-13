@@ -127,7 +127,3 @@ Source: W3C WAI-ARIA Authoring Practices Guide, Disclosure and related patterns,
 * Submenu items are native `<a>` links inside a list container.
 
 **Source:** <https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation-hybrid/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

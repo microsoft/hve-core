@@ -76,7 +76,3 @@ Incorporates the W3C Web Content Accessibility Guidelines 2.0 Level A and Level 
 * Treat WCAG 2.0 criteria as the authoritative technical text when the Access Board chapter language is silent on a specific implementation detail.
 
 Source: <https://www.access-board.gov/ict/#e202-general-requirements>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

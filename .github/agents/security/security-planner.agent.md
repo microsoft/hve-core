@@ -74,7 +74,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 4: Security Model Analysis
 
-Apply STRIDE per bucket. Identify threats using `T-{BUCKET}-{NNN}` format. Build data flow diagrams. Derive risk ratings from the named-bucket Risk Matrix grid in `security-model.instructions.md` (buckets: `Critical`, `High`, `Medium`, `Low`, `Informational`); no numeric multiplication is used.
+Apply STRIDE per bucket. Identify threats using `T-{BUCKET}-{NNN}` format. Build data flow diagrams. Derive risk ratings from the named-bucket Risk Matrix grid in `.github/instructions/security/security-model.instructions.md` (buckets: `Critical`, `High`, `Medium`, `Low`, `Informational`); no numeric multiplication is used.
 
 Human-review exit reminder: a qualified security reviewer confirms each identified threat, data flow, and risk rating before advancing to Phase 5.
 
@@ -94,7 +94,7 @@ Present a summary of all findings, validate completeness, generate the final sec
 
 When the security plan identifies supply chain concerns (dependency management, build integrity, artifact signing, or SBOM requirements), recommend SSSC Planner dispatch. Provide the SSSC Planner agent path (`.github/agents/security/sssc-planner.agent.md`) and suggest `from-security-plan` entry mode.
 
-If the security plan introduced architectural mitigations, trust-boundary changes, or control-placement decisions worth preserving, you may want to capture them as ADRs. The `@adr-creation` agent (`from-planner-handoff` entry mode) accepts a Security Planner handoff directly.
+If the security plan introduced architectural mitigations, trust-boundary changes, or control-placement decisions worth preserving, you may want to capture them as ADRs. The ADR Creator agent (`from-planner-handoff` entry mode) accepts a Security Planner handoff directly.
 
 After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run security:sign -- -SessionPath '.copilot-tracking/security-plans/{project-slug}' -ManifestName 'security-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign. Set `signingRequested` to `true` and record the manifest location in `signingManifestPath`.
 

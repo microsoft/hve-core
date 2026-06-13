@@ -80,7 +80,7 @@ BeforeAll {
     . (Join-Path $PSScriptRoot '../../security/Test-DependencyPinning.ps1')
     Import-Module (Join-Path $PSScriptRoot '../../security/Modules/SecurityHelpers.psm1') -Force
     Import-Module (Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1') -Force
-    $script:FixtureRoot = Join-Path $PSScriptRoot '../Fixtures/Security'
+    $script:FixtureRoot = Join-Path $PSScriptRoot '../fixtures/Security'
     Mock Write-Host {}
     Mock Write-CIAnnotation {} -ModuleName SecurityHelpers
 }
@@ -267,7 +267,7 @@ After execution, check the repository's log or output directory for structured t
 BeforeAll {
     . (Join-Path $PSScriptRoot '../../linting/Invoke-Linter.ps1')
     Import-Module (Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1') -Force
-    $script:FixtureRoot = Join-Path $PSScriptRoot '../Fixtures/Linting'
+    $script:FixtureRoot = Join-Path $PSScriptRoot '../fixtures/Linting'
     Mock Write-Host {}
 }
 

@@ -3,6 +3,8 @@
   "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
   "version": "3.3.101",
   "agents": [
+    "agents/accessibility/",
+    "agents/accessibility/subagents/",
     "agents/ado/",
     "agents/coding-standards/",
     "agents/data-science/",
@@ -33,6 +35,7 @@
   "skills": [
     "skills/accessibility/",
     "skills/coding-standards/",
+    "skills/design-thinking/",
     "skills/experimental/",
     "skills/github/",
     "skills/gitlab/",

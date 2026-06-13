@@ -72,7 +72,3 @@ Cross-skill use is the common case: an APG finding usually cites both the patter
 
 * `SKILL.md` — this file (skill entrypoint and 44-row roll-up table).
 * `references/` — one markdown file per APG pattern family. Each file contains a paraphrased description of every pattern in the family, its keyboard interaction contract, its ARIA roles, states, and properties, and a canonical W3C source URL.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

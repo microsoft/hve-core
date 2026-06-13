@@ -328,7 +328,7 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `lint:permissions`             | `Test-WorkflowPermissions.ps1`              | workflow-permissions-scan.yml |
 | `lint:dependency-pinning`      | `Test-DependencyPinning.ps1`                | dependency-pinning-scan.yml   |
 | `test:py`                      | `pytest`                                    | pytest-tests.yml              |
-| `eval:lint`                    | `vally lint --eval evals/`                  | Local                         |
+| `eval:lint`                    | `vally lint --eval-spec evals/`             | Local                         |
 | `eval:run`                     | Runs all eval suites                        | Local                         |
 | `eval:run:skills`              | `vally eval --suite skill-quality`          | Local                         |
 | `eval:run:agents`              | `vally eval --suite agent-behavior`         | Local                         |

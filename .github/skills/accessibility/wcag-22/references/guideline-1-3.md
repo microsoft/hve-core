@@ -93,7 +93,3 @@ The purpose of user-interface components, icons, and regions can be programmatic
 * Confirm symbolic UI controls (icons) carry consistent and machine-readable purpose metadata.
 
 Source: <https://www.w3.org/TR/WCAG22/#identify-purpose>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

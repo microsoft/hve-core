@@ -47,7 +47,3 @@ Status messages can be programmatically determined through role or properties so
 * Confirm status updates do not steal focus and that polite vs. assertive live-region policies match the urgency of the message.
 
 Source: <https://www.w3.org/TR/WCAG22/#status-messages>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

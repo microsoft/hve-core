@@ -13,11 +13,14 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                       | Description                                                                                             |
-|----------------------------|---------------------------------------------------------------------------------------------------------|
-| **code-review-full**       | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report |
-| **code-review-functional** | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps    |
-| **code-review-standards**  | Skills-based code reviewer applying project-defined coding standards to local changes and PRs           |
+| Name                             | Description                                                                                                                                                       |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-reviewer**       | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                           |
+| **accessibility-skill-assessor** | Assesses a single accessibility knowledge skill against the codebase, reading success-criterion references and returning structured findings                      |
+| **code-review-accessibility**    | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
+| **code-review-full**             | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
+| **code-review-functional**       | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
+| **code-review-standards**        | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
 
 ### Prompts
 
@@ -62,50 +65,6 @@ Enforce language-specific coding conventions and best practices across your proj
 ```bash
 copilot plugin install coding-standards@hve-core
 ```
-
-## Agents
-
-| Agent                  | Description                                                                                             |
-|------------------------|---------------------------------------------------------------------------------------------------------|
-| code-review-full       | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report |
-| code-review-functional | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps    |
-| code-review-standards  | Skills-based code reviewer applying project-defined coding standards to local changes and PRs           |
-
-## Commands
-
-| Command                | Description                                                                                        |
-|------------------------|----------------------------------------------------------------------------------------------------|
-| code-review-functional | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps |
-| code-review-full       | Run both functional and standards code reviews on the current branch in a single pass              |
-
-## Instructions
-
-| Instruction                        | Description                                                                                                                                                                                                                                                 |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| diff-computation.instructions      | Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering                                                                                                                                                |
-| review-artifacts.instructions      | Code review artifact persistence: folder structure, metadata schema, verdict normalization, and writing rules                                                                                                                                               |
-| bash.instructions                  | Bash script authoring conventions                                                                                                                                                                                                                           |
-| bicep.instructions                 | Bicep infrastructure-as-code authoring conventions                                                                                                                                                                                                          |
-| csharp.instructions                | C# (CSharp) code authoring conventions                                                                                                                                                                                                                      |
-| csharp-tests.instructions          | C# (CSharp) test code authoring conventions                                                                                                                                                                                                                 |
-| pester.instructions                | Instructions for Pester testing conventions                                                                                                                                                                                                                 |
-| powershell.instructions            | PowerShell scripting conventions                                                                                                                                                                                                                            |
-| rust.instructions                  | Rust code authoring conventions                                                                                                                                                                                                                             |
-| rust-tests.instructions            | Rust test code authoring conventions                                                                                                                                                                                                                        |
-| python-script.instructions         | Python scripting conventions                                                                                                                                                                                                                                |
-| python-tests.instructions          | Python test code authoring conventions                                                                                                                                                                                                                      |
-| terraform.instructions             | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                      |
-| uv-projects.instructions           | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
-| hve-core-location.instructions     | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
-| code-review-telemetry.instructions | Code Review telemetry overlay applying telemetry-foundations vocabulary to code-review report artifacts                                                                                                                                                     |
-
-## Skills
-
-| Skill                 | Description                                                                                                                                                                                                                                                                                      |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| python-foundational   | Foundational Python best practices, idioms, and code quality fundamentals                                                                                                                                                                                                                        |
-| pr-reference          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
-| telemetry-foundations | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 ---
 
