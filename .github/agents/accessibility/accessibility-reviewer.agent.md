@@ -39,15 +39,15 @@ Orchestrate accessibility assessment by delegating to subagents. Profile the cod
 
 ## Orchestrator Constants
 
-Report directory: `.copilot-tracking/accessibility-reviews`
+Report directory: `.copilot-tracking/accessibility`
 
-Report path pattern (audit): `.copilot-tracking/accessibility-reviews/{{YYYY-MM-DD}}/accessibility-report-{{NNN}}.md`
+Report path pattern (audit): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-{{REPO}}-{{YYYYMMDD}}.md`
 
-Report path pattern (diff): `.copilot-tracking/accessibility-reviews/{{YYYY-MM-DD}}/accessibility-report-diff-{{NNN}}.md`
+Report path pattern (diff): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-report-diff-{{REPO}}-{{YYYYMMDD}}.md`
 
-Report path pattern (plan): `.copilot-tracking/accessibility-reviews/{{YYYY-MM-DD}}/accessibility-plan-risk-assessment-{{NNN}}.md`
+Report path pattern (plan): `.copilot-tracking/accessibility/{{YYYY-MM-DD}}/accessibility-plan-assessment-{{REPO}}-{{YYYYMMDD}}.md`
 
-Sequence number resolution: Determine `{{NNN}}` by listing existing reports in the date directory, extracting the highest sequence number, incrementing by one, and zero-padding to three digits. Start at `001` when no reports exist.
+Sequence number resolution: Not applicable for the accessibility domain. Filenames are uniquely identified by repository slug and date. Append a numeric suffix before the extension when multiple reports on the same date are needed.
 
 ### Available Skills
 
