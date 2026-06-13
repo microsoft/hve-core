@@ -56,12 +56,12 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
    * Efficiency: unnecessarily long, redundant, or wasteful instruction.
 3. Assign severity by matching this canonical table and record the chosen severity for each finding:
 
-   | Severity | Definition |
-   | --- | --- |
-   | Critical | Blocks success or causes severe misbehavior. |
-   | High | Significantly degrades quality or reliability. |
-   | Medium | Noticeable but recoverable issue. |
-   | Low | Minor wording or polish issue. |
+   | Severity | Definition                                     |
+   |----------|------------------------------------------------|
+   | Critical | Blocks success or causes severe misbehavior.   |
+   | High     | Significantly degrades quality or reliability. |
+   | Medium   | Noticeable but recoverable issue.              |
+   | Low      | Minor wording or polish issue.                 |
 
    Reminder: each finding must carry one category from the closed category list above and one severity from this table; if more than one severity fits, choose the higher severity.
 
