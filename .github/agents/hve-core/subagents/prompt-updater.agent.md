@@ -2,6 +2,10 @@
 name: Prompt Updater
 description: 'Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions'
 user-invocable: false
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Prompt Updater

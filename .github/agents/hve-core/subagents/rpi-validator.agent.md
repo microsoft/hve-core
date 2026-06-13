@@ -3,6 +3,7 @@ name: RPI Validator
 description: 'Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase'
 user-invocable: false
 model:
+  - MAI-Code-1-Flash (copilot)
   - Claude Haiku 4.5 (copilot)
   - GPT-5.4 mini (copilot)
 ---
