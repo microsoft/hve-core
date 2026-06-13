@@ -83,12 +83,12 @@ Include only categories with findings. Create additional categories when finding
 
 Assign severity by matching the following table rather than by analogy or judgment:
 
-| Severity | Objective definition |
-| --- | --- |
-| Critical | Blocks correctness, safety, or production readiness, or creates an immediate security or data-loss risk. |
-| High | Causes significant functional, reliability, or maintainability harm, or violates a key standard or requirement. |
-| Medium | Creates a notable defect, weakens maintainability, or leaves avoidable operational risk. |
-| Low | Represents a minor cleanup, style, or documentation issue with limited runtime impact. |
+| Severity | Objective definition                                                                                            |
+|----------|-----------------------------------------------------------------------------------------------------------------|
+| Critical | Blocks correctness, safety, or production readiness, or creates an immediate security or data-loss risk.        |
+| High     | Causes significant functional, reliability, or maintainability harm, or violates a key standard or requirement. |
+| Medium   | Creates a notable defect, weakens maintainability, or leaves avoidable operational risk.                        |
+| Low      | Represents a minor cleanup, style, or documentation issue with limited runtime impact.                          |
 
 If a finding matches more than one severity row, choose the HIGHER severity.
 
