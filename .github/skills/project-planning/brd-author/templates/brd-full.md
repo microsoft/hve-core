@@ -2,13 +2,14 @@
 brd_id: "{{brd_id}}"
 title: "{{title}}"
 status: "draft"
-version: "1.0"
+version: "0.1.0"
 owners: ["{{owner_name}}"]
 reviewers: ["{{reviewer_name}}"]
 created_date: "{{created_date}}"
 last_updated: "{{last_updated}}"
-business_goal_ids: ["{{business_goal_id}}"]
+business_goal_ids: ["BG-001"]
 business_goal_smart_status: "deferred"
+fr_to_ac_coverage_threshold_pct: 80.0
 diagram_format: "mermaid"
 lineage:
   supersedes: []
@@ -18,6 +19,7 @@ requirement_id_prefixes:
   fr: "FR"
   ac: "AC"
   nfr: "NFR"
+  con: "CON"
   br: "BR"
 license: "CC-BY 4.0 (Microsoft HVE-Core)"
 ---
@@ -53,7 +55,15 @@ license: "CC-BY 4.0 (Microsoft HVE-Core)"
 - Interest (High / Medium / Low)
 - Engagement Strategy
 
-See `stakeholder-analysis` skill for Mendelow matrix patterns.
+See [stakeholder-analysis.md](../references/stakeholder-analysis.md) for Mendelow matrix patterns.
+
+---
+
+## Design Decisions
+
+{{design_decisions}}
+
+*Guidance*: Record material authoring or scope decisions with `DD-###` identifiers from [design-decisions.md](../references/design-decisions.md). Example: `DD-008` records a decision that affects scope, traceability, prioritization, or downstream PRD interpretation.
 
 ---
 
@@ -61,7 +71,15 @@ See `stakeholder-analysis` skill for Mendelow matrix patterns.
 
 {{business_goals}}
 
-*Guidance*: List business goals using the SMART framework (Specific, Measurable, Achievable, Relevant, Time-bound).
+*Guidance*: List business goals with `BG-###` identifiers and SMART framing. Example format:
+
+```text
+BG-001: Reduce average claim adjudication time by 30% within 12 months of launch.
+Priority: MUST
+KPI: 30-day rolling average adjudication time at or below 70% of baseline.
+```
+
+Use [id-schema.md](../references/id-schema.md) for identifier prefix and digit rules.
 
 **SMART Evaluation** (assessed at Define→Govern gate per `requirements-definition` skill):
 
@@ -79,12 +97,13 @@ See `stakeholder-analysis` skill for Mendelow matrix patterns.
 
 {{business_rules}}
 
-*Guidance*: List policy, regulatory, and operational constraints as BR-### items (per `traceability-naming` skill). Each rule:
+*Guidance*: List standing business rules as `BR-###` items. A business rule is a policy, regulatory obligation, or operating rule the solution must uphold and that typically outlives this solution. Use [id-schema.md](../references/id-schema.md) for identifier prefix and digit rules. Each rule records:
 
-- BR-###: Rule statement
-- Category: Policy | Regulatory | Operational
-- Rationale: Why this rule exists
-- Enforceability: Mandatory | Advisory
+* `BR-###`: Rule statement.
+* Category: Policy, regulatory, contractual, or operational.
+* Rationale: Why this rule exists.
+* Enforceability: Mandatory or advisory.
+* Enforcing FRs: `FR-###` identifiers when known.
 
 ---
 
@@ -92,13 +111,14 @@ See `stakeholder-analysis` skill for Mendelow matrix patterns.
 
 {{functional_requirements}}
 
-*Guidance*: List user-facing and system capabilities as FR-### items (per `traceability-naming` skill). Each requirement:
+*Guidance*: List user-facing and system capabilities as `FR-###` items. Use [id-schema.md](../references/id-schema.md) for identifier prefix and digit rules. Each requirement records:
 
 - FR-###: Requirement statement
 - Actor: Who uses this capability
 - Trigger: When/how capability is invoked
 - Expected Outcome: What the system does
-- Acceptance Criteria: Link to AC-### items
+* Acceptance Criteria: Link to `AC-###` items.
+* Business Goals: Link to supported `BG-###` items.
 
 Quality assessment per `requirements-definition` skill applies the nine ISO/IEC/IEEE 29148:2018 §5.2.5 characteristics (necessary, appropriate, unambiguous, complete, singular, feasible, verifiable, correct, conforming).
 
@@ -176,13 +196,16 @@ Quality assessment per `requirements-definition` skill applies the nine ISO/IEC/
 
 {{constraints}}
 
-*Guidance*: Scope, timeline, budget, technical, and organizational constraints. Include:
+*Guidance*: List imposed, non-negotiable boundaries as `CON-###` items. Constraints are not standing business rules. They bound the solution, delivery, or operating environment. Use [id-schema.md](../references/id-schema.md) for identifier prefix and digit rules.
 
-- Scope Boundaries: In scope / Out of scope / Future consideration
-- Timeline: Key milestones and deadlines
-- Budget: Resource constraints
-- Technical: Platform, architecture, integration requirements
-- Organizational: Governance, approval gates, dependencies
+Each constraint records:
+
+* `CON-###`: Constraint statement.
+* Imposing source: Regulation, contract, platform standard, fixed external system, budget, timeline, staffing, or governance body.
+* Affected boundary: Scope, timeline, budget, technology, integration, operations, compliance, or organization.
+* Non-negotiability: Why the boundary cannot be changed within this BRD scope.
+* Category: Regulatory, contractual, technical, financial, schedule, organizational, or operational.
+* Impact: Requirement, design, delivery, or acceptance effect.
 
 ---
 
@@ -192,12 +215,11 @@ Quality assessment per `requirements-definition` skill applies the nine ISO/IEC/
 
 *Guidance*: This section resolves at template-fill time to one of:
 
-- `diagram-ascii.md` – ASCII process diagram (low-fidelity)
-- `diagram-mermaid.md` – Mermaid flowchart (default)
-- `diagram-figma.md` – Figma low-fidelity prototype
-- Omitted entirely if `diagram_format: none`
+* `diagram-mermaid.md`: Mermaid flowchart or related Mermaid diagram, the default.
+* `diagram-ascii.md`: ASCII process diagram for low-fidelity Discover sketches.
+* Omitted entirely when `diagram_format: none`.
 
-The diagram illustrates key business or technical processes central to this BRD.
+The diagram illustrates key business or technical processes central to this BRD. Do not mandate external diagram tools from the BRD template.
 
 ---
 
@@ -205,13 +227,13 @@ The diagram illustrates key business or technical processes central to this BRD.
 
 {{acceptance_criteria}}
 
-*Guidance*: Testable conditions for requirement completion as AC-### items (per `traceability-naming` skill and `requirements-definition` skill).
+*Guidance*: Testable conditions for requirement completion as `AC-###` items. Use [id-schema.md](../references/id-schema.md) for identifier prefix and digit rules.
 
 Each acceptance criterion:
 
-- AC-###: Given [context], When [action], Then [expected outcome]
-- Links to: FR-### (which Functional Requirement does this verify?)
-- Status: Not Started | In Progress | Completed | Blocked
+* `AC-###`: Given [context], When [action], Then [expected outcome].
+* Covers: `FR-###` identifiers.
+* Status: Not Started, In Progress, Completed, or Blocked.
 
 Patterns from `requirements-definition` skill: Gherkin Given/When/Then format preferred.
 
@@ -219,19 +241,33 @@ Patterns from `requirements-definition` skill: Gherkin Given/When/Then format pr
 
 ## Traceability Matrix
 
-{{traceability_matrix_html}}
+*Guidance*: Maintain the traceability matrix as part of the BRD. Use [traceability-matrix.md](../references/traceability-matrix.md) for the canonical table shapes and formulas.
 
-*Guidance*: Auto-generated by `update_lineage.py` (Step 2.8) at publish time. Rows: FR-### items. Columns: AC-### items, BR-### items, NFR-### items. Cell content: ✓ (traceability link exists), ○ (optional link), empty (no link).
+### FR-to-AC Coverage
 
-Required coverage:
+{{fr_to_ac_traceability_table}}
 
-- FR↔AC: ≥1 AC per FR (mandatory)
-- FR↔BR: As needed (optional)
-- BR↔FR: For context (informational)
+Coverage formula: `(count of FR rows with one or more AC links / count of FR rows) * 100`.
+
+If the BRD has zero FR rows, report `0.0%` coverage. Treat the result as a caution when the BRD is intentionally non-functional-only and as blocking when the active threshold requires functional scope.
+
+### FR-to-BG Alignment
+
+{{fr_to_bg_traceability_table}}
+
+Coverage formula: `(count of FR rows with one or more BG links / count of FR rows) * 100`.
+
+Target: `100.0%`. Any gap requires an active waiver in `signoff.waivers[]` before Govern handoff.
+
+### BR-to-FR Enforcement
+
+{{br_to_fr_traceability_table}}
+
+Use this view to show which functional requirements enforce standing business rules. `(none)` is allowed only when the BR is enforced outside the BRD solution scope or the missing FR is captured as an open item.
 
 ---
 
-## Risks & Assumptions
+## Risks and Assumptions
 
 ### Key Assumptions
 
@@ -239,9 +275,9 @@ Required coverage:
 
 *Guidance*: List assumptions about stakeholders, resources, dependencies, technical feasibility, etc. For each:
 
-- Assumption statement
-- Impact if false: High / Medium / Low
-- Mitigation strategy
+* Assumption statement.
+* Impact if false: High, medium, or low.
+* Mitigation strategy.
 
 ### Risk Register
 
@@ -249,10 +285,10 @@ Required coverage:
 
 *Guidance*: Identify risks that could impact BRD realization. For each:
 
-- Risk statement
-- Probability: High / Medium / Low
-- Impact: High / Medium / Low
-- Mitigation action
+* Risk statement.
+* Probability: High, medium, or low.
+* Impact: High, medium, or low.
+* Mitigation action.
 
 ---
 
@@ -262,9 +298,9 @@ Required coverage:
 
 *Guidance*: Domain-specific terminology and abbreviations. For each term:
 
-- Term / Abbreviation
-- Definition
-- Context or examples
+* Term or abbreviation.
+* Definition.
+* Context or examples.
 
 ---
 
@@ -272,13 +308,25 @@ Required coverage:
 
 ### Approval Checklist
 
-- [ ] Business Sponsor: {{sponsor_name}} – Approves business case and strategic alignment
-- [ ] Product Owner: {{product_owner_name}} – Approves requirements completeness and feasibility
-- [ ] Technical Lead: {{technical_lead_name}} – Approves technical feasibility and constraints
-- [ ] Quality Lead: {{quality_lead_name}} – Approves quality criteria and acceptance test coverage
-- [ ] Legal/Compliance (if required): {{legal_contact}} – Approves regulatory and policy compliance
+* Business Sponsor: {{sponsor_name}} - Approves business case and strategic alignment.
+* Product Owner: {{product_owner_name}} - Approves requirements completeness and feasibility.
+* Technical Lead: {{technical_lead_name}} - Approves technical feasibility and constraints.
+* Quality Lead: {{quality_lead_name}} - Approves quality criteria and acceptance test coverage.
+* Legal/Compliance: {{legal_contact}} - Approves regulatory and policy compliance when required.
 
-**Approval Date**: {{approval_date}}
+Approval date: {{approval_date}}
+
+### Waivers
+
+{{waivers}}
+
+*Guidance*: Record waiver ID, covered metric or finding, grantor, rationale, approval date, and expiration date. FR-to-BG coverage gaps require a waiver before `BRD_TO_PRD_HANDOFF_V1` can be emitted.
+
+### Handoff Readiness
+
+{{handoff_readiness}}
+
+*Guidance*: Before Govern exit, record the final quality report reference, BRD artifact SHA-256, identifier counts, traceability metrics, approver decisions, approval dates, and waiver status used to emit the BRD-to-PRD handoff.
 
 ---
 
@@ -286,16 +334,16 @@ Required coverage:
 
 {{disclaimer_text}}
 
-*Guidance*: This section is populated from the shared `disclaimer-language.instructions.md` resource (DD-14) at template-fill time. See Step 5.1 for DT-aware disclaimer extension.
+*Guidance*: Populate this section from the shared disclaimer-language instructions when the BRD is prepared for governed use.
 
 ---
 
 ## Document Metadata
 
-- **Template Version**: 1.0
-- **HVE-Core Reference**: Scenario 6 BRD Builder Upgrade, Phase 2 Step 2.2
-- **License**: CC-BY 4.0 (Microsoft HVE-Core)
-- **Attribution**: Microsoft HVE-Core Team
+* Template Version: 1.0.0.
+* Canonical Template: `brd-author/templates/brd-full.md`.
+* License: CC-BY 4.0 (Microsoft HVE-Core).
+* Attribution: Microsoft HVE-Core Team.
 
 ---
 

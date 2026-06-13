@@ -60,6 +60,8 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
     kind: agent
+  - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
@@ -217,18 +219,6 @@ items:
     kind: instruction
   # BRD Skills
   - path: .github/skills/project-planning/brd-author
-    kind: skill
-  - path: .github/skills/project-planning/brd-quality-formats
-    kind: skill
-  - path: .github/skills/project-planning/prioritization-schemes
-    kind: skill
-  - path: .github/skills/project-planning/process-modeling
-    kind: skill
-  - path: .github/skills/project-planning/requirements-definition
-    kind: skill
-  - path: .github/skills/project-planning/stakeholder-analysis
-    kind: skill
-  - path: .github/skills/project-planning/traceability-naming
     kind: skill
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations

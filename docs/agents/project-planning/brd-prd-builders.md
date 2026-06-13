@@ -52,7 +52,7 @@ Both agents support four output modes for reviewing document content:
 
 ### Template-Driven Generation
 
-Both agents use templates to structure their output, ensuring consistent section coverage across documents. The BRD Builder references an external template at `docs/templates/brd-template.md`, while the PRD Builder embeds its template inline within the agent definition.
+Both agents use templates to structure their output, ensuring consistent section coverage across documents. The BRD Builder uses the canonical `brd-author` skill template at `.github/skills/project-planning/brd-author/templates/brd-full.md`, while the PRD Builder embeds its template inline within the agent definition.
 
 ### Quality Controls
 
@@ -66,7 +66,7 @@ Both agents use templates to structure their output, ensuring consistent section
 |--------------------|--------------------------------------------------------|--------------------------------------------------------|
 | Agent file         | `.github/agents/project-planning/brd-builder.agent.md` | `.github/agents/project-planning/prd-builder.agent.md` |
 | File size          | 195 lines                                              | 766 lines                                              |
-| Template strategy  | External (`docs/templates/brd-template.md`)            | Inline (embedded in agent)                             |
+| Template strategy  | External skill template (`brd-author/templates/brd-full.md`) | Inline (embedded in agent)                             |
 | Template sections  | 14                                                     | 17                                                     |
 | Phase 4 name       | Elicit Requirements                                    | Build Requirements                                     |
 | Recovery protocols | Minimal                                                | Extensive                                              |
@@ -93,7 +93,7 @@ Scope:
 - Cost analysis: migration effort vs ongoing vulnerability risk
 - Compliance requirements (SOC 2, FedRAMP) affected by the transition
 - Success metrics: zero-downtime migration, no auth regression in any app
-Output using the BRD template at docs/templates/brd-template.md.
+Output using the canonical BRD template from `.github/skills/project-planning/brd-author/templates/brd-full.md`.
 Save session state to .copilot-tracking/brd-sessions/ for multi-session work.
 ```
 
