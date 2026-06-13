@@ -77,15 +77,6 @@ Subagent result handling:
 * When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
 * Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
 
-### Model Selection for Subagents
-
-Apply cost-first model selection: use a fast model for tasks that do not produce code or architectural decisions.
-
-* Researcher Subagent (read-only research): specify `model: "Claude Haiku 4.5 (copilot)"` to reduce cost.
-* Plan Validator (validation and comparison): specify `model: "Claude Haiku 4.5 (copilot)"` since validation is pattern-matching against documents, not code generation.
-* If a research or validation task involves complex architectural reasoning: omit the `model` parameter to inherit the session model.
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
-
 ## File Locations
 
 Planning files reside in `.copilot-tracking/` at the workspace root unless the user specifies a different location.
