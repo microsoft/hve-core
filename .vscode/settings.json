@@ -81,6 +81,7 @@
     ".github/skills/github": true,
     ".github/skills/gitlab": true,
     ".github/skills/jira": true,
+    ".github/skills/rpi": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
