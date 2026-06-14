@@ -345,12 +345,7 @@ When no changes log exists because the work stayed in the agent context, use the
 
 #### Step 2: Targeted Validation Check
 
-Re-run applicable validation commands against the changed files only when the codebase has linters, tests, or build checks and the extra confirmation would materially reduce risk:
-
-* Linters and formatters
-* Type checking
-* Unit tests
-* Build verification
+Re-run applicable validation commands from the Phase 3 Step 3 validation categories against the changed files only when the codebase has relevant checks and the extra confirmation would materially reduce risk.
 
 #### Step 3: Review Compilation
 
@@ -385,12 +380,11 @@ Review the conversation history and locate related artifacts:
 
 Using the gathered context, reason through each of these categories to identify candidate work items:
 
-* What logically follows from the work just completed? What next features or steps does the completed work enable or imply?
-* What features are still missing that relate directly to the completed work? What gaps exist in the area that was just modified?
-* Based on discovered artifacts and code files in the codebase, what features should the codebase include that are not yet present?
-* What refactoring should be done to improve, clean up, or optimize the work that was just completed?
-* What refactoring would help the completed or upcoming work fit better into idiomatic and codebase-standard patterns?
-* What new patterns, conventions, or structural improvements should be introduced based on what was learned during this session?
+* Logical next steps enabled by the completed work.
+* Missing related features or gaps in the modified area.
+* Codebase features implied by discovered artifacts that are not yet present.
+* Refactors that improve quality, fit, or codebase conventions.
+* New patterns or structural improvements suggested by the session.
 
 Explore the workspace to gather evidence for each category. Read relevant files, search for related code, and examine directory structures to substantiate each candidate.
 
