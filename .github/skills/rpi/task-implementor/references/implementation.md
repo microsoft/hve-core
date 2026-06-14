@@ -76,9 +76,9 @@ Treat the result as Pass only when no open Critical or High findings remain.
 
 Use [../templates/changes-log.md](../templates/changes-log.md) for `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task>-changes.md`.
 
-## Planning-Log Template
+## Planning Log Updates
 
-Use [../templates/planning-log.md](../templates/planning-log.md) for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`.
+The task planner owns the planning log template. During implementation, update the existing planning log at `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md` only when discrepancies, follow-on work, or user decisions appear. Preserve the existing structure and do not create a separate planning-log template from this skill.
 
 ## Progressive Tracking Rules
 
