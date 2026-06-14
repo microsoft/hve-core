@@ -65,13 +65,13 @@ Treat difficulty as dynamic rather than fixed. If Research, Plan, Implement, Rev
 
 Apply the execution model matching the current difficulty at each phase decision point. Simple and medium share the direct model; medium-hard and challenging share the artifact-backed model with increasing subagent reliance.
 
-| Phase     | Direct (Simple/Medium)                                         | Artifact-backed (Medium-hard/Challenging)                                                                    |
-|-----------|----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Research  | Investigate in-context; no research files or subagents         | Create research documents; use `Researcher Subagent` selectively (medium-hard) or as default (challenging)   |
-| Plan      | Record requests, order, and approach in working context         | Create plan artifacts in `.copilot-tracking/plans/`; use subagents for especially complex planning           |
-| Implement | Execute directly from in-context plan                          | Execute from plan artifacts; use `Phase Implementor` selectively (medium-hard) or as default (challenging)   |
-| Track (Phase 3, Step 4) | Keep internal record of changes and validation | Update all `.copilot-tracking/` artifacts (plan checkboxes, changes log, planning log)                       |
-| Review    | Keep findings in working context                               | Compile review log in `.copilot-tracking/reviews/`                                                           |
+| Phase                   | Direct (Simple/Medium)                                  | Artifact-backed (Medium-hard/Challenging)                                                                  |
+|-------------------------|---------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| Research                | Investigate in-context; no research files or subagents  | Create research documents; use `Researcher Subagent` selectively (medium-hard) or as default (challenging) |
+| Plan                    | Record requests, order, and approach in working context | Create plan artifacts in `.copilot-tracking/plans/`; use subagents for especially complex planning         |
+| Implement               | Execute directly from in-context plan                   | Execute from plan artifacts; use `Phase Implementor` selectively (medium-hard) or as default (challenging) |
+| Track (Phase 3, Step 4) | Keep internal record of changes and validation          | Update all `.copilot-tracking/` artifacts (plan checkboxes, changes log, planning log)                     |
+| Review                  | Keep findings in working context                        | Compile review log in `.copilot-tracking/reviews/`                                                         |
 
 ### Intent Detection
 
@@ -128,15 +128,15 @@ All persistent state, session notes, and workflow artifacts are tracked in `.cop
 
 All `.copilot-tracking/` files begin with `<!-- markdownlint-disable-file -->` and are exempt from mega-linter rules.
 
-| Artifact               | Path                                                                                            | Create when                                                                                         |
-|------------------------|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| Research Document      | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md`                               | Difficulty is medium-hard or challenging, or upgraded after deeper investigation                     |
-| Subagent Research      | `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{topic}}-research.md`                     | `Researcher Subagent` runs are used                                                                 |
-| Implementation Plan    | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task-description}}-plan.instructions.md`              | Task is medium-hard or challenging, or requires durable multi-phase coordination                    |
-| Implementation Details | `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task-description}}-details.md`                      | Alongside the implementation plan when explicit phase-by-phase execution notes help                  |
-| Planning Log           | `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task-description}}-log.md`                       | An artifact-backed planning workflow is active                                                       |
-| Changes Log            | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task-description}}-changes.md`                      | Implementation spans enough work for durable change tracking, or earlier phases created plan artifacts |
-| Review Log             | `.copilot-tracking/reviews/{{YYYY-MM-DD}}/{{plan-name}}-plan-review.md`                         | Durable planning or review artifacts are in use, or review findings need to persist across turns     |
+| Artifact               | Path                                                                               | Create when                                                                                            |
+|------------------------|------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Research Document      | `.copilot-tracking/research/{{YYYY-MM-DD}}/{{topic}}-research.md`                  | Difficulty is medium-hard or challenging, or upgraded after deeper investigation                       |
+| Subagent Research      | `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/{{topic}}-research.md`        | `Researcher Subagent` runs are used                                                                    |
+| Implementation Plan    | `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task-description}}-plan.instructions.md` | Task is medium-hard or challenging, or requires durable multi-phase coordination                       |
+| Implementation Details | `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task-description}}-details.md`         | Alongside the implementation plan when explicit phase-by-phase execution notes help                    |
+| Planning Log           | `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task-description}}-log.md`          | An artifact-backed planning workflow is active                                                         |
+| Changes Log            | `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task-description}}-changes.md`         | Implementation spans enough work for durable change tracking, or earlier phases created plan artifacts |
+| Review Log             | `.copilot-tracking/reviews/{{YYYY-MM-DD}}/{{plan-name}}-plan-review.md`            | Durable planning or review artifacts are in use, or review findings need to persist across turns       |
 
 ### Artifact Content
 
