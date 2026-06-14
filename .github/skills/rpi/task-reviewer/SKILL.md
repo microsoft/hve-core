@@ -7,36 +7,45 @@ user-invocable: true
 
 # Task Reviewer
 
+Use [references/review.md](references/review.md) for the deeper review protocol, templates, and validator contracts.
+
 ## Goal
 
-Confirm the implementation is complete, evidence-backed, and ready for handoff or follow-up.
+Produce an evidence-backed review result with review-log synthesis, validator dispatch, and explicit follow-up guidance.
 
 ## What to do
 
-1. Review the implementation and change-log evidence for the current phase.
-2. Dispatch the existing Implementation Validator for review coverage.
-3. Dispatch RPI Validator when the review must confirm plan-to-changes alignment.
-4. Return a concise verdict with blockers, follow-up work, and the next command if more work is needed.
+1. Discover the task plan, changes log, and research artifact from the user request, the current open file, or the most recent dated `.copilot-tracking/` artifacts. Derive the task date and review paths from the discovered plan path. If multiple unrelated artifact sets match, present the candidate sets and stop until the user chooses one.
+2. Create or update `.copilot-tracking/reviews/{{YYYY-MM-DD}}/<plan-file-name-without-instructions-md>-review.md` and start it with `<!-- markdownlint-disable-file -->`.
+3. Dispatch `Implementation Validator` with changed file paths, validation scope, implementation log path, and research context when available; fold returned severity findings into the review log.
+4. Dispatch `RPI Validator` for each plan phase when a plan is present or plan-to-change alignment matters, using one validation file per phase under `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/`. Run independent phases in parallel when useful.
+5. Discover and run applicable validation commands for changed files when available, including lint, build, tests, type checks, and diagnostics; record command, scope, exit status, and pass/fail summary in the review log. Do not mark the review `Complete` unless validation commands pass or are explicitly recorded as not applicable.
+6. Resume from the existing review log and any completed phase validation files when the user re-enters this review; preserve completed work and continue from the earliest incomplete phase.
+7. Use `Researcher Subagent` with `runSubagent` or `task` when context is missing or findings remain ambiguous. Write subagent research outputs to `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md` and stop only when research cannot resolve the gap or dispatch is unavailable.
+8. Aggregate findings by severity and return `Complete`, `Needs Rework`, or `Blocked` with the review log path and the next handoff command.
 
 ## Success criteria
 
-* The review summary names the verified outcome and any remaining issues.
-* The validation path uses the existing RPI validators rather than duplicating review logic.
-* The next command is explicit for the user.
+* The review log exists under `.copilot-tracking/reviews/` and starts with `<!-- markdownlint-disable-file -->`.
+* The review covers artifact discovery, validator dispatch, phase validation, validation commands, severity aggregation, and follow-up synthesis.
+* The final response includes the review log path, overall status, severity counts, follow-up count, and next-step command.
+* The handoff stays compact and names `/task-reviewer` when another review pass is needed.
 
 ## Constraints
 
 * Do not re-implement the fix in this phase.
-* Keep the review result compact and actionable.
-* Use the existing validation subagents for evidence-based review.
+* Keep the reviewer output compact; use [references/review.md](references/review.md) for detailed protocol, templates, and validator contracts.
+* Stop and ask the user only when required subagent dispatch is unavailable or research cannot resolve a blocking ambiguity.
 
 ## Stop rules
 
-* Stop if the implementation evidence is missing.
-* Stop if the validation result shows unresolved blocking issues.
+* Stop if the plan or changes log cannot be discovered and no review artifact can be formed.
+* Stop when multiple unrelated artifact sets match and the user has not selected one.
+* Stop if validator dispatch is unavailable and the review would be based on guesswork.
+* Stop when unresolved Critical or High findings block completion and the user needs to fix the implementation before handoff.
 
 ## Handoff
 
-If the review passes, return to the user with the validated outcome; if follow-up is required, continue with the next phase command or the existing plan.
+After review is complete, continue with the next phase command or the existing plan.
 
 > Brought to you by microsoft/hve-core

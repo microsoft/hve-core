@@ -11,7 +11,7 @@ Use [references/implementation.md](references/implementation.md) for the deeper 
 
 ## Goal
 
-Execute the approved implementation phase with dated tracking evidence, bounded subagent dispatch, and review-ready handoff behavior equivalent to the legacy implementor workflow.
+Execute the approved implementation phase with dated tracking evidence, bounded subagent dispatch, and review-ready handoff behavior.
 
 ## What to do
 
@@ -45,6 +45,6 @@ Execute the approved implementation phase with dated tracking evidence, bounded 
 
 ## Handoff
 
-After implementation is complete, continue with `/task-reviewer` to validate the result and capture review evidence. `/task-review` remains the legacy prompt alias; the skill-forward path is `/task-reviewer`.
+After implementation is complete, continue with `/task-reviewer` to validate the result and capture review evidence.
 
 > Brought to you by microsoft/hve-core

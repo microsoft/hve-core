@@ -8,7 +8,7 @@ Use this reference when the skill needs a compact planning contract rather than 
 
 ## Implementation Plan sections
 
-Use the dated implementation plan at `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.instructions.md`.
+Use [../templates/implementation-plan.md](../templates/implementation-plan.md) for `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.instructions.md`.
 
 Start the file with frontmatter and markdownlint suppression:
 
@@ -32,7 +32,7 @@ Then add `<!-- markdownlint-disable-file -->` before the H1.
 
 ## Implementation Details sections
 
-Use the dated details artifact at `.copilot-tracking/details/{{YYYY-MM-DD}}/<task>-details.md`.
+Use [../templates/implementation-details.md](../templates/implementation-details.md) for `.copilot-tracking/details/{{YYYY-MM-DD}}/<task>-details.md`.
 
 Start the file with `<!-- markdownlint-disable-file -->`.
 
@@ -46,7 +46,7 @@ Start the file with `<!-- markdownlint-disable-file -->`.
 
 ## Planning Log sections
 
-Use the dated planning log at `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`.
+Use [../templates/planning-log.md](../templates/planning-log.md) for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`.
 
 Start the file with `<!-- markdownlint-disable-file -->`.
 
@@ -80,9 +80,9 @@ When research is absent, incomplete, or stale:
 * Treat critical and major Plan Validator findings as blocking. Minor findings may remain only when documented as non-blocking in the planning log.
 * When a decision point remains unresolved, document the selected default in the planning log and note the follow-up work.
 
-## Handoff compatibility
+## Implementation Handoff
 
-Use `/task-implementor` as the skill-forward implementation handoff. `/task-implement` is the legacy prompt alias for the older agent path and should not replace the skill-forward handoff in new planner output.
+Use `/task-implementor` as the implementation handoff in planner output.
 
 ## Decision-point handling
 

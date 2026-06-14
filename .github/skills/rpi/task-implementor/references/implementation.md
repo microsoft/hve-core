@@ -74,80 +74,11 @@ Treat the result as Pass only when no open Critical or High findings remain.
 
 ## Changes-Log Template
 
-Use this structure for `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task>-changes.md`:
-
-```markdown
-<!-- markdownlint-disable-file -->
-# Release Changes: {{task name}}
-
-**Related Plan**: {{plan-file-name}}
-**Implementation Date**: {{YYYY-MM-DD}}
-
-## Summary
-
-{{Brief description of the overall changes}}
-
-## Changes
-
-### Added
-
-* {{relative-file-path}} - {{summary}}
-
-### Modified
-
-* {{relative-file-path}} - {{summary}}
-
-### Removed
-
-* {{relative-file-path}} - {{summary}}
-
-## Additional or Deviating Changes
-
-* {{explanation of deviation or non-change}}
-  * {{reason for deviation}}
-
-## Release Summary
-
-{{Include total files affected, dependency changes, deployment notes, and validation outcome}}
-```
+Use [../templates/changes-log.md](../templates/changes-log.md) for `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task>-changes.md`.
 
 ## Planning-Log Template
 
-Use this structure for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`:
-
-```markdown
-<!-- markdownlint-disable-file -->
-# Planning Log: {{task name}}
-
-**Related Plan**: {{plan-file-name}}
-
-## Discrepancy Log
-
-### Unaddressed Research Items
-
-* DR-01: {{research_item_not_addressed}}
-  * Source: {{research_file}} (Lines {{line_start}}-{{line_end}})
-  * Reason: {{why_not_addressed}}
-  * Impact: {{low / medium / high}}
-
-### Implementation Deviations
-
-* DD-01: {{deviation_description}}
-  * Plan specifies: {{plan_approach}}
-  * Implementation differs: {{actual_approach}}
-  * Rationale: {{why_deviated}}
-
-## Suggested Follow-On Work
-
-* WI-01: {{title}} — {{description}} ({{priority}})
-  * Source: Phase {{N}}, Step {{M}}
-  * Dependency: {{what_must_complete_first}}
-
-## User Decisions
-
-* ID-01: {{decision_title}} — Option {{X}} selected
-  * Rationale: {{user_rationale_or_recommendation_accepted}}
-```
+Use [../templates/planning-log.md](../templates/planning-log.md) for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`.
 
 ## Progressive Tracking Rules
 
@@ -158,7 +89,7 @@ Use this structure for `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.m
 
 ## Resumption and Review Handoff
 
-When resuming, read the existing changes log and plan, preserve completed work, and continue from the next unchecked phase. When handing off to review, keep `/task-reviewer` as the canonical skill-forward command and treat `/task-review` as the legacy alias only.
+When resuming, read the existing changes log and plan, preserve completed work, and continue from the next unchecked phase. Hand off review work with `/task-reviewer`.
 
 ## Telemetry, Commit Messages, and Review Compatibility
 
