@@ -60,6 +60,8 @@ items:
   kind: agent
 - path: .github/agents/hve-core/pr-review.agent.md
   kind: agent
+- path: .github/agents/hve-core/pr-walkthrough.agent.md
+  kind: agent
 - path: .github/agents/hve-core/prompt-builder.agent.md
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
