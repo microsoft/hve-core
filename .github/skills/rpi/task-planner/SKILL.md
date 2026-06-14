@@ -50,7 +50,7 @@ Convert validated research into an implementation-ready plan, supporting details
 
 ## Handoff
 
-After the plan is validated, continue with `/task-implementor` and hand off the dated artifact set. `/task-implement` remains the legacy prompt alias; use `/task-implementor` for the skill-forward flow.
+After the plan is validated, continue with `/task-implementor` and hand off the dated artifact set.
 
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.instructions.md`
 * `.copilot-tracking/details/{{YYYY-MM-DD}}/<task>-details.md`

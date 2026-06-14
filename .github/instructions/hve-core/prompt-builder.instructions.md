@@ -265,8 +265,8 @@ Skill directory structure:
 ├── references/                 # Agents load on demand; keep files focused (optional)
 │   ├── REFERENCE.md            # Detailed technical reference
 │   └── FORMS.md                # Form templates or structured data formats
-└── assets/                     # Templates, images, data files (optional)
-    └── templates/              # Document or configuration templates
+├── templates/                  # Document or configuration templates (optional)
+└── assets/                     # Images, data files, and other static resources (optional)
 ```
 
 #### Optional Directories
@@ -288,13 +288,21 @@ Contains additional documentation that agents read when needed:
 * Domain-specific files such as `finance.md` or `legal.md`.
 * Keep individual reference files focused; agents load these on demand.
 
+##### templates/
+
+Contains reusable document, configuration, or output skeletons that the skill uses to create files:
+
+* Place reusable Markdown, YAML, JSON, or configuration skeletons here when they are primary skill resources.
+* Reference templates from *SKILL.md* or `references/` files with paths relative to the containing file, such as `templates/report.md` from *SKILL.md* or `../templates/report.md` from `references/`.
+* Prefer this top-level directory for skill-specific templates. Use `assets/` only when the template is part of a broader static asset bundle.
+
 ##### assets/
 
 Contains static resources:
 
-* Templates for documents or configuration files.
 * Images such as diagrams or examples.
 * Data files such as lookup tables or schemas.
+* Other non-template resources consumed by scripts, references, or the skill body.
 
 ### Skill Content Structure
 
@@ -362,7 +370,7 @@ When a caller describes a task that semantically matches a skill's `description`
 
 1. Level 1 (Discovery): Matches the task description against skill frontmatter `name` and `description` fields (~100 tokens per skill).
 2. Level 2 (Instructions): Loads the full SKILL.md body into context with script usage instructions (<5000 tokens recommended).
-3. Level 3 (Resources): Accesses scripts, examples, and references in the skill directory on-demand during execution.
+3. Level 3 (Resources): Accesses scripts, examples, references, templates, and assets in the skill directory on-demand during execution.
 
 Validation guidelines:
 

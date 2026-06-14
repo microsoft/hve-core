@@ -6,9 +6,11 @@ description: "Research template and compact protocol for the task-researcher RPI
 
 Use this reference for the research phase when the skill needs a planning-ready document rather than a long inline protocol.
 
-## Research Template
+## Template
 
-Use the primary research artifact at `.copilot-tracking/research/{{YYYY-MM-DD}}/<task>-research.md`.
+Use [../templates/research.md](../templates/research.md) for `.copilot-tracking/research/{{YYYY-MM-DD}}/<task>-research.md`.
+
+The template includes these planning-ready sections.
 
 ### Scope and Success Criteria
 
