@@ -8,27 +8,27 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Chat Agents
 
-| Name                         | Description                                                                                                                              |
-|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **doc-ops**                  | Documentation operations agent for pattern compliance, accuracy verification, and gap detection                                          |
-| **implementation-validator** | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
-| **memory**                   | Conversation memory persistence for session continuity                                                                                   |
-| **phase-implementor**        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |
-| **plan-validator**           | Validates implementation plans against research documents with severity-graded findings                                                  |
-| **pr-review**                | Pull Request review assistant for code quality, security, and convention compliance                                                      |
-| **pr-walkthrough**           | Narrative-driven PR orientation that walks a reviewer through the diff architecture, surfaces design forks and implicit bets             |
-| **prompt-builder**           | Prompt engineering assistant for creating and validating prompts, agents, and instructions                                               |
-| **prompt-evaluator**         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance                |
-| **prompt-tester**            | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value                                      |
-| **prompt-updater**           | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions                                  |
-| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
-| **rpi-agent**                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                    |
-| **rpi-validator**            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                  |
-| **task-challenger**          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading        |
-| **task-implementor**         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                  |
-| **task-planner**             | Implementation planner that creates actionable, step-by-step plans                                                                       |
-| **task-researcher**          | Task research specialist for comprehensive project analysis                                                                              |
-| **task-reviewer**            | Reviews completed implementation work for accuracy, completeness, and convention compliance                                              |
+| Name                         | Description                                                                                                                                                                                                                                           |
+|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **doc-ops**                  | Documentation operations agent for pattern compliance, accuracy verification, and gap detection                                                                                                                                                       |
+| **implementation-validator** | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings                                                                                                              |
+| **memory**                   | Conversation memory persistence for session continuity                                                                                                                                                                                                |
+| **phase-implementor**        | Executes a single implementation phase from a plan with full codebase access and change tracking                                                                                                                                                      |
+| **plan-validator**           | Validates implementation plans against research documents with severity-graded findings                                                                                                                                                               |
+| **pr-review**                | Pull Request review assistant for code quality, security, and convention compliance                                                                                                                                                                   |
+| **pr-walkthrough**           | Narrative-driven PR orientation that walks a reviewer through the diff architecture, surfaces design forks and implicit bets for human judgment, and produces structural appendices for large changes. Runs standalone or as a subagent of PR Review. |
+| **prompt-builder**           | Prompt engineering assistant for creating and validating prompts, agents, and instructions                                                                                                                                                            |
+| **prompt-evaluator**         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance                                                                                                                             |
+| **prompt-tester**            | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value                                                                                                                                                   |
+| **prompt-updater**           | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions                                                                                                                                               |
+| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                                                                                           |
+| **rpi-agent**                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                                                                                                                                 |
+| **rpi-validator**            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                                                                               |
+| **task-challenger**          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading                                                                                                                     |
+| **task-implementor**         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                                                                               |
+| **task-planner**             | Implementation planner that creates actionable, step-by-step plans                                                                                                                                                                                    |
+| **task-researcher**          | Task research specialist for comprehensive project analysis                                                                                                                                                                                           |
+| **task-reviewer**            | Reviews completed implementation work for accuracy, completeness, and convention compliance                                                                                                                                                           |
 
 ### Prompts
 

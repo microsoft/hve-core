@@ -45,7 +45,7 @@ Pull CI status via `gh pr checks` (or equivalent). Record which checks passed, w
 Understand what shaped the PR before analyzing it:
 
 * Read the PR description and linked issues.
-* Run `gh pr list --state merged --author <author> --search <relevant path or keyword> --limit 5` to find 2-3 recent merged PRs that cleared the runway for this one.
+* Run `gh pr list --state merged --author AUTHOR --search "RELEVANT_PATH_OR_KEYWORD" --limit 5` (substitute the PR author's login and a path or keyword relevant to the change) to find 2-3 recent merged PRs that cleared the runway for this one.
 * Check if there are open issues this PR closes or partially addresses.
 
 Record:
@@ -313,7 +313,7 @@ When a `diff-state.json` path is provided in the input by an orchestrator:
 2. Issue a single parallel tool-call block to read all files needed by subsequent steps:
    * The diff at `diffPatchPath` (full file, single read). Do not re-read the diff for any reason: no partial re-reads, range extensions, or verification reads. If the first read returns truncated output, work with what was returned.
    * Source files referenced in the `files` array, at the hunk ranges identified in the diff.
-3. Skip all git diff commands. Diff computation is already complete. Proceed directly to Step 2 (Map the runway).
+3. Skip all git diff commands (diff computation is already complete), but still perform the Step 1 analysis: map the hunks, identify changed files/ranges, and read surrounding file context using the provided diff and file list. Then proceed to Step 2 (Map the runway).
 4. After producing the walkthrough, write the output to `<findingsFolder>/walkthrough.md`.
 5. Skip standalone output steps.
 
@@ -341,9 +341,9 @@ When no `diff-state.json` is provided:
 
    ```bash
    git fetch origin
-   git merge-base origin/${input:baseBranch} HEAD
-   git diff <merge-base>...HEAD
-   git diff <merge-base>...HEAD --name-only
+   MERGE_BASE=$(git merge-base origin/${input:baseBranch} HEAD)
+   git diff ${MERGE_BASE}...HEAD
+   git diff ${MERGE_BASE}...HEAD --name-only
    ```
 
 3. Filter the file list to exclude non-source artifacts: lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`), minified bundles (`.min.js`, `.min.css`), source maps (`.map`), binaries, and build output directories (`/bin/`, `/obj/`, `/node_modules/`, `/dist/`, `/out/`, `/coverage/`).
