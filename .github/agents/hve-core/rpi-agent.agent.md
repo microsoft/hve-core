@@ -324,7 +324,7 @@ When creating a review log:
 
 Determine next action based on review status:
 
-* Complete (all user requests fulfilled, validation passes, and no meaningful placement or quality concerns remain): present a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. Proceed to Phase 5 to discover next work items.
+* Complete (all user requests fulfilled, validation passes, and no meaningful placement or quality concerns remain): summarize iteration count, files changed, and artifact paths. Present a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. Proceed to Phase 5 to discover next work items.
 * Iterate (user requests are partially or fully unaddressed, or placement/quality issues indicate more work is needed): restart from Phase 1 or the earliest affected phase with the specific gaps identified, then continue iterating until the requests are complete before yielding control.
 * Escalate (deeper research or plan revision needed): return to Phase 1 or Phase 2, continue the workflow from there, and still pass through Phase 5 before any user-facing stop or handoff.
 
