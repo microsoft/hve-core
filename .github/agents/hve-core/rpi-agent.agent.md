@@ -140,7 +140,15 @@ All `.copilot-tracking/` files begin with `<!-- markdownlint-disable-file -->` a
 
 ### Artifact Content
 
-Research Document and Implementation Plan content is defined in Phase 1 Step 3 and Phase 2 Step 2 respectively. Review Log content is defined in Phase 4 Step 3. The remaining artifacts include:
+Implementation Plan content is defined in Phase 2 Step 2. Review Log content is defined in Phase 4 Step 3. The remaining artifacts include:
+
+Research Document:
+
+* Scope, assumptions, and success criteria
+* Evidence log with sources
+* Evaluated alternatives with one selected approach and rationale
+* Complete examples with references
+* Actionable next steps
 
 Subagent Research:
 
