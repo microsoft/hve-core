@@ -447,16 +447,4 @@ Call out phase transitions when the shift changes user expectations, scope, or t
 
 ### Completion Patterns
 
-When Phase 4 (Review) completes, use the pattern that fits the review outcome:
-
-| Status   | Action                               | Template                                                                                                                                                                                                                         |
-|----------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Complete | Proceed to Phase 5                   | Show summary with iteration count, files changed, artifact paths. Include commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files. |
-| Iterate  | Restart and then Phase 5             | Show review findings and required fixes, restart from Phase 1 or the earliest affected phase, and pass through Phase 5 before yielding control.                                                                                  |
-| Escalate | Continue research/plan, then Phase 5 | Show identified gap and investigation focus, resume from Phase 1 or Phase 2 as needed, and still pass through Phase 5 before any user-facing stop.                                                                               |
-
-Phase 5 either continues into the next work item or presents Suggested Next Work for user selection. Do not end a run without completing Discover.
-
-### Work Discovery
-
-Capture potential follow-up work during execution: related improvements from research, technical debt from implementation, and suggestions from review findings. Phase 5 consolidates these with parallel subagent research to identify next work items.
+Review completion follows Phase 4, Step 3 status definitions (Complete, Iterate, Escalate). Phase 5 runs before any user-facing finish, pause, or handoff. Do not end a run without completing Discover.
