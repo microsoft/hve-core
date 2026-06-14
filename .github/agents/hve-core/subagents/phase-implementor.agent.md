@@ -24,6 +24,7 @@ Executes a single implementation phase from a plan with full codebase access and
 
 * Phase identifier and step list from the implementation plan.
 * Plan file path (`.copilot-tracking/plans/` file).
+* Delegated RPI work may provide a bounded phase scope and expect a compact completion report plus file-backed progress updates.
 * Details file path (`.copilot-tracking/details/` file) with line ranges for this phase.
 * Research file path when available.
 * Instruction files to read and follow:

@@ -252,6 +252,7 @@ Characteristics:
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
 * Skills without scripts are valid documentation-driven knowledge packages.
+* For skill-forward RPI work, keep the skill body compact and use existing subagents for tool/model/isolation concerns rather than duplicating the full workflow in the skill.
 
 Skill directory structure:
 
@@ -318,6 +319,10 @@ Structure skills for efficient context usage:
 
 Keep the main *SKILL.md* focused. Move detailed reference material to separate files.
 
+Prefer compact, latest-model prompting in the skill body: role → goal → success criteria → constraints → output → stop rules, with progressive disclosure through references rather than long process-heavy prose.
+
+For the RPI migration, use skill-to-subagent dispatch as the selected scoping pattern and avoid thin prompt wrappers. A skill cannot declare `tools`, `model`, `agent`, `handoffs`, or `applyTo` in its frontmatter; those belong to agents, prompts, or instructions.
+
 #### File References
 
 Skill packages are self-contained and relocatable. The skill root directory varies by distribution context (in-repo at `.github/skills/`, as a Copilot CLI plugin at `~/.copilot/installed-plugins/`, or as a VS Code extension at `~/.vscode/extensions/`). The `.github/` directory does not exist outside the source repository.
@@ -362,6 +367,8 @@ When a caller describes a task that semantically matches a skill's `description`
 Validation guidelines:
 
 * Frontmatter follows the Frontmatter Requirements section, including `name` and `description` fields.
+* Skill frontmatter must not declare `tools`, `model`, `agent`, `handoffs`, or `applyTo`; those are agent/prompt/instruction capabilities, not skill capabilities.
+* For RPI migration, use skill-to-subagent dispatch as the selected scoping pattern instead of thin prompt wrappers.
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Skills without scripts are valid; omit Parameters Reference and Script Reference sections in that case.
 * Document prerequisites for each supported platform.
@@ -404,7 +411,7 @@ Optional fields available by file type:
 
 * `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (human-readable name from the target agent's `name:` frontmatter), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
-* `user-invocable:` - Boolean. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker or background-only skills that should not appear in the slash command menu.
+* `user-invocable:` - Boolean. Use this spelling consistently for agents, subagents, and skills. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for background-only artifacts or subagents that should not appear in the picker or command menu.
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
