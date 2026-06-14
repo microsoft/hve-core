@@ -25,9 +25,11 @@ Use this guidance for the new RPI skill packages and their tracking outputs.
 
 * Primary research notes stay under `.copilot-tracking/research/{{YYYY-MM-DD}}/<task>-research.md`.
 * Subagent research outputs stay under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/<topic>-research.md`.
-* Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.md`.
+* Planning evidence stays under `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.instructions.md`.
+* Planning log evidence stays under `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`.
 * Details and validation evidence stay under `.copilot-tracking/details/{{YYYY-MM-DD}}/<task>-details.md`.
 * Implementation and validation results stay under `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task>-changes.md` and related review logs.
+* Generated `.copilot-tracking/**` markdown artifacts include `<!-- markdownlint-disable-file -->` near the top because tracking files are exempt from repository markdownlint rules.
 * Use plain-text workspace-relative paths in tracking documents for AI consumption.
 * For the research phase, do not write files outside `.copilot-tracking/research/` except subagent outputs or workflow tracking files explicitly required by the current execution.
 * When material gaps remain, re-enter the same research phase and update the dated artifact rather than skipping to planning.

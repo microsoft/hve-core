@@ -13,7 +13,7 @@ Produce a planning-ready research brief under `.copilot-tracking/research/` and 
 
 ## Execution
 
-Use [references/RESEARCH.md](references/RESEARCH.md) for the research template and deeper protocol detail.
+Use [references/research.md](references/research.md) for the research template and deeper protocol detail.
 
 1. Confirm the task scope, target files, and expected outcome.
 2. Create or update the primary research artifact at `.copilot-tracking/research/{{YYYY-MM-DD}}/<task>-research.md`.
