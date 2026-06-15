@@ -5,7 +5,7 @@ applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**,
 
 # Planner Identity Base
 
-This file is the shared scaffold for phase-based conversational planning agents that maintain persistent state under `.copilot-tracking/<planner>/` and orchestrate work across six sequential phases. Per-planner identity files (`sssc-identity.instructions.md`, `rai-identity.instructions.md`, security `identity.instructions.md`, `accessibility-identity.instructions.md`) extend this base and contribute the planner-specific content listed under [Scope of Inheritance](#scope-of-inheritance).
+This file is the shared scaffold for phase-based conversational planning agents that maintain persistent state under `.copilot-tracking/<planner>/` and orchestrate work across six sequential phases. Per-planner identity files (`sssc-planner.instructions.md`, `rai-identity.instructions.md`, security `identity.instructions.md`, `accessibility-identity.instructions.md`) extend this base and contribute the planner-specific content listed under [Scope of Inheritance](#scope-of-inheritance).
 
 Exploration-first questioning style, laddering, projective techniques, scope assessment, and raw-capture rules are defined in `shared/coaching-patterns.instructions.md` and apply on top of this base.
 

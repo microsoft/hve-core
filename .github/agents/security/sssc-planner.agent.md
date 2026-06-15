@@ -31,7 +31,7 @@ Phase-based conversational supply chain security planning agent that guides user
 
 Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
-After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-standards.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
+After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-planner.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
 
 ## Telemetry Foundations
 
@@ -39,7 +39,24 @@ This agent emits and reasons about production telemetry. Whenever the gap-analys
 
 When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
 
-For artifact-scoped enforcement, the `sssc-planner-telemetry` instructions apply automatically to matching artifacts.
+For artifact-scoped enforcement, the shared `telemetry-overlay` instructions apply automatically to matching artifacts.
+
+## Skill Reference Contract
+
+Durable supply-chain reference material — standard catalogs, the combined capabilities inventory, and the adoption, effort, concern, and priority taxonomies — lives in the `supply-chain-security` skill, not in this agent. Do not restate framework tables, the capabilities inventory, or the taxonomies inline; load them on demand from the skill.
+
+Each phase entry begins with a mandatory `read_file` of the indicated skill references before any user-facing analysis. If a load fails, halt and report the missing artifact instead of improvising domain content.
+
+| Phase entry | Skill references to read (`read_file`)                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Phase 1     | `.github/skills/security/supply-chain-security/references/00-index.md`, `.github/skills/security/supply-chain-security/references/capabilities-inventory.md`                                                                                                                                                                                                                                                                                                                                        |
+| Phase 2     | `.github/skills/security/supply-chain-security/references/capabilities-inventory.md`                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Phase 3     | `.github/skills/security/supply-chain-security/references/openssf-scorecard.md`, `.github/skills/security/supply-chain-security/references/slsa-levels.md`, `.github/skills/security/supply-chain-security/references/best-practices-badge.md`, `.github/skills/security/supply-chain-security/references/sigstore-maturity.md`, `.github/skills/security/supply-chain-security/references/sbom-elements.md`, `.github/skills/security/supply-chain-security/references/scorecard-check-mapping.md` |
+| Phase 4     | `.github/skills/security/supply-chain-security/references/adoption-categories.md`, `.github/skills/security/supply-chain-security/references/scorecard-check-mapping.md`                                                                                                                                                                                                                                                                                                                            |
+| Phase 5     | `.github/skills/security/supply-chain-security/references/priority-derivation.md`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Phase 6     | `.github/skills/security/supply-chain-security/references/priority-derivation.md`, `.github/skills/security/supply-chain-security/references/sbom-elements.md`                                                                                                                                                                                                                                                                                                                                      |
+
+`.github/skills/security/supply-chain-security/references/00-index.md` is the discovery index cataloging the full reference set; consult it during Phase 1 orientation to locate the references each later phase requires.
 
 ## Six-Phase Architecture
 
@@ -75,7 +92,7 @@ Gate: hard — stop, surface a structured confirmation prompt that references st
 
 ### Phase 2: Supply Chain Assessment
 
-Analyze the target repository's current supply chain security posture against the 27 combined capabilities from hve-core and physical-ai-toolchain. Follow the assessment protocol in `sssc-assessment.instructions.md`.
+On Phase 2 entry, read the `supply-chain-security` skill's `references/capabilities-inventory.md` per the Skill Reference Contract before assessing. Analyze the target repository's current supply chain security posture against the 27 combined capabilities from hve-core and physical-ai-toolchain. Follow the assessment protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer confirms the capability inventory and per-capability assessment results before advancing to Phase 3.
 
@@ -83,7 +100,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 3: Standards Mapping
 
-Map the assessed posture against OpenSSF Scorecard checks, SLSA Build levels, Best Practices Badge criteria, Sigstore signing, and SBOM standards. Follow the mapping protocol in `sssc-standards.instructions.md`.
+On Phase 3 entry, read the `supply-chain-security` skill's `references/openssf-scorecard.md`, `references/slsa-levels.md`, `references/best-practices-badge.md`, `references/sigstore-maturity.md`, `references/sbom-elements.md`, and `references/scorecard-check-mapping.md` per the Skill Reference Contract before mapping. Map the assessed posture against OpenSSF Scorecard checks, SLSA Build levels, Best Practices Badge criteria, Sigstore signing, and SBOM standards. Follow the mapping protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer confirms the Scorecard, SLSA, Sigstore, SBOM, and Best Practices Badge mappings before advancing to Phase 4.
 
@@ -91,7 +108,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 4: Gap Analysis
 
-Compare current state against desired state. Produce a gap table sorted by Scorecard risk level with effort estimates and adoption categories. Follow the analysis protocol in `sssc-gap-analysis.instructions.md`.
+On Phase 4 entry, read the `supply-chain-security` skill's `references/adoption-categories.md` and `references/scorecard-check-mapping.md` per the Skill Reference Contract before analyzing gaps. Compare current state against desired state. Produce a gap table sorted by Scorecard risk level with effort estimates and adoption categories. Follow the analysis protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer confirms each identified gap, adoption category, and effort estimate before advancing to Phase 5.
 
@@ -99,7 +116,7 @@ Gate: hard — stop, surface a structured confirmation prompt that references st
 
 ### Phase 5: Backlog Generation
 
-Generate actionable work items in dual format (ADO + GitHub) from identified gaps. Each work item includes adoption steps referencing specific workflows and scripts. Follow the generation protocol in `sssc-backlog.instructions.md`.
+On Phase 5 entry, read the `supply-chain-security` skill's `references/priority-derivation.md` per the Skill Reference Contract before deriving priorities. Generate actionable work items in dual format (ADO + GitHub) from identified gaps. Each work item includes adoption steps referencing specific workflows and scripts. Follow the generation protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer confirms each generated work item, referenced workflow, and acceptance criteria before advancing to Phase 6.
 
@@ -107,7 +124,7 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 6: Review and Handoff
 
-Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-handoff.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `npm run sssc:sign -- -SessionPath '.copilot-tracking/sssc-plans/{project-slug}' -ManifestName 'sssc-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign.
+Validate completeness, generate Scorecard improvement projections and SLSA level assessments, and hand off to backlog managers. Follow the handoff protocol in `sssc-planner.instructions.md`. Finalize the consolidated SSSC plan markdown at `ssscPlanFile` (`.copilot-tracking/sssc-plans/{project-slug}/sssc-plan.md`) as the primary durable deliverable — completing its phase table, executive summary, posture snapshot, and handoff links per the Plan Markdown Finalization protocol in `sssc-planner.instructions.md`. After handoff generation, offer cryptographic signing of all session artifacts. When the user accepts, invoke `pwsh scripts/security/Sign-PlannerArtifacts.ps1 -SessionPath '.copilot-tracking/sssc-plans/{project-slug}' -ManifestName 'sssc-manifest.json'` via `execute/runInTerminal` to generate a SHA-256 manifest and optionally sign with cosign. End the workflow with the end-of-workflow completion summary — a `📦 Artifacts Generated` table listing every artifact produced this session with its path and status, followed by the posture recap and `⚡ Ready for Backlog Creation` next steps — per the Completion Summary protocol in `sssc-planner.instructions.md`.
 
 Human-review exit reminder: a qualified supply chain security reviewer signs off on the final assessment, Scorecard projections, and backlog handoff artifacts before backlog creation.
 
@@ -180,6 +197,7 @@ State JSON schema for `state.json`:
   "signingRequested": false,
   "signingManifestPath": null,
   "disclaimerShownAt": null,
+  "noticeLog": [],
   "userPreferences": {
     "autonomyTier": "partial",
     "outputDetailLevel": "standard",
@@ -192,13 +210,12 @@ State JSON schema for `state.json`:
     }
   },
   "ssscEnabled": true,
-  "signingRequested": false,
-  "signingManifestPath": null,
-  "disclaimerShownAt": null,
   "securityPlannerLink": null,
   "raiPlannerLink": null
 }
 ```
+
+`state.json` follows the canonical schema at `scripts/linting/schemas/sssc-state.schema.json`. The block above is an illustrative default-value example; the schema is the source of truth for required keys, field types, and defaults.
 
 Six-step state protocol governs every conversation turn:
 
@@ -223,14 +240,9 @@ Seven rules govern conversational flow across all phases:
 
 ## Instruction File References
 
-Six instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/sssc-plans/`.
+The consolidated SSSC instruction file provides detailed guidance for every phase. It is auto-applied via its `applyTo` pattern when working within `.copilot-tracking/sssc-plans/`.
 
-* `.github/instructions/security/sssc-identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and question cadence.
-* `.github/instructions/security/sssc-assessment.instructions.md`: Phase 2 supply chain assessment protocol with the 27 combined capabilities inventory.
-* `.github/instructions/security/sssc-standards.instructions.md`: Phase 3 OpenSSF Scorecard checks, SLSA Build levels, Best Practices Badge, Sigstore, and SBOM standards.
-* `.github/instructions/security/sssc-gap-analysis.instructions.md`: Phase 4 gap comparison, adoption categories, and effort sizing.
-* `.github/instructions/security/sssc-backlog.instructions.md`: Phase 5 dual-format work item generation with templates.
-* `.github/instructions/security/sssc-handoff.instructions.md`: Phase 6 backlog handoff protocol with projections.
+* `.github/instructions/security/sssc-planner.instructions.md`: Agent identity, phase architecture, state management, session recovery, question cadence, and the Phase 2-6 assessment, standards mapping, gap analysis, backlog, and handoff protocols.
 * `.github/instructions/shared/coaching-patterns.instructions.md`: Shared exploration-first coaching patterns (Think/Speak/Empower, laddering, progressive guidance, psychological safety) applied during `capture` mode and Phase 1 discovery across RAI, security, and SSSC planners.
 * `scripts/linting/schemas/sssc-state.schema.json`: Canonical JSON schema for `state.json`. Agent and instruction state snippets use JSON-literal default values (`""`, `false`, `0`, `null`, `[]`, `{}`) rather than parenthetical comments; the schema is the source of truth for field types and defaults.
 
@@ -247,14 +259,14 @@ Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
 
 The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the sssc-standards instruction file.
+* When a `runSubagent` or `task` tool is available, run subagents as described above and in the sssc-planner instruction file.
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
 
 Subagents can run in parallel when researching independent standard domains.
 
 ### Phase-Specific Delegation
 
-* Phase 3 delegates evolving supply chain framework lookups to the Researcher Subagent per the trigger conditions in the sssc-standards instruction file delegation section. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
+* Phase 3 delegates evolving supply chain framework lookups to the Researcher Subagent per the trigger conditions in the sssc-planner instruction file delegation section. Trigger when supply chain standard requirements exceed embedded SLSA, OpenSSF Scorecard, SBOM, and Sigstore coverage.
 * Phase 4 delegates current supply chain risk indicators, emerging SBOM specification changes, and software provenance verification patterns when coverage analysis requires context beyond the embedded taxonomy.
 
 ## Resume and Recovery Protocol
@@ -295,7 +307,7 @@ When a Security Planner assessment exists, incorporate its findings to avoid red
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/security/sssc-handoff.instructions.md` for full handoff templates and formatting rules.
+Reference `.github/instructions/security/sssc-planner.instructions.md` for full handoff templates and formatting rules.
 
 * ADO work items use `WI-SSSC-{NNN}` sequential IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{SSSC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
@@ -307,7 +319,7 @@ Reference `.github/instructions/security/sssc-handoff.instructions.md` for full 
 * Create all files only under `.copilot-tracking/sssc-plans/{project-slug}/`.
 * User-supplied reference content is persisted under `.copilot-tracking/sssc-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
-* Embedded standards (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM) are referenced directly from the sssc-standards instruction file.
+* Embedded standards (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM) are referenced directly from the `sssc-planner.instructions.md` instruction file.
 * Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
 * Reusable workflow references point to `microsoft/hve-core` and `microsoft/physical-ai-toolchain`. Verify workflow availability before recommending adoption.
 * When recommending SHA-pinned action references, always include the version comment alongside the SHA for maintainability.

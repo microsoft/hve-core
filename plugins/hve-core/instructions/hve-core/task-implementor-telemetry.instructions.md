@@ -1,1 +1,0 @@
-../../../../.github/instructions/hve-core/task-implementor-telemetry.instructions.md

@@ -172,22 +172,7 @@ items:
   - path: .github/instructions/security/backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/security/sssc-identity.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-standards.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-gap-analysis.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-backlog.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-handoff.instructions.md
+  - path: .github/instructions/security/sssc-planner.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/accessibility/accessibility-identity.instructions.md
@@ -225,11 +210,7 @@ items:
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
-  - path: .github/instructions/project-planning/prd-builder-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/project-planning/adr-creation-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
   # Skills
   - path: .github/skills/project-planning/adr-author
@@ -251,6 +232,9 @@ items:
     kind: skill
     maturity: experimental
   - path: .github/skills/shared/backlog-templates
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/supply-chain-security
     kind: skill
     maturity: experimental
 display:

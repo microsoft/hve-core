@@ -1,12 +1,12 @@
 {
   "CleanWorkspace": {
     "ScenarioName": "CleanWorkspace",
-    "AgentBytes": 10842,
-    "ColdStartBytes": 37889,
+    "AgentBytes": 10844,
+    "ColdStartBytes": 37891,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10842
+        "Bytes": 10844
       },
       {
         "Path": ".github/instructions/project-planning/adr-identity.instructions.md",
@@ -17,24 +17,20 @@
         "Bytes": 6220
       }
     ],
-    "Hash": "eff9b301d088a33cd9f0e8ed2d6e9845ec9e237b62307189415ec1fee779a3ce"
+    "Hash": "da528f5b8d981ad0778062ab5ea925acc339f14b4dd683bbb418e2ace270562f"
   },
   "SteadyState": {
     "ScenarioName": "SteadyState",
-    "AgentBytes": 10842,
-    "ColdStartBytes": 83230,
+    "AgentBytes": 10844,
+    "ColdStartBytes": 84907,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10842
+        "Bytes": 10844
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 9572
-      },
-      {
-        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
-        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -51,26 +47,26 @@
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
         "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
       }
     ],
-    "Hash": "8955ccfe05d0f8cf8594dffc85a0a7cf8d88c973e4a20e09948b0ae10ee8b456"
+    "Hash": "0c6df2a8c542acb4c41c9daa0ec5cc410bc87ed5283bce3285e7e3c23e289ae1"
   },
   "GovernEntry": {
     "ScenarioName": "GovernEntry",
-    "AgentBytes": 10842,
-    "ColdStartBytes": 97225,
+    "AgentBytes": 10844,
+    "ColdStartBytes": 98902,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10842
+        "Bytes": 10844
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 9572
-      },
-      {
-        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
-        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -87,30 +83,30 @@
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
         "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
       },
       {
         "Path": ".github/skills/project-planning/adr-author/SKILL.md",
         "Bytes": 13995
       }
     ],
-    "Hash": "d09977c23a59d973d2733b3bc29c218d8cfcdacc6b10110058166defabea91d0"
+    "Hash": "8db6ccb4565d2f81c20c9600663c59dbc07df86e99fc1e808cf88b6e7f8e0744"
   },
   "AdoptTemplate": {
     "ScenarioName": "AdoptTemplate",
-    "AgentBytes": 10842,
-    "ColdStartBytes": 104219,
+    "AgentBytes": 10844,
+    "ColdStartBytes": 105896,
     "LoadedFiles": [
       {
         "Path": ".github/agents/project-planning/adr-creation.agent.md",
-        "Bytes": 10842
+        "Bytes": 10844
       },
       {
         "Path": ".github/instructions/project-planning/adr-byo-template.instructions.md",
         "Bytes": 9572
-      },
-      {
-        "Path": ".github/instructions/project-planning/adr-creation-telemetry.instructions.md",
-        "Bytes": 1522
       },
       {
         "Path": ".github/instructions/project-planning/adr-handoff.instructions.md",
@@ -127,6 +123,10 @@
       {
         "Path": ".github/instructions/shared/disclaimer-language.instructions.md",
         "Bytes": 6220
+      },
+      {
+        "Path": ".github/instructions/shared/telemetry-overlay.instructions.md",
+        "Bytes": 3197
       },
       {
         "Path": ".github/skills/project-planning/adr-author/scripts/normalize_template.py",
@@ -137,6 +137,6 @@
         "Bytes": 13995
       }
     ],
-    "Hash": "97fb7526c7ee93518a652c1f310eccd9efd44d05e53c664b1bb305fcd1b8b90b"
+    "Hash": "e596baadf1c7a5b6b63c12725f075af7138fc5889b2cce92d7878b230aa30ca1"
   }
 }

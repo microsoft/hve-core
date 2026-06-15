@@ -82,7 +82,7 @@ items:
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
-  - path: .github/instructions/coding-standards/code-review-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
 display:
   ordering: alpha
