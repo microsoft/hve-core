@@ -1,0 +1,20 @@
+stimuli:
+  - name: experiment-designer-class-recipe
+    prompt: |
+      Design a minimum viable experiment for "Will adding a price slider increase conversion?" Lay out phases, hypothesis, and success metrics. Write the design under `.copilot-tracking/mve/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](mve|plans)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

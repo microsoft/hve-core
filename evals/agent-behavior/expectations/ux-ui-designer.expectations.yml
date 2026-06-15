@@ -1,0 +1,105 @@
+# Bucket-A expectations for ux-ui-designer
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: ux-ui-designer
+class: research-writer
+agent_file: .github/agents/project-planning/ux-ui-designer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/ux-ui-designer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/ux-ui-designer.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-file-location
+    summary: The design brief is written under the tracking subtree.
+    signal: Output names a workspace path beginning with `.copilot-tracking/`.
+    pass_criteria: |
+      The response reports a workspace-relative document path beginning with
+      `.copilot-tracking/` for the design brief, satisfying the
+      `tracking-file-write` grader.
+    failure_modes:
+      - Brief written to `~/.copilot/session-state/` or another absolute path
+        (current 2026-05-28 output fails `tracking-file-write` this way).
+      - Brief written to a temp directory.
+      - No document path reported.
+    priority: high
+    contract_ref: "agent §Outputs (design brief under `.copilot-tracking/`)"
+
+  - expectation_id: three-step-flow-coverage
+    summary: Brief covers all three requested onboarding steps.
+    signal: Output describes welcome, choose-plan, and invite-teammates steps.
+    pass_criteria: |
+      For the `ux-ui-designer-class-recipe` stimulus, the brief describes each
+      of the three requested steps (welcome, choose plan, invite teammates) as
+      a distinct flow stage.
+    failure_modes:
+      - One of the three steps omitted.
+      - Steps merged into a single undifferentiated screen description.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "stimulus design (three-step onboarding wizard, per-stimulus)"
+
+  - expectation_id: accessibility-baseline
+    summary: Brief addresses accessibility at the documented WCAG baseline.
+    signal: Output references WCAG AA (or equivalent accessibility requirements).
+    pass_criteria: |
+      The brief addresses accessibility against the documented baseline
+      (WCAG 2.x AA minimum), covering concerns such as keyboard navigation,
+      contrast, and focus order.
+    failure_modes:
+      - No accessibility considerations mentioned.
+      - Accessibility named but with no concrete requirements.
+    priority: high
+    contract_ref: "agent §Accessibility (WCAG AA minimum)"
+
+  - expectation_id: evidence-tagging
+    summary: Claims are tagged as observed, reported, or assumed.
+    signal: Output distinguishes evidence-backed statements from assumptions.
+    pass_criteria: |
+      Design claims are tagged by evidence basis (observed / reported /
+      assumed), and assumptions are explicitly flagged rather than presented
+      as fact.
+    failure_modes:
+      - Assumptions stated as established user truths with no flagging.
+      - No distinction between evidence and inference.
+    priority: medium
+    contract_ref: "agent §Evidence Tagging (observed/reported/assumed + assumption flagging)"
+
+  - expectation_id: jtbd-or-user-discovery
+    summary: Brief is grounded in user needs / jobs-to-be-done, not just screens.
+    signal: Output references user goals, JTBD, or a discovery framing.
+    pass_criteria: |
+      The brief frames the flow around user goals or jobs-to-be-done and
+      includes a discovery/needs framing, not solely a screen-by-screen visual
+      spec.
+    failure_modes:
+      - Brief jumps straight to UI layout with no user-needs framing.
+    priority: medium
+    contract_ref: "agent §User Discovery / JTBD Analysis"
+
+  - expectation_id: no-source-edit
+    summary: UX design work does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to the design brief under
+      `.copilot-tracking/`.
+    failure_modes:
+      - Producing the brief leads to editing front-end component source.
+    priority: medium
+    contract_ref: "agent scope (writes confined to design-brief documents)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the onboarding UX from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      The brief contains terms from {onboarding, wizard, step, welcome, plan,
+      invite, flow, ux} and addresses the first-run onboarding wizard
+      specifically rather than generic UX prose.
+    failure_modes:
+      - Off-topic brief with no onboarding references.
+      - Generic template with placeholder flow names.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

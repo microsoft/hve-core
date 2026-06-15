@@ -1,0 +1,24 @@
+stimuli:
+  - name: doc-ops-class-recipe
+    prompt: |
+      Plan a documentation coverage pass across the `docs/` tree. List phases and success criteria. Write the plan under `.copilot-tracking/doc-ops/` and tell me the path you wrote it to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: lists-phases
+        config:
+          pattern: '(?i)\bphases?\b'
+      - type: output-matches
+        name: success-criteria
+        config:
+          pattern: '(?i)success\s+criteria|criteria'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](doc-ops|plans)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

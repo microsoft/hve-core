@@ -1,0 +1,20 @@
+stimuli:
+  - name: meeting-analyst-class-recipe
+    prompt: |
+      Analyze this meeting transcript snippet: "We agreed to ship login by Friday, marketing will publish the blog Monday, and Sam will own analytics." Produce an action items document under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(action item|owner|due|decision|deadline)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

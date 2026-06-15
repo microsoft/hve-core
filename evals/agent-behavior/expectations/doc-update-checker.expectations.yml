@@ -1,0 +1,103 @@
+# Bucket-A expectations for doc-update-checker
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `doc-update-checker` passes all three
+# current graders (findings-table-present, severity-vocab, no-source-edit).
+# Expectations below promote contract-grounded checks not yet enforced
+# (doc-set coverage, PR-diff scoping, severity vocabulary alignment).
+slug: doc-update-checker
+class: code-reviewer
+agent_file: .github/agents/hve-core/doc-update-checker.agent.md
+stimulus_file: evals/agent-behavior/stimuli/doc-update-checker.yml
+latest_result: evals/results/agent-matrix/2026-05-28/doc-update-checker.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: doc-surface-coverage
+    summary: Findings reference the canonical documentation surfaces affected.
+    signal: Output names at least one of `README`, `CHANGELOG`, `docs/`, `--help`, or release notes.
+    pass_criteria: |
+      The findings list references one or more of: `README`, `CHANGELOG`,
+      `docs/`, in-tool `--help`/usage output, or release notes. References
+      are concrete (named surface or path) rather than vague ("documentation
+      should be updated").
+    failure_modes:
+      - Output only says "update the docs" with no named surface.
+      - Output flags a doc gap without referencing any of the canonical
+        surfaces.
+    priority: high
+    contract_ref: "agent §Coverage Surfaces (README, CHANGELOG, docs/, --help, release notes)"
+
+  - expectation_id: findings-with-severity
+    summary: Each doc gap is labeled with a severity from the documented vocabulary.
+    signal: Each finding carries a severity word from `critical|high|medium|low|info`.
+    pass_criteria: |
+      Each numbered or rowed finding includes a case-insensitive severity
+      label from the documented vocabulary (`critical`, `high`, `medium`,
+      `low`, `info`). Severity is attached per-finding, not only mentioned
+      in summary prose.
+    failure_modes:
+      - Gaps listed without severities.
+      - Severity present only in a summary line, not per finding.
+      - Custom severities (`P0`/`P1`) with no mapping to documented vocabulary.
+    priority: high
+    contract_ref: "agent §Output Contract (findings table with severity column); current `severity-vocab` grader"
+
+  - expectation_id: pr-diff-scope-anchor
+    summary: Findings are anchored to the PR diff, not invented from imagination.
+    signal: Output either references diff artifacts or explicitly notes diff unavailability.
+    pass_criteria: |
+      When a PR diff is available, the response cites diff-derived evidence
+      (e.g., changed files, added lines, removed lines, new flags). When the
+      diff is not available, the response explicitly states this and frames
+      output as scenario-based rather than authoritative review.
+    failure_modes:
+      - Output speculates beyond the stimulus (e.g., invents config fields
+        not mentioned).
+      - Output claims to have reviewed a diff that was not provided.
+    priority: medium
+    contract_ref: "agent §Phase 1 (review the PR diff to identify doc-affecting changes)"
+
+  - expectation_id: findings-structure-present
+    summary: Output presents findings in a recognizable structured form.
+    signal: Output contains either a severity-labeled table or per-finding sections.
+    pass_criteria: |
+      Output uses a markdown table with severity column OR per-finding
+      sections using `finding|gap|issue|recommendation` language. Each
+      finding includes a brief rationale or impact statement.
+    failure_modes:
+      - Single paragraph of free-form prose with no structure.
+      - Bulleted list with no severity or rationale framing.
+    priority: high
+    contract_ref: "agent §Output Contract; current `findings-table-present` grader"
+
+  - expectation_id: actionable-recommendation
+    summary: Each finding includes an actionable recommendation.
+    signal: Output names what should be added, changed, or removed.
+    pass_criteria: |
+      For each high/critical finding, the response names a concrete
+      remediation (e.g., "add `--strict` to README options table",
+      "document exit code 2 in CHANGELOG"). Recommendations are
+      specific to the named doc surface.
+    failure_modes:
+      - Findings describe the gap but propose no fix.
+      - Recommendations are generic ("improve documentation").
+    priority: medium
+    contract_ref: "agent §Output Contract (each finding includes a remediation)"
+
+  - expectation_id: no-source-edit
+    summary: Review-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Suggested edits to README/CHANGELOG/docs are allowed only as
+      recommendations, not as claimed edits.
+    failure_modes:
+      - Agent claims to have updated the README rather than recommending it.
+      - Modifies `package.json` or source files while reviewing docs.
+    priority: high
+    contract_ref: "agent scope (review-only); current `no-source-edit` grader"

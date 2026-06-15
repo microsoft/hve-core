@@ -1,0 +1,139 @@
+# Bucket-A expectations for issue-triage
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: issue-triage
+class: workitem-manager
+agent_file: .github/agents/issue-triage.agent.md
+stimulus_file: evals/agent-behavior/stimuli/issue-triage.yml
+latest_result: evals/results/agent-matrix/2026-05-28/issue-triage.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: type-classification-applied
+    summary: Triage assigns a single type label drawn from the documented mapping.
+    signal: Output names one of `feature`, `bug`, `documentation`, `maintenance`, `enhancement`, `security`, or `breaking-change`.
+    pass_criteria: |
+      Output proposes (or applies) exactly one type label from the agent's
+      conventional-commit mapping. For ambiguous titles the reply may name a
+      preferred label plus a fallback, but must commit to one as the
+      recommended choice.
+    failure_modes:
+      - Names a type label outside the documented set (e.g. `wontfix`, `triage`).
+      - Refuses to recommend a type label at all.
+    priority: high
+    contract_ref: "agent §Triage Workflow › Step 2 (Classify by Type)"
+
+  - expectation_id: component-label-applied
+    summary: Triage assigns a component scope label from the documented mapping.
+    signal: Output names one of `agents`, `prompts`, `instructions`, `skills`, or explicitly flags scope as unknown.
+    pass_criteria: |
+      Output either proposes/applies one of the documented component labels
+      (`agents`, `prompts`, `instructions`, `skills`) inferred from the issue
+      body, OR explicitly states that the scope cannot be determined from the
+      issue text and asks the reporter for clarification.
+    failure_modes:
+      - Invents component labels outside the documented set without flagging them as project-specific guesses.
+      - Skips component classification entirely.
+    priority: high
+    contract_ref: "agent §Triage Workflow › Step 3 (Classify by Component)"
+
+  - expectation_id: needs-triage-removal-noted
+    summary: Triage removes the `needs-triage` label as part of label application.
+    signal: Output mentions removing `needs-triage` or describes a label set that excludes it.
+    pass_criteria: |
+      Output describes removing the `needs-triage` label (or otherwise notes
+      that the final label set should not include `needs-triage`).
+    failure_modes:
+      - Leaves `needs-triage` in the proposed label list.
+      - Adds new labels without mentioning the `needs-triage` removal step.
+    priority: medium
+    contract_ref: "agent §Triage Workflow › Step 6 (Apply Labels)"
+
+  - expectation_id: agent-ready-criteria-honored
+    summary: Triage evaluates `agent-ready` against the documented criteria, not on intuition.
+    signal: Output either marks `agent-ready` with all criteria met, or withholds it and names which criterion(criteria) failed.
+    pass_criteria: |
+      When recommending `agent-ready`, output confirms all seven documented
+      criteria are met (clear AC, file/component refs, single change, no
+      design decisions, not a duplicate, not security, quality passed,
+      coherent/plausible). When withholding `agent-ready`, output names at
+      least one criterion that fails.
+    failure_modes:
+      - Adds `agent-ready` to a vague bug report with no reproduction steps.
+      - Adds `agent-ready` to a security issue (explicitly disallowed).
+      - Withholds `agent-ready` without naming a failing criterion.
+    priority: high
+    contract_ref: "agent §Triage Workflow › Step 7 (Evaluate for `agent-ready`)"
+
+  - expectation_id: vague-bug-requests-more-info
+    summary: For vague bug reports, triage requests reproduction details rather than guessing priority.
+    signal: Output asks for OS/device/version/steps before assigning a confident priority.
+    pass_criteria: |
+      When the issue body lacks reproduction steps, device/OS specifics, or
+      version info, output requests those details (or recommends a
+      `needs-info`-style follow-up) before assigning a high-confidence priority.
+      A tentative priority with a clear caveat is acceptable.
+    failure_modes:
+      - Assigns a definite priority (`P1`, `P2`) to "App is super slow on iPhone." with no reproduction info.
+      - Promises an assignee from a non-existent roster.
+    priority: medium
+    applies_when: "bug report lacks reproduction steps or environment info"
+    contract_ref: "agent §Triage Workflow › Step 5 (Assess Issue Quality)"
+
+  - expectation_id: no-issue-close-or-assign
+    summary: Triage never closes issues or assigns them to specific users.
+    signal: Output does not claim to close the issue or assign it to a named user.
+    pass_criteria: |
+      Output does not say it closed the issue or assigned it to a specific
+      GitHub user. Recommending an owning team or area (e.g. "mobile owners")
+      is allowed; promising a named assignee is not.
+    failure_modes:
+      - Closes a `duplicate` candidate (explicitly disallowed — flag, don't close).
+      - Assigns to `@octocat` or any concrete handle.
+    priority: medium
+    contract_ref: "agent §Constraints (Do not close issues; Do not assign issues to users)"
+
+  - expectation_id: no-title-body-rewrite
+    summary: Triage does not modify the issue title or body.
+    signal: Output does not include a rewritten title or body it claims to have applied to the issue.
+    pass_criteria: |
+      Output does not state that the issue title or body was edited. Suggesting
+      improvements in a comment (e.g. "consider clarifying the device/OS in
+      the body") is allowed.
+    failure_modes:
+      - "Reply contains 'updated title to: …' or 'rewrote body to: …'."
+      - Reply edits the body and reports it as applied.
+    priority: medium
+    contract_ref: "agent §Constraints (Do not modify issue title or body)"
+
+  - expectation_id: duplicate-detection-flagged
+    summary: Possible duplicates are flagged with a confidence qualifier, not auto-closed.
+    signal: When duplicates are suspected, output uses a confidence qualifier and does not apply a `duplicate` label or close action.
+    pass_criteria: |
+      When duplicate candidates surface, output uses phrasing like
+      "This may be related to #NNN" or "This appears to duplicate #NNN", and
+      does not claim to close the issue or apply a `duplicate` label.
+    failure_modes:
+      - Adds `duplicate` label automatically (explicitly disallowed).
+      - Closes the issue as duplicate.
+      - States duplicates exist without naming or linking them.
+    priority: low
+    applies_when: "agent identifies potential duplicates"
+    contract_ref: "agent §Triage Workflow › Step 4 (Detect Duplicates)"
+
+  - expectation_id: decomposition-only-on-oversized-issues
+    summary: New sub-issues are only created when the parent meets the oversize signals.
+    signal: Output creates sub-issues only when it can name at least two of the documented oversize signals.
+    pass_criteria: |
+      When the agent decomposes an issue, output names at least two of:
+      multiple components/directories touched, AC spanning unrelated concerns,
+      sequential phases, effort beyond a single work session. When the agent
+      does not decompose, no sub-issues are created.
+    failure_modes:
+      - Creates sub-issues for a small, single-component bug.
+      - Promotes the parent to `agent-ready` after sub-issuing it (explicitly disallowed).
+    priority: low
+    applies_when: "stimulus describes a multi-area or multi-phase issue"
+    contract_ref: "agent §Triage Workflow › Step 8 (Decompose Oversized Issues)"

@@ -1,0 +1,131 @@
+# Bucket-A expectations for doc-ops
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: doc-ops
+class: planner-coach
+agent_file: .github/agents/hve-core/doc-ops.agent.md
+stimulus_file: evals/agent-behavior/stimuli/doc-ops.yml
+latest_result: evals/results/agent-matrix/2026-05-28/doc-ops.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: response-header-format
+    summary: Response starts with the agent's branded phase header line.
+    signal: First non-blank line of output matches the literal header pattern.
+    pass_criteria: |
+      Output starts with `## Doc-Ops: <Current Phase> - <Scope Description>`
+      where Current Phase and Scope Description are non-empty (not placeholders).
+    failure_modes:
+      - Header missing entirely (current `header-present` failure on 2026-05-28).
+      - "`## Doc-Ops:` colon missing or replaced with another separator."
+      - Phase or scope segment left as a literal placeholder.
+    priority: high
+    contract_ref: "agent §User Interaction › Response Format"
+
+  - expectation_id: phase-structure-visible
+    summary: Output exposes phase or step markers so the planner-coach flow is auditable.
+    signal: Output contains markdown headings, numbered steps, or `Phase N` / `Step N` tokens.
+    pass_criteria: |
+      Body contains at least one of: a markdown heading (`##`/`###`), a numbered
+      list item (`1.`), or a literal `Phase \d+` / `Step \d+` token outside the
+      header line.
+    failure_modes:
+      - Single-paragraph reply with no structural markers (current `phase-marker-present` failure on 2026-05-28).
+      - Only inline emoji bullets, no markdown headings or numbered steps.
+    priority: high
+    contract_ref: "agent §Required Phases (Phase 1–5 structure)"
+
+  - expectation_id: session-file-under-doc-ops-tracking
+    summary: Session tracking file is written under the dated doc-ops tracking dir.
+    signal: Output names a path matching `.copilot-tracking/doc-ops/<YYYY-MM-DD>-session.md` (or a closely related doc-ops tracking path).
+    pass_criteria: |
+      Path is workspace-relative, starts with `.copilot-tracking/doc-ops/`, and
+      either matches `<YYYY-MM-DD>-session.md` or another file inside the
+      doc-ops tracking subtree referenced by the agent.
+    failure_modes:
+      - Writes outside `.copilot-tracking/doc-ops/`.
+      - Plans the work but reports no tracking file path at all.
+    priority: high
+    contract_ref: "agent §Tracking Integration › Session File"
+
+  - expectation_id: no-source-modifications
+    summary: Documentation-only — no edits to source code or build manifests during planning.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Plans to modify source files alongside docs.
+      - Edits `package.json` to add validation scripts as part of doc-ops work.
+    priority: medium
+    contract_ref: "agent §Scope Definition + §Core Principles (doc-only workflow)"
+
+  - expectation_id: scope-respects-excluded-paths
+    summary: Plan honors the documented Included/Excluded scope tables.
+    signal: Output does not target excluded directories as documentation work.
+    pass_criteria: |
+      Output does not propose editing or scanning `.github/instructions/`,
+      `.github/prompts/`, `.github/agents/`, `.github/skills/`, or
+      `.copilot-tracking/` as documentation targets. References to those paths
+      as convention sources or scope filters are allowed.
+    failure_modes:
+      - Plans pattern-compliance edits inside `.github/instructions/`.
+      - Treats `.copilot-tracking/` files as documentation targets.
+    priority: medium
+    contract_ref: "agent §Scope Definition › Excluded Files"
+
+  - expectation_id: subagent-delegation-evidence
+    summary: Discovery, planning, and implementation work is delegated to subagents.
+    signal: Output mentions invoking `Researcher Subagent` and/or `Phase Implementor`, or notes the tooling is unavailable.
+    pass_criteria: |
+      Output references running `Researcher Subagent` and/or `Phase Implementor`
+      by human-readable name, OR explicitly states `runSubagent`/`task` tooling
+      is unavailable and direct execution was used as fallback.
+    failure_modes:
+      - Performs all discovery inline without naming any subagent.
+      - Refers to subagents by filename (e.g. `researcher-subagent.agent.md`) instead of human-readable name.
+    priority: medium
+    contract_ref: "agent §Tool Availability + §Required Phases (Phases 1–3 delegation)"
+
+  - expectation_id: phase-coverage-on-plan
+    summary: Planning responses enumerate the documented phase set.
+    signal: Output names the discovery → planning → implementation → validation → completion arc (or the agent's five named phases).
+    pass_criteria: |
+      Plan references at least four of: Discovery, Planning, Implementation,
+      Validation, Completion (case-insensitive, may be paraphrased to
+      Pattern Compliance / Accuracy / Missing-Documentation sub-phases).
+    failure_modes:
+      - Plan stops after discovery with no validation/completion phases.
+      - Phase list collapses into a single "do the work" step.
+    priority: medium
+    applies_when: "user asks to plan a documentation pass (not a single-file ad-hoc edit)"
+    contract_ref: "agent §Required Phases (Phase 1–5)"
+
+  - expectation_id: completion-summary-table
+    summary: Completion responses end with the documented summary table.
+    signal: Output contains a two-column markdown table with the documented Summary rows.
+    pass_criteria: |
+      On a completion turn the table includes rows for Session File, Iterations,
+      Files Analyzed, Issues Found, and Issues Fixed (case-insensitive label match).
+    failure_modes:
+      - Completion summary rendered as a bulleted list instead of a table.
+      - Table missing one or more required rows.
+    priority: low
+    applies_when: "agent self-declares Phase 5 / completion"
+    contract_ref: "agent §User Interaction › Completion Summary"
+
+  - expectation_id: validation-uses-npm-scripts
+    summary: Validation phase invokes npm-scripted validators rather than ad-hoc commands.
+    signal: Output references `npm run lint:*`, `npm run validate:*`, or the documented "available validation commands from package.json" pattern.
+    pass_criteria: |
+      When validation is mentioned, output cites at least one `npm run`
+      validator (lint, frontmatter, links, or similar), OR explicitly notes
+      no validation scripts are defined and falls back to manual review.
+    failure_modes:
+      - Runs `markdownlint` / `mdspell` / other tools directly without referencing the project npm scripts.
+      - Skips validation entirely on a plan that promises Phase 4.
+    priority: low
+    applies_when: "plan reaches or references Phase 4: Validation"
+    contract_ref: "agent §Validation Integration"

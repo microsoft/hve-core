@@ -1,0 +1,138 @@
+# Bucket-A expectations for github-backlog-manager
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: github-backlog-manager
+class: workitem-manager
+agent_file: .github/agents/github/github-backlog-manager.agent.md
+stimulus_file: evals/agent-behavior/stimuli/github-backlog-manager.yml
+latest_result: evals/results/agent-matrix/2026-05-28/github-backlog-manager.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-under-github-issues
+    summary: Drafts and planning files are written under the GitHub issues tracking subtree.
+    signal: Reported file path starts with `.copilot-tracking/github-issues/`.
+    pass_criteria: |
+      Output reports a workspace-relative path beginning with
+      `.copilot-tracking/github-issues/` (any of `triage/`, `discovery/`,
+      `sprint/`, `execution/` subdirs by `<YYYY-MM-DD>` or `<scope-name>`,
+      or a single-draft file directly under `github-issues/`). No reports of
+      session-state, temp, or absolute paths outside the workspace.
+    failure_modes:
+      - "Writes to `C:\\Users\\…\\AppData\\Local\\Temp\\vally-eval-…\\github-issue-draft.md` (current 2026-05-28 matrix failure)."
+      - Writes under `~/.copilot/session-state/...` or similar.
+      - Reports no path at all when a draft was clearly created.
+    priority: high
+    contract_ref: "agent §State Management + §Phase 2 tracking-path table"
+
+  - expectation_id: github-field-vocabulary-present
+    summary: Drafts use GitHub issue vocabulary (title, body, labels, steps to reproduce).
+    signal: Output uses GitHub-specific issue field names.
+    pass_criteria: |
+      Output contains at least two of: `Title`, `Body`, `Label(s)`, `Milestone`,
+      `Assignee(s)`, `Steps to Reproduce`, `Expected`, `Actual`
+      (case-insensitive).
+    failure_modes:
+      - Draft uses ADO `Work Item Type` / `Area Path` instead of `title`/`labels`.
+      - Draft uses Jira `Issue Type` / `Summary` / `Components` instead.
+    priority: high
+    contract_ref: "stimulus grader `field-vocab-present`"
+
+  - expectation_id: bug-template-structure-for-bug-reports
+    summary: Bug drafts include the standard bug-template sections.
+    signal: Output contains `Steps to Reproduce`, `Expected`, and `Actual` (and ideally `Environment`).
+    pass_criteria: |
+      For bug-style stimuli, the drafted body includes all three of
+      `Steps to Reproduce`, `Expected` (behavior), and `Actual` (behavior).
+      `Environment` (browser/OS/version) is a recommended addition.
+    failure_modes:
+      - Bug body has steps but is missing expected vs actual contrast.
+      - Bug body is a single descriptive paragraph with no structured sections.
+    priority: high
+    applies_when: "stimulus is a bug-report draft prompt"
+    contract_ref: "stimulus expects steps to reproduce + agent §Phase 2 dispatch to Triage/Discovery instructions"
+
+  - expectation_id: phase-classification-first
+    summary: Orchestrator classifies the request into one of five workflows before dispatching.
+    signal: Output names a workflow (Triage / Discovery / Sprint Planning / Execution / Single Issue).
+    pass_criteria: |
+      For a non-trivial request the output names the dispatched workflow
+      explicitly (one of the agent's five categories), OR states the
+      single-issue path was taken and why.
+    failure_modes:
+      - Jumps straight to drafting without naming a workflow path.
+      - Mis-classifies (e.g. calls a single-issue draft "sprint planning").
+    priority: medium
+    applies_when: "stimulus is not an obvious single-draft prompt"
+    contract_ref: "agent §Phase 1: Intent Classification"
+
+  - expectation_id: github-mcp-used-for-mutation
+    summary: Real GitHub mutations go through documented `mcp_github_*` tools, not `gh` CLI or `curl`.
+    signal: Output references `mcp_github_issue_write`, `mcp_github_add_issue_comment`, or another documented MCP tool.
+    pass_criteria: |
+      When the request implies GitHub-side action (create / update / close /
+      comment / sub-issue link), output references the documented
+      `mcp_github_*` tools. Pure planning replies are exempt.
+    failure_modes:
+      - Falls back to `gh issue create` / `curl` instead of the MCP tools.
+      - Claims to call a non-existent `mcp_github_create_issue` shape (the documented mutation tool is `mcp_github_issue_write`).
+    priority: medium
+    applies_when: "stimulus asks for real GitHub mutation, not a draft"
+    contract_ref: "agent §GitHub MCP Tool Reference"
+
+  - expectation_id: autonomy-default-partial
+    summary: Mutation workflows respect the Partial-autonomy default.
+    signal: Output requests approval before create / close / milestone operations, or reports the active autonomy mode.
+    pass_criteria: |
+      When the request would trigger GitHub mutations, output either pauses
+      for approval before the first create/close/milestone change, or
+      explicitly notes the autonomy mode (Full / Partial / Manual) under which
+      it proceeded.
+    failure_modes:
+      - Performs creates/closes silently without approval or mode call-out.
+      - Claims Full mode without user opt-in.
+    priority: medium
+    applies_when: "stimulus implies real GitHub mutation (not a draft-only prompt)"
+    contract_ref: "agent §Human Review Interaction"
+
+  - expectation_id: content-sanitization-before-mutation
+    summary: Internal tracking IDs and `.copilot-tracking/` paths are stripped before any GitHub-bound content.
+    signal: Output describing GitHub-bound content (issue body, comment) does not contain `.copilot-tracking/` paths or planning IDs.
+    pass_criteria: |
+      Any quoted "this is what will be sent to GitHub" content omits
+      `.copilot-tracking/` paths and planning reference tokens (e.g. `IS002`).
+      Discussion of those paths in the chat reply itself is allowed.
+    failure_modes:
+      - GitHub-bound issue body includes a `.copilot-tracking/...` path.
+      - GitHub-bound issue body includes a planning reference like `IS002`.
+    priority: medium
+    applies_when: "agent shows the payload it intends to send to GitHub"
+    contract_ref: "agent §Core Directives (Content Sanitization Guards)"
+
+  - expectation_id: no-source-modifications
+    summary: Backlog drafting does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml`. Mere
+      mentions in user-quoted text are allowed.
+    failure_modes:
+      - Modifies source files alongside drafting issues.
+      - Edits `package.json` as part of "wiring up" the issue.
+    priority: medium
+    contract_ref: "stimulus grader `no-source-edit`"
+
+  - expectation_id: handoff-summary-on-completion
+    summary: Completion turns surface a structured handoff summary, not just the file path.
+    signal: Output includes a summary of issues produced (titles, numbers, or labels) and applied fields.
+    pass_criteria: |
+      When a draft or set of issues is produced, output lists either the
+      titles/numbers of the issues or the key fields applied (labels, milestone,
+      assignees) so a reviewer can audit without opening the file.
+    failure_modes:
+      - Reply is only a file path with no summary or field call-out.
+      - Reply describes process but omits what was actually drafted.
+    priority: low
+    contract_ref: "agent §Phase 3: Summary and Handoff"

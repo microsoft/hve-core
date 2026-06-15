@@ -1,0 +1,137 @@
+# Bucket-A expectations for rpi-agent
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: rpi-agent
+class: planner-coach
+agent_file: .github/agents/hve-core/rpi-agent.agent.md
+stimulus_file: evals/agent-behavior/stimuli/rpi-agent.yml
+latest_result: evals/results/agent-matrix/2026-05-28/rpi-agent.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-output
+    summary: Durable artifacts are placed under `.copilot-tracking/`.
+    signal: Output names at least one path containing the literal `.copilot-tracking/`.
+    pass_criteria: |
+      When the workflow describes creating research, plan, details, changes, or
+      review artifacts, the response cites at least one workspace path under
+      `.copilot-tracking/<research|plans|details|changes|reviews>/<YYYY-MM-DD>/`.
+    failure_modes:
+      - Plan placed in `~/.copilot/session-state/.../plan.md` instead of tracking dir
+        (current 2026-05-28 failure).
+      - Plan written to repo root or `docs/` instead of `.copilot-tracking/plans/`.
+      - State described only as "session SQL todos table" with no `.copilot-tracking/` path.
+    priority: high
+    contract_ref: "agent §Tracking Artifacts (Research Document, Implementation Plan, Implementation Details, Changes Log, Review Log)"
+
+  - expectation_id: phase-marker-present
+    summary: Response uses phase/step markdown structure for multi-phase work.
+    signal: At least one line begins with `##`, `###`, `Phase N`, `Step N`, or `N.`.
+    pass_criteria: |
+      Output contains a line matching `(?m)^(##|###|Step \d+|Phase \d+|\d+\.)`
+      whenever the user asks the agent to outline RPI phases.
+    failure_modes:
+      - Prose response with no headings or numbered phases.
+      - Phase labels appear only inline-bolded without a leading marker on the line.
+    priority: medium
+    contract_ref: "agent §Required Phases + §Response Format (phase headers)"
+
+  - expectation_id: five-phase-sequence
+    summary: Phased outlines name all five RPI phases in order.
+    signal: Output names Research, Plan, Implement, Review, and Discover (case-insensitive)
+      in order of first appearance.
+    pass_criteria: |
+      For an "outline the phases" stimulus, the response names all of
+      {Research, Plan, Implement, Review, Discover} with first occurrences in the
+      agent's declared order (1 → 5).
+    failure_modes:
+      - Only 3 phases shown (e.g. Research/Plan/Implement) with Review and Discover dropped
+        (current 2026-05-28 output stops at Implement).
+      - Phases listed out of order.
+      - Custom phase names substituted (Build, Ship) without mapping to the five.
+    priority: high
+    contract_ref: "agent §Required Phases (table of 5 phases)"
+
+  - expectation_id: difficulty-assessment-mentioned
+    summary: Multi-phase responses surface a difficulty classification.
+    signal: Output references at least one of `simple`, `medium`, `medium-hard`,
+      or `challenging` as the assessed task difficulty.
+    pass_criteria: |
+      For requests that span multiple phases or non-trivial scope, the response
+      explicitly classifies the task on the Simple → Challenging scale and ties
+      that classification to whether subagents and tracking artifacts will be used.
+    failure_modes:
+      - No difficulty assessment mentioned.
+      - Difficulty named but with no impact on the execution model described.
+    priority: medium
+    contract_ref: "agent §Difficulty Levels"
+
+  - expectation_id: subagent-delegation-named
+    summary: Delegated work names `Researcher Subagent` or `Phase Implementor`.
+    signal: Output references one of the two declared subagents by human-readable name.
+    pass_criteria: |
+      For medium-hard or challenging work descriptions, the response names
+      `Researcher Subagent` and/or `Phase Implementor` as the actor for delegated
+      research or implementation steps, OR explicitly notes that simple/medium
+      difficulty means no subagents are used.
+    failure_modes:
+      - All work executed inline with no subagent reference and no difficulty justification.
+      - Subagent referenced by filename instead of by name.
+      - Unsupported subagent names invented (e.g. `Implementor Subagent`).
+    priority: medium
+    contract_ref: "agent §Subagent Invocation Protocol + frontmatter `agents:` list"
+
+  - expectation_id: no-source-edit-during-outline
+    summary: Outline/coaching responses do not claim to edit source files.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Coaching response claims source edits before research and planning phases.
+      - Modifies `package.json` to add scripts as part of an outline.
+    priority: medium
+    contract_ref: "agent §Phase 3 (Plan Analysis before changes) + §Phase 1 (Research before implementation)"
+
+  - expectation_id: dated-tracking-subdir
+    summary: Tracking paths include a `{YYYY-MM-DD}` subdirectory.
+    signal: Tracking paths match `\.copilot-tracking/(research|plans|details|changes|reviews)/\d{4}-\d{2}-\d{2}/`.
+    pass_criteria: |
+      Every `.copilot-tracking/` path cited under research/plans/details/changes/reviews
+      includes a dated subdirectory equal to today's date (per agent §Tracking Artifacts).
+    failure_modes:
+      - Path lacks dated subdir (e.g. `.copilot-tracking/plans/feature-flags-plan.md`).
+      - Date in the path is in the future or far past.
+    priority: medium
+    contract_ref: "agent §Tracking Artifacts (path templates)"
+
+  - expectation_id: progress-or-completion-format
+    summary: Multi-turn responses use the declared header or progress format.
+    signal: Output contains `## 🤖 RPI Agent: Phase N - <name>`, `## 🤖 RPI Agent: Complete`,
+      or a `Progress: Phase N/5` line.
+    pass_criteria: |
+      For multi-turn phased work, the response includes at least one of the agent's
+      declared status patterns: branded phase header, completion header, or the
+      `Progress: Phase N/5` indicator with the 5-row phase status table.
+    failure_modes:
+      - No phase header and no progress indicator on a multi-phase turn.
+      - Header used but emoji or `RPI Agent` label omitted.
+    priority: low
+    applies_when: "response describes phased work spanning more than one turn"
+    contract_ref: "agent §Response Format (phase headers, progress indicator)"
+
+  - expectation_id: topic-fidelity
+    summary: Response substantively addresses the stimulus's RPI topic.
+    signal: Stimulus-derived keywords appear in the body.
+    pass_criteria: |
+      For the `rpi-agent-class-recipe` stimulus, the response contains terms from
+      {feature, flag, flags, service} and outlines investigation, planning, and
+      implementation work specific to feature flags rather than generic phase prose.
+    failure_modes:
+      - Off-topic response (no feature-flag terms).
+      - Phase outline that could apply to any project with no domain specifics.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

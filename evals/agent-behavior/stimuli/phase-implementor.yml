@@ -1,0 +1,62 @@
+stimuli:
+  - name: phase-implementor-completion-report-shape
+    prompt: |
+      You are the Phase Implementor subagent. The parent orchestrator hands you
+      this input:
+        - phase_id: "Phase 2: Add input validation"
+        - plan_file: .copilot-tracking/plans/2026-05-28/login-hardening-plan.instructions.md
+        - details_file: .copilot-tracking/details/2026-05-28/login-hardening-details.md
+        - steps:
+            1. Add server-side length checks to the login handler.
+            2. Add a unit test covering the rejection path.
+        - validation: "npm test"
+      Execute only this phase and return your completion report.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: phase-completion-header
+        config:
+          pattern: '(?i)##\s*phase completion:?\s*phase 2'
+      - type: output-matches
+        name: status-from-allowed-set
+        config:
+          pattern: '(?i)\*\*status:?\*\*\s*(complete|partial|blocked)'
+      - type: output-matches
+        name: required-sections-present
+        config:
+          pattern: '(?i)(executive details|steps completed|files changed|validation results)'
+      - type: output-matches
+        name: files-changed-categorized
+        config:
+          pattern: '(?i)(added|modified|removed)\s*:'
+
+  - name: phase-implementor-blocked-early-return
+    prompt: |
+      You are the Phase Implementor subagent. The parent orchestrator hands you
+      this input:
+        - phase_id: "Phase 4: Wire payment gateway"
+        - steps:
+            1. Call the billing service using the documented client SDK.
+        - note: The referenced billing SDK and its credentials are not present
+          in the workspace and there is no plan detail describing how to obtain
+          them.
+      Execute only this phase and return your completion report.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: blocked-status
+        config:
+          pattern: '(?i)\*\*status:?\*\*\s*(partial|blocked)'
+      - type: output-matches
+        name: blocker-surfaced
+        config:
+          pattern: '(?i)(steps not completed|issues|blocked|blocker|missing)'
+      - type: output-matches
+        name: no-subagent-dispatch
+        config:
+          pattern: '(?i)(launch|dispatch|spawn)\s+(a\s+)?subagent'
+          negate: true

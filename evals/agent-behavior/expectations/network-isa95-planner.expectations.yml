@@ -1,0 +1,121 @@
+# Bucket-A expectations for network-isa95-planner
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: network-isa95-planner
+class: planner-coach
+agent_file: .github/agents/project-planning/network-isa95-planner.agent.md
+stimulus_file: evals/agent-behavior/stimuli/network-isa95-planner.yml
+latest_result: evals/results/agent-matrix/2026-05-28/network-isa95-planner.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-file-location
+    summary: Assessment document is written under the plans tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/plans/<YYYY-MM-DD>-network-isa95-assessment.md`.
+    pass_criteria: |
+      The response ends by reporting an assessment document path that is
+      workspace-relative, starts with `.copilot-tracking/plans/`, contains an
+      ISO date prefix, and ends with `-network-isa95-assessment.md` (or a
+      clearly derived slug under the same prefix).
+    failure_modes:
+      - Document written to a temp directory or absolute path
+        (current 2026-05-28 output fails `tracking-file-write`).
+      - Document written to repo root with no `.copilot-tracking/plans/` prefix.
+      - No file path reported at all.
+    priority: high
+    contract_ref: "agent §Outputs (Output A markdown assessment at `.copilot-tracking/plans/{{YYYY-MM-DD}}-network-isa95-assessment.md`)"
+
+  - expectation_id: dual-output-markdown-and-yaml
+    summary: Response produces both the markdown assessment and the YAML companion.
+    signal: Output references a markdown assessment document and a structured YAML companion artifact.
+    pass_criteria: |
+      The response delivers Output A (the markdown assessment) and Output B
+      (the YAML companion) and names both artifacts, rather than producing
+      prose only.
+    failure_modes:
+      - Only a markdown narrative produced; no YAML companion.
+      - YAML companion produced but markdown assessment omitted.
+    priority: high
+    contract_ref: "agent §Outputs (Output A markdown + Output B YAML companion)"
+
+  - expectation_id: yaml-companion-required-keys
+    summary: YAML companion includes the documented top-level keys.
+    signal: Output shows the YAML companion with the eight required top-level keys.
+    pass_criteria: |
+      The YAML companion includes the keys `assessment_metadata`, `zones`,
+      `conduits`, `findings`, `remediation_plan`, `validation_checks`,
+      `unresolved_unknowns`, and `user_approved_assumptions`.
+    failure_modes:
+      - YAML omits one or more required keys (e.g. missing `conduits` or
+        `unresolved_unknowns`).
+      - Keys renamed or flattened into free-form prose.
+    priority: medium
+    contract_ref: "agent §Outputs › Output B (YAML companion key schema)"
+
+  - expectation_id: intake-gate-before-design
+    summary: Vague requests trigger the Step 0 intake gate before producing a plan.
+    signal: Output asks intake-gate questions covering the documented intake fields.
+    pass_criteria: |
+      When the stimulus lacks the required intake fields, the response runs the
+      Step 0 Intake Gate and asks for the missing fields (from the 16-field
+      intake set) before producing the assessment document.
+    failure_modes:
+      - Agent produces a full plan from a one-line prompt with no intake gate.
+      - Intake gate skipped and unknowns silently assumed.
+    priority: medium
+    applies_when: "stimulus omits required intake fields"
+    contract_ref: "agent §Step 0 Intake Gate (16 required intake fields)"
+
+  - expectation_id: zones-and-conduits-structure
+    summary: Assessment structures the network as ISA-95 zones with a conduit matrix.
+    signal: Output lists zones and a structured conduit matrix.
+    pass_criteria: |
+      The assessment enumerates ISA-95 zones and presents conduits in a
+      structured matrix (the documented 13-column conduit matrix), not as
+      undifferentiated prose.
+    failure_modes:
+      - Zones mentioned but no conduit matrix produced.
+      - Conduits listed as a bullet list missing the structured columns.
+    priority: medium
+    contract_ref: "agent §Conduit Matrix (13-column structured matrix) + §Zones"
+
+  - expectation_id: mermaid-diagram-present
+    summary: Assessment includes a left-to-right Mermaid network diagram.
+    signal: Output contains a ```mermaid``` block with a left-to-right layout.
+    pass_criteria: |
+      The assessment includes a Mermaid diagram rendering the zones and
+      conduits in a left-to-right (`LR`) layout.
+    failure_modes:
+      - No diagram produced.
+      - Diagram described in prose but no Mermaid code block.
+    priority: low
+    contract_ref: "agent §Outputs › diagram (left-to-right Mermaid network diagram)"
+
+  - expectation_id: no-source-edit
+    summary: Network planning does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to the `.copilot-tracking/plans/`
+      assessment and its YAML companion.
+    failure_modes:
+      - Planning leads to editing application or infrastructure source files.
+    priority: medium
+    contract_ref: "agent scope (writes confined to `.copilot-tracking/plans/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the ISA-95 network topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `network-isa95-planner-class-recipe` stimulus, the response
+      contains terms from {isa-95, level, zone, conduit, network, plc, scada}
+      and addresses a level-2-to-level-3 packaging-line plan rather than
+      generic networking prose.
+    failure_modes:
+      - Off-topic response with no ISA-95 zone/conduit references.
+      - Generic template with placeholder zone names.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

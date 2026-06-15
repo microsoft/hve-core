@@ -1,0 +1,52 @@
+stimuli:
+  - name: vally-test-author-routing-and-append
+    prompt: |
+      You are the Vally Test Author subagent. The orchestrator hands you this
+      input:
+        - mode: from-artifact
+        - kind: agent
+        - files: .github/agents/hve-core/task-planner.agent.md
+      Resolve the target eval file via the routing reference, author advisory
+      stimuli, and report the target_eval_file, the append-only write behavior,
+      and the JSON report path.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: target-eval-file-resolved
+        config:
+          pattern: '(?i)evals/'
+      - type: output-matches
+        name: append-only-write
+        config:
+          pattern: '(?i)(append|append-only|stimuli:)'
+      - type: output-matches
+        name: json-report-path
+        config:
+          pattern: '(?i)logs/vally-test-author-.+\.json'
+      - type: output-matches
+        name: advisory-tag-enforced
+        config:
+          pattern: '(?i)advisory'
+
+  - name: vally-test-author-dedupe-and-mode
+    prompt: |
+      You are the Vally Test Author subagent. The orchestrator hands you this
+      input:
+        - mode: corpus-import
+        - path: .copilot-tracking/imports/prompts-corpus.csv
+      Detect the active mode from the inputs, deduplicate candidate stimuli, and
+      report how duplicates were detected and skipped.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: mode-detection
+        config:
+          pattern: '(?i)corpus-import'
+      - type: output-matches
+        name: dedupe-sha256
+        config:
+          pattern: '(?i)(sha-?256|normaliz|duplicates?_?skipped|dedupe)'

@@ -1,0 +1,152 @@
+# Bucket-A expectations for memory
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `memory` produced an empty output with
+# zero graders evaluated (likely Vally invocation/transcript-capture issue),
+# so there are no current grader-name failures to anchor priorities to.
+# Priorities below are derived from the agent file's strongest promises.
+slug: memory
+class: planner-coach
+agent_file: .github/agents/hve-core/memory.agent.md
+stimulus_file: evals/agent-behavior/stimuli/memory.yml
+latest_result: evals/results/agent-matrix/2026-05-28/memory.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: operation-label-header
+    summary: Response begins with one of the documented operation labels.
+    signal: First non-blank line opens with `Detected`, `Saved`, or `Restored`.
+    pass_criteria: |
+      Output starts with a line whose first token is exactly one of `Detected`,
+      `Saved`, or `Restored` (bolded, in a heading, or plain), matching the
+      detect / save / continue phase.
+    failure_modes:
+      - Response opens with a generic acknowledgment ("Sure, here's the plan…").
+      - Uses a different verb (e.g., "Stored", "Loaded") not in the documented set.
+    priority: high
+    contract_ref: "agent §User Interaction › Response Format"
+
+  - expectation_id: memory-file-path-shape
+    summary: Memory file path uses the documented dated subdirectory layout.
+    signal: Output names a path matching `.copilot-tracking/memory/<YYYY-MM-DD>/<short-description>-memory.md`.
+    pass_criteria: |
+      Reported path is workspace-relative, starts with `.copilot-tracking/memory/`,
+      contains a `YYYY-MM-DD` subdirectory, and ends with `-memory.md`.
+    failure_modes:
+      - Writes to `.copilot-tracking/memory/` root with no date subdir.
+      - Drops the `-memory.md` suffix or uses `.txt`/`.json`.
+      - Writes outside `.copilot-tracking/memory/` (e.g., `/memories/` user-memory scope).
+    priority: high
+    contract_ref: "agent §File Locations"
+
+  - expectation_id: required-memory-sections-present
+    summary: Saved memory content includes the three always-required sections.
+    signal: Output (or the file it describes) contains Task Overview, Current State, and Next Steps headings.
+    pass_criteria: |
+      On a Save turn, the memory file content shown or referenced includes
+      headings for `Task Overview`, `Current State`, and `Next Steps` (case
+      insensitive, in any order).
+    failure_modes:
+      - Save response shows file body that omits one or more required sections.
+      - Sections collapsed into a single prose paragraph with no headings.
+    priority: high
+    applies_when: "save turn (Phase 2)"
+    contract_ref: "agent §Memory File Structure (Always include Task Overview, Current State, and Next Steps)"
+
+  - expectation_id: detect-state-report
+    summary: Detect phase reports either an existing memory file or readiness to create one.
+    signal: Output names a detected memory file with a timestamp, OR explicitly states no memory file was found.
+    pass_criteria: |
+      On a Detect turn, output contains either:
+      (a) an existing memory file path AND a last-update timestamp, OR
+      (b) an explicit "no memory file found / ready for new memory" statement.
+    failure_modes:
+      - Detect response immediately starts saving without reporting detection results.
+      - Claims a file was detected but reports no path.
+    priority: medium
+    applies_when: "detect turn (Phase 1)"
+    contract_ref: "agent §Phase 1: Detect › State Report"
+
+  - expectation_id: save-resume-instructions
+    summary: Save responses include the documented resume instructions.
+    signal: Output ends with the `/clear` + `/checkpoint continue` resume guidance.
+    pass_criteria: |
+      Save response contains both the literal token `/clear` and a
+      `/checkpoint continue` invocation (with a description placeholder or
+      concrete topic), in that order, near the end of the response.
+    failure_modes:
+      - Missing `/clear` or `/checkpoint continue`.
+      - Suggests a different resume pattern (e.g., "just re-open the file").
+    priority: medium
+    applies_when: "save turn (Phase 2)"
+    contract_ref: "agent §Phase 2: Save › Completion Report"
+
+  - expectation_id: completion-summary-table
+    summary: Save and Restore turns end with the documented summary table.
+    signal: Output contains a two-column markdown table with the documented Memory rows.
+    pass_criteria: |
+      Table includes rows for `File`, `Topic`, and `Pending` on save turns, and
+      additionally `Open Questions` on restore turns (case-insensitive label match).
+    failure_modes:
+      - Summary rendered as bulleted list instead of a table.
+      - Missing one or more required rows.
+      - Restore turn omits the `Open Questions` row.
+    priority: medium
+    applies_when: "save or restore turn"
+    contract_ref: "agent §User Interaction › Completion Reports"
+
+  - expectation_id: agent-handoff-on-continue
+    summary: Restore turns surface previously-active custom agents and tell the user to switch.
+    signal: Output names the prior session's agents and instructs the user to switch via the chat agent picker.
+    pass_criteria: |
+      On a Continue turn where the memory file lists agents under
+      `Context to Preserve`, output (a) names each prior agent and (b)
+      includes guidance to switch to the original agent using the chat
+      agent picker before continuing.
+    failure_modes:
+      - Restore response proceeds with current agent and ignores the recorded agent list.
+      - Lists agents but provides no switching guidance.
+    priority: medium
+    applies_when: "continue/restore turn AND memory file records prior agents"
+    contract_ref: "agent §Phase 3: Continue › Custom Agent Handoff"
+
+  - expectation_id: no-source-modifications
+    summary: Memory operations do not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Plans to modify source files as part of memory consolidation.
+      - Edits `package.json` to add a memory-related script.
+    priority: medium
+    contract_ref: "agent scope (memory writes are confined to .copilot-tracking/memory/ per §File Locations)"
+
+  - expectation_id: scope-stays-in-tracking-memory
+    summary: Save targets `.copilot-tracking/memory/` rather than the user-memory `/memories/` scope.
+    signal: Output writes to `.copilot-tracking/memory/...` and does not promote content into `/memories/` (user scope) or `/memories/repo/` without explicit user request.
+    pass_criteria: |
+      Reported write path is under `.copilot-tracking/memory/`. References to
+      `/memories/` are only allowed as source context (reading) or when the
+      user explicitly asks for promotion to user/repo memory scopes.
+    failure_modes:
+      - Auto-promotes session memory into `/memories/` without user request.
+      - Writes a memory file under `/memories/session/` instead of `.copilot-tracking/memory/`.
+    priority: low
+    contract_ref: "agent §File Locations (memory files reside in `.copilot-tracking/memory/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Output substantively addresses the stimulus's memory-planning question.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `memory-class-recipe` stimulus, response contains terms from
+      {memory, session, promote, plan, phase, consolidat}.
+    failure_modes:
+      - Off-topic response (e.g., generic project planning with no memory references).
+      - Response only reports a file path with no plan content.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

@@ -1,0 +1,20 @@
+stimuli:
+  - name: arch-diagram-builder-class-recipe
+    prompt: |
+      Produce an architecture diagram description for a three-tier web app (browser, API, database) using Mermaid. Save the diagram source under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(mermaid|diagram|browser|api|database|tier)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

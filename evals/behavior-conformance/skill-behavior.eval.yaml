@@ -1,0 +1,1157 @@
+name: behavior-conformance-skills
+description: >
+  Advisory-tier behavior conformance evals for 20 skills exercised across three
+  stimulus shapes: knowledge (canonical concept attribution), tool-trigger
+  (correct skill selection from a working context), and bleed-detection
+  (correct refusal when an off-topic context superficially resembles the
+  skill's domain). Total: 60 stimuli. Per DD-05, this is an advisory tier and
+  grader false-positives are absorbed by design.
+type: capability
+config:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+stimuli:
+  - name: skill-python-foundational-knowledge
+    prompt: |
+      Summarize the canonical Python idioms championed by the
+      `python-foundational` skill. Cite at least three patterns it advises.
+    tags:
+      category: behavior-conformance
+      skill: python-foundational
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)dataclass|pathlib|type\\s+hint|comprehension|context\\s+manager"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)python|idiom|foundational|best\\s+practice"
+
+  - name: skill-python-foundational-tool-trigger
+    prompt: |
+      I am authoring a new module at `scripts/utilities/helper.py` and want
+      idiomatic, foundational Python patterns applied. Which skill under
+      `.github/skills/**/SKILL.md` applies and what does it advise?
+    tags:
+      category: behavior-conformance
+      skill: python-foundational
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)python-foundational"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)python|idiom|skill|pattern"
+
+  - name: skill-python-foundational-bleed-detection
+    prompt: |
+      I am authoring a new TypeScript module at `extension/src/helper.ts`.
+      Does the `python-foundational` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: python-foundational
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|N\\/A"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)typescript|javascript|python|scope"
+
+  - name: skill-customer-card-render-knowledge
+    prompt: |
+      What inputs does the `customer-card-render` skill consume and what
+      output artifact does it produce?
+    tags:
+      category: behavior-conformance
+      skill: customer-card-render
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)content\\.yaml|customer[-\\s]card|design\\s+thinking|powerpoint"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)skill|render|design\\s+thinking|deck|powerpoint"
+
+  - name: skill-customer-card-render-tool-trigger
+    prompt: |
+      I have completed Design Thinking canonical artifacts under
+      `.copilot-tracking/dt/methods/method-08/` and need to generate a
+      customer-card deck from them. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: customer-card-render
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)customer-card-render"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|customer[-\\s]card|deck|powerpoint"
+
+  - name: skill-customer-card-render-bleed-detection
+    prompt: |
+      I need to generate a generic project status PowerPoint with no Design
+      Thinking inputs involved. Does the `customer-card-render` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: customer-card-render
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|powerpoint\\s+skill"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|generic|status|powerpoint"
+
+  - name: skill-powerpoint-knowledge
+    prompt: |
+      Summarize the `powerpoint` skill's content-and-style pipeline. Cite the
+      YAML files it consumes and the Python library it depends on.
+    tags:
+      category: behavior-conformance
+      skill: powerpoint
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)python-pptx|content\\.yaml|style\\.yaml"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)powerpoint|slide|deck|yaml"
+
+  - name: skill-powerpoint-tool-trigger
+    prompt: |
+      I need to build a slide deck programmatically from YAML inputs in a
+      Python environment. Which skill applies and what does it scaffold?
+    tags:
+      category: behavior-conformance
+      skill: powerpoint
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)\\bpowerpoint\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)slide|deck|yaml|pptx"
+
+  - name: skill-powerpoint-bleed-detection
+    prompt: |
+      I need to generate a Microsoft Word document from a structured template.
+      Does the `powerpoint` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: powerpoint
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|\\bword\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)word|docx|powerpoint|slide"
+
+  - name: skill-tts-voiceover-knowledge
+    prompt: |
+      Describe the `tts-voiceover` skill's input format and the speech engine
+      it relies on.
+    tags:
+      category: behavior-conformance
+      skill: tts-voiceover
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)azure\\s+speech|ssml|speaker_notes|tts|wav"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)voice|speech|tts|narration"
+
+  - name: skill-tts-voiceover-tool-trigger
+    prompt: |
+      I have a `content.yaml` with `speaker_notes` per slide and want
+      narration WAV files generated from those notes. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: tts-voiceover
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)tts-voiceover"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)voice|speech|narration|wav"
+
+  - name: skill-tts-voiceover-bleed-detection
+    prompt: |
+      I need to synthesize background music for a video (no spoken narration).
+      Does the `tts-voiceover` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: tts-voiceover
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|music"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)music|narration|voice|speech"
+
+  - name: skill-video-to-gif-knowledge
+    prompt: |
+      Summarize the `video-to-gif` skill's conversion approach and the tool
+      it relies on.
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)ffmpeg|two-pass|palette"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)gif|video|convert|optimi[sz]e"
+
+  - name: skill-video-to-gif-tool-trigger
+    prompt: |
+      I have a recorded screencast `demo.mp4` and need an optimized animated
+      GIF embedded in documentation. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)video-to-gif"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)gif|video|screencast|convert"
+
+  - name: skill-video-to-gif-bleed-detection
+    prompt: |
+      I need to convert a single PNG image into a short looping MP4 video.
+      Does the `video-to-gif` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: video-to-gif
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|image[-\\s]to[-\\s]video"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)image|video|mp4|gif"
+
+  - name: skill-vscode-playwright-knowledge
+    prompt: |
+      Describe what the `vscode-playwright` skill captures and the toolchain
+      it composes.
+    tags:
+      category: behavior-conformance
+      skill: vscode-playwright
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)playwright|serve-web|vs\\s*code|screenshot"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)screenshot|capture|browser|automation"
+
+  - name: skill-vscode-playwright-tool-trigger
+    prompt: |
+      I need reproducible VS Code screenshots of a slide deck rendered in the
+      editor for documentation. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: vscode-playwright
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)vscode-playwright"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)vs\\s*code|screenshot|capture|playwright"
+
+  - name: skill-vscode-playwright-bleed-detection
+    prompt: |
+      I need to scrape a public news website for headlines (no VS Code in
+      scope). Does the `vscode-playwright` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: vscode-playwright
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|generic\\s+playwright|web\\s+scrap"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)scrape|web|vs\\s*code|news"
+
+  - name: skill-gh-code-scanning-knowledge
+    prompt: |
+      What does the `gh-code-scanning` skill retrieve, which CLI does it wrap,
+      and which GitHub token scope is required?
+    tags:
+      category: behavior-conformance
+      skill: gh-code-scanning
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)gh\\s+cli|code\\s+scanning|security_events"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)alert|scanning|github|rule|severity"
+
+  - name: skill-gh-code-scanning-tool-trigger
+    prompt: |
+      I need to fetch open GitHub code scanning alerts for the current repo
+      and group them by rule and severity. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: gh-code-scanning
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)gh-code-scanning"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)code\\s+scanning|alert|rule|severity|github"
+
+  - name: skill-gh-code-scanning-bleed-detection
+    prompt: |
+      I need to list open Dependabot alerts for the current repo (not code
+      scanning alerts). Does the `gh-code-scanning` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: gh-code-scanning
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|dependabot"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)dependabot|alert|code\\s+scanning|github"
+
+  - name: skill-gitlab-knowledge
+    prompt: |
+      What does the `gitlab` skill manage and which environment variables
+      does its CLI require?
+    tags:
+      category: behavior-conformance
+      skill: gitlab
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)gitlab|merge\\s+request|pipeline|GITLAB_TOKEN|GITLAB_URL"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)gitlab|merge\\s+request|pipeline|cli"
+
+  - name: skill-gitlab-tool-trigger
+    prompt: |
+      I need to list and update merge requests in a GitLab project via a
+      Python CLI. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: gitlab
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)\\bgitlab\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)gitlab|merge\\s+request|pipeline|cli"
+
+  - name: skill-gitlab-bleed-detection
+    prompt: |
+      I need to list open pull requests on a GitHub repository. Does the
+      `gitlab` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: gitlab
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|github"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)github|gitlab|pull\\s+request|merge\\s+request"
+
+  - name: skill-hve-core-installer-knowledge
+    prompt: |
+      Describe the `hve-core-installer` skill's clone-method options and the
+      two personas it offers.
+    tags:
+      category: behavior-conformance
+      skill: hve-core-installer
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)installer|validator|clone|six"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)install|setup|hve[-\\s]?core|persona"
+
+  - name: skill-hve-core-installer-tool-trigger
+    prompt: |
+      A user wants to install hve-core into a fresh workspace and validate
+      the setup end-to-end. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: hve-core-installer
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)hve-core-installer"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)install|setup|hve[-\\s]?core|validate"
+
+  - name: skill-hve-core-installer-bleed-detection
+    prompt: |
+      A user wants to uninstall hve-core and remove all of its artifacts from
+      their workspace. Does the `hve-core-installer` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: hve-core-installer
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|uninstall"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)uninstall|install|remove|hve[-\\s]?core"
+
+  - name: skill-jira-knowledge
+    prompt: |
+      What does the `jira` skill expose and which authentication environment
+      variables does it require?
+    tags:
+      category: behavior-conformance
+      skill: jira
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)jira|JIRA_BASE_URL|JIRA_PAT|jql"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)jira|issue|jql|rest"
+
+  - name: skill-jira-tool-trigger
+    prompt: |
+      I need to search Jira issues by JQL, transition one to In Progress, and
+      post a comment. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: jira
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)\\bjira\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)jira|issue|jql|transition"
+
+  - name: skill-jira-bleed-detection
+    prompt: |
+      I need to query Azure DevOps work items by WIQL. Does the `jira` skill
+      apply?
+    tags:
+      category: behavior-conformance
+      skill: jira
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|azure\\s+devops|\\bado\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)ado|azure\\s+devops|jira|work\\s+item"
+
+  - name: skill-owasp-agentic-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-agentic` skill encode and how
+      many top risks does it enumerate?
+    tags:
+      category: behavior-conformance
+      skill: owasp-agentic
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+agentic|agentic\\s+top|ai\\s+agent"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)agent|risk|vulnerability|owasp"
+
+  - name: skill-owasp-agentic-tool-trigger
+    prompt: |
+      I am reviewing the security posture of a multi-agent autonomous AI
+      system. Which OWASP skill under `.github/skills/security/**` applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-agentic
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-agentic"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)agent|owasp|risk|review"
+
+  - name: skill-owasp-agentic-bleed-detection
+    prompt: |
+      I am reviewing a traditional web form for SQL injection and XSS risks
+      (no AI agent involved). Does the `owasp-agentic` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-agentic
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|owasp\\s+top\\s+10|web"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)web|owasp|injection|xss|agentic"
+
+  - name: skill-owasp-cicd-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-cicd` skill encode and what
+      kinds of risks does it cover?
+    tags:
+      category: behavior-conformance
+      skill: owasp-cicd
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+ci\\/?cd|ci\\/?cd\\s+top|pipeline"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)ci\\/?cd|pipeline|owasp|risk"
+
+  - name: skill-owasp-cicd-tool-trigger
+    prompt: |
+      I am hardening a GitHub Actions pipeline against poisoned dependency
+      chain and IAM misconfiguration. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-cicd
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-cicd"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)ci\\/?cd|pipeline|owasp|github\\s+actions"
+
+  - name: skill-owasp-cicd-bleed-detection
+    prompt: |
+      I am hardening a running web API against prompt injection from
+      end-user input. Does the `owasp-cicd` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-cicd
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|owasp\\s+llm|owasp\\s+top\\s+10"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)ci\\/?cd|runtime|prompt|web|owasp"
+
+  - name: skill-owasp-docker-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-docker` skill encode and how
+      many top risks does it enumerate?
+    tags:
+      category: behavior-conformance
+      skill: owasp-docker
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+docker|docker\\s+top|container"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)docker|container|owasp|risk"
+
+  - name: skill-owasp-docker-tool-trigger
+    prompt: |
+      I am reviewing the security configuration of a production Dockerfile
+      and the resulting container image. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-docker
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-docker"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)docker|container|image|owasp"
+
+  - name: skill-owasp-docker-bleed-detection
+    prompt: |
+      I am reviewing a Kubernetes cluster's network policies and RBAC
+      configuration. Does the `owasp-docker` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-docker
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|kubernetes"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)kubernetes|docker|container|owasp"
+
+  - name: skill-owasp-infrastructure-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-infrastructure` skill encode
+      and what kinds of risks does it cover?
+    tags:
+      category: behavior-conformance
+      skill: owasp-infrastructure
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+infrastructure|infrastructure\\s+top|outdated\\s+software"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)infrastructure|owasp|risk|internal"
+
+  - name: skill-owasp-infrastructure-tool-trigger
+    prompt: |
+      I am reviewing an on-prem IT infrastructure for outdated software and
+      weak threat detection. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-infrastructure
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-infrastructure"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)infrastructure|owasp|on[-\\s]?prem|review"
+
+  - name: skill-owasp-infrastructure-bleed-detection
+    prompt: |
+      I am reviewing a large language model deployment for prompt injection.
+      Does the `owasp-infrastructure` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-infrastructure
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|owasp\\s+llm"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)llm|infrastructure|prompt|owasp"
+
+  - name: skill-owasp-llm-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-llm` skill encode and what is
+      risk #1 in its 2025 list?
+    tags:
+      category: behavior-conformance
+      skill: owasp-llm
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+llm|llm\\s+top|prompt\\s+injection"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)llm|prompt|injection|owasp"
+
+  - name: skill-owasp-llm-tool-trigger
+    prompt: |
+      I am reviewing an LLM-backed chatbot for prompt injection and sensitive
+      information disclosure risks. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-llm
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-llm"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)llm|prompt|chatbot|owasp"
+
+  - name: skill-owasp-llm-bleed-detection
+    prompt: |
+      I am reviewing a base container image for outdated packages. Does the
+      `owasp-llm` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-llm
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|owasp\\s+docker|owasp\\s+infrastructure"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)container|llm|docker|owasp"
+
+  - name: skill-owasp-mcp-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-mcp` skill encode and name one
+      of its top risks.
+    tags:
+      category: behavior-conformance
+      skill: owasp-mcp
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+mcp|mcp\\s+top|tool\\s+poison|token\\s+mismanagement"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)mcp|model\\s+context|owasp|risk"
+
+  - name: skill-owasp-mcp-tool-trigger
+    prompt: |
+      I am reviewing a Model Context Protocol server for tool poisoning and
+      token mismanagement risks. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-mcp
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-mcp"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)mcp|model\\s+context|tool|owasp"
+
+  - name: skill-owasp-mcp-bleed-detection
+    prompt: |
+      I am reviewing an OAuth-only REST API for token handling weaknesses
+      (no MCP involved). Does the `owasp-mcp` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-mcp
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|oauth|owasp\\s+top\\s+10"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)oauth|mcp|api|owasp"
+
+  - name: skill-owasp-top-10-knowledge
+    prompt: |
+      What body of knowledge does the `owasp-top-10` skill encode and what
+      is risk #1 in its 2025 list for web applications?
+    tags:
+      category: behavior-conformance
+      skill: owasp-top-10
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp\\s+top\\s+10|broken\\s+access\\s+control|web\\s+application"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)web|application|owasp|risk"
+
+  - name: skill-owasp-top-10-tool-trigger
+    prompt: |
+      I am reviewing a public web application for broken access control and
+      injection risks. Which OWASP skill applies?
+    tags:
+      category: behavior-conformance
+      skill: owasp-top-10
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)owasp-top-10"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)web|application|owasp|access\\s+control"
+
+  - name: skill-owasp-top-10-bleed-detection
+    prompt: |
+      I am reviewing the autonomous decision boundary of a multi-agent AI
+      system. Does the `owasp-top-10` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: owasp-top-10
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|owasp\\s+agentic|agent"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)agent|owasp|web|autonomous"
+
+  - name: skill-secure-by-design-knowledge
+    prompt: |
+      What frameworks does the `secure-by-design` skill draw from and what
+      lens does it apply when assessing a system?
+    tags:
+      category: behavior-conformance
+      skill: secure-by-design
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)secure[-\\s]by[-\\s]design|uk\\s+10|asd\\s+6|principle|foundation"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)secure|design|principle|lifecycle"
+
+  - name: skill-secure-by-design-tool-trigger
+    prompt: |
+      I am assessing a new product's lifecycle practices against
+      secure-by-design principles. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: secure-by-design
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)secure-by-design"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)secure|design|principle|lifecycle|assessment"
+
+  - name: skill-secure-by-design-bleed-detection
+    prompt: |
+      I am writing runtime intrusion detection rules for a production host.
+      Does the `secure-by-design` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: secure-by-design
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|runtime|detection"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)runtime|detection|secure|design"
+
+  - name: skill-security-reviewer-formats-knowledge
+    prompt: |
+      What output contracts does the `security-reviewer-formats` skill
+      define for the security reviewer orchestrator and its subagents?
+    tags:
+      category: behavior-conformance
+      skill: security-reviewer-formats
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)VULN_REPORT_V1|PLAN_REPORT_V1|reviewer|orchestrator|severity"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)format|contract|reviewer|report"
+
+  - name: skill-security-reviewer-formats-tool-trigger
+    prompt: |
+      I am implementing a new security reviewer subagent and need the
+      canonical output format and severity vocabulary. Which skill applies?
+    tags:
+      category: behavior-conformance
+      skill: security-reviewer-formats
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)security-reviewer-formats"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)reviewer|subagent|format|severity"
+
+  - name: skill-security-reviewer-formats-bleed-detection
+    prompt: |
+      I want to tighten the markdown linting rules across the repo. Does the
+      `security-reviewer-formats` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: security-reviewer-formats
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|linting|markdown"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)lint|markdown|reviewer|format"
+
+  - name: skill-pr-reference-knowledge
+    prompt: |
+      What does the `pr-reference` skill generate and which two scripting
+      languages does it provide for that generation?
+    tags:
+      category: behavior-conformance
+      skill: pr-reference
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)pr[-\\s]reference|git\\s+diff|commit\\s+history|xml"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pull\\s+request|\\bpr\\b|diff|reference"
+
+  - name: skill-pr-reference-tool-trigger
+    prompt: |
+      I am preparing a pull request description and need a structured XML
+      reference of commits and unified diffs between two branches. Which
+      skill applies?
+    tags:
+      category: behavior-conformance
+      skill: pr-reference
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)pr-reference"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pull\\s+request|\\bpr\\b|diff|branch|xml"
+
+  - name: skill-pr-reference-bleed-detection
+    prompt: |
+      I need to query GitHub issues for triage (no diff or commit analysis
+      involved). Does the `pr-reference` skill apply?
+    tags:
+      category: behavior-conformance
+      skill: pr-reference
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|issue|triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)issue|triage|\\bpr\\b|github"
