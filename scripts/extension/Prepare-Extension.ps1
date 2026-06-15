@@ -464,14 +464,11 @@ function New-CollectionReadme {
     }
 
     # Write back updated artifact section into collection.md when markers are present.
-    # Keep the h2 outside the marker block so repeated generation does not duplicate it.
+    # The hand-authored intro provides the `## Included Artifacts` H2 immediately
+    # before the BEGIN marker, so the generated block contains only the H3 tables.
     if ($parsed.HasMarkers) {
         $generatedBlock = $artifactSections.ToString().TrimEnd()
-        $intro = $parsed.Intro.TrimEnd()
-        if ($intro -notmatch '(?m)^## Included Artifacts\s*$') {
-            $intro = "$intro`n`n## Included Artifacts"
-        }
-        $updatedCollectionMd = "$intro`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+        $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
         if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
             $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
         }
