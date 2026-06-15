@@ -15,6 +15,8 @@ After the disclaimer, display the framework attribution `OpenSSF Scorecard • S
 
 Activate the SSSC Planner in **from-brd mode** for project slug `${input:project-slug}` to bootstrap a supply chain security assessment from existing business requirements documents.
 
+The SSSC Planner consults the `supply-chain-security` skill for framework and capabilities-inventory reference content (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM); do not restate those tables in this prompt.
+
 ## Inputs
 
 * `${input:project-slug}`: (Optional) Project slug for the SSSC plan directory. When omitted, derive from the discovered BRD project name.
@@ -33,7 +35,7 @@ Scan the workspace for BRD artifacts and supporting context:
 
 * `.copilot-tracking/` for files matching `brd-*.md`, `*-brd.md`, or `business-requirements*.md`. Exclude generic matches like `requirements.txt` or files outside business-scoping contexts.
 
-Also scan the shared supporting context sources defined in `sssc-identity.instructions.md`.
+Also scan the shared supporting context sources defined in `sssc-planner.instructions.md`.
 
 Present pre-scan results as a checklist:
 

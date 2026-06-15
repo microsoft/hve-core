@@ -138,7 +138,7 @@ items:
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
-  - path: .github/instructions/hve-core/task-implementor-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
 display:
   ordering: manual

@@ -24,7 +24,7 @@ This agent emits and reasons about production telemetry. Whenever the success-me
 
 When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
 
-For artifact-scoped enforcement, the `prd-builder-telemetry` instructions apply automatically to matching artifacts.
+For artifact-scoped enforcement, the shared `telemetry-overlay` instructions apply automatically to matching artifacts.
 
 ## Lifecycle Dispatch
 
