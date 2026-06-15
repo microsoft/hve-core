@@ -44,6 +44,14 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
+          # GHSA-69w3-r845-3855 (CVE-2026-1839): transformers Trainer
+          # arbitrary code execution via torch.load() without weights_only.
+          # The advisory states the issue only affects torch>=2.2 used with
+          # PyTorch < 2.6; the moderation eval pins torch==2.9.1 (>=2.6), so
+          # safe_globals() protection applies and the path is not exploitable.
+          # The only patched release (5.0.0rc3) is a pre-release that breaks
+          # detoxify==0.5.2, which requires transformers<5.
+          allow-ghsas: GHSA-69w3-r845-3855
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
