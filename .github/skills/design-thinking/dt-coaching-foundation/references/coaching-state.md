@@ -169,5 +169,3 @@ The `.copilot-tracking/dt/{project-slug}/` directory holds all project-specific 
 ## Integration with Method Sequencing
 
 The coaching state schema aligns with the method routing assessment flow used during method sequencing. The `current.method` field drives which dt-methods reference the agent loads on demand via `read_file` when a method becomes active. The `transition_log` provides the history that the method sequencing transition protocol references.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

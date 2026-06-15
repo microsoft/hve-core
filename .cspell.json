@@ -30,7 +30,8 @@
   ],
   "ignoreRegExpList": [
     "/#.*/g",
-    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
+    "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
   "dictionaryDefinitions": [
     {

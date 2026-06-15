@@ -47,5 +47,3 @@ Intermediate learners benefit from comparing silent review results across concep
 Advanced learners should explore how organizational culture affects concept reception (hierarchical organizations may suppress honest feedback), analyze when concepts reveal that synthesis themes from Method 3 were poorly framed, and critique the balance between simplicity and sufficient detail.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
