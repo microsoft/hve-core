@@ -385,6 +385,26 @@ Describe 'Get-SchemaForFile' -Tag 'Unit' {
 
 #endregion
 
+#region Test-ValueAgainstSchema Tests
+
+Describe 'Test-ValueAgainstSchema' -Tag 'Unit' {
+    Context 'Nullable type handling' {
+        It 'Returns no errors when value is null and schema type allows null' {
+            $schema = @{ type = @('string', 'null') }
+            $result = Test-ValueAgainstSchema -Value $null -Schema $schema -Path 'field'
+            $result | Should -BeNullOrEmpty
+        }
+
+        It 'Returns errors when value is null and schema type does not allow null' {
+            $schema = @{ type = 'string' }
+            $result = Test-ValueAgainstSchema -Value $null -Schema $schema -Path 'field'
+            $result | Should -Not -BeNullOrEmpty
+        }
+    }
+}
+
+#endregion Test-ValueAgainstSchema Tests
+
 #region Test-JsonSchemaValidation Tests
 
 Describe 'Test-JsonSchemaValidation' -Tag 'Unit' {

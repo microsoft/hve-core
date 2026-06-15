@@ -13,7 +13,7 @@ Enforce language-specific coding conventions and best practices across your proj
 | **accessibility-reviewer**       | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                           |
 | **accessibility-skill-assessor** | Assesses a single accessibility knowledge skill against the codebase, reading success-criterion references and returning structured findings                      |
 | **code-review-accessibility**    | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
-| **code-review-full**             | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report                                                           |
+| **code-review-full**             | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
 | **code-review-functional**       | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
 | **code-review-standards**        | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
 

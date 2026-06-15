@@ -56,6 +56,7 @@ def test_resolve_token_store_path_explicit_env(
     assert mural_module._resolve_token_store_path(env=env) == explicit
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX XDG path semantics")
 def test_resolve_token_store_path_xdg(
     mural_module: Any, tmp_path: pathlib.Path
 ) -> None:
@@ -64,6 +65,7 @@ def test_resolve_token_store_path_xdg(
     assert mural_module._resolve_token_store_path(env=env) == expected
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX home-fallback path semantics")
 def test_resolve_token_store_path_home_fallback(mural_module: Any) -> None:
     result = mural_module._resolve_token_store_path(env={})
     assert result.parts[-4:-1] == (".local", "share", "hve-core")
@@ -95,6 +97,7 @@ def test_load_token_store_non_object_raises(
         mural_module._load_token_store(bad)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
 def test_save_token_store_writes_mode_0600(
     mural_module: Any, tmp_path: pathlib.Path
 ) -> None:
@@ -905,6 +908,9 @@ def test_token_bucket_acquire_is_thread_safe_under_contention(
     assert bucket.tokens <= bucket.capacity
 
 
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX-only locking and permission semantics"
+)
 def test_save_token_store_is_atomic_under_concurrent_writers(
     mural_module: Any, tmp_path: Any
 ) -> None:
@@ -936,6 +942,7 @@ def test_save_token_store_is_atomic_under_concurrent_writers(
     assert parsed["v"] in seeds
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX-only permission semantics")
 def test_save_token_store_corrects_loose_permissions(
     mural_module: Any, tmp_path: Any
 ) -> None:

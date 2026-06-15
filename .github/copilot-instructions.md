@@ -22,6 +22,11 @@ Rules for comments:
 * Comments that contradict current behavior are removed or updated.
 * Temporal markers (phase references, dates, task IDs) are removed from code files during any edit.
 
+Rules for human review checkboxes:
+
+* Agents never check or mark complete any human review checkbox (for example, `- [ ] Reviewed and validated by a qualified human reviewer`). Only a human may convert `[ ]` to `[x]` on review checkboxes.
+* Backlog managers must verify that all human review checkboxes are checked before processing artifacts into a backlog. If any checkbox is unchecked, halt processing and inform the user that human review is required first.
+
 Rules for fixing errors:
 
 * Proactively fix any problem encountered while working in the codebase, even when unrelated to the original request.
