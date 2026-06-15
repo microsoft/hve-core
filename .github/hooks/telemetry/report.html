@@ -110,7 +110,8 @@
 </div>
 <div class="file-list" id="fileList"></div>
 
-<!-- Embedded telemetry data. Populated by Invoke-TelemetryReport.ps1 to produce a
+<!-- Embedded telemetry data. Populated by the report generator
+     (generate-telemetry-report.sh / Invoke-TelemetryReport.ps1) to produce a
      self-contained report. Leave as an empty array for the interactive drag & drop viewer. -->
 <script id="embeddedData" type="application/json">[]</script>
 
@@ -170,7 +171,8 @@
     }
   }
 
-  /** Load data embedded by Invoke-TelemetryReport.ps1, if any. */
+  /** Load data embedded by the report generator (generate-telemetry-report.sh
+      or Invoke-TelemetryReport.ps1), if any. */
   function loadEmbedded() {
     const el = document.getElementById('embeddedData');
     if (!el) return false;

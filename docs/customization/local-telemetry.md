@@ -165,20 +165,19 @@ The pipeline normalizes different casing variants of event names to canonical na
 
 ## Generate a Report
 
-Use the repository script:
-
-```bash
-npm run telemetry:report
-```
-
-The script wraps `.github/hooks/telemetry/generate-telemetry-report.sh` and creates a self-contained report HTML file.
-
-Useful options:
+Run the report generator directly:
 
 ```bash
 bash .github/hooks/telemetry/generate-telemetry-report.sh --help
 bash .github/hooks/telemetry/generate-telemetry-report.sh --date all
 bash .github/hooks/telemetry/generate-telemetry-report.sh --open
+```
+
+On Windows (or any PowerShell host) the native equivalent needs no `bash`:
+
+```powershell
+pwsh .github/hooks/telemetry/Invoke-TelemetryReport.ps1 -Date all
+pwsh .github/hooks/telemetry/Invoke-TelemetryReport.ps1 -Open
 ```
 
 ## Cross-Project Reports
@@ -194,6 +193,12 @@ Generate a combined, cross-project report with `--all-dirs`:
 bash .github/hooks/telemetry/generate-telemetry-report.sh --all-dirs --date all
 ```
 
+The PowerShell generator takes `-AllDirs` for the same cross-project report:
+
+```powershell
+pwsh .github/hooks/telemetry/Invoke-TelemetryReport.ps1 -AllDirs -Date all
+```
+
 The registry self-populates as you work across repositories, so no manual setup
 is required. Stale directories (deleted or moved repositories) are pruned
 automatically when the report runs. Each session is labeled with its originating
@@ -202,13 +207,13 @@ project in the report, so combined output still reads per project.
 ## Reports Without the Repository (Extension Users)
 
 When telemetry runs from the VS Code extension rather than this repository, the
-`npm run telemetry:report` script is not present and the report generator lives
-at a version-pinned extension path that is awkward to locate. To bridge this, a
-cross-project launcher is written into the HVE home directory (`~/.hve`, honoring
-`HVE_HOME`) at session start, next to the registry it reads:
+report generator lives at a version-pinned extension path that is awkward to
+locate. To bridge this, a cross-project launcher is written into the HVE home
+directory (`~/.hve`, honoring `HVE_HOME`) at session start, next to the registry
+it reads:
 
 * `~/.hve/generate-report.sh`: for unix shells and Git Bash on Windows
-* `~/.hve/generate-report.ps1`: for PowerShell (requires `bash`, for example Git Bash)
+* `~/.hve/generate-report.ps1`: for PowerShell, runs natively (no `bash` required)
 
 Run the launcher from the HVE home directory without knowing the extension path.
 It defaults to a combined, cross-project report written to
@@ -217,6 +222,13 @@ It defaults to a combined, cross-project report written to
 ```bash
 bash ~/.hve/generate-report.sh
 bash ~/.hve/generate-report.sh --date all
+```
+
+From PowerShell, run the native launcher:
+
+```powershell
+~/.hve/generate-report.ps1
+~/.hve/generate-report.ps1 -Date all
 ```
 
 The launchers are regenerated every session, so they self-heal after an
@@ -228,7 +240,7 @@ Common issues:
 
 * No events captured: verify one enablement gate is set and your hook manifest is active.
 * No enrichment data: model and token enrichment depends on available debug logs and session-state data.
-* Report generation fails: install `jq` and ensure `python3` is available.
+* Report generation fails: ensure `python3` is available for enrichment. The bash generator also needs `jq`; the PowerShell generator (`Invoke-TelemetryReport.ps1`) does not.
 
 ## Related Guides
 

@@ -548,12 +548,14 @@ def test_given_windows_when_write_report_launchers_then_writes_ps1_only(tmp_path
     monkeypatch.setenv("HVE_HOME", str(hve))
     monkeypatch.setattr(core, "_is_windows", lambda: True)
     core.write_report_launchers(script_dir)
-    report_script = str(script_dir / "generate-telemetry-report.sh")
+    report_ps1 = str(script_dir / "Invoke-TelemetryReport.ps1")
     out_path = str(hve / "report.generated.html")
     ps = (hve / "generate-report.ps1").read_text(encoding="utf-8")
-    assert report_script in ps
+    # Native delegation to the PowerShell generator, no bash.
+    assert report_ps1 in ps
     assert out_path in ps
-    assert "--all-dirs" in ps
+    assert "-AllDirs" in ps
+    assert "bash" not in ps
     # No POSIX launcher on Windows.
     assert not (hve / "generate-report.sh").exists()
 

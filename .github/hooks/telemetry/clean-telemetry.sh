@@ -35,7 +35,6 @@ Options:
                     use).
   -h, --help        Show this help.
 
-Runs via: npm run telemetry:clean
 EOF
 }
 

@@ -37,7 +37,6 @@ Options:
       --open            Open the generated report in the default browser.
   -h, --help            Show this help.
 
-Runs via: npm run telemetry:report
 EOF
 }
 
