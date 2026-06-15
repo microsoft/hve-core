@@ -6,7 +6,6 @@ agents:
   - Code Review Functional
   - Code Review Standards
   - Code Review Accessibility
-  - PR Walkthrough
 ---
 
 # Code Review Full Agent

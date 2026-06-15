@@ -34,9 +34,6 @@ items:
   - path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/pr-walkthrough.agent.md
-    kind: agent
-    maturity: experimental
   # Prompts
   - path: .github/prompts/coding-standards/code-review-functional.prompt.md
     kind: prompt
