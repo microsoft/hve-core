@@ -432,7 +432,7 @@ foreach ($specRel in $uniqueSpecs.Keys) {
             -RepoRoot $resolvedRoot
 
         if ($inputModeration.flagged) {
-            Write-Host "::warning file=$specRel::Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); skipping eval"
+            Write-Host "::error file=$specRel::Content moderation flagged $($inputModeration.flaggedCount) input prompt(s); eval blocked"
             $specResults[$specRel] = @{
                 specPath         = $specAbs
                 exitCode         = 0
@@ -447,10 +447,6 @@ foreach ($specRel in $uniqueSpecs.Keys) {
                 status           = 'content-moderation-input'
             }
             $failedSpecs++
-            if ($FailFast) {
-                Write-Host "::warning::FailFast set; skipping remaining specs after input moderation failure in $specRel"
-                break
-            }
             continue
         }
     }

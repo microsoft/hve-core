@@ -111,9 +111,10 @@ def classify_records(
     """Classify records using Detoxify and return results with flag status."""
     try:
         from detoxify import Detoxify
-    except ImportError:
-        logger.error("detoxify package not installed; run: uv pip install -r requirements.txt")
-        sys.exit(EXIT_ERROR)
+    except ImportError as exc:
+        raise ImportError(
+            "detoxify package not installed; run: uv pip install -r requirements.txt"
+        ) from exc
 
     logger.info("Loading Detoxify model: %s", model_name)
     model = Detoxify(model_name)
@@ -181,7 +182,11 @@ def main() -> int:
         write_output([], args.output)
         return EXIT_SUCCESS
 
-    results = classify_records(records, args.model, args.threshold)
+    try:
+        results = classify_records(records, args.model, args.threshold)
+    except ImportError as exc:
+        logger.error("%s", exc)
+        return EXIT_ERROR
     write_output(results, args.output)
 
     flagged_count = sum(1 for r in results if r["flagged"])

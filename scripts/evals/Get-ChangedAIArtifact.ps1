@@ -58,6 +58,7 @@ param(
     [string]$RepoRoot
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force

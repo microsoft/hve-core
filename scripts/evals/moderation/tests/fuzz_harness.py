@@ -30,6 +30,9 @@ def fuzz_moderate_input(data: bytes) -> None:
         _ = {"id": "fuzz-record", "text": text}
         # Input accepted
     except Exception:
+        # Fuzz harness intentionally swallows all exceptions: arbitrary/malformed
+        # input is expected to raise, and the goal is to surface crashes (segfaults,
+        # hangs) rather than ordinary Python exceptions.
         pass
 
 

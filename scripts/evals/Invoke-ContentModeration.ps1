@@ -72,6 +72,7 @@ param(
     [string]$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? $PSScriptRoot
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/ModerationRunner.psm1') -Force

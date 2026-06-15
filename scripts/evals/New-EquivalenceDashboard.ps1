@@ -75,6 +75,7 @@ param(
     [switch]$Open
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module -Name (Join-Path $PSScriptRoot 'lib/EquivalenceParsing.psm1') -Force
