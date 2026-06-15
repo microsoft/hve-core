@@ -179,5 +179,3 @@ line art, no shading.
 ```
 
 **Rationale**: Office context (desk), single interaction (viewing metrics), basic shapes (bar charts), avoids "detailed interface mockup" trap.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

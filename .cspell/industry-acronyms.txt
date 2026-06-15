@@ -95,6 +95,7 @@ ESRS
 FAPI
 PKCE
 pkce
+ISTQB
 SSCM
 SSDF
 ssdf

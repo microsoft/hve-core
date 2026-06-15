@@ -321,5 +321,3 @@ Within this folder, produce and update these files:
 * `.copilot-tracking/dt/{project-slug}/method-06-lofi-prototypes/constraint-discoveries.md`
   Document cross-session constraint patterns with severity assessment, categorized by physical, environmental, and workflow, with Method 7 handoff notes.
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
