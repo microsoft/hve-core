@@ -57,5 +57,3 @@ Recommend returning to DT coaching rather than proceeding to planning when any o
 * Fundamental assumptions from Method 1-3 synthesis are invalidated by evidence.
 * Conflicting evidence indicates the Method 3 synthesis needs rework before implementation planning can proceed.
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

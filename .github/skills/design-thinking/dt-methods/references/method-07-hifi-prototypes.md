@@ -131,5 +131,3 @@ Method 7 produces standardized technical validation artifacts organized under `.
 Maintains DT coaching principles: end-user validation focus, environmental constraint application, multi-stakeholder perspectives, and iterative "fail fast, learn fast" refinement within technical feasibility constraints.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -45,5 +45,3 @@ Intermediate learners benefit from comparing affinity clustering with top-down c
 Advanced learners should explore how organizational power dynamics distort synthesis (whose data gets weighted more), analyze cases where contradictory themes are both valid, and critique the boundary between sufficient synthesis and analysis paralysis.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

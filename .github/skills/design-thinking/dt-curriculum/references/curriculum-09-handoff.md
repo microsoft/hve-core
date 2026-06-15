@@ -47,5 +47,3 @@ Intermediate learners benefit from designing telemetry plans and analyzing unexp
 Advanced learners should explore the tension between data-driven decisions and user privacy, analyze when continuous improvement becomes analysis paralysis, and critique how organizational incentive structures (ship features vs maintain quality) affect Method 9 discipline.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
