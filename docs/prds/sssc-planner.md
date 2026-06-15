@@ -12,7 +12,7 @@ tags: [security, supply-chain, planning]
 <!-- markdownlint-disable-file -->
 <!-- markdown-table-prettify-ignore-start -->
 # SSSC Planner - Product Requirements Document (PRD)
-Version 0.1 draft | Status Draft for maintainer review | Owner williamberryiii | Team HVE-Core maintainers | Target v4.1 prerelease | Lifecycle Build and validate
+Version 0.1 draft | Status Draft for maintainer review | Owner HVE-Core maintainers | Team HVE-Core maintainers | Target v4.1 prerelease | Lifecycle Build and validate
 
 ## Progress Tracker
 
@@ -504,7 +504,7 @@ The planner should avoid collecting PII. If telemetry or audit events need user 
 
 | Q ID | Question | Owner | Deadline | Status |
 |------|----------|-------|----------|--------|
-| OQ-001 | Who is the named product or business owner for the SSSC Planner PRD? | User | 2026-06-14 | Resolved: williamberryiii |
+| OQ-001 | Who is the named product or business owner for the SSSC Planner PRD? | User | 2026-06-14 | Resolved: HVE-Core maintainers |
 | OQ-002 | Which release milestone should include the generalized SSSC Planner capability? | User | 2026-06-14 | Resolved: v4.1 prerelease |
 | OQ-003 | Should the SSSC Planner choose a default backlog system? | User | 2026-06-14 | Resolved: No. Emit the existing shared backlog-manager-readable handoff format; users and backlog managers choose target systems. |
 | OQ-004 | Should artifact signing remain opt-in or become required for Phase 6 handoffs? | User | 2026-06-14 | Resolved: Artifact signing will always be opt-in and Phase 6 handoffs must not require it. |

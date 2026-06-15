@@ -69,6 +69,14 @@ success_criteria:
     target: "Agent, prompts, instructions, skill, and collection manifests remain aligned when the SSSC Planner is packaged or updated."
     measurement_window: "each release candidate"
     source: "collections/security.collection.yml and extension/package validation outputs"
+decisionMetadata:
+  driverToTriggerMap:
+    "Repeatable non-certification assessment": "ASR-compliance-non-certification"
+    "Standards/orchestration separation": "ASR-maintainability-standards-separation"
+    "Thin entry prompts": "ASR-maintainability-thin-entry-prompts"
+    "Single protocol surface": "ASR-maintainability-single-protocol"
+    "Coherent ecosystem packaging": "ASR-maintainability-coherent-packaging"
+    "Explicit repository-local review": "ASR-security-explicit-review"
 ---
 
 ## Context
@@ -116,17 +124,12 @@ and reuse of shared backlog handoff.
 
 ## Decision Drivers
 
-* Downstream repositories need a repeatable way to assess their own supply chain posture without
-  treating HVE-Core output as a security certification.
-* The planner must keep standards knowledge separate from conversational orchestration so standards
-  references can evolve without duplicating protocol text across prompts.
-* Entry prompts must remain thin wrappers that start the right mode and seed state, rather than
-  becoming competing planning implementations.
-* Phase gates, state recovery, notices, and handoff behavior must be governed by one protocol surface.
-* The ecosystem must be packageable through collections and extension assets without losing agent,
-  prompt, instruction, skill, or schema alignment.
-* Repository-local human review and ownership must remain explicit because generated findings and
-  backlog items are advisory.
+* Repeatable non-certification assessment
+* Standards/orchestration separation
+* Thin entry prompts
+* Single protocol surface
+* Coherent ecosystem packaging
+* Explicit repository-local review
 
 ## Considered Options
 
@@ -153,6 +156,15 @@ This option would treat tools such as OpenSSF Scorecard, SBOM scanners, and sign
 primary planning interface, with HVE-Core only documenting how to run them.
 
 ## Decision Outcome
+
+| Decision driver                       | Option 1 | Option 2 | Option 3 | Option 4 |
+|---------------------------------------|----------|----------|----------|----------|
+| Repeatable non-certification assessment | Partial  | Yes      | Partial  | Partial  |
+| Standards/orchestration separation    | No       | Yes      | Partial  | No       |
+| Thin entry prompts                    | No       | Yes      | No       | No       |
+| Single protocol surface               | No       | Yes      | Partial  | No       |
+| Coherent ecosystem packaging          | No       | Yes      | Partial  | No       |
+| Explicit repository-local review      | Partial  | Yes      | Partial  | No       |
 
 Chosen option: Option 2, adopt a dedicated SSSC Planner ecosystem.
 
@@ -197,15 +209,18 @@ distribution, and handoff responsibilities distinct while preserving a coherent 
 
 The ecosystem responsibility boundaries are:
 
-| Surface                       | Responsibility                                                                                     |
-|-------------------------------|----------------------------------------------------------------------------------------------------|
-| Entry prompts                 | Start capture, PRD-seeded, BRD-seeded, or Security Planner-seeded sessions and initialize state.   |
-| SSSC Planner agent            | Provide the user-facing identity, caution notice, phase orchestration, and skill-loading contract. |
-| SSSC instructions             | Govern state, phase gates, artifacts, notices, recovery, cross-planner links, and handoff.         |
-| `supply-chain-security` skill | Hold durable standards knowledge, capability inventory, and prioritization taxonomy.               |
-| State schema                  | Validate entry modes, required context fields, phase gate metadata, and notice records.            |
-| Shared backlog handoff        | Shape ADO and GitHub work item output without prescribing backlog routing.                         |
-| Collections                   | Package and distribute the complete capability as a coherent unit.                                 |
+* Entry prompts start capture, PRD-seeded, BRD-seeded, or Security Planner-seeded sessions and
+  initialize state.
+* SSSC Planner agent provides the user-facing identity, caution notice, phase orchestration, and
+  skill-loading contract.
+* SSSC instructions govern state, phase gates, artifacts, notices, recovery, cross-planner links, and
+  handoff.
+* The supply-chain-security skill holds durable standards knowledge, capability inventory, and
+  prioritization taxonomy.
+* State schema validates entry modes, required context fields, phase gate metadata, and notice
+  records.
+* Shared backlog handoff shapes ADO and GitHub work item output without prescribing backlog routing.
+* Collections package and distribute the complete capability as a coherent unit.
 
 ## Consequences
 
@@ -328,13 +343,34 @@ agent while retaining the `supply-chain-security` skill as reference material an
 back to documentation-only guidance. Any rollback must preserve existing planning artifacts and state
 files as historical records, and it must avoid reusing allocated ADR IDs.
 
+## Affected Components
+
+* .github/agents/security/sssc-planner.agent.md
+* .github/instructions/security/sssc-planner.instructions.md
+* .github/prompts/security/sssc-capture.prompt.md
+* .github/prompts/security/sssc-from-prd.prompt.md
+* .github/prompts/security/sssc-from-brd.prompt.md
+* .github/prompts/security/sssc-from-security-plan.prompt.md
+* .github/skills/security/supply-chain-security/SKILL.md
+* scripts/linting/schemas/sssc-state.schema.json
+* docs/planning/brds/sssc-planner-security-brd.md
+* docs/prds/sssc-planner.md
+* collections/security.collection.yml
+* collections/security.collection.md
+
 ## More Information
 
 * `docs/planning/brds/sssc-planner-security-brd.md`
 * `docs/prds/sssc-planner.md`
 * `.github/agents/security/sssc-planner.agent.md`
 * `.github/instructions/security/sssc-planner.instructions.md`
+* `.github/prompts/security/sssc-capture.prompt.md`
+* `.github/prompts/security/sssc-from-prd.prompt.md`
+* `.github/prompts/security/sssc-from-brd.prompt.md`
+* `.github/prompts/security/sssc-from-security-plan.prompt.md`
 * `.github/skills/security/supply-chain-security/SKILL.md`
 * `scripts/linting/schemas/sssc-state.schema.json`
+* `collections/security.collection.yml`
+* `collections/security.collection.md`
 
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
