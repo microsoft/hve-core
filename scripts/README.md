@@ -20,11 +20,12 @@ This directory contains PowerShell scripts for automating linting, validation, a
 ```text
 scripts/
 ├── collections/     Collection validation and shared helpers
+├── devcontainer/    Devcontainer lockfile and change log validation
 ├── extension/       VS Code extension packaging utilities
 ├── lib/             Shared utility modules
 ├── linting/         PowerShell linting and validation scripts
 ├── plugins/         Copilot CLI plugin generation
-└── security/        Security scanning and dependency pinning scripts
+├── security/        Security scanning and dependency pinning scripts
 └── tests/           Pester test organization
 ```
 
@@ -65,6 +66,22 @@ The `linting/` directory contains scripts for validating code quality and docume
 
 See [linting/README.md](linting/README.md) for detailed documentation.
 
+## Devcontainer Scripts
+
+The `devcontainer/` directory contains scripts for devcontainer infrastructure validation:
+
+| Script                              | Purpose                                                  |
+|-------------------------------------|----------------------------------------------------------|
+| `Test-DevcontainerLockfile.ps1`     | Validate lockfile existence, SHA-256 integrity, coverage |
+| `Write-DevcontainerChangeLog.ps1`   | Classify changed files and generate markdown summary     |
+
+Run locally:
+
+```bash
+npm run validate:devcontainer-lockfile
+npm run validate:devcontainer-changelog
+```
+
 ## Security Scripts
 
 The `security/` directory contains scripts for security scanning and dependency management:
@@ -97,16 +114,17 @@ Collection validation and shared helpers.
 
 Pester test organization matching the scripts structure.
 
-| Directory      | Tests For                 |
-|----------------|---------------------------|
-| `collections/` | Collection helpers tests  |
-| `extension/`   | Extension packaging tests |
-| `lib/`         | Library utility tests     |
-| `linting/`     | Linting script tests      |
-| `security/`    | Security validation tests |
-| `plugins/`     | Plugin generation tests   |
-| `Fixtures/`    | Shared test fixtures      |
-| `Mocks/`       | Shared mock data          |
+| Directory        | Tests For                       |
+|------------------|---------------------------------|
+| `collections/`   | Collection helpers tests        |
+| `devcontainer/`  | Devcontainer validation tests   |
+| `extension/`     | Extension packaging tests       |
+| `lib/`           | Library utility tests           |
+| `linting/`       | Linting script tests            |
+| `security/`      | Security validation tests       |
+| `plugins/`       | Plugin generation tests         |
+| `Fixtures/`      | Shared test fixtures            |
+| `Mocks/`         | Shared mock data                |
 
 Run all tests:
 

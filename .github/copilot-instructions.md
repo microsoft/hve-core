@@ -58,6 +58,7 @@ Scripts are organized by function:
 * Collections (`scripts/collections/`) - Collection validation and shared helper modules.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, model reference validation, and PowerShell analysis.
+* Devcontainer (`scripts/devcontainer/`) - Lockfile integrity validation and infrastructure change log generation.
 * Security (`scripts/security/`) - Dependency pinning validation, SHA staleness checks, and action version consistency.
 * Library (`scripts/lib/`) - Shared utilities such as verified downloads.
 * Plugins (`scripts/plugins/`) - Plugin generation and marketplace validation.
@@ -215,8 +216,10 @@ Agents should use npm scripts for all validation:
 * `npm run lint:py` - Python linting via ruff
 * `npm run lint:models` - Model reference validation against catalog
 * `npm run lint:models:refresh` - Refresh model catalog from upstream documentation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, and `lint:models`)
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, `lint:models`, and `validate:devcontainer-lockfile`)
 * `npm run validate:copyright` - Copyright header validation
+* `npm run validate:devcontainer-lockfile` - Devcontainer lockfile integrity validation
+* `npm run validate:devcontainer-changelog` - Devcontainer infrastructure change summary
 * `npm run validate:skills` - Skill structure validation
 * `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting
