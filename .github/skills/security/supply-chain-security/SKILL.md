@@ -1,6 +1,6 @@
 ---
 name: supply-chain-security
-description: Software supply chain security reference covering OpenSSF Scorecard, SLSA v1.0, Sigstore, SBOM, and the posture and backlog taxonomies.
+description: Software supply chain security reference for OpenSSF Scorecard, SLSA, Sigstore, SBOM, and posture/backlog taxonomies.
 license: MIT
 user-invocable: true
 ---
