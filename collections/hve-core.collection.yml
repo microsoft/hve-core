@@ -38,6 +38,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/pr-walkthrough.agent.md
     kind: agent
+    maturity: experimental
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md

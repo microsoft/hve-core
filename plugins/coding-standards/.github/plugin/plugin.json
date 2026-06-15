@@ -5,7 +5,8 @@
   "agents": [
     "agents/accessibility/",
     "agents/accessibility/subagents/",
-    "agents/coding-standards/"
+    "agents/coding-standards/",
+    "agents/hve-core/"
   ],
   "commands": [
     "commands/coding-standards/"
