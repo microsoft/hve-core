@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Generated Report</title>
+<style>
+  :root {
+    --bg: #1e1e1e; --surface: #252526; --border: #3c3c3c;
+    --text: #d4d4d4; --text-dim: #808080; --accent: #569cd6;
+    --green: #6a9955; --yellow: #dcdcaa; --red: #f44747;
+    --orange: #ce9178; --purple: #c586c0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; padding: 24px; max-width: 1400px; margin: 0 auto;
+  }
+  h1 { color: var(--accent); font-size: 1.5rem; margin-bottom: 4px; }
+  h2 { color: var(--accent); font-size: 1.1rem; margin: 28px 0 12px; }
+  .subtitle { color: var(--text-dim); margin-bottom: 24px; font-size: 0.9rem; }
+
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 8px;
+    padding: 40px 24px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s; margin-bottom: 24px;
+  }
+  .drop-zone:hover, .drop-zone.active {
+    border-color: var(--accent); background: rgba(86,156,214,0.05);
+  }
+  .drop-zone input { display: none; }
+  .drop-zone p { color: var(--text-dim); }
+
+  .dashboard { display: none; }
+  .dashboard.visible { display: block; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px;
+  }
+  .card .label { color: var(--text-dim); font-size: 0.8rem; }
+  .card .value { font-size: 1.4rem; font-weight: 600; color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--accent); font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+  td { font-size: 0.82rem; }
+  td.mono { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.8rem; }
+
+  .tag {
+    display: inline-block; border-radius: 3px; padding: 1px 6px;
+    margin: 1px 2px; font-size: 0.75rem;
+  }
+  .tag-model { background: rgba(86,156,214,0.2); color: var(--accent); }
+  .tag-agent { background: rgba(197,134,192,0.2); color: var(--purple); }
+  .tag-instruction { background: rgba(106,153,85,0.2); color: var(--green); }
+  .tag-skill { background: rgba(220,220,170,0.2); color: var(--yellow); }
+  .tag-tool { background: rgba(206,145,120,0.15); color: var(--orange); }
+  .tag-client { background: rgba(86,156,214,0.15); color: var(--accent); font-weight: 600; }
+  .tag-approx { background: rgba(255,255,255,0.06); color: var(--text-dim); font-style: italic; cursor: help; }
+
+  .agent-usage-breakdown { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; }
+  .agent-usage-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  .agent-usage-row .meta { display: inline; font-size: 0.72rem; }
+
+  .matrix-wrap { overflow-x: auto; margin-bottom: 16px; }
+  .matrix-table { border-collapse: collapse; width: 100%; }
+  .matrix-table th, .matrix-table td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; text-align: left; }
+  .matrix-table thead th { background: var(--surface); position: sticky; top: 0; }
+  .matrix-table .dim-label {
+    font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap; background: var(--surface); position: sticky; left: 0; z-index: 1;
+  }
+  .matrix-table .session-title { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; max-width: 220px; overflow-wrap: break-word; white-space: normal; }
+  .matrix-table .sid { font-family: 'Cascadia Code', monospace; font-size: 0.75rem; color: var(--accent); }
+  .matrix-table .meta { color: var(--text-dim); font-size: 0.8rem; display: block; }
+  .matrix-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  .heatmap { display: grid; gap: 2px; margin-bottom: 16px; }
+  .heatmap-cell {
+    padding: 4px 8px; border-radius: 3px; font-size: 0.75rem;
+    text-align: center; min-width: 40px;
+  }
+  .heatmap-header { font-weight: 600; color: var(--text-dim); background: none; font-size: 0.7rem; }
+  .heatmap-model { display: block; font-weight: 400; color: var(--accent); font-size: 0.65rem; margin-top: 2px; }
+  .heat-0 { background: rgba(255,255,255,0.03); color: var(--text-dim); }
+  .heat-1 { background: rgba(86,156,214,0.15); color: var(--accent); }
+  .heat-2 { background: rgba(86,156,214,0.3); color: var(--accent); }
+  .heat-3 { background: rgba(86,156,214,0.5); color: #fff; }
+
+  .file-list { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 16px; }
+  .file-item { display: inline-block; background: var(--surface); border-radius: 4px; padding: 2px 8px; margin: 2px; }
+  .hidden { display: none; }
+  .empty-state { color: var(--text-dim); font-style: italic; padding: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Local Generated Report</h1>
+<p class="subtitle">Compare agents, models, instructions, and skills across local sessions</p>
+
+<div class="drop-zone" id="dropZone">
+  <p>Drag &amp; drop session JSONL files here or click to browse</p>
+  <p style="font-size:0.8rem; margin-top:8px;">sessions-*.jsonl &middot; main.jsonl (debug logs for token data)</p>
+  <input type="file" id="fileInput" multiple accept=".jsonl,.json">
+</div>
+<div class="file-list" id="fileList"></div>
+
+<!-- Embedded telemetry data. Populated by Invoke-TelemetryReport.ps1 to produce a
+     self-contained report. Leave as an empty array for the interactive drag & drop viewer. -->
+<script id="embeddedData" type="application/json">[]</script>
+
+<div class="dashboard" id="dashboard">
+  <div class="grid" id="overviewGrid"></div>
+
+  <h2>Session Matrix</h2>
+  <div id="matrixContainer"></div>
+
+  <h2 id="tokenHeading" class="hidden">Token Usage</h2>
+  <p id="tokenSubtitle" class="subtitle hidden" style="margin-bottom:12px;">Exact counts from debug logs (main.jsonl), joined to sessions by id &mdash; CLI/hook-only sessions show no usage. Input (new): plain = exact (process log); <span class="tag tag-approx">~</span> = approximate (compaction); <span class="tag tag-approx">&mdash;</span> = unknown</p>
+  <div id="tokenContainer"></div>
+
+  <h2>Loaded Instructions &amp; Skills</h2>
+  <p class="subtitle" style="margin-bottom:12px;">Instruction and skill files a session opened via a tool call (estimated ~4 chars/token). Host-attached files are not counted here &mdash; see per-session Token Usage above for actual cost.</p>
+  <div id="coverageContainer"></div>
+
+  <h2>Tool Heatmap</h2>
+  <p class="subtitle" style="margin-bottom:12px;">Tool call counts per session (PreToolUse events)</p>
+  <div id="heatmapContainer"></div>
+
+  <h2>Tool Latency</h2>
+  <p class="subtitle" style="margin-bottom:12px;">Avg tool execution time from PreToolUse&rarr;PostToolUse pairs (ms)</p>
+  <div id="latencyContainer"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const dashboard = document.getElementById('dashboard');
+  const fileListEl = document.getElementById('fileList');
+
+  let hookEvents = [];
+  let debugEvents = [];
+  let loadedFiles = [];
+  // Maps subagent tool_call_id → human-readable agent name (populated from SessionSummary)
+  let subagentNames = {};
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('active');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+  function handleFiles(files) {
+    for (const file of files) {
+      loadedFiles.push(file.name);
+      const reader = new FileReader();
+      reader.onload = e => { parseJsonl(e.target.result); render(); };
+      reader.readAsText(file);
+    }
+  }
+
+  /** Load data embedded by Invoke-TelemetryReport.ps1, if any. */
+  function loadEmbedded() {
+    const el = document.getElementById('embeddedData');
+    if (!el) return false;
+    let files;
+    try { files = JSON.parse(el.textContent); } catch { return false; }
+    if (!Array.isArray(files) || files.length === 0) return false;
+    dropZone.style.display = 'none';
+    for (const f of files) {
+      loadedFiles.push(f.name);
+      parseJsonl(f.content);
+    }
+    render();
+    return true;
+  }
+
+  function parseJsonl(text) {
+    for (const line of text.split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const obj = JSON.parse(line);
+        if (obj.event && obj.sid) {
+          hookEvents.push(obj);
+        } else if (obj.type === 'llm_request' || (typeof obj.name === 'string' && (obj.name.includes('llm_request') || obj.name.startsWith('chat:')))) {
+          debugEvents.push(obj);
+        }
+      } catch { /* skip */ }
+    }
+  }
+
+  /** Build per-session profile from hook events */
+  function buildSessions() {
+    const sessions = {};
+    for (const e of hookEvents) {
+      if (!sessions[e.sid]) {
+        sessions[e.sid] = {
+          sid: e.sid, cwd: '', model: new Set(), modelHint: new Set(), agents: new Set(),
+          instructions: new Set(), skills: new Set(), subagents: new Set(),
+          instrTokens: {}, skillTokens: {},
+          tools: {}, toolCount: 0, firstTs: e.ts, lastTs: e.ts,
+          pendingTools: {}, toolLatencies: {},
+          firstPrompt: '', hasSessionSummary: false, client: '',
+          usage: { requests: 0, input: 0, uncached: null, cached: 0, output: 0, aiu: 0, ttft: 0, ttftCount: 0, tokenSource: '' },
+          // Provenance of the chosen SessionSummary: rank prefers accurate
+          // process-log data over the zero-input state fallback; tie broken by
+          // freshness so a live mid-session regen supersedes an older snapshot.
+          summaryRank: -1, summaryTs: ''
+        };      }
+      const s = sessions[e.sid];
+      if (e.ts) {
+        if (e.ts < s.firstTs || !s.firstTs) s.firstTs = e.ts;
+        if (e.ts > s.lastTs || !s.lastTs) s.lastTs = e.ts;
+      }
+      if (e.cwd && !s.cwd) s.cwd = e.cwd;
+
+      // Session origin (cli, vscode, cloud-agent)
+      if (e.client && !s.client) s.client = e.client;
+
+      // Precise model version is joined later from debug-log llm_request events.
+      if (e.model_hint && e.model_hint !== 'unknown') s.modelHint.add(e.model_hint);
+
+      // Precise model supplied directly in the hook payload (e.g. CLI hosts).
+      if (e.model) s.model.add(e.model);
+
+      // SessionSummary (emitted by collector at Stop time from CLI session state).
+      // Multiple summaries may exist per session (hook Stop events plus a
+      // report-time fallback). They are cumulative snapshots, so we replace
+      // (not accumulate). Choose by provenance rank, then freshness: accurate
+      // process-log data outranks the zero-input state fallback, and among
+      // equal-rank summaries the latest last_ts wins so a live mid-session
+      // regeneration supersedes an older snapshot.
+      if (e.event === 'SessionSummary') {
+        s.hasSessionSummary = true;
+        // Explicit token_source (newer summaries) is authoritative; for legacy
+        // summaries without it, infer accuracy from presence of input/cache/aiu.
+        const rank = e.token_source === 'process_log' ? 2
+          : e.token_source === 'state_fallback' ? 0
+          : ((e.input_tokens || e.cache_read_tokens || e.total_nano_aiu) ? 2 : 0);
+        const ts = e.last_ts || e.ts || '';
+        const better = rank > s.summaryRank
+          || (rank === s.summaryRank && ts >= s.summaryTs);
+        // Model names accumulate across all summaries regardless of which wins.
+        const models = e.models || {};
+        for (const m of Object.keys(models)) { if (m) s.model.add(m); }
+        if (e.subagent_map) { Object.assign(subagentNames, e.subagent_map); }
+        if (e.first_ts) { if (e.first_ts < s.firstTs || !s.firstTs) s.firstTs = e.first_ts; }
+        if (e.last_ts) { if (e.last_ts > s.lastTs || !s.lastTs) s.lastTs = e.last_ts; }
+        if (!better) continue;
+        s.summaryRank = rank;
+        s.summaryTs = ts;
+        const u = s.usage;
+        u.output = e.output_tokens || 0;
+        u.input = e.input_tokens || 0;
+        // Exact fresh input from the process log; null when the summary used
+        // the compaction-only state fallback, so the report can fall back to
+        // input minus cache reads instead of treating absence as zero.
+        u.uncached = (typeof e.input_tokens_uncached === 'number') ? e.input_tokens_uncached : null;
+        // Record how this session's input was determined so the table can flag
+        // exact (process_log) vs approximate/unknown (state_fallback) counts.
+        u.tokenSource = e.token_source || (rank === 2 ? 'process_log' : 'state_fallback');
+        u.cached = e.cache_read_tokens || 0;
+        u.aiu = e.total_nano_aiu || 0;
+        u.requests = e.messages || 0;
+        // Per-model breakdown for sessions using multiple models
+        if (e.model_usage) {
+          s.modelUsage = e.model_usage;
+        }
+        // Per-subagent token attribution from process log partitioning
+        if (e.agent_usage) {
+          s.agentUsage = e.agent_usage;
+        }
+      }
+
+      // Instructions loaded via read_file (track max token estimate seen)
+      if (e.instruction) {
+        s.instructions.add(e.instruction);
+        const t = e.tokens || 0;
+        if (t > (s.instrTokens[e.instruction] || 0)) s.instrTokens[e.instruction] = t;
+      }
+
+      // Skills loaded via read_file (track max token estimate seen)
+      if (e.skill) {
+        s.skills.add(e.skill);
+        const t = e.tokens || 0;
+        if (t > (s.skillTokens[e.skill] || 0)) s.skillTokens[e.skill] = t;
+      }
+
+      // First user prompt doubles as a human-readable session label.
+      if (e.event === 'UserPromptSubmit' && e.prompt && !s.firstPrompt) {
+        s.firstPrompt = e.prompt;
+      }
+
+      // Subagent invocations
+      if (e.event === 'SubagentStart') s.subagents.add(e.agent_name || e.agent_display_name || '');
+      if (e.subagent) s.subagents.add(e.subagent);
+
+      // Agent context (who called the tool)
+      if (e.agent && e.agent !== 'root') s.agents.add(e.agent);
+
+      // Tool usage and latency (sequential correlation by tool name)
+      if (e.event === 'PreToolUse' && e.tool) {
+        s.tools[e.tool] = (s.tools[e.tool] || 0) + 1;
+        s.toolCount++;
+        if (!s.pendingTools[e.tool]) s.pendingTools[e.tool] = [];
+        s.pendingTools[e.tool].push(e.ts);
+      }
+      if (e.event === 'PostToolUse' && e.tool && s.pendingTools[e.tool] && s.pendingTools[e.tool].length) {
+        const preTs = s.pendingTools[e.tool].shift();
+        const ms = new Date(e.ts) - new Date(preTs);
+        if (ms >= 0 && ms < 300000) {
+          if (!s.toolLatencies[e.tool]) s.toolLatencies[e.tool] = [];
+          s.toolLatencies[e.tool].push(ms);
+        }
+      }
+    }
+
+    // Join precise model identifiers from debug-log llm_request events by sid.
+    // These carry the exact version (e.g. claude-opus-4.6) that hooks cannot see.
+    for (const e of debugEvents) {
+      const model = e.attrs && e.attrs.model;
+      if (model && e.sid && sessions[e.sid]) sessions[e.sid].model.add(model);
+    }
+
+    // Accumulate exact token usage per session from debug-log llm_request events.
+    // Skip sessions that already have a SessionSummary to avoid double-counting.
+    for (const e of debugEvents) {
+      const a = e.attrs;
+      if (!a || !e.sid) continue;
+      const s = sessions[e.sid];
+      if (!s || s.hasSessionSummary) continue;
+      const u = s.usage;
+      u.requests++;
+      u.input += a.inputTokens || 0;
+      u.cached += a.cachedTokens || a.cacheReadTokens || 0;
+      u.output += a.outputTokens || 0;
+      u.aiu += a.copilotUsageNanoAiu || (e.copilotUsage && e.copilotUsage.totalNanoAiu) || 0;
+      if (a.ttft) { u.ttft += a.ttft; u.ttftCount++; }
+      // Build per-model breakdown for sessions without SessionSummary
+      const model = a.model || 'unknown';
+      if (!s.modelUsage) s.modelUsage = {};
+      if (!s.modelUsage[model]) s.modelUsage[model] = { output_tokens: 0, messages: 0 };
+      s.modelUsage[model].output_tokens += a.outputTokens || 0;
+      s.modelUsage[model].messages++;
+    }
+
+    // Infer vscode client for sessions enriched only by debug logs (no hook data)
+    for (const sid of Object.keys(sessions)) {
+      const s = sessions[sid];
+      if (!s.client && s.usage.requests > 0) s.client = 'vscode';
+    }
+
+    // Merge subagent sessions into their parent session.
+    // childToParent built from subagent_map in SessionSummary events during processing above.
+    const childToParent = {};
+    for (const e of hookEvents) {
+      if (e.event === 'SessionSummary' && e.subagent_map) {
+        for (const childSid of Object.keys(e.subagent_map)) {
+          childToParent[childSid] = e.sid;
+        }
+      }
+    }
+    for (const [childSid, parentSid] of Object.entries(childToParent)) {
+      const child = sessions[childSid];
+      const parent = sessions[parentSid];
+      if (!child || !parent) continue;
+      // Merge tool counts into parent
+      for (const [tool, count] of Object.entries(child.tools)) {
+        parent.tools[tool] = (parent.tools[tool] || 0) + count;
+        parent.toolCount += count;
+      }
+      // Merge latencies
+      for (const [tool, lats] of Object.entries(child.toolLatencies || {})) {
+        if (!parent.toolLatencies[tool]) parent.toolLatencies[tool] = [];
+        parent.toolLatencies[tool].push(...lats);
+      }
+      // Track the subagent name on the parent
+      const agentLabel = subagentNames[childSid] || 'subagent';
+      parent.subagents.add(agentLabel);
+      // Merge token usage so subagent LLM cost is attributed to the parent
+      const cu = child.usage, pu = parent.usage;
+      pu.input += cu.input; pu.output += cu.output; pu.cached += cu.cached;
+      pu.aiu += cu.aiu; pu.requests += cu.requests;
+      // Accumulate exact fresh input only when the child carries it; a child
+      // without process-log data leaves the parent's value untouched.
+      if (cu.uncached != null) pu.uncached = (pu.uncached || 0) + cu.uncached;
+      pu.ttft += cu.ttft; pu.ttftCount += cu.ttftCount;
+      if (child.modelUsage) {
+        if (!parent.modelUsage) parent.modelUsage = {};
+        for (const [m, d] of Object.entries(child.modelUsage)) {
+          if (!parent.modelUsage[m]) parent.modelUsage[m] = { output_tokens: 0, messages: 0, input_tokens: 0 };
+          parent.modelUsage[m].output_tokens += d.output_tokens || 0;
+          parent.modelUsage[m].input_tokens += d.input_tokens || 0;
+          parent.modelUsage[m].messages += d.messages || 0;
+        }
+      }
+      // Synthesize per-agent usage from child session data when the backend
+      // did not emit agent_usage (e.g. process log was unavailable).
+      if (!parent.agentUsage && cu.requests) {
+        if (!parent.agentUsage) parent.agentUsage = {};
+        parent.agentUsage[agentLabel] = {
+          output_tokens: cu.output, input_tokens: cu.input,
+          cache_read_tokens: cu.cached, total_nano_aiu: cu.aiu,
+          requests: cu.requests,
+        };
+      }
+      // Extend parent time range
+      if (child.firstTs < parent.firstTs) parent.firstTs = child.firstTs;
+      if (child.lastTs > parent.lastTs) parent.lastTs = child.lastTs;
+      // Remove the child session
+      delete sessions[childSid];
+    }
+
+    return Object.values(sessions);
+  }
+
+  /** Precise models if known from debug logs, else vendor hints from hooks. */
+  function sessionModels(s) {
+    return s.model.size ? [...s.model] : [...s.modelHint];
+  }
+
+  /** Short human-readable session label from its first prompt, else the sid. */
+  function sessionLabel(s, max) {
+    const p = (s.firstPrompt || '').replace(/\s+/g, ' ').trim();
+    if (!p) {
+      // Subagent sessions use toolCallId as sid — resolve to agent name
+      if (subagentNames[s.sid]) return '\u2937 ' + subagentNames[s.sid];
+      return s.sid.substring(0, 8);
+    }
+    const limit = max || 48;
+    return p.length > limit ? p.substring(0, limit - 1) + '\u2026' : p;
+  }
+
+  /** Compact model name: drop common vendor prefixes for display. */
+  function shortModel(m) {
+    return String(m).replace(/^(gpt|claude|gemini)-/i, '').trim() || m;
+  }
+
+  function render() {
+    fileListEl.innerHTML = loadedFiles.map(f => `<span class="file-item">${f}</span>`).join(' ');
+    dashboard.classList.add('visible');
+    const sessions = buildSessions();
+    renderOverview(sessions);
+    renderMatrix(sessions);
+    renderHeatmap(sessions);
+    renderLatency(sessions);
+    renderTokens(sessions);
+    renderCoverage(sessions);
+  }
+
+  function renderOverview(sessions) {
+    const grid = document.getElementById('overviewGrid');
+    const allModels = new Set(); const allInstr = new Set(); const allSkills = new Set(); const allAgents = new Set();
+    let totalTools = 0;
+    sessions.forEach(s => {
+      sessionModels(s).forEach(m => allModels.add(m));
+      s.instructions.forEach(i => allInstr.add(i));
+      s.skills.forEach(sk => allSkills.add(sk));
+      s.subagents.forEach(a => allAgents.add(a));
+      totalTools += s.toolCount;
+    });
+    // Token totals: use session usage (already de-duplicated) instead of raw debug events.
+    // Prefer the exact fresh-input count from the process log; otherwise fall back to
+    // input minus cache reads because each request's input_tokens carries the full
+    // running context, so summing raw input re-counts the cached prefix every turn.
+    let totalIn = 0, totalOut = 0;
+    sessions.forEach(s => { totalIn += freshInput(s.usage); totalOut += s.usage.output; });
+    // Flag the aggregate when any session's fresh input is approximate or unknown
+    // (state fallback), since those contribute an understated or zero value to the sum.
+    const inApprox = sessions.some(s => s.usage.requests > 0
+      && s.usage.uncached == null && s.usage.tokenSource === 'state_fallback');
+    const inLabel = 'Input Tokens (new)' + (inApprox ? ' \u2243' : '');
+    const cards = [
+      { label: 'Sessions', value: sessions.length },
+      { label: 'Models Seen', value: allModels.size || '—' },
+      { label: 'Instructions Loaded', value: allInstr.size },
+      { label: 'Skills Loaded', value: allSkills.size },
+      { label: 'Subagents Used', value: allAgents.size },
+      { label: 'Total Tool Calls', value: totalTools },
+    ];
+    if (totalIn > 0 || totalOut > 0) {
+      const totalRequests = sessions.reduce((sum, s) => sum + s.usage.requests, 0);
+      cards.push(
+        { label: 'LLM Requests', value: totalRequests },
+        { label: inLabel, value: fmtTokens(totalIn), title: inApprox ? 'Understated: one or more sessions lack exact per-request data (approximate or unknown input)' : '' },
+        { label: 'Output Tokens', value: fmtTokens(totalOut) }
+      );
+    }
+    grid.innerHTML = cards.map(c => `<div class="card"${c.title ? ` title="${c.title}"` : ''}><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`).join('');
+  }
+
+  function renderMatrix(sessions) {
+    const container = document.getElementById('matrixContainer');
+    if (sessions.length === 0) { container.innerHTML = '<p class="empty-state">No session data loaded</p>'; return; }
+
+    const dim = (none) => `<span style="color:var(--text-dim);font-size:0.8rem;">${none}</span>`;
+    const cols = sessions.map(s => {
+      const shortSid = s.sid.substring(0, 12);
+      const models = sessionModels(s).map(m => `<span class="tag tag-model">${m}</span>`).join('') || `<span class="tag tag-model">not yet detected</span>`;
+      const agents = [...s.subagents].filter(Boolean).map(a => `<span class="tag tag-agent">${a}</span>`).join('') || dim('none');
+      const instrs = [...s.instructions].map(i => `<span class="tag tag-instruction">${i}</span>`).join('') || dim('none loaded');
+      const skills = [...s.skills].map(sk => `<span class="tag tag-skill">${sk}</span>`).join('') || dim('none loaded');
+      const topTools = Object.entries(s.tools).sort((a,b) => b[1] - a[1]).slice(0, 8)
+        .map(([t,c]) => `<span class="tag tag-tool">${t} (${c})</span>`).join('') || dim('none');
+
+      const durMs = new Date(s.lastTs) - new Date(s.firstTs);
+      const durStr = durMs > 0 ? fmtDuration(durMs) : '';
+      const started = s.firstTs ? new Date(s.firstTs).toLocaleString() : '';
+
+      const u = s.usage;
+      let tokens = u.requests
+        ? `<span class="tag tag-tool">${fmtTokens(Math.max(0, u.input - u.cached))} in</span>` +
+          `<span class="tag tag-tool">${fmtTokens(u.output)} out</span>` +
+          (u.aiu ? `<span class="tag tag-model">${fmtAiu(u.aiu)} AIU</span>` : '') +
+          `<span class="meta">${u.requests} request${u.requests === 1 ? '' : 's'}</span>`
+        : dim('no debug-log usage');
+      // Per-subagent token breakdown
+      if (s.agentUsage) {
+        const agentLines = Object.entries(s.agentUsage)
+          .filter(([name]) => name !== 'root')
+          .sort((a, b) => (b[1].output_tokens || 0) - (a[1].output_tokens || 0))
+          .map(([name, au]) => {
+            const freshIn = Math.max(0, (au.input_tokens || 0) - (au.cache_read_tokens || 0));
+            return `<div class="agent-usage-row"><span class="tag tag-agent">${name}</span>` +
+              `<span class="meta">${fmtTokens(freshIn)} in · ${fmtTokens(au.output_tokens || 0)} out` +
+              (au.total_nano_aiu ? ` · ${fmtAiu(au.total_nano_aiu)} AIU` : '') +
+              ` · ${au.requests || 0} req</span></div>`;
+          });
+        if (agentLines.length) {
+          tokens += `<div class="agent-usage-breakdown">${agentLines.join('')}</div>`;
+        }
+      }
+
+      const cwdShort = s.cwd ? s.cwd.replace(/^.*[/\\]/, '') : '';
+      const clientTag = s.client ? `<span class="tag tag-client">${s.client}</span>` : '';
+
+      return {
+        header: `<span class="session-title">${sessionLabel(s)}</span>` +
+          `<span class="sid">${shortSid}</span>` + clientTag +
+          (cwdShort ? `<span class="meta" title="${s.cwd}">${cwdShort}</span>` : '') +
+          `<span class="meta">${s.toolCount} tool calls</span>` +
+          (durStr ? `<span class="meta">${durStr} duration</span>` : '') +
+          (started ? `<span class="meta">${started}</span>` : ''),
+        models, agents, instrs, skills, topTools, tokens
+      };
+    });
+
+    const rows = [
+      ['Model', 'models'],
+      ['Token Usage', 'tokens'],
+      ['Subagents', 'agents'],
+      ['Instructions Loaded', 'instrs'],
+      ['Skills Loaded', 'skills'],
+      ['Top Tools', 'topTools']
+    ];
+
+    let html = '<div class="matrix-wrap"><table class="matrix-table"><thead><tr>';
+    html += '<th class="dim-label">Session</th>';
+    cols.forEach(c => { html += `<th>${c.header}</th>`; });
+    html += '</tr></thead><tbody>';
+    rows.forEach(([label, key]) => {
+      html += `<tr><td class="dim-label">${label}</td>`;
+      cols.forEach(c => { html += `<td>${c[key]}</td>`; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
+
+  function renderHeatmap(sessions) {
+    const container = document.getElementById('heatmapContainer');
+    if (sessions.length === 0) { container.innerHTML = ''; return; }
+
+    // Collect all tools across sessions
+    const allTools = new Set();
+    sessions.forEach(s => Object.keys(s.tools).forEach(t => allTools.add(t)));
+    const tools = [...allTools].sort();
+    if (tools.length === 0) { container.innerHTML = '<p class="empty-state">No tool data</p>'; return; }
+
+    const cols = tools.length + 1;
+    let html = `<div class="heatmap" style="grid-template-columns: 200px repeat(${tools.length}, 1fr);">`;
+    // Header row
+    html += '<div class="heatmap-cell heatmap-header">Session</div>';
+    tools.forEach(t => { html += `<div class="heatmap-cell heatmap-header">${t.replace(/^(vscode_|manage_)/, '')}</div>`; });
+
+    // Data rows
+    sessions.forEach(s => {
+      const models = sessionModels(s);
+      const modelStr = models.length ? models.map(shortModel).join(', ') : '—';
+      html += `<div class="heatmap-cell heatmap-header" title="${s.sid}" style="text-align:left;">` +
+        `${sessionLabel(s, 18)}<span class="heatmap-model">${modelStr}</span></div>`;
+      tools.forEach(t => {
+        const count = s.tools[t] || 0;
+        const heat = count === 0 ? 0 : count <= 3 ? 1 : count <= 10 ? 2 : 3;
+        html += `<div class="heatmap-cell heat-${heat}">${count || ''}</div>`;
+      });
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function fmtTokens(n) {
+    if (!n) return '0';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toString();
+  }
+
+  /** Fresh (uncached) input tokens: exact when the summary carried
+   *  input_tokens_uncached (process log), else input minus cache reads. */
+  function freshInput(u) {
+    if (u.uncached != null) return Math.max(0, u.uncached);
+    return Math.max(0, u.input - u.cached);
+  }
+
+  /** Fresh-input table cell, flagging accuracy by token source. A state_fallback
+   *  session with no recoverable input is unknown ("—"); one with compaction-only
+   *  input is approximate; an exact process-log count renders plainly. The uncached
+   *  guard lets a merged subagent's exact count override the parent's fallback. */
+  function inputCell(u) {
+    const fresh = freshInput(u);
+    if (u.uncached == null && u.tokenSource === 'state_fallback') {
+      if (fresh === 0) {
+        return '<span class="tag tag-approx" title="No process-log or compaction data for this session; fresh input is unknown">—</span>';
+      }
+      return `${fmtTokens(fresh)} <span class="tag tag-approx" title="Approximate: derived from compaction (input minus cache reads), not exact per-request data">~</span>`;
+    }
+    return fmtTokens(fresh);
+  }
+
+  function fmtDuration(ms) {
+    const s = ms / 1000;
+    if (s < 1) return ms + 'ms';
+    if (s < 60) return s.toFixed(1) + 's';
+    if (s < 3600) return Math.floor(s / 60) + 'm ' + Math.floor(s % 60) + 's';
+    return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+  }
+
+  function renderLatency(sessions) {
+    const container = document.getElementById('latencyContainer');
+    // Merge latencies across sessions per tool
+    const allTools = {};
+    sessions.forEach(s => {
+      for (const [tool, times] of Object.entries(s.toolLatencies)) {
+        if (!allTools[tool]) allTools[tool] = [];
+        allTools[tool].push(...times);
+      }
+    });
+    const entries = Object.entries(allTools);
+    if (entries.length === 0) {
+      container.innerHTML = '<p class="empty-state">No latency data — requires both PreToolUse and PostToolUse events for the same tool</p>';
+      return;
+    }
+    entries.sort((a, b) => {
+      const avgA = a[1].reduce((s,v) => s+v, 0) / a[1].length;
+      const avgB = b[1].reduce((s,v) => s+v, 0) / b[1].length;
+      return avgB - avgA;
+    });
+    let html = '<table><thead><tr><th>Tool</th><th>Calls</th><th>Avg</th><th>Min</th><th>Max</th><th>Total</th></tr></thead><tbody>';
+    entries.forEach(([tool, times]) => {
+      const avg = times.reduce((s,v) => s+v, 0) / times.length;
+      const min = Math.min(...times);
+      const max = Math.max(...times);
+      const total = times.reduce((s,v) => s+v, 0);
+      html += `<tr><td>${tool}</td><td>${times.length}</td><td>${fmtDuration(avg)}</td><td>${fmtDuration(min)}</td><td>${fmtDuration(max)}</td><td>${fmtDuration(total)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function renderTokens(sessions) {
+    const heading = document.getElementById('tokenHeading');
+    const subtitle = document.getElementById('tokenSubtitle');
+    const container = document.getElementById('tokenContainer');
+    const hasTokenData = (sessions || []).some(s => s.usage.requests > 0);
+    if (!hasTokenData && debugEvents.length === 0) { heading.classList.add('hidden'); subtitle.classList.add('hidden'); container.innerHTML = ''; return; }
+    heading.classList.remove('hidden'); subtitle.classList.remove('hidden');
+
+    // Per-session usage table (exact counts joined by sid from debug logs).
+    const used = (sessions || []).filter(s => s.usage.requests > 0)
+      .sort((a, b) => (freshInput(b.usage) + b.usage.output) - (freshInput(a.usage) + a.usage.output));
+    let html = '';
+    if (used.length) {
+      html += '<h3 style="margin:4px 0 8px;">By Session</h3>';
+      html += '<table><thead><tr><th>Session</th><th>Models</th><th>Requests</th><th title="Fresh (uncached) input tokens; cached prefix is shown separately">Input (new)</th>' +
+        '<th>Cached (hit %)</th><th>Output</th><th>Total</th><th>AIU</th><th>Avg TTFT</th></tr></thead><tbody>';
+      used.forEach(s => {
+        const u = s.usage;
+        // Prefer the exact fresh-input count from the process log. When it is
+        // unavailable (state fallback), each request's input_tokens is the full
+        // running context, so the cached prefix is re-sent every turn; subtract
+        // cache reads to avoid re-counting it. Cached and AIU are shown separately.
+        const freshIn = freshInput(u);
+        const total = freshIn + u.output;
+        const hitPct = u.input ? Math.round((u.cached / u.input) * 100) : 0;
+        const avgTtft = u.ttftCount ? fmtDuration(u.ttft / u.ttftCount) : '—';
+        const models = sessionModels(s).join(', ') || '—';
+        const clientTag = s.client ? ` <span class="tag tag-client">${s.client}</span>` : '';
+        html += `<tr><td class="sid" title="${s.sid}">${sessionLabel(s, 40)}${clientTag}</td><td>${models}</td>` +
+          `<td>${u.requests}</td><td>${inputCell(u)}</td>` +
+          `<td>${fmtTokens(u.cached)} (${hitPct}%)</td><td>${fmtTokens(u.output)}</td>` +
+          `<td>${fmtTokens(total)}</td><td>${u.aiu ? fmtAiu(u.aiu) : '—'}</td><td>${avgTtft}</td></tr>`;
+        // Per-model sub-rows for multi-model sessions
+        const mu = s.modelUsage;
+        if (mu && Object.keys(mu).length > 1) {
+          Object.entries(mu).sort((a, b) => b[1].output_tokens - a[1].output_tokens).forEach(([m, d]) => {
+            const pct = u.output ? Math.round((d.output_tokens / u.output) * 100) : 0;
+            html += `<tr style="opacity:0.7;font-size:0.9em"><td style="padding-left:1.5em">↳ ${m}</td>` +
+              `<td></td><td>${d.messages}</td><td></td><td></td>` +
+              `<td>${fmtTokens(d.output_tokens)} (${pct}%)</td><td></td><td></td><td></td></tr>`;
+          });
+        }
+      });
+      html += '</tbody></table>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function fmtAiu(nanoAiu) {
+    // copilotUsageNanoAiu is billed AIU in nano units (1e-9 AIU).
+    const aiu = (nanoAiu || 0) / 1e9;
+    if (aiu === 0) return '0';
+    if (aiu < 0.001) return aiu.toExponential(1);
+    if (aiu < 1) return aiu.toFixed(3);
+    return aiu.toFixed(2);
+  }
+
+  function renderCoverage(sessions) {
+    const container = document.getElementById('coverageContainer');
+    if (sessions.length === 0) { container.innerHTML = ''; return; }
+
+    const allInstr = new Set(); const allSkills = new Set();
+    sessions.forEach(s => {
+      s.instructions.forEach(i => allInstr.add(i));
+      s.skills.forEach(sk => allSkills.add(sk));
+    });
+
+    if (allInstr.size === 0 && allSkills.size === 0) {
+      container.innerHTML = '<p class="empty-state">No instructions or skills were opened via tool calls in these sessions. Host-attached files load automatically and are not tracked here; refer to per-session Token Usage for actual cost.</p>';
+      return;
+    }
+
+    // Artifact rows: instructions first, then skills. Sort each group by peak token weight.
+    const peak = (name, kind) => Math.max(0, ...sessions.map(s => (kind === 'instr' ? s.instrTokens[name] : s.skillTokens[name]) || 0));
+    const instrRows = [...allInstr].map(n => ({ name: n, label: n.replace('.instructions.md', ''), kind: 'instr', peak: peak(n, 'instr') }));
+    const skillRows = [...allSkills].map(n => ({ name: n, label: n, kind: 'skill', peak: peak(n, 'skill') }));
+    instrRows.sort((a, b) => b.peak - a.peak || a.label.localeCompare(b.label));
+    skillRows.sort((a, b) => b.peak - a.peak || a.label.localeCompare(b.label));
+    const rows = [...instrRows, ...skillRows];
+
+    const tokensFor = (s, r) => (r.kind === 'instr' ? s.instrTokens[r.name] : s.skillTokens[r.name]);
+    const heatFor = (tok, loaded) => {
+      if (!loaded) return 0;
+      if (!tok) return 1;            // loaded but token estimate unavailable (older data)
+      if (tok < 1000) return 1;
+      if (tok < 4000) return 2;
+      return 3;
+    };
+    const cell = (tok, loaded) => {
+      if (!loaded) return '<div class="heatmap-cell heat-0"></div>';
+      const label = tok ? fmtTokens(tok) : '&bull;';
+      return `<div class="heatmap-cell heat-${heatFor(tok, loaded)}">${label}</div>`;
+    };
+
+    let html = `<div class="heatmap" style="grid-template-columns: minmax(180px,1fr) repeat(${sessions.length}, minmax(60px,auto));">`;
+    // Header row
+    html += '<div class="heatmap-cell heatmap-header" style="text-align:left;">Artifact</div>';
+    sessions.forEach(s => { html += `<div class="heatmap-cell heatmap-header" title="${s.sid}">${sessionLabel(s, 18)}</div>`; });
+
+    // Artifact rows
+    rows.forEach(r => {
+      const tagClass = r.kind === 'instr' ? 'tag-instruction' : 'tag-skill';
+      html += `<div class="heatmap-cell heatmap-header" style="text-align:left;"><span class="tag ${tagClass}">${r.label}</span></div>`;
+      sessions.forEach(s => {
+        const loaded = r.kind === 'instr' ? s.instructions.has(r.name) : s.skills.has(r.name);
+        html += cell(tokensFor(s, r), loaded);
+      });
+    });
+
+    // Totals row: instruction + skill tokens per session
+    html += '<div class="heatmap-cell heatmap-header" style="text-align:left;">Total loaded (est.)</div>';
+    sessions.forEach(s => {
+      const total = Object.values(s.instrTokens).reduce((a, b) => a + b, 0) +
+        Object.values(s.skillTokens).reduce((a, b) => a + b, 0);
+      html += `<div class="heatmap-cell heat-${total ? 2 : 0}" style="font-weight:600;">${total ? fmtTokens(total) : ''}</div>`;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  loadEmbedded();
+})();
+</script>
+</body>
+</html>

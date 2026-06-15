@@ -599,6 +599,8 @@ items:
   kind: skill
 - path: .github/skills/shared/telemetry-foundations
   kind: skill
+- path: .github/hooks/telemetry.json
+  kind: hook
 display:
   featured: true
   ordering: alpha

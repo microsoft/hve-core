@@ -279,4 +279,10 @@ Use this edition when you want access to everything without choosing a focused c
 | **video-to-gif**              | Video-to-GIF conversion with FFmpeg two-pass optimization                                                                                                                                                                                                                                                             |
 | **vscode-playwright**         | VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation                                                                                                                                                                                                                      |
 
+### Hooks
+
+| Name          | Description                                                                |
+|---------------|----------------------------------------------------------------------------|
+| **telemetry** | Records Copilot session lifecycle events to local telemetry for reporting. |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->

@@ -49,5 +49,6 @@
     "skills/rpi/",
     "skills/security/",
     "skills/shared/"
-  ]
+  ],
+  "hooks": "hooks/telemetry.json"
 }

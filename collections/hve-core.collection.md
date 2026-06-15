@@ -83,4 +83,10 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 | **vally-tests**           | Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli                                                                                                     |
 
+### Hooks
+
+| Name          | Description                                                                |
+|---------------|----------------------------------------------------------------------------|
+| **telemetry** | Records Copilot session lifecycle events to local telemetry for reporting. |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->

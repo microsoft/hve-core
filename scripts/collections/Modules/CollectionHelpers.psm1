@@ -223,6 +223,9 @@ function Get-CollectionArtifactKey {
         'skill' {
             return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
         }
+        'hook' {
+            return [System.IO.Path]::GetFileNameWithoutExtension($Path.TrimEnd('/'))
+        }
         default {
             if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
                 return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
@@ -361,7 +364,7 @@ function Get-ArtifactFiles {
 
     .DESCRIPTION
     Scans .github/agents/, .github/prompts/, .github/instructions/ (recursively),
-    and .github/skills/ to build a complete list of collection items. Returns
+    .github/skills/, and .github/hooks/ to build a complete list of collection items. Returns
     repo-relative paths with forward slashes.
 
     .PARAMETER RepoRoot
@@ -424,6 +427,24 @@ function Get-ArtifactFiles {
             }
 
             $items += @{ path = $relativePath; kind = 'skill' }
+        }
+    }
+
+    # Hooks (JSON files under .github/hooks/)
+    $hooksDir = Join-Path -Path $RepoRoot -ChildPath '.github/hooks'
+    if (Test-Path -Path $hooksDir) {
+        # Hook manifests live at the top level (.github/hooks/<name>.json);
+        # implementation files under .github/hooks/<name>/ must not be treated
+        # as manifests, so do not recurse.
+        $hookFiles = Get-ChildItem -Path $hooksDir -Filter '*.json' -File
+        foreach ($hookFile in $hookFiles) {
+            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $hookFile.FullName) -replace '\\', '/'
+
+            if (Test-DeprecatedPath -Path $relativePath) {
+                continue
+            }
+
+            $items += @{ path = $relativePath; kind = 'hook' }
         }
     }
 
@@ -697,6 +718,27 @@ function Get-ArtifactDescription {
     )
 
     if (-not (Test-Path $FilePath)) {
+        return ''
+    }
+
+    # Hook manifests are JSON with no frontmatter; read their top-level
+    # description field instead of scanning for a YAML block.
+    if ([System.IO.Path]::GetExtension($FilePath) -eq '.json') {
+        try {
+            # Hook manifests can contain keys differing only by case (e.g.
+            # sessionStart / SessionStart), which ConvertFrom-Json rejects when
+            # building a case-insensitive PSCustomObject. -AsHashtable uses a
+            # case-sensitive map that tolerates those keys; only the top-level
+            # description is read here.
+            $json = Get-Content -Path $FilePath -Raw | ConvertFrom-Json -AsHashtable
+            $desc = $json['description']
+            if ($desc) {
+                return ([string]$desc).Trim()
+            }
+        }
+        catch {
+            Write-Verbose "Failed to parse JSON description from $FilePath`: $_"
+        }
         return ''
     }
 

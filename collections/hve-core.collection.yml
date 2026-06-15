@@ -149,5 +149,8 @@ items:
   # Telemetry overlays
   - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
+  # Hooks
+  - path: .github/hooks/telemetry.json
+    kind: hook
 display:
   ordering: manual

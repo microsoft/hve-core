@@ -41,7 +41,7 @@ function Get-PluginItemName {
         [string]$FileName,
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill', 'hook')]
         [string]$Kind
     )
 
@@ -50,6 +50,7 @@ function Get-PluginItemName {
         'prompt'      { return $FileName -replace '\.prompt\.md$', '.md' }
         'instruction' { return $FileName }
         'skill'       { return $FileName }
+        'hook'        { return $FileName }
     }
 }
 
@@ -79,7 +80,7 @@ function Get-PluginItemSubpath {
         [string]$Path,
 
         [Parameter(Mandatory = $true)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill', 'hook')]
         [string]$Kind
     )
 
@@ -88,6 +89,7 @@ function Get-PluginItemSubpath {
         'prompt'      = '.github/prompts/'
         'instruction' = '.github/instructions/'
         'skill'       = '.github/skills/'
+        'hook'        = '.github/hooks/'
     }
 
     $prefix = $prefixMap[$Kind]
@@ -126,7 +128,7 @@ function Get-PluginSubdirectory {
     [OutputType([string])]
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet('agent', 'prompt', 'instruction', 'skill')]
+        [ValidateSet('agent', 'prompt', 'instruction', 'skill', 'hook')]
         [string]$Kind
     )
 
@@ -135,6 +137,7 @@ function Get-PluginSubdirectory {
         'prompt' { return 'commands' }
         'instruction' { return 'instructions' }
         'skill' { return 'skills' }
+        'hook' { return 'hooks' }
     }
 }
 
@@ -168,6 +171,9 @@ function New-PluginManifestContent {
     .PARAMETER SkillPaths
     Optional. Array of relative directory paths containing skill subdirs.
 
+    .PARAMETER HookPaths
+    Optional. Array of relative file paths to hook JSON files.
+
     .OUTPUTS
     [hashtable] Plugin manifest with name, description, version, and
     component path keys.
@@ -194,7 +200,11 @@ function New-PluginManifestContent {
 
         [Parameter(Mandatory = $false)]
         [AllowEmptyCollection()]
-        [string[]]$SkillPaths
+        [string[]]$SkillPaths,
+
+        [Parameter(Mandatory = $false)]
+        [AllowEmptyCollection()]
+        [string[]]$HookPaths
     )
 
     $manifest = [ordered]@{
@@ -215,6 +225,17 @@ function New-PluginManifestContent {
 
     if ($SkillPaths -and $SkillPaths.Count -gt 0) {
         $manifest['skills'] = @($SkillPaths | Sort-Object)
+    }
+
+    if ($HookPaths -and $HookPaths.Count -gt 0) {
+        # The CLI `hooks` field is a single hooks-config file path (or inline
+        # object), not an array. Emit the lone path as a string; warn when more
+        # than one hook manifest is registered since only one can be referenced.
+        $sortedHooks = @($HookPaths | Sort-Object)
+        if ($sortedHooks.Count -gt 1) {
+            Write-Warning "Plugin '$CollectionId' declares $($sortedHooks.Count) hook manifests; the CLI references only one. Using '$($sortedHooks[0])'."
+        }
+        $manifest['hooks'] = $sortedHooks[0]
     }
 
     return $manifest
@@ -320,6 +341,7 @@ function New-PluginReadmeContent {
         prompt      = @{ Title = 'Commands'; Header = 'Command' }
         instruction = @{ Title = 'Instructions'; Header = 'Instruction' }
         skill       = @{ Title = 'Skills'; Header = 'Skill' }
+        hook        = @{ Title = 'Hooks'; Header = 'Hook' }
     }
 
     $hasCollectionArtifactContent = -not [string]::IsNullOrWhiteSpace($CollectionContent) -and (
@@ -635,6 +657,71 @@ function New-PluginLink {
     }
 }
 
+function Write-PluginHookArtifact {
+    <#
+    .SYNOPSIS
+    Materializes a hook manifest and its sibling script directory into a plugin.
+
+    .DESCRIPTION
+    Hook command paths in the source manifest are repository-root relative
+    (for example .github/hooks/telemetry/telemetry-collector.sh) so they resolve
+    when the hook is auto-loaded from a checked-out repository. Inside an
+    installed plugin the same scripts live under the plugin root, so this
+    function writes a transformed copy of the manifest with those paths
+    rewritten to the ${PLUGIN_ROOT} placeholder, then links the sibling script
+    directory (the manifest path without its .json extension) alongside it.
+
+    .PARAMETER SourceManifest
+    Absolute path to the source hook .json manifest in the repository.
+
+    .PARAMETER DestinationManifest
+    Absolute path where the transformed manifest is written in the plugin.
+
+    .PARAMETER GeneratedFiles
+    Set tracking generated paths for orphan cleanup; the linked script
+    directory is added to it.
+
+    .PARAMETER SymlinkCapable
+    When set, links the script directory; otherwise writes a text stub.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceManifest,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationManifest,
+
+        [Parameter(Mandatory = $true)]
+        [System.Collections.Generic.HashSet[string]]$GeneratedFiles,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$SymlinkCapable
+    )
+
+    # Degrade gracefully when the manifest is missing, matching how other kinds
+    # warn rather than throw and fail the entire generation run.
+    if (-not (Test-Path -LiteralPath $SourceManifest)) {
+        Write-Warning "Hook manifest not found: $SourceManifest"
+        return
+    }
+
+    # Rewrite repo-root-relative hook script paths to plugin-relative paths so
+    # commands resolve from the installed plugin directory. Literal string
+    # replacement avoids regex interpretation of the path and the $ placeholder.
+    $manifestText = Get-Content -LiteralPath $SourceManifest -Raw -Encoding utf8
+    $manifestText = $manifestText.Replace('.github/hooks/', '${PLUGIN_ROOT}/hooks/')
+    Set-ContentIfChanged -Path $DestinationManifest -Value $manifestText | Out-Null
+
+    # Link the sibling script directory (manifest path without .json extension).
+    $scriptSrc = $SourceManifest -replace '\.json$', ''
+    if (Test-Path -LiteralPath $scriptSrc) {
+        $scriptDest = $DestinationManifest -replace '\.json$', ''
+        [void]$GeneratedFiles.Add($scriptDest)
+        New-PluginLink -SourcePath $scriptSrc -DestinationPath $scriptDest -SymlinkCapable:$SymlinkCapable
+    }
+}
+
 function Write-PluginDirectory {
     <#
     .SYNOPSIS
@@ -707,6 +794,7 @@ function Write-PluginDirectory {
         CommandCount      = 0
         InstructionCount = 0
         SkillCount       = 0
+        HookCount        = 0
     }
 
     # Track unique directories per kind for plugin.json path arrays
@@ -717,6 +805,9 @@ function Write-PluginDirectory {
         [System.StringComparer]::OrdinalIgnoreCase
     )
     $skillDirs = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+    $hookFiles = [System.Collections.Generic.HashSet[string]]::new(
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
@@ -761,20 +852,25 @@ function Write-PluginDirectory {
                 $destPath = Join-Path -Path $pluginRoot -ChildPath $subdir -AdditionalChildPath $itemName
             }
 
-            # Read frontmatter from the source file for description
-            $fallback = $itemName -replace '\.md$', ''
-            if (Test-Path -Path $sourcePath) {
-                $frontmatter = Get-ArtifactFrontmatter -FilePath $sourcePath -FallbackDescription $fallback
-                $description = $frontmatter.description
-            }
-            else {
+            # Read description from the source file. Hook manifests are JSON
+            # with no frontmatter, so read their top-level description field.
+            $fallback = $itemName -replace '\.(md|json)$', ''
+            if (-not (Test-Path -Path $sourcePath)) {
                 $description = $fallback
                 Write-Warning "Source file not found: $sourcePath"
+            }
+            elseif ($kind -eq 'hook') {
+                $hookDesc = Get-ArtifactDescription -FilePath $sourcePath
+                $description = if ($hookDesc) { $hookDesc } else { $fallback }
+            }
+            else {
+                $frontmatter = Get-ArtifactFrontmatter -FilePath $sourcePath -FallbackDescription $fallback
+                $description = $frontmatter.description
             }
         }
 
         $readmeItems += @{
-            Name        = $itemName -replace '\.md$', ''
+            Name        = ($itemName -replace '\.md$', '') -replace '\.json$', ''
             Description = $description
             Kind        = $kind
         }
@@ -801,6 +897,11 @@ function Write-PluginDirectory {
                 $relDir = [System.IO.Path]::GetRelativePath($pluginRoot, $parentDir) -replace '\\', '/'
                 [void]$skillDirs.Add("$relDir/")
             }
+            'hook' {
+                $counts.HookCount++
+                $relPath = [System.IO.Path]::GetRelativePath($pluginRoot, $destPath) -replace '\\', '/'
+                [void]$hookFiles.Add($relPath)
+            }
         }
 
         [void]$generatedFiles.Add($destPath)
@@ -810,7 +911,15 @@ function Write-PluginDirectory {
             continue
         }
 
-        New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+        # Hooks bundle a sibling script directory and need plugin-relative
+        # command paths; other kinds link their single source file directly.
+        if ($kind -eq 'hook') {
+            Write-PluginHookArtifact -SourceManifest $sourcePath -DestinationManifest $destPath `
+                -GeneratedFiles $generatedFiles -SymlinkCapable:$SymlinkCapable
+        }
+        else {
+            New-PluginLink -SourcePath $sourcePath -DestinationPath $destPath -SymlinkCapable:$SymlinkCapable
+        }
     }
 
     # Link shared resource directories (unconditional, all plugins)
@@ -847,7 +956,8 @@ function Write-PluginDirectory {
         -Version $Version `
         -AgentPaths @($agentDirs) `
         -CommandPaths @($commandDirs) `
-        -SkillPaths @($skillDirs)
+        -SkillPaths @($skillDirs) `
+        -HookPaths @($hookFiles)
     [void]$generatedFiles.Add($manifestPath)
 
     if ($DryRun) {
@@ -883,6 +993,7 @@ function Write-PluginDirectory {
         CommandCount     = $counts.CommandCount
         InstructionCount = $counts.InstructionCount
         SkillCount       = $counts.SkillCount
+        HookCount        = $counts.HookCount
         GeneratedFiles   = $generatedFiles
     }
 }
