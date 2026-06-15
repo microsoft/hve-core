@@ -140,7 +140,7 @@ All `.copilot-tracking/` files begin with `<!-- markdownlint-disable-file -->` a
 
 ### Artifact Content
 
-Implementation Plan content is defined in Phase 2 Step 2. Review Log content is defined in Phase 4 Step 3. The remaining artifacts include:
+Implementation Plan content is defined in Phase 2 Step 2. The remaining artifacts include:
 
 Research Document:
 
@@ -178,6 +178,16 @@ Changes Log:
 * Changes by category: added, modified, removed (each with file paths)
 * Additional or deviating changes with reasons
 * Release summary after final phase
+
+Review Log:
+
+* Review metadata (plan path, reviewer, date)
+* User request fulfillment status
+* Validation command outputs
+* Follow-up recommendations
+* Missing or incomplete work relative to user requests
+* Follow-up recommendations
+* Overall status: Complete, Iterate, or Escalate
 
 ## Required Phases
 
