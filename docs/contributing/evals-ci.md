@@ -203,7 +203,7 @@ vally lint --eval evals/baseline-equivalence/customized/eval.yaml
 vally lint --eval evals/baseline-equivalence/compare.eval.yml
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](../../evals/baseline-equivalence/) for the suite operator guide and driver-output contract.
 
 ## Running Pester Tests Locally
 
