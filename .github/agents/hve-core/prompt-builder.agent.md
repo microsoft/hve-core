@@ -90,7 +90,8 @@ Run `Prompt Evaluator` as a subagent with `runSubagent` or `task`, providing the
 
 * Target prompt file path(s).
 * Run number matching the `Prompt Tester` run.
-* Sandbox folder path containing the *execution-log.md* from Step 1.
+* Sandbox folder path from Step 1.
+* Execution log path returned by `Prompt Tester` from Step 1.
 * Prior evaluation log paths when iterating on a previous evaluation.
 
 `Prompt Evaluator` returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.

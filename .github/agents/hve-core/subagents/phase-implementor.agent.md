@@ -4,7 +4,7 @@ description: 'Executes a single implementation phase from a plan with full codeb
 user-invocable: false
 model:
   - MAI-Code-1-Flash (copilot)
-  - Claude Haiku 4.5 (copilot)
+  - Claude Sonnet 4.6 (copilot)
   - GPT-5.4 mini (copilot)
 ---
 

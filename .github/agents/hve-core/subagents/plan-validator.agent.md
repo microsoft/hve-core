@@ -64,12 +64,13 @@ When prior planning logs are available, cross-run comparison notes reference res
 1. Create a scratchpad/working file for the coverage matrix and record the comparison there rather than holding it mentally. Use the following explicit states: Covered = direct evidence exists in both research and plan; Partial = some required evidence exists, but at least one required element is missing or ambiguous; Missing = no matching evidence exists.
 2. Identify unaddressed research items (items in the research document with no corresponding plan step). Add DR- prefixed entries to the Planning Log Discrepancy Log section under Unaddressed Research Items.
 3. Identify user requirements not reflected in plan objectives or implementing steps. Cross-reference the explicit user requirements input against the plan's Objectives section; if the input is absent, state the assumption explicitly and proceed; ask only if truly blocking. Add DR- prefixed entries for missing user requirements.
-4. Assign severity to each gap internally:
-   * *Critical*: Missing core requirement that blocks implementation success.
-   * *Major*: Partial coverage where a requirement is acknowledged but incompletely planned.
-   * *Scope-Addition*: Added work or scope expansion not grounded in research; treat this as a discrepancy category and route it with the plan-deviation findings.
-   * *Minor*: Nice-to-have or secondary item not addressed in the current scope.
-5. Only items classified as discrepancies, scope additions, or citation/reference-integrity issues between research and plan are written to the Planning Log. Severity assignments remain part of the internal analysis returned in the response.
+4. Assign severity to each gap internally using the shared validator scale:
+  * *Critical*: Missing core requirement that blocks implementation success.
+  * *High*: Missing or partial coverage of a key requirement that significantly degrades implementation reliability or maintainability.
+  * *Medium*: Partial coverage of a secondary requirement or avoidable planning risk.
+  * *Low*: Nice-to-have or polish item not addressed in the current scope.
+5. Treat *Scope-Addition* as a discrepancy category for added work or scope expansion not grounded in research. Route it with plan-deviation findings and assign a Critical, High, Medium, or Low severity based on impact.
+6. Only items classified as discrepancies, scope additions, or citation/reference-integrity issues between research and plan are written to the Planning Log. Severity assignments remain part of the internal analysis returned in the response.
 
 ### Step 2: Discrepancy Validation
 
@@ -106,8 +107,8 @@ The subagent always writes complete validation findings to the Planning Log befo
 
 Initial chat response, emit at most:
 * 1 line: planning log file path (the parent re-reads this file when it needs detail).
-* 1 line: validation status (Pass / Fail - Critical / Fail - Major / Fail - Minor).
-* Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize critical and major items.
+* 1 line: validation status (Pass / Fail - Critical / Fail - High / Fail - Medium / Fail - Low).
+* Up to 7 bullet-point severity-ordered findings (each ≤ 240 chars). Prioritize Critical and High items.
 * 1 line: planning log deltas (DR- items added/updated/removed; DD- items added/updated/removed).
 * Up to 3 clarifying questions, only when blocking.
 * 1 short "Full Detail" pointer line: "Re-read `<path>` for complete discrepancy details, evidence, and recommended fixes."

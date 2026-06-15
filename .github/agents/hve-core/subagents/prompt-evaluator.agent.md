@@ -22,7 +22,8 @@ Evaluates prompt engineering artifacts and their execution results against Promp
 
 * Target prompt file(s) to evaluate.
 * Run number for current prompt testing iteration.
-* Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}` containing the caller-provided execution log path from a prior test run.
+* Sandbox folder path in `.copilot-tracking/sandbox/` using `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}`.
+* Execution log path returned by the caller from a prior test run.
 * (Optional) Prior evaluation log paths when iterating (for cross-run comparison).
 
 ## Evaluation Log
@@ -46,7 +47,7 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 
 ### Step 1: Evaluate Execution Log Findings
 
-1. Read the caller-provided execution log path from the sandbox folder; do not assume a hardcoded file name.
+1. Read the caller-provided execution log path; do not derive it from the sandbox folder or assume a hardcoded file name.
 2. Use only these canonical finding categories in the evaluation log:
    * Clarity: unclear or ambiguous instruction.
    * Completeness: missing required guidance or examples.

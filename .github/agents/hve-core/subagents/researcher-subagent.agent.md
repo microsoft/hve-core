@@ -15,7 +15,7 @@ Research specific questions and topics using search tools, read tools, fetch web
 ## Inputs
 
 * Research topics and/or questions to investigate.
-* Subagent research document file path. If the parent provides a path, use that path. Otherwise derive the file name from the topic using lowercase, hyphenated, punctuation-stripped text, for example `API Design` becomes `api-design.md`.
+* Subagent research document file path. If the parent provides a path, use that path. Otherwise place the file under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` and derive the file name from the topic using lowercase, hyphenated, punctuation-stripped text, for example `API Design` becomes `api-design.md`.
 
 ## Subagent Research Document
 
