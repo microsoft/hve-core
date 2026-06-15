@@ -52,5 +52,3 @@ Functionally rigorous but not visually polished. High-fidelity prototypes test w
 Core principle: systematic validation through quantitative metrics (task completion, error rates, efficiency) alongside qualitative feedback via progressive questioning.
 
 Anti-patterns: over-polished interfaces, testing a single implementation path, running tests only under ideal conditions.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

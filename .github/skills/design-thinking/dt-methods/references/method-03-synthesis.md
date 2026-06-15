@@ -169,5 +169,3 @@ Next-step pathways:
 * Hand off to the RPI workflow via `dt-handoff-problem-space.prompt.md` when the team wants a Researcher/Planner/Implementor to continue from validated problem understanding
 * Return to Methods 1-2 when synthesis exposes research gaps, conflicting narratives, or missing constraints
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

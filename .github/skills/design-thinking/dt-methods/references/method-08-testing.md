@@ -160,5 +160,3 @@ When testing triggers a return to an earlier method, the decision log captures: 
 ### Cross-Method Consistency
 
 Maintains DT coaching principles: end-user validation focus, environmental constraint application, multi-stakeholder perspectives, leap-enabling questioning over surface validation, and iterative "fail fast, learn fast" refinement.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -47,5 +47,3 @@ Intermediate learners benefit from analyzing observation data for behavioral con
 Advanced learners should explore how testing protocol design introduces bias (participant selection, scenario framing, facilitator presence), analyze when a series of backward loops signals a fundamental misframing of the original problem, and critique the ethical dimensions of observing workers' struggles during testing.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

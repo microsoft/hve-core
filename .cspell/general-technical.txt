@@ -1612,8 +1612,12 @@ Kerberoasting
 loggable
 NONINTERACTIVE
 reauthentication
+inlines
 referer
+Repoint
 synchronizable
 syncer
+transitioner
 urlsafe
+wberry
 writeback

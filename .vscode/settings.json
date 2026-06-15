@@ -57,6 +57,7 @@
     ".github/agents/hve-core/subagents": true,
     ".github/agents/jira": true,
     ".github/agents/project-planning": true,
+    ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
