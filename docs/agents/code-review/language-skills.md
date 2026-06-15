@@ -89,12 +89,12 @@ The `coding-standards` collection ships with one language skill. Additional lang
 
 ### python-foundational
 
-| Field        | Value                                                  |
-|--------------|--------------------------------------------------------|
-| Skill path   | `skills/coding-standards/python-foundational/`         |
-| Activates on | `.py` files in the diff                                |
-| Sections     | 9 checklist sections, 30+ individual checks            |
-| Maturity     | Experimental                                           |
+| Field        | Value                                          |
+|--------------|------------------------------------------------|
+| Skill path   | `skills/coding-standards/python-foundational/` |
+| Activates on | `.py` files in the diff                        |
+| Sections     | 9 checklist sections, 30+ individual checks    |
+| Maturity     | Experimental                                   |
 
 The python-foundational skill covers:
 
@@ -236,15 +236,15 @@ A frontend team authors `.github/skills/coding-standards/northwind/react-standar
 
 ## Reference
 
-| Resource                    | Path                                                           |
-|-----------------------------|----------------------------------------------------------------|
-| python-foundational skill   | `skills/coding-standards/python-foundational/SKILL.md`         |
-| Standards output format     | `docs/templates/standards-review-output-format.md`             |
-| Full review output format   | `docs/templates/full-review-output-format.md`                  |
-| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`                   |
-| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md)       |
-| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)           |
-| coding-standards collection | `collections/coding-standards.collection.yml`                  |
+| Resource                    | Path                                                     |
+|-----------------------------|----------------------------------------------------------|
+| python-foundational skill   | `skills/coding-standards/python-foundational/SKILL.md`   |
+| Standards output format     | `docs/templates/standards-review-output-format.md`       |
+| Full review output format   | `docs/templates/full-review-output-format.md`            |
+| Engineering fundamentals    | `docs/templates/engineering-fundamentals.md`             |
+| Skill authoring guide       | [Authoring Custom Skills](../../customization/skills.md) |
+| Contributing skills         | [Contributing: Skills](../../contributing/skills.md)     |
+| coding-standards collection | `collections/coding-standards.collection.yml`            |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
