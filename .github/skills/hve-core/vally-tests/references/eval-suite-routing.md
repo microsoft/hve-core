@@ -9,12 +9,12 @@ This reference documents how the `vally-tests` skill routes newly authored stimu
 
 ## Routing Table
 
-| Kind | Primary Target | Fallback | Notes |
-| --- | --- | --- | --- |
-| `prompt` | `evals/behavior-conformance/prompts.eval.yaml` | n/a | One stimulus block per check from `references/prompts.md`. |
-| `instructions` | `evals/behavior-conformance/instructions.eval.yaml` | n/a | One stimulus block per check from `references/instructions.md`. |
-| `agent` | `evals/agent-behavior/stimuli/<slug>.yml` | n/a | One file per agent, slug = agent filename minus `.agent.md`. |
-| `skill` | `evals/behavior-conformance/skill-behavior.eval.yaml` | `evals/skill-quality/eval.yaml` | See DR-03 note below. |
+| Kind           | Primary Target                                        | Fallback                        | Notes                                                           |
+|----------------|-------------------------------------------------------|---------------------------------|-----------------------------------------------------------------|
+| `prompt`       | `evals/behavior-conformance/prompts.eval.yaml`        | n/a                             | One stimulus block per check from `references/prompts.md`.      |
+| `instructions` | `evals/behavior-conformance/instructions.eval.yaml`   | n/a                             | One stimulus block per check from `references/instructions.md`. |
+| `agent`        | `evals/agent-behavior/stimuli/<slug>.yml`             | n/a                             | One file per agent, slug = agent filename minus `.agent.md`.    |
+| `skill`        | `evals/behavior-conformance/skill-behavior.eval.yaml` | `evals/skill-quality/eval.yaml` | See DR-03 note below.                                           |
 
 ## Per-Kind Detail
 

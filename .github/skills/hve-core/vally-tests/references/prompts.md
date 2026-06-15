@@ -16,16 +16,16 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic | Section in prompt-builder.instructions.md | Line range |
-|---|---|---|
-| Frontmatter and metadata | Prompt frontmatter structure | L124-L135 |
-| Agent delegation | Delegated-agent pattern | L136-L150 |
-| Input variables and argument hints | Input variable and hint format | L151-L170 |
-| Protocol structure | Required Steps and Required Phases | L527-L657 |
-| Step and phase headings | Protocol heading conventions | L569-L604 |
-| Writing style and link format | Prompt writing style | L703-L800 |
-| Subagent invocation | Invocation by human-readable name | L666-L701 |
-| Quality criteria checklist | Prompt quality checklist | L817-L829 |
+| Topic                              | Section in prompt-builder.instructions.md | Line range |
+|------------------------------------|-------------------------------------------|------------|
+| Frontmatter and metadata           | Prompt frontmatter structure              | L124-L135  |
+| Agent delegation                   | Delegated-agent pattern                   | L136-L150  |
+| Input variables and argument hints | Input variable and hint format            | L151-L170  |
+| Protocol structure                 | Required Steps and Required Phases        | L527-L657  |
+| Step and phase headings            | Protocol heading conventions              | L569-L604  |
+| Writing style and link format      | Prompt writing style                      | L703-L800  |
+| Subagent invocation                | Invocation by human-readable name         | L666-L701  |
+| Quality criteria checklist         | Prompt quality checklist                  | L817-L829  |
 
 ## Conformance Checks
 

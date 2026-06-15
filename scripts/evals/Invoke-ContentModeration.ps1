@@ -69,7 +69,10 @@ param(
     [string]$OutFile,
 
     [Parameter(Mandatory = $false)]
-    [string]$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? $PSScriptRoot
+    [string]$RepoRoot = $(
+        $detected = git rev-parse --show-toplevel 2>$null
+        if ($detected) { $detected } else { $PSScriptRoot }
+    )
 )
 
 $ErrorActionPreference = 'Stop'

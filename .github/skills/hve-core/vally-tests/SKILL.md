@@ -55,15 +55,15 @@ The pipeline is identical for both invocation modes. Corpus-import mode runs ste
 
 Authoring is bounded by seven refusal categories. Any stimulus that matches a category's regex set is refused before it reaches the dedupe step. The categories and their normative source are listed below. The full regex set lives in `references/refusal-taxonomy.md` and is consumed by the safety lint script.
 
-| Category                     | Definition                                                                                                                | Normative Source                                                                |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| jailbreak                    | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | `CODE_OF_CONDUCT.md`                                                            |
-| prompt-injection             | Attempts to override system or developer instructions through embedded or external content.                               | `CODE_OF_CONDUCT.md`                                                            |
-| harmful-elicitation          | Requests for content that causes physical, financial, psychological, or reputational harm.                                | `CODE_OF_CONDUCT.md`                                                            |
-| tos-violation                | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | `CODE_OF_CONDUCT.md`                                                            |
-| coc-violation                | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | `CODE_OF_CONDUCT.md`                                                            |
-| model-refusal-elicitation    | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | `.github/instructions/rai-planning/rai-risk-classification.instructions.md`     |
-| pii-extraction               | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | `.github/instructions/rai-planning/rai-risk-classification.instructions.md`     |
+| Category                  | Definition                                                                                                                | Normative Source                                                            |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| jailbreak                 | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | `CODE_OF_CONDUCT.md`                                                        |
+| prompt-injection          | Attempts to override system or developer instructions through embedded or external content.                               | `CODE_OF_CONDUCT.md`                                                        |
+| harmful-elicitation       | Requests for content that causes physical, financial, psychological, or reputational harm.                                | `CODE_OF_CONDUCT.md`                                                        |
+| tos-violation             | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | `CODE_OF_CONDUCT.md`                                                        |
+| coc-violation             | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | `CODE_OF_CONDUCT.md`                                                        |
+| model-refusal-elicitation | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | `.github/instructions/rai-planning/rai-risk-classification.instructions.md` |
+| pii-extraction            | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | `.github/instructions/rai-planning/rai-risk-classification.instructions.md` |
 
 When a request triggers a refusal, emit the canonical refusal block:
 
@@ -77,13 +77,13 @@ Substitute the matched `<category>` and the most relevant normative source. Do n
 
 Helper scripts ship as parity pairs (`.ps1` and `.sh`) where the workflow does not require Python. Python is used only for the corpus-import path because the source-of-truth interchange format is CSV with an XLSX mirror.
 
-| Script                          | Purpose                                                                                            | Language        | Delivery |
-|---------------------------------|----------------------------------------------------------------------------------------------------|-----------------|----------|
-| `scripts/New-Stimulus.ps1`      | Scaffolds a single stimulus YAML block from an artifact path and appends to the routed eval file. | PowerShell 7+   | Phase 2  |
-| `scripts/new-stimulus.sh`       | Parity counterpart for the PowerShell stimulus scaffolder.                                         | bash            | Phase 2  |
-| `scripts/import_corpus.py`      | Reads the CSV or XLSX corpus template and emits dedupe-checked stimulus blocks per kind.           | Python 3.11+    | Phase 2  |
-| `scripts/Lint-VallyTestSafety.ps1` | Runs the refusal taxonomy regex set against a candidate stimulus and exits non-zero on match.   | PowerShell 7+   | Phase 3  |
-| `scripts/lint-vally-test-safety.sh` | Parity counterpart for the safety lint script.                                                | bash            | Phase 3  |
+| Script                              | Purpose                                                                                           | Language      | Delivery |
+|-------------------------------------|---------------------------------------------------------------------------------------------------|---------------|----------|
+| `scripts/New-Stimulus.ps1`          | Scaffolds a single stimulus YAML block from an artifact path and appends to the routed eval file. | PowerShell 7+ | Phase 2  |
+| `scripts/new-stimulus.sh`           | Parity counterpart for the PowerShell stimulus scaffolder.                                        | bash          | Phase 2  |
+| `scripts/import_corpus.py`          | Reads the CSV or XLSX corpus template and emits dedupe-checked stimulus blocks per kind.          | Python 3.11+  | Phase 2  |
+| `scripts/Lint-VallyTestSafety.ps1`  | Runs the refusal taxonomy regex set against a candidate stimulus and exits non-zero on match.     | PowerShell 7+ | Phase 3  |
+| `scripts/lint-vally-test-safety.sh` | Parity counterpart for the safety lint script.                                                    | bash          | Phase 3  |
 
 All helpers honour a shared dedupe contract: SHA-256 of the prompt text after Unicode NFC normalization and whitespace collapse.
 
@@ -91,35 +91,35 @@ All helpers honour a shared dedupe contract: SHA-256 of the prompt text after Un
 
 References capture the conformance taxonomy, grader selection rules, eval-suite routing, and the regex source of truth for the refusal taxonomy. Each file targets a specific decision point in the authoring workflow.
 
-| Reference                              | Covers                                                                  |
-|----------------------------------------|-------------------------------------------------------------------------|
-| `references/prompts.md`                | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
-| `references/instructions.md`           | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
-| `references/agents.md`                 | The 10 conformance checks emitted for `.agent.md` artifacts.            |
-| `references/skills.md`                 | The 10 conformance checks emitted for `SKILL.md` artifacts.             |
-| `references/grader-catalog.md`         | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
-| `references/refusal-taxonomy.md`       | Regex source of truth for the 7 refusal categories and worked examples. |
-| `references/eval-suite-routing.md`     | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
+| Reference                          | Covers                                                                  |
+|------------------------------------|-------------------------------------------------------------------------|
+| `references/prompts.md`            | The 12 conformance checks emitted for `.prompt.md` artifacts.           |
+| `references/instructions.md`       | The 8 conformance checks emitted for `.instructions.md` artifacts.      |
+| `references/agents.md`             | The 10 conformance checks emitted for `.agent.md` artifacts.            |
+| `references/skills.md`             | The 10 conformance checks emitted for `SKILL.md` artifacts.             |
+| `references/grader-catalog.md`     | Vally CLI 0.4.0 grader types, selection rules, and gotchas.             |
+| `references/refusal-taxonomy.md`   | Regex source of truth for the 7 refusal categories and worked examples. |
+| `references/eval-suite-routing.md` | Maps artifact kind to the canonical Vally eval file under `evals/`.     |
 
 ## Asset Index
 
 Assets supply the interchange formats the corpus-import path consumes. The CSV is the source of truth. The XLSX mirror is regenerated from the CSV by `import_corpus.py` and is never edited directly.
 
-| Asset                                          | Purpose                                                                                       |
-|------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `assets/corpus-import-template.csv`            | Canonical CSV template with header `prompt,kind,target_artifact,grader,tags,expected_refusal_category,notes`. |
-| `assets/corpus-import-template.xlsx`           | Excel mirror of the CSV regenerated by the import script.                                     |
+| Asset                                | Purpose                                                                                                       |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `assets/corpus-import-template.csv`  | Canonical CSV template with header `prompt,kind,target_artifact,grader,tags,expected_refusal_category,notes`. |
+| `assets/corpus-import-template.xlsx` | Excel mirror of the CSV regenerated by the import script.                                                     |
 
 ## Output Targets per Kind
 
 Authored stimuli always land in one of the routed Vally eval files. The router is encoded in `references/eval-suite-routing.md` and mirrored here for quick lookup.
 
-| Kind         | Target Eval File                                       | Vally Suite Name        |
-|--------------|--------------------------------------------------------|-------------------------|
-| prompt       | `evals/behavior-conformance/prompts.eval.yaml`         | behavior-conformance    |
-| instructions | `evals/behavior-conformance/instructions.eval.yaml`    | behavior-conformance    |
-| agent        | `evals/agent-behavior/eval.yaml`                       | agent-behavior          |
-| skill        | `evals/behavior-conformance/skill-behavior.eval.yaml`  | behavior-conformance    |
+| Kind         | Target Eval File                                      | Vally Suite Name     |
+|--------------|-------------------------------------------------------|----------------------|
+| prompt       | `evals/behavior-conformance/prompts.eval.yaml`        | behavior-conformance |
+| instructions | `evals/behavior-conformance/instructions.eval.yaml`   | behavior-conformance |
+| agent        | `evals/agent-behavior/eval.yaml`                      | agent-behavior       |
+| skill        | `evals/behavior-conformance/skill-behavior.eval.yaml` | behavior-conformance |
 
 Never write to `evals/baseline-equivalence/`, `evals/script-validation/`, or `evals/results/` from this skill. Those targets serve baseline equivalence, script validation, and historical comparison flows that are out of scope for conformance authoring.
 

@@ -16,15 +16,15 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic | Section in prompt-builder.instructions.md | Line range |
-|---|---|---|
-| Frontmatter and name | Skill frontmatter structure | L346-L400 |
-| File location and portability | Self-contained skill packaging | L401-L550 |
-| Optional subdirectories | scripts, references, assets | L410-L450 |
-| Content sections | Required SKILL.md body sections | L451-L487 |
-| Progressive disclosure | Token budgets and lazy loading | L488-L510 |
-| Semantic invocation | Description-driven matching | L511-L540 |
-| Attribution | Frontmatter and footer attribution | L552-L562 |
+| Topic                         | Section in prompt-builder.instructions.md | Line range |
+|-------------------------------|-------------------------------------------|------------|
+| Frontmatter and name          | Skill frontmatter structure               | L346-L400  |
+| File location and portability | Self-contained skill packaging            | L401-L550  |
+| Optional subdirectories       | scripts, references, assets               | L410-L450  |
+| Content sections              | Required SKILL.md body sections           | L451-L487  |
+| Progressive disclosure        | Token budgets and lazy loading            | L488-L510  |
+| Semantic invocation           | Description-driven matching               | L511-L540  |
+| Attribution                   | Frontmatter and footer attribution        | L552-L562  |
 
 ## Conformance Checks
 

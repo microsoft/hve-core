@@ -294,7 +294,8 @@ function Test-SpecInputModeration {
     )
 
     if (-not $RepoRoot) {
-        $RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '../../..')
+        $RepoRoot = git rev-parse --show-toplevel 2>$null
+        if (-not $RepoRoot) { $RepoRoot = Join-Path $PSScriptRoot '../../..' }
     }
     if (-not $ModerationScript) {
         $ModerationScript = Join-Path $RepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
@@ -399,7 +400,8 @@ function Test-SpecOutputModeration {
     )
 
     if (-not $RepoRoot) {
-        $RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '../../..')
+        $RepoRoot = git rev-parse --show-toplevel 2>$null
+        if (-not $RepoRoot) { $RepoRoot = Join-Path $PSScriptRoot '../../..' }
     }
     if (-not $ModerationScript) {
         $ModerationScript = Join-Path $RepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
