@@ -16,11 +16,11 @@ BeforeDiscovery {
 
     $script:backlogFiles = @(
         (Join-Path $script:repoRoot '.github/instructions/security/backlog-handoff.instructions.md'),
-        (Join-Path $script:repoRoot '.github/instructions/security/sssc-backlog.instructions.md')
+        (Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md')
     )
     $script:identityFiles = @(
         (Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'),
-        (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
+        (Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md')
     )
 
     $script:exitPoints = @(
