@@ -82,7 +82,7 @@ Templates for agent and prompt outputs are stored in `docs/templates/`:
 * `docs/templates/adr-template-solutions.md` - Architecture decision record template.
 * `docs/templates/rca-template.md` - Root cause analysis template.
 
-The canonical Business Requirements Document template lives in `.github/skills/project-planning/brd-author/templates/brd-full.md` as part of the `brd-author` skill.
+The canonical Business Requirements Document template lives in `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md` as part of the `requirements-author` skill.
 
 ### Copilot Tracking
 

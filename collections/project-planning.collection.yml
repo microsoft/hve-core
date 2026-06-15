@@ -62,6 +62,8 @@ items:
     kind: agent
   - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
     kind: agent
+  - path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
     kind: prompt
@@ -218,7 +220,7 @@ items:
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
   # BRD Skills
-  - path: .github/skills/project-planning/brd-author
+  - path: .github/skills/project-planning/requirements-author
     kind: skill
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations

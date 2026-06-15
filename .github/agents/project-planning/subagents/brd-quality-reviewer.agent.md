@@ -34,8 +34,8 @@ Assess a BRD draft against the requirements taxonomy and standards rubric in a s
 
 This subagent emits two YAML payloads per invocation. Per the consolidated design, the reviewer absorbs the quality-report generation step, so a single invocation produces both the per-standard findings and the aggregated report.
 
-* `BRD_STANDARD_FINDINGS_V1`, defined in [brd-standard-findings-v1.md](../../../skills/project-planning/brd-author/references/brd-standard-findings-v1.md). Captures the structured result of grading the BRD (or one partition) against the standards rubric. Its `schema_version` MUST be the literal string `BRD_STANDARD_FINDINGS_V1`.
-* `BRD_QUALITY_REPORT_V1`, defined in [brd-quality-report-v1.md](../../../skills/project-planning/brd-author/references/brd-quality-report-v1.md). Rolls the findings up into a BRD-level verdict and gate decisions. Its `schema_version` MUST be the literal string `BRD_QUALITY_REPORT_V1`.
+* `BRD_STANDARD_FINDINGS_V1`, defined in [brd-standard-findings-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-standard-findings-v1.md). Captures the structured result of grading the BRD (or one partition) against the standards rubric. Its `schema_version` MUST be the literal string `BRD_STANDARD_FINDINGS_V1`.
+* `BRD_QUALITY_REPORT_V1`, defined in [brd-quality-report-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-quality-report-v1.md). Rolls the findings up into a BRD-level verdict and gate decisions. Its `schema_version` MUST be the literal string `BRD_QUALITY_REPORT_V1`.
 
 Follow each contract exactly for field names, required keys, enumerations, and validation rules. Do not alter either `schema_version` constant.
 
@@ -51,7 +51,7 @@ Follow each contract exactly for field names, required keys, enumerations, and v
 ### Pre-requisite: Setup
 
 1. Accept the BRD draft, active phase, and taxonomy in force from the parent agent.
-2. Read [brd-standard-findings-v1.md](../../../skills/project-planning/brd-author/references/brd-standard-findings-v1.md) and [brd-quality-report-v1.md](../../../skills/project-planning/brd-author/references/brd-quality-report-v1.md) in full. Treat both as the authoritative schemas for the payloads.
+2. Read [brd-standard-findings-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-standard-findings-v1.md) and [brd-quality-report-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-quality-report-v1.md) in full. Treat both as the authoritative schemas for the payloads.
 3. When the BRD draft is supplied as a path, read the artifact. Capture BRD id, version, and phase from its frontmatter when not provided explicitly.
 
 ### Step 1: Partition the BRD by taxonomy
@@ -74,14 +74,14 @@ Follow each contract exactly for field names, required keys, enumerations, and v
 
 ### Step 3: Emit BRD_STANDARD_FINDINGS_V1
 
-1. Assemble the findings payload exactly per [brd-standard-findings-v1.md](../../../skills/project-planning/brd-author/references/brd-standard-findings-v1.md), with `schema_version: BRD_STANDARD_FINDINGS_V1` and `mode: plan`.
+1. Assemble the findings payload exactly per [brd-standard-findings-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-standard-findings-v1.md), with `schema_version: BRD_STANDARD_FINDINGS_V1` and `mode: plan`.
 2. Populate `summary_counts` so the totals equal the number of findings, and set `overall_status` consistent with those counts.
 3. Include the conditional rubric blocks (`iso_29148_attributes`, `iso_25010_categories`, `smart_business_goals`, `fr_ac_coverage`) when the standard bundle is the requirements rubric.
 4. Validate the payload against the contract validation rules before returning it.
 
 ### Step 4: Emit BRD_QUALITY_REPORT_V1
 
-1. Aggregate the findings into the report payload exactly per [brd-quality-report-v1.md](../../../skills/project-planning/brd-author/references/brd-quality-report-v1.md), with `schema_version: BRD_QUALITY_REPORT_V1`.
+1. Aggregate the findings into the report payload exactly per [brd-quality-report-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-quality-report-v1.md), with `schema_version: BRD_QUALITY_REPORT_V1`.
 2. Set `overall_status` from the constituent findings: `FAIL` when any standard reports `RISK`, `NEEDS_REVIEW` when only `CAUTION` findings exist, otherwise `PASS`.
 3. Set gate decisions for the active phase. Set `gate_decisions.govern_exit` to `NOT_EVALUATED` when the phase is `Define`, and evaluate both gates when the phase is `Govern`. Set `gate_decisions.define_exit` to `BLOCKED` when `overall_status` is `FAIL`.
 4. Populate `category_summaries`, including zero-FR `0.0%` coverage values, `top_findings` (up to ten `RISK` items first, then `CAUTION` items), and prioritized `recommendations`, then validate the payload against the contract validation rules. Let the quality report determine caution, block, or waiver behavior under the active thresholds.
@@ -99,7 +99,7 @@ Follow each contract exactly for field names, required keys, enumerations, and v
 
 Return both payloads to the parent agent:
 
-* The `BRD_STANDARD_FINDINGS_V1` YAML payload, conforming to [brd-standard-findings-v1.md](../../../skills/project-planning/brd-author/references/brd-standard-findings-v1.md).
-* The `BRD_QUALITY_REPORT_V1` YAML payload, conforming to [brd-quality-report-v1.md](../../../skills/project-planning/brd-author/references/brd-quality-report-v1.md).
+* The `BRD_STANDARD_FINDINGS_V1` YAML payload, conforming to [brd-standard-findings-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-standard-findings-v1.md).
+* The `BRD_QUALITY_REPORT_V1` YAML payload, conforming to [brd-quality-report-v1.md](../../../skills/project-planning/requirements-author/references/brd/brd-quality-report-v1.md).
 
 Include clarifying questions when the BRD path cannot be resolved, the active phase is neither `Define` nor `Govern`, the taxonomy in force is ambiguous, or either contract file cannot be read.
