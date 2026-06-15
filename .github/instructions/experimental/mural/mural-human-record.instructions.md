@@ -47,5 +47,3 @@ When AI contributes content into Mural under facilitator mode:
 ## When mode cannot be honored
 
 If a Layer B agent cannot satisfy the visibility invariant for the current request (for example, the user asks the AI to "just decide" without authoring anything), the agent stops and surfaces the conflict. It does not proceed with a silent decision.
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

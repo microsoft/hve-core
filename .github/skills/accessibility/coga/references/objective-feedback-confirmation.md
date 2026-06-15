@@ -113,7 +113,3 @@ Users with memory or attention differences benefit from reminders about upcoming
 * Confirm reminders can be dismissed or snoozed.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-7>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

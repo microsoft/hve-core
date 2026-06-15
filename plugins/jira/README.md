@@ -53,40 +53,6 @@ Manage Jira backlog workflows and PRD-driven issue planning from VS Code. This c
 copilot plugin install jira@hve-core
 ```
 
-## Agents
-
-| Agent                | Description                                                                                         |
-|----------------------|-----------------------------------------------------------------------------------------------------|
-| jira-backlog-manager | Jira backlog orchestrator for discovery, triage, execution, and single-issue actions                |
-| jira-prd-to-wit      | Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira |
-
-## Commands
-
-| Command              | Description                                                                                                    |
-|----------------------|----------------------------------------------------------------------------------------------------------------|
-| jira-discover-issues | Discover Jira issues via user queries, artifact analysis, or JQL search and produce planning files             |
-| jira-execute-backlog | Execute a Jira backlog plan by creating, updating, transitioning, and commenting on issues from a handoff file |
-| jira-prd-to-wit      | Analyze PRD artifacts and plan Jira issue hierarchies without mutating Jira                                    |
-| jira-setup           | Interactive, verification-first Jira credential configuration assistant (non-destructive)                      |
-| jira-triage-issues   | Triage Jira issues with field recommendations, duplicate detection, and optional updates                       |
-
-## Instructions
-
-| Instruction                         | Description                                                                                                                                                                                                                                                 |
-|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| hve-core-location.instructions      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
-| jira-backlog-discovery.instructions | Jira issue backlog discovery: user-centric, artifact-driven, JQL-based                                                                                                                                                                                      |
-| jira-backlog-planning.instructions  | Jira backlog management: planning files, search conventions, similarity assessment, and state persistence                                                                                                                                                   |
-| jira-backlog-triage.instructions    | Jira issue backlog triage: field recommendations, duplicate detection, and controlled execution                                                                                                                                                             |
-| jira-backlog-update.instructions    | Jira backlog execution: consumes planning handoffs and applies sequential Jira operations                                                                                                                                                                   |
-| jira-wit-planning.instructions      | Jira PRD work item planning: hierarchy mapping, field validation, and handoff contracts                                                                                                                                                                     |
-
-## Skills
-
-| Skill | Description                                                                                                                                                                                                                                                                                           |
-|-------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| jira  | Jira issue workflows for search, issue updates, transitions, comments, and field discovery via the Jira REST API. Use when you need to search with JQL, inspect an issue, create or update work items, move an issue between statuses, post comments, or discover required fields for issue creation. |
-
 ---
 
 > Source: [microsoft/hve-core](https://github.com/microsoft/hve-core)

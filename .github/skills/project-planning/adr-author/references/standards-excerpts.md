@@ -55,7 +55,3 @@ The following sources inform the practice but MUST NOT be embedded verbatim in s
 - ISO/IEC/IEEE 42010:2022, "Software, systems and enterprise — Architecture description". ISO catalog: <https://www.iso.org/standard/74393.html>. Cite only; do not quote.
 - arc42 §9 — "Architecture Decisions" section of the arc42 documentation template, providing a lightweight rationale-capture pattern complementary to MADR.
 - joelparkerhenderson/architecture-decision-record — community catalog of ADR templates and examples. Licensed under CC-BY-SA; embedding text would impose share-alike obligations on hve-core and is therefore prohibited. Cite by URL only.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

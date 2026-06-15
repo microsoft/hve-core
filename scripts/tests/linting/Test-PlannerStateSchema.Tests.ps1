@@ -16,7 +16,7 @@ $script:identityFiles = @(
     (Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md')
 )
 
-Describe 'Inline planner state schema defaults' {
+Describe 'Inline planner state schema defaults' -Tag 'Unit' {
     BeforeAll {
         function Get-InlineStateJson {
             param([string]$Path)

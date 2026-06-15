@@ -40,6 +40,9 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/accessibility/accessibility-planner.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
@@ -56,6 +59,10 @@ items:
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
     kind: agent
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
@@ -212,6 +219,9 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # BRD Skills
+  - path: .github/skills/project-planning/requirements-author
+    kind: skill
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations
     kind: skill

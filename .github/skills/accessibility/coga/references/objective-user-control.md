@@ -92,7 +92,3 @@ Personalisation lets users adjust the interface to suit their preferences. Honou
 * Confirm semantic markup supports personalisation extensions and assistive vocabularies.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-8>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

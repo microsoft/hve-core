@@ -322,30 +322,40 @@ function New-PluginReadmeContent {
         skill       = @{ Title = 'Skills'; Header = 'Skill' }
     }
 
-    foreach ($entry in $sectionMap.GetEnumerator()) {
-        $kind = $entry.Key
-        $meta = $entry.Value
-        $kindItems = @($Items | Where-Object { $_.Kind -eq $kind })
-        if ($kindItems.Count -eq 0) {
-            continue
-        }
+    $hasCollectionArtifactContent = -not [string]::IsNullOrWhiteSpace($CollectionContent) -and (
+        $CollectionContent -match '(?m)^##\s+Included Artifacts\s*$' -or
+        (
+            $CollectionContent -match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->' -and
+            $CollectionContent -match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+        )
+    )
 
-        [void]$sb.AppendLine()
-        [void]$sb.AppendLine("## $($meta.Title)")
-        [void]$sb.AppendLine()
+    if (-not $hasCollectionArtifactContent) {
+        foreach ($entry in $sectionMap.GetEnumerator()) {
+            $kind = $entry.Key
+            $meta = $entry.Value
+            $kindItems = @($Items | Where-Object { $_.Kind -eq $kind })
+            if ($kindItems.Count -eq 0) {
+                continue
+            }
 
-        # Calculate column widths for aligned table output
-        $col1Width = $meta.Header.Length
-        $col2Width = 'Description'.Length
-        foreach ($item in $kindItems) {
-            if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
-            if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
-        }
+            [void]$sb.AppendLine()
+            [void]$sb.AppendLine("## $($meta.Title)")
+            [void]$sb.AppendLine()
 
-        [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
-        [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
-        foreach ($item in $kindItems) {
-            [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
+            # Calculate column widths for aligned table output
+            $col1Width = $meta.Header.Length
+            $col2Width = 'Description'.Length
+            foreach ($item in $kindItems) {
+                if ($item.Name.Length -gt $col1Width) { $col1Width = $item.Name.Length }
+                if ($item.Description.Length -gt $col2Width) { $col2Width = $item.Description.Length }
+            }
+
+            [void]$sb.AppendLine("| $($meta.Header.PadRight($col1Width)) | $('Description'.PadRight($col2Width)) |")
+            [void]$sb.AppendLine('|' + ('-' * ($col1Width + 2)) + '|' + ('-' * ($col2Width + 2)) + '|')
+            foreach ($item in $kindItems) {
+                [void]$sb.AppendLine("| $($item.Name.PadRight($col1Width)) | $($item.Description.PadRight($col2Width)) |")
+            }
         }
     }
 

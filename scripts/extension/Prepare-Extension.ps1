@@ -464,7 +464,8 @@ function New-CollectionReadme {
     }
 
     # Write back updated artifact section into collection.md when markers are present.
-    # Collection files keep the parent h2 outside the generated marker block.
+    # The hand-authored intro provides the `## Included Artifacts` H2 immediately
+    # before the BEGIN marker, so the generated block contains only the H3 tables.
     if ($parsed.HasMarkers) {
         $generatedBlock = $artifactSections.ToString().TrimEnd()
         $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"

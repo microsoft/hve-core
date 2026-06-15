@@ -16,7 +16,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **codebase-profiler**     | Scans the repository to build a technology profile and select applicable security skills                                                                                    |
 | **finding-deep-verifier** | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                      |
 | **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
-| **report-generator**      | Collates verified security skill findings into a comprehensive vulnerability report                                                                                         |
+| **report-generator**      | Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory              |
 | **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
 | **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                           |
 | **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |

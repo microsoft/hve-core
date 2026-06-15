@@ -11,5 +11,3 @@ This file is the intake for new telemetry vocabulary not yet covered by the pare
 No pending additions.
 
 > Brought to you by microsoft/hve-core
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

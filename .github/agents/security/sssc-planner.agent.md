@@ -29,7 +29,7 @@ Phase-based conversational supply chain security planning agent that guides user
 
 ## Startup Announcement
 
-Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new conversation and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
+Display the SSSC Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new project and whenever `disclaimerShownAt` is `null` in `state.json`, before any questions or analysis. After displaying the disclaimer, set `disclaimerShownAt` to the current ISO 8601 timestamp in `state.json`.
 
 After the disclaimer, display the standards attribution: assessment is conducted against OpenSSF Scorecard, SLSA Build levels, OpenSSF Best Practices Badge, Sigstore keyless signing, and SBOM standards (CycloneDX and SPDX) as referenced in `sssc-standards.instructions.md`. Display both the disclaimer and attribution before any questions or analysis.
 
@@ -113,7 +113,7 @@ Human-review exit reminder: a qualified supply chain security reviewer signs off
 
 Gate: hard — stop, surface a structured confirmation prompt that references state.phaseGates.phase6.confirmedAt, and wait for explicit user approval before advancing. Record the ISO-8601 timestamp in state.phaseGates.phase6.confirmedAt once the user approves.
 
-If the assessment surfaced architectural decisions worth preserving — signing strategy, build-isolation topology, registry or distribution choices, SBOM tooling — you may want to capture them as ADRs via `@adr-creation`.
+If the assessment surfaced architectural decisions worth preserving, such as signing strategy, build-isolation topology, registry or distribution choices, or SBOM tooling, you may want to capture them as ADRs via the ADR Creator agent.
 
 ## Entry Modes
 

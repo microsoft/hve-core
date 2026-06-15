@@ -96,7 +96,3 @@ Tickets, fare cards, keycards, and similar machine-readable identification media
 * For systems that issue cards on demand (ticket machine), confirm the issued card preserves the tactile orientation feature regardless of which print path generated it.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

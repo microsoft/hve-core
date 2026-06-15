@@ -132,6 +132,9 @@ items:
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
+  - path: .github/skills/hve-core/vally-tests
+    kind: skill
+    maturity: experimental
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays

@@ -30,7 +30,8 @@
   ],
   "ignoreRegExpList": [
     "/#.*/g",
-    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
+    "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
   "dictionaryDefinitions": [
     {
@@ -83,6 +84,7 @@
     "hideable",
     "idor",
     "learning",
+    "normaliz",
     "prval",
     "skillmd",
     "smol",
@@ -91,10 +93,10 @@
     "vally",
     "vyta",
     "whiteboarding",
-    "ystatement",
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic",
+    "ystatement",
     "sssc",
     "SSSC",
     "SLSA",

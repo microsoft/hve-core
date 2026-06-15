@@ -27,6 +27,6 @@ Apply all shared patterns by default during capture mode. The RAI-specific guida
 
 * **Risk classification context**: Use scan results to detect potential risk classification indicators (depth tier signals) and tailor opening questions accordingly. Tier assignment itself happens in Phase 2.
 * **AI-system framing**: Frame the opening prompts around the AI system specifically — surface model type, training data origin, decision automation, and human-in-the-loop placement during natural conversation rather than as a checklist.
-* **Tension surfacing target**: Record identified RAI principle tensions in `runningObservations` for tracking through Phases 2–6.
+* **Tension surfacing target**: Record identified RAI principle tensions in `runningObservations` for tracking through Phases 2-6.
 * **Output preferences timing**: In `from-prd` mode, ask preference questions after the PRD pre-scan summary, before Phase 2. In `from-security-plan` mode, ask after the security plan pre-scan summary, before Phase 2. Record responses in `userPreferences` using the schema field names, defaulting to `{outputDetailLevel: standard, targetSystem: github, audienceProfile: technical, includeOptionalArtifacts: {transparencyNote: false, monitoringSummary: false, artifactSigning: false}}` if the user declines to specify.
 

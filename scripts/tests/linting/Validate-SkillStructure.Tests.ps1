@@ -570,7 +570,7 @@ description: 'Skill with co-located tests directory'
             $result.IsValid | Should -BeTrue
             $result.Warnings | Should -HaveCount 0
         }
-        
+
         It 'Does not warn about templates/ subdirectory' {
             $frontmatter = @"
 ---
