@@ -184,5 +184,3 @@ Method 9 artifacts are stored at `.copilot-tracking/dt/{project-slug}/method-09-
 * `deployment-plan.md` — Captures organizational deployment strategy including change management, stakeholder communication, training, adoption metrics, and rollback procedures.
 * `iteration-summary.md` — Summarizes overall iteration findings, business value delivered, and coaching exit status.
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

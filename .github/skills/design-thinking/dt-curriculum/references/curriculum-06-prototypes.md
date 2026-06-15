@@ -46,5 +46,3 @@ Intermediate learners benefit from comparing competing prototypes and understand
 Advanced learners should explore how organizational risk tolerance affects prototyping ambition, analyze when a stream of prototype failures signals a return to Method 3 for re-synthesis, and critique the trade-off between single-assumption purity and practical time constraints.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

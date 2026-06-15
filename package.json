@@ -85,7 +85,7 @@
   },
   "devDependencies": {
     "@cspell/cspell-json-reporter": "10.0.1",
-    "@microsoft/vally-cli": "0.5.0",
+    "@microsoft/vally-cli": "0.6.0",
     "@vscode/vsce": "3.9.2",
     "alex": "11.0.1",
     "audit-ci": "7.1.0",
@@ -104,7 +104,9 @@
   "overrides": {
     "basic-ftp": "6.0.1",
     "brace-expansion@^5": "5.0.6",
+    "form-data": "4.0.6",
     "ip-address": "10.2.0",
+    "js-yaml": "4.2.0",
     "markdown-it": "14.1.1",
     "picomatch@^2": "2.3.2",
     "picomatch@^4": "4.0.4",
