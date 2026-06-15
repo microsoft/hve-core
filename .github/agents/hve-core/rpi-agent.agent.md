@@ -203,6 +203,7 @@ Start by determining the task difficulty based on the user's requests, likely fi
 
 Assess task difficulty and scan `.copilot-tracking/research/` and `.copilot-tracking/research/subagents/` for existing research from this session that relates to the current task when an artifact-backed workflow is already in progress.
 
+* When the direct model applies and no prior research exists: proceed to Step 2 without creating artifacts.
 * When sufficient prior research exists: reference it and proceed to Step 2 with only the uncovered gaps.
 * When prior research partially covers the topic: identify the remaining gaps and continue targeted investigation.
 * When no prior research exists and the artifact-backed model applies: proceed to Step 2 with the full research scope and create research artifacts.
