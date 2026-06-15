@@ -61,7 +61,7 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
 
         It 'Plans a vally command per slug using --eval-spec for the slug stimulus file' {
             $first = $script:Summary.plannedCommands[0]
-            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/stimuli/[^/]+\.yml$'
+            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/stimuli/[^/]+\.yml --model \S+$'
         }
     }
 

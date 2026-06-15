@@ -117,7 +117,8 @@ Describe 'Test-EvalSpec.ps1 (entry script)' -Tag 'Unit' {
         & $script:ScriptPath `
             -Root 'scripts/tests/evals/fixtures/specs/valid' `
             -RepoRoot $script:RepoRoot `
-            -OutputPath $script:OutputPath *> $null
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
         $exit = $LASTEXITCODE
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
 
@@ -130,7 +131,8 @@ Describe 'Test-EvalSpec.ps1 (entry script)' -Tag 'Unit' {
         & $script:ScriptPath `
             -Root 'scripts/tests/evals/fixtures/specs/invalid' `
             -RepoRoot $script:RepoRoot `
-            -OutputPath $script:OutputPath *> $null
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
         $exit = $LASTEXITCODE
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
 

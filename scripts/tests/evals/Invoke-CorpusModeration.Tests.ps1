@@ -121,7 +121,7 @@ Describe 'Invoke-CorpusModeration.ps1' -Tag 'Unit' {
         )
 
         $stubDir = New-PythonStub -OutputJson '{"records":[{"id":".github/agents/clean.agent.md","scores":{"toxicity":0.05},"flagged":false,"flaggedLabels":[]}],"summary":{"total":1,"flaggedCount":0}}'
-        $env:PATH = "$stubDir;$($script:OrigPath)"
+        $env:PATH = "$stubDir$([System.IO.Path]::PathSeparator)$($script:OrigPath)"
 
         & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $manifest -OutFile $outFile -RepoRoot $repo 2>$null
         $LASTEXITCODE | Should -Be 0
@@ -141,7 +141,7 @@ Describe 'Invoke-CorpusModeration.ps1' -Tag 'Unit' {
         )
 
         $stubDir = New-PythonStub -OutputJson '{"records":[{"id":".github/prompts/bad.prompt.md","scores":{"toxicity":0.92},"flagged":true,"flaggedLabels":["toxicity"]}],"summary":{"total":1,"flaggedCount":1}}'
-        $env:PATH = "$stubDir;$($script:OrigPath)"
+        $env:PATH = "$stubDir$([System.IO.Path]::PathSeparator)$($script:OrigPath)"
 
         & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $manifest -OutFile $outFile -RepoRoot $repo 2>$null
         $LASTEXITCODE | Should -Be 1
