@@ -1,0 +1,19 @@
+name: fixture-valid-moderation-threshold
+description: Compliant spec that exercises the optional moderation.threshold override.
+type: capability
+config:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+moderation:
+  threshold: 0.75
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: stimulus-with-custom-threshold
+    prompt: "Describe how content moderation thresholds work."
+    graders:
+      - type: output-matches
+        name: mentions-moderation
+        config: {pattern: '(?i)moderation'}

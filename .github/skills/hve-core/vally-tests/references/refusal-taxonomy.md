@@ -232,3 +232,5 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 * The lint script joins all regex blocks under a single category using alternation (`|`) and evaluates the combined pattern against the candidate stimulus. Patterns within a category are designed to coexist when alternated.
 * Any match against any category's combined pattern flags the stimulus for refusal. The script emits the matching category, the matching pattern index within that category, and the stimulus location.
 * This file is the only normative source for the regex set. Changes to category names, pattern semantics, or refusal wording propagate through the lint script and the Vally Test Author prompt on the next regeneration; do not duplicate the patterns elsewhere.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

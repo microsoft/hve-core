@@ -1,0 +1,32 @@
+[project]
+name = "hve-core-moderation"
+version = "1.0.0"
+description = "Content moderation tooling for eval input/output screening"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "fuzz_harness.py"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.14",
+    "ruff>=0.6",
+]
+fuzz = [
+    "atheris>=3.0",
+]

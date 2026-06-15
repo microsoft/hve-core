@@ -16,6 +16,7 @@ graders:
     config:
       prompt: |
         Score 1 if the response <criterion>. Score 0 otherwise.
+      model: gpt-4o-mini
       scoring: scale_1_5
       threshold: 0.85
 

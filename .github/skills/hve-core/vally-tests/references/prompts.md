@@ -131,3 +131,5 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader catalog and selection rules: [grader-catalog.md](./grader-catalog.md).
 * Refusal categories and regex source of truth: [refusal-taxonomy.md](./refusal-taxonomy.md).
 * Eval target routing for `prompt` kind: [eval-suite-routing.md](./eval-suite-routing.md).
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

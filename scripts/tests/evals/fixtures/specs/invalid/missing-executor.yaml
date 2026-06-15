@@ -1,0 +1,16 @@
+name: fixture-missing-executor
+description: Spec missing the required config.executor key.
+type: capability
+config:
+  runs: 1
+  timeout: 60s
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: a-stimulus
+    prompt: "What is 2 + 2?"
+    graders:
+      - type: output-matches
+        name: four
+        config: {pattern: '\b4\b'}

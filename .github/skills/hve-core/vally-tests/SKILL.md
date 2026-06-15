@@ -118,7 +118,7 @@ Authored stimuli always land in one of the routed Vally eval files. The router i
 |--------------|-------------------------------------------------------|----------------------|
 | prompt       | `evals/behavior-conformance/prompts.eval.yaml`        | behavior-conformance |
 | instructions | `evals/behavior-conformance/instructions.eval.yaml`   | behavior-conformance |
-| agent        | `evals/agent-behavior/stimuli/<slug>.yml`             | agent-behavior       |
+| agent        | `evals/agent-behavior/eval.yaml`                      | agent-behavior       |
 | skill        | `evals/behavior-conformance/skill-behavior.eval.yaml` | behavior-conformance |
 
 Never write to `evals/baseline-equivalence/`, `evals/script-validation/`, or `evals/results/` from this skill. Those targets serve baseline equivalence, script validation, and historical comparison flows that are out of scope for conformance authoring.
@@ -131,3 +131,7 @@ Follow these conventions when extending this skill:
 * New grader types belong in `references/grader-catalog.md` and only after the matching Vally CLI version is pinned in `package.json` devDependencies.
 * New refusal categories require updates to `references/refusal-taxonomy.md`, the regex set the safety lint script consumes, the Safety Refusal Taxonomy table above, and the canonical refusal block.
 * Helper scripts must ship in parity pairs (`.ps1` and `.sh`) unless the workflow has a hard Python dependency. Python helpers live under `scripts/` and are configured by the skill's `pyproject.toml`.
+
+---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -17,7 +17,14 @@ param(
     [switch]$CodeCoverage,
 
     [Parameter()]
-    [string[]]$TestPath = @("$PSScriptRoot")
+    [string[]]$TestPath = @("$PSScriptRoot"),
+
+    [Parameter()]
+    [Alias('IncludeTag')]
+    [string[]]$Tag,
+
+    [Parameter()]
+    [string[]]$ExcludeTag = @('Integration', 'Slow')
 )
 
 # Dynamically discover skill test directories when using the default TestPath.
@@ -49,7 +56,12 @@ $configuration.Run.PassThru = $true
 $configuration.Run.TestExtension = '.Tests.ps1'
 
 # Filter configuration
-$configuration.Filter.ExcludeTag = @('Integration', 'Slow')
+# When -ExcludeTag is omitted, the default @('Integration','Slow') applies.
+# Passing -ExcludeTag (including @()) replaces the default rather than appending.
+if ($Tag) {
+    $configuration.Filter.Tag = $Tag
+}
+$configuration.Filter.ExcludeTag = $ExcludeTag
 
 # Output configuration
 $configuration.Output.Verbosity = if ($CI.IsPresent) { 'Normal' } else { 'Detailed' }

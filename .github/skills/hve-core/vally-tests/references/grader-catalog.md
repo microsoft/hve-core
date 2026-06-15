@@ -46,6 +46,7 @@ graders:
       prompt: |
         Score 1 if the response explains the prompt's purpose using the
         words "scope" or "objective" with reasoning. Score 0 otherwise.
+      model: gpt-4o-mini
       scoring: scale_1_5
       threshold: 0.85
 ```
@@ -292,3 +293,5 @@ Not applicable. The grader is not shipped in Vally CLI 0.4.0.
 * Per-kind checks for the `skill` kind: [skills.md](./skills.md).
 * Refusal categories and regex source of truth: [refusal-taxonomy.md](./refusal-taxonomy.md).
 * Eval suite routing by artifact kind: [eval-suite-routing.md](./eval-suite-routing.md).
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

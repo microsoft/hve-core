@@ -1,0 +1,17 @@
+name: fixture-moderation-threshold-non-numeric
+description: Spec whose moderation.threshold is not numeric.
+type: capability
+config:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+moderation:
+  threshold: "high"
+
+stimuli:
+  - name: non-numeric
+    prompt: "Non-numeric threshold must fail validation."
+    graders:
+      - type: output-matches
+        name: noop
+        config: {pattern: '.*'}

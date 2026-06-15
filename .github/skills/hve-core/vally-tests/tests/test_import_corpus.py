@@ -161,11 +161,14 @@ class TestPatchEntry:
         )
         digest = "c" * 64
         block = import_corpus.build_patch_entry(row, digest)
-        comment_lines = [line for line in block.splitlines() if line.startswith("#")]
+        comment_lines = [
+            line for line in block.splitlines() if line.startswith("#")
+        ]
         assert all("\n" not in line for line in comment_lines)
         # The injected mapping must not survive as a parsed document key.
         parsed = yaml.safe_load(block)
         assert isinstance(parsed, list) and len(parsed) == 1
+
 
 
 class TestImportCorpus:
@@ -221,6 +224,7 @@ class TestImportCorpus:
         assert all(entry["tags"]["advisory"] is True for entry in parsed)
         assert parsed[0]["grader"] == "Equals: tricky # value"
         assert parsed[0]["notes"] == "multi\nline: note"
+
 
     def test_dedupes_against_existing_target(self, tmp_path: Path) -> None:
         row = _sample_row()
