@@ -5,6 +5,7 @@ agents:
   - CVE Analyzer
 tools:
   - agent
+  - todos
   - search/codebase
   - search/fileSearch
   - search/textSearch
@@ -72,10 +73,11 @@ The non-negotiable guard: when reachability or exploitability cannot be determin
 
 ### Phase 3: Exploitability Analysis
 
-1. Invoke the `CVE Analyzer` subagent once per CVE, passing the enriched profile and codebase context.
-2. After each response, check for clarifying questions. Resolve deterministic ones with tools; ask the user when judgment is required; then re-invoke with the resolved answers.
-3. If a response is incomplete or malformed, retry the invocation once; on a second failure, mark that CVE `under_investigation` and note the analysis gap in the report.
-4. Collect one structured finding per CVE.
+1. Build a todo list with one item per enriched CVE so progress across the batch stays visible; mark each in progress before delegating and complete after its finding is collected.
+2. Invoke the `CVE Analyzer` subagent once per CVE, passing the enriched profile and codebase context.
+3. After each response, check for clarifying questions. Resolve deterministic ones with tools; ask the user when judgment is required; then re-invoke with the resolved answers.
+4. If a response is incomplete or malformed, retry the invocation once; on a second failure, mark that CVE `under_investigation` and note the analysis gap in the report.
+5. Collect one structured finding per CVE.
 
 ### Phase 4: Report Generation
 
