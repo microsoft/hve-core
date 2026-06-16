@@ -44,7 +44,10 @@ Read the assigned phase section from the plan and details files. Read all provid
 
 Implement each step in the phase sequentially:
 
-* Follow exact file paths, schemas, and instruction documents cited in the details.
+* Follow exact file paths, schemas, and instruction documents cited in the details for implementation logic; code comments must not reference these internal artifacts.
+* Code comments and documentation strings must be self-contained and may reference public materials such as RFCs, published specifications, official documentation, or open-source library docs with appropriate citations.
+* Code comments may reference code or documentation in this codebase or related codebases when that reference is durable and accessible to future maintainers.
+* Do not include internal planning, research, or implementation artifact references, including `.copilot-tracking/` paths, in code comments, production code, or documentation.
 * Apply conventions and standards from instruction files loaded in Step 1.
 * When a local file pattern conflicts with the codebase's established conventions or instructions, follow the established codebase guidance unless the plan or user explicitly overrides it.
 * Create, modify, or remove files as specified.
