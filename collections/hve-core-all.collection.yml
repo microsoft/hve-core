@@ -565,6 +565,8 @@ items:
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental
+- path: .github/skills/project-planning/requirements-author
+  kind: skill
 - path: .github/skills/rpi/rpi
   kind: skill
 - path: .github/skills/rpi/task-implementor
@@ -574,8 +576,6 @@ items:
 - path: .github/skills/rpi/task-researcher
   kind: skill
 - path: .github/skills/rpi/task-reviewer
-  kind: skill
-- path: .github/skills/project-planning/requirements-author
   kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill

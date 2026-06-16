@@ -28,12 +28,12 @@ Repeat this loop until the current evaluation log reports no remaining issues. I
 
 Use `runSubagent` or `task` whenever those tools are available; the named subagent should still be the primary dispatch target.
 
-| Subagent | Inputs | Outputs |
-|---|---|---|
-| `Prompt Tester` | target prompt file paths, run number, sandbox folder path, purpose/requirements/expectations, prior sandbox runs when iterating | sandbox folder path, execution-log path, execution status, literal execution findings, clarifying questions |
-| `Prompt Evaluator` | target prompt file paths, run number, sandbox folder path containing the execution log, prior evaluation logs when iterating | evaluation-log path, evaluation status, severity-graded checklist, clarifying questions |
-| `Researcher Subagent` | research topic or question, subagent research path to create or update | subagent research path, research status, key findings, suggested next research, clarifying questions |
-| `Prompt Updater` | prompt files to create or modify, requirements/objectives, evaluation findings and research results, updater tracking path, sandbox/evaluation-log paths when relevant | updater tracking path, changed prompt file paths, related file paths, modification status, outstanding checklist, clarifying questions |
+| Subagent              | Inputs                                                                                                                                                                 | Outputs                                                                                                                                |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `Prompt Tester`       | target prompt file paths, run number, sandbox folder path, purpose/requirements/expectations, prior sandbox runs when iterating                                        | sandbox folder path, execution-log path, execution status, literal execution findings, clarifying questions                            |
+| `Prompt Evaluator`    | target prompt file paths, run number, sandbox folder path containing the execution log, prior evaluation logs when iterating                                           | evaluation-log path, evaluation status, severity-graded checklist, clarifying questions                                                |
+| `Researcher Subagent` | research topic or question, subagent research path to create or update                                                                                                 | subagent research path, research status, key findings, suggested next research, clarifying questions                                   |
+| `Prompt Updater`      | prompt files to create or modify, requirements/objectives, evaluation findings and research results, updater tracking path, sandbox/evaluation-log paths when relevant | updater tracking path, changed prompt file paths, related file paths, modification status, outstanding checklist, clarifying questions |
 
 ## Research and update artifact paths
 

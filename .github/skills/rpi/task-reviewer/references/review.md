@@ -80,15 +80,15 @@ Use compact skill-forward wording while preserving the review outcome fields in 
 ```markdown
 ## {{status_icon}} Task Reviewer: {{task_description}}
 
-| Summary | |
-|---------|-|
-| Review Log | {{review_log_path}} |
-| Overall Status | {{Complete / Needs Rework / Blocked}} |
-| Critical Findings | {{count}} |
-| High Findings | {{count}} |
-| Medium Findings | {{count}} |
-| Low Findings | {{count}} |
-| Follow-Up Items | {{count}} |
+| Summary           |                                       |
+|-------------------|---------------------------------------|
+| Review Log        | {{review_log_path}}                   |
+| Overall Status    | {{Complete / Needs Rework / Blocked}} |
+| Critical Findings | {{count}}                             |
+| High Findings     | {{count}}                             |
+| Medium Findings   | {{count}}                             |
+| Low Findings      | {{count}}                             |
+| Follow-Up Items   | {{count}}                             |
 
 Next step: {{/task-implementor, /task-researcher, /task-planner, or return to user}}
 ```
