@@ -80,20 +80,21 @@ jobs:
       - name: Install Chrome for pa11y (puppeteer)
         working-directory: docs/docusaurus
         run: |
-          # A restored cache can contain a Chrome build folder whose executable
-          # is missing, which makes `puppeteer browsers install` fail because it
-          # treats the folder as already installed. Prune incomplete builds first.
-          chrome_root="$HOME/.cache/puppeteer/chrome"
-          if [ -d "$chrome_root" ]; then
-            for build in "$chrome_root"/*/; do
-              [ -d "$build" ] || continue
-              if [ -z "$(find "$build" -type f -name chrome 2>/dev/null)" ]; then
-                echo "Removing incomplete Chrome build: $build"
-                rm -rf "$build"
-              fi
-            done
-          fi
+          # A restored cache can leave a Chrome build folder without its
+          # executable. puppeteer then treats Chrome as already installed and
+          # skips the download, so pa11y fails at launch with "Could not find
+          # Chrome". Verify the exact path puppeteer resolves and, if it is
+          # missing, wipe the cache and reinstall from scratch.
+          verify_chrome() {
+            node -e "const fs=require('fs');const p=require('puppeteer').executablePath();if(!fs.existsSync(p)){console.error('Chrome executable missing at '+p);process.exit(1);}console.log('Chrome executable present at '+p);"
+          }
           npx puppeteer browsers install chrome
+          if ! verify_chrome; then
+            echo "Reinstalling Chrome after clearing the puppeteer cache"
+            rm -rf "$HOME/.cache/puppeteer"
+            npx puppeteer browsers install chrome
+            verify_chrome
+          fi
 
       - name: Accessibility scan (pa11y-ci)
         working-directory: docs/docusaurus
