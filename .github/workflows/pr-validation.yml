@@ -247,6 +247,16 @@ jobs:
       changed-files-only: true
       base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
 
+  eval-validation:
+    name: Eval Validation
+    uses: ./.github/workflows/eval-validation.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
+      changed-files-only: true
+      base-branch: ${{ github.event.pull_request.base.sha || format('origin/{0}', github.base_ref) }}
+
   link-lang-check:
     name: Link Language Check
     uses: ./.github/workflows/link-lang-check.yml
