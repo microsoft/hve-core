@@ -430,7 +430,7 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 #### `Invoke-PythonTests.ps1`
 
-Runs pytest across Python skills.
+Runs tests across Python skills using `uv run pytest` when `uv` is available, with a fallback to venv or global pytest.
 
 Purpose: Execute Python test suites for all Python skills that include a `tests/` directory, reporting aggregate pass/fail results.
 
@@ -438,7 +438,8 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 * Discovers Python skills via `pyproject.toml` file search
 * Skips skills without a `tests/` directory
-* Verifies pytest availability before running
+* Prefers `uv run pytest` when `uv` is available; syncs dev dependencies with `uv sync --dev` (or `--locked` when `uv.lock` exists) before running
+* Falls back to venv or global `pytest` when `uv` is not found
 * Reports per-skill test results with pass/fail counts
 * Configurable verbosity level
 
