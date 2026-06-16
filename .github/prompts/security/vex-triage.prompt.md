@@ -12,7 +12,7 @@ argument-hint: "report=path/to/report.json [product=pkg:npm/@org/name]"
 
 ## Inputs
 
-* ${input:report}: (Required) Path to an existing scan report or SBOM to triage. Accepts Trivy JSON, OSV-Scanner JSON, or SPDX-JSON. Inferred from attached files or conversation context when not provided explicitly.
+* ${input:report}: (Required) Path to an existing scan report or SBOM to triage. Accepts Trivy JSON, OSV-Scanner JSON, or SPDX-JSON. If not passed explicitly, it is inferred from attached files or conversation context.
 * ${input:product}: (Optional) Product identifier in PURL format for the generated statements (for example, `pkg:npm/@microsoft/hve-core`). Inferred from the manifest when not provided.
 
 ## Requirements
@@ -20,4 +20,3 @@ argument-hint: "report=path/to/report.json [product=pkg:npm/@org/name]"
 1. Run the VEX Generator in Mode 2 (triage from existing report): skip the scan phase and begin at enrichment using `${input:report}`.
 2. Apply the input precedence when interpreting the report: Trivy JSON > OSV-Scanner JSON > SPDX-JSON SBOM.
 3. When `${input:product}` is provided, use it as the PURL product identifier for the generated VEX statements.
-4. Present the result as a draft for human review, including counts by status and confidence band, every `affected` finding, and outstanding reviewer questions for Medium and Low confidence findings.

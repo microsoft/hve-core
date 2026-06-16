@@ -20,4 +20,3 @@ argument-hint: "[scope=path/to/dir] [product=pkg:npm/@org/name]"
 1. Run the VEX Generator in Mode 1 (full pipeline): scan, enrich, analyze, and generate.
 2. When `${input:scope}` is provided, limit the dependency scan to files within the specified directories or paths.
 3. When `${input:product}` is provided, use it as the PURL product identifier for the generated VEX statements.
-4. Present the result as a draft for human review, including counts by status and confidence band, every `affected` finding, and outstanding reviewer questions for Medium and Low confidence findings.
