@@ -407,11 +407,13 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 * Lints each skill directory independently
 * Reports per-skill pass/fail results
 * Supports optional JSON output
+* `-Fix` mode applies `ruff check --fix` followed by `ruff format`; writes results to `python-lint-fix-results.json` instead of `python-lint-results.json`
 
 ##### Parameters
 
 * `-RepoRoot` (string) - Repository root path (default: current directory)
 * `-OutputPath` (string) - Optional path for JSON results
+* `-Fix` (switch) - Applies `ruff check --fix` + `ruff format` to each skill directory; intended for local developer use, not CI gating
 
 ##### Usage
 
@@ -421,12 +423,16 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 # Lint from a specific repository root
 ./scripts/linting/Invoke-PythonLint.ps1 -RepoRoot /path/to/repo
+
+# Apply ruff autofixes and format (local use only)
+./scripts/linting/Invoke-PythonLint.ps1 -Fix
 ```
 
 ##### GitHub Actions Integration
 
 * Workflow: `.github/workflows/python-lint.yml`
 * npm script: `npm run lint:py`
+* npm script (**Local** use): `npm run lint:py:fix`
 
 #### `Invoke-PythonTests.ps1`
 
