@@ -107,6 +107,73 @@ project's `.github/instructions/` directory.
 
 * Skills require skill-compatible agent environments
 
+## Using Agents After Installation
+
+After installing a plugin, agents and named commands are available in your CLI session.
+
+### Named Commands vs Agent Mode
+
+CLI plugins provide two distinct interaction patterns:
+
+| Mode          | Command                  | Behavior                                                     |
+|---------------|--------------------------|--------------------------------------------------------------|
+| Named Command | `/git-commit`            | Executes a predefined workflow, then returns to default mode |
+| Agent Mode    | `/agent Task Researcher` | Switches to the agent for open-ended conversation            |
+
+Named commands (prompts) run a specific workflow and produce structured output. Agent mode enables freeform conversation with a specialized agent until you exit.
+
+> [!IMPORTANT]
+> The CLI does not support prompts that switch to a custom agent directly.
+> Prompts like `/task-research` are designed to run within a specific agent
+> context. To use them, first switch to the agent, then run the prompt:
+>
+> ```text
+> /agent Task Researcher
+> /task-research topic="API authentication patterns"
+> ```
+>
+> Prompts that do not require an agent context (e.g., `/git-commit`,
+> `/git-merge`) work directly from the default mode.
+
+### Example: Research Workflow
+
+Switch to the agent first, then run the prompt:
+
+```text
+> /agent Task Researcher
+Switched to Task Researcher
+> /task-research topic="API authentication patterns"
+[Agent executes research workflow, creates research document]
+```
+
+Continue with follow-up questions in the same agent context:
+
+```text
+> What are common API authentication patterns for REST APIs?
+[Research conversation continues]
+> How do OAuth2 and API keys compare for microservices?
+[Follow-up within same agent context]
+> /exit
+```
+
+### Available Agents
+
+After installing the hve-core plugin, these agents are available via `/agent <name>`:
+
+* Task Researcher - deep research and technical investigation
+* Task Planner - implementation planning with phased execution
+* Task Implementor - code changes following plans
+* Memory - persistent context across sessions
+* PR Review - pull request analysis and feedback
+
+For the complete list, run `/help` in a CLI session to see all available commands and agents.
+
+### When to Use Each Mode
+
+* Use **named commands** (`/git-commit-message`, `/git-merge`) directly from default mode for workflows that do not require a custom agent.
+* Use **agent mode** (`/agent <name>`) first, then run agent-specific prompts (`/task-research`, `/task-plan`) for structured workflows that need agent context.
+* Stay in **agent mode** for exploratory conversations, follow-up questions, or tasks that don't fit a predefined prompt.
+
 ---
 
 <!-- markdownlint-disable MD036 -->

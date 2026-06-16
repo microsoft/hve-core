@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.py'
-description: 'Required instructions for Python test code research, planning, implementation, editing, or creating - Brought to you by microsoft/hve-core'
+description: 'Python test code authoring conventions'
 ---
 
 # Python Test Instructions

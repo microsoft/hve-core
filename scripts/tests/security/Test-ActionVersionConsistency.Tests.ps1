@@ -22,7 +22,7 @@ BeforeAll {
 
     Save-CIEnvironment
 
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 }
 
 AfterAll {
@@ -701,7 +701,7 @@ Describe 'Invoke-ActionVersionConsistency' -Tag 'Unit' {
 Describe 'Main Script Execution' -Tag 'Unit' {
     BeforeAll {
         $script:TestScript = (Resolve-Path (Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1')).Path
-        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+        $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
         # Use cross-platform temp directory (accessible from child process, unlike $TestDrive)
         $tempBase = [System.IO.Path]::GetTempPath()
         $script:MainTestRoot = Join-Path $tempBase "pester-main-$(Get-Random)"

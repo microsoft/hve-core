@@ -1,5 +1,5 @@
 ---
-description: 'Export Design Thinking artifacts to a collaborative FigJam board or Figma Design file using the official Figma MCP server - Brought to you by microsoft/hve-core'
+description: 'Export Design Thinking artifacts to a FigJam board or Figma Design file via the Figma MCP server'
 agent: 'DT Coach'
 argument-hint: "project-slug=... [board-title=...] [method=latest] [output-type=figjam]"
 tools:

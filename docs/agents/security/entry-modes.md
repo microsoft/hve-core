@@ -37,7 +37,7 @@ Activate From-PRD mode with the **Security Plan from PRD** prompt (`security-pla
 
 ```text
 Inputs:
-  project-slug (optional) — Kebab-case project identifier
+  project-slug (optional) - Kebab-case project identifier
 ```
 
 ### When to Choose From-PRD Mode
@@ -66,7 +66,7 @@ Activate capture mode with the **Security Capture** prompt (`security-capture.pr
 
 ```text
 Inputs:
-  project-slug (optional) — Kebab-case project identifier
+  project-slug (optional) - Kebab-case project identifier
 ```
 
 If the user provides existing security notes or context in the initial message, the agent incorporates them into the interview rather than asking redundant questions.

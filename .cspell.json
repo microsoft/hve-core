@@ -24,11 +24,14 @@
     "**/Cargo.lock",
     "CHANGELOG.md",
     "logs/**",
-    "docs/docusaurus/build/**"
+    "docs/docusaurus/build/**",
+    "dependency-pinning-artifacts/**",
+    "evals/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
-    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
+    "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
   "dictionaryDefinitions": [
     {
@@ -62,25 +65,56 @@
     "general-technical"
   ],
   "words": [
+    "ˈpræksɪs",
+    "agentic",
+    "aoda",
     "atheris",
     "behaviour",
+    "beval",
     "behavioural",
     "brainwriting",
     "clusterfuzzlite",
     "collab",
+    "dogfooding",
     "easyops",
+    "evals",
+    "fetchone",
     "figjam",
+    "graphify",
+    "graphifyy",
     "hideable",
+    "idor",
     "learning",
+    "normaliz",
+    "packageable",
+    "prval",
+    "skillmd",
     "smol",
     "subcat",
+    "uncited",
+    "vally",
+    "vyta",
     "whiteboarding",
     "ˈpræksɪs",
     "πρᾶξις",
-    "agentic"
+    "agentic",
+    "ystatement",
+    "underspecified",
+    "sssc",
+    "SSSC",
+    "SLSA",
+    "Sigstore",
+    "cosign",
+    "scorecard",
+    "watchlist"
   ],
   "reporters": [
     "default",
-    ["@cspell/cspell-json-reporter", { "outFile": "logs/cspell-results.json" }]
+    [
+      "@cspell/cspell-json-reporter",
+      {
+        "outFile": "logs/cspell-results.json"
+      }
+    ]
   ]
 }

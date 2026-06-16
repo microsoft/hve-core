@@ -5,11 +5,6 @@ disable-model-invocation: true
 agents:
   - Researcher Subagent
   - PowerPoint Subagent
-handoffs:
-  - label: "Compact"
-    agent: PowerPoint Builder
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths for all of the current Tracking Artifacts. Be sure to include any current analysis log artifacts. Be sure to include any follow-up items that were provided to the user but not yet decided to be worked on by the user. Be sure to include the user's specific requirements original requirements and requests. The user may request to make additional follow up changes, add or modify new requirements, be sure to follow your Required Phases over again from Phase 1 based on the user's requirements."
 ---
 
 # PowerPoint Builder
@@ -115,8 +110,6 @@ Run a `PowerPoint Subagent` with task type `validate` providing:
 * Image output directory: `slide-deck/validation/`.
 * Execution log path: `changes/validate-{{timestamp}}.md`.
 * The `validate_slides.py` script has a built-in issue-only system message that checks overlapping elements, text overflow/cutoff, decorative line mismatch after title wrapping, citation/footer collisions, spacing/alignment problems, low contrast, narrow text boxes, and leftover placeholders. It treats dense near-edge layouts as acceptable when readability remains acceptable. Do not pass a `-ValidationPrompt` unless the user requests additional task-specific checks. To activate vision validation, pass `-ValidationPrompt "Validate visual quality"`.
-* Optional overrides: validation model (default: `claude-haiku-4.5`).
-
 The pipeline automatically clears stale images before exporting and names output files to match original slide numbers when `-Slides` is used. This ensures `validate_slides.py` reads the correct, freshly-exported images.
 
 **This phase must always run with a subagent, regardless of how many slides were modified or added. Even when slides appear correct, run validation.**

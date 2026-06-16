@@ -352,3 +352,63 @@ Describe 'Invoke-MarketplaceValidation - valid manifest' {
         $result.ErrorCount | Should -Be 0
     }
 }
+
+Describe 'Invoke-MarketplaceValidation - JSON output' {
+    BeforeEach {
+        $script:repoRoot = Join-Path $TestDrive 'repo-json-output'
+        $script:manifestDir = Join-Path $script:repoRoot '.github/plugin'
+        New-Item -ItemType Directory -Path $script:manifestDir -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/my-plugin') -Force | Out-Null
+        Set-Content -Path (Join-Path $script:repoRoot 'package.json') -Value '{"version":"1.0.0"}'
+    }
+
+    It 'Writes report with expected schema for valid plugin validation' {
+        $outputPath = Join-Path $TestDrive 'logs/marketplace-validation-results.json'
+        $json = @{
+            name     = 'test'
+            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
+            owner    = @{ name = 'owner' }
+            plugins  = @(
+                @{ name = 'my-plugin'; source = 'my-plugin'; description = 'A plugin'; version = '1.0.0' }
+            )
+        } | ConvertTo-Json -Depth 5
+        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+
+        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot -OutputPath $outputPath
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+
+        $result.Success | Should -BeTrue
+        $report.Timestamp | Should -Not -BeNullOrEmpty
+        { [DateTimeOffset]::Parse($report.Timestamp) } | Should -Not -Throw
+        $report.ErrorCount | Should -Be 0
+        $report.Results.Count | Should -Be 1
+        $report.Results[0].PluginName | Should -Be 'my-plugin'
+        $report.Results[0].IsValid | Should -BeTrue
+        $report.Results[0].Errors | Should -BeNullOrEmpty
+        $report.Results[0].Warnings | Should -BeNullOrEmpty
+    }
+
+    It 'Writes per-plugin errors into JSON results' {
+        $outputPath = Join-Path $TestDrive 'logs/marketplace-validation-results.json'
+        New-Item -ItemType Directory -Path (Join-Path $script:repoRoot 'plugins/actual-source') -Force | Out-Null
+        $json = @{
+            name     = 'test'
+            metadata = @{ description = 'd'; version = '1.0.0'; pluginRoot = 'plugins' }
+            owner    = @{ name = 'owner' }
+            plugins  = @(
+                @{ name = 'display-name'; source = 'actual-source'; description = 'A plugin'; version = '1.0.0' }
+            )
+        } | ConvertTo-Json -Depth 5
+        Set-Content -Path (Join-Path $script:manifestDir 'marketplace.json') -Value $json
+
+        $result = Invoke-MarketplaceValidation -RepoRoot $script:repoRoot -OutputPath $outputPath
+        $report = Get-Content -Path $outputPath -Raw | ConvertFrom-Json
+        $pluginResult = @($report.Results | Where-Object { $_.PluginName -eq 'display-name' })[0]
+
+        $result.Success | Should -BeFalse
+        $report.ErrorCount | Should -BeGreaterThan 0
+        $pluginResult.IsValid | Should -BeFalse
+        $pluginResult.Errors | Should -Contain "name does not match source 'actual-source'"
+        $pluginResult.Warnings | Should -BeNullOrEmpty
+    }
+}

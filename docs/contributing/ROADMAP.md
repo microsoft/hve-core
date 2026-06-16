@@ -3,7 +3,7 @@ title: Roadmap
 description: Project direction and priorities for HVE Core over the next 12-18 months
 sidebar_position: 10
 author: HVE Core Team
-ms.date: 2026-01-21
+ms.date: 2026-05-13
 ms.topic: reference
 keywords:
   - roadmap
@@ -195,7 +195,7 @@ The roadmap evolves based on community input:
 ## Version History
 
 | Version | Date       | Changes                     |
-|---------|------------|-----------------------------|
+|---------|------------|-----------------------------||
 | 1.0     | 2026-01-21 | Initial roadmap publication |
 
 *This roadmap satisfies OpenSSF Best Practices Badge Silver criterion `documentation_roadmap`.*

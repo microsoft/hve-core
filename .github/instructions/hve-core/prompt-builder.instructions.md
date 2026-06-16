@@ -1,5 +1,5 @@
 ---
-description: "Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills"
+description: "Authoring standards for prompts, agents, instructions, and skills"
 applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 ---
 
@@ -306,7 +306,7 @@ Skill files include these sections in order:
 5. Parameters Reference: Table documenting all options with defaults.
 6. Script Reference: Usage examples for bash and PowerShell.
 7. Troubleshooting: Common issues and solutions.
-8. Attribution: Attribution in `description:` frontmatter and standard footer.
+8. Attribution: Standard footer.
 
 #### Progressive Disclosure
 
@@ -370,13 +370,9 @@ Validation guidelines:
 
 #### Attribution
 
-Artifacts include attribution as a suffix in the `description:` frontmatter field using the format `- Brought to you by organization/repository-name`:
+The `description:` frontmatter field is a single concise sentence with no attribution suffix. Distribution attribution is added automatically where needed, so source artifacts omit it.
 
-```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
-```
-
-Skill files also include a standard attribution footer as the last line of body content:
+Skill files include a standard attribution footer as the last line of body content:
 
 ```markdown
 > Brought to you by organization/repository-name
@@ -412,7 +408,7 @@ Optional fields available by file type:
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification. Accepts any valid model identifier string (for example, `gpt-4o`, `claude-sonnet-4`). When omitted, the default model is used.
+* `model:` - Model specification. For **agent files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. For **prompt files**, accepts a single model identifier string only. When omitted, the currently selected model in the model picker is used.
 * `license:` - SPDX license identifier for skill content (for example, `MIT`, `CC-BY-SA-4.0`). Defaults to the repository license when omitted. Use for skills that incorporate third-party content under a specific license.
 * `metadata:` - Object containing provenance and versioning metadata for skills. Recognized fields include `authors`, `spec_version`, `framework_revision`, `last_updated`, `skill_based_on`, and `content_based_on`.
 

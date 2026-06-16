@@ -3,7 +3,7 @@ title: Task Reviewer Guide
 description: Use the Task Reviewer custom agent to validate implementation against research and plan specifications
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-05-13
 ms.topic: tutorial
 keywords:
   - task reviewer
@@ -148,11 +148,12 @@ Task Reviewer categorizes findings by impact:
 
 ## Common Pitfalls
 
-| Pitfall             | Solution                                                 |
-|---------------------|----------------------------------------------------------|
-| No artifacts found  | Complete implementation first; verify changes log exists |
-| Research not linked | Ensure plan references research document                 |
-| Too many findings   | Break implementation into smaller phases                 |
+| Pitfall                | Solution                                                                                                              |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| No artifacts found     | Complete implementation first; verify changes log exists                                                              |
+| Research not linked    | Ensure plan references research document                                                                              |
+| Too many findings      | Break implementation into smaller phases                                                                              |
+| Pester test counts off | Expand `-ForEach` parametrization arity before flagging suite size; effective case count is not raw `It` block count. |
 
 ## Next Steps
 

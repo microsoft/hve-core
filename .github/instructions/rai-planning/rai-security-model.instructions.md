@@ -1,5 +1,5 @@
 ---
-description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol - Brought to you by microsoft/hve-core'
+description: 'RAI security model analysis for Phase 4: AI STRIDE extensions, dual threat IDs, ML STRIDE matrix, and security model merge protocol'
 applyTo: '**/.copilot-tracking/rai-plans/**'
 ---
 

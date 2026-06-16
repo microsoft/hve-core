@@ -93,13 +93,31 @@ Focus on agents that:
 
 ### Model Version Requirements
 
-All agents **MUST** target the **latest available models** from **Anthropic and OpenAI only**.
+All agents **MUST** target the **latest available models** from Anthropic and OpenAI only. The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot, but hve-core restricts usage to Anthropic and OpenAI.
 
-Accepted: Latest Claude models (e.g., Claude Sonnet 4, Claude Opus 4) and latest GPT models (e.g., GPT-5.1, o1)
+Accepted: Latest Claude and GPT models with `(copilot)` suffix (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`)
 
-Not Accepted: Older model versions (e.g., GPT-3.5, GPT-4.1, Claude 2), models from other providers, custom/fine-tuned models
+Not Accepted: Models from other providers, older model versions not in the catalog, custom/fine-tuned models, deprecated versions
 
-Rationale: Latest models provide superior capabilities, reduce maintenance burden, and ensure future compatibility. Older model versions will be deprecated.
+### Model Selection for Subagents
+
+The `model` frontmatter property is **optional**. When omitted, the agent inherits the parent conversation model. Use explicit model selection for cost optimization on subagents that perform read-only or validation tasks:
+
+```yaml
+# Subagent that does research (read-only) — use fast-tier model
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
+```
+
+```yaml
+# Subagent that writes code — omit model to inherit session model
+# (no model property)
+```
+
+Parent agents can also pass `model` dynamically on `runSubagent` calls via instructions in the agent body. The cost tier constraint means subagent models cannot exceed the parent model's tier.
+
+Run `npm run lint:models` to validate model references against the catalog.
 
 ## File Structure Requirements
 

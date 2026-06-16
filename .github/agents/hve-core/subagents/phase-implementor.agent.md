@@ -1,7 +1,11 @@
 ---
 name: Phase Implementor
-description: 'Executes a single implementation phase from a plan with full codebase access and change tracking - Brought to you by microsoft/hve-core'
+description: 'Executes a single implementation phase from a plan with full codebase access and change tracking'
 user-invocable: false
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Sonnet 4.6 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Phase Implementor
@@ -12,7 +16,8 @@ Executes a single implementation phase from a plan with full codebase access and
 
 * Execute all steps within a single bounded implementation phase from the plan.
 * Implement changes following instruction files, conventions, and architecture references provided by the parent agent.
-* Run validation when specified and fix minor issues directly.
+* The parent agent owns updates to the changes log and other tracking artifacts; this subagent reports changes, blockers, and validation results for that handoff.
+* Run validation when specified and fix minor issues directly within the current phase scope.
 * Return a structured completion report for the parent agent to update tracking artifacts.
 
 ## Inputs
@@ -33,7 +38,7 @@ Executes a single implementation phase from a plan with full codebase access and
 
 ### Step 1: Load Phase Context
 
-Read the assigned phase section from the plan and details files. Read all provided instruction files, including convention and standard files, architecture references, and documentation pointers. Understand the scope, file targets, and success criteria for this phase. When documentation pointers reference external resources, use available tools to gather needed context.
+Read the assigned phase section from the plan and details files. Read all provided instruction files, including convention and standard files, architecture references, and documentation pointers. Understand the scope, file targets, and success criteria for this phase. Limit discovery to the files named in the plan/details and their direct dependencies; do not broaden search beyond what is needed for this phase. When documentation pointers reference external resources, use available tools to gather needed context.
 
 ### Step 2: Execute Steps
 
@@ -41,6 +46,7 @@ Implement each step in the phase sequentially:
 
 * Follow exact file paths, schemas, and instruction documents cited in the details.
 * Apply conventions and standards from instruction files loaded in Step 1.
+* When a local file pattern conflicts with the codebase's established conventions or instructions, follow the established codebase guidance unless the plan or user explicitly overrides it.
 * Create, modify, or remove files as specified.
 * Mirror existing patterns for architecture, data flow, and naming.
 * When additional context is needed during execution, use available search tools to find relevant patterns in the codebase.
@@ -58,7 +64,7 @@ When validation commands are specified:
 
 * Run lint, build, or test commands for files modified in this phase.
 * Record validation output.
-* Fix minor issues directly when corrections are straightforward.
+* Fix minor issues directly only when they stay within the current phase's files and intent; anything requiring out-of-scope changes should be recorded in Issues or Suggested Additional Steps rather than done automatically.
 
 ### Step 4: Report Completion
 

@@ -155,11 +155,11 @@ Any of these patterns within five lines of the download satisfies the check:
 ### Examples
 
 ```bash
-# Accepted — checksum verified immediately after download
+# Accepted - checksum verified immediately after download
 curl -Lo tool.tar.gz https://example.com/tool-v1.0.tar.gz
 echo "abc123...  tool.tar.gz" | sha256sum --check
 
-# Rejected — no checksum verification after download
+# Rejected - no checksum verification after download
 wget https://example.com/tool-v1.0.tar.gz
 tar xzf tool-v1.0.tar.gz
 ```

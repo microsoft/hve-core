@@ -1,0 +1,1 @@
+../../../../.github/instructions/project-planning/adr-byo-template.instructions.md

@@ -463,7 +463,9 @@ function New-CollectionReadme {
         $null = $artifactSections.AppendLine()
     }
 
-    # Write back updated artifact section into collection.md when markers are present
+    # Write back updated artifact section into collection.md when markers are present.
+    # The hand-authored intro provides the `## Included Artifacts` H2 immediately
+    # before the BEGIN marker, so the generated block contains only the H3 tables.
     if ($parsed.HasMarkers) {
         $generatedBlock = $artifactSections.ToString().TrimEnd()
         $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"

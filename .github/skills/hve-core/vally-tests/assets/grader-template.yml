@@ -1,0 +1,44 @@
+# Vally grader template — vally-tests skill
+#
+# One block per supported grader. Copy the block that matches the check from
+# references/grader-catalog.md. The skill vocabulary on the left maps to the
+# literal Vally CLI 0.4.0 `type:` keyword on the right:
+#
+#   semantic_similarity  → type: prompt
+#   contains             → type: output-contains   (or output-not-contains)
+#   regex                → type: output-matches    (or output-not-matches)
+#   json_schema          → NOT SHIPPED IN 0.4.0; use regex envelope as workaround.
+
+graders:
+  # ── semantic_similarity → type: prompt ────────────────────────────────────
+  - type: prompt
+    name: <grader-id>
+    config:
+      prompt: |
+        Score 1 if the response <criterion>. Score 0 otherwise.
+      scoring: scale_1_5
+      threshold: 0.85
+
+  # ── contains → type: output-contains ──────────────────────────────────────
+  - type: output-contains
+    name: <grader-id>
+    config:
+      substring: "<literal phrase>"
+      case_sensitive: true
+      negate: false
+
+  # ── regex → type: output-matches ──────────────────────────────────────────
+  - type: output-matches
+    name: <grader-id>
+    config:
+      pattern: "(?i)<regex-source-of-truth>"
+      negate: false
+
+  # ── json_schema workaround → type: output-matches ─────────────────────────
+  # Until Vally ships a json_schema grader, validate the envelope with regex
+  # anchored to the required keys. Document the schema in the stimulus tags.
+  - type: output-matches
+    name: <grader-id>-json-envelope
+    config:
+      pattern: "(?s)\\A\\s*\\{[^}]*\"<required-key>\"\\s*:.*\\}\\s*\\z"
+      negate: false

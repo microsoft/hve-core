@@ -1,6 +1,6 @@
 ---
 description: >-
-  Initiate responsible AI assessment planning from existing knowledge using the
+  Start responsible AI assessment planning from existing knowledge using the
   RAI Planner agent in capture mode
 agent: "RAI Planner"
 ---

@@ -1,6 +1,9 @@
 ---
 agent: 'agent'
-description: 'Stages all changes, generates a conventional commit message, shows it to the user, and commits using only git add/commit'
+description: 'Stage all changes, generate a conventional commit message, and commit'
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Stage, Generate, and Commit

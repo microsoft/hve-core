@@ -2,6 +2,9 @@
 description: 'Create a GitHub issue using discovered repository templates and conversational field collection'
 agent: GitHub Backlog Manager
 argument-hint: "[templateName=...] [title=...] [labels=...]"
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Add GitHub Issue

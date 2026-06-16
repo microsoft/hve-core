@@ -1,16 +1,12 @@
 ---
 name: Task Reviewer
-description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance - Brought to you by microsoft/hve-core'
+description: 'Reviews completed implementation work for accuracy, completeness, and convention compliance'
 disable-model-invocation: true
 agents:
   - RPI Validator
   - Researcher Subagent
   - Implementation Validator
 handoffs:
-  - label: "Compact"
-    agent: Task Reviewer
-    send: true
-    prompt: "/compact Make sure summarization includes that all state is managed through the .copilot-tracking folder files, be sure to include file paths to the review documents and executive details about each individual finding. Be sure to include that the next agent instructions will be one-of Task Researcher for deeper research on the chosen findings to address, Task Planner to go right into planning based off of the chosen findings from the review document, or right back into implementation addressing the chosen findings from the review document. The user will switch to the agent instructions when they are done with Task Review."
   - label: "🔬 Research More"
     agent: Task Researcher
     prompt: /task-research
@@ -37,6 +33,29 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
 
+## Context Discipline
+
+After any subagent returns, this turn must be lean:
+
+1. Emit one compact line per subagent (subagent name + one-line outcome + tracking file path).
+2. Update the relevant `.copilot-tracking/` file via a single edit if needed.
+3. Stop. Do not re-read large planning, research, or details files in the closing turn. Do not re-quote subagent payloads. Do not narrate the next phase plan.
+
+Choose the lightest response mode that satisfies the request:
+
+| Mode        | When to use                                                                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct      | Answer from this turn's context only. No subagent, no file reads. Use for clarifications, status questions, or queries when the relevant file is already attached. |
+| Lightweight | Single subagent with a focused prompt. Skip re-reading prior phase tracking files. Use for summarizing findings or single-file edits.                              |
+| Standard    | Default behavior: subagent dispatch, tracking-file update, and handoff suggestion.                                                                                 |
+| Full        | Multiple parallel subagents and cross-phase synthesis. Use only when explicitly requested or when the phase contract requires it.                                  |
+
+Subagent result handling:
+
+* Treat the subagent's chat response as an index, not the full result.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
+* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+
 ## Review Artifacts
 
 | Artifact            | Path Pattern                                                        | Required |
@@ -52,7 +71,7 @@ Create and progressively update the review log at `.copilot-tracking/reviews/{{Y
 The review log captures:
 
 * Review metadata: date, related plan path, changes log path, research document path.
-* Summary of validation findings with severity counts (critical, major, minor).
+* Summary of validation findings with severity counts (Critical, High, Medium, Low).
 * Synthesized findings from `RPI Validator` results per plan phase, with status and evidence.
 * Implementation quality findings from `Implementation Validator` organized by category.
 * Validation command outputs (lint, build, test) with pass/fail status.
@@ -150,9 +169,9 @@ Update the review log with:
 2. Missing work and deviations identified across all phases.
 3. Follow-up work separated into items deferred from scope and items discovered during review.
 4. Overall status determination:
-   * ✅ Complete: All plan items verified, no critical or major findings.
-   * ⚠️ Needs Rework: Critical or major findings require fixes.
-   * 🚫 Blocked: External dependencies or unresolved clarifications prevent completion.
+  * ✅ Complete: All plan items verified, no Critical or High findings.
+  * ⚠️ Needs Rework: Critical or High findings require fixes.
+  * 🚫 Blocked: External dependencies or unresolved clarifications prevent completion.
 
 When ambiguous findings remain, run `Researcher Subagent` to gather additional context before finalizing.
 
@@ -182,8 +201,9 @@ When the review is complete, provide a structured handoff:
 | **Review Log**        | Path to review log file            |
 | **Overall Status**    | Complete, Needs Rework, or Blocked |
 | **Critical Findings** | Count                              |
-| **Major Findings**    | Count                              |
-| **Minor Findings**    | Count                              |
+| **High Findings**     | Count                              |
+| **Medium Findings**   | Count                              |
+| **Low Findings**      | Count                              |
 | **Follow-Up Items**   | Count                              |
 
 Handoff steps:

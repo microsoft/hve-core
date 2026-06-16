@@ -53,7 +53,8 @@ function Invoke-PythonTests {
         Write-Host "Found $($pythonSkills.Count) Python skill(s):" -ForegroundColor Cyan
         $pythonSkills | ForEach-Object { Write-Host "  - $_" -ForegroundColor Gray }
 
-        # Check if pytest is globally available (used as fallback when skill has no venv)
+        # Prefer locked uv environments when available; pytest remains the fallback for unlocked projects.
+        $uvCommand = Get-Command uv -ErrorAction SilentlyContinue
         $globalPytest = Get-Command pytest -ErrorAction SilentlyContinue
 
         $results = @{
@@ -77,34 +78,77 @@ function Invoke-PythonTests {
                     continue
                 }
                 
-                # Resolve pytest: prefer skill venv, fall back to global
-                $pytestCmd = $null
-                $venvPytest = Join-Path $skillPath '.venv/bin/pytest'
-                $venvPytestWin = Join-Path $skillPath '.venv/Scripts/pytest.exe'
-                if (Test-Path $venvPytest) {
-                    $pytestCmd = $venvPytest
-                    Write-Host '  Using venv pytest' -ForegroundColor Gray
-                } elseif (Test-Path $venvPytestWin) {
-                    $pytestCmd = $venvPytestWin
-                    Write-Host '  Using venv pytest' -ForegroundColor Gray
-                } elseif ($globalPytest) {
-                    $pytestCmd = 'pytest'
-                }
+                $uvLockPath = Join-Path $skillPath 'uv.lock'
+                $runner = 'pytest'
+                $syncOutput = $null
 
-                if (-not $pytestCmd) {
-                    Write-Host '❌ pytest not available (no .venv and not installed globally)' -ForegroundColor Red
-                    $results.success = $false
-                    $results.failed++
-                    $results.errors += $skillPath
-                    continue
-                }
+                # use uv if the command is available, regardless of whether uv.lock exists
+                if ($uvCommand) {
+                    $runner = 'uv'
+                    
+                    if (Test-Path $uvLockPath) {
+                        Write-Host '  Using uv locked environment' -ForegroundColor Gray
+                        $syncOutput = & uv sync --locked --dev 2>&1
+                    } else {
+                        Write-Host '  Using uv environment (syncing dev dependencies)' -ForegroundColor Gray
+                        $syncOutput = & uv sync --dev 2>&1
+                    }
 
-                $output = & $pytestCmd tests/ $Verbosity --tb=short 2>&1
-                $exitCode = $LASTEXITCODE
+                    $syncExitCode = $LASTEXITCODE
+                    Write-Host "$syncOutput"
+
+                    if ($syncExitCode -ne 0) {
+                        $result = @{
+                            path = $skillPath
+                            passed = $false
+                            runner = $runner
+                            phase = 'sync'
+                            output = $syncOutput | Out-String
+                        }
+
+                        $results.details += $result
+                        $results.skillsTested++
+                        $results.success = $false
+                        $results.failed++
+                        $results.errors += $skillPath
+                        Write-Host '❌ uv sync failed' -ForegroundColor Red
+                        continue
+                    }
+
+                    $output = & uv run pytest tests/ $Verbosity --tb=short 2>&1
+                    $exitCode = $LASTEXITCODE
+                } else {
+                    # Resolve pytest: prefer skill venv, fall back to global
+                    $pytestCmd = $null
+                    $venvPytest = Join-Path $skillPath '.venv/bin/pytest'
+                    $venvPytestWin = Join-Path $skillPath '.venv/Scripts/pytest.exe'
+                    if (Test-Path $venvPytest) {
+                        $pytestCmd = $venvPytest
+                        Write-Host '  Using venv pytest' -ForegroundColor Gray
+                    } elseif (Test-Path $venvPytestWin) {
+                        $pytestCmd = $venvPytestWin
+                        Write-Host '  Using venv pytest' -ForegroundColor Gray
+                    } elseif ($globalPytest) {
+                        $pytestCmd = 'pytest'
+                    }
+
+                    if (-not $pytestCmd) {
+                        # Updated error message to reflect that uv is the primary check
+                        Write-Host '❌ pytest not available (uv not found, no .venv, and not installed globally)' -ForegroundColor Red
+                        $results.success = $false
+                        $results.failed++
+                        $results.errors += $skillPath
+                        continue
+                    }
+
+                    $output = & $pytestCmd tests/ $Verbosity --tb=short 2>&1
+                    $exitCode = $LASTEXITCODE
+                }
                 
                 $result = @{
                     path = $skillPath
                     passed = ($exitCode -eq 0)
+                    runner = $runner
                     output = $output | Out-String
                 }
                 

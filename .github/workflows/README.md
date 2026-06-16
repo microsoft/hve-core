@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2025-11-12
+ms.date: 2026-05-01
 ms.topic: reference
 keywords:
   - github actions
@@ -248,13 +248,13 @@ This architecture ensures:
 
 Workflow Execution Matrix:
 
-| Event                                | Workflows That Run                                       | CodeQL Included       |
-|--------------------------------------|----------------------------------------------------------|-----------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes               |
-| Merge to main                        | `release-stable.yml` (5 jobs)                                      | ✅  Yes               |
-| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone)  |
-| Feature branch push (no open PR)[^1] | None                                                     | ❌  No                |
+| Event                                | Workflows That Run                                       | CodeQL Included     |
+|--------------------------------------|----------------------------------------------------------|---------------------|
+| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
+| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
+| Merge to main                        | `release-stable.yml` (5 jobs)                            | ✅  Yes              |
+| Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone) |
+| Feature branch push (no open PR)[^1] | None                                                     | ❌  No               |
 
 [^1]: Feature branches without an open PR are not validated. Open a PR to main or develop to trigger validation workflows.
 
@@ -549,12 +549,12 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 
 ## Configuration Files
 
-| File                                                  | Purpose                      | Used By                     |
-|-------------------------------------------------------|------------------------------|-----------------------------|
-| `scripts/linting/PSScriptAnalyzer.psd1`               | PowerShell linting rules     | `ps-script-analyzer.yml`    |
-| `.markdownlint.json`                                  | Markdown formatting rules    | `markdown-lint.yml`         |
-| `scripts/linting/markdown-link-check.config.json`     | Link checking configuration  | `markdown-link-check.yml`   |
-| `.cspell.json`                                        | Spell checking configuration | `spell-check.yml`           |
+| File                                                           | Purpose                      | Used By                     |
+|----------------------------------------------------------------|------------------------------|-----------------------------|
+| `scripts/linting/PSScriptAnalyzer.psd1`                        | PowerShell linting rules     | `ps-script-analyzer.yml`    |
+| `.markdownlint.json`                                           | Markdown formatting rules    | `markdown-lint.yml`         |
+| `scripts/linting/markdown-link-check.config.json`              | Link checking configuration  | `markdown-link-check.yml`   |
+| `.cspell.json`                                                 | Spell checking configuration | `spell-check.yml`           |
 | `.github/instructions/hve-core/markdown.instructions.md`       | Markdown style guide         | All markdown workflows      |
 | `.github/instructions/hve-core/commit-message.instructions.md` | Commit message standards     | All workflows (informative) |
 
@@ -564,9 +564,3 @@ Use `continue-on-error: true` to prevent workflow failure on SARIF upload issues
 * [GitHub Actions: Workflow syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
 * [GitHub Actions: Security hardening](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions)
 * [SARIF specification](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

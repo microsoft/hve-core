@@ -44,14 +44,14 @@ slower, noisier, and harder to review in agent workflows.
 
 ## Common Filters
 
-| Goal | JQL pattern |
-|------|-------------|
-| My active work | `assignee = currentUser() AND resolution = Unresolved` |
-| Project backlog | `project = PROJ AND statusCategory != Done` |
+| Goal                  | JQL pattern                                                |
+|-----------------------|------------------------------------------------------------|
+| My active work        | `assignee = currentUser() AND resolution = Unresolved`     |
+| Project backlog       | `project = PROJ AND statusCategory != Done`                |
 | Recently updated bugs | `project = PROJ AND issuetype = Bug ORDER BY updated DESC` |
-| Sprint work | `project = PROJ AND sprint in openSprints()` |
-| Label slice | `project = PROJ AND labels = backend` |
-| Team ownership | `project = PROJ AND component = API` |
+| Sprint work           | `project = PROJ AND sprint in openSprints()`               |
+| Label slice           | `project = PROJ AND labels = backend`                      |
+| Team ownership        | `project = PROJ AND component = API`                       |
 
 ## Common Search Commands
 
@@ -91,10 +91,4 @@ the next action:
 * `comment` to add a note
 * `transition` to move workflow state
 * `update` to modify fields with JSON
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->
  

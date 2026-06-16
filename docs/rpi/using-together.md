@@ -3,7 +3,7 @@ title: Using RPI Agents Together
 description: Complete walkthrough of the RPI workflow from research through review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-01-24
+ms.date: 2026-05-13
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -30,7 +30,7 @@ This guide walks through a complete RPI workflow, showing how the four custom ag
         ↓                                ↓                                ↓                                ↓
    research.md                   plan.md + details.md           code + changes.md              review.md + findings
         ↑                                ↑
-        └────────────────────────────────┴──────────────── 🔬 Research More / 📋 Revise Plan ────────────────────────┘
+        └────────────────────────────────┴──────────────── 🔬 Research More / 📋 Revise Plan ────────────────────┘
 ```
 
 ## Critical Rule: Clear Context
@@ -384,7 +384,7 @@ For tasks that don't require strict phase separation, **rpi-agent** provides aut
 ### Quick Decision Guide
 
 | Choose Strict RPI when...    | Choose rpi-agent when...           |
-|------------------------------|------------------------------------|
+|------------------------------|------------------------------------||
 | Deep research is critical    | Scope is clear and straightforward |
 | Multi-file pattern discovery | Minimal external research needed   |
 | Team handoff needed          | Quick iteration during development |

@@ -1,0 +1,40 @@
+{
+  "project": {
+    "slug": "accessibility-phase-1-minimal",
+    "name": "Accessibility Phase 1 Minimal Fixture",
+    "entryMode": "capture"
+  },
+  "phase": "discovery",
+  "frameworkSelections": {},
+  "controlMappings": [],
+  "riskClassification": {
+    "screeningSignals": []
+  },
+  "evidenceRegister": [],
+  "gates": {
+    "discovery": {
+      "confirmed": false
+    },
+    "framework-selection": {
+      "confirmed": false
+    },
+    "standards-mapping": {
+      "confirmed": false
+    },
+    "plan-risk-assessment": {
+      "confirmed": false
+    },
+    "impact-evidence": {
+      "confirmed": false
+    },
+    "backlog-handoff": {
+      "confirmed": false
+    }
+  },
+  "planRiskAssessment": {
+    "tradeoffs": [],
+    "watchlist": [],
+    "deferredMitigations": []
+  },
+  "noticeLog": []
+}

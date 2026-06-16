@@ -1,5 +1,5 @@
 ---
-description: "Generate comprehensive synthetic data for any specified subject with realistic patterns and relationships"
+description: "Generate synthetic data for any subject with realistic patterns and relationships"
 ---
 
 # Synthetic Data Generator

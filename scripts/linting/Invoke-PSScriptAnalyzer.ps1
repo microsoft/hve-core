@@ -32,6 +32,45 @@ Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
 
 #region Functions
 
+function Invoke-ScriptAnalyzerIsolated {
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseUsingScopeModifierInNewRunspaces', '', Justification = 'Variables are passed into the Start-Job script block via param() and -ArgumentList, so the $using: modifier does not apply.')]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$SettingsPath
+    )
+
+    # Analyze each file in its own child process so every file compiles into a
+    # fresh dynamic assembly. On Linux/CoreCLR a process permits only one dynamic
+    # module per dynamic assembly, so analyzing multiple module files in a shared
+    # runspace throws "more than one dynamic module" on the second .psm1 file.
+    $job = Start-Job -ScriptBlock {
+        param($FilePath, $ConfigPath)
+        Import-Module PSScriptAnalyzer -RequiredVersion 1.25.0
+        Invoke-ScriptAnalyzer -Path $FilePath -Settings $ConfigPath | ForEach-Object {
+            [pscustomobject]@{
+                RuleName = $_.RuleName
+                Message  = $_.Message
+                Severity = $_.Severity.ToString()
+                Line     = $_.Line
+                Column   = $_.Column
+            }
+        }
+    } -ArgumentList $Path, $SettingsPath
+
+    try {
+        $null = Wait-Job -Job $job
+        return @(Receive-Job -Job $job)
+    }
+    finally {
+        Remove-Job -Job $job -Force
+    }
+}
+
 function Invoke-PSScriptAnalyzerCore {
     [CmdletBinding()]
     [OutputType([void])]
@@ -85,12 +124,15 @@ function Invoke-PSScriptAnalyzerCore {
     $allResults = @()
     $hasErrors = $false
 
+    $resolvedConfigPath = (Resolve-Path -LiteralPath $ConfigPath).Path
+
     foreach ($file in $filesToAnalyze) {
         $filePath = if ($file -is [System.IO.FileInfo]) { $file.FullName } else { $file }
         Write-Host "`n📄 Analyzing: $filePath" -ForegroundColor Cyan
-        
-        $results = Invoke-ScriptAnalyzer -Path $filePath -Settings $ConfigPath
-        
+
+        $resolvedFilePath = (Resolve-Path -LiteralPath $filePath).Path
+        $results = @(Invoke-ScriptAnalyzerIsolated -Path $resolvedFilePath -SettingsPath $resolvedConfigPath)
+
         if ($results) {
             $allResults += $results
             

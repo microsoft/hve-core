@@ -17,7 +17,6 @@ import logging
 from collections import Counter
 from pathlib import Path
 
-import cairosvg
 import yaml
 from lxml import etree
 from pptx import Presentation
@@ -117,6 +116,9 @@ def _sanitize_svg(blob: bytes) -> bytes:
 def _convert_svg_to_png(blob: bytes) -> bytes:
     """Sanitize an SVG blob and convert it to PNG via cairosvg."""
     clean_svg = _sanitize_svg(blob)
+
+    import cairosvg
+
     return cairosvg.svg2png(bytestring=clean_svg)
 
 

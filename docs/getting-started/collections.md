@@ -95,6 +95,19 @@ If you prefer a leaner workspace or need to standardize which artifacts are avai
 > [!TIP]
 > You can always switch later. Start with `hve-core-all` to explore, then move to the installer approach when you know which collections your team needs.
 
+## After Installing a Collection
+
+Once a collection is installed, its artifacts activate automatically:
+
+1. Agents appear in the Copilot Chat agent picker (press `Ctrl+.` or use the dropdown).
+2. Prompts are available as slash commands (type `/` in Copilot Chat to see them).
+3. Instructions apply automatically to matching files based on their `applyTo` patterns.
+4. Skills extend agent capabilities without additional configuration.
+
+To verify installation, open Copilot Chat and check that collection-specific agents appear in the agent picker. For example, installing the `hve-core` collection adds Task Researcher, Task Planner, Task Implementor, and Memory agents.
+
+To add more collections later, search "HVE" in the VS Code Extensions marketplace or use the selective install commands from the table above.
+
 ---
 
 <!-- markdownlint-disable MD036 -->

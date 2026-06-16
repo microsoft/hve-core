@@ -18,18 +18,25 @@
     ],
     "./scripts/linting/schemas/docs-frontmatter.schema.json": [
       "docs/**/*.md"
+    ],
+    "./scripts/linting/schemas/adr-config.schema.json": [
+      "**/.adr-config.yml",
+      "**/.adr-config.yaml"
     ]
   },
   "json.schemas": [
     {
       "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
       "url": "./scripts/linting/schemas/rai-state.schema.json"
+    },
+    {
+      "fileMatch": [".copilot-tracking/accessibility/*/state.json"],
+      "url": "./scripts/linting/schemas/accessibility-state.schema.json"
     }
   ],
   "chat.instructionsFilesLocations": {
     ".github/instructions/ado": true,
     ".github/instructions/coding-standards": true,
-    ".github/instructions/design-thinking": true,
     ".github/instructions/experimental": true,
     ".github/instructions/github": true,
     ".github/instructions/hve-core": true,
@@ -50,6 +57,7 @@
     ".github/agents/hve-core/subagents": true,
     ".github/agents/jira": true,
     ".github/agents/project-planning": true,
+    ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
@@ -67,12 +75,14 @@
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
-    ".github/skills/shared": true,
     ".github/skills/coding-standards": true,
+    ".github/skills/design-thinking": true,
     ".github/skills/experimental": true,
-    ".github/skills/security": true,
+    ".github/skills/github": true,
+    ".github/skills/gitlab": true,
     ".github/skills/jira": true,
-    ".github/skills/gitlab": true
+    ".github/skills/security": true,
+    ".github/skills/shared": true
   },
   "github.copilot.chat.commitMessageGeneration.instructions": [
     {

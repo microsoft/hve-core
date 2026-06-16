@@ -3,7 +3,7 @@ title: GitHub Backlog Manager
 description: Automated issue discovery, triage, sprint planning, and execution for GitHub repositories
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-12
+ms.date: 2026-05-20
 ms.topic: concept
 keywords:
   - github backlog manager
@@ -53,9 +53,9 @@ Execution consumes handoff files produced by earlier workflows and performs the 
 
 See the [Execution workflow guide](execution.md) for handoff consumption and operation logging.
 
-### ➕ Quick Add
+### 🎯 Single Issue
 
-Quick Add is a single-issue shortcut for creating one issue without running the full pipeline. Use it when you need to file an issue quickly and apply standard labels and milestone in a single step.
+Single Issue handles operations scoped to an individual issue without running the full pipeline. Use it when you need to create, update, or act on one specific issue and apply standard labels and milestone in a single step.
 
 ## Autonomy Levels
 

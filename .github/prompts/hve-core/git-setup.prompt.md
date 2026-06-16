@@ -1,6 +1,9 @@
 ---
 agent: 'agent'
 description: 'Interactive, verification-first Git configuration assistant (non-destructive)'
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Git Environment Setup (Verification-First)

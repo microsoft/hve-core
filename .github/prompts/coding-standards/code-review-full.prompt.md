@@ -1,5 +1,5 @@
 ---
-description: "Run both functional and standards code reviews on the current branch in a single pass - Brought to you by microsoft/hve-core"
+description: "Run both functional and standards code reviews on the current branch in a single pass"
 name: code-review-full
 agent: Code Review Full
 argument-hint: "[story=AIAA-123]"

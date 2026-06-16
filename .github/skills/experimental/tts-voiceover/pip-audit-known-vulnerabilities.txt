@@ -1,0 +1,4 @@
+# pyjwt PYSEC-2025-183 / CVE-2025-45768 — disputed by supplier; key length is chosen
+# by the application, not the library. No fix available upstream as of pyjwt 2.12.1.
+# Revisit if upstream changes disposition or releases a patched version.
+PYSEC-2025-183

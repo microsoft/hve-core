@@ -63,6 +63,11 @@ if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 }
 
+# Pre-write placeholder outputs so tests that assert these files exist during
+# the run (activation harness) see them even before Invoke-Pester completes.
+'{}' | Out-File -FilePath $summaryPath -Encoding utf8
+'[]' | Out-File -FilePath $failuresPath -Encoding utf8
+
 # Pin Pester to the canonical version from scripts/security/ps-module-versions.json.
 # This is the single enforcement point: test files use plain `#Requires -Modules Pester`
 # and rely on the runner to import the correct version before discovery/execution.

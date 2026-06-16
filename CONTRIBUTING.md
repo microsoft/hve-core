@@ -2,7 +2,7 @@
 title: Contributing
 description: Guidelines for contributing code, documentation, and improvements to the HVE Core project
 author: HVE Core Team
-ms.date: 2026-02-07
+ms.date: 2026-06-04
 ms.topic: guide
 keywords:
   - contributing
@@ -22,6 +22,49 @@ All types of contributions are encouraged and valued. See the [Table of Contents
 >
 > * Star the project or add it to your favorites
 > * Mention the project to your peer studio crews and tell your work friends/colleagues
+
+## Table of Contents
+
+* [Build and Validation Requirements](#build-and-validation-requirements)
+  * [Required Tools](#required-tools)
+  * [Validation Commands](#validation-commands)
+  * [Development Environment](#development-environment)
+* [Table of Contents](#table-of-contents)
+* [Code of Conduct](#code-of-conduct)
+* [I Have a Question](#i-have-a-question)
+* [I Want To Contribute](#i-want-to-contribute)
+  * [Reporting Bugs](#reporting-bugs)
+    * [Before Submitting a Bug Report](#before-submitting-a-bug-report)
+    * [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
+  * [Suggesting Enhancements](#suggesting-enhancements)
+    * [Before Submitting an Enhancement](#before-submitting-an-enhancement)
+    * [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
+  * [Your First Code Contribution](#your-first-code-contribution)
+  * [Improving The Documentation](#improving-the-documentation)
+* [AI Artifact Contributions](#ai-artifact-contributions)
+  * [Getting Started with AI Artifacts](#getting-started-with-ai-artifacts)
+  * [Artifact Types](#artifact-types)
+  * [Essential Resources](#essential-resources)
+  * [Quick Reference](#quick-reference)
+* [Dependabot Pull Requests](#dependabot-pull-requests)
+* [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
+  * [Active Pull Requests](#active-pull-requests)
+  * [Draft Pull Requests](#draft-pull-requests)
+  * [Exemptions](#exemptions)
+* [Style Guides](#style-guides)
+  * [Local Development Setup](#local-development-setup)
+  * [Coding Conventions](#coding-conventions)
+  * [Copyright and License Headers](#copyright-and-license-headers)
+* [Testing Requirements](#testing-requirements)
+  * [When Tests Are Required](#when-tests-are-required)
+  * [Test Conventions](#test-conventions)
+  * [Running Tests Locally](#running-tests-locally)
+* [Release Process](#release-process)
+  * [How Releases Work](#how-releases-work)
+  * [Version Determination](#version-determination)
+  * [Commit Message Examples](#commit-message-examples)
+  * [Release Validation](#release-validation)
+* [Attribution](#attribution)
 
 ## Build and Validation Requirements
 
@@ -67,49 +110,6 @@ For additional validation commands specific to AI artifacts (agents, prompts, in
 ### Development Environment
 
 We strongly recommend using the provided DevContainer, which comes pre-configured with all required tools. See the [DevContainer README](./.devcontainer/README.md) for setup instructions.
-
-## Table of Contents
-
-* [Build and Validation Requirements](#build-and-validation-requirements)
-  * [Required Tools](#required-tools)
-  * [Validation Commands](#validation-commands)
-  * [Development Environment](#development-environment)
-* [Table of Contents](#table-of-contents)
-* [Code of Conduct](#code-of-conduct)
-* [I Have a Question](#i-have-a-question)
-* [I Want To Contribute](#i-want-to-contribute)
-  * [Reporting Bugs](#reporting-bugs)
-    * [Before Submitting a Bug Report](#before-submitting-a-bug-report)
-    * [How Do I Submit a Good Bug Report?](#how-do-i-submit-a-good-bug-report)
-  * [Suggesting Enhancements](#suggesting-enhancements)
-    * [Before Submitting an Enhancement](#before-submitting-an-enhancement)
-    * [How Do I Submit a Good Enhancement Suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
-  * [Your First Code Contribution](#your-first-code-contribution)
-  * [Improving The Documentation](#improving-the-documentation)
-* [AI Artifact Contributions](#ai-artifact-contributions)
-  * [Getting Started with AI Artifacts](#getting-started-with-ai-artifacts)
-  * [Artifact Types](#artifact-types)
-  * [Essential Resources](#essential-resources)
-  * [Quick Reference](#quick-reference)
-* [Dependabot Pull Requests](#dependabot-pull-requests)
-* [Pull Request Inactivity Policy](#pull-request-inactivity-policy)
-  * [Active Pull Requests](#active-pull-requests)
-  * [Draft Pull Requests](#draft-pull-requests)
-  * [Exemptions](#exemptions)
-* [Style Guides](#style-guides)
-  * [Local Development Setup](#local-development-setup)
-  * [Coding Conventions](#coding-conventions)
-  * [Copyright and License Headers](#copyright-and-license-headers)
-* [Testing Requirements](#testing-requirements)
-  * [When Tests Are Required](#when-tests-are-required)
-  * [Test Conventions](#test-conventions)
-  * [Running Tests Locally](#running-tests-locally)
-* [Release Process](#release-process)
-  * [How Releases Work](#how-releases-work)
-  * [Version Determination](#version-determination)
-  * [Commit Message Examples](#commit-message-examples)
-  * [Release Validation](#release-validation)
-* [Attribution](#attribution)
 
 ## Code of Conduct
 
@@ -189,7 +189,7 @@ Enhancement suggestions are tracked as [GitHub Issues](https://github.com/micros
 * Use a **clear and descriptive title** for the issue to identify the suggestion.
 * Provide a **step-by-step description of the suggested enhancement** in as many details as possible.
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why. At this point you can also tell which alternatives do not work for you.
-* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) or [this tool](http://git.gnome.org/browse/byzanz/) on Linux.
+* You may want to **include screenshots and animated GIFs** which help you demonstrate the steps or point out the part which the suggestion is related to. You can use [this tool](https://www.cockos.com/licecap/) to record GIFs on macOS and Windows, and [this tool](https://github.com/colinkeenan/silentcast) on Linux.
 * **Explain why this enhancement would be useful** to most HVE Core users. You may also want to point out the other projects that solved it better and which could serve as inspiration.
 
 ### Your First Code Contribution
@@ -213,6 +213,8 @@ For AI artifact documentation (agents, prompts, instructions, skills), see the [
 ## AI Artifact Contributions
 
 HVE Core includes specialized contribution guides for AI artifacts that enhance GitHub Copilot functionality. These artifacts define custom agents, reusable prompts, coding guidelines (instructions), and executable skills.
+
+> **Transparency Note updates:** If your change adds or modifies a skill or agent that generates media, personas, or likenesses, or that introduces an external service dependency or a new decision-shaping behavior, update [`TRANSPARENCY-NOTE.md`](./TRANSPARENCY-NOTE.md) (and the relevant appendix).
 
 ### Getting Started with AI Artifacts
 

@@ -1,0 +1,31 @@
+name: Weekly GitHub Code Scanning
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # Mondays at 03:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  security-events: read
+
+jobs:
+  gh-code-scanning:
+    name: GitHub Code Scanning
+    uses: ./.github/workflows/gh-code-scanning.yml
+    permissions:
+      contents: read
+      security-events: read
+
+  create-gh-code-scanning-issues:
+    name: Create GitHub Code Scanning Issues
+    needs: [gh-code-scanning]
+    uses: ./.github/workflows/create-gh-code-scanning-issues.yml
+    permissions:
+      issues: write
+      security-events: read

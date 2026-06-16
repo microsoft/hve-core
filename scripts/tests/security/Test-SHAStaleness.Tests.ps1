@@ -25,7 +25,7 @@ BeforeAll {
     Save-CIEnvironment
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Security'
 }
 
 AfterAll {

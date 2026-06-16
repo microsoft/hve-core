@@ -212,8 +212,78 @@ Describe 'Manifest Generation' -Tag 'Unit' {
 
             $manifest = Get-Content $script:outputPath -Raw | ConvertFrom-Json
             $fields = ($manifest | Get-Member -MemberType NoteProperty).Name | Sort-Object
-            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'version') | Sort-Object
+            $expected = @('algorithm', 'artifacts', 'fileCount', 'generatedAt', 'projectSlug', 'sessionPath', 'version') | Sort-Object
             $fields | Should -Be $expected
+        }
+    }
+
+    Context 'when SessionPath is specified' {
+        It 'Generates a manifest for a repo-relative session path' {
+            $relativeSessionPath = '.copilot-tracking/sssc-plans/test-sssc-session'
+            $sessionDir = Join-Path $TestDrive $relativeSessionPath
+            New-Item -ItemType Directory -Path $sessionDir -Force | Out-Null
+            Set-Content -Path (Join-Path $sessionDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -SessionPath $relativeSessionPath
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $outputPath = Join-Path $sessionDir 'artifact-manifest.json'
+            Test-Path $outputPath | Should -BeTrue
+            $manifest = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $manifest.projectSlug | Should -Be 'test-sssc-session'
+            $manifest.sessionPath | Should -Be '.copilot-tracking/sssc-plans/test-sssc-session'
+            $manifest.fileCount | Should -Be 1
+        }
+
+        It 'Generates a manifest for an absolute session path' {
+            $sessionDir = Join-Path $TestDrive '.copilot-tracking/sssc-plans/absolute-session'
+            New-Item -ItemType Directory -Path $sessionDir -Force | Out-Null
+            Set-Content -Path (Join-Path $sessionDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location (Split-Path -Path $script:ScriptPath -Parent)
+                & $script:ScriptPath -SessionPath $sessionDir
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $outputPath = Join-Path $sessionDir 'artifact-manifest.json'
+            Test-Path $outputPath | Should -BeTrue
+            $manifest = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $manifest.projectSlug | Should -Be 'absolute-session'
+            $manifest.sessionPath | Should -Be ($sessionDir -replace '\\','/')
+            $manifest.fileCount | Should -Be 1
+        }
+
+        It 'Uses a custom manifest name and excludes it from artifact inventory' {
+            $relativeSessionPath = '.copilot-tracking/sssc-plans/custom-manifest-session'
+            $sessionDir = Join-Path $TestDrive $relativeSessionPath
+            New-Item -ItemType Directory -Path $sessionDir -Force | Out-Null
+            Set-Content -Path (Join-Path $sessionDir 'state.json') -Value '{}' -Encoding utf8NoBOM
+            Set-Content -Path (Join-Path $sessionDir 'sssc-manifest.json') -Value '{}' -Encoding utf8NoBOM
+
+            $originalPWD = $PWD
+            try {
+                Set-Location $TestDrive
+                & $script:ScriptPath -SessionPath $relativeSessionPath -ManifestName 'sssc-manifest.json'
+            }
+            finally {
+                Set-Location $originalPWD
+            }
+
+            $outputPath = Join-Path $sessionDir 'sssc-manifest.json'
+            Test-Path $outputPath | Should -BeTrue
+            $manifest = Get-Content $outputPath -Raw | ConvertFrom-Json
+            $manifest.fileCount | Should -Be 1
+            $manifest.artifacts[0].path | Should -Be 'state.json'
         }
     }
 

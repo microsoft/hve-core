@@ -60,7 +60,7 @@ jobs:
       has-projects: ${{ steps.find.outputs.has-projects }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 
@@ -68,8 +68,11 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The moderation eval (scripts/evals/moderation) carries a heavy
+          # torch/detoxify stack and runs weekly via weekly-validation.yml,
+          # so it is excluded from per-PR Python matrix jobs here.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
@@ -196,6 +199,18 @@ jobs:
       skip-footer-validation: false
       warnings-as-errors: true
 
+  adr-consistency-validation:
+    name: ADR Consistency Validation
+    uses: ./.github/workflows/adr-consistency-validation.yml
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+    with:
+      soft-fail: false
+      changed-files-only: true
+      upload-sarif: true
+      upload-artifact: false
+
   ai-artifact-validation:
     name: AI Artifact Validation
     uses: ./.github/workflows/ai-artifact-validation.yml
@@ -300,7 +315,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
 

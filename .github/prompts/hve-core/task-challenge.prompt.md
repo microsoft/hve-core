@@ -1,5 +1,5 @@
 ---
-description: "Adversarial What/Why/How interrogation of completed implementation artifacts - Brought to you by microsoft/hve-core"
+description: "Adversarial What/Why/How interrogation of completed implementation artifacts"
 agent: Task Challenger
 argument-hint: "[plan=...] [changes=...] [research=...] [focus=...]"
 ---

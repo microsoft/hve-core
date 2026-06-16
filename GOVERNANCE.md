@@ -2,7 +2,7 @@
 title: Governance
 description: Project governance model, roles, decision-making processes, and contribution authority for HVE Core
 author: HVE Core Team
-ms.date: 2026-02-07
+ms.date: 2026-05-13
 ms.topic: reference
 keywords:
   - governance

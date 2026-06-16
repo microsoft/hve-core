@@ -3,7 +3,7 @@ title: Testing Architecture
 description: PowerShell Pester test infrastructure and conventions
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-01-22
+ms.date: 2026-05-20
 ms.topic: concept
 ---
 
@@ -144,9 +144,10 @@ AfterEach {
 
 ### npm Scripts
 
-| Command           | Description          |
-|-------------------|----------------------|
-| `npm run test:ps` | Run all Pester tests |
+| Command           | Description                     |
+|-------------------|---------------------------------|
+| `npm run test:ps` | Run all PowerShell Pester tests |
+| `npm run test:py` | Run all Python tests via pytest |
 
 ### Direct Pester Invocation
 

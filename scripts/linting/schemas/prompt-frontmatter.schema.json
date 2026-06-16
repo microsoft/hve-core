@@ -4,7 +4,9 @@
   "title": "Prompt File Frontmatter Schema",
   "description": "Frontmatter schema for .prompt.md files per VS Code Copilot specification",
   "type": "object",
-  "required": ["description"],
+  "required": [
+    "description"
+  ],
   "properties": {
     "description": {
       "type": "string",

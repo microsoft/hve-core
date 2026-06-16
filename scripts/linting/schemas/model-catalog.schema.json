@@ -1,0 +1,90 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "model-catalog.schema.json",
+    "title": "Model Catalog",
+    "description": "Schema for the Copilot model catalog used by model reference validation",
+    "type": "object",
+    "required": [
+        "lastUpdated",
+        "source",
+        "models",
+        "providerAllowlist"
+    ],
+    "properties": {
+        "$schema": {
+            "type": "string"
+        },
+        "providerAllowlist": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Providers permitted for use in agent/prompt model references. Add entries here to allow additional providers in the future."
+        },
+        "lastUpdated": {
+            "type": "string",
+            "format": "date",
+            "description": "ISO 8601 date when the catalog was last updated"
+        },
+        "source": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the authoritative model list"
+        },
+        "models": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "tier",
+                    "multiplier",
+                    "status",
+                    "provider"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "VS Code display name with vendor suffix"
+                    },
+                    "tier": {
+                        "type": "string",
+                        "enum": [
+                            "free",
+                            "fast",
+                            "standard",
+                            "premium",
+                            "ultra"
+                        ],
+                        "description": "Cost tier classification"
+                    },
+                    "multiplier": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Request multiplier relative to standard tier"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ga",
+                            "preview",
+                            "retiring"
+                        ],
+                        "description": "Availability status"
+                    },
+                    "retiredDate": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Date when model will be retired (only for retiring status)"
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "Model provider name (e.g., Anthropic, OpenAI, Google, xAI)"
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}
