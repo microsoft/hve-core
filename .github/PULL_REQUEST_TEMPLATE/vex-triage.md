@@ -15,9 +15,9 @@
 
 <!-- Copy the block below for each CVE addressed in this PR. -->
 
-### CVE-YYYY-NNNNN
+### CVE-YYYY-NNNN+
 
-<!-- Replace the heading above with the actual CVE ID. -->
+<!-- Replace the heading above with the actual CVE ID. The numeric portion is variable-length (4 or more digits). -->
 
 **VEX Status:**
 

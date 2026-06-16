@@ -450,12 +450,10 @@ jobs:
       attestations: write
       artifact-metadata: write
     steps:
-      - name: Checkout Syft config and VEX document
+      - name: Checkout Syft config
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          sparse-checkout: |
-            .syft.yaml
-            security/vex/hve-core.openvex.json
+          sparse-checkout: .syft.yaml
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -525,11 +523,6 @@ jobs:
           subject-path: ${{ steps.vsix.outputs.file }}
           sbom-path: sbom/dependencies.spdx.json
 
-      - name: Attest VEX document
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: security/vex/hve-core.openvex.json
-
       - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -544,7 +537,6 @@ jobs:
             "dist/${{ steps.vsix.outputs.name }}.spdx.json" \
             "dist/${{ steps.vsix.outputs.name }}.sigstore.json" \
             "dist/${{ steps.vsix.outputs.name }}.intoto.jsonl" \
-            "security/vex/hve-core.openvex.json" \
             --clobber -R "${{ github.repository }}"
 
   upload-plugin-packages:
@@ -561,12 +553,10 @@ jobs:
       attestations: write
       artifact-metadata: write
     steps:
-      - name: Checkout Syft config and VEX document
+      - name: Checkout Syft config
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          sparse-checkout: |
-            .syft.yaml
-            security/vex/hve-core.openvex.json
+          sparse-checkout: .syft.yaml
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
@@ -626,11 +616,6 @@ jobs:
           subject-path: dist/plugins/${{ matrix.id }}.zip
           sbom-path: sbom/dependencies.spdx.json
 
-      - name: Attest VEX document
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
-        with:
-          subject-path: security/vex/hve-core.openvex.json
-
       - name: Upload assets to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -645,6 +630,36 @@ jobs:
             "dist/plugins/${{ matrix.id }}.zip.spdx.json" \
             "dist/plugins/${{ matrix.id }}.zip.sigstore.json" \
             "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
+            --clobber -R "${{ github.repository }}"
+
+  attest-and-upload-vex:
+    name: Attest and Upload VEX
+    needs: [release-please]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Checkout VEX document
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          sparse-checkout: security/vex/hve-core.openvex.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Attest VEX document
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: security/vex/hve-core.openvex.json
+
+      - name: Upload VEX document to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" \
             "security/vex/hve-core.openvex.json" \
             --clobber -R "${{ github.repository }}"
 
@@ -794,10 +809,11 @@ jobs:
 
           ## VEX (Vulnerability Exploitability eXchange)
 
-          This release includes an [OpenVEX](https://openvex.dev/) document
-          (`hve-core.openvex.json`) that communicates the exploitability status of known
-          vulnerabilities in project dependencies. Use it alongside the SBOM to filter
-          false positives in vulnerability scanners:
+          This release includes a foundational [OpenVEX](https://openvex.dev/) document
+          (`hve-core.openvex.json`). It establishes the signed, attested VEX artifact that future
+          releases populate with per-CVE exploitability statements. Until statements are added, the
+          document carries no vulnerability assessments and is not authoritative triage. Once
+          populated, use it alongside the SBOM to filter false positives in vulnerability scanners:
 
           ```bash
           # Verify VEX attestation
@@ -811,7 +827,7 @@ jobs:
 
   publish-release:
     name: Publish GitHub Release
-    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff, append-verification-notes]
+    needs: [release-please, attest-and-upload, upload-plugin-packages, attest-and-upload-vex, sbom-diff, append-verification-notes]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:

@@ -200,6 +200,19 @@ The agent must classify each finding into one of three confidence bands, with ha
 
 **Hard rule**: the agent is forbidden from drafting `not_affected` at low confidence. Uncertain cases default to `under_investigation`, which is safe and fully retractable in OpenVEX.
 
+> [!NOTE]
+> **Editorial audit note (added 2026-06-17, not part of the original issue text).** The
+> **Vendor-disputed** row above proposes drafting `not_affected` with
+> `inline_mitigations_already_exist`. This was determined to be **incorrect**: it lets the agent
+> assert non-exploitability for a disputed CVE without reachability evidence, which violates the
+> project's core guard. The implemented standard (see the `openvex-spec` skill reference
+> [`vex-status-logic.md`](../.github/skills/security/openvex-spec/references/vex-status-logic.md)
+> and [`vex-standards.instructions.md`](../.github/instructions/security/vex-standards.instructions.md))
+> **corrects this**: vendor-disputed findings are drafted as `under_investigation`, recording the
+> dispute in `status_notes` until evidence is gathered. The verbatim table is retained above for
+> historical traceability. The `codepaths` spelling in the Medium row is likewise a verbatim
+> artifact of the source issue; the shipped files use `code paths`.
+
 ### 5. Mandatory human-touch surface (the non-negotiables)
 
 | Touch Point                  | Why                                                                   | Frequency                            |
