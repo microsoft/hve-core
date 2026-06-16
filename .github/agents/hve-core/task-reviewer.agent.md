@@ -71,7 +71,7 @@ Create and progressively update the review log at `.copilot-tracking/reviews/{{Y
 The review log captures:
 
 * Review metadata: date, related plan path, changes log path, research document path.
-* Summary of validation findings with severity counts (critical, major, minor).
+* Summary of validation findings with severity counts (Critical, High, Medium, Low).
 * Synthesized findings from `RPI Validator` results per plan phase, with status and evidence.
 * Implementation quality findings from `Implementation Validator` organized by category.
 * Validation command outputs (lint, build, test) with pass/fail status.
@@ -125,15 +125,6 @@ Read the validation files produced by each `RPI Validator` run. Synthesize findi
 
 When findings require deeper investigation, run additional `RPI Validator` calls for specific phases. Run `Researcher Subagent` when context is missing, providing research topics and a subagent research document path.
 
-#### Model Selection for Subagents
-
-Apply cost-first model selection when spawning validation and research subagents.
-
-* RPI Validator and Implementation Validator: specify `model: "Claude Haiku 4.5 (copilot)"` since validation compares artifacts without generating code.
-* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` for read-only research.
-* If validation requires complex code reasoning or architectural judgment: omit `model` to inherit the session model.
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
-
 Proceed to Phase 3 when RPI validation is complete.
 
 ### Phase 3: Quality Validation
@@ -178,9 +169,9 @@ Update the review log with:
 2. Missing work and deviations identified across all phases.
 3. Follow-up work separated into items deferred from scope and items discovered during review.
 4. Overall status determination:
-   * ✅ Complete: All plan items verified, no critical or major findings.
-   * ⚠️ Needs Rework: Critical or major findings require fixes.
-   * 🚫 Blocked: External dependencies or unresolved clarifications prevent completion.
+  * ✅ Complete: All plan items verified, no Critical or High findings.
+  * ⚠️ Needs Rework: Critical or High findings require fixes.
+  * 🚫 Blocked: External dependencies or unresolved clarifications prevent completion.
 
 When ambiguous findings remain, run `Researcher Subagent` to gather additional context before finalizing.
 
@@ -210,8 +201,9 @@ When the review is complete, provide a structured handoff:
 | **Review Log**        | Path to review log file            |
 | **Overall Status**    | Complete, Needs Rework, or Blocked |
 | **Critical Findings** | Count                              |
-| **Major Findings**    | Count                              |
-| **Minor Findings**    | Count                              |
+| **High Findings**     | Count                              |
+| **Medium Findings**   | Count                              |
+| **Low Findings**      | Count                              |
 | **Follow-Up Items**   | Count                              |
 
 Handoff steps:
