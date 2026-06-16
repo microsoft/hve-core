@@ -22,6 +22,11 @@ Rules for comments:
 * Comments that contradict current behavior are removed or updated.
 * Temporal markers (phase references, dates, task IDs) are removed from code files during any edit.
 
+Rules for markdown frontmatter:
+
+* When editing any Markdown file whose frontmatter already contains an `ms.date` field, update that field to today's date.
+* Format the date using ISO 8601 (`YYYY-MM-DD`), matching the existing `ms.date` convention.
+
 Rules for human review checkboxes:
 
 * Agents never check or mark complete any human review checkbox (for example, `- [ ] Reviewed and validated by a qualified human reviewer`). Only a human may convert `[ ]` to `[x]` on review checkboxes.
