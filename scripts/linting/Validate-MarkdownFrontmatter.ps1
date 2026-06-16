@@ -29,7 +29,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
-        'scripts/tests/Fixtures/**',
+        'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
         'extension/README.md',
         'extension/README.*.md',
@@ -345,6 +345,7 @@ function Test-ValueAgainstSchema {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [object]$Value,
 
         [Parameter(Mandatory = $true)]
@@ -355,6 +356,13 @@ function Test-ValueAgainstSchema {
     )
 
     $localErrors = [List[string]]::new()
+
+    if ($Schema.type -and $null -eq $Value) {
+        $schemaTypes = @($Schema.type)
+        if ($schemaTypes -contains 'null') {
+            return $localErrors.ToArray()
+        }
+    }
 
     # Handle oneOf by validating against each subschema.
     if ($Schema.oneOf) {

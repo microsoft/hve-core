@@ -1,5 +1,5 @@
 ---
-description: "Authoring standards for prompt engineering artifacts including prompts, agents, instructions, and skills"
+description: "Authoring standards for prompts, agents, instructions, and skills"
 applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 ---
 
@@ -306,7 +306,7 @@ Skill files include these sections in order:
 5. Parameters Reference: Table documenting all options with defaults.
 6. Script Reference: Usage examples for bash and PowerShell.
 7. Troubleshooting: Common issues and solutions.
-8. Attribution: Attribution in `description:` frontmatter and standard footer.
+8. Attribution: Standard footer.
 
 #### Progressive Disclosure
 
@@ -370,13 +370,9 @@ Validation guidelines:
 
 #### Attribution
 
-Artifacts include attribution as a suffix in the `description:` frontmatter field using the format `- Brought to you by organization/repository-name`:
+The `description:` frontmatter field is a single concise sentence with no attribution suffix. Distribution attribution is added automatically where needed, so source artifacts omit it.
 
-```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
-```
-
-Skill files also include a standard attribution footer as the last line of body content:
+Skill files include a standard attribution footer as the last line of body content:
 
 ```markdown
 > Brought to you by organization/repository-name

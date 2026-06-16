@@ -1,5 +1,5 @@
 ---
-description: 'Required instructions for pull request description generation and optional PR creation using diff analysis, subagent review, and MCP tools - Brought to you by microsoft/hve-core'
+description: 'Pull request description generation and creation via diff analysis, subagent review, and MCP tools'
 applyTo: '**/.copilot-tracking/pr/**'
 ---
 

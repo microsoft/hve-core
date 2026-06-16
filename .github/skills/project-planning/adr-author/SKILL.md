@@ -24,11 +24,11 @@ Entry mode and output template are independent: a `from-planner-handoff` session
 
 Lifecycle at a glance:
 
-| Mode                   | Phase sequence                                              | Output                                              |
-| ---------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `capture`              | Frame → Decide → Govern                                     | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern             | Shaped by `outputTemplate` (y-statement or madr-v4) |
-| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern       | First ADR + `.adr-config.yml` per the BYO contract  |
+| Mode                   | Phase sequence                                        | Output                                              |
+|------------------------|-------------------------------------------------------|-----------------------------------------------------|
+| `capture`              | Frame → Decide → Govern                               | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `from-planner-handoff` | Frame (confirm pre-populated) → Decide → Govern       | Shaped by `outputTemplate` (y-statement or madr-v4) |
+| `adopt-template`       | Ingest → Normalize → Derive Questions → Fill → Govern | First ADR + `.adr-config.yml` per the BYO contract  |
 
 The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`), and the canonical `state.json` schema are defined in `adr-identity.instructions.md`. This skill provides the authoring activities and artifact contracts; it does not redefine the state machine.
 
@@ -37,7 +37,7 @@ The state machine, hard exit gates, autonomy tiers (`manual`, `partial`, `full`)
 Activities:
 
 - **Scope** — capture the decision in one or two sentences; bound it to a single project.
-- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned).
+- **Decision-makers** — record `deciders`, `consulted`, `informed` (RACI-aligned). Prefer a role or team handle over a personal name, and never record personal contact details, secrets, credentials, or third-party or customer PII in any ADR field.
 - **Drivers** — list decision drivers (functional needs, business goals).
 - **Constraints** — list non-negotiables (regulatory, platform, contractual, time).
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.
@@ -154,6 +154,7 @@ Five-step pointer. Full lifecycle, including GP-13 (the `.adr-config.yml` schema
 - `scripts/validate_frontmatter.py` — Validates ADR frontmatter against the MADR v4 schema and the closed enums. Returns non-zero on violation. Path-traversal guarded against the same root.
 - `scripts/update_lineage.py` — Single writer of `last_decision_id` in `.adr-config.yml`. Mutates predecessor ADRs' `superseded-by` atomically with the new ADR's `supersedes`. Path-traversal guarded.
 - `scripts/normalize_template.py` — Converts a user-supplied ADR template into the canonical structure used by `templates/madr-v4.md`. Used only by the `adopt-template` lifecycle. Path-traversal guarded.
+- `scripts/scan_sensitive_content.py` — Deterministic disclosure-risk scanner accepting a file path or stdin and emitting JSON findings. Returns non-zero when high-confidence PII is present, including personal email addresses, phone numbers, and national-identifier-shaped values. Internal-only URL and hostname detection is gated behind `--public` and runs only when `state.repoVisibility` is `public`, since internal URLs are a leak concern only for publicly accessible repositories. Required gate before any durable ADR write (Govern phase) and before any external or handoff emission. Path-traversal guarded.
 
 All scripts treat their working directory as untrusted input and reject paths that resolve outside the project ADR root.
 
@@ -166,7 +167,7 @@ All scripts treat their working directory as untrusted input and reject paths th
 The ADR Creator agent enforces a phase→section load contract per `adr-identity.instructions.md`. Each phase MUST load its section of this skill before executing phase work, and MUST append the section anchor to `state.phaseSkillsLoaded`:
 
 | Phase  | Section anchor | Required `phaseSkillsLoaded` entry |
-| ------ | -------------- | ---------------------------------- |
+|--------|----------------|------------------------------------|
 | Frame  | `#frame`       | `adr-author#frame`                 |
 | Decide | `#decide`      | `adr-author#decide`                |
 | Govern | `#govern`      | `adr-author#govern`                |
@@ -176,5 +177,3 @@ The agent loads sections via `read_file` against this skill file and records the
 ---
 
 > Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

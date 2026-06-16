@@ -1390,6 +1390,72 @@ No footer
             $footerIssues | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Agentic GHCP asset footers' {
+        It 'Does not require footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{ RelativePath = '.github/workflows/workflow-notes.md' }
+            @{ RelativePath = '.github/skills/example/references/reference.md' }
+            @{ RelativePath = '.github/skills/example/SKILL.md' }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+No Copilot footer here
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -BeNullOrEmpty
+        }
+
+        It 'Rejects standard Copilot footer for agentic GHCP asset <RelativePath>' -ForEach @(
+            @{
+                RelativePath = '.github/workflows/workflow-notes.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/workflows/README.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/references/reference.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+            @{
+                RelativePath = '.github/skills/example/SKILL.md'
+                FooterText   = '🤖 Crafted with precision by ✨Copilot following brilliant human instruction, carefully refined by our team of discerning human reviewers.'
+            }
+        ) {
+            $mockContent = @"
+---
+title: Agentic Asset
+description: Test asset
+---
+
+# Agentic Asset
+
+$FooterText
+"@
+            $testFile = Join-Path $script:TestRepoRoot $RelativePath
+            $result = Test-SingleFileFrontmatter `
+                -FilePath $testFile `
+                -RepoRoot $script:TestRepoRoot `
+                -FileReader { $mockContent }.GetNewClosure()
+
+            $footerIssues = $result.Issues | Where-Object { $_.Field -eq 'footer' }
+            $footerIssues | Should -Not -BeNullOrEmpty
+            $footerIssues[0].Message | Should -Be 'Standard Copilot footer is not allowed on agentic GHCP assets'
+        }
+    }
 }
 
 Describe 'Invoke-FrontmatterValidation' -Tag 'Unit' {

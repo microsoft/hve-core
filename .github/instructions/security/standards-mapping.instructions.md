@@ -1,5 +1,5 @@
 ---
-description: "Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups - Brought to you by microsoft/hve-core"
+description: "Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups"
 applyTo: '**/.copilot-tracking/security-plans/**'
 ---
 

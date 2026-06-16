@@ -76,7 +76,3 @@ login attempts, and promote password best practices among users.
 * Deploy MFA across all user and administrative accounts.
 * Implement account lockout and alerting for repeated failed authentication attempts.
 * Provide organization-wide password management tooling and security awareness training.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

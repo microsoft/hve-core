@@ -1,6 +1,6 @@
 ---
 name: Security Reviewer
-description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting - Brought to you by microsoft/hve-core"
+description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting"
 agents:
   - Codebase Profiler
   - Skill Assessor
@@ -106,16 +106,6 @@ Skill resolution: Read the applicable security skill (e.g., `owasp-top-10`, `owa
 | Finding Deep Verifier | `.github/agents/**/finding-deep-verifier.agent.md` | Deep adversarial verification of findings using full vulnerability references.     |
 | Report Generator      | `.github/agents/**/report-generator.agent.md`      | Collates all verified findings and generates the final vulnerability report.       |
 | Skill Assessor        | `.github/agents/**/skill-assessor.agent.md`        | Assesses a single skill against the codebase, returning structured findings.       |
-
-### Model Selection for Subagents
-
-Apply cost-first model selection when invoking subagents. Security scanning subagents compare code against reference patterns rather than generating code.
-
-* Codebase Profiler: specify `model: "Claude Haiku 4.5 (copilot)"` (read-only scanning and classification).
-* Skill Assessor: specify `model: "Claude Haiku 4.5 (copilot)"` (pattern matching against vulnerability references).
-* Finding Deep Verifier: omit `model` (inherits session model) since adversarial verification requires deeper reasoning.
-* Report Generator: specify `model: "Claude Haiku 4.5 (copilot)"` (collation and formatting, not analysis).
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
 
 ### Available Skills
 

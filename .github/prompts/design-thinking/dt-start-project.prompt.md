@@ -1,5 +1,5 @@
 ---
-description: 'Start a new Design Thinking coaching project with state initialization and first coaching interaction - Brought to you by microsoft/hve-core'
+description: 'Start a new Design Thinking coaching project with state initialization and first coaching interaction'
 agent: DT Coach
 argument-hint: "project-slug=... [context=...] [stakeholders=...] [industry=...]"
 ---

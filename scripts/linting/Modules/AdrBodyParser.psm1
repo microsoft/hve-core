@@ -293,9 +293,9 @@ function Get-AdrPathTokens {
     .DESCRIPTION
         Scans a section's text (including code spans wrapped in backticks) and
         returns tokens that look like repo-relative paths: they contain at least
-        one forward slash, end in a recognized file extension, and consist of
-        path-safe characters. Markdown link text and inline code spans are both
-        considered.
+        one forward slash, either end in a recognized file extension or a trailing
+        slash, and consist of path-safe characters. Markdown link text and inline
+        code spans are both considered.
     .PARAMETER SectionText
         Section body text returned by Get-AdrH2Section.
     .OUTPUTS
@@ -313,7 +313,7 @@ function Get-AdrPathTokens {
     $ordered = [System.Collections.Generic.List[string]]::new()
     if ([string]::IsNullOrEmpty($SectionText)) { return @() }
 
-    $pattern = '(?<![A-Za-z0-9_\-./])([A-Za-z0-9_\-./]+/[A-Za-z0-9_\-./]+\.[A-Za-z0-9]{1,8})(?![A-Za-z0-9])'
+    $pattern = '(?<![A-Za-z0-9_\-./])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:/|\.[A-Za-z0-9]{1,8}))(?![A-Za-z0-9_.-])'
     foreach ($match in [regex]::Matches($SectionText, $pattern)) {
         $token = $match.Groups[1].Value.Trim()
         if (-not $token) { continue }

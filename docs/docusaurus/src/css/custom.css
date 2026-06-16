@@ -90,6 +90,13 @@ a:visited {
   color: inherit;
 }
 
+.navbar__search kbd {
+  background-color: #ebedf0;
+  border-color: #6b7680;
+  box-shadow: inset 0 -1px 0 #6b7680;
+  color: #4a5560;
+}
+
 /* Navbar: MS Learn-style sizing */
 .navbar {
   height: 54px;

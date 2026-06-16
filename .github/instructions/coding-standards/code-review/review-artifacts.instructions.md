@@ -1,5 +1,5 @@
 ---
-description: "Shared review artifact persistence protocol for code review agents - folder structure, metadata schema, verdict normalization, and writing rules - Brought to you by microsoft/hve-core"
+description: "Code review artifact persistence: folder structure, metadata schema, verdict normalization, and writing rules"
 applyTo: "**/.copilot-tracking/reviews/code-reviews/**"
 ---
 

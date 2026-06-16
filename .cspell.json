@@ -25,11 +25,14 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
+    "dependency-pinning-artifacts/**",
+    "evals/results/**",
     "evals/beval/**/results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
-    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
+    "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
   "dictionaryDefinitions": [
     {
@@ -64,13 +67,16 @@
   ],
   "words": [
     "agentic",
+    "aoda",
     "atheris",
     "behaviour",
+    "beval",
     "behavioural",
     "beval",
     "brainwriting",
     "clusterfuzzlite",
     "collab",
+    "dogfooding",
     "easyops",
     "evals",
     "fetchone",
@@ -81,22 +87,28 @@
     "idor",
     "learning",
     "parseable",
+    "normaliz",
+    "packageable",
+    "prval",
     "skillmd",
     "smol",
     "subcat",
     "uncited",
     "vally",
+    "vyta",
     "whiteboarding",
     "wireframes",
     "ystatement",
+    "underspecified",
+    "ˈpræksɪs",
+    "πρᾶξις",
     "sssc",
     "SSSC",
     "SLSA",
     "Sigstore",
     "cosign",
     "scorecard",
-    "ˈpræksɪs",
-    "πρᾶξις"
+    "watchlist"
   ],
   "reporters": [
     "default",

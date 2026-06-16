@@ -1,6 +1,6 @@
 ---
 name: ADO Backlog Manager
-description: "Orchestrator agent for Azure DevOps backlog management workflows including triage, discovery, sprint planning, PRD-to-work-item conversion, and execution - Brought to you by microsoft/hve-core"
+description: "Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution"
 disable-model-invocation: true
 tools:
   - ado/search_workitem
