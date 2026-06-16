@@ -63,6 +63,24 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run build
 
+      - name: Resolve puppeteer version
+        id: puppeteer-version
+        working-directory: docs/docusaurus
+        run: echo "version=$(node -p "require('puppeteer/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache puppeteer Chrome
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-${{ runner.os }}-${{ steps.puppeteer-version.outputs.version }}-${{ hashFiles('docs/docusaurus/package-lock.json') }}
+          restore-keys: |
+            puppeteer-${{ runner.os }}-${{ steps.puppeteer-version.outputs.version }}-
+            puppeteer-${{ runner.os }}-
+
+      - name: Install Chrome for pa11y (puppeteer)
+        working-directory: docs/docusaurus
+        run: npx puppeteer browsers install chrome
+
       - name: Accessibility scan (pa11y-ci)
         working-directory: docs/docusaurus
         run: |
@@ -71,12 +89,18 @@ jobs:
           npm run a11y:ci
         continue-on-error: ${{ inputs.soft-fail }}
 
+      - name: Resolve Playwright version
+        id: playwright-version
+        working-directory: docs/docusaurus
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Cache Playwright browsers
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('docs/docusaurus/package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-${{ hashFiles('docs/docusaurus/package-lock.json') }}
           restore-keys: |
+            playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-
             playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers

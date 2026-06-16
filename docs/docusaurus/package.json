@@ -53,6 +53,7 @@
     "jest": "30.4.2",
     "jest-axe": "10.0.0",
     "pa11y-ci": "4.1.1",
+    "puppeteer": "24.43.1",
     "start-server-and-test": "3.0.11",
     "ts-jest": "29.4.11",
     "wait-on": "9.0.10"
