@@ -39,6 +39,14 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
 
             $errors.Count | Should -Be 0
         }
+
+        It 'Reports zero errors when environment paths resolve relative to the spec directory' {
+            $relPath = 'scripts/tests/evals/fixtures/specs/valid/valid-env-path.yaml'
+            $path = Join-Path $script:RepoRoot $relPath
+            $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
+            ($errors | Where-Object { $_.field -like 'environment.*' }).Count | Should -Be 0
+        }
     }
 
     Context 'Invalid fixtures' {
@@ -82,6 +90,14 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'moderation-threshold-non-numeric.yaml' -RepoRoot $script:RepoRoot
             ($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
+        }
+
+        It 'Flags environment paths that do not resolve relative to the spec directory' {
+            $relPath = 'scripts/tests/evals/fixtures/specs/invalid/env-path-unresolved.yaml'
+            $path = Join-Path $script:RepoRoot $relPath
+            $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
+            ($errors | Where-Object { $_.field -like 'environment.*' -and $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 2
         }
     }
 
