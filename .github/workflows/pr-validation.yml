@@ -68,8 +68,11 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The moderation eval (scripts/evals/moderation) carries a heavy
+          # torch/detoxify stack and runs weekly via weekly-validation.yml,
+          # so it is excluded from per-PR Python matrix jobs here.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)

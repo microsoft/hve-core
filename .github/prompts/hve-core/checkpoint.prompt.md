@@ -2,7 +2,9 @@
 description: "Save or restore conversation context using memory files"
 agent: Memory
 argument-hint: "[mode={save|continue|incremental}] [description=...]"
-model: Claude Haiku 4.5 (copilot)
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Checkpoint
