@@ -94,8 +94,11 @@ jobs:
         with:
           node-version: "24"
 
+      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
+      # ignore-scripts=true for dev safety). Packaging needs vsce's native
+      # install hooks (@vscode/vsce-sign, keytar) to run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts=false
 
       - name: Setup PowerShell
         shell: pwsh

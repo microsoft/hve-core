@@ -26,7 +26,7 @@ BeforeAll {
     }
 
     $script:secIdentity = Join-Path $script:repoRoot '.github/instructions/security/identity.instructions.md'
-    $script:ssscIdentity = Join-Path $script:repoRoot '.github/instructions/security/sssc-identity.instructions.md'
+    $script:ssscIdentity = Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md'
     $script:secSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/security-state.schema.json'
     $script:raiSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/rai-state.schema.json'
     $script:ssscSchema = Join-Path $script:repoRoot 'scripts/linting/schemas/sssc-state.schema.json'
