@@ -63,7 +63,9 @@ jobs:
             WTFPL, LicenseRef-scancode-unicode
           # Packages with compound SPDX expressions containing GPL or MPL
           # from bundled code; distributed licenses are permissive.
-          # @github/copilot uses a non-SPDX proprietary license
+          # @github/copilot and its platform-specific binaries (including
+          # @github/copilot-linuxmusl-arm64 and @github/copilot-linuxmusl-x64
+          # added in v1.0.63) use a non-SPDX proprietary license
           # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
           # CLI toolchain, deliberately used in beval.yml.
           # pkg:npm/hve-core is the private root package (never published to npm).
@@ -123,6 +125,8 @@ jobs:
             pkg:npm/%40github/copilot-linux-x64,
             pkg:npm/%40github/copilot-win32-arm64,
             pkg:npm/%40github/copilot-win32-x64,
+            pkg:npm/%40github/copilot-linuxmusl-arm64,
+            pkg:npm/%40github/copilot-linuxmusl-x64,
             pkg:npm/lightningcss,
             pkg:npm/lightningcss-android-arm64,
             pkg:npm/lightningcss-darwin-arm64,
