@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@github/copilot": "1.0.9"
+    "@github/copilot": "^1.0.63"
   }
 }
