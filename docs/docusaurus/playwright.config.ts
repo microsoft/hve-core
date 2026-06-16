@@ -24,11 +24,11 @@ export default defineConfig({
   webServer: {
     command: 'npm run build && npm run serve:ci',
     url: baseURL,
-    // In CI the pa11y-ci step leaves a `serve:ci` server running on this URL
-    // (a background process that outlives its step), so reuse it to avoid a
-    // port conflict and a redundant rebuild. When no server is already
-    // listening -- locally, or if the pa11y server is absent -- Playwright
-    // starts its own.
+    // Each step owns its own server lifecycle. In CI the pa11y-ci step runs
+    // via start-server-and-test, which starts and then stops `serve:ci`, so
+    // nothing is left listening here and Playwright builds and serves its
+    // own instance. Locally, `reuseExistingServer: true` reuses an already
+    // running dev/serve process instead of failing on a port conflict.
     reuseExistingServer: true,
     timeout: 180000,
     stdout: 'pipe',

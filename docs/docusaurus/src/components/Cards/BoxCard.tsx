@@ -21,7 +21,8 @@ export default function BoxCard({
   links,
   icon,
 }: BoxCardProps): React.ReactElement {
-  const iconUrl = icon ? useBaseUrl(icon) : undefined;
+  const resolvedIcon = useBaseUrl(icon ?? '');
+  const iconUrl = icon ? resolvedIcon : undefined;
   return (
     <div className={styles.boxCard}>
       {iconUrl && (

@@ -12,6 +12,6 @@
     "http://127.0.0.1:3001/hve-core/docs/",
     "http://127.0.0.1:3001/hve-core/docs/getting-started/",
     "http://127.0.0.1:3001/hve-core/docs/rpi/task-researcher/",
-    "http://127.0.0.1:3001/hve-core/404.html"
+    "http://127.0.0.1:3001/hve-core/this-page-does-not-exist/"
   ]
 }
