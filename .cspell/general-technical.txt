@@ -419,6 +419,7 @@ exabytes
 exadata
 executables
 execs
+exploitability
 exponential
 failback
 failover

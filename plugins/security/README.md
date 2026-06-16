@@ -19,17 +19,19 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 
 ### Chat Agents
 
-| Name                      | Description                                                                                                                                                                 |
-|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **codebase-profiler**     | Scans the repository to build a technology profile and select applicable security skills                                                                                    |
-| **finding-deep-verifier** | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                      |
-| **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff      |
-| **report-generator**      | Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory              |
-| **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                 |
-| **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                           |
-| **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                   |
-| **skill-assessor**        | Assesses a single security skill against the codebase and returns structured findings                                                                                       |
-| **sssc-planner**          | Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows. |
+| Name                      | Description                                                                                                                                                                      |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **codebase-profiler**     | Scans the repository to build a technology profile and select applicable security skills                                                                                         |
+| **cve-analyzer**          | Per-CVE deep exploitability analysis tracing code reachability to determine an evidence-backed VEX status                                                                        |
+| **finding-deep-verifier** | Deep adversarial verification of FAIL and PARTIAL findings for a single security skill                                                                                           |
+| **rai-planner**           | Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff           |
+| **report-generator**      | Collates verified security or accessibility skill assessment findings and generates a comprehensive report written to the domain-appropriate reports directory                   |
+| **researcher-subagent**   | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                      |
+| **security-planner**      | Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration                                |
+| **security-reviewer**     | Security skill assessment orchestrator for codebase profiling and vulnerability reporting                                                                                        |
+| **skill-assessor**        | Assesses a single security skill against the codebase and returns structured findings                                                                                            |
+| **sssc-planner**          | Six-phase repository supply chain security assessment against OpenSSF Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized backlog of reusable workflows.      |
+| **vex-generator**         | Orchestrates AI-assisted vulnerability triage that scans dependencies, enriches CVEs, delegates per-CVE exploitability analysis, and drafts an OpenVEX document for human review |
 
 ### Prompts
 
@@ -50,6 +52,8 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **sssc-from-brd**               | Start supply chain security planning from BRD artifacts using the SSSC Planner agent in from-brd mode                                        |
 | **sssc-from-prd**               | Start supply chain security planning from PRD artifacts using the SSSC Planner agent in from-prd mode                                        |
 | **sssc-from-security-plan**     | Extend a Security Planner assessment with supply chain coverage using the SSSC Planner agent in from-security-plan mode                      |
+| **vex-scan**                    | Run a full VEX pipeline that scans dependencies, enriches CVEs, analyzes exploitability, and drafts an OpenVEX document for review           |
+| **vex-triage**                  | Triage CVEs from an existing scan report or SBOM and draft an OpenVEX document, skipping the scan phase                                      |
 
 ### Instructions
 
@@ -68,6 +72,8 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | **security/security-model**              | STRIDE-based security model analysis per operational bucket with threat table format and data flow analysis                                                                                                                                                                  |
 | **security/sssc-planner**                | SSSC Planner identity, six-phase orchestration, state schema, session recovery, and Phase 2-6 assessment protocols                                                                                                                                                           |
 | **security/standards-mapping**           | Embedded OWASP and NIST security standards with researcher subagent delegation for CIS, WAF, CAF, and other runtime lookups                                                                                                                                                  |
+| **security/vex-generation**              | VEX generation rules: evidence requirements, confidence routing, forbidden transitions, report templates, and licensing posture for AI-assisted vulnerability triage                                                                                                         |
+| **security/vex-standards**               | VEX document standards: canonical rule reference, licensing posture, author-of-record contract, and document mutation contract for OpenVEX management                                                                                                                        |
 | **shared/coaching-patterns**             | Shared exploration-first coaching patterns for planning agents (RAI, security, SSSC) adapted from Design Thinking research methods                                                                                                                                           |
 | **shared/disclaimer-language**           | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                                 |
 | **shared/hve-core-location**             | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree.                  |
@@ -79,6 +85,7 @@ Security review, planning, incident response, risk assessment, vulnerability ana
 | Name                          | Description                                                                                                                                                                                                                                                                                      |
 |-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **backlog-templates**         | Shared work-item templates and conventions for ADO and GitHub backlog handoff across the RAI, Security, SSSC, and Accessibility planners                                                                                                                                                         |
+| **openvex-spec**              | OpenVEX v0.2.0 specification reference for producing, validating, and interpreting Vulnerability Exploitability eXchange documents - Brought to you by microsoft/hve-core.                                                                                                                       |
 | **owasp-agentic**             | OWASP Agentic Security Top 10 knowledge base for identifying, assessing, and remediating AI agent system security risks.                                                                                                                                                                         |
 | **owasp-cicd**                | OWASP CI/CD Top 10 knowledge base for identifying, assessing, and remediating CI/CD pipeline security risks.                                                                                                                                                                                     |
 | **owasp-infrastructure**      | OWASP Infrastructure Top 10 knowledge base for identifying, assessing, and remediating internal IT infrastructure security risks.                                                                                                                                                                |

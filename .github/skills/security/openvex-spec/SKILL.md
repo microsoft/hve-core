@@ -21,24 +21,24 @@ determination logic and agent behavioral rules live in the VEX generation instru
 
 ## VEX statuses
 
-| Status                 | Meaning                                                                                         |
-|------------------------|-------------------------------------------------------------------------------------------------|
-| `not_affected`         | The vulnerability is not exploitable in this product. Requires a `justification` or `impact_statement`. |
-| `affected`             | The vulnerability is exploitable. Requires an `action_statement` describing remediation.                |
-| `fixed`                | The vulnerability was present but has been remediated in this product version.                          |
-| `under_investigation`  | The author is evaluating whether the vulnerability affects this product. Safe default for uncertain cases. |
+| Status                | Meaning                                                                                                    |
+|-----------------------|------------------------------------------------------------------------------------------------------------|
+| `not_affected`        | The vulnerability is not exploitable in this product. Requires a `justification` or `impact_statement`.    |
+| `affected`            | The vulnerability is exploitable. Requires an `action_statement` describing remediation.                   |
+| `fixed`               | The vulnerability was present but has been remediated in this product version.                             |
+| `under_investigation` | The author is evaluating whether the vulnerability affects this product. Safe default for uncertain cases. |
 
 ### Justification codes for `not_affected`
 
 When a statement uses `not_affected` status, it must include a machine-readable justification:
 
-| Code                                 | Meaning                                                          |
-|--------------------------------------|------------------------------------------------------------------|
-| `component_not_present`              | The vulnerable component is not included in the product.         |
-| `vulnerable_code_not_present`        | The component is present but the vulnerable code is not included. |
-| `vulnerable_code_not_in_execute_path`| The vulnerable code is present but cannot be reached at runtime. |
+| Code                                                | Meaning                                                            |
+|-----------------------------------------------------|--------------------------------------------------------------------|
+| `component_not_present`                             | The vulnerable component is not included in the product.           |
+| `vulnerable_code_not_present`                       | The component is present but the vulnerable code is not included.  |
+| `vulnerable_code_not_in_execute_path`               | The vulnerable code is present but cannot be reached at runtime.   |
 | `vulnerable_code_cannot_be_controlled_by_adversary` | The code is reachable but an attacker cannot influence the inputs. |
-| `inline_mitigations_already_exist`   | Existing controls prevent exploitation of the vulnerability.     |
+| `inline_mitigations_already_exist`                  | Existing controls prevent exploitation of the vulnerability.       |
 
 ### Product identifiers
 
@@ -64,14 +64,10 @@ Products use [Package URL (PURL)](https://github.com/package-url/purl-spec) form
 
 ## Third-Party Attribution
 
-| Attribute | Value |
-|-----------|-------|
-| Specification | OpenVEX Specification v0.2.0 |
-| Copyright | © OpenVEX Contributors |
-| License | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) |
-| Source | <https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md> |
+| Attribute     | Value                                                                                                                                                            |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Specification | OpenVEX Specification v0.2.0                                                                                                                                     |
+| Copyright     | © OpenVEX Contributors                                                                                                                                           |
+| License       | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)                                                                                                |
+| Source        | <https://github.com/openvex/spec/blob/main/OPENVEX-SPEC.md>                                                                                                      |
 | Modifications | Specification restructured into agent-consumable reference documents with added status determination logic, evidence requirements, and CVE data source guidance. |
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

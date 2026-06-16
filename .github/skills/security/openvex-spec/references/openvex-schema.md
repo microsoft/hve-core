@@ -153,7 +153,3 @@ precedence. The `products` field has no document-level equivalent and must appea
   "status_notes": "Vulnerable dependency updated to patched version in release 3.10.1."
 }
 ```
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

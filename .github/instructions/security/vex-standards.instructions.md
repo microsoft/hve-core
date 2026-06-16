@@ -31,11 +31,11 @@ The critical guard that governs every VEX document in this repository:
 VEX documents reference vulnerability data from multiple sources. Each source carries distinct
 licensing obligations.
 
-| Source             | License                           | Usage guidance |
-|--------------------|-----------------------------------|----------------|
+| Source             | License                           | Usage guidance                                                                                                                                 |
+|--------------------|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | OSV.dev            | Mixed (varies by upstream source) | Check record provenance before paraphrasing. Only paraphrase CC0 or public-domain records. Write original prose for CC-BY-4.0 sourced records. |
-| NVD                | US Government public domain       | Use for CVSS vectors and CWE classifications. |
-| GitHub Advisory DB | CC-BY-4.0                         | Reference URLs and identifiers only. Do not quote GHSA prose, to avoid CC-BY-4.0 attribution obligations; link to the advisory URL instead. |
+| NVD                | US Government public domain       | Use for CVSS vectors and CWE classifications.                                                                                                  |
+| GitHub Advisory DB | CC-BY-4.0                         | Reference URLs and identifiers only. Do not quote GHSA prose, to avoid CC-BY-4.0 attribution obligations; link to the advisory URL instead.    |
 
 OSV.dev aggregates records from multiple upstream databases, so its effective license varies per
 record. Check the record `id` prefix (`GHSA-` = CC-BY-4.0, `RUSTSEC-` = CC0, `CVE-` from NVD =

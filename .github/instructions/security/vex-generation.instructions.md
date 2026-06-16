@@ -34,12 +34,12 @@ reference. The behavioral rules below supplement that reference with agent-speci
 
 VEX documents require an accountable author for trust purposes.
 
-| Role | Description |
-|------|-------------|
-| Drafter | the AI agent. No trust requirement; the agent performs analysis and drafts the document. |
-| Reviewer | CODEOWNERS-required human approver who validates evidence and status determinations. |
-| Author of record | the merge commit author (the human approver). This is the accountable identity. |
-| Trust anchor | Sigstore identity of the release workflow that attests the VEX document. |
+| Role             | Description                                                                              |
+|------------------|------------------------------------------------------------------------------------------|
+| Drafter          | the AI agent. No trust requirement; the agent performs analysis and drafts the document. |
+| Reviewer         | CODEOWNERS-required human approver who validates evidence and status determinations.     |
+| Author of record | the merge commit author (the human approver). This is the accountable identity.          |
+| Trust anchor     | Sigstore identity of the release workflow that attests the VEX document.                 |
 
 The agent must never represent itself as the author of record. The `author` field in OpenVEX
 documents must identify the maintainer team or organization, not the agent.
@@ -48,11 +48,11 @@ documents must identify the maintainer team or organization, not the agent.
 
 When drafting VEX content, follow these rules for external data:
 
-| Source              | License                           | Permitted use                                                    |
-|---------------------|-----------------------------------|------------------------------------------------------------------|
-| OSV.dev             | Mixed (varies by upstream source) | Check record provenance before paraphrasing. Only paraphrase CC0 or public domain records. Write original prose for CC-BY-4.0 sourced records. |
-| NVD API 2.0         | US Gov public domain              | Use for CVSS vectors and CWE classification.                    |
-| GitHub Advisory DB   | CC-BY-4.0                        | Reference URLs and identifiers only. Do not quote or closely paraphrase prose. |
+| Source             | License                           | Permitted use                                                                                                                                  |
+|--------------------|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| OSV.dev            | Mixed (varies by upstream source) | Check record provenance before paraphrasing. Only paraphrase CC0 or public domain records. Write original prose for CC-BY-4.0 sourced records. |
+| NVD API 2.0        | US Gov public domain              | Use for CVSS vectors and CWE classification.                                                                                                   |
+| GitHub Advisory DB | CC-BY-4.0                         | Reference URLs and identifiers only. Do not quote or closely paraphrase prose.                                                                 |
 
 OSV.dev aggregates records from multiple databases. Check the record `id` prefix (`GHSA-` = CC-BY-4.0,
 `RUSTSEC-` = CC0, `CVE-` from NVD = public domain) to determine the upstream license. When the
