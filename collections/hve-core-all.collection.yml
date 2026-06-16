@@ -498,6 +498,7 @@ items:
   maturity: experimental
 - path: .github/instructions/security/sssc-planner.instructions.md
   kind: instruction
+  maturity: experimental
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
@@ -603,6 +604,7 @@ items:
   maturity: experimental
 - path: .github/skills/security/supply-chain-security
   kind: skill
+  maturity: experimental
 - path: .github/skills/shared/backlog-templates
   kind: skill
   maturity: experimental
