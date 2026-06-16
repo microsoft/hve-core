@@ -649,6 +649,15 @@ The directory includes the following 10 JSON schema files:
 * `prompt-frontmatter.schema.json`
 * `root-community-frontmatter.schema.json`
 * `skill-frontmatter.schema.json`
+* `accessibility-state.schema.json`
+* `adr-config.schema.json`
+* `adr-consistency-rules.schema.json`
+* `adr-frontmatter.schema.json`
+* `ai-artifact-config.schema.json`
+* `model-catalog.schema.json`
+* `rai-state.schema.json`
+* `security-state.schema.json`
+* `sssc-state.schema.json`
 
 ### Schema Mapping
 
