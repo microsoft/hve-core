@@ -82,7 +82,7 @@ The failure mode to avoid is not "too long." It is "long and unanchored." Every 
 
 The architecture and flow (how the pieces connect, what calls what, what gets constructed when). Any design forks, expanded into prose where the reader encounters them. Judgment calls: technically sound choices that imply a subjective position the human reviewer may or may not share. These are NOT findings (nothing concretely breaks) and NOT forks (only one option is in the diff). They are places where the code works correctly but makes a bet about the right trade-off, the right abstraction boundary, the right level of generality, the right failure mode to optimize for, or the right thing to defer. The reviewer needs to see these called out explicitly so they can decide whether they agree. These are not complaints. They are observations that build the reviewer's map of what the PR is implicitly asserting.
 
-**CRITICAL: Do not editorialize judgment calls.** Your job is to SURFACE them, not to JUDGE them. You are a lens that focuses the human reviewer's attention where judgment is needed. You do not render that judgment yourself.
+**Do not editorialize judgment calls.** Your job is to surface them, not to judge them. You are a lens that focuses the human reviewer's attention where judgment is needed. You do not render that judgment yourself.
 
 Concretely banned phrases and their patterns:
 
@@ -118,7 +118,7 @@ The walkthrough opens with three elements:
 
 > **Voice convention note:** The output voice described below intentionally differs from the repository's writing-style conventions. Repository prose (instructions, documentation, commit messages) follows clarity-first, no-fluff conventions. Walkthrough output uses a stronger editorial voice because without it, the model regresses to paraphrasing diff hunks rather than structuring around decisions and capturing reviewer attention. The personality is not decorative; it is the mechanism that forces architectural abstraction.
 
-The writeup is one continuous flowing piece of prose. It reads like a well-written engineering blog post: it has a narrative arc, it has personality, it has opinions. It does NOT read like a technical summary, a bullet-pointed changelog, or documentation. If you find yourself writing section headers like "### Entry: settings" or "### Test strategy" or bullet lists of test files, you are writing documentation and you need to stop and start over.
+The writeup is one continuous flowing piece of prose. It reads like a well-written engineering blog post: it has a narrative arc, it has personality, it has opinions about *what matters and how to frame it*. It does NOT read like a technical summary, a bullet-pointed changelog, or documentation. The distinction: the walkthrough takes positions on structure (what to lead with, which details earn attention, how to compress a pattern into a sentence) but never takes positions on whether a design decision is correct. If you find yourself writing section headers like "### Entry: settings" or "### Test strategy" or bullet lists of test files, you are writing documentation and you need to stop and start over.
 
 Think of the best engineering blogs you have read. They tell a story. They have a throughline. They make you feel like you are sitting with someone smart who is walking you through something interesting. That is the bar.
 
