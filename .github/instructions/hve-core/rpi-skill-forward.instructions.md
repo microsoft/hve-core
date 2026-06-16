@@ -1,6 +1,6 @@
 ---
 description: "Shared guidance for RPI skill-forward artifacts, subagent dispatch, and tracking-file conventions"
-applyTo: '.github/skills/rpi/**, .copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**'
+applyTo: '.github/skills/rpi/**, .copilot-tracking/research/**, .copilot-tracking/plans/**, .copilot-tracking/details/**, .copilot-tracking/changes/**, .copilot-tracking/reviews/**'
 ---
 
 # RPI Skill-Forward Guidance

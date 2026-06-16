@@ -306,7 +306,7 @@ Contains static resources:
 
 ### Skill Content Structure
 
-Skill files include these sections in order:
+Script-oriented skill files include these sections in order:
 
 1. Title (H1): Clear heading matching skill purpose.
 2. Overview: Brief explanation of what the skill does.
@@ -316,6 +316,21 @@ Skill files include these sections in order:
 6. Script Reference: Usage examples for bash and PowerShell.
 7. Troubleshooting: Common issues and solutions.
 8. Attribution: Standard footer.
+
+Playbook-style skills are valid for documentation-driven workflows that delegate detailed execution to agents or subagents instead of bundled scripts. Use this structure in order:
+
+1. Title (H1): Clear heading matching skill purpose.
+2. Goal: The workflow outcome and entry-point responsibility.
+3. Flow, Execution, or What to do: Ordered steps for the delegated workflow.
+4. Inputs: Supported arguments or invocation signals, when applicable.
+5. Success criteria: Completion evidence and quality gates.
+6. Constraints: Scope boundaries, delegation rules, and excluded behavior.
+7. Stop rules: Conditions that block further progress.
+8. Handoff: Next skill, agent, or artifact path.
+9. Final response contract or output format, when the caller requires a specific summary shape.
+10. Attribution: Standard footer.
+
+For playbook-style skills, omit Prerequisites, Quick Start, Parameters Reference, Script Reference, and Troubleshooting when there are no local scripts or operational setup steps.
 
 #### Progressive Disclosure
 
@@ -423,7 +438,7 @@ Optional fields available by file type:
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification. For **agent files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. For **prompt files**, accepts a single model identifier string only. When omitted, the currently selected model in the model picker is used.
+* `model:` - Model specification. For **agent files** and **prompt files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. When omitted, the currently selected model in the model picker is used.
 * `license:` - SPDX license identifier for skill content (for example, `MIT`, `CC-BY-SA-4.0`). Defaults to the repository license when omitted. Use for skills that incorporate third-party content under a specific license.
 * `metadata:` - Object containing provenance and versioning metadata for skills. Recognized fields include `authors`, `spec_version`, `framework_revision`, `last_updated`, `skill_based_on`, and `content_based_on`.
 
