@@ -379,8 +379,10 @@ jobs:
       - name: Check job results
         shell: bash
         run: |
-          echo "## Validation Gate Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Validation Gate Summary"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           FAILED=""
 
@@ -433,14 +435,18 @@ jobs:
           check_result "CodeQL" "${{ needs.codeql.result }}"
 
           if [ -n "$FAILED" ]; then
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "---" >> "$GITHUB_STEP_SUMMARY"
-            echo "❌ **Validation failed**: ${FAILED%, }" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo ""
+              echo "---"
+              echo "❌ **Validation failed**: ${FAILED%, }"
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "One or more required checks failed: ${FAILED%, }"
             exit 1
           fi
 
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "---" >> "$GITHUB_STEP_SUMMARY"
-          echo "✅ **All validations passed**" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo ""
+            echo "---"
+            echo "✅ **All validations passed**"
+          } >> "$GITHUB_STEP_SUMMARY"
 
