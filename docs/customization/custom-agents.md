@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-15
 ms.topic: how-to
 keywords:
   - agents
