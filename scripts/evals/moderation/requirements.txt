@@ -1,5 +1,5 @@
 # Content moderation dependencies for eval input/output screening
 # Pinned per hve-core security conventions
 detoxify==0.5.2
-torch==2.9.1
+torch==2.12.0
 transformers>=4.40,<5
