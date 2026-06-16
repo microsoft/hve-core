@@ -44,6 +44,14 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
+          # GHSA-69w3-r845-3855 (CVE-2026-1839): transformers Trainer
+          # arbitrary code execution via torch.load() without weights_only.
+          # The advisory states the issue only affects torch>=2.2 used with
+          # PyTorch < 2.6; the moderation eval pins torch==2.9.1 (>=2.6), so
+          # safe_globals() protection applies and the path is not exploitable.
+          # The only patched release (5.0.0rc3) is a pre-release that breaks
+          # detoxify==0.5.2, which requires transformers<5.
+          allow-ghsas: GHSA-69w3-r845-3855
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
@@ -71,6 +79,20 @@ jobs:
           # is MPL-2.0 licensed; it is pulled in transitively by
           # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
           # copyleft and safe to consume as a dependency.
+          # The pkg:pypi/torch ML stack below is the transitive dependency
+          # graph of the moderation eval (scripts/evals/moderation). torch
+          # resolves from the CPU-only wheel index
+          # (download.pytorch.org/whl/cpu), so the nvidia-*-cu12 CUDA runtime
+          # libraries are no longer pulled in. PyPI metadata reports
+          # "unknown" for the remaining packages so the action cannot match
+          # them against allow-licenses: torch is BSD-3-Clause; filelock is
+          # Unlicense (public domain); hf-xet, idna, and safetensors ship
+          # permissive licenses (Apache-2.0 / BSD-style) per their source
+          # repositories. pkg:pypi/regex declares a compound SPDX expression
+          # (CNRI-Python AND Apache-2.0) and is pulled transitively by
+          # transformers; CNRI-Python is a permissive PSF-style license. The
+          # moderation eval is an internal test harness, not a distributed
+          # product.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -83,6 +105,12 @@ jobs:
             pkg:pypi/jaraco-context,
             pkg:pypi/jaraco-functools,
             pkg:pypi/keyrings-alt,
+            pkg:pypi/torch,
+            pkg:pypi/filelock,
+            pkg:pypi/hf-xet,
+            pkg:pypi/idna,
+            pkg:pypi/safetensors,
+            pkg:pypi/regex,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
             pkg:npm/lightningcss,

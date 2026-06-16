@@ -168,6 +168,13 @@
             "multiplier": 0,
             "name": "Goldeneye (copilot)",
             "provider": "Unknown"
+        },
+        {
+            "name": "MAI-Code-1-Flash (copilot)",
+            "tier": "fast",
+            "multiplier": 0.33,
+            "status": "ga",
+            "provider": "Microsoft"
         }
     ],
     "providerAllowlist": [
@@ -175,8 +182,10 @@
         "Google",
         "OpenAI",
         "xAI"
+        "OpenAI",
+        "Microsoft"
     ],
     "$schema": "./schemas/model-catalog.schema.json",
-    "lastUpdated": "2026-05-06",
+    "lastUpdated": "2026-06-12",
     "source": "https://docs.github.com/en/copilot/reference/ai-models/supported-models"
 }
