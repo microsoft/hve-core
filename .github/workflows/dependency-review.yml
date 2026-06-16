@@ -45,6 +45,14 @@ jobs:
           retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
           comment-summary-in-pr: always
+          # GHSA-69w3-r845-3855 (CVE-2026-1839): transformers Trainer arbitrary
+          # code execution. Patched only in 5.0.0rc3, but detoxify==0.5.2 pins
+          # transformers<5, so the fixed release is unreachable. The advisory
+          # is non-applicable here: it requires PyTorch <2.6 and use of the
+          # Trainer class, while scripts/evals/moderation pins torch==2.9.1 and
+          # uses transformers solely for toxic-bert inference (no training,
+          # no untrusted checkpoint loading).
+          allow-ghsas: GHSA-69w3-r845-3855
           license-check: true
           allow-licenses: >-
             MIT, MIT-0, MIT-CMU, Apache-2.0,
