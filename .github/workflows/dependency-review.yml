@@ -79,8 +79,13 @@ jobs:
           # is MPL-2.0 licensed; it is pulled in transitively by
           # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
           # copyleft and safe to consume as a dependency.
+          # pkg:pypi/regex declares the compound SPDX expression
+          # "CNRI-Python AND Apache-2.0" (transitive dependency of
+          # transformers). Both components are permissive, but the action
+          # treats compound expressions as a mismatch against allow-licenses.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
+            pkg:pypi/regex,
             pkg:pypi/typing-extensions,
             pkg:pypi/certifi,
             pkg:pypi/charset-normalizer,
