@@ -249,9 +249,9 @@ Companion to the implementation plan at `vex-workflow-and-agent-plan.instruction
 
 ### P7-VEX-VERIFY: Consumer Documentation
 
-- [ ] File exists at `docs/security/vex-verification.md`
-- [ ] Has valid YAML frontmatter with `title`, `description`, `sidebar_position`, `author`, `ms.date`, `ms.topic`, `keywords`, `estimated_reading_time`
-- [ ] Contains sections:
+- [x] File exists at `docs/security/vex-verification.md`
+- [x] Has valid YAML frontmatter with `title`, `description`, `sidebar_position`, `author`, `ms.date`, `ms.topic`, `keywords`, `estimated_reading_time`
+- [x] Contains sections:
   - What VEX is and how it complements the SBOM
   - How to download the VEX document from a release
   - How to verify the VEX attestation (`gh attestation verify` with `--predicate-type`)
@@ -260,54 +260,54 @@ Companion to the implementation plan at `vex-workflow-and-agent-plan.instruction
 
 ### P7-SECURITY-MODEL: Control Table Update
 
-- [ ] `docs/security/security-model.md` contains a VEX control entry in the Security Controls table
-- [ ] Control entry includes: control name, description, automated status, validation method
+- [x] `docs/security/security-model.md` contains a VEX control entry in the Security Controls table
+- [x] Control entry includes: control name, description, automated status, validation method
 
 ### P7-SECURITY-INDEX: README Update
 
-- [ ] `docs/security/README.md` contains a link to `vex-verification.md`
+- [x] `docs/security/README.md` contains a link to `vex-verification.md`
 
 ### P7-SECURITY-MD: Release Artifacts Table
 
-- [ ] `SECURITY.md` Release Artifact Formats table includes `.openvex.json` row with format and description
+- [x] `SECURITY.md` Release Artifact Formats table includes `.openvex.json` row with format and description
 
 ### P7-AGENT-DOCS: Agent Documentation
 
-- [ ] File exists at `docs/agents/security/vex-generator.md`
-- [ ] Contains: purpose, prerequisites (Trivy v0.63.0+), usage examples (`/vex-scan`, `/vex-triage`), output format, confidence routing explanation
+- [x] File exists at `docs/agents/security/vex-generator.md`
+- [x] Contains: purpose, prerequisites (Trivy v0.63.0+), usage examples (`/vex-scan`, `/vex-triage`), output format, confidence routing explanation
 
 ### P7-VALIDATE: Automated Checks
 
-- [ ] `npm run lint:md` passes
-- [ ] `npm run lint:frontmatter` passes
-- [ ] `npm run lint:md-links` passes (no broken links)
-- [ ] `npm run spell-check` passes
+- [x] `npm run lint:md` passes
+- [x] `npm run lint:frontmatter` passes
+- [x] `npm run lint:md-links` passes (no broken links)
+- [x] `npm run spell-check` passes
 
 ## Cross-Phase Validation
 
 ### CROSS-CONSISTENCY: Content Consistency
 
-- [ ] Confidence-routing 5-band table is identical in: `vex-standards.instructions.md`, `vex-generation.instructions.md`, `vex-generator.agent.md` (by reference)
-- [ ] Forbidden transitions list is identical across all files that reference it
-- [ ] Licensing posture (OSV.dev mixed-license, routed by record prefix) is consistent across all files
-- [ ] Author-of-record contract is consistent across all files
-- [ ] Evidence requirements match between instructions and agent files
-- [ ] CAUTION disclaimer blocks reference `disclaimer-language.instructions.md`
+- [x] Confidence-routing 5-band table is identical in: `vex-standards.instructions.md`, `vex-generation.instructions.md`, `vex-generator.agent.md` (by reference)
+- [x] Forbidden transitions list is identical across all files that reference it
+- [x] Licensing posture (OSV.dev mixed-license, routed by record prefix) is consistent across all files
+- [x] Author-of-record contract is consistent across all files
+- [x] Evidence requirements match between instructions and agent files
+- [x] CAUTION disclaimer blocks reference `disclaimer-language.instructions.md`
 
 ### CROSS-COLLECTION: Collection Integrity
 
-- [ ] Every new `.github/` artifact is listed in `collections/security.collection.yml`
-- [ ] No artifact listed in collection YAML is missing from the filesystem
-- [ ] `npm run plugin:generate` produces no unexpected diffs outside `plugins/`
-- [ ] `npm run plugin:validate` reports 0 errors
+- [x] Every new `.github/` artifact is listed in `collections/security.collection.yml`
+- [x] No artifact listed in collection YAML is missing from the filesystem
+- [x] `npm run plugin:generate` produces no unexpected diffs outside `plugins/`
+- [x] `npm run plugin:validate` reports 0 errors
 
 ### CROSS-RELEASE: Release Pipeline
 
-- [ ] VEX attestation step in `release-stable.yml` uses the same `actions/attest` SHA as existing SBOM attestation
-- [ ] VEX upload uses the same `gh release upload --clobber` pattern as existing artifacts
-- [ ] Release notes mention VEX verification alongside SBOM verification
+- [x] VEX attestation step in `release-stable.yml` uses the same `actions/attest` SHA as existing SBOM attestation
+- [x] VEX upload uses the same `gh release upload --clobber` pattern as existing artifacts
+- [x] Release notes mention VEX verification alongside SBOM verification
 
 ### CROSS-LINT: Full Lint Suite
 
-- [ ] `npm run lint:all` passes
-- [ ] `npm run validate:copyright` passes (if copyright headers are required for new file types)
+- [x] `npm run lint:all` passes
+- [x] `npm run validate:copyright` passes (if copyright headers are required for new file types)

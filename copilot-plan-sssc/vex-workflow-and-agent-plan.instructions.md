@@ -170,12 +170,12 @@ Create the gh-aw agentic workflow that uses the VEX generator agent to draft VEX
 
 Create consumer-facing documentation for VEX verification and agent usage.
 
-- [ ] 7.1 Create `docs/security/vex-verification.md` — What VEX is, how it complements the SBOM, how to download and verify, how to interpret status values, how to consume VEX with Trivy/Grype
-- [ ] 7.2 Update `docs/security/security-model.md` — Add VEX control entry to the Security Controls table
-- [ ] 7.3 Update `docs/security/README.md` — Add VEX verification link to the security documentation index
-- [ ] 7.4 Update `SECURITY.md` — Add `.openvex.json` to the Release Artifact Formats table
-- [ ] 7.5 Create `docs/agents/security/vex-generator.md` — Agent documentation with usage examples, prerequisites (Trivy), output format, confidence routing explanation
-- [ ] 7.6 Update `docs/agents/sssc-planning/phase-reference.md` — Add VEX capability to the capability table (if this file exists)
+- [x] 7.1 Create `docs/security/vex-verification.md` — What VEX is, how it complements the SBOM, how to download and verify, how to interpret status values, how to consume VEX with Trivy/Grype
+- [x] 7.2 Update `docs/security/security-model.md` — Add VEX control entry to the Security Controls table
+- [x] 7.3 Update `docs/security/README.md` — Add VEX verification link to the security documentation index
+- [x] 7.4 Update `SECURITY.md` — Add `.openvex.json` to the Release Artifact Formats table
+- [x] 7.5 Create `docs/agents/security/vex-generator.md` — Agent documentation with usage examples, prerequisites (Trivy), output format, confidence routing explanation
+- [ ] 7.6 Update `docs/agents/sssc-planning/phase-reference.md` — Add VEX capability to the capability table (if this file exists) — N/A: VEX is not an SSSC planning phase, so it does not belong in that capability table
 
 **Deliverables**: 2 new doc files, 3-4 doc updates
 
