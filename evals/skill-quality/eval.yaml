@@ -9,7 +9,12 @@ config:
   timeout: 120s
   executor: copilot-sdk
 
-environment: security
+# Skill paths are resolved relative to this spec's directory (evals/skill-quality/),
+# so they ascend to the repo root before descending into .github/skills.
+environment:
+  skills:
+    - ../../.github/skills/security/owasp-top-10
+    - ../../.github/skills/security/owasp-cicd
 
 scoring:
   threshold: 0.7

@@ -151,7 +151,7 @@ stimuli:
 
 Agents that analyze code, diffs, or artifacts and surface issues, risks, or recommendations.
 
-**Members (9):** code-review-full, code-review-functional, code-review-standards, content-policy-citation, dependency-reviewer, doc-update-checker, pr-review, security-reviewer, task-reviewer
+**Members (8):** code-review-full, code-review-functional, code-review-standards, dependency-reviewer, doc-update-checker, pr-review, security-reviewer, task-reviewer
 
 **Required Graders:**
 
@@ -358,7 +358,6 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | code-review-full             | code-reviewer    | light     | [.github/agents/coding-standards/code-review-full.agent.md](../../.github/agents/coding-standards/code-review-full.agent.md)                         |
 | code-review-functional       | code-reviewer    | light     | [.github/agents/coding-standards/code-review-functional.agent.md](../../.github/agents/coding-standards/code-review-functional.agent.md)             |
 | code-review-standards        | code-reviewer    | light     | [.github/agents/coding-standards/code-review-standards.agent.md](../../.github/agents/coding-standards/code-review-standards.agent.md)               |
-| content-policy-citation      | code-reviewer    | light     | [.github/agents/content-policy-citation.agent.md](../../.github/agents/content-policy-citation.agent.md)                                             |
 | dependency-reviewer          | code-reviewer    | light     | [.github/agents/dependency-reviewer.agent.md](../../.github/agents/dependency-reviewer.agent.md)                                                     |
 | doc-ops                      | planner-coach    | light     | [.github/agents/hve-core/doc-ops.agent.md](../../.github/agents/hve-core/doc-ops.agent.md)                                                           |
 | doc-update-checker           | code-reviewer    | light     | [.github/agents/doc-update-checker.agent.md](../../.github/agents/doc-update-checker.agent.md)                                                       |

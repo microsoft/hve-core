@@ -10,7 +10,11 @@ config:
   timeout: 120s
   executor: copilot-sdk
 
-environment: coding-standards
+# Skill paths are resolved relative to this spec's directory (evals/script-validation/),
+# so they ascend to the repo root before descending into .github/skills.
+environment:
+  skills:
+    - ../../.github/skills/coding-standards/python-foundational
 
 scoring:
   threshold: 0.7

@@ -176,6 +176,30 @@ function Test-EvalSpecCompliance {
         }
     }
 
+    if ($Spec.ContainsKey('environment')) {
+        $environment = $Spec['environment']
+        if ($environment -is [System.Collections.IDictionary]) {
+            $specDir = Split-Path -Path (Join-Path -Path $RepoRoot -ChildPath $SpecPath) -Parent
+            foreach ($entryKey in @('skills', 'files')) {
+                if (-not $environment.ContainsKey($entryKey)) { continue }
+                $entryPaths = @($environment[$entryKey])
+                $entryIndex = -1
+                foreach ($rawPath in $entryPaths) {
+                    $entryIndex++
+                    $pathString = [string]$rawPath
+                    if ([string]::IsNullOrWhiteSpace($pathString)) {
+                        $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "Empty environment.$entryKey path" })
+                        continue
+                    }
+                    $resolved = [System.IO.Path]::GetFullPath((Join-Path -Path $specDir -ChildPath $pathString))
+                    if (-not (Test-Path -LiteralPath $resolved)) {
+                        $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "environment.$entryKey path '$pathString' does not resolve to an existing path (resolved to '$resolved'); vally resolves it relative to the spec directory" })
+                    }
+                }
+            }
+        }
+    }
+
     if (-not $Spec.ContainsKey('stimuli')) {
         $errors.Add(@{ path = $SpecPath; field = 'stimuli'; message = 'Missing required key: stimuli' })
         return $errors

@@ -22,15 +22,14 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 10      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 30      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 60      | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 44      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 72      | `behavior-conformance` | Active (Phase 13) |
 
 The Phase 9 cut of `prompts.eval.yaml` covers ten high-traffic prompts: the five RPI prompts (`task-research`, `task-plan`, `task-implement`, `task-review`, `task-challenge`), `security-review`, `ado/ado-create-pull-request`, `github/github-execute-backlog`, `jira/jira-execute-backlog`, and `design-thinking/dt-start-project`. Phase 10 expands the inventory to the full prompt catalog.
 
-The Phase 11 cut of `instructions.eval.yaml` covers 30 high-signal instructions whose `applyTo` matches Markdown files. Coverage spans:
+The Phase 11 cut of `instructions.eval.yaml` covers 44 high-signal instructions whose `applyTo` matches Markdown files. Coverage spans:
 
 * ADO backlog and PR families: `ado-backlog-sprint`, `ado-backlog-triage`, `ado-create-pull-request`, `ado-get-build-info`, `ado-update-wit-items`, `ado-wit-discovery`, `ado-wit-planning`.
-* Design Thinking: `dt-coaching-state`, `dt-method-01-scope`, `dt-method-05-concepts`, `dt-rpi-handoff-contract`, `dt-subagent-handoff`.
 * GitHub and Jira backlog flows: `github-backlog-discovery`, `github-backlog-planning`, `github-backlog-triage`, `github-backlog-update`, `jira-backlog-planning`, `jira-wit-planning`.
 * HVE-Core authoring: `markdown`, `prompt-builder`, `pull-request`, `writing-style`.
 * RAI and Security planning: `rai-identity`, `rai-risk-classification`, `backlog-handoff`, `sssc-assessment`.

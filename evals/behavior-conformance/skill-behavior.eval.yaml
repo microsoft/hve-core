@@ -1,10 +1,10 @@
 name: behavior-conformance-skills
 description: >
-  Advisory-tier behavior conformance evals for 20 skills exercised across three
+  Advisory-tier behavior conformance evals for 24 skills exercised across three
   stimulus shapes: knowledge (canonical concept attribution), tool-trigger
   (correct skill selection from a working context), and bleed-detection
   (correct refusal when an off-topic context superficially resembles the
-  skill's domain). Total: 60 stimuli. Per DD-05, this is an advisory tier and
+  skill's domain). Total: 72 stimuli. Per DD-05, this is an advisory tier and
   grader false-positives are absorbed by design.
 type: capability
 config:
@@ -1155,3 +1155,235 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)issue|triage|\\bpr\\b|github"
+
+  - name: skill-dt-coaching-foundation-knowledge
+    prompt: |
+      Summarize the foundational knowledge encoded by the
+      `dt-coaching-foundation` skill. Name at least three of its core areas.
+    tags:
+      category: behavior-conformance
+      skill: dt-coaching-foundation
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)coach\\s+identity|fidelity|method\\s+sequencing|coaching\\s+state|deck\\s+workflow"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|coaching|facilitat|foundation"
+
+  - name: skill-dt-coaching-foundation-tool-trigger
+    prompt: |
+      I am persisting Design Thinking coaching state and need the canonical
+      coaching-state schema and method-sequencing rules. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: dt-coaching-foundation
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)dt-coaching-foundation"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)coaching\\s+state|sequencing|design\\s+thinking|skill"
+
+  - name: skill-dt-coaching-foundation-bleed-detection
+    prompt: |
+      I am configuring OpenTelemetry trace spans for a backend service.
+      Does the `dt-coaching-foundation` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: dt-coaching-foundation
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|telemetry"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)telemetry|coaching|design\\s+thinking|scope"
+
+  - name: skill-dt-methods-knowledge
+    prompt: |
+      What body of knowledge does the `dt-methods` skill encode across the
+      Design Thinking methods? Mention its per-method and industry coverage.
+    tags:
+      category: behavior-conformance
+      skill: dt-methods
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)nine\\s+methods|per-method|deep\\s+expertise|industry\\s+context"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|method|technique|industry"
+
+  - name: skill-dt-methods-tool-trigger
+    prompt: |
+      I am coaching a Method 3 synthesis session and need method-specific
+      techniques plus healthcare industry context. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: dt-methods
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)dt-methods"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)method|technique|industry|design\\s+thinking"
+
+  - name: skill-dt-methods-bleed-detection
+    prompt: |
+      I am writing Pester tests for a PowerShell linting module. Does the
+      `dt-methods` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: dt-methods
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|pester"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pester|powershell|design\\s+thinking|scope"
+
+  - name: skill-dt-rpi-integration-knowledge
+    prompt: |
+      Summarize what the `dt-rpi-integration` skill covers for handing off
+      Design Thinking outputs into the RPI workflow.
+    tags:
+      category: behavior-conformance
+      skill: dt-rpi-integration
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)handoff\\s+contract|subagent\\s+handoff|method\\s+5|image\\s+prompt|rpi"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|rpi|handoff|research"
+
+  - name: skill-dt-rpi-integration-tool-trigger
+    prompt: |
+      I have completed a Design Thinking session and need to hand its outputs
+      into the RPI research and planning phases via a subagent. Which skill
+      under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: dt-rpi-integration
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)dt-rpi-integration"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|rpi|design\\s+thinking|skill"
+
+  - name: skill-dt-rpi-integration-bleed-detection
+    prompt: |
+      I am drafting an Azure DevOps work item description for a sprint. Does
+      the `dt-rpi-integration` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: dt-rpi-integration
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|work\\s+item"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)work\\s+item|azure\\s+devops|design\\s+thinking|scope"
+
+  - name: skill-dt-curriculum-knowledge
+    prompt: |
+      What does the `dt-curriculum` skill provide for teaching Design
+      Thinking? Describe its module structure and reference scenario.
+    tags:
+      category: behavior-conformance
+      skill: dt-curriculum
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)nine\\s+(progressive\\s+)?modules|problem\\s+space|solution\\s+space|manufacturing\\s+reference"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)design\\s+thinking|curriculum|module|learn"
+
+  - name: skill-dt-curriculum-tool-trigger
+    prompt: |
+      I am building a progressive Design Thinking training course with a
+      shared manufacturing scenario across modules. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: dt-curriculum
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)dt-curriculum"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)curriculum|module|design\\s+thinking|skill"
+
+  - name: skill-dt-curriculum-bleed-detection
+    prompt: |
+      I am writing a Terraform module for an Azure storage account. Does the
+      `dt-curriculum` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: dt-curriculum
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|different\\s+skill|terraform"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)terraform|infrastructure|design\\s+thinking|scope"

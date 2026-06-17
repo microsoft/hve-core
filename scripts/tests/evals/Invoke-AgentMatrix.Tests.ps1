@@ -44,10 +44,10 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
             $script:Summary.overall | Should -Be 'dry-run'
         }
 
-        It 'Enumerates exactly 46 parent agents (DD-09)' {
-            $script:Summary.agentCount | Should -Be 46
-            $script:Summary.results.Count | Should -Be 46
-            $script:Summary.plannedCommands.Count | Should -Be 46
+        It 'Enumerates exactly 48 parent agents (DD-09)' {
+            $script:Summary.agentCount | Should -Be 48
+            $script:Summary.results.Count | Should -Be 48
+            $script:Summary.plannedCommands.Count | Should -Be 48
         }
 
         It 'Records a class and cost_tier for every result row' {
@@ -59,9 +59,9 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
             }
         }
 
-        It 'Plans a vally command per slug using --eval-spec for the slug stimulus file' {
+        It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
-            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/stimuli/[^/]+\.yml --model \S+$'
+            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+$'
         }
     }
 
@@ -254,7 +254,7 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
         It 'Returns every inventory slug in All mode' {
             $slugs = Resolve-SlugSet -RepoRoot $script:RepoRoot -Inventory $script:Inventory -ParameterSet 'All'
             $slugs.Count | Should -Be $script:Inventory.Count
-            $slugs.Count | Should -Be 46
+            $slugs.Count | Should -Be 48
         }
 
         It 'Filters Changed inputs to known slugs' {
