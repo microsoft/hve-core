@@ -1,10 +1,10 @@
 name: behavior-conformance-skills
 description: >
-  Advisory-tier behavior conformance evals for 24 skills exercised across three
+  Advisory-tier behavior conformance evals for 25 skills exercised across three
   stimulus shapes: knowledge (canonical concept attribution), tool-trigger
   (correct skill selection from a working context), and bleed-detection
   (correct refusal when an off-topic context superficially resembles the
-  skill's domain). Total: 72 stimuli. Per DD-05, this is an advisory tier and
+  skill's domain). Total: 75 stimuli. Per DD-05, this is an advisory tier and
   grader false-positives are absorbed by design.
 type: capability
 config:
@@ -1387,3 +1387,61 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)terraform|infrastructure|design\\s+thinking|scope"
+
+  - name: skill-vally-tests-knowledge
+    prompt: |
+      What artifact kinds does the `vally-tests` skill author conformance
+      tests for, and what bounds its test authoring?
+    tags:
+      category: behavior-conformance
+      skill: vally-tests
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)vally|conformance|stimulus|grader"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prompt|instruction|agent|skill|refusal|safety"
+
+  - name: skill-vally-tests-tool-trigger
+    prompt: |
+      I want to author conformance test stimuli for an existing
+      `.prompt.md` artifact and route the results through Vally graders.
+      Which skill under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: vally-tests
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)vally-tests"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)conformance|stimulus|grader|vally|skill"
+
+  - name: skill-vally-tests-bleed-detection
+    prompt: |
+      I need to generate jailbreak and prompt-injection probes to red-team a
+      model. Does the `vally-tests` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: vally-tests
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: "(?i)not\\s+apply|does\\s+not|inapplicable|refusal|out\\s+of\\s+scope"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)jailbreak|prompt-injection|adversarial|red-team|scope"

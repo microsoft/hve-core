@@ -1252,3 +1252,39 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)synthetic|data|generate|schema|fixture"
+
+  - name: prompt-graph-research-conformance
+    prompt: |
+      Invoke the `graph-research` prompt with topic="what depends on
+      `auth_middleware.py`" against an existing `graphify-out/graph.json`.
+    tags:
+      category: behavior-conformance
+      prompt: graph-research
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+researcher\\b|graph-research|graphify"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)graph|graphify|dependency|structural|research"
+
+  - name: prompt-jira-setup-conformance
+    prompt: |
+      Invoke the `jira-setup` prompt to verify my Jira integration
+      environment is configured for the HVE-Core Jira agents.
+    tags:
+      category: behavior-conformance
+      prompt: jira-setup
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)jira-setup|\\bjira\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)credential|environment|configuration|verify|JIRA_BASE_URL|token"

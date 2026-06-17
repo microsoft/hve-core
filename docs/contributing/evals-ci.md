@@ -85,7 +85,7 @@ When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Set the spec's `stimulus.backlink` field to the absolute repository path of the artifact under test (for example, `.github/agents/coding-standards/researcher-subagent.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: researcher-subagent}` for `.github/agents/coding-standards/researcher-subagent.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 

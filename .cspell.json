@@ -26,7 +26,8 @@
     "logs/**",
     "docs/docusaurus/build/**",
     "dependency-pinning-artifacts/**",
-    "evals/results/**"
+    "evals/results/**",
+    "vally-results/**"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
