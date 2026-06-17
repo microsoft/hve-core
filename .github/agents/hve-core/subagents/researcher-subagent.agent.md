@@ -60,6 +60,8 @@ Files under `.copilot-tracking/` are consumed by AI agents, not humans clicking 
 
 External URLs may still use markdown link syntax.
 
+Research references are consumed by RPI agents during implementation to guide logic and architecture decisions. Do not include `.copilot-tracking/` paths or internal workflow artifact references in production code, code comments, documentation strings, commit messages, or artifacts outside `.copilot-tracking/`.
+
 ## Response Format
 
 The subagent always writes complete findings to its subagent file before returning. The chat response is an executive summary only. Full fidelity lives on disk.

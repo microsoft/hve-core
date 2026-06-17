@@ -1,6 +1,5 @@
 ---
-description: "Exploration-first questioning techniques for accessibility capture mode covering personas, contextual inquiry, and conflict surfacing"
-applyTo: '**/.copilot-tracking/accessibility/**'
+description: Exploration-first capture mode coaching techniques for Accessibility Planner Discovery and risk assessment phases
 ---
 
 # Accessibility Capture Mode Coaching
@@ -132,7 +131,7 @@ Transition out of capture into Phase 2 (`framework-selection`) when every item b
 * Outstanding questions are tracked in `planRiskAssessment.watchlist` rather than carried in the planner's working memory.
 * The user has confirmed the discovery summary via the gate-confirmation prompt.
 
-When the criteria are met, set `gates.discovery.confirmed = true` with `confirmedAt` and `confirmedBy`, advance `phase` to `framework-selection`, and hand off to the multi-select pattern defined in `accessibility-framework-selection.instructions.md`.
+When the criteria are met, set `gates.discovery.confirmed = true` with `confirmedAt` and `confirmedBy`, advance `phase` to `framework-selection`, and hand off to the multi-select pattern defined in `references/framework-selection.md`.
 
 ## Anti-Patterns
 
