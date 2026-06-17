@@ -43,6 +43,6 @@
 
 ## Validation Commands
 
-| Command | Scope | Status | Summary |
-|---|---|---|---|
+| Command     | Scope                                | Status                        | Summary                                        |
+|-------------|--------------------------------------|-------------------------------|------------------------------------------------|
 | {{command}} | {{changed_files_package_or_project}} | {{Passed / Failed / Skipped}} | {{important_output_summary_or_skip_rationale}} |

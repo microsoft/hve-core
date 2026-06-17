@@ -56,10 +56,10 @@ copilot plugin install rpi@hve-core
 | Skill            | Description                                                                                                                                                                                                                             |
 |------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | task-researcher  | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first. |
-| task-planner     | Planning-only RPI playbook that turns research into a concrete plan, details notes, and planning log, then validates the plan before implementation. Use when the user needs scope, sequencing, and validation evidence.                |
-| task-implementor | Implementation-only RPI playbook that applies the approved plan, updates .copilot-tracking/changes/, and dispatches validation when the phase is blocked or needs review. Use when the user needs bounded code changes.                 |
+| task-planner     | Create implementation-ready planning artifacts and validation evidence for RPI tasks.                                                                                                                                                   |
+| task-implementor | Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.                                                                                                                                   |
 | task-reviewer    | Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.                                 |
-| rpi              | Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with legacy-equivalent quality gates.                                                                                  |
+| rpi              | Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.                                                                                                    |
 
 ---
 

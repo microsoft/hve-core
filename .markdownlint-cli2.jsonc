@@ -7,6 +7,8 @@
     "evals/results/**",
     "vally-results/**",
     "venv/**",
+    ".venv/**",
+    "**/.venv/**",
     "scripts/tests/Fixtures/**",
     "scripts/tests/fixtures/**",
     "scripts/tests/linting/fixtures/**",

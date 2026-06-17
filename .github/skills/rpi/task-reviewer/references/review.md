@@ -28,13 +28,13 @@ Use one deterministic slug rule for every path in this skill:
 * Use `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` as the canonical review-log path.
 * Use `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-impl-validation.md` as the canonical implementation-validation log path.
 
-| Artifact | Required path | Notes |
-|---|---|---|
-| Implementation plan | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md` | Required |
-| Changes log | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md` | Required |
-| Research | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md` | Optional when available |
-| Review log | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` | Canonical review-log path |
-| Phase validation | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md` | One file per phase |
+| Artifact                  | Required path                                                                  | Notes                                   |
+|---------------------------|--------------------------------------------------------------------------------|-----------------------------------------|
+| Implementation plan       | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md`      | Required                                |
+| Changes log               | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md`              | Required                                |
+| Research                  | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md`            | Optional when available                 |
+| Review log                | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md`          | Canonical review-log path               |
+| Phase validation          | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md` | One file per phase                      |
 | Implementation validation | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-impl-validation.md` | Canonical implementation-validation log |
 
 1. Discover only the current task-named plan, changes log, and research artifacts for the user’s task slug or the explicit paths supplied with the request.
@@ -143,15 +143,15 @@ Use brief, skill-forward wording and keep the review outcome fields in the final
 ```markdown
 ## {{status_icon}} Task Reviewer: {{task_description}}
 
-| Summary | |
-|---|---|
-| Review Log | {{review_log_path}} |
-| Overall Status | {{Complete / Needs Rework / Blocked}} |
-| Critical Findings | {{count}} |
-| High Findings | {{count}} |
-| Medium Findings | {{count}} |
-| Low Findings | {{count}} |
-| Follow-Up Items | {{count}} |
+| Summary           |                                       |
+|-------------------|---------------------------------------|
+| Review Log        | {{review_log_path}}                   |
+| Overall Status    | {{Complete / Needs Rework / Blocked}} |
+| Critical Findings | {{count}}                             |
+| High Findings     | {{count}}                             |
+| Medium Findings   | {{count}}                             |
+| Low Findings      | {{count}}                             |
+| Follow-Up Items   | {{count}}                             |
 
 Next step: {{/task-implementor, /task-researcher, /task-planner, or return to user}}
 ```
