@@ -318,8 +318,9 @@ Phase 6 closes when every criterion below is true. The planner does not set `gat
   },
   "noticeLog": [
     {
+      "noticeType": "handoff-disclaimer",
       "shownAt": "{ISO 8601 timestamp}",
-      "source": ".github/skills/project-planning/accessibility-planner-playbook/references/backlog-handoff.md",
+      "source": ".github/instructions/accessibility/accessibility-identity.instructions.md",
       "details": {
         "phase": "backlog-handoff",
         "artifact": ".copilot-tracking/accessibility/{project-slug}/handoff-summary.md"
