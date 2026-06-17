@@ -1,1 +1,0 @@
-../../../../.github/instructions/hve-core/walkthrough-voice.instructions.md
