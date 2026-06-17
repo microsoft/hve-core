@@ -106,6 +106,10 @@ A successful verification confirms:
 
 Each release includes a Software Bill of Materials (SBOM) in SPDX 2.3 JSON format, cryptographically attested using Sigstore. For verification steps, download instructions, inspection commands, and SPDX field reference, see the [SBOM Verification Guide](docs/security/sbom-verification.md).
 
+### Verifying the VEX Document
+
+Each release publishes an OpenVEX v0.2.0 vulnerability exploitability document (`hve-core.openvex.json`) that records whether known vulnerabilities in bundled components affect HVE Core. It is cryptographically attested using Sigstore. For download, verification, status interpretation, and how to apply it with Trivy or Grype, see the [VEX Verification Guide](docs/security/vex-verification.md).
+
 ### Release Artifact Formats
 
 Each attested artifact produces a set of companion files uploaded alongside the primary asset:
@@ -115,6 +119,7 @@ Each attested artifact produces a set of companion files uploaded alongside the 
 | `.spdx.json`     | SPDX 2.3 JSON          | Software Bill of Materials                     |
 | `.sigstore.json` | Sigstore bundle (JSON) | Cryptographic attestation envelope             |
 | `.intoto.jsonl`  | in-toto DSSE envelope  | Provenance statement extracted from the bundle |
+| `.openvex.json`  | OpenVEX v0.2.0 JSON    | Vulnerability exploitability statements (VEX)   |
 
 The `.sigstore.json` bundle contains the full Sigstore verification material. The `.intoto.jsonl` file is the DSSE envelope extracted from the bundle for tools that consume in-toto provenance directly.
 
@@ -127,6 +132,7 @@ The `.sigstore.json` bundle contains the full Sigstore verification material. Th
 | Per-extension SBOM     | GitHub Releases | Yes                   |
 | Per-plugin SBOM        | GitHub Releases | Yes                   |
 | Dependency SBOM        | GitHub Releases | Yes                   |
+| VEX document           | GitHub Releases | Yes                   |
 | Dependency diff        | GitHub Releases | No                    |
 | VS Code Marketplace    | Stable          | Marketplace signature |
 | VS Code Marketplace    | Pre-Release     | Marketplace signature |

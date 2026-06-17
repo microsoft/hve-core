@@ -1045,6 +1045,7 @@ External standards are cited inline.
 | SC-6 | Tool Checksum Verification      | scripts/security/tool-checksums.json            | S-1               |
 | SC-7 | SBOM Generation and Attestation | anchore/sbom-action, actions/attest in main.yml | S-1, S-2          |
 | SC-8 | SBOM Dependency Diff            | sbom-diff job in main.yml                       | S-1, S-2          |
+| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, attest-and-upload-vex in release-stable.yml | S-1, S-2 |
 
 #### SC-8: SBOM Dependency Diff Implementation
 
