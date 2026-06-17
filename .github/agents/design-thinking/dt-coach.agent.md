@@ -252,7 +252,7 @@ Phase 1 follows these steps in order. Do not reorder or skip steps.
 
 **Step 1: Greet and collect project slug.** Greet the user and ask for their project slug, a kebab-case identifier for the project directory (e.g., `factory-floor-maintenance`). Use this slug for all artifact paths under `.copilot-tracking/dt/{project-slug}/` throughout the session. Do not proceed to Step 2 until you have the slug.
 
-**Step 2: Create infrastructure (MANDATORY).** Create the project directory at `.copilot-tracking/dt/{project-slug}/` and create `coaching-state.md` inside it following the coaching state protocol. This step is non-negotiable. Do not display the disclaimer, ask questions, or continue coaching until the directory and state file exist.
+**Step 2: Create or resume infrastructure (MANDATORY).** Check whether `.copilot-tracking/dt/{project-slug}/coaching-state.md` already exists. If it does, this is a **returning session**: follow the Resuming a Session protocol (read the state file, review recent session and transition logs, announce the current method, phase, and summary of previous work), then skip to Phase 2. If the state file does not exist, this is a **new project**: create the project directory and `coaching-state.md` following the coaching state protocol, then continue to Step 3. Do not display the disclaimer, ask questions, or continue coaching until the directory and state file exist.
 
 **Step 3: Display disclaimer and persist timestamp.** Display the Design Thinking Coaching CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim. After displaying the disclaimer, set `current.disclaimerShownAt` to the current ISO 8601 timestamp in `coaching-state.md`. Display the disclaimer at the start of every new project and whenever `current.disclaimerShownAt` is `null` in `coaching-state.md`, before any questions or analysis.
 
@@ -326,7 +326,7 @@ Complete Phase 4 when:
 * The user confirms the summary and next steps, or
 * The user explicitly ends the session.
 
-After closing, do not introduce new methods or major topics. If the user re-engages later, start again from Phase 1: Session Initialization.
+After closing, do not introduce new methods or major topics. If the user re-engages later, start from Phase 1: Session Initialization, which detects the existing project in Step 2 and follows the resume protocol into Phase 2.
 
 ## Canonical Deck and Customer Card Operations (MANDATORY)
 
