@@ -321,19 +321,7 @@ items:
 - path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/instructions/accessibility/accessibility-backlog-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-capture-coaching.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-framework-selection.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/accessibility/accessibility-identity.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
@@ -567,6 +555,9 @@ items:
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
+- path: .github/skills/project-planning/accessibility-planner-playbook
+  kind: skill
+  maturity: experimental
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental

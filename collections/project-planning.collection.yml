@@ -178,18 +178,6 @@ items:
   - path: .github/instructions/accessibility/accessibility-identity.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-capture-coaching.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-framework-selection.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-impact-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-backlog-handoff.instructions.md
-    kind: instruction
-    maturity: experimental
   - path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
     kind: instruction
     maturity: experimental
@@ -214,6 +202,9 @@ items:
     kind: instruction
   # Skills
   - path: .github/skills/project-planning/adr-author
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/project-planning/accessibility-planner-playbook
     kind: skill
     maturity: experimental
   - path: .github/skills/accessibility/wcag-22

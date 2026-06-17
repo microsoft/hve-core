@@ -79,6 +79,10 @@ jobs:
           # is MPL-2.0 licensed; it is pulled in transitively by
           # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
           # copyleft and safe to consume as a dependency.
+          # pkg:npm/uri-js declares a compound SPDX expression
+          # (BSD-2-Clause AND BSD-2-Clause-Views); both components are
+          # permissive BSD variants, but the action treats the compound
+          # expression as a mismatch against allow-licenses.
           # The pkg:pypi/torch ML stack below is the transitive dependency
           # graph of the moderation eval (scripts/evals/moderation). torch
           # resolves from the CPU-only wheel index
@@ -125,6 +129,7 @@ jobs:
             pkg:npm/lightningcss-linux-x64-musl,
             pkg:npm/lightningcss-win32-arm64-msvc,
             pkg:npm/lightningcss-win32-x64-msvc,
+            pkg:npm/uri-js,
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3

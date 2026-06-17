@@ -24,14 +24,14 @@ Callers:
 * RAI Planner (`.github/instructions/rai-planning/rai-backlog-handoff.instructions.md`)
 * Security Planner (`.github/instructions/security/backlog-handoff.instructions.md`)
 * SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
-* Accessibility Planner (`.github/instructions/accessibility/accessibility-backlog-handoff.instructions.md`)
+* Accessibility Planner (`accessibility-planner-playbook` skill `references/backlog-handoff.md`)
 
 What stays per-planner (NOT in this skill):
 
 * Domain-specific HTML and markdown body content (NIST characteristic vs. STRIDE category vs. WCAG criterion vs. Scorecard check).
 * Severity-to-priority and severity-to-tier mapping tables — different input vocabularies per planner.
 * Work-item hierarchy mapping (Epic / Feature / Story / Task / Bug).
-* The accessibility disclaimer text (pinned to `accessibility-backlog-handoff.instructions.md` by the L7 disclaimer lever).
+* The accessibility disclaimer text (pinned to `accessibility-identity.instructions.md` by the L7 disclaimer lever).
 
 ## ADO Work Item Template
 
@@ -193,7 +193,7 @@ Every backlog handoff artifact (handoff summary, ADO output file, GitHub output 
 Source-of-truth split for the disclaimer text:
 
 * RAI, Security, SSSC — Read the disclaimer text from `.github/instructions/shared/disclaimer-language.instructions.md` under the corresponding planner section.
-* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-backlog-handoff.instructions.md` under the `Planning Disclaimer` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
+* Accessibility — Read the disclaimer text from `.github/instructions/accessibility/accessibility-identity.instructions.md` under the `Disclaimer Handling` heading. The L7 disclaimer lever pins the accessibility disclaimer to that file. Do not move it to `shared/disclaimer-language.instructions.md`.
 
 Placement rules:
 
