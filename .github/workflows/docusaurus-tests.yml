@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write  # Required for Codecov OIDC
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -34,17 +35,88 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
+        env:
+          # pa11y uses the runner's system Google Chrome (provisioned by the
+          # "Provision system Chrome" step below), so skip the puppeteer
+          # postinstall download. That self-download failed deterministically
+          # in CI by extracting a partial browser tree while still exiting 0,
+          # poisoning ~/.cache/puppeteer.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+      - name: Lint accessibility
+        working-directory: docs/docusaurus
+        run: npm run lint:a11y
+
+      - name: Typecheck
+        working-directory: docs/docusaurus
+        run: npm run typecheck
 
       - name: Run tests
         working-directory: docs/docusaurus
-        run: npm test
+        run: npm run test:coverage
         env:
           COLLECTIONS_DIR: ${{ github.workspace }}/collections
         continue-on-error: ${{ inputs.soft-fail }}
 
+      - name: Upload to Codecov
+        if: success()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: docs/docusaurus/coverage/lcov.info
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: docusaurus
+          name: docusaurus-coverage
+        continue-on-error: true
+
       - name: Build site
         working-directory: docs/docusaurus
         run: npm run build
+
+      # Both accessibility tools reuse the ubuntu-latest runner's maintained
+      # Google Chrome stable build instead of self-downloading a browser:
+      # pa11y drives it over CDP via puppeteer (honouring
+      # PUPPETEER_EXECUTABLE_PATH because `.pa11yci` sets no `executablePath`),
+      # and Playwright drives it via `channel: 'chrome'` in
+      # playwright.config.ts. Self-downloading failed deterministically in CI:
+      # the archive downloaded in full but extraction silently dropped the
+      # main `chrome` binary while the install still exited 0, so no retry or
+      # disk-space change could recover it. This step is the single source of
+      # the shared Chrome dependency; its presence check and `--version` echo
+      # guard both tools by failing the job loudly here -- with a clear
+      # message -- rather than as an opaque browser-launch error downstream.
+      - name: Provision system Chrome
+        run: |
+          set -u
+          chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [ -z "$chrome_bin" ]; then
+            echo "::error::No system Google Chrome found on the runner; pa11y and Playwright both require it"
+            exit 1
+          fi
+          echo "Using system Chrome at: $chrome_bin"
+          "$chrome_bin" --version
+          echo "PUPPETEER_EXECUTABLE_PATH=$chrome_bin" >> "$GITHUB_ENV"
+
+      # `npm run a11y` wraps the scan in start-server-and-test, which starts
+      # `serve:ci`, waits for it, runs pa11y-ci, then tears the server down --
+      # so this step is self-contained and leaves no background process behind.
+      - name: Accessibility scan (pa11y-ci)
+        working-directory: docs/docusaurus
+        run: npm run a11y
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      # Playwright drives Google Chrome stable via `channel: 'chrome'` in
+      # playwright.config.ts, reusing the runner's maintained Chrome build
+      # instead of self-downloading a bundled Chromium, so no browser install
+      # or cache step is needed. The "Provision system Chrome" step above is
+      # the shared dependency and already fails the job loudly when no system
+      # Chrome is present. This step owns its own e2e server (Playwright's
+      # webServer config), independent of the pa11y step above.
+      - name: Accessibility journeys (Playwright)
+        working-directory: docs/docusaurus
+        run: npm run test:e2e
+        continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload test results
         if: always()
