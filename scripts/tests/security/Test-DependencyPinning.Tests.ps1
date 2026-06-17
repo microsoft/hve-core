@@ -80,6 +80,16 @@ Describe 'Test-NpmExactVersion' -Tag 'Unit' {
         }
     }
 
+    Context 'Local-path protocol references' {
+        It 'Returns true for file: local path' {
+            Test-NpmExactVersion -Version 'file:../..' | Should -BeTrue
+        }
+
+        It 'Returns true for link: local path' {
+            Test-NpmExactVersion -Version 'link:../shared' | Should -BeTrue
+        }
+    }
+
     Context 'Range specifiers' {
         It 'Returns false for caret range' {
             Test-NpmExactVersion -Version '^4.17.21' | Should -BeFalse

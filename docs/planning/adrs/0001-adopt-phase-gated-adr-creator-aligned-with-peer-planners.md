@@ -1,7 +1,7 @@
 ---
 id: "0001"
 title: "Adopt phase-gated ADR Creator aligned with peer planners"
-description: "Adopt a phase-gated ADR Creator agent and supporting skills/instructions that align ADR authoring with peer planners (BRD, PRD, RPI) under MADR v4.0.0 plus hve-core extensions for IDs, lineage, and ASR triggers."
+description: "Adopt a phase-gated ADR Creator agent and supporting skills/instructions that align ADR authoring with peer planners (Security, RAI, SSSC) under MADR v4.0.0 plus hve-core extensions for IDs, lineage, and ASR triggers."
 author: "HVE Core Maintainers"
 ms.date: "2026-05-08"
 ms.topic: "reference"
