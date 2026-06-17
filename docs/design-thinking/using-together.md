@@ -245,7 +245,6 @@ The coach re-enters Method 3 with the new evidence, updates synthesis themes, an
 > [!TIP]
 > Iteration is progress, not failure. Discovering that your assumptions were wrong in Method 8 is far cheaper than discovering it after full deployment.
 
-Brought to you by microsoft/hve-core
 
 ---
 

@@ -261,4 +261,3 @@ Follow the Report Skeleton and Persist and Present sections from the output form
 
 ---
 
-Brought to you by microsoft/hve-core

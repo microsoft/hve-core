@@ -422,7 +422,6 @@ Include at end of file (MANDATORY):
 ```markdown
 ---
 
-Brought to you by microsoft/hve-core
 ```
 
 ### XML-Style Block Requirements

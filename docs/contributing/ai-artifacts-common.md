@@ -877,7 +877,7 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
 
 ```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
+description: 'Tests prompt files in a sandbox environment'
 ```
 
 Format: `- Brought to you by organization/repository-name` appended to the description value.
@@ -885,7 +885,6 @@ Format: `- Brought to you by organization/repository-name` appended to the descr
 Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 
 ```markdown
-> Brought to you by microsoft/hve-core
 ```
 
 ## GitHub Issue Title Conventions

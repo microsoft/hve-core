@@ -130,4 +130,3 @@ Involve a human product owner or stakeholder when:
 
 ---
 
-Brought to you by microsoft/hve-core

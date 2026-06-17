@@ -11,4 +11,3 @@ argument-hint: "[story=AIAA-123]"
 
 ---
 
-Brought to you by microsoft/hve-core

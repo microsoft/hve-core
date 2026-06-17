@@ -44,15 +44,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `semantic_similarity` with rubric "Does the skill's frontmatter name field equal the final segment of its directory path in lowercase kebab-case?".
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L1 declares `name: vscode-playwright` matching the directory.
 
-### Check 3: Attribution Footer
-
-* Contract source: `prompt-builder.instructions.md` L552-L562.
-* Testable behavior: SKILL.md MUST end its body with an attribution footer as the last non-blank line, taking the form `> Brought to you by organization/repository-name` or a recognized equivalent for the hve-core collection.
-* Suggested stimulus: ask the assistant to quote the final line of a named skill's body.
-* Grader recommendation: `regex` with pattern `(?m)^(?:>\s+Brought to you by\s+\S+/\S+|.*Crafted with precision.*hve-core.*)\s*$`.
-* Evidence: every shipped skill under `.github/skills/` carries an attribution footer at the end of `SKILL.md`.
-
-### Check 4: H1 Title Matches Skill Purpose
+### Check 3: H1 Title Matches Skill Purpose
 
 * Contract source: `prompt-builder.instructions.md` L451-L487.
 * Testable behavior: the SKILL.md H1 heading MUST state the skill's purpose clearly and SHOULD align in intent with the `description:` frontmatter.
@@ -60,7 +52,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `semantic_similarity` with rubric "Does the SKILL.md H1 heading describe the skill's purpose in a way that aligns with the description frontmatter?".
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L10-L11 carries an H1 that matches the description's intent.
 
-### Check 5: Required Content Sections
+### Check 4: Required Content Sections
 
 * Contract source: `prompt-builder.instructions.md` L300-L370.
 * Testable behavior: SKILL.md MUST open with an H1 Title followed by an Overview (or Purpose) section. It SHOULD then follow the recommended structure — Prerequisites, Quick Start (or Architecture plus Workflow Steps), and, when the skill ships scripts or parameters, a Parameters Reference and Script Reference. Skills without scripts MAY omit the Parameters Reference and Script Reference sections. The Troubleshooting section is governed solely by Check 9 and is not required here.
@@ -68,7 +60,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `regex` with pattern `(?m)^#\s+\S` AND `(?m)^##\s+(?:Overview|Purpose)\b` for the required H1 and Overview, paired with a `semantic_similarity` rubric "Does the SKILL.md follow the recommended section ordering (Overview, then Prerequisites and Quick Start or Architecture plus Workflow), omitting the Parameters Reference and Script Reference only when the skill ships no scripts?".
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` L10-L27 lays out the recommended section sequence, while script-free skills legitimately omit the Parameters Reference and Script Reference sections.
 
-### Check 6: Relative Path Portability
+### Check 5: Relative Path Portability
 
 * Contract source: `prompt-builder.instructions.md` L401-L550.
 * Testable behavior: all file path references within SKILL.md MUST be relative to the skill root. Repo-root-relative paths starting with `.github/` and absolute paths (Unix `/` or Windows drive-letter) are non-conforming.
@@ -76,7 +68,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `regex` with negate pattern `(?m)(?:\]\(|\s|^)(?:\.github/|/[a-z]|[A-Za-z]:[\\/])` evaluated over SKILL.md path references.
 * Evidence: `.github/skills/experimental/vscode-playwright/SKILL.md` references resources by skill-root-relative paths under its own directory.
 
-### Check 7: Progressive Disclosure Structure
+### Check 6: Progressive Disclosure Structure
 
 * Contract source: `prompt-builder.instructions.md` L488-L540.
 * Testable behavior: SKILL.md SHOULD respect progressive disclosure: frontmatter holds metadata of roughly 100 tokens, the body holds activation instructions of under 5000 tokens, and large or domain-specific resources live in `references/`, `scripts/`, or `assets/` subdirectories rather than inline.
@@ -84,7 +76,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `semantic_similarity` with rubric "Does the skill follow progressive disclosure, with a focused SKILL.md body under the activation budget and large references moved to separate files?".
 * Evidence: `.github/skills/hve-core/vally-tests/SKILL.md` body delegates regex sets and routing tables to files under `references/`.
 
-### Check 8: Script Parity for Cross-Platform Helpers
+### Check 7: Script Parity for Cross-Platform Helpers
 
 * Contract source: `prompt-builder.instructions.md` L410-L430.
 * Testable behavior: when a skill ships executable helpers, the helpers SHOULD be provided in parity pairs of a bash (`.sh`) implementation and a PowerShell (`.ps1`) implementation, unless the workflow requires Python.
@@ -92,7 +84,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `semantic_similarity` with rubric "If the skill ships non-Python helpers, does each helper appear in both .sh and .ps1 forms for cross-platform parity?".
 * Evidence: skills under `.github/skills/` consistently pair `.sh` and `.ps1` helpers for cross-platform helpers.
 
-### Check 9: Troubleshooting Section
+### Check 8: Troubleshooting Section
 
 * Contract source: `prompt-builder.instructions.md` L300-L370.
 * Testable behavior: SKILL.md SHOULD include a Troubleshooting section that documents common failure modes and their resolutions, or that explicitly states no common issues exist. This SHOULD is the only Troubleshooting requirement; Check 5 does not impose a stronger one, so a script-free skill that omits Troubleshooting passes both checks.
@@ -100,7 +92,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `regex` with pattern `(?m)^##\s+Troubleshooting\b`.
 * Evidence: the `.github/skills/experimental/vscode-playwright/` skill exposes a Troubleshooting section in line with the convention.
 
-### Check 10: Semantic Invocation Alignment
+### Check 9: Semantic Invocation Alignment
 
 * Contract source: `prompt-builder.instructions.md` L511-L540.
 * Testable behavior: the `description:` frontmatter MUST be domain-specific enough that natural-language task descriptions matching the skill's domain (for example "extract VS Code screenshots") semantically correlate with the declared description.

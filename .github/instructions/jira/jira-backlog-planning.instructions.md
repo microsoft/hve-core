@@ -338,4 +338,3 @@ Pause and ask for guidance when:
 
 ---
 
-Brought to you by microsoft/hve-core

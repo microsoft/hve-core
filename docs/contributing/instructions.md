@@ -331,7 +331,6 @@ Always include an attribution footer at the end of the file.
 ```markdown
 ---
 
-Brought to you by microsoft/hve-core
 ```
 
 ### XML-Style Block Requirements

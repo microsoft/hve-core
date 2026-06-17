@@ -82,7 +82,6 @@ When you have a clear scope statement, stakeholder map, and constraint inventory
 * [Method 2: Design Research](method-02-design-research.md)
 * [Method 3: Input Synthesis](method-03-input-synthesis.md)
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

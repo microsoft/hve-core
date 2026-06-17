@@ -362,7 +362,6 @@ This log gives the full history: the original handoff, the return to DT with the
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

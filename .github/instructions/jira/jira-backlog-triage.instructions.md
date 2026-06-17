@@ -119,4 +119,3 @@ The triage workflow produces files in `.copilot-tracking/jira-issues/triage/{{YY
 
 ---
 
-Brought to you by microsoft/hve-core

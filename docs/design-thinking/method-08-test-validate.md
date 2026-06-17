@@ -86,7 +86,6 @@ When testing produces sufficient evidence for a clear decision:
 * [Method 9: Iteration at Scale](method-09-iteration-at-scale.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

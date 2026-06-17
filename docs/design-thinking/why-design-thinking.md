@@ -80,7 +80,6 @@ Industry context shapes the coaching conversation without changing the underlyin
 
 Start with the [DT Coach](dt-coach.md) to run your first guided session. The coach adapts to your experience level and guides you through each method at a pace that works for your team.
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

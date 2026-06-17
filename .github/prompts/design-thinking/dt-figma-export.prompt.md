@@ -515,4 +515,3 @@ For best results, ensure team members have Dev or Full seats on a paid Figma pla
 
 ---
 
-Brought to you by microsoft/hve-core

@@ -387,4 +387,3 @@ MUST escalate to human decision-makers when:
 
 ---
 
-Brought to you by microsoft/hve-core

@@ -85,7 +85,6 @@ When you have constraint discoveries from real-environment testing and clear evi
 * [Method 7: Hi-Fi Prototypes](method-07-hifi-prototypes.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

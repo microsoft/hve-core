@@ -368,16 +368,6 @@ Validation guidelines:
 * Keep *SKILL.md* focused; move detailed reference material to `references/`.
 * Additional sections can be added between Parameters Reference and Troubleshooting as needed.
 
-#### Attribution
-
-The `description:` frontmatter field is a single concise sentence with no attribution suffix. Distribution attribution is added automatically where needed, so source artifacts omit it.
-
-Skill files include a standard attribution footer as the last line of body content:
-
-```markdown
-> Brought to you by organization/repository-name
-```
-
 ## Frontmatter Requirements
 
 Frontmatter field requirements for prompt engineering artifacts follow.

@@ -161,4 +161,3 @@ These sections in `jira-backlog-planning.instructions.md` inform discovery opera
 
 ---
 
-Brought to you by microsoft/hve-core

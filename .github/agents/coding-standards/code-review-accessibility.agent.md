@@ -238,4 +238,3 @@ After presenting the report, offer to save it as a markdown file.
 
 ---
 
-Brought to you by microsoft/hve-core

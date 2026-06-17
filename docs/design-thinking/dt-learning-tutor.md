@@ -146,7 +146,6 @@ After completing the curriculum (or the modules relevant to your goals):
 > [!TIP]
 > Use the **🎯 Start a DT project** handoff button when available to transition directly from learning to coaching with DT Coach.
 
-Brought to you by microsoft/hve-core
 
 ---
 

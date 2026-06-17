@@ -349,6 +349,5 @@ This Product Requirements Document was prepared with AI assistance and reflects 
 
 ---
 
-> Brought to you by microsoft/hve-core
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

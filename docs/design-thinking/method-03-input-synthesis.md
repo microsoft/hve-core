@@ -82,7 +82,6 @@ When your synthesis produces validated themes, a clear problem statement, and te
 * [Method 4: Brainstorming](method-04-brainstorming.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

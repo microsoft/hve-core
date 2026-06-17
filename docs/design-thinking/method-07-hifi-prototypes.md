@@ -83,7 +83,6 @@ When you have functional prototypes validated under real conditions with documen
 * [Method 8: Test and Validate](method-08-test-validate.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

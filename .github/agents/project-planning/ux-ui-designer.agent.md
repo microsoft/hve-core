@@ -172,4 +172,3 @@ Involve a human when:
 
 ---
 
-Brought to you by microsoft/hve-core

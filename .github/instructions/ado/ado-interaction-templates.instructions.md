@@ -393,4 +393,3 @@ Template conventions:
 
 ---
 
-Brought to you by microsoft/hve-core

@@ -64,4 +64,3 @@ Sanitize the branch name by replacing every `/` with `-`
 
 ---
 
-Brought to you by microsoft/hve-core
