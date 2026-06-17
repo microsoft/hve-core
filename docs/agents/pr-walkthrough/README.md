@@ -47,13 +47,7 @@ The narrative uses an editorial voice with headers as narrative beats rather tha
 
 ## Invocation
 
-### Standalone
-
 Select **PR Walkthrough** from the agent picker and provide a branch name or PR URL. The agent computes the diff, analyzes the change, and produces the walkthrough.
-
-### Orchestrated
-
-When invoked by an orchestrator that provides a `diff-state.json` path, the agent skips diff computation and reads directly from the provided state. This avoids redundant git operations when the walkthrough is part of a larger review pipeline.
 
 ## Output Location
 
@@ -62,8 +56,6 @@ Walkthroughs are written to:
 ```text
 .copilot-tracking/pr/review/<sanitized-branch>/walkthrough.md
 ```
-
-In orchestrated mode, the output is written to the `findingsFolder` specified in `diff-state.json`.
 
 ## Relationship to Code Review Agents
 
@@ -78,14 +70,9 @@ The PR Walkthrough and the Code Review agents serve complementary but distinct p
 
 The agents can be used independently or sequentially. When used together, the walkthrough provides orientation and the code review provides detailed findings.
 
-## Pipeline Integration
+## Dependencies
 
-The walkthrough consumes:
-
-* **pr-reference skill** for diff computation (shared infrastructure)
-* **diff-state.json** for orchestrated input (when called as part of a pipeline)
-
-Both are shared components that any review-adjacent agent can use independently.
+The walkthrough uses the **pr-reference skill** for diff computation (shared infrastructure within the hve-core collection).
 
 ## Maturity
 

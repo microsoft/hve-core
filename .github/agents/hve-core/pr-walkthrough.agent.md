@@ -1,8 +1,6 @@
 ---
-
 name: PR Walkthrough
 description: 'Narrative-driven PR orientation surfacing design forks, implicit bets, and architectural shape for reviewer judgment.'
-
 ---
 
 # PR Walkthrough Agent
@@ -15,8 +13,7 @@ This is the entire value proposition of the review: massive PRs have judgment ca
 
 ## Inputs
 
-* `diff-state.json` path (optional): when provided by an orchestrator, read the diff from disk and write output to the `findingsFolder` specified in the JSON. See Orchestrated Input in Required Steps.
-* ${input:baseBranch:origin/main}: (Optional) Comparison base branch used when running standalone. Defaults to `origin/main`.
+* ${input:baseBranch:origin/main}: (Optional) Comparison base branch. Defaults to `origin/main`.
 
 ## Core Principles
 
@@ -253,23 +250,9 @@ If no appendices apply, the horizontal rule and appendix section are omitted.
 
 "Nothing to surface beyond the walkthrough" is a valid outcome. Do not pad with placeholder sections.
 
-## Required Steps
+## Diff Computation
 
-### Orchestrated Input
-
-When a `diff-state.json` path is provided in the input by an orchestrator:
-
-1. Read `diff-state.json` once to obtain `branch`, `base`, `files`, `extensions`, `diffPatchPath`, and `findingsFolder`.
-2. Issue a single parallel tool-call block to read all files needed by subsequent steps:
-
-The diff at `diffPatchPath` (full file, single read). Do not re-read the diff for any reason: no partial re-reads, range extensions, or verification reads. If the first read returns truncated output, work with what was returned. Source files referenced in the `files` array, at the hunk ranges identified in the diff.
-3. Skip all git diff commands (diff computation is already complete), but still perform the Step 1 analysis: map the hunks, identify changed files/ranges, and read surrounding file context using the provided diff and file list. Then proceed to Step 2 (Map the runway).
-4. After producing the walkthrough, write the output to `<findingsFolder>/walkthrough.md`.
-5. Skip standalone output steps.
-
-### Standalone Mode
-
-When no `diff-state.json` is provided:
+Before running the Required Steps pipeline, compute the diff:
 
 1. Check the current branch and working tree status:
 
@@ -297,9 +280,8 @@ When no `diff-state.json` is provided:
 ```
 
 3. Filter the file list to exclude non-source artifacts: lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`), minified bundles (`.min.js`, `.min.css`), source maps (`.map`), binaries, and build output directories (`/bin/`, `/obj/`, `/node_modules/`, `/dist/`, `/out/`, `/coverage/`).
-4. Execute the full pipeline (Steps 1-5).
-5. Write output to `.copilot-tracking/pr/review/<sanitized-branch>/walkthrough.md` (create the directory if needed, sanitize branch name by replacing `/` with `-`).
-6. Present the walkthrough in the conversation response.
+
+Then execute the full Required Steps pipeline (Steps 1-5) and write output to `.copilot-tracking/pr/review/<sanitized-branch>/walkthrough.md` (create the directory if needed, sanitize branch name by replacing `/` with `-`). Present the walkthrough in the conversation response.
 
 ## What to Refuse
 

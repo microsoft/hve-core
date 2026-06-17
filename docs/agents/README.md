@@ -43,7 +43,7 @@ Three agents provide pre-PR code review on local branches. Code Review Functiona
 
 ## PR Walkthrough
 
-A narrative orientation agent that builds a reviewer's mental model before they open the diff. Produces a flowing essay structured around decisions and design forks rather than a file-by-file summary. Useful for large PRs, cross-cutting refactors, and onboarding reviewers who lack context. Marked experimental. See the [PR Walkthrough Documentation](pr-walkthrough/) for usage and pipeline integration.
+A narrative orientation agent that builds a reviewer's mental model before they open the diff. Produces a flowing essay structured around decisions and design forks rather than a file-by-file summary. Useful for large PRs, cross-cutting refactors, and onboarding reviewers who lack context. Marked experimental. See the [PR Walkthrough Documentation](pr-walkthrough/) for usage.
 
 ## GitHub Backlog Management
 
