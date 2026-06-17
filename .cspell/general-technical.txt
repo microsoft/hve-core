@@ -1420,6 +1420,7 @@ backlog
 pipeline
 blockquotes
 deinit
+deprioritize
 deprioritized
 deprioritizes
 experim
