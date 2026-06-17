@@ -216,6 +216,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+
       - name: Create logs directory
         run: mkdir -p logs
 
