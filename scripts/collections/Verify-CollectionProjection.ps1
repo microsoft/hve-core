@@ -241,6 +241,10 @@ if (-not $SkipPluginParity) {
     New-Item -ItemType Directory -Path $scratchRoot -Force | Out-Null
 
     try {
+        # NOTE: plugins/ is intentionally NOT copied - we regenerate from scratch
+        # to verify parity. Copying plugins/ with Copy-Item -Recurse follows
+        # symlinks and expands them to real directories, causing symlink creation
+        # to fail during regeneration.
         $copySpecs = @(
             @{ Source = 'collections';   Required = $true  }
             @{ Source = '.github';       Required = $true  }
@@ -248,7 +252,6 @@ if (-not $SkipPluginParity) {
             @{ Source = 'scripts';       Required = $true  }
             @{ Source = 'package.json';  Required = $true  }
             @{ Source = 'extension';     Required = $false }
-            @{ Source = 'plugins';       Required = $false }
         )
         foreach ($spec in $copySpecs) {
             $src = Join-Path $RepoRoot $spec.Source

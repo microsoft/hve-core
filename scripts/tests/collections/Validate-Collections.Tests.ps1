@@ -506,19 +506,15 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows items from accessibility/ folder in any collection' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection referencing accessibility item'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/accessibility/accessibility.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection referencing accessibility item' })
+                items = @(
+                    @{ path = '.github/instructions/accessibility/accessibility.instructions.md'; kind = 'instruction'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
