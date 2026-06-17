@@ -31,7 +31,7 @@ Assess exactly one accessibility knowledge skill per invocation. Read all succes
 
 ## Constants
 
-Skill resolution: Read the applicable accessibility skill by name (`wcag-22`, `aria-apg`, `coga`, `section-508`, `en-301-549`). Follow the skill's `SKILL.md` to access the success-criterion roll-up table and each per-guideline (or per-chapter / per-pattern) reference file under the skill's `references/` directory.
+Skill resolution: Read the consolidated accessibility entrypoint at `.github/skills/accessibility/accessibility/SKILL.md`, then open the matching framework reference file under `.github/skills/accessibility/accessibility/references/frameworks/<framework>.md` (or the relevant phase reference under `.github/skills/accessibility/accessibility/references/phases/` when the workflow is phase-driven).
 
 ### Status Values
 
@@ -141,7 +141,7 @@ Make all guidance specific to the plan content rather than generic boilerplate.
 
 ### Step 1: Gather All Success-Criterion References
 
-1. Read the located skill's `SKILL.md` and capture framework metadata (name, version, reference URL) plus the skill's licensing posture.
+1. Read the consolidated accessibility entrypoint and the matching framework reference file to capture framework metadata (name, version, reference URL) plus the skill's licensing posture.
 2. Extract the full list of success-criterion (or requirement / pattern) IDs from the skill's roll-up table in `SKILL.md`.
 3. For each unique per-guideline (or per-chapter, per-clause, per-pattern) reference file linked from the roll-up table, read the file from the skill's `references/` directory and store its full content. Each reference file may contain multiple success-criterion sections; capture them all.
 4. Apply the optional conformance scope filter at the end of Step 1 by retaining only the criteria included in the requested scope; do not skip reading reference files based on the filter.

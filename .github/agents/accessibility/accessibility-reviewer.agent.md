@@ -51,11 +51,12 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 ### Available Skills
 
-* wcag-22
-* aria-apg
-* coga
-* section-508
-* en-301-549
+* `accessibility` — consolidated entrypoint for planning and review guidance in `.github/skills/accessibility/accessibility/SKILL.md`
+* `wcag-22` — framework reference at `.github/skills/accessibility/accessibility/references/frameworks/wcag-22.md`
+* `aria-apg` — framework reference at `.github/skills/accessibility/accessibility/references/frameworks/aria-apg.md`
+* `coga` — framework reference at `.github/skills/accessibility/accessibility/references/frameworks/coga.md`
+* `section-508` — framework reference at `.github/skills/accessibility/accessibility/references/frameworks/section-508.md`
+* `en-301-549` — framework reference at `.github/skills/accessibility/accessibility/references/frameworks/en-301-549.md`
 
 ## Required Steps
 
