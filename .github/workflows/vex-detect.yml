@@ -70,11 +70,18 @@ jobs:
 
       - name: Run vulnerability scan
         id: scan
-        # osv-scanner exits 1 when vulnerabilities are found, which is an
-        # expected outcome here, not a workflow failure.
-        continue-on-error: true
         run: |
-          osv-scanner scan source --recursive --format json --output /tmp/osv-results.json . || true
+          set +e
+          osv-scanner scan source --recursive --format json --output /tmp/osv-results.json .
+          rc=$?
+          set -e
+          # osv-scanner exits 0 when clean and 1 when vulnerabilities are found;
+          # both are expected. A higher exit code is a real scanner error and
+          # must fail the job rather than be masked as "no vulnerabilities".
+          if [[ "${rc}" -gt 1 ]]; then
+            echo "ERROR: osv-scanner failed (exit ${rc})" >&2
+            exit "${rc}"
+          fi
           if [[ ! -s /tmp/osv-results.json ]]; then
             echo '{"results":[]}' > /tmp/osv-results.json
           fi
@@ -84,6 +91,11 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
+
+          # Statuses that represent a completed triage decision. Any other
+          # status (e.g. affected, under_investigation) is drift that must
+          # resurface, and a missing statement means the vuln is untriaged.
+          TERMINAL = {'not_affected', 'fixed'}
 
           with open('/tmp/osv-results.json', encoding='utf-8') as fh:
               try:
@@ -98,6 +110,8 @@ jobs:
                   vex = json.load(fh)
               for stmt in vex.get('statements', []):
                   vuln = stmt.get('vulnerability', {}) or {}
+                  if isinstance(vuln, str):
+                      vuln = {'name': vuln}
                   status = stmt.get('status', 'unknown')
                   ids = [vuln.get('name')] + (vuln.get('aliases') or [])
                   for vid in ids:
@@ -113,24 +127,30 @@ jobs:
                   info = pkg.get('package', {}) or {}
                   name = info.get('name', 'unknown')
                   version = info.get('version', 'unknown')
+                  groups = pkg.get('groups', []) or []
+                  max_sev = next((g.get('max_severity') for g in groups if g.get('max_severity')), '')
                   for vuln in pkg.get('vulnerabilities', []):
                       vid = vuln.get('id', 'unknown')
                       aliases = vuln.get('aliases') or []
                       all_ids = [vid] + aliases
                       vex_status = next((known[i] for i in all_ids if i in known), None)
-                      if vex_status is not None:
-                          continue  # already triaged in the VEX document
-                      sev = ''
-                      for s in vuln.get('severity', []) or []:
-                          if s.get('score'):
-                              sev = s['score']
-                              break
+                      # Suppress only vulns with a terminal VEX status; untriaged
+                      # (no statement) and non-terminal statuses are reported.
+                      if vex_status in TERMINAL:
+                          continue
+                      sev = max_sev
+                      if not sev:
+                          for s in vuln.get('severity', []) or []:
+                              if s.get('score'):
+                                  sev = s['score']
+                                  break
                       findings[vid] = {
                           'id': vid,
                           'aliases': ', '.join(a for a in aliases if a) or '-',
                           'package': f'{name}@{version}',
                           'source': source,
                           'severity': sev or '-',
+                          'status': vex_status or 'none',
                       }
 
           rows = sorted(findings.values(), key=lambda f: f['id'])
@@ -139,16 +159,17 @@ jobs:
           body_lines = [
               '## VEX detection: untriaged vulnerabilities',
               '',
-              f'OSV-Scanner found **{count}** vulnerability(ies) with no statement in '
-              '`security/vex/hve-core.openvex.json`. Triage each with `/vex-triage` or `/vex-scan` '
-              '(see the VEX Generator agent), then open a PR using the VEX triage template.',
+              f'OSV-Scanner found **{count}** vulnerability(ies) that are untriaged or carry a '
+              'non-terminal status in `security/vex/hve-core.openvex.json`. Triage each with '
+              '`/vex-triage` or `/vex-scan` (see the VEX Generator agent), then open a PR using '
+              'the VEX triage template.',
               '',
               '| Vulnerability | Aliases | Package | Source | Severity | Current VEX status |',
               '|---------------|---------|---------|--------|----------|--------------------|',
           ]
           for f in rows:
               body_lines.append(
-                  f"| {f['id']} | {f['aliases']} | {f['package']} | {f['source']} | {f['severity']} | none |"
+                  f"| {f['id']} | {f['aliases']} | {f['package']} | {f['source']} | {f['severity']} | {f['status']} |"
               )
           body_lines += ['', '_Generated by the VEX Detection workflow (OSV-Scanner). This is detection only; no status has been drafted._']
 
@@ -162,27 +183,27 @@ jobs:
           PY
 
       - name: File or update detection issue
-        if: ${{ steps.diff.outputs.count != '0' }}
+        if: ${{ steps.diff.outputs.count != '' && steps.diff.outputs.count != '0' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
+          REPO_SLUG: ${{ github.repository }}
           ISSUE_TITLE: 'VEX detection: untriaged vulnerabilities found'
         run: |
           existing=$(gh issue list \
-            --repo "${OWNER}/${REPO}" \
+            --repo "${REPO_SLUG}" \
             --state open \
-            --search "in:title ${ISSUE_TITLE}" \
-            --json number \
-            --jq '.[0].number // empty')
+            --label automated \
+            --search "in:title \"${ISSUE_TITLE}\"" \
+            --json number,title \
+            --jq "map(select(.title == \"${ISSUE_TITLE}\")) | .[0].number // empty")
           if [[ -z "${existing}" ]]; then
             gh issue create \
-              --repo "${OWNER}/${REPO}" \
+              --repo "${REPO_SLUG}" \
               --title "${ISSUE_TITLE}" \
               --label "security,automated,needs-triage" \
               --body-file /tmp/vex-issue-body.md
           else
             gh issue edit "${existing}" \
-              --repo "${OWNER}/${REPO}" \
+              --repo "${REPO_SLUG}" \
               --body-file /tmp/vex-issue-body.md
           fi
