@@ -175,7 +175,7 @@ What the wit is not: puns, wordplay, forced cleverness, Twitter-thread energy, o
 * External references earn their keep through specificity. Each reference must make a falsifiable claim about a specific line or decision in this diff.
 * No magic numbers in instructions. Do not follow any numeric targets in these instructions literally. Those are vibes, not quotas. Use as many or as few as the material earns.
 
-After drafting, run Step 4 (self-verification) on the writeup itself with these extra checks:
+After drafting, run Step 5 (self-verification) on the writeup itself with these extra checks:
 
 * **"Find every claim about the code that is not supported by a quoted line in this same writeup. Flag each one."** Cut everything flagged.
 * **"Does this walkthrough contain at least one external reference (CVE, blog post, RFC, postmortem, design pattern with citation) anchored to a specific line in the diff?"** If no: go back to Step 2's contextual research, actually run web\_fetch on the domain, and find one. If after genuine search effort nothing qualifies, add a one-line note at the end of the narrative: "Research note: searched [what you searched for] without finding a reference specific enough to anchor to this diff." That note is the proof you did the work.
@@ -319,8 +319,8 @@ Before running the Required Steps pipeline, compute the diff:
 1. Check the current branch and working tree status:
 
 ```bash
- git status --short
-   git branch --show-current
+git status --short
+git branch --show-current
 ```
 
    If the current branch is the base branch or HEAD is detached, ask the user which branch to walk through before proceeding.
@@ -328,17 +328,17 @@ Before running the Required Steps pipeline, compute the diff:
 2. Compute the diff using the pr-reference skill when available:
 
 ```bash
- generate.sh --base-branch auto --merge-base --exclude-ext min.js,min.css,map
-   list-changed-files.sh --exclude-type deleted --format plain
+generate.sh --base-branch auto --merge-base --exclude-ext min.js,min.css,map
+list-changed-files.sh --exclude-type deleted --format plain
 ```
 
    If the pr-reference skill is unavailable, fall back to manual diff computation:
 
 ```bash
-  git fetch origin
-   MERGE_BASE=$(git merge-base <baseBranch> HEAD)
-   git diff "$MERGE_BASE"...HEAD
-   git diff "$MERGE_BASE"...HEAD --name-only
+git fetch origin
+MERGE_BASE=$(git merge-base <baseBranch> HEAD)
+git diff "$MERGE_BASE"...HEAD
+git diff "$MERGE_BASE"...HEAD --name-only
 ```
 
 3. Filter the file list to exclude non-source artifacts: lock files (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`), minified bundles (`.min.js`, `.min.css`), source maps (`.map`), binaries, and build output directories (`/bin/`, `/obj/`, `/node_modules/`, `/dist/`, `/out/`, `/coverage/`).
