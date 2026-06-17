@@ -128,13 +128,6 @@
             "provider": "Google"
         },
         {
-            "name": "Grok Code Fast 1 (copilot)",
-            "tier": "fast",
-            "multiplier": 0.25,
-            "status": "ga",
-            "provider": "xAI"
-        },
-        {
             "status": "ga",
             "tier": "fast",
             "multiplier": 0.25,
@@ -179,6 +172,7 @@
     ],
     "providerAllowlist": [
         "Anthropic",
+        "Google",
         "OpenAI",
         "Microsoft"
     ],

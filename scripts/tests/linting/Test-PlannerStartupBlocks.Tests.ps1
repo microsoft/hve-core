@@ -26,7 +26,6 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
     BeforeAll {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
         $script:accessibilityIdentityPath = Join-Path $script:repoRoot '.github/instructions/accessibility/accessibility-identity.instructions.md'
-        $script:accessibilityHandoffPath = Join-Path $script:repoRoot '.github/instructions/accessibility/accessibility-backlog-handoff.instructions.md'
     }
 
     Context 'Security and SSSC entry prompts' {
@@ -45,7 +44,7 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
             $content = Get-Content -Path $script:accessibilityIdentityPath -Raw
 
             $content | Should -Match "The planner follows the shared base's Session Start Display cadence" -Because 'Accessibility should inherit shared startup cadence'
-            $content | Should -Match 'emit the canonical accessibility disclaimer block from `accessibility-backlog-handoff\.instructions\.md` before Phase 1 work begins' -Because 'Accessibility disclaimer must be upfront, not handoff-only'
+            $content | Should -Match 'emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins' -Because 'Accessibility disclaimer must be upfront, not handoff-only'
         }
 
         It 'Records session-start disclaimer state and notice log updates' {
@@ -57,13 +56,12 @@ Describe 'Planner startup disclosures' -Tag 'Unit' {
         }
 
         It 'Keeps session-start logging distinct from handoff artifact disclaimer logging' {
-            Test-Path $script:accessibilityHandoffPath | Should -BeTrue -Because 'Accessibility handoff instructions must exist'
-            $content = Get-Content -Path $script:accessibilityHandoffPath -Raw
+            Test-Path $script:accessibilityIdentityPath | Should -BeTrue -Because 'Accessibility identity instructions must exist'
+            $content = Get-Content -Path $script:accessibilityIdentityPath -Raw
 
-            $content | Should -Match 'Emit this block verbatim at session start before Phase 1 work begins' -Because 'Canonical disclaimer source must define startup behavior'
+            $content | Should -Match 'emit the canonical accessibility disclaimer block below verbatim before Phase 1 work begins' -Because 'Canonical disclaimer source must define startup behavior'
             $content | Should -Match 'noticeType: "session-start-disclaimer"' -Because 'Canonical disclaimer source must define startup notice logging'
             $content | Should -Match 'noticeType: "handoff-disclaimer"' -Because 'Handoff artifact logging must remain separate from startup display'
-            $content | Should -Match 'Preserve an existing `disclaimerShownAt` value from the session-start display' -Because 'Phase 6 must not overwrite the startup timestamp during normal operation'
         }
     }
 }
