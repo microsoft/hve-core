@@ -8,6 +8,14 @@
 .docusaurus
 .cache-loader
 
+# Playwright
+/test-results
+/playwright-report
+/playwright/.cache
+
+# Test coverage
+/coverage
+
 # Misc
 .DS_Store
 .env.local

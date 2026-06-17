@@ -25,6 +25,7 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
+    "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
     "evals/results/**",
     "vally-results/**"
@@ -67,9 +68,12 @@
   ],
   "words": [
     "ˈpræksɪs",
+    "activedescendant",
     "agentic",
     "aoda",
     "atheris",
+    "cursored",
+    "networkidle",
     "behaviour",
     "beval",
     "behavioural",
