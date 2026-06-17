@@ -215,5 +215,3 @@ Merge candidates should be tested through a new round of Silent Review to verify
 Coaching prompt: "These two concepts are solving the same problem differently. What if we took the interaction model from one and the value proposition from the other?"
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

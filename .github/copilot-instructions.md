@@ -22,6 +22,16 @@ Rules for comments:
 * Comments that contradict current behavior are removed or updated.
 * Temporal markers (phase references, dates, task IDs) are removed from code files during any edit.
 
+Rules for markdown frontmatter:
+
+* When editing any Markdown file whose frontmatter already contains an `ms.date` field, update that field to today's date.
+* Format the date using ISO 8601 (`YYYY-MM-DD`), matching the existing `ms.date` convention.
+
+Rules for human review checkboxes:
+
+* Agents never check or mark complete any human review checkbox (for example, `- [ ] Reviewed and validated by a qualified human reviewer`). Only a human may convert `[ ]` to `[x]` on review checkboxes.
+* Backlog managers must verify that all human review checkboxes are checked before processing artifacts into a backlog. If any checkbox is unchecked, halt processing and inform the user that human review is required first.
+
 Rules for fixing errors:
 
 * Proactively fix any problem encountered while working in the codebase, even when unrelated to the original request.
@@ -53,6 +63,7 @@ Scripts are organized by function:
 * Collections (`scripts/collections/`) - Collection validation and shared helper modules.
 * Extension (`scripts/extension/`) - Extension packaging and preparation.
 * Linting (`scripts/linting/`) - Markdown validation, link checking, frontmatter validation, model reference validation, and PowerShell analysis.
+* Devcontainer (`scripts/devcontainer/`) - Lockfile integrity validation and infrastructure change log generation.
 * Security (`scripts/security/`) - Dependency pinning validation, SHA staleness checks, and action version consistency.
 * Library (`scripts/lib/`) - Shared utilities such as verified downloads.
 * Plugins (`scripts/plugins/`) - Plugin generation and marketplace validation.
@@ -78,10 +89,11 @@ Templates for agent and prompt outputs are stored in `docs/templates/`:
 * `docs/templates/full-review-output-format.md` - Code review full output format.
 * `docs/templates/standards-review-output-format.md` - Standards review output format.
 * `docs/templates/engineering-fundamentals.md` - Engineering fundamentals reference.
-* `docs/templates/brd-template.md` - Business requirements document template.
 * `docs/templates/user-journey-template.md` - User journey template.
 * `docs/templates/adr-template-solutions.md` - Architecture decision record template.
 * `docs/templates/rca-template.md` - Root cause analysis template.
+
+The canonical Business Requirements Document template lives in `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md` as part of the `requirements-author` skill.
 
 ### Copilot Tracking
 
@@ -210,8 +222,10 @@ Agents should use npm scripts for all validation:
 * `npm run lint:py` - Python linting via ruff
 * `npm run lint:models` - Model reference validation against catalog
 * `npm run lint:models:refresh` - Refresh model catalog from upstream documentation
-* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:links`, `lint:frontmatter`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, and `lint:models`)
+* `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:json`, `lint:links`, `lint:frontmatter`, `lint:adr-consistency`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:ps-module-pins`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, `lint:models`, `eval:lint:vally`, `eval:lint:schema`, `eval:lint:text`, `eval:lint:safety`, and `validate:devcontainer-lockfile`)
 * `npm run validate:copyright` - Copyright header validation
+* `npm run validate:devcontainer-lockfile` - Devcontainer lockfile integrity validation
+* `npm run validate:devcontainer-changelog` - Devcontainer infrastructure change summary
 * `npm run validate:skills` - Skill structure validation
 * `npm run spell-check` - Spelling validation
 * `npm run format:tables` - Markdown table formatting

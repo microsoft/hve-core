@@ -329,5 +329,3 @@ Include production, maintenance, quality, safety, and operations teams in deploy
 * Verify that ADKAR phases are addressed sequentially; skipping phases undermines adoption sustainability.
 * Cross-reference adoption metrics with the method-tier leading/lagging indicator framework to maintain measurement consistency.
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

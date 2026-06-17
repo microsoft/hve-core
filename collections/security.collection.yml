@@ -71,6 +71,9 @@ items:
   - path: .github/skills/security/security-reviewer-formats
     kind: skill
     maturity: experimental
+  - path: .github/skills/security/supply-chain-security
+    kind: skill
+    maturity: experimental
   - path: .github/skills/shared/pr-reference
     kind: skill
   # Security Planner Prompts
@@ -138,22 +141,7 @@ items:
     kind: instruction
     maturity: experimental
   # SSSC Planner Instructions
-  - path: .github/instructions/security/sssc-identity.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-standards.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-gap-analysis.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-backlog.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-handoff.instructions.md
+  - path: .github/instructions/security/sssc-planner.instructions.md
     kind: instruction
     maturity: experimental
   # RAI Planner Instructions
@@ -194,11 +182,7 @@ items:
   - path: .github/skills/shared/backlog-templates
     kind: skill
     maturity: experimental
-  - path: .github/instructions/security/security-planner-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/security/sssc-planner-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
 display:
   ordering: manual

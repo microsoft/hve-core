@@ -29,7 +29,7 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string[]]$ExcludePaths = @(
-        'scripts/tests/Fixtures/**',
+        'scripts/tests/fixtures/**',
         'scripts/tests/linting/fixtures/**',
         'extension/README.md',
         'extension/README.*.md',
@@ -345,6 +345,7 @@ function Test-ValueAgainstSchema {
     [OutputType([string[]])]
     param(
         [Parameter(Mandatory = $true)]
+        [AllowNull()]
         [object]$Value,
 
         [Parameter(Mandatory = $true)]
@@ -355,6 +356,20 @@ function Test-ValueAgainstSchema {
     )
 
     $localErrors = [List[string]]::new()
+
+    # Null handling: a null value is valid when the schema permits the 'null' type
+    # (e.g. nullable fields declared as type ['string', 'null']). With no type
+    # constraint, null is treated as acceptable for this soft validation.
+    if ($null -eq $Value) {
+        if ($Schema.type) {
+            $allowsNull = if ($Schema.type -is [array]) { $Schema.type -contains 'null' } else { $Schema.type -eq 'null' }
+            if (-not $allowsNull) {
+                $localErrors.Add("Field '$Path' must not be null")
+            }
+        }
+
+        return $localErrors.ToArray()
+    }
 
     # Handle oneOf by validating against each subschema.
     if ($Schema.oneOf) {

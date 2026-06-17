@@ -1,0 +1,9 @@
+{
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:abc123",
+      "integrity": "md5:abc123"
+    }
+  }
+}

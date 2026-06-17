@@ -509,7 +509,7 @@ class TestMain:
         )
         main()
         assert report.exists()
-        assert "# Geometry Validation Report" in report.read_text()
+        assert "# Geometry Validation Report" in report.read_text(encoding="utf-8")
 
     def test_per_slide_dir(self, simple_deck, tmp_path, monkeypatch):
         per_slide = tmp_path / "per-slide"

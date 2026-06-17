@@ -223,7 +223,7 @@ class TestFindLibreofficePathlib:
         mocker.patch.object(
             Path,
             "is_file",
-            lambda p: str(p) == "/usr/bin/soffice",
+            lambda p: p == Path("/usr/bin/soffice"),
         )
         result = find_libreoffice()
         assert result == "/usr/bin/soffice"

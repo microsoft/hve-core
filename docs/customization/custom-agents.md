@@ -2,7 +2,7 @@
 title: Creating Custom Agents
 description: Build specialized agents with tool restrictions, subagent delegation, and mode-based workflows for your team
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-15
 ms.topic: how-to
 keywords:
   - agents
@@ -228,15 +228,34 @@ For full frontmatter schema, naming conventions, and contribution requirements, 
 
 Agent frontmatter supports these fields:
 
-| Field                      | Type    | Required | Purpose                                                      |
-|----------------------------|---------|----------|--------------------------------------------------------------|
-| `name`                     | string  | Yes      | Human-readable name shown in the agent picker                |
-| `description`              | string  | Yes      | One-line purpose with attribution suffix                     |
-| `tools`                    | array   | No       | Restrict available tools; omit for full access               |
-| `agents`                   | array   | No       | Human-readable names of subagent dependencies                |
-| `handoffs`                 | array   | No       | Structured transitions to other agents                       |
-| `disable-model-invocation` | boolean | No       | Set `true` for orchestrators that only delegate to subagents |
-| `user-invocable`           | boolean | No       | Set `false` for subagents not meant for direct invocation    |
+| Field                      | Type           | Required | Purpose                                                                          |
+|----------------------------|----------------|----------|----------------------------------------------------------------------------------|
+| `name`                     | string         | Yes      | Human-readable name shown in the agent picker                                    |
+| `description`              | string         | Yes      | One-line purpose with attribution suffix                                         |
+| `tools`                    | array          | No       | Restrict available tools; omit for full access                                   |
+| `agents`                   | array          | No       | Human-readable names of subagent dependencies                                    |
+| `handoffs`                 | array          | No       | Structured transitions to other agents                                           |
+| `model`                    | string / array | No       | Preferred model(s); array tried in order until one is available; omit to inherit |
+| `disable-model-invocation` | boolean        | No       | Set `true` for orchestrators that only delegate to subagents                     |
+| `user-invocable`           | boolean        | No       | Set `false` for subagents not meant for direct invocation                        |
+
+### model
+
+Specifies a preferred AI model as a single string or prioritized fallback array. The system tries each entry in order until one is available. When omitted, the agent inherits the parent conversation model.
+
+```yaml
+# Single model
+model: Claude Sonnet 4.6 (copilot)
+```
+
+```yaml
+# Prioritized fallback array
+model:
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
+```
+
+Subagents that perform read-only or validation tasks should use fast-tier models for cost optimization. Accepted models are those in `scripts/linting/model-catalog.json` whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references.
 
 ### description
 

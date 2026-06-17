@@ -6,10 +6,22 @@ tags:
 - complete
 - bundle
 items:
+- path: .github/agents/accessibility/accessibility-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/accessibility/accessibility-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
+- path: .github/agents/coding-standards/code-review-accessibility.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/coding-standards/code-review-full.agent.md
   kind: agent
   maturity: experimental
@@ -99,6 +111,10 @@ items:
 - path: .github/agents/project-planning/prd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
+  kind: agent
+- path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+  kind: agent
+- path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
   kind: agent
 - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
   kind: agent
@@ -305,19 +321,7 @@ items:
 - path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
-- path: .github/instructions/accessibility/accessibility-backlog-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-capture-coaching.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-framework-selection.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/accessibility/accessibility-identity.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/accessibility/accessibility-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
@@ -342,8 +346,6 @@ items:
 - path: .github/instructions/coding-standards/bash/bash.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/bicep/bicep.instructions.md
-  kind: instruction
-- path: .github/instructions/coding-standards/code-review-telemetry.instructions.md
   kind: instruction
 - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
   kind: instruction
@@ -419,8 +421,6 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/pull-request.instructions.md
   kind: instruction
-- path: .github/instructions/hve-core/task-implementor-telemetry.instructions.md
-  kind: instruction
 - path: .github/instructions/hve-core/writing-style.instructions.md
   kind: instruction
 - path: .github/instructions/jira/jira-backlog-discovery.instructions.md
@@ -436,8 +436,6 @@ items:
 - path: .github/instructions/project-planning/adr-byo-template.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/project-planning/adr-creation-telemetry.instructions.md
-  kind: instruction
 - path: .github/instructions/project-planning/adr-handoff.instructions.md
   kind: instruction
   maturity: experimental
@@ -447,8 +445,6 @@ items:
 - path: .github/instructions/project-planning/adr-standards.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/project-planning/prd-builder-telemetry.instructions.md
-  kind: instruction
 - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
   kind: instruction
   maturity: experimental
@@ -461,8 +457,6 @@ items:
 - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
-  kind: instruction
 - path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
   kind: instruction
   maturity: experimental
@@ -484,26 +478,7 @@ items:
 - path: .github/instructions/security/security-model.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security/security-planner-telemetry.instructions.md
-  kind: instruction
-- path: .github/instructions/security/sssc-assessment.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-backlog.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-gap-analysis.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-identity.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-planner-telemetry.instructions.md
-  kind: instruction
-- path: .github/instructions/security/sssc-standards.instructions.md
+- path: .github/instructions/security/sssc-planner.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security/standards-mapping.instructions.md
@@ -519,6 +494,8 @@ items:
   kind: instruction
   maturity: experimental
 - path: .github/instructions/shared/story-quality.instructions.md
+  kind: instruction
+- path: .github/instructions/shared/telemetry-overlay.instructions.md
   kind: instruction
 - path: .github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md
   kind: instruction
@@ -571,13 +548,21 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/vally-tests
+  kind: skill
+  maturity: experimental
 - path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
+- path: .github/skills/project-planning/accessibility-planner-playbook
+  kind: skill
+  maturity: experimental
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental
+- path: .github/skills/project-planning/requirements-author
+  kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental
@@ -600,6 +585,9 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/security/security-reviewer-formats
+  kind: skill
+  maturity: experimental
+- path: .github/skills/security/supply-chain-security
   kind: skill
   maturity: experimental
 - path: .github/skills/shared/backlog-templates

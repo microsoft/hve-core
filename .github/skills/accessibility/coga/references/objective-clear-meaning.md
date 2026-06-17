@@ -281,7 +281,3 @@ Some users read text well; some understand pictures better; some prefer audio or
 * Confirm modality alternatives are equally discoverable.
 
 Source: <https://www.w3.org/TR/coga-usable/#objective-3>.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

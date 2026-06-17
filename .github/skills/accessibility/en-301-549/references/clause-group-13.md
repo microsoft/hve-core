@@ -103,7 +103,3 @@ ICT that provides access to emergency services shall support video communication
 * Walk the flow with a signing user to confirm orientation cues, mute indicators, and in-call status are perceivable without audio.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/> (Clause 13.2.3).
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

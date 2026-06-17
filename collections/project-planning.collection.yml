@@ -40,6 +40,9 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/accessibility/accessibility-planner.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
@@ -56,6 +59,10 @@ items:
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
     kind: agent
   - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+    kind: agent
+  - path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
     kind: agent
   # Prompts
   - path: .github/prompts/security/security-plan-from-prd.prompt.md
@@ -165,37 +172,10 @@ items:
   - path: .github/instructions/security/backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/security/sssc-identity.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-standards.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-gap-analysis.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-backlog.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/sssc-handoff.instructions.md
+  - path: .github/instructions/security/sssc-planner.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/accessibility/accessibility-identity.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-capture-coaching.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-framework-selection.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-impact-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/accessibility/accessibility-backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
   - path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
@@ -212,17 +192,19 @@ items:
     kind: instruction
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
+  # BRD Skills
+  - path: .github/skills/project-planning/requirements-author
+    kind: skill
   # Telemetry
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
-  - path: .github/instructions/project-planning/prd-builder-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/project-planning/adr-creation-telemetry.instructions.md
-    kind: instruction
-  - path: .github/instructions/rai-planning/rai-planner-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
   # Skills
   - path: .github/skills/project-planning/adr-author
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/project-planning/accessibility-planner-playbook
     kind: skill
     maturity: experimental
   - path: .github/skills/accessibility/wcag-22
@@ -241,6 +223,9 @@ items:
     kind: skill
     maturity: experimental
   - path: .github/skills/shared/backlog-templates
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/security/supply-chain-security
     kind: skill
     maturity: experimental
 display:

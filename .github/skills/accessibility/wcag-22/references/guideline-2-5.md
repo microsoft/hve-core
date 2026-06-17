@@ -109,7 +109,3 @@ The size of the target for pointer inputs is at least 24 by 24 CSS pixels, with 
 * Confirm touch targets are at least 24x24 CSS pixels or that smaller targets carry sufficient surrounding space so the effective target reaches 24x24.
 
 Source: <https://www.w3.org/TR/WCAG22/#target-size-minimum>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

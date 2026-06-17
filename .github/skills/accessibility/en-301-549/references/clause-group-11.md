@@ -440,7 +440,3 @@ Status messages that inform the user of success, progress, or other non-modal st
 * Confirm transient toasts persist long enough to be announced and inspected, or offer a history surface.
 
 Source: <https://www.etsi.org/deliver/etsi_en/301500_301599/301549/>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

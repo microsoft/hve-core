@@ -15,7 +15,7 @@
 
 BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../linting/Test-CopyrightHeaders.ps1'
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/CopyrightHeaders'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/CopyrightHeaders'
     $script:CIHelpersPath = Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1'
 
     # Import modules for mocking

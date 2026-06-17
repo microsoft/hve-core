@@ -68,8 +68,11 @@ jobs:
         id: find
         shell: pwsh
         run: |
+          # The moderation eval (scripts/evals/moderation) carries a heavy
+          # torch/detoxify stack and runs weekly via weekly-validation.yml,
+          # so it is excluded from per-PR Python matrix jobs here.
           $projectList = @(Get-ChildItem -Recurse -Force -Filter pyproject.toml |
-            Where-Object { $_.FullName -notmatch 'node_modules' } |
+            Where-Object { $_.FullName -notmatch 'node_modules' -and $_.FullName -notmatch 'evals[\\/]+moderation' } |
             ForEach-Object { Resolve-Path -Relative $_.DirectoryName } |
             ForEach-Object { $_ -replace '^\.[\\/]', '' } |
             Sort-Object)
@@ -182,8 +185,10 @@ jobs:
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
+      id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
       soft-fail: false
+      changed-files-only: true
 
   frontmatter-validation:
     name: Frontmatter Validation
@@ -270,6 +275,14 @@ jobs:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  devcontainer-lockfile-check:
+    name: Devcontainer Lockfile Integrity
+    uses: ./.github/workflows/devcontainer-lockfile-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
 
   workflow-permissions-check:
     name: Workflow Permissions Check

@@ -8,11 +8,14 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                       | Description                                                                                             |
-|----------------------------|---------------------------------------------------------------------------------------------------------|
-| **code-review-full**       | Orchestrator that runs functional and standards code reviews via subagents and produces a merged report |
-| **code-review-functional** | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps    |
-| **code-review-standards**  | Skills-based code reviewer applying project-defined coding standards to local changes and PRs           |
+| Name                             | Description                                                                                                                                                       |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-reviewer**       | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                           |
+| **accessibility-skill-assessor** | Assesses a single accessibility knowledge skill against the codebase, reading success-criterion references and returning structured findings                      |
+| **code-review-accessibility**    | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
+| **code-review-full**             | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
+| **code-review-functional**       | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
+| **code-review-standards**        | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
 
 ### Prompts
 
@@ -27,7 +30,6 @@ Enforce language-specific coding conventions and best practices across your proj
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **coding-standards/bash/bash**                    | Bash script authoring conventions                                                                                                                                                                                                                           |
 | **coding-standards/bicep/bicep**                  | Bicep infrastructure-as-code authoring conventions                                                                                                                                                                                                          |
-| **coding-standards/code-review-telemetry**        | Code Review telemetry overlay applying telemetry-foundations vocabulary to code-review report artifacts                                                                                                                                                     |
 | **coding-standards/code-review/diff-computation** | Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering                                                                                                                                                |
 | **coding-standards/code-review/review-artifacts** | Code review artifact persistence: folder structure, metadata schema, verdict normalization, and writing rules                                                                                                                                               |
 | **coding-standards/csharp/csharp**                | C# (CSharp) code authoring conventions                                                                                                                                                                                                                      |
@@ -41,6 +43,7 @@ Enforce language-specific coding conventions and best practices across your proj
 | **coding-standards/terraform/terraform**          | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                      |
 | **coding-standards/uv-projects**                  | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | **shared/hve-core-location**                      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| **shared/telemetry-overlay**                      | Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts                                                                                                       |
 
 ### Skills
 

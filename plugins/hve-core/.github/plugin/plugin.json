@@ -11,6 +11,7 @@
   ],
   "skills": [
     "skills/experimental/",
+    "skills/hve-core/",
     "skills/shared/"
   ]
 }

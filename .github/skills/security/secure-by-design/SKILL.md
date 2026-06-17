@@ -59,7 +59,3 @@ secure-by-design practices across the software lifecycle.
 * **Source**: <https://www.cyber.gov.au/business-government/secure-design/secure-by-design/secure-by-design-foundations>
 * **Modifications**: Synthesized into structured principle-checklist format with cross-references; merged with UK guidance into unified principle areas
 * **Trademark**: Use of ASD/ACSC content does not imply endorsement
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

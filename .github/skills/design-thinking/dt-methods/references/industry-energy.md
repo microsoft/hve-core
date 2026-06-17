@@ -91,5 +91,3 @@ Lo-fi prototypes — paper mockups of enhanced dispatch screens and revised hand
 Operator confidence in managing high-renewable periods improves measurably during pilot. Iteration focuses on alarm management — operators report alarm fatigue from renewable variability triggers that existing thresholds were not designed to handle.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

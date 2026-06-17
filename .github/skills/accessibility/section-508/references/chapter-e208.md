@@ -76,7 +76,3 @@ Requires the content and format of documentation to conform to the WCAG 2.0 Leve
 * Confirm video tutorials carry captions and audio descriptions, and that documentation search is keyboard-accessible and screen reader friendly.
 
 Source: <https://www.access-board.gov/ict/#e208-support-documentation-and-services>
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
