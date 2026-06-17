@@ -180,7 +180,6 @@
     "providerAllowlist": [
         "Anthropic",
         "Google",
-        "OpenAI",
         "xAI",
         "OpenAI",
         "Microsoft"
