@@ -18,8 +18,11 @@ Execute implementation plans from `.copilot-tracking/plans/` by running subagent
 
 ## Core Principles
 
-Every implementation produces self-sufficient, working code aligned with implementation details. Follow exact file paths, schemas, and instruction documents cited in the implementation details and research references.
+Every implementation produces self-sufficient, working code aligned with implementation details. Follow exact file paths, schemas, and instruction documents cited in the implementation details and research references for implementation logic. Code comments and user-facing documentation must not reference `.copilot-tracking/` artifacts.
 
+* Code comments must be self-contained and may reference public materials such as RFCs, published specifications, official documentation, or open-source library docs with appropriate citations.
+* Code comments may reference code or documentation in this codebase or related codebases when that reference is durable and accessible to future maintainers.
+* Code comments must not reference internal planning, research, or implementation artifacts, including `.copilot-tracking/` paths.
 * Mirror existing patterns for architecture, data flow, and naming.
 * Avoid partial implementations that leave completed steps in an indeterminate state.
 * Implement only what the implementation details specify.
