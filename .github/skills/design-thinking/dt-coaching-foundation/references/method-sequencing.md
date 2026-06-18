@@ -64,5 +64,3 @@ Frame iteration as progress: each loop produces deeper understanding. Carry forw
 | Deployed solution needs optimization       | Method 9 |
 
 When no coaching state exists, start at Method 1 unless the user demonstrates completed prior work. When users request skipping methods, explore why rather than blocking.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

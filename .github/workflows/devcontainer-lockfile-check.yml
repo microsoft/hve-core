@@ -1,0 +1,37 @@
+name: Devcontainer Lockfile Integrity
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on lockfile integrity violations'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-lockfile:
+    name: Validate Devcontainer Lockfile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate lockfile integrity
+        id: validate
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+          $params = @{}
+          if ('${{ inputs.soft-fail }}' -ne 'true') {
+            $params['FailOnViolation'] = $true
+          }
+          & scripts/devcontainer/Test-DevcontainerLockfile.ps1 @params
+          exit $LASTEXITCODE

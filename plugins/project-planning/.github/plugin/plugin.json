@@ -7,6 +7,7 @@
     "agents/hve-core/",
     "agents/hve-core/subagents/",
     "agents/project-planning/",
+    "agents/project-planning/subagents/",
     "agents/rai-planning/",
     "agents/security/"
   ],
@@ -18,6 +19,7 @@
     "skills/accessibility/",
     "skills/experimental/",
     "skills/project-planning/",
+    "skills/security/",
     "skills/shared/"
   ]
 }

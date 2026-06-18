@@ -904,7 +904,7 @@ def _build_color_map(
             colors["text_white"] = color_hex
         elif brightness < 80 and "text_dark" not in colors:
             colors["text_dark"] = color_hex
-        elif 80 <= brightness <= 200 and "text_gray" not in colors:
+        elif "text_gray" not in colors:
             colors["text_gray"] = color_hex
 
     accent_names = ["accent_blue", "accent_teal", "accent_green"]

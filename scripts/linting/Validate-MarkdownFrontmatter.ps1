@@ -357,11 +357,18 @@ function Test-ValueAgainstSchema {
 
     $localErrors = [List[string]]::new()
 
-    if ($Schema.type -and $null -eq $Value) {
-        $schemaTypes = @($Schema.type)
-        if ($schemaTypes -contains 'null') {
-            return $localErrors.ToArray()
+    # Null handling: a null value is valid when the schema permits the 'null' type
+    # (e.g. nullable fields declared as type ['string', 'null']). With no type
+    # constraint, null is treated as acceptable for this soft validation.
+    if ($null -eq $Value) {
+        if ($Schema.type) {
+            $allowsNull = if ($Schema.type -is [array]) { $Schema.type -contains 'null' } else { $Schema.type -eq 'null' }
+            if (-not $allowsNull) {
+                $localErrors.Add("Field '$Path' must not be null")
+            }
         }
+
+        return $localErrors.ToArray()
     }
 
     # Handle oneOf by validating against each subschema.

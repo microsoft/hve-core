@@ -221,5 +221,3 @@ The same prototype serves different roles with distinct validation criteria:
 Each role exercises different features and judges success by different standards. A prototype that delights operators but alarms safety officers requires role-specific iteration.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

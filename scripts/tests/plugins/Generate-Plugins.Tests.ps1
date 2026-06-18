@@ -338,6 +338,68 @@ display:
         Test-Path $readmePath | Should -BeTrue
     }
 
+    It 'Writes one Included Artifacts heading to collection markdown' {
+        $headingRepo = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $headingRepo -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo 'collections') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo '.github/agents') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo '.github/plugin') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo 'plugins') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo 'docs/templates') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $headingRepo 'scripts/lib') -Force | Out-Null
+
+        @{ name = 'hve-core'; version = '1.0.0'; description = 'test'; author = 'test-author' } |
+            ConvertTo-Json | Set-Content -Path (Join-Path $headingRepo 'package.json') -Encoding utf8NoBOM
+
+        @'
+---
+description: "Test agent"
+---
+'@ | Set-Content -Path (Join-Path $headingRepo '.github/agents/test.agent.md') -Encoding utf8NoBOM
+
+        @'
+id: hve-core-all
+name: hve-core
+description: All artifacts
+tags: []
+items: []
+display: {}
+'@ | Set-Content -Path (Join-Path $headingRepo 'collections/hve-core-all.collection.yml') -Encoding utf8NoBOM
+
+        $collectionYmlPath = Join-Path $headingRepo 'collections/heading-test.collection.yml'
+        @"
+id: heading-test
+name: Heading Test
+description: Heading writeback test
+items:
+  - path: .github/agents/test.agent.md
+    kind: agent
+"@ | Set-Content -Path $collectionYmlPath -Encoding utf8NoBOM
+
+        $collectionMdPath = Join-Path $headingRepo 'collections/heading-test.collection.md'
+        @"
+# Heading Test
+
+Intro text.
+
+## Included Artifacts
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Old content.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@ | Set-Content -Path $collectionMdPath -Encoding utf8NoBOM
+
+    $result = Invoke-PluginGeneration -RepoRoot $headingRepo -CollectionIds @('heading-test') -Refresh -Channel 'PreRelease'
+
+        $result.Success | Should -BeTrue
+        $collectionContent = Get-Content -Path $collectionMdPath -Raw
+        ([regex]::Matches($collectionContent, '(?m)^## Included Artifacts$')).Count | Should -Be 1
+        $collectionContent | Should -Not -Match 'Old content'
+        $collectionContent | Should -Match '### Chat Agents'
+    }
+
     It 'Filters to specific collection IDs when provided' {
         $result = Invoke-PluginGeneration -RepoRoot $script:tempDir -CollectionIds @('hve-core-all') -Refresh -Channel 'PreRelease'
         $result.PluginCount | Should -Be 1

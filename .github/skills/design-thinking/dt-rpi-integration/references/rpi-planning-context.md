@@ -47,5 +47,3 @@ Recommend returning to DT coaching rather than proceeding to implementation when
 These adjustments complement co-loaded instruction files (`dt-rpi-handoff-contract`, `dt-quality-constraints`, `dt-method-sequencing`, `dt-rpi-research-context`, `dt-rpi-review-context`): reference their content during planning rather than duplicating it.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

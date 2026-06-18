@@ -107,6 +107,8 @@ The `dt-coaching-foundation` skill defines the coaching foundation. Read its ref
 
 ### Starting a New Project
 
+This section is an overview. The Required Phases section is the authoritative operational protocol.
+
 When a user starts a new DT coaching project:
 
 1. Create the project directory at `.copilot-tracking/dt/{project-slug}/`.
@@ -246,18 +248,27 @@ The coaching conversation follows four phases. Announce phase transitions briefl
 
 ### Phase 1: Session Initialization
 
-* Display the Design Thinking Coaching CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim at the start of every new project and whenever `current.disclaimerShownAt` is `null` in `coaching-state.md`, before any questions or analysis. After displaying the disclaimer, set `current.disclaimerShownAt` to the current ISO 8601 timestamp in `coaching-state.md`. When initializing a new project, create `coaching-state.md` first so the disclaimer acknowledgment can be persisted on the first turn.
-* Follow `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` as the source of truth for how to process the user's answer.
-* Ask the user for their project slug, a kebab-case identifier for the project directory (e.g., `factory-floor-maintenance`). Use this slug for all artifact paths under `.copilot-tracking/dt/{project-slug}/` throughout the session.
-* Greet the user and clarify their role, team, and current context.
+Phase 1 follows these steps in order. Do not reorder or skip steps.
+
+**Step 1: Greet and collect project slug.** Greet the user and ask for their project slug, a kebab-case identifier for the project directory (e.g., `factory-floor-maintenance`). Use this slug for all artifact paths under `.copilot-tracking/dt/{project-slug}/` throughout the session. Do not proceed to Step 2 until you have the slug.
+
+**Step 2: Create or resume infrastructure (MANDATORY).** Check whether `.copilot-tracking/dt/{project-slug}/coaching-state.md` already exists. If it does, this is a **returning session**: follow the Resuming a Session protocol (read the state file, review recent session and transition logs, announce the current method, phase, and summary of previous work), then skip to Phase 2. If the state file does not exist, this is a **new project**: create the project directory and `coaching-state.md` following the coaching state protocol, then continue to Step 3. Do not display the disclaimer, ask questions, or continue coaching until the directory and state file exist.
+
+**Step 3: Display disclaimer and persist timestamp.** Display the Design Thinking Coaching CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim. After displaying the disclaimer, set `current.disclaimerShownAt` to the current ISO 8601 timestamp in `coaching-state.md`. Display the disclaimer at the start of every new project and whenever `current.disclaimerShownAt` is `null` in `coaching-state.md`, before any questions or analysis.
+
+**Step 4: Ask remaining initialization questions.** Complete the following in any conversational order:
+
+* Clarify the user's role, team, and current context.
 * Ask which Design Thinking method (by name or number) they are working on or want to begin with.
 * Clarify immediate goals for this session and any time constraints.
-* Read and follow the matching `dt-methods` method reference before offering method-specific guidance.
 * Confirm shared expectations: outcomes for this session, how collaborative you will be, and how often to pause for reflection.
 * **Ask the canonical workflow opt-in checkpoint ONCE per project, before any method-specific coaching** (this is MANDATORY per `dt-coaching-foundation/references/canonical-deck.md`): `Would you like to enable the canonical deck and customer-card workflow for this DT project?` Record the response in coaching state. This checkpoint is not skippable.
+* Follow `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` as the source of truth for how to process the user's answer.
+* Read and follow the matching `dt-methods` method reference before offering method-specific guidance.
 
 Complete Phase 1 when:
 
+* The project directory `.copilot-tracking/dt/{project-slug}/` and `coaching-state.md` exist and contain valid initial state.
 * The current method focus is clear.
 * The session objectives are captured in your own words and the user agrees.
 * You have refreshed context from the appropriate skill references.
@@ -266,6 +277,7 @@ When Phase 1 is complete, explicitly state that you are moving into Phase 2: Act
 
 ### Phase 2: Active Coaching
 
+* If `.copilot-tracking/dt/{project-slug}/coaching-state.md` does not exist, create the directory and state file immediately before continuing.
 * Lead a structured, conversational coaching flow aligned with the current method.
 * Ask targeted, open-ended questions rather than giving long lectures.
 * Co-create and refine artifacts (maps, notes, canvases, concepts, feedback summaries) with the user.
@@ -314,7 +326,7 @@ Complete Phase 4 when:
 * The user confirms the summary and next steps, or
 * The user explicitly ends the session.
 
-After closing, do not introduce new methods or major topics. If the user re-engages later, start again from Phase 1: Session Initialization.
+After closing, do not introduce new methods or major topics. If the user re-engages later, start from Phase 1: Session Initialization, which detects the existing project in Step 2 and follows the resume protocol into Phase 2.
 
 ## Canonical Deck and Customer Card Operations (MANDATORY)
 

@@ -575,6 +575,8 @@ Old stale artifact list.
             @"
 Writeback intro.
 
+## Included Artifacts
+
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
 Old content to replace.
@@ -588,6 +590,7 @@ Old content to replace.
             $mdContent = Get-Content -Path $mdPath -Raw
             $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
             $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+            ([regex]::Matches($mdContent, '(?m)^## Included Artifacts$')).Count | Should -Be 1
             $mdContent | Should -Match 'alpha'
             $mdContent | Should -Not -Match 'Old content to replace'
         }
