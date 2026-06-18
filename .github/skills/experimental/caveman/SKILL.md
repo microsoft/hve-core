@@ -1,6 +1,7 @@
 ---
 name: caveman
 description: 'Ultra-compressed response style that reduces output token count while preserving technical accuracy, with intensity levels and auto-clarity safety rules - Brought to you by microsoft/hve-core'
+argument-hint: "[{lite|full|ultra|wenyan|off}]"
 license: MIT
 disable-model-invocation: true
 metadata:
@@ -101,5 +102,3 @@ Caveman (ultra): "Auth bug. `<` → `<=`. Fix:"
 Concept based on the [Caveman project](https://github.com/JuliusBrussee/caveman) (MIT license, Copyright (c) 2026 Julius Brussee). This SKILL.md is an original specification authored for hve-core; no upstream files are redistributed.
 
 > Brought to you by microsoft/hve-core
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
