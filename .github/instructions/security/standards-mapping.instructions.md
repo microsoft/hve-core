@@ -34,7 +34,7 @@ Do NOT delegate OWASP, NIST 800-53, OWASP LLM Top 10, or NIST AI RMF lookups. Th
 When buckets or AI components from Phases 1–2 match, prefer the matching specialized security skill over a runtime delegation:
 
 * AI/ML components → `owasp-agentic`, and `owasp-mcp` when MCP tooling is used (alongside the always-loaded `owasp-llm`)
-* `infrastructure` bucket → `owasp-infrastructure`, and `owasp-docker` when containers are used
+* `infrastructure` bucket → `owasp-infrastructure`
 * `build` / `devops-platform-ops` buckets → `owasp-cicd`, `supply-chain-security`
 * Cross-cutting GS overlay → `secure-by-design`
 

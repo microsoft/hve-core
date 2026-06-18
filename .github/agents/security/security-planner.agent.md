@@ -60,7 +60,7 @@ Beyond the always-load references above, load these specialized security skills 
 | Trigger (from Phase 1 scoping / Phase 2 buckets) | Load on entry | Skill(s) to `read_file`                                         |
 |--------------------------------------------------|---------------|-----------------------------------------------------------------|
 | AI/ML components detected (`raiEnabled` true)    | Phase 3 & 4   | `owasp-agentic`; `owasp-mcp` when MCP tooling is used           |
-| `infrastructure` bucket present                  | Phase 3 & 4   | `owasp-infrastructure`; `owasp-docker` when containers are used |
+| `infrastructure` bucket present                  | Phase 3 & 4   | `owasp-infrastructure`                                          |
 | `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                           |
 | Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                              |
 
