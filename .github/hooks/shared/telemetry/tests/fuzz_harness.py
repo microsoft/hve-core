@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import sys
 from contextlib import suppress
+from pathlib import Path
 
-import _telemetry_core as core
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import _telemetry_core as core  # noqa: E402
 
 try:
     import atheris
