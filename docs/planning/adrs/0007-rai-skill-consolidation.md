@@ -2,6 +2,7 @@
 id: "0007"
 title: "Consolidate RAI knowledge into skills consumed by RAI Planner and RAI Reviewer"
 description: "Consolidate RAI domain guidance into shared rai-standards and rai-planner-playbook skills instead of inline per-agent instructions files."
+author: "HVE Core Maintainers"
 ms.date: 2026-06-17
 ms.topic: reference
 status: proposed
@@ -61,13 +62,13 @@ agent orchestration logic?
 
 ## Considered Options
 
-* Option A: Skill-based consolidation — move RAI guidance into shared `rai-standards` and `rai-planner-playbook` skills consumed on demand by both agents.
-* Option B: Inline per-agent `rai-*.instructions.md` — keep guidance embedded in each agent's instructions surface.
+* Option A: Skill-based consolidation: move RAI guidance into shared `rai-standards` and `rai-planner-playbook` skills consumed on demand by both agents.
+* Option B: Inline per-agent `rai-*.instructions.md`: keep guidance embedded in each agent's instructions surface.
 * Option C: Single shared instructions file referenced via `#file:` from each agent.
 
 ## Decision Outcome
 
-Chosen option: **Option A — Skill-based consolidation**.
+Chosen option: **Option A: Skill-based consolidation**.
 
 > In the context of structuring and consuming RAI domain knowledge across the
 > RAI Planner and Reviewer, facing the tension between a single source of truth
@@ -84,12 +85,12 @@ rejected because referencing one monolithic instructions file from every agent
 couples all consumers to a single file and forgoes the on-demand packaging,
 metadata, and licensing isolation that the skill format provides.
 
-| Decision Driver                                              | Option A — Skills                       | Option B — Inline instructions | Option C — Shared instructions file      |
-|--------------------------------------------------------------|-----------------------------------------|--------------------------------|------------------------------------------|
-| Single source of truth for RAI standards                     | Strong — one skill pair authored once   | Weak — copy per agent          | Moderate — one file, no packaging        |
-| Reuse across both the RAI Planner and the RAI Reviewer       | Strong — loaded on demand by both       | Weak — duplicated bodies       | Moderate — shared via `#file:` coupling  |
-| Cleaner licensing-posture isolation from agent orchestration | Strong — dedicated instructions overlay | Weak — mixed into agent logic  | Weak — mixed into one monolith           |
-| Evolve RAI guidance without editing agent bodies             | Strong — edit skills only               | Weak — edit every agent        | Moderate — edit file, all agents coupled |
+| Decision Driver                                              | Option A: Skills                       | Option B: Inline instructions | Option C: Shared instructions file      |
+|--------------------------------------------------------------|----------------------------------------|-------------------------------|-----------------------------------------|
+| Single source of truth for RAI standards                     | Strong: one skill pair authored once   | Weak: copy per agent          | Moderate: one file, no packaging        |
+| Reuse across both the RAI Planner and the RAI Reviewer       | Strong: loaded on demand by both       | Weak: duplicated bodies       | Moderate: shared via `#file:` coupling  |
+| Cleaner licensing-posture isolation from agent orchestration | Strong: dedicated instructions overlay | Weak: mixed into agent logic  | Weak: mixed into one monolith           |
+| Evolve RAI guidance without editing agent bodies             | Strong: edit skills only               | Weak: edit every agent        | Moderate: edit file, all agents coupled |
 
 ### Consequences
 
@@ -98,7 +99,7 @@ metadata, and licensing isolation that the skill format provides.
 * Good, because licensing posture is isolated in dedicated instructions, separate from agent orchestration logic.
 * Good, because RAI guidance can evolve by editing the skills, without touching agent bodies.
 * Bad, because agents must explicitly load the skills, introducing skill-discovery and load-failure risk that inline guidance did not have.
-* Bad, because the artifact surface is larger — two skills plus an agent and a subagent — instead of a single instructions file.
+* Bad, because the artifact surface is larger (two skills plus an agent and a subagent) instead of a single instructions file.
 * Bad, because the artifacts ship at `maturity: experimental` and will churn while the format stabilizes.
 * Neutral, because changes to the RAI skills require collection and plugin regeneration to propagate to packaged outputs.
 
@@ -133,3 +134,5 @@ restores the prior inline arrangement without data loss.
 * RAI skill-assessor subagent: `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`
 * RAI licensing-posture overlay: `.github/instructions/rai-planning/rai-license-posture.instructions.md`
 * Repository licensing posture: `.github/instructions/hve-core/licensing-posture.instructions.md`
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
