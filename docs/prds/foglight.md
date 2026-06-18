@@ -2,7 +2,7 @@
 title: Project Foglight BRD for HVE Core Integration
 description: Business requirements for integrating Project Foglight into HVE Core as an experimental collection of agents, subagents, skills, prompts, instructions, and templates for TPMs and Dev and Data Science leads delivering intelligent systems.
 author: Foglight Working Group
-ms.date: 2026-06-18
+ms.date: 2026-06-19
 ms.topic: overview
 keywords:
   - foglight
@@ -13,6 +13,8 @@ keywords:
   - probabilistic delivery
 estimated_reading_time: 18
 ---
+
+<!-- cspell:words Foglight foglight timebox Timeboxed Ratcliffe Parag Alurkar Namit -->
 
 ## Purpose
 
@@ -78,9 +80,16 @@ A security operations team ships an internal AI copilot that helps analysts inve
 
 The tools helps the crew detect that "green delivery" is no longer equivalent to "safe to expand" by continuously tracking evaluation drift, evidence freshness, regression risk, and rollout readiness. Instead of only reporting completed tasks, the tool highlights that confidence has decayed because the retrieval corpus and model dependencies changed after signoff. That allows TPMs and Dev/DS Leads to pause rollout until the evaluation set is refreshed and operational confidence is rebuilt.
 
-### Example 2: Retail Product Discovery Chatbot 
+### Example 2: Retail Product Discovery Chatbot
 
-A furniture retailer develops an AI-powered customer chatbot that helps shoppers discover furniture assembly instructions, product care guidance, and room-planning advice across thousands of products. Functional testing passes and the bot meets all acceptance criteria before launch. In production, however, customers start asking multi-product questions and using natural language that was poorly represented in the evaluation set. The chatbot begins confidently giving outdated assembly sequences for revised product models and fails to escalate when instructions are ambiguous.
+A furniture retailer develops an AI-powered customer chatbot that helps
+shoppers discover furniture assembly instructions, product care guidance, and
+room-planning advice across thousands of products. Functional testing passes
+and the bot meets all acceptance criteria before launch. In production,
+however, customers start asking multi-product questions and using natural
+language that was poorly represented in the evaluation set. The chatbot begins
+confidently giving outdated assembly sequences for revised product models and
+fails to escalate when instructions are ambiguous.
 
 The tool exposes that the system is not actually safe to scale despite appearing green in traditional TPM reporting. The tool surfaces gaps in evaluation coverage, low confidence in escalation workflows, and insufficient evidence maturity for real-world customer interactions. This allows the team to strengthen evaluation datasets and monitor post-launch behavioural drift before expanding the chatbot across all international support channels.
 
@@ -88,10 +97,10 @@ The tool exposes that the system is not actually safe to scale despite appearing
 
 Foglight is targeted at two primary user groups in the first release phase.
 
-| Audience | Primary Need |
-|----------|--------------|
+| Audience                   | Primary Need                                                                                                                                  |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | Technical Program Managers | Need delivery artifacts that express confidence, uncertainty, evidence quality, readiness, and decision posture in stakeholder-ready language |
-| Dev and Data Science leads | Need planning and operating tools that treat evaluation capacity, drift, model behavior, and operator workflow as delivery constraints |
+| Dev and Data Science leads | Need planning and operating tools that treat evaluation capacity, drift, model behavior, and operator workflow as delivery constraints        |
 
 Secondary stakeholders, such as RAI reviewers, security reviewers, governance
 owners, and operations leads, are consumers of Foglight outputs but are not the
@@ -182,14 +191,14 @@ A typical session with the Foglight Orchestrator follows six stages. The
 orchestrator may loop back to earlier stages as the conversation reveals new
 context.
 
-| Stage | Orchestrator behavior | User outcome |
-|-------|-----------------------|--------------|
-| 1. Understand the context | Gather bounded project context from repo documents, optional backlog sources, and a short user statement of the situation | A shared, explicit framing of the current project state and the decision in front of the crew |
-| 2. Frame the capability | Explain what Foglight can and cannot do for the situation, and where it defers to other HVE Core agents | Clear expectations and no false promises of generic research, planning, or implementation help |
-| 3. Offer areas of expertise | Surface the Foglight expertise areas that apply, for example scope framing, evidence maturity, readiness, operations, learning loops, or change control | A short menu of relevant lanes rather than a flat list of all 27 tools |
-| 4. Prescribe relevant tools | Recommend the smallest useful Foglight artifact for the chosen lane, with the rationale for why that artifact fits the decision and evidence posture | A focused recommendation tied to a named decision, not a generic checklist |
-| 5. Templatize for context | Generate a context-specific version of the artifact by populating the template from repo evidence, backlog signals, and the user's framing | A working draft that reflects the actual project, not a blank template |
-| 6. Co-author interactively | Work the artifact with the user, prompt for missing evidence, refine confidence and shelf-life entries, and prepare handoffs to adjacent HVE Core agents when needed | A usable artifact and a clear next action, including any handoff to Task Planner, RAI Planner, Code Reviewer, or backlog agents |
+| Stage                       | Orchestrator behavior                                                                                                                                                | User outcome                                                                                                                    |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| 1. Understand the context   | Gather bounded project context from repo documents, optional backlog sources, and a short user statement of the situation                                            | A shared, explicit framing of the current project state and the decision in front of the crew                                   |
+| 2. Frame the capability     | Explain what Foglight can and cannot do for the situation, and where it defers to other HVE Core agents                                                              | Clear expectations and no false promises of generic research, planning, or implementation help                                  |
+| 3. Offer areas of expertise | Surface the Foglight expertise areas that apply, for example scope framing, evidence maturity, readiness, operations, learning loops, or change control              | A short menu of relevant lanes rather than a flat list of all 27 tools                                                          |
+| 4. Prescribe relevant tools | Recommend the smallest useful Foglight artifact for the chosen lane, with the rationale for why that artifact fits the decision and evidence posture                 | A focused recommendation tied to a named decision, not a generic checklist                                                      |
+| 5. Templatize for context   | Generate a context-specific version of the artifact by populating the template from repo evidence, backlog signals, and the user's framing                           | A working draft that reflects the actual project, not a blank template                                                          |
+| 6. Co-author interactively  | Work the artifact with the user, prompt for missing evidence, refine confidence and shelf-life entries, and prepare handoffs to adjacent HVE Core agents when needed | A usable artifact and a clear next action, including any handoff to Task Planner, RAI Planner, Code Reviewer, or backlog agents |
 
 The orchestrator must be explicit when a stage produces insufficient signal to
 continue, and must offer the user the option to defer, gather more evidence, or
@@ -247,16 +256,16 @@ minimum pilot inputs.
 
 ### Upstream HVE Core Relationships
 
-| Existing HVE Core artifact | Relationship to Foglight | Dependency posture |
-|----------------------------|--------------------------|--------------------|
-| Task Researcher | Provides optional discovery context when repo evidence is incomplete | Optional enricher |
-| Task Planner | Receives structured handoff when Foglight identifies follow-on work | Optional downstream consumer |
-| Code Reviewer | Consumes readiness or QA outputs during review flows | Optional downstream consumer |
-| RAI Planner | Receives evidence pointers for model behavior, evaluation, and operator workflow concerns; may also be iterative with Foglight (similar to the RAI Planner ↔ DT Coach pattern) | Under investigation — likely upstream, possibly iterative |
-| Security Planner | Consumes operational readiness or change-control outputs when relevant | Optional downstream consumer |
-| SSSC Planner | Consumes supply-chain-relevant evidence when operational or packaging concerns are surfaced | Optional downstream consumer |
-| DT Coach | Can supply earlier scope and stakeholder framing for projects that began with design work | Optional enricher |
-| Backlog agents (`ado-*`, `github-backlog-*`, `jira-*`) | Provide backlog discovery context now and may accept structured handoff later | Optional enricher in phase 1 |
+| Existing HVE Core artifact                             | Relationship to Foglight                                                                                                                                                       | Dependency posture                                       |
+|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
+| Task Researcher                                        | Provides optional discovery context when repo evidence is incomplete                                                                                                           | Optional enricher                                        |
+| Task Planner                                           | Receives structured handoff when Foglight identifies follow-on work                                                                                                            | Optional downstream consumer                             |
+| Code Reviewer                                          | Consumes readiness or QA outputs during review flows                                                                                                                           | Optional downstream consumer                             |
+| RAI Planner                                            | Receives evidence pointers for model behavior, evaluation, and operator workflow concerns; may also be iterative with Foglight (similar to the RAI Planner ↔ DT Coach pattern) | Under investigation: likely upstream, possibly iterative |
+| Security Planner                                       | Consumes operational readiness or change-control outputs when relevant                                                                                                         | Optional downstream consumer                             |
+| SSSC Planner                                           | Consumes supply-chain-relevant evidence when operational or packaging concerns are surfaced                                                                                    | Optional downstream consumer                             |
+| DT Coach                                               | Can supply earlier scope and stakeholder framing for projects that began with design work                                                                                      | Optional enricher                                        |
+| Backlog agents (`ado-*`, `github-backlog-*`, `jira-*`) | Provide backlog discovery context now and may accept structured handoff later                                                                                                  | Optional enricher in phase 1                             |
 
 ### Backlog Integration Posture
 
@@ -288,11 +297,11 @@ No upstream HVE Core agent is a hard prerequisite for pilot use.
 This section defines where Foglight artifacts live and how durable each surface
 is expected to be.
 
-| Output surface | Purpose | Expected durability |
-|----------------|---------|---------------------|
-| Repo-resident markdown artifacts | Core Foglight tools such as dashboards, ledgers, contracts, and readiness artifacts | Durable and reviewable |
-| `.copilot-tracking/foglight/` artifacts | Ephemeral generation traces, pilot outputs, experiment notes, or workflow records | Useful but not primary source of truth |
-| Structured handoff payloads to other agents | Passing the next action into planner, reviewer, or backlog workflows | Transient but contract-based |
+| Output surface                              | Purpose                                                                             | Expected durability                    |
+|---------------------------------------------|-------------------------------------------------------------------------------------|----------------------------------------|
+| Repo-resident markdown artifacts            | Core Foglight tools such as dashboards, ledgers, contracts, and readiness artifacts | Durable and reviewable                 |
+| `.copilot-tracking/foglight/` artifacts     | Ephemeral generation traces, pilot outputs, experiment notes, or workflow records   | Useful but not primary source of truth |
+| Structured handoff payloads to other agents | Passing the next action into planner, reviewer, or backlog workflows                | Transient but contract-based           |
 
 Per-artifact field contracts are owned by each artifact's own definition file
 and are not enumerated in this BRD.
@@ -313,14 +322,15 @@ Three planning concepts are expected to surface across the pilot artifacts.
 They are listed here at a high level; per-artifact field contracts live in each
 artifact's own definition file.
 
-* **Minimum Viable Experiment (MVE)** — formal scoping pattern (hypothesis,
-  evidence needed, timebox, pass/fail threshold, kill criteria, owner). Surfaces
+* Minimum Viable Experiment (MVE): formal scoping pattern (hypothesis,
+  evidence needed, timebox, pass or fail threshold, kill criteria, owner).
+  Surfaces
   in the Hypothesis-Driven Scope Pack, Timeboxed Learning Cycles, and Kill
   Criteria artifacts.
-* **Evaluation capacity as a delivery constraint** — schedule and scope
+* Evaluation capacity as a delivery constraint: schedule and scope
   recommendations account for how much model behaviour the crew can
   meaningfully evaluate in the next timebox, not just how much code can ship.
-* **Context freshness and feedback loop velocity** — confidence decays as
+* Context freshness and feedback loop velocity: confidence decays as
   prompts, eval sets, ADRs, runbooks, and business rules age; the elapsed time
   between production signal and the next redeploy decision is a better
   heartbeat than story completion alone.
@@ -333,44 +343,44 @@ composes with existing HVE Core agents.
 ### Proposed Primitive Mapping
 
 **Only the rows marked *MVP* are committed in this BRD.** All other rows are
-*illustrative* — they show how the broader Foglight tool catalogue is *likely*
+*illustrative*, and they show how the broader Foglight tool catalogue is *likely*
 to map to HVE Core primitives once the pilot validates the pattern. They are
 not a commitment to implement in the first release.
 
 Proposed agent names are suggestions and may change during implementation.
 
-| Scope | Artifact | Proposed primitive | Proposed name | Reasoning |
-|-------|----------|--------------------|---------------|-----------|
-| MVP | Foglight Orchestrator | Agent | `foglight-orchestrator` | Multi-turn coaching, context gathering, and dispatch |
-| MVP | Confidence Dashboard | Subagent | `confidence-dashboard` | Multi-step generation and update behavior anchored to decisions |
-| MVP | Decision Ledger | Subagent | `decision-ledger` | Stateful append or update behavior and evidence linkage |
-| MVP | Uncertainty Framing Contract | Prompt | `uncertainty-framing-contract` | One-shot workflow entry point |
-| MVP | Model Operations Readiness Checklist | Subagent | `model-operations-readiness` | Multi-source readiness synthesis and signing candidate |
-| Illustrative | Dependency Intelligence Pack | Subagent | `dependency-intelligence-pack` | Multi-source reasoning over dependency surfaces |
-| Illustrative | Quality Assurance Pack | Subagent | `quality-assurance-pack` | Multi-domain evidence synthesis |
-| Illustrative | Confidence Heatmap for Experiments | Skill | — | Repeatable artifact package |
-| Illustrative | Hypothesis-Driven Scope Pack | Skill | — | Repeatable artifact package |
-| Illustrative | Timeboxed Learning Cycles | Skill | — | Repeatable artifact package |
-| Illustrative | Schedule vs Confidence Matrix | Skill | — | Repeatable artifact package |
-| Illustrative | Decision-Based Milestones | Skill | — | Repeatable artifact package |
-| Illustrative | Risk Heatmap | Skill | — | Repeatable artifact package |
-| Illustrative | Kill Criteria | Skill | — | Repeatable artifact package |
-| Illustrative | Assumption Register | Skill | — | Repeatable artifact package |
-| Illustrative | Iteration or Sprint DoD Scorecard | Skill | — | Repeatable artifact package |
-| Illustrative | Ownership and Escalation Matrix | Skill | — | Repeatable artifact package |
-| Illustrative | Operational Failure Mode Playbook | Skill | — | Repeatable artifact package |
-| Illustrative | Monitoring Signal Map | Skill | — | Repeatable artifact package |
-| Illustrative | Cost of Operation Tracker | Skill | — | Repeatable artifact package |
-| Illustrative | Learning and Change Log | Skill | — | Repeatable artifact package |
-| Illustrative | Decision Log | Skill | — | Repeatable artifact package |
-| Illustrative | Change Control Card | Skill | — | Repeatable artifact package |
-| Illustrative | Backtracking Narrative Template | Skill | — | Repeatable artifact package |
-| Illustrative | Risk Discovery Checklist | Skill | — | Repeatable artifact package |
-| Illustrative | Weekly Learning Reviews | Skill | — | Repeatable artifact package |
-| Illustrative | First Failure Simulation | Skill | — | Repeatable artifact package |
-| Illustrative | Schedule Framing | Instruction | — | Auto-applied convention |
-| Illustrative | Confidence Framing | Instruction | — | Auto-applied convention |
-| Illustrative | No Composite Scores | Instruction | — | Auto-applied guardrail |
+| Scope        | Artifact                             | Proposed primitive | Proposed name                  | Reasoning                                                       |
+|--------------|--------------------------------------|--------------------|--------------------------------|-----------------------------------------------------------------|
+| MVP          | Foglight Orchestrator                | Agent              | `foglight-orchestrator`        | Multi-turn coaching, context gathering, and dispatch            |
+| MVP          | Confidence Dashboard                 | Subagent           | `confidence-dashboard`         | Multi-step generation and update behavior anchored to decisions |
+| MVP          | Decision Ledger                      | Subagent           | `decision-ledger`              | Stateful append or update behavior and evidence linkage         |
+| MVP          | Uncertainty Framing Contract         | Prompt             | `uncertainty-framing-contract` | One-shot workflow entry point                                   |
+| MVP          | Model Operations Readiness Checklist | Subagent           | `model-operations-readiness`   | Multi-source readiness synthesis and signing candidate          |
+| Illustrative | Dependency Intelligence Pack         | Subagent           | `dependency-intelligence-pack` | Multi-source reasoning over dependency surfaces                 |
+| Illustrative | Quality Assurance Pack               | Subagent           | `quality-assurance-pack`       | Multi-domain evidence synthesis                                 |
+| Illustrative | Confidence Heatmap for Experiments   | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Hypothesis-Driven Scope Pack         | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Timeboxed Learning Cycles            | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Schedule vs Confidence Matrix        | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Decision-Based Milestones            | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Risk Heatmap                         | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Kill Criteria                        | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Assumption Register                  | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Iteration or Sprint DoD Scorecard    | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Ownership and Escalation Matrix      | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Operational Failure Mode Playbook    | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Monitoring Signal Map                | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Cost of Operation Tracker            | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Learning and Change Log              | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Decision Log                         | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Change Control Card                  | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Backtracking Narrative Template      | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Risk Discovery Checklist             | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Weekly Learning Reviews              | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | First Failure Simulation             | Skill              | n/a                            | Repeatable artifact package                                     |
+| Illustrative | Schedule Framing                     | Instruction        | n/a                            | Auto-applied convention                                         |
+| Illustrative | Confidence Framing                   | Instruction        | n/a                            | Auto-applied convention                                         |
+| Illustrative | No Composite Scores                  | Instruction        | n/a                            | Auto-applied guardrail                                          |
 
 ### Why the Foglight Orchestrator Should Not Be Rejected as a Duplicate Agent
 
@@ -432,11 +442,11 @@ decision faster without adding unnecessary process weight.
 
 The initial pilot use cases should include at least the following archetypes.
 
-| Use case | Why it matters |
-|----------|----------------|
-| Enterprise RAG rollout | Exercises chained-component risk, evaluation coverage, operator workflow, and drift |
+| Use case                       | Why it matters                                                                          |
+|--------------------------------|-----------------------------------------------------------------------------------------|
+| Enterprise RAG rollout         | Exercises chained-component risk, evaluation coverage, operator workflow, and drift     |
 | Multi-tenant copilot expansion | Exercises confidence per decision, rollout gating, and context freshness across tenants |
-| ML-driven workflow automation | Exercises readiness, human fallback, and business-impact translation |
+| ML-driven workflow automation  | Exercises readiness, human fallback, and business-impact translation                    |
 
 Each pilot should capture:
 
@@ -500,22 +510,22 @@ The following are out of scope for the initial integration:
 * direct backlog write-back in the pilot phase
 * a hosted dashboard or separate UI product outside HVE Core artifact patterns
 * external framework mapping (NIST AI RMF, ISO/IEC 42001, ISO/IEC 23894, PAIR,
-  MLCommons) and signing / chain-of-custody integration — see *Future
+  MLCommons) and signing / chain-of-custody integration: see *Future
   Opportunities*
 
 ## Future Opportunities
 
 These items are intentionally deferred so the MVP can prove the core idea and
-attract contributors who specialise in each area.
+attract contributors who specialize in each area.
 
-* **Open standards alignment** — map Foglight outputs to NIST AI RMF 1.0,
+* Open standards alignment: map Foglight outputs to NIST AI RMF 1.0,
   ISO/IEC 42001, ISO/IEC 23894, Google PAIR / Model Cards, and MLCommons
   evaluation work for teams that need to report against those frameworks.
-* **Chain of custody / signing** — make Confidence Dashboard snapshots,
+* Chain of custody / signing: make Confidence Dashboard snapshots,
   Decision Ledger entries, QA Pack outputs, and Model Operations Readiness
   outputs eligible for signing using HVE Core's existing approach, with
   in-toto / SLSA-style evidence as a longer-term direction.
-* **Evidence maturity model** — formalise the six readiness dimensions
+* Evidence maturity model: formalize the six readiness dimensions
   (capability, evaluation, safety, observability, drift, human) into a shared
   rubric that the orchestrator can reason over.
 
@@ -529,18 +539,20 @@ The Foglight working group is specifically seeking review on the following point
   for the first pilot?
 * Are the proposed handoffs sufficient, or are additional HVE Core agents
   needed?
-* What is the right posture for RAI Planner — strictly upstream, or iterative
+* What is the right posture for RAI Planner: strictly upstream, or iterative
   with Foglight (similar to RAI Planner ↔ DT Coach)?
 * Does the BRD structure match what HVE Core maintainers expect, or should it
   be regenerated through the HVE Core BRD generator agent for comparison?
 
 ## Working Group and Open Actions
 
-| Contributor | Role | Open actions from BRD review |
-|-------------|------|------------------------------|
+| Contributor     | Role        | Open actions from BRD review                                                                                                                          |
+|-----------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | David Ratcliffe | Contributor | Refine Problem Statement with customer-grounded examples; investigate RAI Planner upstream/downstream posture; raise RAI alignment question with Bill |
-| Parag Alurkar | Contributor | Tighten Purpose / MVP framing language; clarity pass on opening sections |
-| Namit T.S | Contributor | Generate a parallel BRD via the HVE Core BRD generator and sense-check structure with Bill; maintain this BRD |
+| Parag Alurkar   | Contributor | Tighten Purpose / MVP framing language; clarity pass on opening sections                                                                              |
+| Namit T.S       | Contributor | Generate a parallel BRD via the HVE Core BRD generator and sense-check structure with Bill; maintain this BRD                                         |
 
 Feedback on this BRD should initially flow through the open HVE Core discussion
 thread so the integration shape can be reviewed in public.
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
