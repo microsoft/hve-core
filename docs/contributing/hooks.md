@@ -3,7 +3,7 @@ title: Contributing Hooks
 description: How to implement, register, and validate hook artifacts in hve-core
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-18
 ms.topic: how-to
 keywords:
   - hooks
@@ -27,12 +27,13 @@ Use a hook when you need event-driven behavior such as:
 
 Hooks are collection-scoped, like every other distributable artifact type. Use this structure for hook contributions:
 
-| Path | Purpose |
-|---|---|
-| `.github/hooks/<collection>/<name>.json` | Hook manifest that maps lifecycle events to executable commands |
-| `.github/hooks/<collection>/<name>/` | Hook implementation scripts and support files |
-| `collections/*.collection.yml` | Collection registration with `kind: hook` |
-| `collections/*.collection.md` | Human-readable hook entry in the collection documentation table |
+| Path                                                | Purpose                                                         |
+|-----------------------------------------------------|-----------------------------------------------------------------|
+| `.github/hooks/<collection>/<name>.json`            | Hook manifest that maps lifecycle events to executable commands |
+| `.github/hooks/<collection>/<name>/`                | Hook implementation scripts and support files                   |
+| `scripts/linting/schemas/hook-manifest.schema.json` | JSON Schema (draft-07) that defines the manifest contract       |
+| `collections/*.collection.yml`                      | Collection registration with `kind: hook`                       |
+| `collections/*.collection.md`                       | Human-readable hook entry in the collection documentation table |
 
 Manifests live one collection level down (`.github/hooks/<collection>/`) so the installer can activate each collection's hooks independently by adding only that collection's folder to `chat.hookFilesLocations`. A flat `.github/hooks/<name>.json` is treated as a repo-specific artifact and is excluded from distribution.
 
@@ -80,6 +81,12 @@ For reliability and portability, hook scripts should follow these rules:
 
 Telemetry follows this model with a no-op gate and structured JSONL append behavior.
 
+## Manifest Schema and Validation
+
+Manifests are validated against `scripts/linting/schemas/hook-manifest.schema.json`, the authoritative contract. The schema enforces the allowed top-level keys (`version`, `description`, `hooks`), the eight CLI-lowercase event names (`sessionStart`, `userPromptSubmit`, `preToolUse`, `postToolUse`, `preCompact`, `subagentStart`, `subagentStop`, `stop`), and the permitted command properties.
+
+Run `npm run lint:hooks` to validate every collection-scoped manifest. On failure, the validator prints each error and the schema path so you can reconcile the manifest against the contract.
+
 ## Handling Sensitive Payloads
 
 Hook payloads can contain sensitive data. `PreToolUse` inputs include full file
@@ -126,9 +133,10 @@ Then update the corresponding collection markdown (`collections/*.collection.md`
 
 Before opening a PR:
 
-1. Run `npm run plugin:validate`
-2. Run `npm run plugin:generate`
-3. Run `npm run lint:md`
+1. Run `npm run lint:hooks`
+2. Run `npm run plugin:validate`
+3. Run `npm run plugin:generate`
+4. Run `npm run lint:md`
 
 When your hook includes scripts, also run the relevant script linters and tests for those languages.
 
