@@ -252,7 +252,7 @@ project in the report, so combined output still reads per project.
 > (`raw-input.jsonl`, `report.generated.html`, `sessions-*.jsonl`, and the
 > `.stacks/` directory). It never deletes a directory wholesale. A tampered
 > registry can therefore, at most, delete those specific names in an
-> attacker-chosen directory — not arbitrary files. The `.stacks/` entry is
+> attacker-chosen directory, not arbitrary files. The `.stacks/` entry is
 > removed recursively, but symlinked artifacts are unlinked rather than
 > followed, so the target of a symlink is never deleted. The registry lives in
 > the user-owned HVE home (`~/.hve`, honoring `HVE_HOME`), so an attacker able
