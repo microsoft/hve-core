@@ -637,6 +637,38 @@ Markdown link checker configuration.
 * Timeout: 10 seconds
 * Ignore patterns: Localhost, example.com
 
+## Schemas Directory
+
+The `schemas/` directory contains JSON schema files used for frontmatter validation. These schemas ensure that the metadata in various markdown and configuration files adheres to the expected structure.
+
+### Schema Files
+
+The directory includes the following 19 JSON schema files:
+
+* `accessibility-state.schema.json`
+* `adr-config.schema.json`
+* `adr-consistency-rules.schema.json`
+* `adr-frontmatter.schema.json`
+* `agent-frontmatter.schema.json`
+* `ai-artifact-config.schema.json`
+* `base-frontmatter.schema.json`
+* `chatmode-frontmatter.schema.json`
+* `collection-manifest.schema.json`
+* `docs-frontmatter.schema.json`
+* `instruction-frontmatter.schema.json`
+* `marketplace-manifest.schema.json`
+* `model-catalog.schema.json`
+* `prompt-frontmatter.schema.json`
+* `rai-state.schema.json`
+* `root-community-frontmatter.schema.json`
+* `security-state.schema.json`
+* `skill-frontmatter.schema.json`
+* `sssc-state.schema.json`
+
+### Schema Mapping
+
+* `schema-mapping.json`: Maps glob patterns to their corresponding JSON schemas for targeted validation.
+
 ## Testing
 
 All scripts support local testing before running in GitHub Actions:
