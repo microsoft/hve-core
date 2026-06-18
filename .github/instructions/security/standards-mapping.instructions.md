@@ -7,7 +7,7 @@ applyTo: '**/.copilot-tracking/security-plans/**'
 
 Frequently-used security standards are referenced from the durable skill material during Phase 3 of the security planning workflow. Specialized cloud frameworks (WAF and CAF) are delegated to the Researcher Subagent at runtime instead of duplicating large, version-sensitive content.
 
-At least one standard from each applicable framework should map to every component in the security plan. Use the durable reference material in [.github/skills/project-planning/security-planning/references/standards-cross-reference.md](../../skills/project-planning/security-planning/references/standards-cross-reference.md) and [.github/skills/project-planning/security-planning/references/nist-control-families.md](../../skills/project-planning/security-planning/references/nist-control-families.md) for OWASP, NIST, and AI RMF mapping details. This instruction file stays orchestration-focused and delegates the versioned standard tables to the skill.
+At least one standard from each applicable framework should map to every component in the security plan. The Security Planner's Skill Reference Contract loads the durable standards references (`standards-cross-reference.md` and `nist-control-families.md` from the `security-planning` skill) via a mandatory `read_file` on Phase 3 entry, so the OWASP, NIST, and AI RMF mapping tables are not restated here. This instruction file stays orchestration-focused and defers the versioned standard tables to the skill loaded by that contract.
 
 ## Researcher Subagent Delegation
 
