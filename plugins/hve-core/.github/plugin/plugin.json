@@ -14,5 +14,5 @@
     "skills/hve-core/",
     "skills/shared/"
   ],
-  "hooks": "hooks/telemetry.json"
+  "hooks": "hooks/shared/telemetry.json"
 }

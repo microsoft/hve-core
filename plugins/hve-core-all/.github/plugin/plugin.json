@@ -50,5 +50,5 @@
     "skills/security/",
     "skills/shared/"
   ],
-  "hooks": "hooks/telemetry.json"
+  "hooks": "hooks/shared/telemetry.json"
 }

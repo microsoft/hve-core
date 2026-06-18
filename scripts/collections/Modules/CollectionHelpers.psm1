@@ -123,7 +123,7 @@ function Test-HveCoreRepoRelativePath {
 
     .DESCRIPTION
     Returns true when the repo-relative path is directly under a .github type
-    directory (agents, instructions, prompts, skills) with no subdirectory,
+    directory (agents, instructions, prompts, hooks, skills) with no subdirectory,
     indicating it is a root-level repo-specific artifact not intended for distribution.
 
     .PARAMETER Path
@@ -140,7 +140,7 @@ function Test-HveCoreRepoRelativePath {
         [string]$Path
     )
 
-    return ($Path -match '^\.github/(agents|instructions|prompts|skills)/[^/]+$')
+    return ($Path -match '^\.github/(agents|instructions|prompts|hooks|skills)/[^/]+$')
 }
 
 function Get-CollectionManifest {
@@ -430,21 +430,28 @@ function Get-ArtifactFiles {
         }
     }
 
-    # Hooks (JSON files under .github/hooks/)
+    # Hooks (JSON manifests under .github/hooks/<collection>/)
     $hooksDir = Join-Path -Path $RepoRoot -ChildPath '.github/hooks'
     if (Test-Path -Path $hooksDir) {
-        # Hook manifests live at the top level (.github/hooks/<name>.json);
-        # implementation files under .github/hooks/<name>/ must not be treated
-        # as manifests, so do not recurse.
-        $hookFiles = Get-ChildItem -Path $hooksDir -Filter '*.json' -File
-        foreach ($hookFile in $hookFiles) {
-            $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $hookFile.FullName) -replace '\\', '/'
+        # Hook manifests are collection-scoped (.github/hooks/<collection>/<name>.json);
+        # implementation files live one level deeper under
+        # .github/hooks/<collection>/<name>/ and must not be treated as
+        # manifests, so enumerate only the collection level.
+        $hookCollectionDirs = Get-ChildItem -Path $hooksDir -Directory
+        foreach ($collectionDir in $hookCollectionDirs) {
+            $hookFiles = Get-ChildItem -Path $collectionDir.FullName -Filter '*.json' -File
+            foreach ($hookFile in $hookFiles) {
+                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $hookFile.FullName) -replace '\\', '/'
 
-            if (Test-DeprecatedPath -Path $relativePath) {
-                continue
+                if (Test-HveCoreRepoRelativePath -Path $relativePath) {
+                    continue
+                }
+                if (Test-DeprecatedPath -Path $relativePath) {
+                    continue
+                }
+
+                $items += @{ path = $relativePath; kind = 'hook' }
             }
-
-            $items += @{ path = $relativePath; kind = 'hook' }
         }
     }
 
@@ -725,13 +732,8 @@ function Get-ArtifactDescription {
     # description field instead of scanning for a YAML block.
     if ([System.IO.Path]::GetExtension($FilePath) -eq '.json') {
         try {
-            # Hook manifests can contain keys differing only by case (e.g.
-            # sessionStart / SessionStart), which ConvertFrom-Json rejects when
-            # building a case-insensitive PSCustomObject. -AsHashtable uses a
-            # case-sensitive map that tolerates those keys; only the top-level
-            # description is read here.
-            $json = Get-Content -Path $FilePath -Raw | ConvertFrom-Json -AsHashtable
-            $desc = $json['description']
+            $json = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+            $desc = $json.description
             if ($desc) {
                 return ([string]$desc).Trim()
             }

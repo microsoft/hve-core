@@ -664,7 +664,7 @@ function Write-PluginHookArtifact {
 
     .DESCRIPTION
     Hook command paths in the source manifest are repository-root relative
-    (for example .github/hooks/telemetry/telemetry-collector.sh) so they resolve
+    (for example .github/hooks/shared/telemetry/telemetry-collector.sh) so they resolve
     when the hook is auto-loaded from a checked-out repository. Inside an
     installed plugin the same scripts live under the plugin root, so this
     function writes a transformed copy of the manifest with those paths

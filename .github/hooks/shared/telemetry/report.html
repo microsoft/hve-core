@@ -153,6 +153,19 @@
   // Maps subagent tool_call_id → human-readable agent name (populated from SessionSummary)
   let subagentNames = {};
 
+  /** Escape a value for safe interpolation into HTML text or attributes.
+      Session content (prompts, cwd, tool/instruction/skill/subagent names) can
+      originate from models, MCP servers, or third-party collections, so every
+      dynamic value written into innerHTML must pass through here. */
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   dropZone.addEventListener('click', () => fileInput.click());
   dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('active'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('active'));
@@ -450,7 +463,7 @@
   }
 
   function render() {
-    fileListEl.innerHTML = loadedFiles.map(f => `<span class="file-item">${f}</span>`).join(' ');
+    fileListEl.innerHTML = loadedFiles.map(f => `<span class="file-item">${esc(f)}</span>`).join(' ');
     dashboard.classList.add('visible');
     const sessions = buildSessions();
     renderOverview(sessions);
@@ -499,7 +512,7 @@
         { label: 'Output Tokens', value: fmtTokens(totalOut) }
       );
     }
-    grid.innerHTML = cards.map(c => `<div class="card"${c.title ? ` title="${c.title}"` : ''}><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`).join('');
+    grid.innerHTML = cards.map(c => `<div class="card"${c.title ? ` title="${esc(c.title)}"` : ''}><div class="label">${esc(c.label)}</div><div class="value">${esc(c.value)}</div></div>`).join('');
   }
 
   function renderMatrix(sessions) {
@@ -509,12 +522,12 @@
     const dim = (none) => `<span style="color:var(--text-dim);font-size:0.8rem;">${none}</span>`;
     const cols = sessions.map(s => {
       const shortSid = s.sid.substring(0, 12);
-      const models = sessionModels(s).map(m => `<span class="tag tag-model">${m}</span>`).join('') || `<span class="tag tag-model">not yet detected</span>`;
-      const agents = [...s.subagents].filter(Boolean).map(a => `<span class="tag tag-agent">${a}</span>`).join('') || dim('none');
-      const instrs = [...s.instructions].map(i => `<span class="tag tag-instruction">${i}</span>`).join('') || dim('none loaded');
-      const skills = [...s.skills].map(sk => `<span class="tag tag-skill">${sk}</span>`).join('') || dim('none loaded');
+      const models = sessionModels(s).map(m => `<span class="tag tag-model">${esc(m)}</span>`).join('') || `<span class="tag tag-model">not yet detected</span>`;
+      const agents = [...s.subagents].filter(Boolean).map(a => `<span class="tag tag-agent">${esc(a)}</span>`).join('') || dim('none');
+      const instrs = [...s.instructions].map(i => `<span class="tag tag-instruction">${esc(i)}</span>`).join('') || dim('none loaded');
+      const skills = [...s.skills].map(sk => `<span class="tag tag-skill">${esc(sk)}</span>`).join('') || dim('none loaded');
       const topTools = Object.entries(s.tools).sort((a,b) => b[1] - a[1]).slice(0, 8)
-        .map(([t,c]) => `<span class="tag tag-tool">${t} (${c})</span>`).join('') || dim('none');
+        .map(([t,c]) => `<span class="tag tag-tool">${esc(t)} (${c})</span>`).join('') || dim('none');
 
       const durMs = new Date(s.lastTs) - new Date(s.firstTs);
       const durStr = durMs > 0 ? fmtDuration(durMs) : '';
@@ -534,7 +547,7 @@
           .sort((a, b) => (b[1].output_tokens || 0) - (a[1].output_tokens || 0))
           .map(([name, au]) => {
             const freshIn = Math.max(0, (au.input_tokens || 0) - (au.cache_read_tokens || 0));
-            return `<div class="agent-usage-row"><span class="tag tag-agent">${name}</span>` +
+            return `<div class="agent-usage-row"><span class="tag tag-agent">${esc(name)}</span>` +
               `<span class="meta">${fmtTokens(freshIn)} in · ${fmtTokens(au.output_tokens || 0)} out` +
               (au.total_nano_aiu ? ` · ${fmtAiu(au.total_nano_aiu)} AIU` : '') +
               ` · ${au.requests || 0} req</span></div>`;
@@ -545,12 +558,12 @@
       }
 
       const cwdShort = s.cwd ? s.cwd.replace(/^.*[/\\]/, '') : '';
-      const clientTag = s.client ? `<span class="tag tag-client">${s.client}</span>` : '';
+      const clientTag = s.client ? `<span class="tag tag-client">${esc(s.client)}</span>` : '';
 
       return {
-        header: `<span class="session-title">${sessionLabel(s)}</span>` +
-          `<span class="sid">${shortSid}</span>` + clientTag +
-          (cwdShort ? `<span class="meta" title="${s.cwd}">${cwdShort}</span>` : '') +
+        header: `<span class="session-title">${esc(sessionLabel(s))}</span>` +
+          `<span class="sid">${esc(shortSid)}</span>` + clientTag +
+          (cwdShort ? `<span class="meta" title="${esc(s.cwd)}">${esc(cwdShort)}</span>` : '') +
           `<span class="meta">${s.toolCount} tool calls</span>` +
           (durStr ? `<span class="meta">${durStr} duration</span>` : '') +
           (started ? `<span class="meta">${started}</span>` : ''),
@@ -594,14 +607,14 @@
     let html = `<div class="heatmap" style="grid-template-columns: 200px repeat(${tools.length}, 1fr);">`;
     // Header row
     html += '<div class="heatmap-cell heatmap-header">Session</div>';
-    tools.forEach(t => { html += `<div class="heatmap-cell heatmap-header">${t.replace(/^(vscode_|manage_)/, '')}</div>`; });
+    tools.forEach(t => { html += `<div class="heatmap-cell heatmap-header">${esc(t.replace(/^(vscode_|manage_)/, ''))}</div>`; });
 
     // Data rows
     sessions.forEach(s => {
       const models = sessionModels(s);
       const modelStr = models.length ? models.map(shortModel).join(', ') : '—';
-      html += `<div class="heatmap-cell heatmap-header" title="${s.sid}" style="text-align:left;">` +
-        `${sessionLabel(s, 18)}<span class="heatmap-model">${modelStr}</span></div>`;
+      html += `<div class="heatmap-cell heatmap-header" title="${esc(s.sid)}" style="text-align:left;">` +
+        `${esc(sessionLabel(s, 18))}<span class="heatmap-model">${esc(modelStr)}</span></div>`;
       tools.forEach(t => {
         const count = s.tools[t] || 0;
         const heat = count === 0 ? 0 : count <= 3 ? 1 : count <= 10 ? 2 : 3;
@@ -675,7 +688,7 @@
       const min = Math.min(...times);
       const max = Math.max(...times);
       const total = times.reduce((s,v) => s+v, 0);
-      html += `<tr><td>${tool}</td><td>${times.length}</td><td>${fmtDuration(avg)}</td><td>${fmtDuration(min)}</td><td>${fmtDuration(max)}</td><td>${fmtDuration(total)}</td></tr>`;
+      html += `<tr><td>${esc(tool)}</td><td>${times.length}</td><td>${fmtDuration(avg)}</td><td>${fmtDuration(min)}</td><td>${fmtDuration(max)}</td><td>${fmtDuration(total)}</td></tr>`;
     });
     html += '</tbody></table>';
     container.innerHTML = html;
@@ -708,8 +721,8 @@
         const hitPct = u.input ? Math.round((u.cached / u.input) * 100) : 0;
         const avgTtft = u.ttftCount ? fmtDuration(u.ttft / u.ttftCount) : '—';
         const models = sessionModels(s).join(', ') || '—';
-        const clientTag = s.client ? ` <span class="tag tag-client">${s.client}</span>` : '';
-        html += `<tr><td class="sid" title="${s.sid}">${sessionLabel(s, 40)}${clientTag}</td><td>${models}</td>` +
+        const clientTag = s.client ? ` <span class="tag tag-client">${esc(s.client)}</span>` : '';
+        html += `<tr><td class="sid" title="${esc(s.sid)}">${esc(sessionLabel(s, 40))}${clientTag}</td><td>${esc(models)}</td>` +
           `<td>${u.requests}</td><td>${inputCell(u)}</td>` +
           `<td>${fmtTokens(u.cached)} (${hitPct}%)</td><td>${fmtTokens(u.output)}</td>` +
           `<td>${fmtTokens(total)}</td><td>${u.aiu ? fmtAiu(u.aiu) : '—'}</td><td>${avgTtft}</td></tr>`;
@@ -718,7 +731,7 @@
         if (mu && Object.keys(mu).length > 1) {
           Object.entries(mu).sort((a, b) => b[1].output_tokens - a[1].output_tokens).forEach(([m, d]) => {
             const pct = u.output ? Math.round((d.output_tokens / u.output) * 100) : 0;
-            html += `<tr style="opacity:0.7;font-size:0.9em"><td style="padding-left:1.5em">↳ ${m}</td>` +
+            html += `<tr style="opacity:0.7;font-size:0.9em"><td style="padding-left:1.5em">↳ ${esc(m)}</td>` +
               `<td></td><td>${d.messages}</td><td></td><td></td>` +
               `<td>${fmtTokens(d.output_tokens)} (${pct}%)</td><td></td><td></td><td></td></tr>`;
           });
@@ -779,12 +792,12 @@
     let html = `<div class="heatmap" style="grid-template-columns: minmax(180px,1fr) repeat(${sessions.length}, minmax(60px,auto));">`;
     // Header row
     html += '<div class="heatmap-cell heatmap-header" style="text-align:left;">Artifact</div>';
-    sessions.forEach(s => { html += `<div class="heatmap-cell heatmap-header" title="${s.sid}">${sessionLabel(s, 18)}</div>`; });
+    sessions.forEach(s => { html += `<div class="heatmap-cell heatmap-header" title="${esc(s.sid)}">${esc(sessionLabel(s, 18))}</div>`; });
 
     // Artifact rows
     rows.forEach(r => {
       const tagClass = r.kind === 'instr' ? 'tag-instruction' : 'tag-skill';
-      html += `<div class="heatmap-cell heatmap-header" style="text-align:left;"><span class="tag ${tagClass}">${r.label}</span></div>`;
+      html += `<div class="heatmap-cell heatmap-header" style="text-align:left;"><span class="tag ${tagClass}">${esc(r.label)}</span></div>`;
       sessions.forEach(s => {
         const loaded = r.kind === 'instr' ? s.instructions.has(r.name) : s.skills.has(r.name);
         html += cell(tokensFor(s, r), loaded);

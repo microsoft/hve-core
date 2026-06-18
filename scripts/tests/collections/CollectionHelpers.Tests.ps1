@@ -40,6 +40,20 @@ Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
         $hveCorePromptsDir = Join-Path $promptsDir 'hve-core'
         New-Item -ItemType Directory -Path $hveCorePromptsDir -Force | Out-Null
         Set-Content -Path (Join-Path $hveCorePromptsDir 'task-plan.prompt.md') -Value '---\ndescription: distributable prompt\n---'
+
+        # Create collection-scoped hook manifest in subdirectory (should be included)
+        $sharedHooksDir = Join-Path $ghDir 'hooks/shared'
+        New-Item -ItemType Directory -Path $sharedHooksDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedHooksDir 'telemetry.json') -Value '{ "version": 1 }'
+
+        # Create hook implementation file one level deeper (should NOT be treated as a manifest)
+        $hookImplDir = Join-Path $sharedHooksDir 'telemetry'
+        New-Item -ItemType Directory -Path $hookImplDir -Force | Out-Null
+        Set-Content -Path (Join-Path $hookImplDir 'config.json') -Value '{ "internal": true }'
+
+        # Create flat hook manifest directly under .github/hooks (should be excluded)
+        $hooksRootDir = Join-Path $ghDir 'hooks'
+        Set-Content -Path (Join-Path $hooksRootDir 'orphan.json') -Value '{ "version": 1 }'
     }
 
     It 'Excludes root-level repo-specific instructions' {
@@ -76,6 +90,25 @@ Describe 'Get-ArtifactFiles - repo-specific path exclusion' {
         $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
         $paths = $items | ForEach-Object { $_.path }
         $paths | Should -Contain '.github/prompts/hve-core/task-plan.prompt.md'
+    }
+
+    It 'Includes collection-scoped hook manifests in subdirectories' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $hookItem = $items | Where-Object { $_.path -eq '.github/hooks/shared/telemetry.json' }
+        $hookItem | Should -Not -BeNullOrEmpty
+        $hookItem.kind | Should -Be 'hook'
+    }
+
+    It 'Excludes hook implementation files nested under the manifest folder' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/hooks/shared/telemetry/config.json'
+    }
+
+    It 'Excludes flat hook manifests directly under .github/hooks' {
+        $items = Get-ArtifactFiles -RepoRoot $script:repoRoot
+        $paths = $items | ForEach-Object { $_.path }
+        $paths | Should -Not -Contain '.github/hooks/orphan.json'
     }
 }
 
@@ -218,6 +251,14 @@ Describe 'Test-HveCoreRepoRelativePath' {
 
     It 'Returns false for shared instruction in subdirectory' {
         Test-HveCoreRepoRelativePath -Path '.github/instructions/shared/hve-core-location.instructions.md' | Should -BeFalse
+    }
+
+    It 'Returns true for flat hook manifest directly under hooks' {
+        Test-HveCoreRepoRelativePath -Path '.github/hooks/telemetry.json' | Should -BeTrue
+    }
+
+    It 'Returns false for collection-scoped hook manifest' {
+        Test-HveCoreRepoRelativePath -Path '.github/hooks/shared/telemetry.json' | Should -BeFalse
     }
 
     It 'Returns false for path directly under .github (wrong nesting level)' {

@@ -41,14 +41,21 @@ main() {
   local telemetry_dir="${HVE_TELEMETRY_DIR:-$repo_root/.copilot-tracking/telemetry}"
   mkdir -p "$telemetry_dir" "$telemetry_dir/.stacks"
 
-  # Dump raw input for diagnostics (first 5 events only)
-  local raw_log="$telemetry_dir/raw-input.jsonl"
-  local raw_count=0
-  if [[ -f "$raw_log" ]]; then
-    raw_count=$(wc -l < "$raw_log")
-  fi
-  if (( raw_count < 5 )); then
-    echo "$input" >> "$raw_log"
+  # Dump raw input for diagnostics (first 5 events only). This records hook
+  # payloads verbatim, including the full prompt text and tool inputs such as
+  # file contents and shell command strings, which can contain secrets. The
+  # processed sessions-*.jsonl stream already provides the diagnostic signal,
+  # so the verbatim dump is a separate explicit opt-in (off by default) layered
+  # on top of the telemetry gate. See docs/customization/local-telemetry.md.
+  if [[ "${HVE_TELEMETRY_RAW:-}" == "1" ]]; then
+    local raw_log="$telemetry_dir/raw-input.jsonl"
+    local raw_count=0
+    if [[ -f "$raw_log" ]]; then
+      raw_count=$(wc -l < "$raw_log")
+    fi
+    if (( raw_count < 5 )); then
+      echo "$input" >> "$raw_log"
+    fi
   fi
 
   # Delegate all JSON processing to the shared telemetry engine. The engine

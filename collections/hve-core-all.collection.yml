@@ -599,7 +599,7 @@ items:
   kind: skill
 - path: .github/skills/shared/telemetry-foundations
   kind: skill
-- path: .github/hooks/telemetry.json
+- path: .github/hooks/shared/telemetry.json
   kind: hook
 display:
   featured: true

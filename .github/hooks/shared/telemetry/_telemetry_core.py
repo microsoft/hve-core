@@ -66,6 +66,7 @@ def iter_jsonl(path: str | os.PathLike[str]) -> Iterator[dict]:
                 if isinstance(obj, dict):
                     yield obj
     except OSError:
+        # File cannot be opened or read (e.g., does not exist or permission denied)
         return
 
 

@@ -150,7 +150,7 @@ items:
   - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
   # Hooks
-  - path: .github/hooks/telemetry.json
+  - path: .github/hooks/shared/telemetry.json
     kind: hook
 display:
   ordering: manual
