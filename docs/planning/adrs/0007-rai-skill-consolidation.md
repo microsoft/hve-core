@@ -1,7 +1,7 @@
 ---
 id: "0007"
 title: "Consolidate RAI knowledge into skills consumed by RAI Planner and RAI Reviewer"
-description: "Consolidate RAI domain guidance into shared rai-standards and rai-planner-playbook skills instead of inline per-agent instructions files."
+description: "Consolidate RAI domain guidance into shared rai-standards and rai-planner skills instead of inline per-agent instructions files."
 author: "HVE Core Maintainers"
 ms.date: 2026-06-17
 ms.topic: reference
@@ -17,7 +17,7 @@ informed:
   - "HVE-Core contributors"
 affected_components:
   - ".github/skills/rai/rai-standards/SKILL.md"
-  - ".github/skills/project-planning/rai-planner-playbook/SKILL.md"
+  - ".github/skills/project-planning/rai-planner/SKILL.md"
   - ".github/agents/rai-planning/rai-reviewer.agent.md"
   - ".github/agents/rai-planning/subagents/rai-skill-assessor.agent.md"
   - ".github/instructions/rai-planning/rai-license-posture.instructions.md"
@@ -62,7 +62,7 @@ agent orchestration logic?
 
 ## Considered Options
 
-* Option A: Skill-based consolidation: move RAI guidance into shared `rai-standards` and `rai-planner-playbook` skills consumed on demand by both agents.
+* Option A: Skill-based consolidation: move RAI guidance into shared `rai-standards` and `rai-planner` skills consumed on demand by both agents.
 * Option B: Inline per-agent `rai-*.instructions.md`: keep guidance embedded in each agent's instructions surface.
 * Option C: Single shared instructions file referenced via `#file:` from each agent.
 
@@ -73,7 +73,7 @@ Chosen option: **Option A: Skill-based consolidation**.
 > In the context of structuring and consuming RAI domain knowledge across the
 > RAI Planner and Reviewer, facing the tension between a single source of truth
 > and avoiding per-agent duplication, we decided for consolidating RAI guidance
-> into shared `rai-standards` and `rai-planner-playbook` skills and against
+> into shared `rai-standards` and `rai-planner` skills and against
 > inline per-agent `rai-*.instructions.md` files or a single shared instructions
 > file, to achieve reuse, maintainability, and licensing-posture isolation,
 > accepting explicit skill-load dependencies and a larger artifact surface
@@ -120,7 +120,7 @@ restores the prior inline arrangement without data loss.
 ## Affected Components
 
 * .github/skills/rai/rai-standards/SKILL.md
-* .github/skills/project-planning/rai-planner-playbook/SKILL.md
+* .github/skills/project-planning/rai-planner/SKILL.md
 * .github/agents/rai-planning/rai-reviewer.agent.md
 * .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
 * .github/instructions/rai-planning/rai-license-posture.instructions.md
@@ -129,7 +129,7 @@ restores the prior inline arrangement without data loss.
 ## More Information
 
 * RAI standards skill: `.github/skills/rai/rai-standards/SKILL.md`
-* RAI Planner playbook skill: `.github/skills/project-planning/rai-planner-playbook/SKILL.md`
+* RAI Planner skill: `.github/skills/project-planning/rai-planner/SKILL.md`
 * RAI Reviewer agent: `.github/agents/rai-planning/rai-reviewer.agent.md`
 * RAI skill-assessor subagent: `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`
 * RAI licensing-posture overlay: `.github/instructions/rai-planning/rai-license-posture.instructions.md`

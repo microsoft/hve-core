@@ -85,7 +85,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 ### Phase 6: Review and Handoff (NIST Manage)
 
 * **Entry criteria**: Phase 5 complete; impact assessment confirmed.
-* **Activities**: Generate review summary covering observations across six dimensions: scope boundary clarity, risk identification coverage, control surface adequacy, evidence sufficiency, future work governance, and risk classification alignment. Generate backlog items for identified gaps using the appropriate format (ADO, GitHub, or both) per user preference. Present findings for final review. After handoff generation, offer cryptographic signing of all session artifacts per the Artifact Signing subsection in the `rai-planner-playbook` skill's backlog handoff reference. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` to generate a SHA-256 manifest and optionally sign with cosign.
+* **Activities**: Generate review summary covering observations across six dimensions: scope boundary clarity, risk identification coverage, control surface adequacy, evidence sufficiency, future work governance, and risk classification alignment. Generate backlog items for identified gaps using the appropriate format (ADO, GitHub, or both) per user preference. Present findings for final review. After handoff generation, offer cryptographic signing of all session artifacts per the Artifact Signing subsection in the `rai-planner` skill's backlog handoff reference. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` to generate a SHA-256 manifest and optionally sign with cosign.
 * **Exit criteria**: Hard gate: present complete review summary with observations, backlog items, and handoff summary. User must confirm before work items are created. Rationale: external-effect, created work items are visible to others.
 * **Artifacts**: `rai-review-summary.md`, backlog items, `artifact-manifest.json` (when signing accepted)
 * **Transition**: Assessment complete. State file updated with observations and `handoffGenerated` updated with platform-specific flags.
@@ -96,7 +96,7 @@ Three entry modes determine Phase 1 initialization. All modes converge at Phase 
 
 ### `capture`
 
-Fresh assessment. Display the disclaimer and attribution notices, then initialize blank `state.json` with `entryMode: "capture"`. Scan for existing reference content in `.copilot-tracking/rai-plans/references/`. Conduct reference content and output format discovery before the scoping interview. Then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner-playbook` skill.
+Fresh assessment. Display the disclaimer and attribution notices, then initialize blank `state.json` with `entryMode: "capture"`. Scan for existing reference content in `.copilot-tracking/rai-plans/references/`. Conduct reference content and output format discovery before the scoping interview. Then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
 
 ### `from-prd`
 

@@ -40,7 +40,7 @@ flowchart TD
   end
 
   subgraph Skills ["Skills"]
-    S1["rai-planner-playbook"]
+    S1["rai-planner"]
     S2["rai-standards"]
   end
 
@@ -61,7 +61,7 @@ The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-plann
 
 | Skill                  | Domain                                                                                                         |
 |------------------------|----------------------------------------------------------------------------------------------------------------|
-| `rai-planner-playbook` | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
+| `rai-planner` | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
 | `rai-standards`        | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay  |
 
 ## State Management

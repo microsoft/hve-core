@@ -82,7 +82,7 @@ items:
     maturity: experimental
   - path: .github/skills/shared/pr-reference
     kind: skill
-  - path: .github/skills/project-planning/rai-planner-playbook
+  - path: .github/skills/project-planning/rai-planner
     kind: skill
     maturity: experimental
   - path: .github/skills/rai/rai-standards

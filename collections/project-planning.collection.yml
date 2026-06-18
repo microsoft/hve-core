@@ -108,7 +108,7 @@ items:
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
-  - path: .github/skills/project-planning/rai-planner-playbook
+  - path: .github/skills/project-planning/rai-planner
     kind: skill
     maturity: experimental
   - path: .github/skills/rai/rai-standards

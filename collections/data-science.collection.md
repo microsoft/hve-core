@@ -43,9 +43,9 @@ Generate data specifications, Jupyter notebooks, and Streamlit dashboards from n
 
 ### Skills
 
-| Name                     | Description                                                                                                                                                                                                                                                                 |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **rai-planner-playbook** | On-demand RAI planner reference pack for Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff. Read the matching reference when entering a phase boundary or when you need the detailed guidance for that phase. |
-| **rai-standards**        | Consolidated Responsible AI standards reference: NIST AI RMF 1.0 (7 trustworthiness characteristics, 4 functions, 72 subcategories), the AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping                          |
+| Name              | Description                                                                                                                                                                                                                                                                 |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **rai-planner**   | On-demand RAI planner reference pack for Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff. Read the matching reference when entering a phase boundary or when you need the detailed guidance for that phase. |
+| **rai-standards** | Consolidated Responsible AI standards reference: NIST AI RMF 1.0 (7 trustworthiness characteristics, 4 functions, 72 subcategories), the AI STRIDE threat-modeling overlay, EU AI Act risk tiers, and an open-standards catalog with phase mapping                          |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

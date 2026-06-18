@@ -46,7 +46,7 @@ items:
   - path: .github/instructions/shared/untrusted-content-boundary.instructions.md
     kind: instruction
   # Skills
-  - path: .github/skills/project-planning/rai-planner-playbook
+  - path: .github/skills/project-planning/rai-planner
     kind: skill
     maturity: experimental
   - path: .github/skills/rai/rai-standards

@@ -1,5 +1,5 @@
 ---
-name: rai-planner-playbook
+name: rai-planner
 description: "On-demand RAI planner reference pack for Phase 1 capture, Phase 2 risk classification, Phase 5 impact assessment, and Phase 6 review and backlog handoff. Read the matching reference when entering a phase boundary or when you need the detailed guidance for that phase."
 license: MIT
 user-invocable: false
@@ -9,7 +9,7 @@ metadata:
   last_updated: "2026-06-17"
 ---
 
-# RAI Planner Playbook
+# RAI Planner
 
 ## Overview
 
@@ -24,6 +24,6 @@ Use this skill as an on-demand reference pack for the RAI Planner. The main skil
 
 ## Usage Notes
 
-* Load this playbook on demand at phase boundaries rather than as fixed startup context.
+* Load these references on demand at phase boundaries rather than as fixed startup context.
 * Use the referenced file that matches the phase you are about to enter or the section you need to re-open during execution.
 * Keep the detailed rubric, templates, and evidence guidance in the reference files rather than in the main skill body.
