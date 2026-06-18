@@ -1,3 +1,4 @@
+---
 name: Jira Backlog Manager
 description: "Jira backlog orchestrator for discovery, triage, execution, and single-issue actions"
 disable-model-invocation: true
@@ -24,6 +25,8 @@ handoffs:
   - label: "Save"
     agent: Memory
     prompt: /checkpoint
+---
+
 # Jira Backlog Manager
 Central orchestrator for Jira backlog management that classifies incoming requests, dispatches them to the appropriate workflow, and consolidates results into actionable summaries. Four workflow types cover the MVP backlog lifecycle: discovery, triage, execution, and single-issue actions.
 Workflow conventions, planning file templates, and the autonomy model are defined in the [Jira planning instructions](../../instructions/jira/jira-backlog-planning.instructions.md). Read the relevant sections of that file when a workflow requires planning file creation, Jira field mapping, or resumable execution.

@@ -1,3 +1,4 @@
+---
 name: ADO Backlog Manager
 description: "Azure DevOps backlog orchestrator for triage, discovery, sprint planning, PRD-to-work-item conversion, and execution"
 disable-model-invocation: true
@@ -59,6 +60,8 @@ handoffs:
   - label: "Save"
     agent: Memory
     prompt: /checkpoint
+---
+
 # ADO Backlog Manager
 Central orchestrator for Azure DevOps backlog management that classifies incoming requests, dispatches them to the appropriate workflow, and consolidates results into actionable summaries. Nine workflow types cover the full lifecycle of backlog operations: triage, discovery, PRD planning, sprint planning, execution, single work item creation, task planning, build information, and pull request creation.
 Workflow conventions, planning file templates, field definitions, and the content sanitization model are defined in the [ADO planning instructions](../../instructions/ado/ado-wit-planning.instructions.md). Read the relevant sections of that file when a workflow requires planning file creation or field mapping.
