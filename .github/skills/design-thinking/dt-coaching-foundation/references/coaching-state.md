@@ -52,9 +52,25 @@ artifacts: []
   #   method: 1
   #   type: "stakeholder-map"
 
-# Additional workflow-specific state blocks may be present.
-# The canonical deck workflow adds `canonical_deck` and `customer_card_render`
-# blocks as defined in canonical-deck.md.
+canonical_deck:
+  opted_in: false        # boolean; set during Phase 1 initialization
+  opted_in_at: null      # ISO 8601 timestamp; when user answered the opt-in checkpoint
+  snapshots: []
+    # - method: 1
+    #   date: "YYYY-MM-DD"
+    #   entry_count: 0
+    #   candidate_count: 0  # number of candidate entries before filtering
+    #   fingerprint: ""    # content hash for staleness detection
+  last_offered_at: null  # ISO 8601 timestamp; last time a snapshot was offered
+  last_offered_response: null  # "accepted" | "declined" | null
+  last_generated_at: null  # ISO 8601 timestamp; last time a snapshot was generated
+
+customer_card_render:
+  last_offered_at: null   # ISO 8601 timestamp; last time customer-card build was offered
+  last_offered_response: null  # "accepted" | "declined" | null
+  last_generated_at: null  # ISO 8601 timestamp; last time customer-card PPTX was generated
+  decline_final: false    # boolean; true if user declined at Method 5 (no further offers)
+  output_path: null       # relative path to last generated PPTX
 ```
 
 ### Field Definitions
@@ -116,6 +132,23 @@ Specialized DT workflows may extend the base state schema with additional top-le
 
 * `canonical_deck`: snapshot history and cooldown state for canonical deck generation.
 * `customer_card_render`: cooldown state and output metadata for PowerPoint renders derived from the canonical deck.
+
+#### Canonical Deck Block
+
+* `opted_in`: boolean indicating whether the user accepted the canonical deck workflow during Phase 1 initialization. Set to `false` by default; set to `true` when the user accepts the opt-in checkpoint.
+* `opted_in_at`: ISO 8601 timestamp recording when the user answered the opt-in checkpoint. `null` until answered.
+* `snapshots`: list of snapshot records, one per canonical deck generation. Each entry records the method number, date, entry count, candidate count, and content fingerprint for staleness detection.
+* `last_offered_at`: ISO 8601 timestamp of the most recent canonical deck offer, whether accepted or declined.
+* `last_offered_response`: user's response to the most recent canonical deck offer: `"accepted"`, `"declined"`, or `null` if never offered.
+* `last_generated_at`: ISO 8601 timestamp of the most recent canonical deck generation.
+
+#### Customer Card Render Block
+
+* `last_offered_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint offer.
+* `last_offered_response`: user's response to the most recent offer: `"accepted"`, `"declined"`, or `null` if never offered.
+* `last_generated_at`: ISO 8601 timestamp of the most recent customer-card PowerPoint generation.
+* `decline_final`: boolean indicating the user declined at the Method 5 checkpoint. When `true`, no further customer-card offers are made.
+* `output_path`: relative path to the last generated customer-card PowerPoint file.
 
 ## State Management Rules
 
