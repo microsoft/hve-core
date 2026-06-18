@@ -28,6 +28,12 @@ tags:
 supersedes: null
 superseded-by: null
 related: []
+decisionMetadata:
+  driverToTriggerMap:
+    "Single source of truth for RAI standards": "consolidation-removes-per-agent-duplication"
+    "Reuse across both the RAI Planner and the RAI Reviewer": "shared-skill-load-by-both-consumers"
+    "Cleaner licensing-posture isolation from agent orchestration": "dedicated-licensing-posture-overlay"
+    "Evolve RAI guidance without editing agent bodies": "edit-skills-not-agents"
 ---
 
 ## Context
@@ -78,12 +84,12 @@ rejected because referencing one monolithic instructions file from every agent
 couples all consumers to a single file and forgoes the on-demand packaging,
 metadata, and licensing isolation that the skill format provides.
 
-| Decision Driver | Option A — Skills | Option B — Inline instructions | Option C — Shared instructions file |
-|---|---|---|---|
-| Single source of truth | Strong — one skill pair authored once | Weak — copy per agent | Moderate — one file, no packaging |
-| Reuse across Planner and Reviewer | Strong — loaded on demand by both | Weak — duplicated bodies | Moderate — shared via `#file:` coupling |
-| Licensing-posture isolation | Strong — dedicated instructions overlay | Weak — mixed into agent logic | Weak — mixed into one monolith |
-| Evolve without editing agent bodies | Strong — edit skills only | Weak — edit every agent | Moderate — edit file, all agents coupled |
+| Decision Driver                                              | Option A — Skills                       | Option B — Inline instructions | Option C — Shared instructions file      |
+|--------------------------------------------------------------|-----------------------------------------|--------------------------------|------------------------------------------|
+| Single source of truth for RAI standards                     | Strong — one skill pair authored once   | Weak — copy per agent          | Moderate — one file, no packaging        |
+| Reuse across both the RAI Planner and the RAI Reviewer       | Strong — loaded on demand by both       | Weak — duplicated bodies       | Moderate — shared via `#file:` coupling  |
+| Cleaner licensing-posture isolation from agent orchestration | Strong — dedicated instructions overlay | Weak — mixed into agent logic  | Weak — mixed into one monolith           |
+| Evolve RAI guidance without editing agent bodies             | Strong — edit skills only               | Weak — edit every agent        | Moderate — edit file, all agents coupled |
 
 ### Consequences
 
@@ -112,9 +118,18 @@ restores the prior inline arrangement without data loss.
 
 ## Affected Components
 
-* `.github/skills/rai/rai-standards/SKILL.md`
-* `.github/skills/project-planning/rai-planner-playbook/SKILL.md`
-* `.github/agents/rai-planning/rai-reviewer.agent.md`
-* `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`
-* `.github/instructions/rai-planning/rai-license-posture.instructions.md`
-* `.github/instructions/hve-core/licensing-posture.instructions.md`
+* .github/skills/rai/rai-standards/SKILL.md
+* .github/skills/project-planning/rai-planner-playbook/SKILL.md
+* .github/agents/rai-planning/rai-reviewer.agent.md
+* .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+* .github/instructions/rai-planning/rai-license-posture.instructions.md
+* .github/instructions/hve-core/licensing-posture.instructions.md
+
+## More Information
+
+* RAI standards skill: `.github/skills/rai/rai-standards/SKILL.md`
+* RAI Planner playbook skill: `.github/skills/project-planning/rai-planner-playbook/SKILL.md`
+* RAI Reviewer agent: `.github/agents/rai-planning/rai-reviewer.agent.md`
+* RAI skill-assessor subagent: `.github/agents/rai-planning/subagents/rai-skill-assessor.agent.md`
+* RAI licensing-posture overlay: `.github/instructions/rai-planning/rai-license-posture.instructions.md`
+* Repository licensing posture: `.github/instructions/hve-core/licensing-posture.instructions.md`
