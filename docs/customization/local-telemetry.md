@@ -3,7 +3,7 @@ title: Local Telemetry
 description: Enable local Copilot session telemetry, understand capture mechanics, and generate local reports
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-18
 ms.topic: how-to
 keywords:
   - telemetry
@@ -244,6 +244,20 @@ The registry self-populates as you work across repositories, so no manual setup
 is required. Stale directories (deleted or moved repositories) are pruned
 automatically when the report runs. Each session is labeled with its originating
 project in the report, so combined output still reads per project.
+
+> [!NOTE]
+> **Registry-driven cleanup is name-constrained.** `clean-telemetry.sh
+> --all-dirs` iterates every path in `~/.hve/telemetry-dirs.txt` and, in each
+> directory, removes only a fixed allow-list of artifact names
+> (`raw-input.jsonl`, `report.generated.html`, `sessions-*.jsonl`, and the
+> `.stacks/` directory). It never deletes a directory wholesale. A tampered
+> registry can therefore, at most, delete those specific names in an
+> attacker-chosen directory — not arbitrary files. The `.stacks/` entry is
+> removed recursively, but symlinked artifacts are unlinked rather than
+> followed, so the target of a symlink is never deleted. The registry lives in
+> the user-owned HVE home (`~/.hve`, honoring `HVE_HOME`), so an attacker able
+> to tamper with it already holds the user's filesystem privileges; the risk is
+> low and the blast radius is bounded.
 
 ## Reports Without the Repository (Extension Users)
 
