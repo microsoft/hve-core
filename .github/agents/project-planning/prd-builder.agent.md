@@ -74,6 +74,8 @@ Load `prd-author#prd-finalize` first. Deliver the complete, actionable PRD and r
 
 If the PRD surfaced significant architectural decisions worth preserving — for example, tech-stack choices, build-vs-buy calls, system-boundary or integration patterns — you may want to capture them as ADRs. The `@adr-creation` agent can guide you through it; the PRD makes useful context.
 
+When the PRD benefits from an architecture or network diagram, use the architecture-diagrams skill: read `.github/skills/hve-core/architecture-diagrams/SKILL.md` with `read_file` and follow its authoring contract, choosing ASCII or Mermaid output for the diagram. That skill is the authoritative source for its own conventions and output format.
+
 ## File Management
 
 ### PRD Creation

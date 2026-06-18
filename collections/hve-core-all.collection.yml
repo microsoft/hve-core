@@ -99,8 +99,6 @@ items:
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
   kind: agent
-- path: .github/agents/project-planning/arch-diagram-builder.agent.md
-  kind: agent
 - path: .github/agents/project-planning/brd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
@@ -548,6 +546,9 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/architecture-diagrams
+  kind: skill
+  maturity: experimental
 - path: .github/skills/hve-core/vally-tests
   kind: skill
   maturity: experimental

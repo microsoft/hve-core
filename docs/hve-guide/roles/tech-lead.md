@@ -3,7 +3,7 @@ title: Tech Lead Guide
 description: HVE Core support for tech leads and architects driving architecture, code quality, and prompt engineering standards
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-17
 ms.topic: how-to
 keywords:
   - tech lead
@@ -45,7 +45,7 @@ This guide is for you if you make architecture decisions, set coding standards, 
 ## Stage Walkthrough
 
 1. Stage 2: Discovery. Use the **task-researcher** agent to evaluate design options, research external patterns, and gather architectural evidence.
-2. Stage 3: Product Definition. Create architecture decision records with the **adr-creation** agent and generate diagrams with the **arch-diagram-builder** agent.
+2. Stage 3: Product Definition. Create architecture decision records with the **adr-creation** agent and generate diagrams with the **architecture-diagrams** skill.
 3. Stage 6: Implementation. Guide engineers using coding standards (auto-activated by file type) and prompt engineering tools for AI artifact creation.
 4. Stage 7: Review. Run the **pr-review** agent for automated pull request feedback and the **task-reviewer** agent for implementation-against-plan validation.
 5. Stage 9: Operations. Use `/prompt-analyze` and `/prompt-refactor` to maintain and evolve prompt engineering artifacts as team practices mature.
@@ -61,13 +61,13 @@ around vendor neutrality and auto-instrumentation support, alternatives
 like Datadog APM and Jaeger, and migration impact on existing services.
 ```
 
-Select **arch-diagram-builder** agent:
+Use the **architecture-diagrams** skill:
 
 ```text
-Generate an architecture diagram for the event-driven order processing
-pipeline. Show the message flow from API gateway through the event bus
-to worker services, including the dead-letter queue and monitoring
-integration. Use mermaid flowchart syntax.
+Generate an ASCII architecture diagram for the event-driven order
+processing pipeline. Show the message flow from API gateway through the
+event bus to worker services, including the dead-letter queue and
+monitoring integration. Use ASCII block diagram syntax.
 ```
 
 Select **pr-review** agent:
@@ -93,17 +93,17 @@ specificity, and alignment with repository conventions.
 
 ## Key Agents and Workflows
 
-| Agent                    | Purpose                                    | Docs                                            |
-|--------------------------|--------------------------------------------|-------------------------------------------------|
-| **adr-creation**         | Architecture decision record creation      | Agent file                                      |
-| **arch-diagram-builder** | Mermaid architecture diagram generation    | Agent file                                      |
-| **pr-review**            | Pull request review automation             | Agent file                                      |
-| **task-reviewer**        | Implementation review against plan         | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **prompt-builder**       | Prompt engineering artifact creation       | Agent file                                      |
-| **task-researcher**      | Deep codebase and architecture research    | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**         | Structured implementation planning         | [Task Planner](../../rpi/task-planner.md)       |
-| **doc-ops**              | Documentation operations and maintenance   | Agent file                                      |
-| **memory**               | Session context and preference persistence | Agent file                                      |
+| Agent                     | Purpose                                    | Docs                                            |
+|---------------------------|--------------------------------------------|-------------------------------------------------|
+| **adr-creation**          | Architecture decision record creation      | Agent file                                      |
+| **architecture-diagrams** | ASCII architecture diagram generation      | Skill file                                      |
+| **pr-review**             | Pull request review automation             | Agent file                                      |
+| **task-reviewer**         | Implementation review against plan         | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **prompt-builder**        | Prompt engineering artifact creation       | Agent file                                      |
+| **task-researcher**       | Deep codebase and architecture research    | [Task Researcher](../../rpi/task-researcher.md) |
+| **task-planner**          | Structured implementation planning         | [Task Planner](../../rpi/task-planner.md)       |
+| **doc-ops**               | Documentation operations and maintenance   | Agent file                                      |
+| **memory**                | Session context and preference persistence | Agent file                                      |
 
 Prompts complement the agents for cross-cutting workflows:
 
