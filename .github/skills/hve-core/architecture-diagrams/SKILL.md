@@ -48,10 +48,10 @@ Use the following conventions for readability:
 
 ## Arrow Types
 
-| Arrow | Meaning |
-| --- | --- |
-| `---->` | Data flow or dependency |
-| `<--->` | Bidirectional connection |
+| Arrow   | Meaning                          |
+|---------|----------------------------------|
+| `---->` | Data flow or dependency          |
+| `<--->` | Bidirectional connection         |
 | `- - >` | Optional or conditional resource |
 
 ## Grouping and Boundaries

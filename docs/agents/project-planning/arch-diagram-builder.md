@@ -7,7 +7,7 @@ ms.date: 2026-06-18
 ms.topic: how-to
 ---
 
-The [architecture-diagrams skill](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) is the recommended way to generate ASCII architecture diagrams from infrastructure source files. It is especially useful for ADRs, onboarding guides, and design reviews when you want a quick, text-based view of a system's structure.
+The [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) is the recommended way to generate ASCII architecture diagrams from infrastructure source files. It is especially useful for ADRs, onboarding guides, and design reviews when you want a quick, text-based view of a system's structure.
 
 ## When to Use This Skill
 

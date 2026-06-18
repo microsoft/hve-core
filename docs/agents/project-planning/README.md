@@ -42,13 +42,13 @@ See the [BRD & PRD Builders](brd-prd-builders.md) guide for the shared workflow,
 
 ## Architecture
 
-Two agents address architecture documentation from different angles. The ADR Creation Coach uses Socratic questioning to guide users through structured reasoning about technical decisions, producing architecture decision records. The [architecture-diagrams skill](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
+Two agents address architecture documentation from different angles. The ADR Creation Coach uses Socratic questioning to guide users through structured reasoning about technical decisions, producing architecture decision records. The [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
 
 > [!TIP]
-> Pair the ADR Creation Coach with the [architecture-diagrams skill](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
+> Pair the ADR Creation Coach with the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
 
 * [ADR Creation Coach](adr-creation.md): Guided decision reasoning and documentation
-* [architecture-diagrams skill](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
+* [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
 
 ## Security
 
@@ -65,7 +65,7 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 * Agent definition files from the `project-planning` collection deployed to `.github/agents/`
 * For Security Planner: agent definition files from the `security` collection
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
-* For diagram generation: the [architecture-diagrams skill](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
+* For diagram generation: the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 
 ## Getting Started
 

@@ -75,7 +75,7 @@ The framing for this decision came directly from the requesting session:
 
 ## Decision Outcome
 
-We adopt a reusable `architecture-diagrams` skill at [.github/skills/hve-core/architecture-diagrams/SKILL.md](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) as the shared capability for IaC-derived diagrams.
+We adopt a reusable `architecture-diagrams` skill at [.github/skills/hve-core/architecture-diagrams/SKILL.md](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) as the shared capability for IaC-derived diagrams.
 
 | Decision driver               | Reusable shared skill | Dedicated diagram agent | Inline per-agent logic |
 |-------------------------------|-----------------------|-------------------------|------------------------|
@@ -153,7 +153,7 @@ If this decision is reversed, the rollback path is:
 
 1. Remove invocations of the `architecture-diagrams` skill from the consuming agents.
 2. Reintroduce diagram logic inline in the agents that still require it, or replace the skill with a dedicated diagram agent.
-3. Remove the skill at [.github/skills/hve-core/architecture-diagrams/SKILL.md](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) once no consumer references it.
+3. Remove the skill at [.github/skills/hve-core/architecture-diagrams/SKILL.md](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) once no consumer references it.
 4. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
 No data migration is required; removing the skill leaves existing content untouched.
@@ -171,7 +171,7 @@ No data migration is required; removing the skill leaves existing content untouc
 
 The skill consumes infrastructure source files and produces either an ASCII
 block diagram or a Mermaid flowchart at the caller's choice. The capability
-lives at [.github/skills/hve-core/architecture-diagrams/SKILL.md](../../../.github/skills/hve-core/architecture-diagrams/SKILL.md). Current consumers are
+lives at [.github/skills/hve-core/architecture-diagrams/SKILL.md](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md). Current consumers are
 [.github/agents/project-planning/adr-creation.agent.md](../../../.github/agents/project-planning/adr-creation.agent.md),
 [.github/agents/project-planning/brd-builder.agent.md](../../../.github/agents/project-planning/brd-builder.agent.md),
 [.github/agents/project-planning/prd-builder.agent.md](../../../.github/agents/project-planning/prd-builder.agent.md),
