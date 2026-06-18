@@ -76,9 +76,7 @@ def _is_safe_sid(sid: str) -> bool:
     Rejects empty ids and any value containing a path separator or ``..``
     traversal sequence so callers never build paths outside their store.
     """
-    return bool(sid) and not (
-        os.sep in sid or "/" in sid or "\\" in sid or ".." in sid
-    )
+    return bool(sid) and not (os.sep in sid or "/" in sid or "\\" in sid or ".." in sid)
 
 
 def collect_sids(hook_files: Iterable[str]) -> set[str]:
@@ -255,9 +253,7 @@ def write_report_launchers(script_dir: Path | None = None) -> None:
                 "__CLEAN_PS1__", clean_ps1.replace("'", "''")
             )
             (home / "generate-report.ps1").write_text(pwsh_text, encoding="utf-8")
-            (home / "clean-telemetry.ps1").write_text(
-                pwsh_clean_text, encoding="utf-8"
-            )
+            (home / "clean-telemetry.ps1").write_text(pwsh_clean_text, encoding="utf-8")
         else:
             # Shell-quote so unusual install paths (spaces, quotes, ``$``)
             # cannot break or inject into the generated launchers.
@@ -293,9 +289,7 @@ def find_process_log(state_dir: Path, home: Path) -> str | None:
     return candidates[0] if candidates else None
 
 
-def _log_references_interactions(
-    log_path: str, interaction_ids: set[str]
-) -> bool:
+def _log_references_interactions(log_path: str, interaction_ids: set[str]) -> bool:
     """Return True when a process log references any of the interaction ids.
 
     Uses a cheap line substring scan so logs that cannot belong to the session
@@ -304,9 +298,7 @@ def _log_references_interactions(
     try:
         with open(log_path, encoding="utf-8", errors="replace") as handle:
             for line in handle:
-                if "interaction_id" in line and any(
-                    iid in line for iid in interaction_ids
-                ):
+                if "interaction_id" in line and any(iid in line for iid in interaction_ids):
                     return True
     except OSError:
         return False
@@ -547,9 +539,7 @@ def _totals_from_state_fallback(state_file: str | os.PathLike[str]) -> dict:
                 msg_output_total += output_tokens
                 model = data.get("model", "")
                 if model:
-                    msg_output_by_model[model] = (
-                        msg_output_by_model.get(model, 0) + output_tokens
-                    )
+                    msg_output_by_model[model] = msg_output_by_model.get(model, 0) + output_tokens
             continue
         if etype != "session.shutdown":
             continue
@@ -639,9 +629,7 @@ def build_session_summary(
             token_source = "process_log"
             # Compute per-subagent token attribution when subagents were used.
             if meta["subagent_map"]:
-                agent_usage = _per_agent_usage_from_process_log(
-                    entries, meta["subagent_map"]
-                )
+                agent_usage = _per_agent_usage_from_process_log(entries, meta["subagent_map"])
     if totals is None:
         totals = _totals_from_state_fallback(state_file)
 
@@ -694,9 +682,7 @@ def _normalize_event(data: dict) -> str:
 def _normalize_timestamp(raw_ts: object) -> str:
     """Coerce a hook timestamp (epoch ms or string) to an ISO-8601 string."""
     if isinstance(raw_ts, (int, float)):
-        return datetime.datetime.fromtimestamp(
-            raw_ts / 1000, tz=datetime.UTC
-        ).isoformat()
+        return datetime.datetime.fromtimestamp(raw_ts / 1000, tz=datetime.UTC).isoformat()
     if isinstance(raw_ts, str) and raw_ts:
         return raw_ts
     return datetime.datetime.now(datetime.UTC).isoformat()
@@ -723,9 +709,7 @@ class _AgentStack:
 
     def __init__(self, stack_dir: Path, sid: str) -> None:
         self.stack_dir = stack_dir
-        self.stack_file = (
-            stack_dir / f"{sid}.json" if _is_safe_sid(sid) else None
-        )
+        self.stack_file = stack_dir / f"{sid}.json" if _is_safe_sid(sid) else None
 
     def _read(self) -> list[str]:
         if self.stack_file and self.stack_file.exists():
@@ -791,9 +775,7 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
         entry["prompt"] = (data.get("prompt", "") or "")[:200]
     elif event == "PreToolUse":
         entry["tool"] = tool_name
-        entry["tool_input_keys"] = (
-            list(tool_input.keys()) if isinstance(tool_input, dict) else []
-        )
+        entry["tool_input_keys"] = list(tool_input.keys()) if isinstance(tool_input, dict) else []
         entry["agent"] = stack.current()
         # Detect instructions and skills by file path convention to track
         # which artifacts the agent loaded during the session.
@@ -819,9 +801,7 @@ def build_entry(data: dict, event: str, stack: _AgentStack) -> dict | None:
     elif event == "PostToolUse":
         entry["tool"] = tool_name
         if isinstance(tool_result, dict):
-            text = tool_result.get("text_result_for_llm") or tool_result.get(
-                "textResultForLlm", ""
-            )
+            text = tool_result.get("text_result_for_llm") or tool_result.get("textResultForLlm", "")
             entry["tool_response_len"] = len(text if isinstance(text, str) else str(text))
         elif isinstance(tool_result, str):
             entry["tool_response_len"] = len(tool_result)
@@ -897,8 +877,12 @@ def _mode_collect() -> int:
         state_file = state_dir / "events.jsonl"
         if state_file.is_file():
             summary = build_session_summary(
-                sid, state_dir, state_file, home,
-                ts_override=entry["ts"], client=_detect_client(),
+                sid,
+                state_dir,
+                state_file,
+                home,
+                ts_override=entry["ts"],
+                client=_detect_client(),
             )
             if summary is not None:
                 with open(log_file, "a", encoding="utf-8") as handle:
@@ -1013,9 +997,7 @@ def _mode_clean(all_dirs: bool, dry_run: bool) -> int:
     targets: list[Path] = []
     if all_dirs:
         targets.extend(Path(d) for d in read_registry_dirs())
-    targets.append(
-        Path(os.environ.get("HVE_TELEMETRY_DIR", ".copilot-tracking/telemetry"))
-    )
+    targets.append(Path(os.environ.get("HVE_TELEMETRY_DIR", ".copilot-tracking/telemetry")))
 
     seen: set[str] = set()
     for tel_dir in targets:

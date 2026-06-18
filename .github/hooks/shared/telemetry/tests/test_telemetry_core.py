@@ -161,9 +161,7 @@ def test_given_process_log_when_build_session_summary_then_uses_process_log(tmp_
             },
         }
     ]
-    home, state_dir, state_file = _make_session(
-        tmp_path, "sid1", state_rows, process_rows, pid=777
-    )
+    home, state_dir, state_file = _make_session(tmp_path, "sid1", state_rows, process_rows, pid=777)
     summary = core.build_session_summary("sid1", state_dir, state_file, home)
     assert summary["input_tokens"] == 10
     assert summary["input_tokens_uncached"] == 7
@@ -380,9 +378,7 @@ def test_given_skill_path_when_build_entry_then_detects_skill(tmp_path):
     data = {
         "hook_event_name": "PreToolUse",
         "tool_name": "read",
-        "tool_input": {
-            "filePath": "/repo/.github/skills/coll/my-skill/SKILL.md"
-        },
+        "tool_input": {"filePath": "/repo/.github/skills/coll/my-skill/SKILL.md"},
     }
     entry = core.build_entry(data, "PreToolUse", stack)
     assert entry["skill"] == "my-skill"
@@ -576,9 +572,7 @@ def test_given_posix_when_write_report_launchers_then_clean_sh_delegates_to_bash
     assert not (hve / "clean-telemetry.ps1").exists()
 
 
-def test_given_windows_when_write_report_launchers_then_clean_ps1_is_native(
-    tmp_path, monkeypatch
-):
+def test_given_windows_when_write_report_launchers_then_clean_ps1_is_native(tmp_path, monkeypatch):
     hve = tmp_path / "hve"
     script_dir = tmp_path / "hook"
     script_dir.mkdir()
@@ -635,9 +629,7 @@ def test_given_dry_run_when_clean_telemetry_dir_then_reports_without_deleting(tm
     assert len(removed) == 5
 
 
-def test_given_current_store_when_mode_clean_then_cleans_only_current(
-    tmp_path, monkeypatch
-):
+def test_given_current_store_when_mode_clean_then_cleans_only_current(tmp_path, monkeypatch):
     current = tmp_path / "current"
     other = tmp_path / "other"
     hve = tmp_path / "hve"
@@ -655,9 +647,7 @@ def test_given_current_store_when_mode_clean_then_cleans_only_current(
     assert registry.exists()
 
 
-def test_given_all_dirs_when_mode_clean_then_cleans_registry_and_home(
-    tmp_path, monkeypatch
-):
+def test_given_all_dirs_when_mode_clean_then_cleans_registry_and_home(tmp_path, monkeypatch):
     current = tmp_path / "current"
     other = tmp_path / "other"
     hve = tmp_path / "hve"
@@ -685,5 +675,3 @@ def test_given_clean_mode_when_main_dispatches_then_parses_flags(tmp_path, monke
     assert core.main(["clean", "--dry-run"]) == 0
     # Dry-run leaves artifacts in place.
     assert (current / "raw-input.jsonl").exists()
-
-

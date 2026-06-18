@@ -50,8 +50,15 @@ def fuzz_build_entry(data: bytes) -> None:
     """Fuzz entry building with arbitrary payloads."""
     provider = atheris.FuzzedDataProvider(data)
     events = [
-        "SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
-        "SubagentStart", "SubagentStop", "PreCompact", "Stop", "unknown",
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+        "SubagentStart",
+        "SubagentStop",
+        "PreCompact",
+        "Stop",
+        "unknown",
     ]
     event = events[provider.ConsumeIntInRange(0, len(events) - 1)]
     payload = {
