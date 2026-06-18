@@ -26,6 +26,12 @@ items:
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/rai-planning/rai-reviewer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   - path: .github/agents/security/security-reviewer.agent.md
@@ -76,6 +82,12 @@ items:
     maturity: experimental
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/project-planning/rai-planner-playbook
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/rai/rai-standards
+    kind: skill
+    maturity: experimental
   # Security Planner Prompts
   - path: .github/prompts/security/security-capture.prompt.md
     kind: prompt
@@ -148,22 +160,7 @@ items:
   - path: .github/instructions/rai-planning/rai-identity.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/rai-planning/rai-standards.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-security-model.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
+  - path: .github/instructions/rai-planning/rai-license-posture.instructions.md
     kind: instruction
     maturity: experimental
   # Shared Instructions

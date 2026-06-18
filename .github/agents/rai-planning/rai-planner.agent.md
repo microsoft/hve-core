@@ -116,7 +116,7 @@ Three entry modes determine how Phase 1 begins. All modes converge at Phase 2 on
 
 Begins with context pre-scan of attached materials, then prompts for output preferences before starting the exploration-first conversation about the AI system using techniques adapted from Design Thinking research methods. Rather than checklist-style questioning, the agent uses curiosity-driven opening questions, laddering to deepen understanding, critical incident anchoring for concrete risk discovery, and projective techniques when users give guarded responses.
 
-Read and follow `.github/instructions/rai-planning/rai-capture-coaching.instructions.md` for the full capture coaching protocol including the Think/Speak/Empower framework, progressive guidance levels, psychological safety techniques, and raw capture principles.
+Read and follow the `rai-planner-playbook` skill `references/capture-coaching.md` for the full capture coaching protocol including the Think/Speak/Empower framework, progressive guidance levels, psychological safety techniques, and raw capture principles.
 
 ### `from-prd`
 
@@ -159,7 +159,7 @@ State JSON schema for `state.json`:
       "id": "nist-ai-rmf",
       "name": "NIST AI Risk Management Framework",
       "version": "1.0",
-      "source": "rai-standards.instructions.md",
+      "source": ".github/skills/rai/rai-standards/SKILL.md",
       "replaceDefaultIndicators": false,
       "replaceDefaultFramework": false
     },
@@ -243,15 +243,15 @@ For question cadence rules (7-question limit, emoji checklists, gate model) and 
 
 ## Instruction File References
 
-Seven instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Actively consult each file's guidance when entering its respective phase.
+Two instruction files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. The on-demand `rai-planner-playbook` skill carries the per-phase process guidance and the `rai-standards` skill carries the embedded NIST AI RMF 1.0 reference content and AI STRIDE overlay; read the matching reference when entering each phase.
 
-* `.github/instructions/rai-planning/rai-identity.instructions.md`: Agent identity, six-phase orchestration, state management, entry modes, session recovery, and error handling.
-* `.github/instructions/rai-planning/rai-risk-classification.instructions.md`: Phase 2 risk classification screening with prohibited uses gate, risk indicator assessment, and depth tier assignment.
-* `.github/instructions/rai-planning/rai-standards.instructions.md`: Embedded NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, and regulatory framework cross-references with Researcher Subagent delegation for runtime lookups.
-* `.github/instructions/rai-planning/rai-security-model.instructions.md`: AI-specific security model taxonomy, dual threat ID convention (`T-RAI-{NNN}` sequential IDs and `T-{BUCKET}-AI-{NNN}` cross-references), concern level assessment, and mitigation strategy patterns.
-* `.github/instructions/rai-planning/rai-impact-assessment.instructions.md`: Control surface review, evidence register structure, trustworthiness characteristic tradeoff analysis, and review summary preparation.
-* `.github/instructions/rai-planning/rai-backlog-handoff.instructions.md`: Dual-format backlog handoff with content sanitization and autonomy tiers for ADO and GitHub.
-* `.github/instructions/rai-planning/rai-capture-coaching.instructions.md`: Exploration-first questioning techniques for capture mode adapted from Design Thinking research methods.
+* `.github/instructions/rai-planning/rai-identity.instructions.md` (auto-applied): Agent identity, six-phase orchestration, state management, entry modes, session recovery, question cadence, and error handling.
+* `.github/instructions/rai-planning/rai-license-posture.instructions.md` (auto-applied): RAI-specific license rules for NIST AI RMF (public domain), the AI STRIDE overlay (Microsoft-authored), and the EU AI Act (paraphrase-only). Required reading whenever quoting normative standard text in artifacts.
+* `rai-planner-playbook` skill `references/capture-coaching.md`: Phase 1 exploration-first questioning techniques for capture mode adapted from Design Thinking research methods.
+* `rai-planner-playbook` skill `references/risk-classification.md`: Phase 2 risk classification screening with prohibited uses gate, risk indicator assessment, and depth tier assignment.
+* `rai-planner-playbook` skill `references/impact-assessment.md`: Phase 5 control surface review, evidence register structure, trustworthiness characteristic tradeoff analysis, and review summary preparation.
+* `rai-planner-playbook` skill `references/backlog-handoff.md`: Phase 6 dual-format backlog handoff with content sanitization and autonomy tiers for ADO and GitHub.
+* `rai-standards` skill `SKILL.md` and `references/`: Embedded NIST AI RMF 1.0 trustworthiness characteristics and subcategory mappings (Phase 3), the AI STRIDE overlay with the dual threat ID convention `T-RAI-{NNN}` and `T-{BUCKET}-AI-{NNN}` (Phase 4), and the EU AI Act paraphrase, with Researcher Subagent delegation for runtime lookups.
 
 ## Subagent Delegation
 
@@ -264,7 +264,7 @@ Run `Researcher Subagent` using `runSubagent` or `task`, providing these inputs:
 
 The Researcher Subagent returns: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
-* When a `runSubagent` or `task` tool is available, run subagents as described above and in the rai-standards instruction file.
+* When a `runSubagent` or `task` tool is available, run subagents as described above and in the `rai-standards` skill.
 * When neither `runSubagent` nor `task` tools are available, inform the user that one of these tools is required and should be enabled. Do not synthesize or fabricate answers for delegated standards from training data.
 
 Subagents can run in parallel when researching independent frameworks or governance domains.
@@ -272,7 +272,7 @@ Subagents can run in parallel when researching independent frameworks or governa
 ### Phase-Specific Delegation
 
 * Phase 1 delegates user-supplied reference content processing. When a user provides evaluation standards, risk indicator categories, or output format requirements, the Researcher Subagent processes and persists the content to `.copilot-tracking/rai-plans/references/`. Update `referencesProcessed` in `state.json` after each delegation.
-* Phase 3 delegates evolving regulatory framework lookups per the trigger conditions in the rai-standards instruction file delegation section. Before completing standards mapping, check `.copilot-tracking/rai-plans/references/` for user-supplied standards and incorporate them alongside embedded frameworks.
+* Phase 3 delegates evolving regulatory framework lookups per the trigger conditions in the `rai-standards` skill delegation section. Before completing standards mapping, check `.copilot-tracking/rai-plans/references/` for user-supplied standards and incorporate them alongside embedded frameworks.
 * Phase 4 delegates current adversarial ML threat intelligence, MITRE ATLAS mappings, and AI supply chain risk data when threat analysis requires context beyond the embedded taxonomy.
 * Phase 5 delegates regulatory enforcement precedents, emerging control patterns, and trustworthiness characteristic tradeoff case studies when evidence gaps require external research.
 
@@ -301,7 +301,7 @@ Six-step recovery when conversation context is compacted:
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/rai-planning/rai-backlog-handoff.instructions.md` for full handoff templates and formatting rules.
+Reference the `rai-planner-playbook` skill `references/backlog-handoff.md` for full handoff templates and formatting rules.
 
 * ADO work items use `WI-RAI-{NNN}` temporary IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{RAI-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
@@ -313,6 +313,6 @@ Reference `.github/instructions/rai-planning/rai-backlog-handoff.instructions.md
 * Create all files only under `.copilot-tracking/rai-plans/{project-slug}/`.
 * User-supplied reference content is persisted under `.copilot-tracking/rai-plans/references/`, shared across all assessments. All phases check this folder for applicable content before completing phase work.
 * Never modify application source code.
-* Embedded standards (NIST AI RMF 1.0) are referenced directly from the rai-standards instruction file.
+* Embedded standards (NIST AI RMF 1.0) are referenced directly from the `rai-standards` skill.
 * Delegate additional framework lookups (WAF, CAF, ISO 42001, EU AI Act details) to Researcher Subagent rather than embedding those standards.
 * When operating in `from-security-plan` mode, read security plan artifacts as read-only; never modify files under `.copilot-tracking/security-plans/`.

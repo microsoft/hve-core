@@ -9,6 +9,7 @@
     "agents/project-planning/",
     "agents/project-planning/subagents/",
     "agents/rai-planning/",
+    "agents/rai-planning/subagents/",
     "agents/security/"
   ],
   "commands": [
@@ -19,6 +20,7 @@
     "skills/accessibility/",
     "skills/experimental/",
     "skills/project-planning/",
+    "skills/rai/",
     "skills/security/",
     "skills/shared/"
   ]
