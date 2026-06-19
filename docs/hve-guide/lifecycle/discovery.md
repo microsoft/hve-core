@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-17
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -36,7 +36,7 @@ You enter Discovery after completing [Stage 1: Setup](setup.md) with a configure
 | rai-planner            | Agent  | Select **rai-planner** agent            | Assess responsible AI risks and generate RAI plans                                         |
 | gen-data-spec          | Agent  | Select **gen-data-spec** agent          | Generate data specifications and schemas                                                   |
 | adr-creation           | Agent  | Select **adr-creation** agent           | Document architecture decisions                                                            |
-| arch-diagram-builder   | Agent  | Select **arch-diagram-builder** agent   | Generate architecture diagrams                                                             |
+| architecture-diagrams  | Skill  | Use the **architecture-diagrams** skill | Generate architecture diagrams                                                             |
 | ux-ui-designer         | Agent  | Select **ux-ui-designer** agent         | Design user experience and interface concepts                                              |
 | github-backlog-manager | Agent  | Select **github-backlog-manager** agent | Discover and triage existing GitHub issues                                                 |
 | memory                 | Agent  | Select **memory** agent                 | Store research findings for later reference                                                |

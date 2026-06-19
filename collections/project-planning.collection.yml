@@ -22,8 +22,6 @@ items:
     kind: agent
   - path: .github/agents/project-planning/adr-creation.agent.md
     kind: agent
-  - path: .github/agents/project-planning/arch-diagram-builder.agent.md
-    kind: agent
   - path: .github/agents/project-planning/brd-builder.agent.md
     kind: agent
   - path: .github/agents/project-planning/network-isa95-planner.agent.md
@@ -105,6 +103,9 @@ items:
     kind: prompt
     maturity: experimental
   # Skills
+  - path: .github/skills/hve-core/architecture-diagrams
+    kind: skill
+    maturity: experimental
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
