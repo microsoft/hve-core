@@ -1,6 +1,6 @@
 ---
 name: vally-tests
-description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, with explicit refusal of jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, model-refusal-elicitation, and PII-extraction stimuli - Brought to you by microsoft/hve-core'
+description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli - Brought to you by microsoft/hve-core'
 license: MIT
 user-invocable: true
 compatibility: 'Requires Vally CLI 0.4.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'
@@ -36,7 +36,7 @@ Do not invoke this skill to:
 * Generate adversarial probes, jailbreak attempts, prompt-injection payloads, or red-team stimuli.
 * Test refusal quality on harmful, illegal, or policy-violating prompts.
 * Author stimuli that elicit PII, secrets, or model self-disclosure.
-* Replace Responsible AI threat modeling. RAI work lives in `.github/instructions/rai-planning/rai-risk-classification.instructions.md`.
+* Replace Responsible AI threat modeling. RAI work lives in the RAI Planner agent (`.github/agents/rai-planning/rai-planner.agent.md`).
 
 ## Authoring Workflow
 
@@ -55,20 +55,20 @@ The pipeline is identical for both invocation modes. Corpus-import mode runs ste
 
 Authoring is bounded by seven refusal categories. Any stimulus that matches a category's regex set is refused before it reaches the dedupe step. The categories and their normative source are listed below. The full regex set lives in `references/refusal-taxonomy.md` and is consumed by the safety lint script.
 
-| Category                  | Definition                                                                                                                | Normative Source                                                            |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| jailbreak                 | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | `CODE_OF_CONDUCT.md`                                                        |
-| prompt-injection          | Attempts to override system or developer instructions through embedded or external content.                               | `CODE_OF_CONDUCT.md`                                                        |
-| harmful-elicitation       | Requests for content that causes physical, financial, psychological, or reputational harm.                                | `CODE_OF_CONDUCT.md`                                                        |
-| tos-violation             | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | `CODE_OF_CONDUCT.md`                                                        |
-| coc-violation             | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | `CODE_OF_CONDUCT.md`                                                        |
-| model-refusal-elicitation | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | `.github/instructions/rai-planning/rai-risk-classification.instructions.md` |
-| pii-extraction            | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | `.github/instructions/rai-planning/rai-risk-classification.instructions.md` |
+| Category                  | Definition                                                                                                                | Normative Source                                   |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
+| jailbreak                 | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | `CODE_OF_CONDUCT.md`                               |
+| prompt-injection          | Attempts to override system or developer instructions through embedded or external content.                               | `CODE_OF_CONDUCT.md`                               |
+| harmful-elicitation       | Requests for content that causes physical, financial, psychological, or reputational harm.                                | `CODE_OF_CONDUCT.md`                               |
+| tos-violation             | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | `CODE_OF_CONDUCT.md`                               |
+| coc-violation             | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | `CODE_OF_CONDUCT.md`                               |
+| model-refusal-elicitation | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | `.github/agents/rai-planning/rai-planner.agent.md` |
+| pii-extraction            | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | `.github/agents/rai-planning/rai-planner.agent.md` |
 
 When a request triggers a refusal, emit the canonical refusal block:
 
 ```text
-This skill authors conformance tests only. The request appears to fall under <category>. Please consult <CODE_OF_CONDUCT.md | .github/instructions/rai-planning/rai-risk-classification.instructions.md> for the appropriate process.
+This skill authors conformance tests only. The request appears to fall under <category>. Please consult <CODE_OF_CONDUCT.md | .github/agents/rai-planning/rai-planner.agent.md> for the appropriate process.
 ```
 
 Substitute the matched `<category>` and the most relevant normative source. Do not negotiate, rephrase, or partially fulfill the request.

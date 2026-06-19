@@ -3,7 +3,7 @@ title: Collections Overview
 description: Explore the HVE collection system, compare available collections, and choose the right extension for your workflow
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-22
+ms.date: 2026-06-18
 ms.topic: overview
 ---
 
@@ -15,7 +15,7 @@ Two VS Code Marketplace extensions deliver these collections:
 
 ### HVE Core All (`ise-hve-essentials.hve-core-all`)
 
-The complete bundle containing 221 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
+The complete bundle containing 241 artifacts across all domains. If you want access to everything without choosing individual collections, install this extension. It is the recommended starting point for most users.
 
 ### HVE Installer (`ise-hve-essentials.hve-installer`)
 
@@ -45,7 +45,6 @@ The installer enables targeted deployment of specific collections into workspace
 | installer        | Deploy HVE artifacts across workspace configurations with decision-driven setup                                                                | 0      | 0       | 1            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-installer)        |
 | jira             | Manage Jira backlogs, plan PRD-driven issue hierarchies, and execute issue operations                                                          | 2      | 4       | 6            | 1      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-jira)             |
 | project-planning | Create architecture decision records, requirements documents, and diagrams through guided AI workflows                                         | 18     | 11      | 20           | 0      | Stable       | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-project-planning) |
-| rai-planning     | Assess AI systems against Responsible AI standards and capture standards-aligned backlog work                                                  | 2      | 3       | 8            | 0      | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-rai-planning)     |
 | security         | Security review, planning, incident response, risk assessment, and vulnerability analysis                                                      | 9      | 14      | 19           | 5      | Experimental | [Install](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-security)         |
 
 ## How Collections Fit Together
@@ -54,7 +53,7 @@ The following diagram shows how the domain collections relate to the two marketp
 
 ```mermaid
 graph TD
-    HCA["hve#45;core#45;all<br/>(221 artifacts)"]
+    HCA["hve#45;core#45;all<br/>(241 artifacts)"]
     INS["installer<br/>(2 artifacts)"]
 
     ADO["ado"]
@@ -67,7 +66,6 @@ graph TD
     HC["hve#45;core"]
     JR["jira"]
     PP["project#45;planning"]
-    RP["rai#45;planning"]
     SP["security"]
 
     HCA --> ADO
@@ -80,7 +78,6 @@ graph TD
     HCA --> HC
     HCA --> JR
     HCA --> PP
-    HCA --> RP
     HCA --> SP
 ```
 
