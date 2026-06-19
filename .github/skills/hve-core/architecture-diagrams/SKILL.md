@@ -1,13 +1,13 @@
 ---
 name: architecture-diagrams
-description: "Architecture diagram authoring for cloud infrastructure: parse Azure IaC, map relationships, and render either ASCII block diagrams or Mermaid flowcharts based on the caller's chosen output format - Brought to you by microsoft/hve-core"
+description: "Architecture diagram authoring for cloud infrastructure: parse Azure IaC, map relationships, and render either ASCII block diagrams or Mermaid flowcharts based on the caller's chosen output format"
 license: MIT
 user-invocable: true
 compatibility: "Works in any chat context where the caller needs an ASCII or Mermaid architecture diagram from infrastructure source files"
 metadata:
   authors: "microsoft/hve-core"
   spec_version: "1.0"
-  last_updated: "2026-06-17"
+  last_updated: "2026-06-19"
 ---
 
 # Architecture Diagrams Skill
@@ -19,6 +19,25 @@ Use this skill to turn infrastructure source files into readable architecture di
 ## Output Format
 
 This skill produces either ASCII block diagrams or Mermaid flowcharts. Neither is the default: the caller or surrounding context chooses the output format for each diagram. When the caller does not state a preference, ask which format they want before generating. Follow the ASCII Conventions or the Mermaid Conventions below depending on the selected format, and keep the structure, boundaries, and relationships identical across formats.
+
+## Preference Contract
+
+Architecture diagram format selection applies beyond ADRs. For standalone usage, consult the root state file at `.copilot-tracking/architecture-diagrams/state.json`. If that file is absent, create it when a format is chosen.
+
+```json
+{
+  "userPreferences": {
+    "diagramFormat": "mermaid"
+  },
+  "repoVisibility": "private"
+}
+```
+
+The `userPreferences.diagramFormat` value must be either `ascii` or `mermaid`. The `repoVisibility` field is optional and may be used by surrounding workflows when they need to distinguish public and private repositories. Resolution order is:
+
+1. Explicit request or caller state.
+2. Root state file at `.copilot-tracking/architecture-diagrams/state.json`.
+3. If no preference is known for a standalone request, ask once and persist the answer to the root state file for later reuse.
 
 ## Workflow
 
@@ -131,7 +150,7 @@ When reading infrastructure sources, extract:
 Use this structure for every diagram:
 
 ```markdown
-## Architecture Diagram: <Name> Architecture
+## <Name> Architecture
 
 [diagram in the selected format]
 
@@ -147,7 +166,7 @@ The title should use title case and follow the pattern `<Name> Architecture`. Th
 ## Worked Example: AKS Platform Architecture
 
 ```markdown
-## Architecture Diagram: AKS Platform Architecture
+## AKS Platform Architecture
 
 +===============================================================+
 |  Resource Group                                               |
@@ -175,7 +194,7 @@ See the arrow types above. Additional symbols: `====` primary boundary, `:---:` 
 The same architecture in Mermaid form expresses identical structure, boundaries, and relationships:
 
 ````markdown
-## Architecture Diagram: AKS Platform Architecture
+## AKS Platform Architecture
 
 ```mermaid
 flowchart TB
