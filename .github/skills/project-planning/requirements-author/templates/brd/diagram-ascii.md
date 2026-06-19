@@ -44,7 +44,7 @@ This fragment is used when `brd_frontmatter.diagram_format: "ascii"`.
 
 {{arch_diagram_ref}}
 
-*Guidance*: When this process depends on infrastructure or system integration details, read the architecture-diagrams skill at `.github/skills/hve-core/architecture-diagrams/SKILL.md` with `read_file` and follow its workflow, conventions, arrow types, grouping, layout, resource identification, output format, worked example, and authoring guidelines. Otherwise, leave blank.
+*Guidance*: When this process depends on infrastructure or system integration details, use the `architecture-diagrams` skill and follow its workflow, conventions, arrow types, grouping, layout, resource identification, output format, worked example, and authoring guidelines. Otherwise, leave blank.
 
 ---
 
