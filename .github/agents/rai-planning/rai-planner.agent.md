@@ -106,6 +106,8 @@ Prepare a review summary of findings across dimensions: scope boundary clarity, 
 
 If the assessment surfaced architectural decisions worth preserving — model selection, training-data sources, human-in-the-loop placement, or AI-surface boundaries — you may want to capture them as ADRs. The `@adr-creation` agent (`from-planner-handoff` entry mode) accepts an RAI Planner handoff directly.
 
+When presenting the final handoff message, render the produced artifacts using the Final Handoff Summary table in the `rai-planner` skill `references/backlog-handoff.md` rather than a flat list of filenames.
+
 * Artifacts: `rai-review-summary.md`, backlog items, `artifact-manifest.json` (when signing accepted)
 
 ## Entry Modes
