@@ -13,7 +13,7 @@ tags:
   - architecture
   - reference
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-18
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -36,36 +36,33 @@ flowchart TD
 
   subgraph Instructions ["Instruction Files"]
     I1["rai-identity"]
-    I2["rai-standards"]
-    I3["rai-security-model"]
-    I4["rai-impact-assessment"]
-    I5["rai-backlog-handoff"]
-    I6["rai-risk-classification"]
-    I7["rai-capture-coaching"]
+    I2["rai-license-posture"]
+  end
+
+  subgraph Skills ["Skills"]
+    S1["rai-planner"]
+    S2["rai-standards"]
   end
 
   RP -->|"reads/writes"| SJ
   RP -->|"generates"| AF
   RP -->|"follows"| I1
   RP -->|"follows"| I2
-  RP -->|"follows"| I3
-  RP -->|"follows"| I4
-  RP -->|"follows"| I5
-  RP -->|"follows"| I6
-  RP -->|"follows"| I7
+  RP -->|"uses"| S1
+  RP -->|"uses"| S2
 ```
 
-The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Seven instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`.
+The RAI Planner agent definition lives at `.github/agents/rai-planning/rai-planner.agent.md`. Two instruction files under `.github/instructions/rai-planning/` provide domain-specific guidance, auto-applied via `applyTo` patterns when working within `.copilot-tracking/rai-plans/`. Phase-specific assessment guidance lives in the shared `backlog-templates` skill and the `rai-standards` skill.
 
-| Instruction file                          | Domain                                                                                                  |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `rai-identity.instructions.md`            | Agent identity, orchestration, state management, session recovery                                       |
-| `rai-risk-classification.instructions.md` | Risk classification screening, depth tier assignment, prohibited uses gate                              |
-| `rai-standards.instructions.md`           | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation architecture |
-| `rai-security-model.instructions.md`      | AI-specific threat taxonomy, `T-RAI-{NNN}` format, concern level assessment                             |
-| `rai-impact-assessment.instructions.md`   | Control surface evaluation, evidence register, characteristic tradeoff analysis                         |
-| `rai-backlog-handoff.instructions.md`     | Dual-format backlog handoff, content sanitization, autonomy tiers                                       |
-| `rai-capture-coaching.instructions.md`    | Exploration-first questioning techniques for capture mode                                               |
+| Instruction file                      | Domain                                                                    |
+|---------------------------------------|---------------------------------------------------------------------------|
+| `rai-identity.instructions.md`        | Agent identity, orchestration, state management, session recovery         |
+| `rai-license-posture.instructions.md` | RAI standards licensing posture, source-class mapping, attribution gating |
+
+| Skill           | Domain                                                                                                         |
+|-----------------|----------------------------------------------------------------------------------------------------------------|
+| `rai-planner`   | Risk classification, impact assessment, security model, capture coaching, and backlog handoff phase references |
+| `rai-standards` | NIST AI RMF 1.0 trustworthiness characteristics, subcategory mappings, framework isolation, AI STRIDE overlay  |
 
 ## State Management
 
