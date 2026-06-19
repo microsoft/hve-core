@@ -1,6 +1,6 @@
 ---
 description: "Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment"
-applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/docs/planning/adrs/**'
+applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/adr-plans/**, **/.copilot-tracking/dt/**, **/docs/planning/adrs/**'
 ---
 
 # Disclaimer Language
