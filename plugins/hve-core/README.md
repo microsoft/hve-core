@@ -3,7 +3,7 @@
 
 Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
-> **⚠️ Maturity** — This bundle includes stable, experimental assets. The experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
+> **⚠️ Maturity** — This bundle includes stable, preview, experimental assets. The preview and experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
 
 ## Overview
 
@@ -70,12 +70,14 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **hve-core/pull-request**    | Pull request description generation and creation via diff analysis, subagent review, and MCP tools                                                                                                                                                          |
 | **hve-core/writing-style**   | Writing style conventions for voice, tone, and language in markdown content                                                                                                                                                                                 |
 | **shared/hve-core-location** | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| **shared/telemetry-overlay** | Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts                                                                                                       |
 
 ### Skills
 
-| Name             | Description                                                                                                                                                                                                                                                                                      |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **pr-reference** | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| Name                      | Description                                                                                                                                                                                                                                                                                      |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

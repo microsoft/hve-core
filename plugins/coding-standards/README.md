@@ -3,7 +3,7 @@
 
 Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
-> **⚠️ Maturity** — This bundle includes stable, experimental assets. The experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
+> **⚠️ Maturity** — This bundle includes stable, preview, experimental assets. The preview and experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
 
 ## Overview
 
@@ -50,13 +50,15 @@ Enforce language-specific coding conventions and best practices across your proj
 | **coding-standards/terraform/terraform**          | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                      |
 | **coding-standards/uv-projects**                  | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
 | **shared/hve-core-location**                      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| **shared/telemetry-overlay**                      | Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts                                                                                                       |
 
 ### Skills
 
-| Name                    | Description                                                                                                                                                                                                                                                                                      |
-|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **pr-reference**        | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
-| **python-foundational** | Foundational Python best practices, idioms, and code quality fundamentals                                                                                                                                                                                                                        |
+| Name                      | Description                                                                                                                                                                                                                                                                                      |
+|---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
+| **python-foundational**   | Foundational Python best practices, idioms, and code quality fundamentals                                                                                                                                                                                                                        |
+| **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

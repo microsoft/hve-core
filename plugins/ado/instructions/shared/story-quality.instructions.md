@@ -1,0 +1,1 @@
+../../../../.github/instructions/shared/story-quality.instructions.md

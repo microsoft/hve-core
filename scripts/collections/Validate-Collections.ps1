@@ -397,6 +397,187 @@ function Test-AgentHandoffNameReferences {
     return ,$diagnostics
 }
 
+function Test-SharedDependencyClosure {
+    <#
+    .SYNOPSIS
+        Validates that every themed collection ships the shared instructions and
+        skills its own artifacts reference.
+
+    .DESCRIPTION
+        Shared assets live under .github/instructions/shared/ and
+        .github/skills/shared/ and are consumed by artifacts in multiple themed
+        collections. A consumer references a shared asset by concrete path, by a
+        repository-relative shared/<name>.instructions.md path, or by a
+        backtick-delimited bare name. For each consumer that references a shared
+        asset, this check requires every collection shipping the consumer to also
+        ship the referenced shared asset. Membership in 'hve-core-all' never
+        satisfies a themed collection's requirement.
+
+        A consumer may opt out of a specific dependency by declaring an
+        'externalDependencies' list on its manifest item node, naming the shared
+        asset paths that are intentionally provided outside the collection.
+
+    .PARAMETER RepoRoot
+        Absolute path to the repository root directory.
+
+    .PARAMETER ItemOccurrences
+        Map of item key to the list of collection occurrences accumulated during
+        validation. Each occurrence exposes CollectionId, Kind, Path, and Maturity.
+
+    .PARAMETER CoreManifest
+        Parsed core manifest used to read optional 'externalDependencies' opt-outs.
+
+    .OUTPUTS
+        [hashtable[]] Diagnostics with Collection, Severity, ErrorType, and
+        Message keys. Returns an empty array when every dependency is satisfied.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable[]])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$ItemOccurrences,
+
+        [Parameter(Mandatory = $true)]
+        [object]$CoreManifest
+    )
+
+    $diagnostics = @()
+
+    # Per-consumer membership: Path -> @{ Kind; Collections = set of collection ids }.
+    # Occurrences with maturity 'removed' are tombstones excluded from every projected
+    # collection and are skipped.
+    $consumerInfo = @{}
+    foreach ($itemKey in $ItemOccurrences.Keys) {
+        foreach ($occ in $ItemOccurrences[$itemKey]) {
+            if ($occ.Maturity -eq 'removed') {
+                continue
+            }
+            if ([string]::IsNullOrWhiteSpace($occ.Path)) {
+                continue
+            }
+            if (-not $consumerInfo.ContainsKey($occ.Path)) {
+                $consumerInfo[$occ.Path] = @{
+                    Kind        = $occ.Kind
+                    Collections = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+                }
+            }
+            [void]$consumerInfo[$occ.Path].Collections.Add($occ.CollectionId)
+        }
+    }
+
+    # Shared-asset index limited to shared instructions and skills.
+    $sharedAssets = @()
+    foreach ($path in $consumerInfo.Keys) {
+        if ($path -match '^\.github/instructions/shared/.+\.instructions\.md$') {
+            $name = [System.IO.Path]::GetFileName($path) -replace '\.instructions\.md$', ''
+            $sharedAssets += @{ Path = $path; Kind = 'instruction'; Name = $name; Collections = $consumerInfo[$path].Collections }
+        }
+        elseif ($path -match '^\.github/skills/shared/[^/]+$') {
+            $name = ($path -split '/')[-1]
+            $sharedAssets += @{ Path = $path; Kind = 'skill'; Name = $name; Collections = $consumerInfo[$path].Collections }
+        }
+    }
+
+    if ($sharedAssets.Count -eq 0) {
+        return ,$diagnostics
+    }
+
+    # Opt-outs: consumer path -> set of externalized shared asset paths.
+    $externalized = @{}
+    foreach ($kindSection in @('agents', 'prompts', 'instructions', 'skills')) {
+        $section = Get-CoreManifestProperty -InputObject $CoreManifest -Name $kindSection
+        if ($null -eq $section) {
+            continue
+        }
+        foreach ($itemPath in (Get-CoreManifestKeys -InputObject $section)) {
+            $node = Get-CoreManifestProperty -InputObject $section -Name $itemPath
+            $ext = Get-CoreManifestProperty -InputObject $node -Name 'externalDependencies'
+            if (-not $ext) {
+                continue
+            }
+            $consumerPath = ConvertTo-CoreManifestRelativePath -Path ([string]$itemPath)
+            $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+            foreach ($e in @($ext)) {
+                $normalized = ConvertTo-CoreManifestRelativePath -Path ([string]$e)
+                if (-not [string]::IsNullOrWhiteSpace($normalized)) {
+                    [void]$set.Add($normalized)
+                }
+            }
+            $externalized[$consumerPath] = $set
+        }
+    }
+
+    $contentCache = @{}
+
+    foreach ($consumerPath in ($consumerInfo.Keys | Sort-Object)) {
+        $consumer = $consumerInfo[$consumerPath]
+
+        if (-not $contentCache.ContainsKey($consumerPath)) {
+            $resolved = Join-Path -Path $RepoRoot -ChildPath $consumerPath
+            $text = ''
+            if ($consumer.Kind -eq 'skill') {
+                if (Test-Path -Path $resolved -PathType Container) {
+                    $mdFiles = Get-ChildItem -Path $resolved -Filter '*.md' -File -Recurse -ErrorAction SilentlyContinue
+                    $parts = foreach ($md in $mdFiles) { Get-Content -Path $md.FullName -Raw }
+                    $text = ($parts -join "`n")
+                }
+            }
+            elseif (Test-Path -Path $resolved -PathType Leaf) {
+                $text = Get-Content -Path $resolved -Raw
+            }
+            $contentCache[$consumerPath] = [string]$text
+        }
+
+        $content = $contentCache[$consumerPath]
+        if ([string]::IsNullOrEmpty($content)) {
+            continue
+        }
+
+        foreach ($shared in $sharedAssets) {
+            if ($shared.Path -eq $consumerPath) {
+                continue
+            }
+
+            $referenced = $false
+            if ($content.Contains($shared.Path)) {
+                $referenced = $true
+            }
+            elseif ($shared.Kind -eq 'instruction' -and $content.Contains("shared/$($shared.Name).instructions.md")) {
+                $referenced = $true
+            }
+            elseif ($content -match ('`' + [regex]::Escape($shared.Name) + '`')) {
+                $referenced = $true
+            }
+            if (-not $referenced) {
+                continue
+            }
+
+            if ($externalized.ContainsKey($consumerPath) -and $externalized[$consumerPath].Contains($shared.Path)) {
+                continue
+            }
+
+            foreach ($collectionId in ($consumer.Collections | Sort-Object)) {
+                if ($shared.Collections.Contains($collectionId)) {
+                    continue
+                }
+                $message = "collection '$collectionId' ships '$consumerPath' which references shared $($shared.Kind) '$($shared.Path)', but that dependency is missing from '$collectionId'"
+                $diagnostics += @{
+                    Collection = $collectionId
+                    Severity   = 'Error'
+                    ErrorType  = 'SharedDependencyNotInCollection'
+                    Message    = $message
+                }
+            }
+        }
+    }
+
+    return ,$diagnostics
+}
+
 #endregion Validation Helpers
 
 #region Orchestration
@@ -872,6 +1053,13 @@ function Invoke-CollectionValidation {
 
     $handoffDiagnostics = Test-AgentHandoffNameReferences -RepoRoot $RepoRoot
     foreach ($diag in $handoffDiagnostics) {
+        Write-Host "  FAIL $($diag.Message)" -ForegroundColor Red
+        Add-ValidationResult -Collection $diag.Collection -ErrorType $diag.ErrorType -Message $diag.Message -Severity $diag.Severity
+        $errorCount++
+    }
+
+    $closureDiagnostics = Test-SharedDependencyClosure -RepoRoot $RepoRoot -ItemOccurrences $itemOccurrences -CoreManifest $coreManifest
+    foreach ($diag in $closureDiagnostics) {
         Write-Host "  FAIL $($diag.Message)" -ForegroundColor Red
         Add-ValidationResult -Collection $diag.Collection -ErrorType $diag.ErrorType -Message $diag.Message -Severity $diag.Severity
         $errorCount++

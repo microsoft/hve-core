@@ -44,9 +44,10 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 
 ### Instructions
 
-| Name                         | Description                                                                                                                                                                                                                                                 |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **shared/hve-core-location** | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Name                           | Description                                                                                                                                                                                                                                                 |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **shared/disclaimer-language** | Centralized disclaimer language for AI-assisted planning agents requiring professional review acknowledgment                                                                                                                                                |
+| **shared/hve-core-location**   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills
 
@@ -56,6 +57,7 @@ Coaching identity, quality constraints, and methodology instructions for AI-enha
 | **dt-curriculum**          | Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice                                                                                                    |
 | **dt-methods**             | Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG) |
 | **dt-rpi-integration**     | Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation                                                                                                               |
+| **telemetry-foundations**  | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                                                    |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->
 

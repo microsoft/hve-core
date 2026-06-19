@@ -9,6 +9,7 @@
     "commands/design-thinking/"
   ],
   "skills": [
-    "skills/design-thinking/"
+    "skills/design-thinking/",
+    "skills/shared/"
   ]
 }

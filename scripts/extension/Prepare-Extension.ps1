@@ -548,7 +548,7 @@ function New-CollectionReadme {
 
     if ($Collection.ContainsKey('items')) {
         foreach ($item in $Collection.items) {
-            if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+            if (-not $item.Contains('kind') -or -not $item.Contains('path')) {
                 continue
             }
             $maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
@@ -835,7 +835,7 @@ function Get-CollectionArtifacts {
     }
 
     foreach ($item in $Collection.items) {
-        if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
+        if (-not $item.Contains('kind') -or -not $item.Contains('path')) {
             continue
         }
 

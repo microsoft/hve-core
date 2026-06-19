@@ -1428,6 +1428,7 @@ instructions:
     path: .github/instructions/shared/coaching-patterns.instructions.md
     maturity: stable
     collections:
+    - data-science
     - hve-core-all
     - project-planning
     - security
@@ -1435,6 +1436,8 @@ instructions:
     path: .github/instructions/shared/disclaimer-language.instructions.md
     maturity: stable
     collections:
+    - data-science
+    - design-thinking
     - hve-core-all
     - project-planning
     - security
@@ -1455,18 +1458,27 @@ instructions:
     path: .github/instructions/shared/planner-identity-base.instructions.md
     maturity: preview
     collections:
+    - data-science
     - hve-core-all
+    - project-planning
+    - security
   .github/instructions/shared/story-quality.instructions.md:
     path: .github/instructions/shared/story-quality.instructions.md
     maturity: stable
     collections:
+    - ado
     - hve-core-all
     - project-planning
   .github/instructions/shared/telemetry-overlay.instructions.md:
     path: .github/instructions/shared/telemetry-overlay.instructions.md
     maturity: preview
     collections:
+    - coding-standards
+    - data-science
+    - hve-core
     - hve-core-all
+    - project-planning
+    - security
 skills:
   .github/skills/accessibility/aria-apg:
     path: .github/skills/accessibility/aria-apg
@@ -1676,12 +1688,21 @@ skills:
     path: .github/skills/shared/backlog-templates
     maturity: experimental
     collections:
+    - data-science
     - hve-core-all
+    - project-planning
+    - security
   .github/skills/shared/telemetry-foundations:
     path: .github/skills/shared/telemetry-foundations
     maturity: preview
     collections:
+    - coding-standards
+    - data-science
+    - design-thinking
+    - hve-core
     - hve-core-all
+    - project-planning
+    - security
 releases:
   hve-core-all:
     channel: stable

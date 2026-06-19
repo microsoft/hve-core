@@ -75,11 +75,16 @@ BeforeAll {
                         }
                     }
                     else {
-                        $sections[$section][$path] = [ordered]@{
+                        $entry = [ordered]@{
                             path        = $path
                             maturity    = [string]$item.maturity
                             collections = @($id)
                         }
+                        $sections[$section][$path] = $entry
+                    }
+
+                    if ($item.Contains('externalDependencies') -and $null -ne $item.externalDependencies) {
+                        $entry['externalDependencies'] = @($item.externalDependencies)
                     }
                 }
             }
@@ -1235,5 +1240,234 @@ Describe 'Invoke-CollectionValidation - MissingPrereleaseDescription diagnostic'
 
         $result.Success | Should -BeFalse
         @($result.Results | Where-Object { $_.ErrorType -eq 'InvalidDescriptions' }).Count | Should -BeGreaterOrEqual 1
+    }
+}
+
+Describe 'Invoke-CollectionValidation - shared-dependency closure' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'shared-closure-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Shared instruction asset referenced via the relative shared/<name> form.
+        $sharedInstructionDir = Join-Path $script:repoRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $sharedInstructionDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedInstructionDir 'planner-identity-base.instructions.md') -Value @'
+---
+description: shared planner identity base
+---
+Base planner identity guidance.
+'@
+
+        # Shared skill asset referenced via its full repository path.
+        $backlogSkillDir = Join-Path $script:repoRoot '.github/skills/shared/backlog-templates'
+        New-Item -ItemType Directory -Path $backlogSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $backlogSkillDir 'SKILL.md') -Value '# Backlog Templates'
+
+        # Shared skill asset referenced via its backtick bare name.
+        $telemetrySkillDir = Join-Path $script:repoRoot '.github/skills/shared/telemetry-foundations'
+        New-Item -ItemType Directory -Path $telemetrySkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $telemetrySkillDir 'SKILL.md') -Value '# Telemetry Foundations'
+
+        # Consumer artifacts live in subdirectories so the repo-specific path check does not reject them.
+        $securityAgentsDir = Join-Path $script:repoRoot '.github/agents/security'
+        $dataScienceAgentsDir = Join-Path $script:repoRoot '.github/agents/data-science'
+        New-Item -ItemType Directory -Path $securityAgentsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $dataScienceAgentsDir -Force | Out-Null
+
+        # References planner-identity-base via the relative shared/<name> form.
+        Set-Content -Path (Join-Path $securityAgentsDir 'sec-planner.agent.md') -Value @'
+---
+description: security planner agent
+---
+Follow #file:../../instructions/shared/planner-identity-base.instructions.md for identity.
+'@
+
+        # References backlog-templates via the full skill path form.
+        Set-Content -Path (Join-Path $dataScienceAgentsDir 'ds-backlog.agent.md') -Value @'
+---
+description: data-science backlog agent
+---
+Use #file:.github/skills/shared/backlog-templates for templates.
+'@
+
+        # References telemetry-foundations via the backtick bare-name form.
+        Set-Content -Path (Join-Path $securityAgentsDir 'sec-telemetry.agent.md') -Value @'
+---
+description: security telemetry agent
+---
+Apply the `telemetry-foundations` skill conventions.
+'@
+
+        # References planner-identity-base but opts out via externalDependencies.
+        Set-Content -Path (Join-Path $dataScienceAgentsDir 'ds-optout.agent.md') -Value @'
+---
+description: data-science opt-out agent
+---
+Follow #file:../../instructions/shared/planner-identity-base.instructions.md for identity.
+'@
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Fails when a shared instruction (relative form) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(@{ path = '.github/agents/security/sec-planner.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'security'
+        $closure[0].Message | Should -Match 'planner-identity-base'
+    }
+
+    It 'Passes when the shared instruction also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(
+                    @{ path = '.github/agents/security/sec-planner.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Fails when a shared skill (full-path form) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(@{ path = '.github/agents/data-science/ds-backlog.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/skills/shared/backlog-templates'; kind = 'skill'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'data-science'
+        $closure[0].Message | Should -Match 'backlog-templates'
+    }
+
+    It 'Passes when the shared skill also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(
+                    @{ path = '.github/agents/data-science/ds-backlog.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/skills/shared/backlog-templates'; kind = 'skill'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Fails when a shared skill (backtick bare name) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(@{ path = '.github/agents/security/sec-telemetry.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/skills/shared/telemetry-foundations'; kind = 'skill'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'security'
+        $closure[0].Message | Should -Match 'telemetry-foundations'
+    }
+
+    It 'Passes when the shared skill referenced by bare name also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(
+                    @{ path = '.github/agents/security/sec-telemetry.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/skills/shared/telemetry-foundations'; kind = 'skill'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Passes when the consumer opts out of the shared dependency via externalDependencies' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(@{
+                        path                 = '.github/agents/data-science/ds-optout.agent.md'
+                        kind                 = 'agent'
+                        maturity             = 'stable'
+                        externalDependencies = @('.github/instructions/shared/planner-identity-base.instructions.md')
+                    })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
     }
 }
