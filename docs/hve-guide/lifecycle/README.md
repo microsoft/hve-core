@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-19
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
@@ -28,7 +28,7 @@ HVE Core supports a 9-stage project lifecycle, from initial setup through ongoin
 | Stage 4 | Decomposition      | 5           | ado-prd-to-wit, github-backlog-manager                                                          | [Decomposition](decomposition.md)           |
 | Stage 5 | Sprint Planning    | 9           | github-backlog-manager, agile-coach                                                             | [Sprint Planning](sprint-planning.md)       |
 | Stage 6 | Implementation     | 30          | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder       | [Implementation](implementation.md)         |
-| Stage 7 | Review             | 11          | task-reviewer, pr-review                                                                        | [Review](review.md)                         |
+| Stage 7 | Review             | 11          | task-reviewer, code-review                                                                      | [Review](review.md)                         |
 | Stage 8 | Delivery           | 9           | git-merge, ado-get-build-info                                                                   | [Delivery](delivery.md)                     |
 | Stage 9 | Operations         | 11          | doc-ops, prompt-builder, incident-response                                                      | [Operations](operations.md)                 |
 

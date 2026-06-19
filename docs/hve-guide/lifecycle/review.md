@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-19
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -32,7 +32,7 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | Tool                     | Type  | How to Invoke                             | Purpose                                  |
 |--------------------------|-------|-------------------------------------------|------------------------------------------|
 | task-reviewer            | Agent | Select **task-reviewer** agent            | Review implementation against the plan   |
-| pr-review                | Agent | Select **pr-review** agent                | Evaluate pull requests for quality       |
+| code-review              | Agent | Select **code-review** agent              | Evaluate pull requests for quality       |
 | test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
 
 ### Supporting Agents
@@ -92,7 +92,7 @@ Review today's changes to the authentication service against .copilot-tracking/p
 /ado-create-pull-request adoProject=hve-core baseBranch=origin/main isDraft=true workItemIds=54321,54322
 ```
 
-Select **pr-review** agent:
+Select **code-review** agent:
 
 ```text
 Review the open PR for the payment processing refactor, focusing on breaking changes to the /api/payments endpoint and any exposed credentials in configuration files

@@ -19,15 +19,22 @@ items:
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-accessibility.agent.md
+- path: .github/agents/coding-standards/code-review.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/coding-standards/code-review-full.agent.md
+- path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/coding-standards/code-review-functional.agent.md
+- path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-standards.agent.md
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/data-science/eval-dataset-creator.agent.md
@@ -57,8 +64,6 @@ items:
 - path: .github/agents/hve-core/doc-ops.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
-  kind: agent
-- path: .github/agents/hve-core/pr-review.agent.md
   kind: agent
 - path: .github/agents/hve-core/prompt-builder.agent.md
   kind: agent
@@ -144,6 +149,12 @@ items:
 - path: .github/agents/security/subagents/skill-assessor.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/security/subagents/supply-chain-skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/supply-chain-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-create-pull-request.prompt.md
@@ -161,11 +172,6 @@ items:
 - path: .github/prompts/ado/ado-triage-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
-  kind: prompt
-- path: .github/prompts/coding-standards/code-review-full.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
 - path: .github/prompts/data-science/synth-data-generate.prompt.md
   kind: prompt
@@ -512,6 +518,9 @@ items:
   kind: skill
   maturity: experimental
 - path: .github/skills/accessibility/wcag-22
+  kind: skill
+  maturity: experimental
+- path: .github/skills/coding-standards/code-review
   kind: skill
   maturity: experimental
 - path: .github/skills/coding-standards/python-foundational

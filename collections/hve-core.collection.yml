@@ -34,8 +34,6 @@ items:
   - path: .github/agents/hve-core/task-challenger.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/pr-review.agent.md
-    kind: agent
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md

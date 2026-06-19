@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-19
 ms.topic: how-to
 keywords:
   - engineer
@@ -107,7 +107,7 @@ with coding standards.
 | **task-implementor** | Phase-based code implementation                | [Task Implementor](../../rpi/task-implementor.md) |
 | **task-reviewer**    | Code review and quality validation             | [Task Reviewer](../../rpi/task-reviewer.md)       |
 | **rpi-agent**        | Full RPI orchestration in one agent            | [RPI Overview](../../rpi/)                        |
-| **pr-review**        | Pull request review automation                 | Agent file                                        |
+| **code-review**      | Pull request review automation                 | Agent file                                        |
 | **memory**           | Session context and preference persistence     | Agent file                                        |
 | **prompt-builder**   | Create and refine prompt engineering artifacts | Agent file                                        |
 

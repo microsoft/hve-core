@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-06-19
 ms.topic: overview
 keywords:
   - github copilot
@@ -38,7 +38,7 @@ The Research, Plan, Implement methodology separates complex tasks into specializ
 
 ## Code Review
 
-Three agents provide pre-PR code review on local branches. Code Review Functional catches logic errors, edge cases, and error handling gaps across five focus areas. Code Review Standards enforces project-defined conventions through dynamically loaded language skills. Code Review Full orchestrates both in a single pass and produces a merged, deduplicated report. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
+A single human-gated Code Review agent provides pre-PR review on local branches. It confirms scope with you, then dispatches the perspectives you choose, functional, standards, accessibility, security, and PR, each to a thin skill-backed subagent, and merges them into one deduplicated report. A depth tier (basic, standard, or comprehensive) controls how deeply each perspective verifies the change. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
 
 ## GitHub Backlog Management
 
