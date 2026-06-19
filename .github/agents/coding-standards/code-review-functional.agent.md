@@ -105,6 +105,7 @@ Use the following format for each finding:
 * Low issues section with all Low-severity findings.
 * Positive changes highlighting good practices observed in the branch.
 * Testing recommendations listing specific tests to add or update.
+* Professional Review Disclaimer displaying the Code-Review CAUTION block verbatim (see Step 3, step 8). Include this section in every presented report, including the no-issues case.
 * When no issues are found, include the executive summary, changed files overview, and positive changes with a confirmation that no functional issues were identified.
 
 ## Required Steps
@@ -169,6 +170,7 @@ When a `diff-state.json` path is provided in the input by an orchestrator:
 5. Include the changed files overview table.
 6. Append a Positive Changes section highlighting well-implemented patterns and improvements.
 7. Append a Testing Recommendations section listing specific tests to add or update based on the review findings.
+8. When presenting the markdown report to the user (standalone mode), append the Code-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Skip in orchestrated mode, where findings are written as JSON and the orchestrator emits the consolidated disclaimer.
 
 ### Step 4: Save Review
 

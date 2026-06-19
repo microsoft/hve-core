@@ -120,6 +120,7 @@ Use the following format for each finding:
 * Low issues section with all Low-severity findings.
 * Positive changes highlighting accessible patterns observed in the branch.
 * Testing recommendations listing specific assistive-technology checks to perform (screen reader, keyboard-only, zoom/reflow, contrast).
+* When presenting the markdown report to the user (standalone mode), append the Code-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Include this section in every presented report, including the no-issues case. Skip in orchestrated mode, where findings are written as JSON and the orchestrator emits the consolidated disclaimer.
 * When no UI surface is in scope, or no barriers are found, include the executive summary, changed files overview, and a confirmation that no accessibility issues were identified.
 
 ## Required Steps
