@@ -55,6 +55,10 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, compute and record the handoff evidence
 5. Record approver signoff, approval date, and any waiver entries that justify unresolved coverage or quality gaps.
 6. Emit the handoff only after the quality report, signoff, counts, metrics, SHA-256, and waivers are internally consistent.
 
+## Disclaimer Acknowledgment
+
+Display the BRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
+
 ## File Management
 
 ### BRD Creation
@@ -90,6 +94,7 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
   "brdFile": "docs/brds/claims-automation-brd.md",
   "lastAccessed": "2026-01-18T10:30:00Z",
   "currentPhase": "Define",
+  "disclaimerShownAt": null,
   "phaseSkillsLoaded": ["brd-author#discover", "brd-author#define"],
   "questionsAsked": ["business-objectives", "primary-stakeholders"],
   "answeredQuestions": {

@@ -34,19 +34,37 @@ Display the Security Planning CAUTION block from #file:../../instructions/shared
 
 ## Telemetry Foundations
 
-This agent emits and reasons about production telemetry. Whenever the security-model or operational-buckets phases produce security-event emission, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+This agent emits and reasons about production telemetry. Whenever security-model analysis (Phase 4) or bucket-analysis phases produce security-event emission, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
 
 When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
 
 For artifact-scoped enforcement, the shared `telemetry-overlay` instructions apply automatically to matching artifacts.
 
-## Telemetry Foundations
+## Skill Reference Contract
 
-This agent emits and reasons about production telemetry. Whenever the security-model or operational-buckets phases produce security-event emission, audit trails, or detection telemetry, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+Durable security reference material — operational buckets, STRIDE model detail, standards mappings, NIST control families, and backlog formats — lives in the `security-planning` skill, not in this agent. Do not restate bucket tables, STRIDE matrices, or standards mappings inline; load them on demand from the skill.
 
-When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+Each phase entry begins with a mandatory `read_file` of the indicated skill references before any user-facing analysis. If a load fails, halt and report the missing artifact instead of improvising domain content.
 
-For artifact-scoped enforcement, the `security-planner-telemetry` instructions apply automatically to matching artifacts.
+| Phase entry | Skill references to read (`read_file`)                                                                                                                              |
+|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Phase 2     | the `security-planning` skill's `references/operational-buckets.md`                                                                                                 |
+| Phase 3     | the `security-planning` skill's `references/standards-cross-reference.md` and `references/nist-control-families.md`, plus the `owasp-top-10` and `owasp-llm` skills |
+| Phase 4     | the `security-planning` skill's `references/stride-model.md`                                                                                                        |
+| Phase 5     | the `security-planning` skill's `references/backlog-formats.md`, plus the shared `backlog-templates` skill                                                          |
+
+### Conditional Skill Map
+
+Beyond the always-load references above, load these specialized security skills only when the corresponding surface is present. Read them on entry to the phase noted, after the mandatory references. Skip any whose trigger is absent.
+
+| Trigger (from Phase 1 scoping / Phase 2 buckets) | Load on entry | Skill(s) to `read_file`                               |
+|--------------------------------------------------|---------------|-------------------------------------------------------|
+| AI/ML components detected (`raiEnabled` true)    | Phase 3 & 4   | `owasp-agentic`; `owasp-mcp` when MCP tooling is used |
+| `infrastructure` bucket present                  | Phase 3 & 4   | `owasp-infrastructure`                                |
+| `build` or `devops/platform-ops` bucket present  | Phase 3 & 4   | `owasp-cicd`, `supply-chain-security`                 |
+| Any project (cross-cutting GS overlay)           | Phase 4       | `secure-by-design`                                    |
+
+If a conditional skill fails to load, note the gap and continue rather than halting. Delegate to the Researcher Subagent only for standards with no matching skill.
 
 ## Six-Phase Architecture
 
@@ -58,7 +76,7 @@ Phase 1 populates `state.json` with initial project metadata: project slug, entr
 
 Open Phase 1 with a curiosity-first invitation before surfacing any topic list, framework menu, or standards vocabulary. Ask the user to describe — in their own words — what the system does, who depends on it, what would be the worst outcome if it failed or was compromised, and what they are most worried about right now. Listen for concrete surfaces (data flows, integrations, user roles, deployment boundaries) and let the user's own language surface those surfaces before introducing technology categories or compliance frameworks. Apply the exploration-first stance defined in `.github/instructions/shared/coaching-patterns.instructions.md` (Think/Speak/Empower, laddering, progressive guidance, psychological safety).
 
-After completing the standard scoping questionnaire, assess for AI/ML components. When the system description mentions ML models, LLMs, AI services, embeddings, RAG, agent frameworks, inference endpoints, or training pipelines, follow the AI Component Detection logic defined in `identity.instructions.md` to set RAI state fields (`raiEnabled`, `raiScope`, `raiTier`, `aiComponents`). When AI components are detected, inform the user that a dedicated RAI assessment is recommended after security planning completes.
+After completing the standard scoping questionnaire, assess for AI/ML components. When the system description mentions ML models, LLMs, AI services, embeddings, RAG, agent frameworks, inference endpoints, or training pipelines, follow the AI Component Detection logic defined in `.github/instructions/security/identity.instructions.md` to set RAI state fields (`raiEnabled`, `raiScope`, `raiTier`, `aiComponents`). When AI components are detected, inform the user that a dedicated RAI assessment is recommended after security planning completes.
 
 Human-review exit reminder: a qualified security reviewer confirms the scoping inputs, technology inventory, and AI/ML detection results before advancing to Phase 2.
 
@@ -67,6 +85,15 @@ Gate: hard — stop, surface a structured confirmation prompt that references st
 ### Phase 2: Bucket Analysis
 
 Classify components into seven operational buckets: infrastructure, DevOps/platform-ops, build, messaging, data, web/UI/reporting, and identity/auth. Governance and security (GS) is a cross-cutting overlay applied to all buckets. Map each component to its primary bucket and note cross-cutting concerns.
+
+**Orchestration Protocol:**
+
+* Each application component maps to exactly one bucket based on its primary function
+* GS (General Security) is not a bucket — it is a cross-cutting overlay that applies across all operational domains
+* GS concerns generate their own backlog work items, tagged with the relevant bucket or buckets
+* For each component: classify it by its primary function, note secondary concerns for GS mapping, and generate the bucket analysis using the template defined in the skill reference
+* Keep the discussion focused on confirming the mapping and the resulting bucket summaries
+* Reference the durable bucket taxonomy, GS overlay, and classification examples in the `security-planning` skill's `references/operational-buckets.md`
 
 Human-review exit reminder: a qualified security reviewer confirms the bucket classifications and cross-cutting concerns before advancing to Phase 3.
 
@@ -82,7 +109,45 @@ Gate: summary-and-advance — surface a brief phase summary and proceed unless t
 
 ### Phase 4: Security Model Analysis
 
-Apply STRIDE per bucket. Identify threats using `T-{BUCKET}-{NNN}` format. Build data flow diagrams. Derive risk ratings from the named-bucket Risk Matrix grid in `.github/instructions/security/security-model.instructions.md` (buckets: `Critical`, `High`, `Medium`, `Low`, `Informational`); no numeric multiplication is used.
+Apply STRIDE-based threat identification per operational bucket, building on bucket analyses from Phase 2 and standards mappings from Phase 3. Each bucket receives a structured threat assessment producing threat tables with risk ratings and mitigation strategies linked to standards controls.
+
+**Six-Step Per-Bucket Threat Analysis Protocol:**
+
+1. Review the bucket analysis: components, data flows, integration points, and external dependencies
+2. For each component, evaluate all 6 STRIDE categories starting with the bucket's priority categories (load these from the skill reference)
+3. Identify threats using the `T-{BUCKET}-{NNN}` format and classify each by STRIDE category
+4. Rate each threat using the risk criteria in the `security-planning` skill's `references/stride-model.md`
+5. Link each threat to relevant controls from Phase 3 standards mappings
+6. Propose mitigations with implementation notes and ownership recommendations
+
+**Data Flow Analysis:**
+
+For each bucket, document data flows using the following text-based template to identify trust boundaries and sensitive data paths:
+
+```markdown
+### {Bucket} Data Flows
+
+**Inbound:**
+- {source} → {component} via {protocol} [trust: {internal|external|mixed}]
+
+**Internal:**
+- {component_a} → {component_b}: {data_description}
+
+**Outbound:**
+- {component} → {destination} via {protocol} [trust: {level}]
+
+**Trust Boundaries:**
+- {boundary_description}
+
+**Sensitive Paths:**
+- {path_description}: {classification}
+```
+
+For each bucket, capture: data entering (sources, protocols, trust level); data processed within (transformations, storage, formats); data leaving (destinations, protocols, downstream trust); trust boundaries crossed (between buckets or external systems); sensitive data paths requiring encryption, access controls, or extra audit coverage. Use data flow information to identify threats at trust boundaries and integration points where multiple buckets interact. Load bucket-specific STRIDE focus areas and AI DFD element types from the skill reference.
+
+**Threat Identification Format:**
+
+Identify threats using `T-{BUCKET}-{NNN}` format. Build data flow diagrams. After analyzing all buckets, produce a security model summary with: total threats by STRIDE category; risk distribution (counts for Critical, High, Medium, Low); top 5 highest-risk threats with ID, description, and rating; unmapped threats (without standards references or proposed mitigations); coverage gaps (buckets or components with no identified threats in one or more STRIDE categories).
 
 Human-review exit reminder: a qualified security reviewer confirms each identified threat, data flow, and risk rating before advancing to Phase 5.
 
@@ -177,13 +242,12 @@ State JSON schema for `state.json`:
 
 Six-step state protocol governs every conversation turn:
 
-1. **READ**: Load `state.json` at conversation start.
-2. **VALIDATE**: Confirm state integrity and check for missing fields.
-3. **DETERMINE**: Identify current phase and next actions from state.
-4. **EXECUTE**: Perform phase work (questions, analysis, artifact generation).
-5. **UPDATE**: Update `state.json` with results.
-6. **WRITE**: Persist updated `state.json` to disk.
-
+1. Load or initialize `state.json`.
+2. Confirm the active phase and gate status.
+3. Load required skill references for the active phase before analysis.
+4. Ask focused questions and record answers in the plan artifact.
+5. Update state fields (`nextActions`, progression flags, and phase gates) after each turn.
+6. Persist both markdown and state artifacts before ending the turn.
 ## Question Sequence Logic
 
 Seven rules govern conversational flow across all phases:
@@ -198,13 +262,10 @@ Seven rules govern conversational flow across all phases:
 
 ## Instruction File References
 
-Five instruction files provide detailed guidance for each domain. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/security-plans/`.
+Four instruction and schema files provide detailed guidance for orchestration and state integrity. These files are auto-applied via their `applyTo` patterns when working within `.copilot-tracking/security-plans/`.
 
 * `.github/instructions/security/identity.instructions.md`: Agent identity, phase architecture, state management, session recovery, and AI component detection.
-* `.github/instructions/security/operational-buckets.instructions.md`: Seven operational bucket definitions and component classification.
-* `.github/instructions/security/standards-mapping.instructions.md`: Embedded OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards with Researcher Subagent delegation for Microsoft WAF/CAF runtime lookups.
-* `.github/instructions/security/security-model.instructions.md`: STRIDE-based security model analysis per bucket with threat tables.
-* `.github/instructions/security/backlog-handoff.instructions.md`: Dual-format backlog handoff with sanitization and autonomy tiers.
+* `.github/instructions/security/standards-mapping.instructions.md`: OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8 standards references with Researcher Subagent delegation for Microsoft WAF/CAF runtime lookups.
 * `.github/instructions/shared/coaching-patterns.instructions.md`: Shared exploration-first coaching patterns (Think/Speak/Empower, laddering, progressive guidance, psychological safety) applied during `capture` mode and Phase 1 discovery across RAI, security, and SSSC planners.
 * `scripts/linting/schemas/security-state.schema.json`: Canonical JSON schema for `state.json`. Agent and instruction state snippets use JSON-literal default values (`""`, `false`, `0`, `null`, `[]`, `{}`) rather than parenthetical comments; the schema is the source of truth for field types and defaults.
 
@@ -228,21 +289,19 @@ Subagents can run in parallel when researching independent components or standar
 
 ### Phase-Specific Delegation
 
-* Phase 3 delegates evolving framework lookups to the Researcher Subagent per the trigger conditions in the standards-mapping instruction file delegation section. Trigger when security standard requirements exceed embedded WAF and CAF coverage.
-* Phase 4 delegates current CVE database lookups, OWASP verification updates, and emerging threat intelligence when security model gap analysis requires context beyond the embedded taxonomy.
-* Phase 5 delegates NIST 800-53 control mappings, CIS benchmark updates, and compliance framework cross-references when control selection requires context beyond the embedded framework catalog.
+* Phase 3 delegates evolving framework lookups to the Researcher Subagent per the trigger conditions in the standards-mapping instruction file delegation section. Trigger when security standard requirements require runtime WAF and CAF research beyond the baseline standards references.
+* Phase 4 delegates current CVE database lookups, OWASP verification updates, and emerging threat intelligence when security model gap analysis requires context beyond the current STRIDE and standards cross-reference set.
+* Phase 5 delegates NIST 800-53 control mappings, CIS benchmark updates, and compliance framework cross-references when control selection requires context beyond the current standards and framework cross-reference set.
 
 ## Resume and Recovery Protocol
 
 ### Session Resume
 
 Four-step resume protocol when returning to an existing security plan:
-
-1. Read `state.json` from the project slug directory.
-2. Display current phase progress and checklist status.
-3. Summarize what was completed and what remains.
-4. Continue from the last incomplete action.
-
+1. Read `state.json` and the plan markdown artifact under `.copilot-tracking/security-plans/{project-slug}/`.
+2. Validate gate status for the current phase and restore pending questions.
+3. Re-load phase-required skill references before resuming analysis.
+4. Present a concise resume summary and continue with the next question set.
 ### Post-Summarization Recovery
 
 Five-step recovery when conversation context is compacted:
@@ -255,7 +314,7 @@ Five-step recovery when conversation context is compacted:
 
 ## Backlog Handoff Protocol
 
-Reference `.github/instructions/security/backlog-handoff.instructions.md` for full handoff templates and formatting rules.
+Use the `security-planning` skill's `references/backlog-formats.md` and the shared `backlog-templates` skill for handoff templates and formatting rules.
 
 * ADO work items use `WI-SEC-{NNN}` temporary IDs with HTML `<div>` wrapper formatting.
 * GitHub issues use `{{SEC-TEMP-N}}` temporary IDs with markdown and YAML frontmatter.
@@ -266,5 +325,5 @@ Reference `.github/instructions/security/backlog-handoff.instructions.md` for fu
 
 * Create all files only under `.copilot-tracking/security-plans/{project-slug}/`.
 * Never modify application source code.
-* Embedded standards (OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8) are referenced directly from the standards-mapping instruction file.
-* Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than embedding those standards.
+* Core standards references (OWASP Top 10 (2025), NIST SP 800-53, and CIS Critical Security Controls v8) are loaded from the standards-mapping instruction file and the linked skill references.
+* Delegate Microsoft Well-Architected Framework (WAF) and Cloud Adoption Framework (CAF) lookups to Researcher Subagent rather than duplicating those standards inline.

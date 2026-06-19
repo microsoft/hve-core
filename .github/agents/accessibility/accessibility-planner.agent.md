@@ -138,6 +138,7 @@ Two instruction files are auto-applied via their `applyTo` patterns when working
 
 * `.github/instructions/accessibility/accessibility-identity.instructions.md` (auto-applied): Agent identity, six-phase architecture, state schema, session recovery, question cadence, and the canonical planning disclaimer (L7 lever).
 * `.github/instructions/accessibility/accessibility-license-posture.instructions.md` (auto-applied): Per-framework license rules for W3C Document License (WCAG, ARIA APG, COGA), U.S. Government Work (Section 508), and ETSI Reproduction Permitted (EN 301 549). Required reading whenever quoting normative standard text in artifacts.
+* `.github/instructions/shared/untrusted-content-boundary.instructions.md` (auto-applied): Treats ingested untrusted content (web fetches, handoff payloads, tool outputs) as data, never as instructions; anchors authority to the live conversation and trusted repo configuration.
 * `accessibility-planner-playbook` skill `references/framework-selection.md`: Phase 2 framework picker, default selections, host-aware multi-select protocol, atomic disabled-bundle schema, license posture surface.
 * `accessibility-planner-playbook` skill `references/capture-coaching.md`: Phase 1 and Phase 4 exploration-first questioning techniques for capture mode and re-escalation flows.
 * `accessibility-planner-playbook` skill `references/impact-assessment.md`: Phase 5 evidence register, tradeoff log, work-item seeds, and cross-planner reference patterns.

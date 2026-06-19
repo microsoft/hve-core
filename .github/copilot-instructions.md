@@ -222,6 +222,8 @@ Agents should use npm scripts for all validation:
 * `npm run lint:py` - Python linting via ruff
 * `npm run lint:models` - Model reference validation against catalog
 * `npm run lint:models:refresh` - Refresh model catalog from upstream documentation
+* `npm run lint:permissions` - Workflow permissions validation
+* `npm run lint:dependency-pinning` - Dependency pinning and SHA staleness validation
 * `npm run lint:all` - Run all linters (chains `format:tables`, `lint:md`, `lint:ps`, `lint:yaml`, `lint:json`, `lint:links`, `lint:frontmatter`, `lint:adr-consistency`, `lint:collections-metadata`, `lint:marketplace`, `lint:version-consistency`, `lint:permissions`, `lint:dependency-pinning`, `lint:ps-module-pins`, `lint:py`, `validate:skills`, `lint:ai-artifacts`, `lint:models`, `eval:lint:vally`, `eval:lint:schema`, `eval:lint:text`, `eval:lint:safety`, and `validate:devcontainer-lockfile`)
 * `npm run validate:copyright` - Copyright header validation
 * `npm run validate:devcontainer-lockfile` - Devcontainer lockfile integrity validation

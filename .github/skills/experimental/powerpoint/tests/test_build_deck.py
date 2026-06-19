@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from build_deck import (
+    EXIT_ERROR,
     ContentExtraError,
     _reset_effect_ref,
     _validate_content_extra,
@@ -1392,7 +1393,7 @@ class TestMain:
         mock_prs.save.assert_called_once_with(str(output))
 
     def test_full_build_no_slides(self, mocker, tmp_path):
-        """No slide directories found exits with code 1."""
+        """No slide directories found returns EXIT_ERROR."""
         empty_content = tmp_path / "content"
         empty_content.mkdir()
         style_file = tmp_path / "style.yaml"
@@ -1417,10 +1418,7 @@ class TestMain:
                 str(output),
             ],
         )
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-
-        assert exc_info.value.code == 1
+        assert main() == EXIT_ERROR
         mock_build_slide.assert_not_called()
 
     def test_full_build_with_metadata(self, mocker, tmp_path):
@@ -1523,10 +1521,7 @@ class TestMain:
                 str(template),
             ],
         )
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-
-        assert exc_info.value.code == 1
+        assert main() == EXIT_ERROR
 
     def test_partial_rebuild(self, mocker, tmp_path):
         content_dir, style_file = self._setup_content_dir(tmp_path)
