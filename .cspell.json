@@ -25,6 +25,7 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
+    "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
     "evals/results/**",
     "evals/beval/**/results/**"
@@ -66,9 +67,12 @@
     "general-technical"
   ],
   "words": [
+    "activedescendant",
     "agentic",
     "aoda",
     "atheris",
+    "cursored",
+    "networkidle",
     "behaviour",
     "beval",
     "behavioural",

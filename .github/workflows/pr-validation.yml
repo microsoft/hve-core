@@ -185,8 +185,10 @@ jobs:
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
+      id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
       soft-fail: false
+      changed-files-only: true
 
   frontmatter-validation:
     name: Frontmatter Validation
@@ -273,6 +275,14 @@ jobs:
       soft-fail: false
       upload-sarif: true
       upload-artifact: false
+
+  devcontainer-lockfile-check:
+    name: Devcontainer Lockfile Integrity
+    uses: ./.github/workflows/devcontainer-lockfile-check.yml
+    permissions:
+      contents: read
+    with:
+      soft-fail: false
 
   workflow-permissions-check:
     name: Workflow Permissions Check

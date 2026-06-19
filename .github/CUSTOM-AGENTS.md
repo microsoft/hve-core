@@ -74,6 +74,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | Agent                      | Purpose                                                               | Key Constraint                                            |
 |----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
 | **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
+| **pr-walkthrough**         | Narrative PR orientation that builds a reviewer's mental model        | Orientation-only; never renders judgments; experimental   |
 | **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
 | **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
 | **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |

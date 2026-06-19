@@ -3,7 +3,7 @@ title: Dependency Pinning
 description: How HVE Core enforces dependency pinning across GitHub Actions, npm, pip, and shell downloads with automated CI validation
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-02
+ms.date: 2026-06-08
 ms.topic: concept
 keywords:
   - dependency pinning
@@ -78,6 +78,40 @@ GitHub Actions references must use full 40-character commit SHAs because action 
 ```
 
 The scanner validates that the SHA is a real 40-character hexadecimal string and optionally checks staleness against the GitHub API.
+
+## DevContainer Features: Lockfile Integrity
+
+DevContainer features declared in `.devcontainer/devcontainer.json` are pinned through a lockfile (`devcontainer-lock.json`) that records the exact version, OCI digest, and SHA-256 integrity hash for each feature. This follows the [devcontainer lockfile spec](https://github.com/devcontainers/spec/blob/main/docs/specs/devcontainer-lockfile.md), modeled after `package-lock.json`.
+
+### What Is Validated
+
+The `devcontainer-lockfile-check.yml` workflow enforces three checks during PR validation:
+
+| Check              | Failure Condition                                                          |
+|--------------------|----------------------------------------------------------------------------|
+| Lockfile existence | `devcontainer-lock.json` is absent from the repository                     |
+| SHA-256 integrity  | A feature entry is missing `resolved` or `integrity` with `sha256:` prefix |
+| Feature coverage   | A feature in `devcontainer.json` has no corresponding lockfile entry       |
+
+### Lockfile Format
+
+Each feature entry records the resolved OCI reference and integrity hash:
+
+```json
+{
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46...",
+      "integrity": "sha256:8c0de46..."
+    }
+  }
+}
+```
+
+### Regenerating the Lockfile
+
+Rebuild the dev container to regenerate the lockfile. In VS Code, use the **Dev Containers: Rebuild Container** command. Commit the updated `devcontainer-lock.json` alongside any changes to `devcontainer.json`.
 
 ## pip: Exact-Version Pinning
 

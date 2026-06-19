@@ -81,7 +81,7 @@ Most skills are pure authoring or validation helpers with no independent Respons
 
 HVE Core is built for these situations:
 
-* **Faster starts for engineers, field teams, and other GitHub Copilot users.** Agents and prompts capture common workflows (research, planning, implementation, review, discovery) so starting a task with Copilot takes less setup.
+* **Ready-made starting points for engineers, field teams, and other GitHub Copilot users.** Agents and prompts capture common workflows (research, planning, implementation, review, discovery) so you begin a task with structure already in place instead of authoring it from scratch.
 * **Consistent coding standards through Copilot.** Per-language instructions and code-review agents bring shared guidance into Copilot when you work in C#, Python, PowerShell, Rust, Bash, Bicep, Terraform, and related stacks.
 * **Help with governance-aware planning.** The RAI Planner, Security Planner, and SSSC Planner help teams structure assessments aligned with the NIST AI RMF, STRIDE, and the OpenSSF Scorecard family. These agents produce drafts; a qualified person must review and approve every output.
 * **Backlog help for Azure DevOps, GitHub Issues, GitLab, and Jira.** Agents can search, draft, triage, and prepare updates for a human to review and approve.
@@ -107,6 +107,7 @@ Legal and regulatory considerations. Organizations need to evaluate potential sp
 
 HVE Core is a set of files that depends on a downstream AI platform. That shapes its limits:
 
+* **Inherits the downstream model's inherent properties.** Every HVE Core output is produced by a host-platform model, so it inherits that model's inherent properties: the model will sometimes fail, is not neutral, and is not bias-free. HVE Core cannot detect or correct these properties and adds no safety layer of its own.
 * **No model of its own.** HVE Core cannot check what a model actually produces from its instructions. File quality is verified through linting, frontmatter checks, link checking, plugin-generation gates, and human pull-request review. Whether the output fits a given model and prompt depends on the host platform.
 * **Behavior depends on the host.** Different Copilot Chat versions, model choices, and VS Code extensions can produce very different results from the same file. HVE Core does not pin the model and cannot guarantee the same behavior across hosts.
 * **No built-in safety filtering.** HVE Core relies entirely on the host platform's safety stack (input and output classifiers, jailbreak detection, content filters, abuse monitoring). It adds none of its own.
@@ -150,7 +151,7 @@ HVE Core does not measure performance against a specific model. If you need repr
 
 ## Evaluation of HVE Core
 
-HVE Core is evaluated as a set of files, not as a model. Evaluation checks whether each artifact is well-formed, behaves as documented when loaded into a supported host, and carries the right Responsible AI controls.
+HVE Core is evaluated as a set of files, not as a model. Evaluation checks whether each artifact is well-formed, behaves as documented when loaded into a supported host, and carries appropriate Responsible AI controls.
 
 Evaluation methods:
 
@@ -170,7 +171,7 @@ Fairness and representational considerations:
 
 HVE Core is engineering tooling, not a managed service. At integration time, three things are still the responsibility of the HVE Core user:
 
-* **Pick the right scope.** Coding-standards collections suit engineering productivity. Planning collections (RAI, Security, SSSC) support governance work but still need qualified human reviewers. The experimental collection ships features that are deliberately less mature.
+* **Pick the right scope.** Coding-standards collections suit day-to-day engineering work. Planning collections (RAI, Security, SSSC) support governance work but still need qualified human reviewers. The experimental collection ships features that are deliberately less mature.
 * **Check the host platform.** Current GitHub Copilot Chat in VS Code or the GitHub Copilot CLI are the supported hosts. Other clients are not characterized.
 * **Set up your own oversight.** Agents do not commit code, file work items, or send messages on their own without operator confirmation. Keep that confirmation step, and keep code-review gates on any agent-authored change to source, configuration, infrastructure, or workflows.
 
@@ -178,7 +179,7 @@ Watch out for automation bias. Treat agent suggestions as starting points for hu
 
 ## Learn more about responsible AI
 
-* [Microsoft AI Principles](https://www.microsoft.com/ai/responsible-ai)
+* [Microsoft AI Principles](https://www.microsoft.com/ai/responsible-ai): fairness; reliability and safety; privacy and security; inclusiveness; transparency; and accountability.
 * [Microsoft Responsible AI Resources](https://www.microsoft.com/ai/tools-practices)
 * [NIST AI Risk Management Framework 1.0](https://www.nist.gov/itl/ai-risk-management-framework)
 * [Responsible use of GitHub Copilot features](https://docs.github.com/en/copilot/responsible-use)

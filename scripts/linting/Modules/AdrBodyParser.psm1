@@ -313,7 +313,7 @@ function Get-AdrPathTokens {
     $ordered = [System.Collections.Generic.List[string]]::new()
     if ([string]::IsNullOrEmpty($SectionText)) { return @() }
 
-    $pattern = '(?<![A-Za-z0-9_\-./])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:/|\.[A-Za-z0-9]{1,8}))(?![A-Za-z0-9_.-])'
+    $pattern = '(?<![A-Za-z0-9_\-./])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:/\.[A-Za-z0-9_][A-Za-z0-9_.-]*|\.[A-Za-z0-9]{1,8}|/))(?![A-Za-z0-9_.-])'
     foreach ($match in [regex]::Matches($SectionText, $pattern)) {
         $token = $match.Groups[1].Value.Trim()
         if (-not $token) { continue }

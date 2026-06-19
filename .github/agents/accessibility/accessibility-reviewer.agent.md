@@ -96,6 +96,7 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 * Display completion summary with counts, assessed skills, and report path.
 * Include excluded skills and reasons when any skill invocation failed.
+* After the completion summary, display the Accessibility-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a finding-status row. Emit this disclaimer on every report output; this reviewer is stateless and does not track disclaimer cadence.
 
 ## Required Protocol
 
