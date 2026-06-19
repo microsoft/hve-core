@@ -69,7 +69,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 ### Phase 4: RAI Security Model Analysis (NIST Measure)
 
 * **Entry criteria**: Phase 3 complete; standards mapping confirmed.
-* **Activities**: Apply AI-specific security model analysis per component. Identify threats using the dual threat ID convention: `T-RAI-{NNN}` for sequential RAI threat IDs and `T-{BUCKET}-AI-{NNN}` for Security Planner cross-references when overlap exists. Threat categories include data poisoning, model evasion, prompt injection, output manipulation, bias amplification, privacy leakage, and misuse escalation. Assess potential impact and concern level per the security model instruction. When operating in `from-security-plan` mode, start threat IDs at the next sequence number after the security plan's threat count.
+* **Activities**: Apply AI-specific security model analysis per component. Identify threats using the dual threat ID convention: `T-RAI-{NNN}` for sequential RAI threat IDs and `T-{BUCKET}-AI-{NNN}` for Security Planner cross-references when overlap exists. Threat categories include data poisoning, model evasion, prompt injection, output manipulation, bias amplification, privacy leakage, and misuse escalation. Assess potential impact and concern level per the AI STRIDE overlay in the `rai-standards` skill. When operating in `from-security-plan` mode, start threat IDs at the next sequence number after the security plan's threat count.
 * **Exit criteria**: Summary-and-advance: present security model analysis summary with threat table and concern levels. Advance unless the user raises concerns.
 * **Artifacts**: `rai-threat-addendum.md`
 * **Transition**: Advance to Phase 5 after summary.
@@ -85,7 +85,7 @@ Six sequential phases structure the RAI assessment. Each phase declares entry cr
 ### Phase 6: Review and Handoff (NIST Manage)
 
 * **Entry criteria**: Phase 5 complete; impact assessment confirmed.
-* **Activities**: Generate review summary covering observations across six dimensions: scope boundary clarity, risk identification coverage, control surface adequacy, evidence sufficiency, future work governance, and risk classification alignment. Generate backlog items for identified gaps using the appropriate format (ADO, GitHub, or both) per user preference. Present findings for final review. After handoff generation, offer cryptographic signing of all session artifacts per the Artifact Signing protocol in `rai-backlog-handoff.instructions.md`. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` to generate a SHA-256 manifest and optionally sign with cosign.
+* **Activities**: Generate review summary covering observations across six dimensions: scope boundary clarity, risk identification coverage, control surface adequacy, evidence sufficiency, future work governance, and risk classification alignment. Generate backlog items for identified gaps using the appropriate format (ADO, GitHub, or both) per user preference. Present findings for final review. After handoff generation, offer cryptographic signing of all session artifacts per the Artifact Signing subsection in the `rai-planner` skill's backlog handoff reference. When the user accepts, invoke `npm run rai:sign -- -ProjectSlug {project-slug}` to generate a SHA-256 manifest and optionally sign with cosign.
 * **Exit criteria**: Hard gate: present complete review summary with observations, backlog items, and handoff summary. User must confirm before work items are created. Rationale: external-effect, created work items are visible to others.
 * **Artifacts**: `rai-review-summary.md`, backlog items, `artifact-manifest.json` (when signing accepted)
 * **Transition**: Assessment complete. State file updated with observations and `handoffGenerated` updated with platform-specific flags.
@@ -96,7 +96,7 @@ Three entry modes determine Phase 1 initialization. All modes converge at Phase 
 
 ### `capture`
 
-Fresh assessment. Display the disclaimer and attribution notices, then initialize blank `state.json` with `entryMode: "capture"`. Scan for existing reference content in `.copilot-tracking/rai-plans/references/`. Conduct reference content and output format discovery before the scoping interview. Then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in `rai-capture-coaching.instructions.md`.
+Fresh assessment. Display the disclaimer and attribution notices, then initialize blank `state.json` with `entryMode: "capture"`. Scan for existing reference content in `.copilot-tracking/rai-plans/references/`. Conduct reference content and output format discovery before the scoping interview. Then conduct an exploration-first AI system scoping interview using the Think/Speak/Empower coaching framework, curiosity-driven opening questions, laddering, critical incident anchoring, and projective techniques. Follow the full capture coaching protocol in the `rai-planner` skill.
 
 ### `from-prd`
 
@@ -158,7 +158,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/rai-plans/{p
       "id": "nist-ai-rmf",
       "name": "NIST AI Risk Management Framework",
       "version": "1.0",
-      "source": "rai-standards.instructions.md",
+      "source": ".github/skills/rai/rai-standards/SKILL.md",
       "replaceDefaultIndicators": false,
       "replaceDefaultFramework": false
     },
@@ -231,7 +231,7 @@ State persists across sessions in a JSON file at `.copilot-tracking/rai-plans/{p
 
 The `framework` object inside `riskClassification` identifies the evaluation framework in use for the current assessment and is populated during Phase 1 (reference content discovery) or Phase 2 (risk classification).
 
-* When `replaceDefaultFramework` is `false` (default), the object reflects NIST AI RMF: `id` = `"nist-ai-rmf"`, `name` = `"NIST AI Risk Management Framework"`, `version` = `"1.0"`, `source` = `"rai-standards.instructions.md"`.
+* When `replaceDefaultFramework` is `false` (default), the object reflects NIST AI RMF: `id` = `"nist-ai-rmf"`, `name` = `"NIST AI Risk Management Framework"`, `version` = `"1.0"`, `source` = `".github/skills/rai/rai-standards/SKILL.md"`.
 * When `replaceDefaultFramework` is `true`, the object is derived from the user-supplied custom framework document processed by the Researcher Subagent: `id`, `name`, `version`, and `source` are extracted from the custom framework, and `replaceDefaultIndicators` may also be set to `true` if the custom framework supplies its own indicator definitions.
 
 Downstream phases reference `riskClassification.framework` to determine which framework name, version, phase mappings, and characteristic references to use in activities, artifacts, and exit criteria. Subagents receive the framework identity as context so they can adapt their outputs to the active framework.
