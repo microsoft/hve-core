@@ -40,7 +40,7 @@ Load `brd-author#define` first. Author full BRD content using the canonical temp
 
 Dispatch the `BRD Quality Reviewer` subagent to grade the draft. A single invocation returns a `BRD_STANDARD_FINDINGS_V1` payload and an aggregated `BRD_QUALITY_REPORT_V1` payload; treat both as the evidence for the Define gate. Define does not exit until the quality report's gate decision permits advancement.
 
-Author ordinary BRD process diagrams inline through the canonical BRD template guidance. The Arch Diagram Builder can provide optional infrastructure context when a BRD section needs architecture-specific interpretation, but it is not required for the BRD workflow.
+Author ordinary BRD process diagrams inline through the canonical BRD template guidance. When a BRD section needs infrastructure-specific interpretation or an architecture/network diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, choosing ASCII or Mermaid output for the diagram. That skill is the authoritative source for its own conventions and output format; ordinary BRD process diagrams remain optional inline and do not require a separate diagram-specific handoff.
 
 ### Govern
 
@@ -54,6 +54,10 @@ Before emitting `BRD_TO_PRD_HANDOFF_V1`, compute and record the handoff evidence
 4. Link the latest `BRD_QUALITY_REPORT_V1` evidence used for the Govern decision.
 5. Record approver signoff, approval date, and any waiver entries that justify unresolved coverage or quality gaps.
 6. Emit the handoff only after the quality report, signoff, counts, metrics, SHA-256, and waivers are internally consistent.
+
+## Disclaimer Acknowledgment
+
+Display the BRD Requirements Planning CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim once per session, before any phase work, whenever `state.json.disclaimerShownAt` is `null`. After display, set `disclaimerShownAt` to the current ISO 8601 timestamp and persist `state.json`.
 
 ## File Management
 
@@ -90,6 +94,7 @@ Maintain state in `.copilot-tracking/brd-sessions/<brd-name>.state.json`:
   "brdFile": "docs/brds/claims-automation-brd.md",
   "lastAccessed": "2026-01-18T10:30:00Z",
   "currentPhase": "Define",
+  "disclaimerShownAt": null,
   "phaseSkillsLoaded": ["brd-author#discover", "brd-author#define"],
   "questionsAsked": ["business-objectives", "primary-stakeholders"],
   "answeredQuestions": {

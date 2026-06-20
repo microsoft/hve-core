@@ -77,6 +77,8 @@ Every phase entry begins with a mandatory `read_file` of the indicated SKILL.md 
 
 During Frame, prompt the user to choose `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. The Frame phase cannot exit without this value. Subsequent template renders compose `.github/skills/project-planning/adr-author/templates/madr-v4.md` with the matching diagram fragment from `.github/skills/project-planning/adr-author/templates/diagram-{ascii|mermaid}.md`. Once recorded, the value is read-only for the remainder of the session.
 
+When an ADR needs an architecture or network diagram derived from infrastructure source files, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, requesting the same `ascii` or `mermaid` format recorded in `state.userPreferences.diagramFormat`. That skill is the authoritative source for its own conventions and output format.
+
 ## Autonomy Tiers
 
 The autonomy-tier prompt fires once at Govern-phase entry, mirroring the Phase-5 pattern in Security Planner and SSSC Planner. Frame and Decide always run with full coaching cadence regardless of tier. The selected tier is persisted to `state.userPreferences.autonomyTier`.

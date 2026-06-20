@@ -73,6 +73,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 | Agent                 | Purpose                                                                | Key Constraint                                                |
 |-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
+| **pr-walkthrough**    | Narrative PR orientation that builds a reviewer's mental model         | Orientation-only; never renders judgments; experimental       |
 | **prompt-builder**    | Engineers and validates instruction/prompt files                       | Dual-persona system with auto-testing                         |
 | **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
 | **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
@@ -84,7 +85,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
 | **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
 | **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-| **arch-diagram-builder**    | Builds ASCII block diagrams from Azure IaC         | Parses Terraform, Bicep, ARM scripts |
 
 ### Platform Integration Agents
 
@@ -391,17 +391,6 @@ It dispatches thin perspective subagents under `.github/agents/coding-standards/
 **Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
 
 **Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
-
-### arch-diagram-builder
-
-**Creates:** ASCII architecture diagrams in markdown:
-
-* Inline ASCII block diagrams embedded in markdown (pure ASCII for consistent alignment)
-* Component legend and relationship key
-
-**Workflow:** Discovery → Parsing → Relationship Mapping → Generation
-
-**Critical:** Parses Terraform, Bicep, ARM, or shell scripts. Uses pure ASCII for consistent alignment. Groups by network boundary.
 
 ### github-backlog-manager
 

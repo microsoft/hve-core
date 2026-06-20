@@ -19,6 +19,7 @@
     "agents/project-planning/",
     "agents/project-planning/subagents/",
     "agents/rai-planning/",
+    "agents/rai-planning/subagents/",
     "agents/security/",
     "agents/security/subagents/"
   ],
@@ -44,6 +45,7 @@
     "skills/installer/",
     "skills/jira/",
     "skills/project-planning/",
+    "skills/rai/",
     "skills/security/",
     "skills/shared/"
   ]

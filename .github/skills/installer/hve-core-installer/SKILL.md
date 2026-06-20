@@ -419,9 +419,12 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
   },
   "chat.agentSkillsLocations": {
     "<PREFIX>/.github/skills": true,
-    "<PREFIX>/.github/skills/shared": true,
     "<PREFIX>/.github/skills/coding-standards": true,
-    "<PREFIX>/.github/skills/design-thinking": true
+    "<PREFIX>/.github/skills/design-thinking": true,
+    "<PREFIX>/.github/skills/project-planning": true,
+    "<PREFIX>/.github/skills/rai": true,
+    "<PREFIX>/.github/skills/security": true,
+    "<PREFIX>/.github/skills/shared": true
   }
 }
 ```
@@ -508,9 +511,12 @@ Add to devcontainer.json:
         },
         "chat.agentSkillsLocations": {
           "/workspaces/hve-core/.github/skills": true,
-          "/workspaces/hve-core/.github/skills/shared": true,
           "/workspaces/hve-core/.github/skills/coding-standards": true,
-          "/workspaces/hve-core/.github/skills/design-thinking": true
+          "/workspaces/hve-core/.github/skills/design-thinking": true,
+          "/workspaces/hve-core/.github/skills/project-planning": true,
+          "/workspaces/hve-core/.github/skills/rai": true,
+          "/workspaces/hve-core/.github/skills/security": true,
+          "/workspaces/hve-core/.github/skills/shared": true
         }
       }
     }
@@ -932,7 +938,7 @@ Copying agents enables local customization and offline use.
   • product-manager-advisor, security-planner, ux-ui-designer
 
 ⚙️ Generators
-  • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
+  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
   • pr-review, prompt-builder, test-streamlit-dashboard

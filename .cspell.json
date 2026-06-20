@@ -27,7 +27,8 @@
     "docs/docusaurus/build/**",
     "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
-    "evals/results/**"
+    "evals/results/**",
+    "evals/agent-behavior/eval.yaml"
   ],
   "ignoreRegExpList": [
     "/#.*/g",

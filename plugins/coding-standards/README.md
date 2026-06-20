@@ -13,16 +13,16 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                             | Description                                                                                                                                                                      |
-|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **accessibility-reviewer**       | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                                          |
-| **accessibility-skill-assessor** | Assesses a single accessibility knowledge skill against the codebase, reading success-criterion references and returning structured findings                                     |
-| **code-review**                  | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report |
-| **code-review-accessibility**    | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                              |
-| **code-review-functional**       | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                 |
-| **code-review-pr**               | Thin skill-backed perspective subagent that reviews a precomputed diff for pull-request hygiene and writes structured findings                                                   |
-| **code-review-security**         | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                        |
-| **code-review-standards**        | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                           |
+| Name                                 | Description                                                                                                                                                                      |
+|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-framework-assessor** | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings                                                             |
+| **accessibility-reviewer**           | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                                          |
+| **code-review**                      | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report |
+| **code-review-accessibility**        | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                              |
+| **code-review-functional**           | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                 |
+| **code-review-pr**                   | Thin skill-backed perspective subagent that reviews a precomputed diff for pull-request hygiene and writes structured findings                                                   |
+| **code-review-security**             | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                        |
+| **code-review-standards**            | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                           |
 
 ### Instructions
 
