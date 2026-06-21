@@ -16,13 +16,13 @@ This agent creates comprehensive BRDs that express business needs, outcomes, and
 
 ## Lifecycle Dispatch
 
-The BRD Builder runs the three-phase lifecycle defined by the [requirements-author skill](../../skills/project-planning/requirements-author/SKILL.md): Discover, Define, and Govern. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
+The BRD Builder runs the three-phase lifecycle defined by the `requirements-author` skill: Discover, Define, and Govern. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
 
-| Phase    | Section to load with `read_file`                                        | `phaseSkillsLoaded` entry | Phase responsibility                                                                             |
-|----------|-------------------------------------------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------|
-| Discover | `.github/skills/project-planning/requirements-author/SKILL.md#discover` | `brd-author#discover`     | Establish business context, stakeholder scope, and problem framing, then hold the Discover gate. |
-| Define   | `.github/skills/project-planning/requirements-author/SKILL.md#define`   | `brd-author#define`       | Author testable, traceable requirements and gather quality evidence for the Define gate.         |
-| Govern   | `.github/skills/project-planning/requirements-author/SKILL.md#govern`   | `brd-author#govern`       | Finalize, approve, and produce the BRD-to-PRD handoff under supersession lineage.                |
+| Phase    | Section to load from `requirements-author` | `phaseSkillsLoaded` entry | Phase responsibility                                                                             |
+|----------|--------------------------------------------|---------------------------|--------------------------------------------------------------------------------------------------|
+| Discover | `SKILL.md#discover`                        | `brd-author#discover`     | Establish business context, stakeholder scope, and problem framing, then hold the Discover gate. |
+| Define   | `SKILL.md#define`                          | `brd-author#define`       | Author testable, traceable requirements and gather quality evidence for the Define gate.         |
+| Govern   | `SKILL.md#govern`                          | `brd-author#govern`       | Finalize, approve, and produce the BRD-to-PRD handoff under supersession lineage.                |
 
 ### Discover
 
@@ -30,7 +30,7 @@ Load `brd-author#discover` first. Clarify the business problem before discussing
 
 Create files immediately when the user provides an explicit initiative name, a clear business change, or a specific project reference. Gather context first when the user provides vague requests, problem-only statements, or multiple unrelated ideas.
 
-Coach the conversation toward complete stakeholder coverage. Surface missing voices, unclear ownership, and unrepresented impacted groups as they emerge, and when a stakeholder cohort, decision owner, or sign-off authority is implied but not named, ask for it directly rather than proceeding. Use the [stakeholder-analysis reference](../../skills/project-planning/requirements-author/references/_shared/stakeholder-analysis.md) (the Mendelow Power/Interest grid and RACI variants) to classify each identified party and to detect ownership gaps. Delegate broader discovery research, such as market context, the regulatory landscape, or comparable initiatives, to the Researcher Subagent when a question exceeds the conversation's immediate scope.
+Coach the conversation toward complete stakeholder coverage. Surface missing voices, unclear ownership, and unrepresented impacted groups as they emerge, and when a stakeholder cohort, decision owner, or sign-off authority is implied but not named, ask for it directly rather than proceeding. Use the `requirements-author` skill reference `references/_shared/stakeholder-analysis.md` (the Mendelow Power/Interest grid and RACI variants) to classify each identified party and to detect ownership gaps. Delegate broader discovery research, such as market context, the regulatory landscape, or comparable initiatives, to the Researcher Subagent when a question exceeds the conversation's immediate scope.
 
 Discover exits only through the brd-author Discover hard gate: scope is bounded, stakeholder ownership is explicit, and the seed requirement and traceability scaffold for Define is present and internally consistent.
 
@@ -69,17 +69,17 @@ File locations:
 
 * BRD file: `docs/project-planning/<kebab-case-name>-brd.md`
 * State file: `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`
-* Template: `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`
+* Template: `requirements-author` skill path `templates/brd/brd-full.md`
 
 File creation process:
 
-1. Read the BRD template from `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`. If the canonical template cannot be read, halt and report the missing artifact.
+1. Read the BRD template from the `requirements-author` skill path `templates/brd/brd-full.md`. If the canonical template cannot be read, halt and report the missing artifact.
 2. Create BRD file at `docs/project-planning/<kebab-case-name>-brd.md` using the canonical template structure.
 3. Create state file at `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json`.
 4. Initialize BRD by replacing `{{placeholder}}` values with known content.
 5. Announce creation to user and explain next steps.
 
-Produced BRDs follow standard markdown conventions and pass markdownlint validation. Exclude `<!-- markdownlint-disable-file -->` from produced files. Author BRD frontmatter per the authoritative [brd-frontmatter-overlay](../../skills/project-planning/requirements-author/templates/brd/brd-frontmatter-overlay.md) schema and the frontmatter block in the canonical [brd-full.md](../../skills/project-planning/requirements-author/templates/brd/brd-full.md) template; do not maintain a separate field list here.
+Produced BRDs must be valid Markdown and pass markdownlint validation. Author BRD frontmatter per the authoritative requirements-author skill paths `templates/brd/brd-frontmatter-overlay.md` and `templates/brd/brd-full.md`; do not maintain a separate field list here.
 
 ### Session Continuity
 
@@ -187,11 +187,11 @@ Use TODO placeholders for incomplete information and reconstruct state from BRD 
 
 ## BRD Structure
 
-Use the canonical section set defined in the [brd-full.md](../../skills/project-planning/requirements-author/templates/brd/brd-full.md) template, loaded during the relevant phase. Do not maintain a separate section enumeration here; the template is the single source of truth for required, conditional, and ordered sections.
+Use the canonical section set defined in the `requirements-author` skill template `templates/brd/brd-full.md`, loaded during the relevant phase. Do not maintain a separate section enumeration here; the template is the single source of truth for required, conditional, and ordered sections.
 
 ### Requirement Quality
 
-Every captured requirement is classified under the configurable identifier taxonomy and carries a unique identifier: `FR-###` for a functional requirement, `AC-###` for an acceptance criterion, `NFR-###` for a non-functional requirement, `CON-###` for an imposed constraint or boundary, `BR-###` for a business rule or policy, `BG-###` for a business goal, and `DD-###` for a design decision. Each item carries a testable description, a linked business goal, impacted stakeholders, acceptance criteria, and a priority. The identifier schema and the family definitions (including business goals and design decisions) are owned by the [id-schema](../../skills/project-planning/requirements-author/references/_shared/id-schema.md), [design-decisions](../../skills/project-planning/requirements-author/references/_shared/design-decisions.md), [traceability-naming](../../skills/project-planning/requirements-author/references/_shared/traceability-naming.md), and [requirements-definition](../../skills/project-planning/requirements-author/references/_shared/requirements-definition.md) references.
+Every captured requirement is classified under the configurable identifier taxonomy and carries a unique identifier: `FR-###` for a functional requirement, `AC-###` for an acceptance criterion, `NFR-###` for a non-functional requirement, `CON-###` for an imposed constraint or boundary, `BR-###` for a business rule or policy, `BG-###` for a business goal, and `DD-###` for a design decision. Each item carries a testable description, a linked business goal, impacted stakeholders, acceptance criteria, and a priority. The identifier schema and the family definitions (including business goals and design decisions) are owned by the `requirements-author` skill references `references/_shared/id-schema.md`, `references/_shared/design-decisions.md`, `references/_shared/traceability-naming.md`, and `references/_shared/requirements-definition.md`.
 
 ## Quality Gates
 

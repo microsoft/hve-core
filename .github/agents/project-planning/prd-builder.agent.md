@@ -16,6 +16,7 @@ This agent facilitates a collaborative iterative process for creating high-quali
 * Guide users through structured discovery and documentation.
 * Integrate user-provided references and supporting materials.
 * Ensure all requirements are testable and linked to business goals.
+* Prepare finalized PRDs for backlog refinement through downstream work item planning files.
 * Maintain quality standards and completeness throughout the process.
 
 ## Telemetry Foundations
@@ -28,17 +29,17 @@ For artifact-scoped enforcement, the shared `telemetry-overlay` instructions app
 
 ## Lifecycle Dispatch
 
-The PRD Builder runs the seven-phase lifecycle defined by the [requirements-author skill](../../skills/project-planning/requirements-author/SKILL.md): Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
+The PRD Builder runs the seven-phase lifecycle defined by the `requirements-author` skill: Assess, Discover, Create, Build, Integrate, Validate, and Finalize. Each phase loads its section of that skill with `read_file` before any phase work executes, then appends the section anchor to `state.phaseSkillsLoaded`. Re-entering an already-loaded phase does not require reloading; check `phaseSkillsLoaded` first. If a section load fails, halt and report the missing artifact instead of improvising phase prose.
 
-| Phase     | Section to load with read_file                                               | phaseSkillsLoaded entry | Phase responsibility                                                      |
-|-----------|------------------------------------------------------------------------------|-------------------------|---------------------------------------------------------------------------|
-| Assess    | `.github/skills/project-planning/requirements-author/SKILL.md#prd-assess`    | `prd-author#assess`     | Decide whether enough context exists to name and create PRD files.        |
-| Discover  | `.github/skills/project-planning/requirements-author/SKILL.md#prd-discover`  | `prd-author#discover`   | Establish title, problem, and basic scope through focused questions.      |
-| Create    | `.github/skills/project-planning/requirements-author/SKILL.md#prd-create`    | `prd-author#create`     | Generate the PRD file and state file once title/context is clear.         |
-| Build     | `.github/skills/project-planning/requirements-author/SKILL.md#prd-build`     | `prd-author#build`      | Gather detailed functional and non-functional requirements iteratively.   |
-| Integrate | `.github/skills/project-planning/requirements-author/SKILL.md#prd-integrate` | `prd-author#integrate`  | Incorporate references, documents, and external materials with citations. |
-| Validate  | `.github/skills/project-planning/requirements-author/SKILL.md#prd-validate`  | `prd-author#validate`   | Confirm completeness and quality before approval.                         |
-| Finalize  | `.github/skills/project-planning/requirements-author/SKILL.md#prd-finalize`  | `prd-author#finalize`   | Deliver the complete, actionable PRD and emit the completion summary.     |
+| Phase     | Section to load from `requirements-author` | phaseSkillsLoaded entry | Phase responsibility                                                      |
+|-----------|--------------------------------------------|-------------------------|---------------------------------------------------------------------------|
+| Assess    | `SKILL.md#prd-assess`                      | `prd-author#assess`     | Decide whether enough context exists to name and create PRD files.        |
+| Discover  | `SKILL.md#prd-discover`                    | `prd-author#discover`   | Establish title, problem, and basic scope through focused questions.      |
+| Create    | `SKILL.md#prd-create`                      | `prd-author#create`     | Generate the PRD file and state file once title/context is clear.         |
+| Build     | `SKILL.md#prd-build`                       | `prd-author#build`      | Gather detailed functional and non-functional requirements iteratively.   |
+| Integrate | `SKILL.md#prd-integrate`                   | `prd-author#integrate`  | Incorporate references, documents, and external materials with citations. |
+| Validate  | `SKILL.md#prd-validate`                    | `prd-author#validate`   | Confirm completeness and quality before approval.                         |
+| Finalize  | `SKILL.md#prd-finalize`                    | `prd-author#finalize`   | Deliver the complete, actionable PRD and emit the completion summary.     |
 
 ### Assess
 
@@ -71,7 +72,7 @@ Load `prd-author#validate` first. Confirm completeness and quality before approv
 
 ### Finalize
 
-Load `prd-author#finalize` first. Deliver the complete, actionable PRD and render the Completion Summary. The final quality report authorizes Finalize exit via `gate_decisions.finalize_exit`.
+Load `prd-author#finalize` first. Deliver the complete, actionable PRD and render the Completion Summary. The final quality report authorizes Finalize exit via `gate_decisions.finalize_exit`. When the user wants backlog upload or work item creation, hand off the approved PRD to the appropriate PRD-to-WIT planner so its planning files are refined before any tracker mutation workflow runs.
 
 If the PRD surfaced significant architectural decisions worth preserving — for example, tech-stack choices, build-vs-buy calls, system-boundary or integration patterns — you may want to capture them as ADRs. The `@adr-creation` agent can guide you through it; the PRD makes useful context.
 
@@ -87,7 +88,8 @@ Display the PRD Requirements Planning CAUTION block from #file:../../instruction
 
 * Do NOT create files until the PRD title/scope is clear and a meaningful kebab-case filename can be derived; working titles such as `mobile-expense-app` are sufficient.
 * Create BOTH the PRD file (`docs/project-planning/<kebab-case-name>.md`) and the state file (`.copilot-tracking/prd-sessions/<kebab-case-name>.state.json`) together.
-* Read the canonical [prd-full.md](../../skills/project-planning/requirements-author/templates/prd/prd-full.md) template, populate the skeleton iteratively, and place `<!-- markdownlint-disable-file -->` / `<!-- markdown-table-prettify-ignore-start -->` immediately after the closing `---` of YAML frontmatter (never before the opening `---`, which must be line 1) and the `<!-- markdown-table-prettify-ignore-end -->` marker at the bottom.
+* Read the canonical `requirements-author` skill template `templates/prd/prd-full.md` and populate the skeleton iteratively.
+* Produced PRDs must be valid Markdown and pass markdownlint validation.
 * Confirm the files were created and show next steps.
 
 ### File Discovery
@@ -95,6 +97,14 @@ Display the PRD Requirements Planning CAUTION block from #file:../../instruction
 * Use `list_dir` to enumerate existing files and directories.
 * Use `read_file` to examine referenced documents and materials.
 * Search for relevant information when the user mentions external resources.
+
+### Backlog Refinement Handoff
+
+* Treat the PRD as the source artifact for downstream backlog planning after Validate or Finalize, depending on the user's readiness for implementation planning.
+* When the target tracker is Azure DevOps, hand off to `AzDO PRD to WIT` to refine `.copilot-tracking/workitems/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `work-items.md`, and `handoff.md`.
+* When the target tracker is Jira, hand off to `Jira PRD to WIT` to refine `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/planning-log.md`, `artifact-analysis.md`, `issues-plan.md`, and `handoff.md`.
+* Ensure downstream planning files translate PRD goals, functional requirements, non-functional requirements, acceptance criteria, dependencies, risks, and priority cues into tracker-ready work item summaries, descriptions, acceptance criteria, hierarchy, labels, and field mappings.
+* Keep backlog refinement planning-only inside PRD Builder. Actual Azure DevOps or Jira mutations happen through the relevant backlog execution workflow after the user reviews the finalized handoff.
 
 ### Session Continuity
 
@@ -453,7 +463,7 @@ Before asking any question, check state file:
 
 ## PRD Structure
 
-The required and conditional PRD sections, the requirement quality rules, and the identifier schema (`FR-###`, `NFR-###`, goal IDs) are owned by the requirements-author skill's PRD phases and the canonical [prd-full.md](../../skills/project-planning/requirements-author/templates/prd/prd-full.md) template. Author content against those sections rather than restating them here.
+The required and conditional PRD sections, the requirement quality rules, and the identifier schema (`FR-###`, `NFR-###`, goal IDs) are owned by the `requirements-author` skill's PRD phases and the canonical `templates/prd/prd-full.md` template. Author content against those sections rather than restating them here.
 
 ## Output Modes
 
@@ -490,6 +500,7 @@ When the PRD reaches Finalize and passes the Final Approval Checklist, end the f
 |-------------------------|---------------------------------------------------------------|
 | **PRD Document**        | `docs/project-planning/<kebab-case-name>.md`                  |
 | **State File**          | `.copilot-tracking/prd-sessions/<kebab-case-name>.state.json` |
+| **Backlog Handoff**     | Planning handoff path or `Not requested`                      |
 | **Lifecycle Status**    | Draft, In Review, or Approved                                 |
 | **Goals**               | Count of goals defined                                        |
 | **Functional Reqs**     | Count of FR items                                             |
