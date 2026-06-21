@@ -1141,7 +1141,7 @@ stimuli:
   - type: output-matches
     name: walkthrough-narrative
     config:
-      pattern: (?i)(walkthrough|narrative|reviewer|architectur|design|change|judgment)
+      pattern: (?i)(walkthrough|narrative|reviewer|architect|design|change|judgment)
   - type: output-matches
     name: topic-coverage
     config:
