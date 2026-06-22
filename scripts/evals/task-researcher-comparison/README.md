@@ -44,3 +44,20 @@ DEEPEVAL_RUN_LLM=1 uv run --project scripts/evals/task-researcher-comparison dee
 ```
 
 The DeepEval score is not a replacement for the manual rubric. Use it to identify deltas that deserve human review.
+
+## Capturing Live Outputs
+
+The comparison tests can grade committed synthetic fixtures or live captured outputs.
+
+Without a runner, the capture helper writes prompt files:
+
+```bash
+uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
+```
+
+With a runner, set `TASK_RESEARCHER_RUNNER` to a command template that accepts `{prompt}` and writes the assistant output to stdout:
+
+```bash
+TASK_RESEARCHER_RUNNER='your-agent-runner --prompt "{prompt}"' \
+  uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
+```
