@@ -18,6 +18,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 |-----------------------------------------|----------|-------------|---------------------------------------------------------------------------------|
 | RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                           |
 | [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                            |
+| [PR Walkthrough](#pr-walkthrough)       | 1        | Medium      | [PR Walkthrough](pr-walkthrough/README.md)                                      |
 | GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                     |
 | ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                        |
 | Jira Backlog Management                 | 2 active | Very High   | Backlog Manager                                                                 |
@@ -39,6 +40,10 @@ The Research, Plan, Implement methodology separates complex tasks into specializ
 ## Code Review
 
 Three agents provide pre-PR code review on local branches. Code Review Functional catches logic errors, edge cases, and error handling gaps across five focus areas. Code Review Standards enforces project-defined conventions through dynamically loaded language skills. Code Review Full orchestrates both in a single pass and produces a merged, deduplicated report. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
+
+## PR Walkthrough
+
+A narrative orientation agent that builds a reviewer's mental model before they open the diff. Produces a flowing essay structured around decisions and design forks rather than a file-by-file summary. Useful for large PRs, cross-cutting refactors, and onboarding reviewers who lack context. Marked experimental. See the [PR Walkthrough Documentation](pr-walkthrough/) for usage.
 
 ## GitHub Backlog Management
 

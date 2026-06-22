@@ -123,5 +123,3 @@ The generated XML wraps commit metadata and unified diff output in a `<commit_hi
 | "No commits found" or empty XML | No diverging commits from base branch | Verify the branch has commits ahead of the base with `git log base..HEAD` |
 | "Branch not found" error        | Base branch ref missing locally       | Run `git fetch origin` to update remote tracking refs                     |
 | "git: command not found"        | git is not on PATH                    | Install git or verify PATH includes the git binary directory              |
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

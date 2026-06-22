@@ -1,0 +1,47 @@
+# Per-agent stimulus partial for the `pr-review` agent slug.
+# The generator (scripts/evals/Build-AgentBehaviorSpec.ps1) injects
+# `tags.agent: pr-review` from this file name; do not add it here.
+stimuli:
+  - name: pr-review-identifies-security
+    prompt: |
+      Review this code change for a Python web application:
+      ```python
+      @app.route('/user/<id>')
+      def get_user(id):
+          query = f"SELECT * FROM users WHERE id = {id}"
+          return db.execute(query).fetchone()
+      ```
+      Focus on security and code quality.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: identifies-sql-injection
+        config:
+          pattern: "(?i)\\bsql\\s*injection\\b|\\binjection\\b"
+      - type: output-matches
+        name: provides-remediation
+        config:
+          pattern: "(?i)parameterized|prepared|placeholder|bind"
+
+  - name: pr-review-identifies-error-handling
+    prompt: |
+      Review this code change:
+      ```python
+      def process_payment(amount):
+          response = requests.post(PAYMENT_API, json={"amount": amount})
+          return response.json()["transaction_id"]
+      ```
+      What issues do you see?
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: identifies-missing-error-handling
+        config:
+          pattern: "(?i)error.handling|exception|try|status.code|timeout"
+      - type: output-matches
+        name: identifies-missing-validation
+        config:
+          # cspell:disable-next-line
+          pattern: "(?i)validat|check|verify|amount|negative"

@@ -53,40 +53,6 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 copilot plugin install github@hve-core
 ```
 
-## Agents
-
-| Agent                  | Description                                                                       |
-|------------------------|-----------------------------------------------------------------------------------|
-| github-backlog-manager | GitHub backlog orchestrator for triage, discovery, sprint planning, and execution |
-
-## Commands
-
-| Command                | Description                                                                                                         |
-|------------------------|---------------------------------------------------------------------------------------------------------------------|
-| github-add-issue       | Create a GitHub issue using discovered repository templates and conversational field collection                     |
-| github-discover-issues | Discover GitHub issues via user queries, artifact analysis, or search and produce planning files                    |
-| github-triage-issues   | Triage untriaged GitHub issues with label suggestions, milestone assignment, and duplicate detection                |
-| github-execute-backlog | Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file |
-| github-sprint-plan     | Plan a GitHub milestone sprint by analyzing issue coverage, gaps, and prioritized backlog                           |
-| github-suggest         | Resume GitHub backlog management workflow after session restore                                                     |
-
-## Instructions
-
-| Instruction                           | Description                                                                                                                                                                                                                                                 |
-|---------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| github-backlog-discovery.instructions | GitHub issue backlog discovery: artifact-driven, user-centric, search-based                                                                                                                                                                                 |
-| github-backlog-planning.instructions  | GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence                                                                                                                                                   |
-| github-backlog-triage.instructions    | GitHub issue backlog triage: label suggestion, milestone assignment, and duplicate detection                                                                                                                                                                |
-| github-backlog-update.instructions    | GitHub issue backlog execution: consumes planning handoffs and runs issue operations                                                                                                                                                                        |
-| community-interaction.instructions    | Community interaction voice, tone, and response templates for GitHub-facing agents and prompts                                                                                                                                                              |
-| hve-core-location.instructions        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
-
-## Skills
-
-| Skill            | Description                                                                            |
-|------------------|----------------------------------------------------------------------------------------|
-| gh-code-scanning | Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI |
-
 ---
 
 > Source: [microsoft/hve-core](https://github.com/microsoft/hve-core)

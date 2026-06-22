@@ -1,0 +1,19 @@
+# torch PYSEC-2026-139 / CVE-2026-4538 — local-only deserialization in the pt2 loading
+# handler; no fixed release available upstream. The moderation tooling loads only its own
+# trusted Detoxify weights, never untrusted checkpoints. Revisit when a patched torch ships.
+PYSEC-2026-139
+# torch CVE-2025-3000 / GHSA-rrmf-rvhw-rf47 — local memory corruption in torch.jit.script;
+# no fixed release available upstream. Not reachable from the moderation code path.
+CVE-2025-3000
+# torch CVE-2025-3001 / GHSA-qfhq-4f3w-5fph — local memory corruption in torch.lstm_cell;
+# fix lands in torch 2.10.0, which is incompatible with detoxify 0.5.2's pinned stack.
+# Not reachable from the moderation code path. Revisit when detoxify supports torch 2.10.
+CVE-2025-3001
+# transformers PYSEC-2025-217 / CVE-2025-14929 — RCE via X-CLIP checkpoint conversion
+# deserialization; no fixed release in the 4.x line. The moderation tooling never converts
+# untrusted checkpoints. Revisit when a 4.x patch ships or the stack moves to transformers 5.
+PYSEC-2025-217
+# transformers CVE-2026-1839 / GHSA-69w3-r845-3855 — Trainer._load_rng_state torch.load RCE;
+# fix only in transformers 5.0.0rc3, outside the supported <5 constraint. The moderation
+# tooling does not use the Trainer class. Revisit when transformers 5 is stable and adopted.
+CVE-2026-1839

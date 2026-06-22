@@ -12,7 +12,8 @@
     "riskClassification",
     "evidenceRegister",
     "gates",
-    "planRiskAssessment"
+      "planRiskAssessment",
+      "noticeLog"
   ],
   "properties": {
     "project": {
@@ -297,7 +298,7 @@
     },
     "riskClassification": {
       "type": "object",
-      "required": ["tier", "screeningSignals"],
+        "required": ["screeningSignals"],
       "properties": {
         "tier": {
           "type": "string",

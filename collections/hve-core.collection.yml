@@ -36,6 +36,9 @@ items:
     maturity: experimental
   - path: .github/agents/hve-core/pr-review.agent.md
     kind: agent
+  - path: .github/agents/hve-core/pr-walkthrough.agent.md
+    kind: agent
+    maturity: experimental
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
@@ -95,6 +98,8 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/markdown.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/licensing-posture.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/prompt-builder.instructions.md
@@ -132,10 +137,13 @@ items:
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
+  - path: .github/skills/hve-core/vally-tests
+    kind: skill
+    maturity: experimental
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
-  - path: .github/instructions/hve-core/task-implementor-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
 display:
   ordering: manual

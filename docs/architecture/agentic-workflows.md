@@ -194,13 +194,13 @@ The [GitHub Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.gi
 
 Five agents support upstream planning activities:
 
-| Agent                        | Purpose                                  |
-|------------------------------|------------------------------------------|
-| BRD Builder                  | Business Requirements Documents          |
-| PRD Builder                  | Product Requirements Documents           |
-| ADR Creation                 | Architecture Decision Records            |
-| Architecture Diagram Builder | Visual system architecture diagrams      |
-| Security Plan Creator        | Security assessment and mitigation plans |
+| Agent                       | Purpose                                  |
+|-----------------------------|------------------------------------------|
+| BRD Builder                 | Business Requirements Documents          |
+| PRD Builder                 | Product Requirements Documents           |
+| ADR Creation                | Architecture Decision Records            |
+| Architecture Diagrams Skill | ASCII system architecture diagrams       |
+| Security Plan Creator       | Security assessment and mitigation plans |
 
 ## How It All Connects
 

@@ -147,5 +147,3 @@ Method 2 artifacts at `.copilot-tracking/dt/{project-slug}/method-02-research/`:
 * Unmet need patterns across user groups
 * Assumption validation results
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

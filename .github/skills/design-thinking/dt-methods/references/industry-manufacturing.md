@@ -87,5 +87,3 @@ Use anonymized incident reports and near-miss data as empathy artifacts. These r
 **Implementation (Methods 7-9)**: Hi-fi prototypes validate industrial-grade microphones for 85-90 dB environments and glove-friendly interfaces. User testing across four operator types shows 40% higher adoption with glove-friendly design. Shift-change usage spikes lead to dedicated transition features. Emergency stop procedures are used 300% above forecast, revealing safety as the highest-value use case.
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

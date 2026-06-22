@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-05-20
+ms.date: 2026-06-08
 ms.topic: overview
 ---
 
@@ -55,6 +55,7 @@ flowchart TD
 | `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing                          |
 | `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                                    |
 | `devcontainer-change-log.yml`        | Push to main/develop    | Logs devcontainer infrastructure file changes to the step summary |
+| `devcontainer-lockfile-check.yml`    | Reusable                | Validates devcontainer lockfile integrity and SHA-256 pinning     |
 | `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main                      |
 | `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management                               |
 | `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis                               |
@@ -100,6 +101,7 @@ Individual validation workflows called by orchestration workflows:
 | `docusaurus-tests.yml`                | Docusaurus test suite            | N/A (npm test)                      |
 | `model-validation.yml`                | Model reference validation       | `npm run lint:models`               |
 | `ai-artifact-validation.yml`          | AI artifact structure validation | `npm run lint:ai-artifacts`         |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity  | N/A (bash + jq direct)              |
 | `action-version-consistency-scan.yml` | Action version consistency       | `npm run lint:version-consistency`  |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
@@ -130,6 +132,7 @@ flowchart LR
 
     subgraph "Security"
         DPC[dependency-pinning-check]
+        DCL[devcontainer-lockfile-check]
         NA[npm-audit]
         CQL[codeql]
         GLS[gitleaks-scan]
@@ -138,24 +141,25 @@ flowchart LR
 
 ### Jobs
 
-| Job                      | Reusable Workflow             | Validates                      |
-|--------------------------|-------------------------------|--------------------------------|
-| spell-check              | `spell-check.yml`             | Spelling across all files      |
-| markdown-lint            | `markdown-lint.yml`           | Markdown formatting rules      |
-| table-format             | `table-format.yml`            | Markdown table structure       |
-| psscriptanalyzer         | `ps-script-analyzer.yml`      | PowerShell code quality        |
-| yaml-lint                | `yaml-lint.yml`               | YAML syntax                    |
-| pester-tests             | `pester-tests.yml`            | PowerShell unit tests          |
-| frontmatter-validation   | `frontmatter-validation.yml`  | AI artifact metadata           |
-| skill-validation         | `skill-validation.yml`        | Skill directory structure      |
-| link-lang-check          | `link-lang-check.yml`         | Link accessibility             |
-| markdown-link-check      | `markdown-link-check.yml`     | Broken links                   |
-| dependency-pinning-check | `dependency-pinning-scan.yml` | Dependency pinning             |
-| npm-audit                | Inline                        | npm dependency vulnerabilities |
-| codeql                   | `codeql-analysis.yml`         | Code security patterns         |
-| copyright-headers        | `copyright-headers.yml`       | Copyright header compliance    |
-| plugin-validation        | `plugin-validation.yml`       | Plugin and collection metadata |
-| gitleaks-scan            | `gitleaks-scan.yml`           | Secret detection               |
+| Job                         | Reusable Workflow                 | Validates                       |
+|-----------------------------|-----------------------------------|---------------------------------|
+| spell-check                 | `spell-check.yml`                 | Spelling across all files       |
+| markdown-lint               | `markdown-lint.yml`               | Markdown formatting rules       |
+| table-format                | `table-format.yml`                | Markdown table structure        |
+| psscriptanalyzer            | `ps-script-analyzer.yml`          | PowerShell code quality         |
+| yaml-lint                   | `yaml-lint.yml`                   | YAML syntax                     |
+| pester-tests                | `pester-tests.yml`                | PowerShell unit tests           |
+| frontmatter-validation      | `frontmatter-validation.yml`      | AI artifact metadata            |
+| skill-validation            | `skill-validation.yml`            | Skill directory structure       |
+| link-lang-check             | `link-lang-check.yml`             | Link accessibility              |
+| markdown-link-check         | `markdown-link-check.yml`         | Broken links                    |
+| dependency-pinning-check    | `dependency-pinning-scan.yml`     | Dependency pinning              |
+| devcontainer-lockfile-check | `devcontainer-lockfile-check.yml` | Devcontainer lockfile integrity |
+| npm-audit                   | Inline                            | npm dependency vulnerabilities  |
+| codeql                      | `codeql-analysis.yml`             | Code security patterns          |
+| copyright-headers           | `copyright-headers.yml`           | Copyright header compliance     |
+| plugin-validation           | `plugin-validation.yml`           | Plugin and collection metadata  |
+| gitleaks-scan               | `gitleaks-scan.yml`               | Secret detection                |
 
 All jobs run in parallel with no dependencies, enabling fast feedback (typically under 3 minutes).
 
@@ -296,44 +300,48 @@ Maturity filtering rules:
 
 Workflows invoke validation through npm scripts defined in `package.json`:
 
-| npm Script                     | Command                                     | Used By                       |
-|--------------------------------|---------------------------------------------|-------------------------------|
-| `lint:md`                      | `markdownlint-cli2`                         | markdown-lint.yml             |
-| `lint:md:fix`                  | `markdownlint-cli2 --fix`                   | Local                         |
-| `spell-check`                  | `cspell`                                    | spell-check.yml               |
-| `spell-check:fix`              | `cspell --show-suggestions`                 | Local                         |
-| `lint:frontmatter`             | `Validate-MarkdownFrontmatter.ps1`          | frontmatter-validation.yml    |
-| `lint:md-links`                | `Markdown-Link-Check.ps1`                   | markdown-link-check.yml       |
-| `lint:links`                   | `Invoke-LinkLanguageCheck.ps1`              | link-lang-check.yml           |
-| `lint:yaml`                    | `Invoke-YamlLint.ps1`                       | yaml-lint.yml                 |
-| `lint:ps`                      | `Invoke-PSScriptAnalyzer.ps1`               | ps-script-analyzer.yml        |
-| `lint:collections-metadata`    | `Validate-Collections.ps1`                  | plugin-validation.yml         |
-| `lint:marketplace`             | `Validate-Marketplace.ps1`                  | plugin-validation.yml         |
-| `lint:version-consistency`     | `Test-ActionVersionConsistency.ps1`         | Local                         |
-| `lint:all`                     | Chains all linters (incl. `eval:lint`)      | Local                         |
-| `format:tables`                | `markdown-table-formatter`                  | table-format.yml              |
-| `test:ps`                      | `Invoke-PesterTests.ps1`                    | pester-tests.yml              |
-| `validate:skills`              | `Validate-SkillStructure.ps1`               | skill-validation.yml          |
-| `validate:copyright`           | `Test-CopyrightHeaders.ps1`                 | copyright-headers.yml         |
-| `extension:prepare`            | `Prepare-Extension.ps1`                     | extension-package.yml         |
-| `extension:prepare:prerelease` | `Prepare-Extension.ps1 -Channel PreRelease` | extension-package.yml         |
-| `extension:package`            | `Package-Extension.ps1`                     | extension-package.yml         |
-| `package:extension`            | Alias for `extension:package`               | extension-package.yml         |
-| `extension:package:prerelease` | `Package-Extension.ps1 -PreRelease`         | extension-package.yml         |
-| `plugin:generate`              | `Generate-Plugins.ps1` + post-process       | plugin-package.yml            |
-| `plugin:validate`              | Alias for `lint:collections-metadata`       | plugin-validation.yml         |
-| `lint:py`                      | `ruff check`                                | python-lint.yml               |
-| `lint:models`                  | `Validate-ModelReferences.ps1`              | model-validation.yml          |
-| `lint:ai-artifacts`            | `Validate-AIArtifacts.ps1`                  | ai-artifact-validation.yml    |
-| `lint:permissions`             | `Test-WorkflowPermissions.ps1`              | workflow-permissions-scan.yml |
-| `lint:dependency-pinning`      | `Test-DependencyPinning.ps1`                | dependency-pinning-scan.yml   |
-| `test:py`                      | `pytest`                                    | pytest-tests.yml              |
-| `eval:lint`                    | `vally lint --eval evals/`                  | Local                         |
-| `eval:run`                     | Runs all eval suites                        | Local                         |
-| `eval:run:skills`              | `vally eval --suite skill-quality`          | Local                         |
-| `eval:run:agents`              | `vally eval --suite agent-behavior`         | Local                         |
-| `eval:run:scripts`             | `vally eval --suite script-validation`      | Local                         |
-| `eval:compare`                 | `vally compare`                             | Local                         |
+| npm Script                     | Command                                                                | Used By                       |
+|--------------------------------|------------------------------------------------------------------------|-------------------------------|
+| `lint:md`                      | `markdownlint-cli2`                                                    | markdown-lint.yml             |
+| `lint:md:fix`                  | `markdownlint-cli2 --fix`                                              | Local                         |
+| `spell-check`                  | `cspell`                                                               | spell-check.yml               |
+| `spell-check:fix`              | `cspell --show-suggestions`                                            | Local                         |
+| `lint:frontmatter`             | `Validate-MarkdownFrontmatter.ps1`                                     | frontmatter-validation.yml    |
+| `lint:md-links`                | `Markdown-Link-Check.ps1`                                              | markdown-link-check.yml       |
+| `lint:links`                   | `Invoke-LinkLanguageCheck.ps1`                                         | link-lang-check.yml           |
+| `lint:yaml`                    | `Invoke-YamlLint.ps1`                                                  | yaml-lint.yml                 |
+| `lint:ps`                      | `Invoke-PSScriptAnalyzer.ps1`                                          | ps-script-analyzer.yml        |
+| `lint:collections-metadata`    | `Validate-Collections.ps1`                                             | plugin-validation.yml         |
+| `lint:marketplace`             | `Validate-Marketplace.ps1`                                             | plugin-validation.yml         |
+| `lint:version-consistency`     | `Test-ActionVersionConsistency.ps1`                                    | Local                         |
+| `lint:all`                     | Chains all linters (incl. `eval:lint:*`)                               | Local                         |
+| `format:tables`                | `markdown-table-formatter`                                             | table-format.yml              |
+| `test:ps`                      | `Invoke-PesterTests.ps1`                                               | pester-tests.yml              |
+| `validate:skills`              | `Validate-SkillStructure.ps1`                                          | skill-validation.yml          |
+| `validate:copyright`           | `Test-CopyrightHeaders.ps1`                                            | copyright-headers.yml         |
+| `extension:prepare`            | `Prepare-Extension.ps1`                                                | extension-package.yml         |
+| `extension:prepare:prerelease` | `Prepare-Extension.ps1 -Channel PreRelease`                            | extension-package.yml         |
+| `extension:package`            | `Package-Extension.ps1`                                                | extension-package.yml         |
+| `package:extension`            | Alias for `extension:package`                                          | extension-package.yml         |
+| `extension:package:prerelease` | `Package-Extension.ps1 -PreRelease`                                    | extension-package.yml         |
+| `plugin:generate`              | `Generate-Plugins.ps1` + post-process                                  | plugin-package.yml            |
+| `plugin:validate`              | Alias for `lint:collections-metadata`                                  | plugin-validation.yml         |
+| `lint:py`                      | `ruff check`                                                           | python-lint.yml               |
+| `lint:models`                  | `Validate-ModelReferences.ps1`                                         | model-validation.yml          |
+| `lint:ai-artifacts`            | `Validate-AIArtifacts.ps1`                                             | ai-artifact-validation.yml    |
+| `lint:permissions`             | `Test-WorkflowPermissions.ps1`                                         | workflow-permissions-scan.yml |
+| `lint:dependency-pinning`      | `Test-DependencyPinning.ps1`                                           | dependency-pinning-scan.yml   |
+| `test:py`                      | `pytest`                                                               | pytest-tests.yml              |
+| `eval:lint:vally`              | `Build-AgentBehaviorSpec.ps1 -WhatIf && vally lint --eval-spec evals/` | Local                         |
+| `eval:lint:schema`             | `Test-EvalSpec.ps1`                                                    | Local                         |
+| `eval:lint:text`               | `Test-EvalSpecText.ps1`                                                | Local                         |
+| `eval:lint:safety`             | `Test-VallyTestSafety.ps1`                                             | Local                         |
+| `eval:lint:skills`             | `vally lint .github/skills/`                                           | Local                         |
+| `eval:run`                     | Runs all eval suites                                                   | Local                         |
+| `eval:run:skills`              | `vally eval --suite skill-quality`                                     | Local                         |
+| `eval:run:agents`              | `vally eval --suite agent-behavior`                                    | Local                         |
+| `eval:run:scripts`             | `vally eval --suite script-validation`                                 | Local                         |
+| `eval:compare`                 | `vally compare`                                                        | Local                         |
 
 ## Related Documentation
 

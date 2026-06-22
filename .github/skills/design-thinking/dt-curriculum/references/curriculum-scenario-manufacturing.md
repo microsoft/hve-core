@@ -93,5 +93,3 @@ Use these fictional results for Module 7-9 exercises.
 | T8   | Emergency procedure lookup under simulated urgency           | Pass   | 95% completion rate, 12-second average; highest satisfaction |
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

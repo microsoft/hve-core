@@ -19,21 +19,21 @@ Load this file when the team identifies **Pharmaceuticals & Life Sciences** as t
 
 ## Vocabulary Mapping
 
-| Pharma/Life Sciences Term | Design Thinking Equivalent / Clarification |
-|---------------------------|------------------------------------------|
-| **IND** (Investigational New Drug) | Regulatory permission to initiate human clinical trials; gate 1 in development |
-| **NDA/BLA** (New Drug/Biologics License Application) | Final regulatory submission post-clinical data; gate 2 for market approval |
-| **Phase I, II, III, IV trials** | Sequential human testing: Phase I (safety in 20-100 healthy/patients), Phase II (efficacy signal in 100-500 patients), Phase III (confirmation in 1,000-5,000 patients), Phase IV (post-approval surveillance) |
-| **CMC** (Chemistry, Manufacturing, Controls) | Supply chain & scale-up readiness; manufacturing process validation |
-| **GCP** (Good Clinical Practice) | Regulatory standard for ethical trial conduct, patient safety, data integrity |
-| **Efficacy endpoint** | Measurable outcome proving the drug works (e.g., tumor shrinkage, pain reduction, biomarker change) |
-| **Adverse event / Safety signal** | Unwanted side effect; cluster of similar events triggers investigation & potential trial halt |
-| **REMS** (Risk Evaluation & Mitigation Strategy) | Risk management plan post-approval (e.g., restricted distribution, prescriber certification) |
-| **Reimbursement / Payer approval** | Health insurance coverage decision; tied to cost-effectiveness (NICE ICER, HAS ASMR) |
-| **Patent cliff** | Expiration of patent protection; generic entry expected, revenue drops sharply |
-| **Breakthrough Therapy / Accelerated Approval** | Expedited regulatory pathways for serious conditions with unmet need |
-| **Real-World Evidence (RWE)** | Post-approval data from electronic health records, disease registries, patient outcomes outside controlled trials |
-| **Rare disease / Orphan designation** | Drug for <200,000 US patients or <5 in 10,000 EU patients; incentives (PRV, market exclusivity, lower evidence bar) |
+| Pharma/Life Sciences Term                            | Design Thinking Equivalent / Clarification                                                                                                                                                                     |
+|------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **IND** (Investigational New Drug)                   | Regulatory permission to initiate human clinical trials; gate 1 in development                                                                                                                                 |
+| **NDA/BLA** (New Drug/Biologics License Application) | Final regulatory submission post-clinical data; gate 2 for market approval                                                                                                                                     |
+| **Phase I, II, III, IV trials**                      | Sequential human testing: Phase I (safety in 20-100 healthy/patients), Phase II (efficacy signal in 100-500 patients), Phase III (confirmation in 1,000-5,000 patients), Phase IV (post-approval surveillance) |
+| **CMC** (Chemistry, Manufacturing, Controls)         | Supply chain & scale-up readiness; manufacturing process validation                                                                                                                                            |
+| **GCP** (Good Clinical Practice)                     | Regulatory standard for ethical trial conduct, patient safety, data integrity                                                                                                                                  |
+| **Efficacy endpoint**                                | Measurable outcome proving the drug works (e.g., tumor shrinkage, pain reduction, biomarker change)                                                                                                            |
+| **Adverse event / Safety signal**                    | Unwanted side effect; cluster of similar events triggers investigation & potential trial halt                                                                                                                  |
+| **REMS** (Risk Evaluation & Mitigation Strategy)     | Risk management plan post-approval (e.g., restricted distribution, prescriber certification)                                                                                                                   |
+| **Reimbursement / Payer approval**                   | Health insurance coverage decision; tied to cost-effectiveness (NICE ICER, HAS ASMR)                                                                                                                           |
+| **Patent cliff**                                     | Expiration of patent protection; generic entry expected, revenue drops sharply                                                                                                                                 |
+| **Breakthrough Therapy / Accelerated Approval**      | Expedited regulatory pathways for serious conditions with unmet need                                                                                                                                           |
+| **Real-World Evidence (RWE)**                        | Post-approval data from electronic health records, disease registries, patient outcomes outside controlled trials                                                                                              |
+| **Rare disease / Orphan designation**                | Drug for <200,000 US patients or <5 in 10,000 EU patients; incentives (PRV, market exclusivity, lower evidence bar)                                                                                            |
 
 ## Constraints and Considerations
 
@@ -150,4 +150,3 @@ Your design challenge: **How do we design a clinical program that maximizes pati
 
 **Scope:** This reference scenario illustrates how **empathy for fragmented care, patient heterogeneity, and payer risk management** can drive better regulatory strategy, more inclusive trial design, and faster access to therapy. DT methods (user observation, co-design with patients, value workshops) surface these insights earlier, reducing late-stage regulatory and commercial surprises. The "solution" is not just a better drug—it's a **better development & access model** informed by stakeholder needs.
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

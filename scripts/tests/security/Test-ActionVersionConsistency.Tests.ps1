@@ -22,7 +22,7 @@ BeforeAll {
 
     Save-CIEnvironment
 
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 }
 
 AfterAll {
@@ -214,6 +214,17 @@ Describe 'Get-ActionVersionViolations' -Tag 'Unit' {
             $result = Get-ActionVersionViolations -WorkflowPath $testPath
             $mismatch = $result.Violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' } | Select-Object -First 1
             $mismatch.Metadata.AffectedLocations.Count | Should -Be 2
+        }
+
+        It 'Treats gh-aw "(source vN)" provenance suffix as the same version comment' {
+            $testPath = Join-Path $TestDrive 'source-suffix'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'source-suffix-a.yml') -Destination $testPath
+            Copy-Item -Path (Join-Path $script:FixturesPath 'source-suffix-b.yml') -Destination $testPath
+
+            $result = Get-ActionVersionViolations -WorkflowPath $testPath
+            $mismatches = $result.Violations | Where-Object { $_.ViolationType -eq 'VersionMismatch' }
+            $mismatches.Count | Should -Be 0
         }
     }
 
@@ -701,7 +712,7 @@ Describe 'Invoke-ActionVersionConsistency' -Tag 'Unit' {
 Describe 'Main Script Execution' -Tag 'Unit' {
     BeforeAll {
         $script:TestScript = (Resolve-Path (Join-Path $PSScriptRoot '../../security/Test-ActionVersionConsistency.ps1')).Path
-        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+        $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
         # Use cross-platform temp directory (accessible from child process, unlike $TestDrive)
         $tempBase = [System.IO.Path]::GetTempPath()
         $script:MainTestRoot = Join-Path $tempBase "pester-main-$(Get-Random)"

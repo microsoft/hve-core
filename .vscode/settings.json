@@ -35,6 +35,7 @@
     }
   ],
   "chat.instructionsFilesLocations": {
+    ".github/instructions/accessibility": true,
     ".github/instructions/ado": true,
     ".github/instructions/coding-standards": true,
     ".github/instructions/experimental": true,
@@ -46,6 +47,8 @@
     ".github/instructions/shared": true
   },
   "chat.agentFilesLocations": {
+    ".github/agents/accessibility": true,
+    ".github/agents/accessibility/subagents": true,
     ".github/agents/ado": true,
     ".github/agents/coding-standards": true,
     ".github/agents/data-science": true,
@@ -57,6 +60,7 @@
     ".github/agents/hve-core/subagents": true,
     ".github/agents/jira": true,
     ".github/agents/project-planning": true,
+    ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
@@ -74,12 +78,15 @@
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
+    ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
     ".github/skills/design-thinking": true,
     ".github/skills/experimental": true,
     ".github/skills/github": true,
     ".github/skills/gitlab": true,
     ".github/skills/jira": true,
+    ".github/skills/project-planning": true,
+    ".github/skills/rai": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },

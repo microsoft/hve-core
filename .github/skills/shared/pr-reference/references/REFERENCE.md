@@ -190,9 +190,3 @@ Generate a PR reference XML excluding markdown diffs, saving to the review track
 ```
 
 Avoid referencing script paths directly in prompts, agents, or instructions. The agent selects the appropriate script based on the current platform.
-
----
-
-<!-- markdownlint-disable MD036 -->
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
-<!-- markdownlint-enable MD036 -->

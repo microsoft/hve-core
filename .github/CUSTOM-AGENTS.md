@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-03-22
+ms.date: 2026-06-17
 ms.topic: guide
 keywords:
   - copilot
@@ -74,6 +74,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | Agent                      | Purpose                                                               | Key Constraint                                            |
 |----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
 | **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
+| **pr-walkthrough**         | Narrative PR orientation that builds a reviewer's mental model        | Orientation-only; never renders judgments; experimental   |
 | **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
 | **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
 | **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |
@@ -87,7 +88,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
 | **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
 | **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-| **arch-diagram-builder**    | Builds ASCII block diagrams from Azure IaC         | Parses Terraform, Bicep, ARM scripts |
 
 ### Platform Integration Agents
 
@@ -425,17 +425,6 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
 
-### arch-diagram-builder
-
-**Creates:** ASCII architecture diagrams in markdown:
-
-* Inline ASCII block diagrams embedded in markdown (pure ASCII for consistent alignment)
-* Component legend and relationship key
-
-**Workflow:** Discovery → Parsing → Relationship Mapping → Generation
-
-**Critical:** Parses Terraform, Bicep, ARM, or shell scripts. Uses pure ASCII for consistent alignment. Groups by network boundary.
-
 ### github-backlog-manager
 
 **Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
@@ -547,7 +536,5 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * Review generated outputs before using
 * Chain agents together for complex tasks
 * Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
-
----
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

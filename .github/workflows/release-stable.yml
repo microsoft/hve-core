@@ -89,6 +89,7 @@ jobs:
     uses: ./.github/workflows/docusaurus-tests.yml
     permissions:
       contents: read
+      id-token: write # Required for Codecov OIDC in the reusable workflow
     with:
       soft-fail: false
 

@@ -25,12 +25,15 @@
     "CHANGELOG.md",
     "logs/**",
     "docs/docusaurus/build/**",
+    "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
-    "evals/results/**"
+    "evals/results/**",
+    "evals/agent-behavior/eval.yaml"
   ],
   "ignoreRegExpList": [
     "/#.*/g",
-    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi"
+    "/^authors?:.*(?:\\r?\\n\\s*-.*)*$/gmi",
+    "/\\*\\*[A-Za-z]\\*\\*[a-z]+/g"
   ],
   "dictionaryDefinitions": [
     {
@@ -65,15 +68,19 @@
   ],
   "words": [
     "ˈpræksɪs",
+    "activedescendant",
     "agentic",
     "aoda",
     "atheris",
+    "cursored",
+    "networkidle",
     "behaviour",
     "beval",
     "behavioural",
     "brainwriting",
     "clusterfuzzlite",
     "collab",
+    "dogfooding",
     "easyops",
     "evals",
     "fetchone",
@@ -83,6 +90,8 @@
     "hideable",
     "idor",
     "learning",
+    "normaliz",
+    "packageable",
     "prval",
     "skillmd",
     "smol",
@@ -91,10 +100,11 @@
     "vally",
     "vyta",
     "whiteboarding",
-    "ystatement",
     "ˈpræksɪs",
     "πρᾶξις",
     "agentic",
+    "ystatement",
+    "underspecified",
     "sssc",
     "SSSC",
     "SLSA",

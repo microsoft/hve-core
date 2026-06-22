@@ -17,21 +17,21 @@ Load this file when the team identifies financial services as their industry con
 
 Bridge DT language and financial services language bidirectionally. Use financial services terms when coaching finance teams.
 
-| DT Concept                | Financial Services Term                                      |
-|---------------------------|--------------------------------------------------------------|
-| Stakeholder map           | RACI chart, three-lines-of-defense alignment                 |
-| Pain point                | Friction in customer journey, operational loss event         |
-| User journey              | Customer onboarding flow, loan origination path, claims lifecycle |
-| Observation / field study | Branch shadowing, call center side-by-side, ops center watch |
-| Prototype                 | Controlled experiment, champion-challenger test, sandbox pilot |
-| Iteration                 | Agile sprint, staged rollout (cohort expansion)              |
-| Empathy                   | Customer perspective, operational staff perspective          |
+| DT Concept                | Financial Services Term                                                  |
+|---------------------------|--------------------------------------------------------------------------|
+| Stakeholder map           | RACI chart, three-lines-of-defense alignment                             |
+| Pain point                | Friction in customer journey, operational loss event                     |
+| User journey              | Customer onboarding flow, loan origination path, claims lifecycle        |
+| Observation / field study | Branch shadowing, call center side-by-side, ops center watch             |
+| Prototype                 | Controlled experiment, champion-challenger test, sandbox pilot           |
+| Iteration                 | Agile sprint, staged rollout (cohort expansion)                          |
+| Empathy                   | Customer perspective, operational staff perspective                      |
 | Success metric            | NPS, CSAT, STP rate (straight-through processing), first-call resolution |
-| Workflow mapping          | Process swimlane, settlement workflow, approval workflow     |
-| Risk assumption           | Conduct risk, model risk, operational risk, fair lending risk |
-| Constraint-driven design  | Compliance gate, regulatory approval requirement             |
-| Alert system concept      | AML SAR trigger, fraud alert, risk dashboard alert           |
-| Integration timing        | Settlement window, regulatory reporting deadline             |
+| Workflow mapping          | Process swimlane, settlement workflow, approval workflow                 |
+| Risk assumption           | Conduct risk, model risk, operational risk, fair lending risk            |
+| Constraint-driven design  | Compliance gate, regulatory approval requirement                         |
+| Alert system concept      | AML SAR trigger, fraud alert, risk dashboard alert                       |
+| Integration timing        | Settlement window, regulatory reporting deadline                         |
 
 ## Constraints and Considerations
 
@@ -90,4 +90,3 @@ The core friction is not form-filling complexity; it's information asymmetry and
 
 * All DT coaching artifacts are scoped to `.copilot-tracking/dt/{project-slug}/`. Never write DT artifacts directly under `.copilot-tracking/dt/` without a project-slug directory.
 
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

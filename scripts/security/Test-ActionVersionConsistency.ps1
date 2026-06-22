@@ -147,6 +147,9 @@ function Get-ActionVersionViolations {
                 $action = $Matches['action']
                 $sha = $Matches['ref']
                 $version = if ($Matches['version']) { $Matches['version'].Trim() } else { $null }
+                # Normalize gh-aw provenance suffix (e.g. "v9.0.0 (source v9)") so generated
+                # lock files and generated workflows are treated as the same version comment.
+                $normalizedVersion = if ($version) { ($version -replace '\s*\(source[^)]*\)\s*$', '').Trim() } else { $null }
                 $relativePath = [System.IO.Path]::GetRelativePath((Get-Location).Path, $file.FullName)
 
                 # Initialize SHA entry if not present
@@ -159,8 +162,8 @@ function Get-ActionVersionViolations {
                 }
 
                 # Track version and source
-                if ($version -and $version -notin $shaVersionMap[$sha].Versions) {
-                    [void]$shaVersionMap[$sha].Versions.Add($version)
+                if ($normalizedVersion -and $normalizedVersion -notin $shaVersionMap[$sha].Versions) {
+                    [void]$shaVersionMap[$sha].Versions.Add($normalizedVersion)
                 }
                 [void]$shaVersionMap[$sha].Sources.Add(@{
                     File       = $relativePath

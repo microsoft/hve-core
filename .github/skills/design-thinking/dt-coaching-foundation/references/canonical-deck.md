@@ -256,5 +256,3 @@ When canonical workflow is active, maintain canonical state fields in coaching s
 - Last offered and last generated customer-card snapshot keys
 
 If the team does not opt in, these fields are optional and should not gate progress.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
