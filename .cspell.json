@@ -28,7 +28,7 @@
     "docs/docusaurus/coverage/**",
     "dependency-pinning-artifacts/**",
     "evals/results/**",
-    "evals/beval/**/results/**"
+    "evals/beval/**/results/**",
     "evals/agent-behavior/eval.yaml"
   ],
   "ignoreRegExpList": [
