@@ -33,3 +33,14 @@ Score each dimension from 0 to 2.
 ## Interpreting Delta
 
 Prefer `with-subagents` when it improves coverage or actionability by at least 2 total points without losing more than 1 point in noise control. Prefer `no-subagents` when scores are tied and the request is simple or latency-sensitive.
+
+## DeepEval LLM-Judge Mode
+
+DeepEval metrics are optional because they require an LLM provider key. Run deterministic checks first, then opt into LLM judging:
+
+```bash
+uv run --project scripts/evals/task-researcher-comparison pytest
+DEEPEVAL_RUN_LLM=1 uv run --project scripts/evals/task-researcher-comparison deepeval test run scripts/evals/task-researcher-comparison/tests/test_deepeval_metrics.py
+```
+
+The DeepEval score is not a replacement for the manual rubric. Use it to identify deltas that deserve human review.

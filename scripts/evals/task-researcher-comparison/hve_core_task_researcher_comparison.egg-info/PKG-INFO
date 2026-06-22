@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: hve-core-task-researcher-comparison
+Version: 0.1.0
+Summary: DeepEval and deterministic comparison harness for Task Researcher subagent behavior
+Requires-Python: >=3.11
+Requires-Dist: deepeval<4,>=3.0
+Requires-Dist: pyyaml<7,>=6.0

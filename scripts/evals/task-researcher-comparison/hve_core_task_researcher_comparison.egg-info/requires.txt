@@ -1,0 +1,2 @@
+deepeval<4,>=3.0
+pyyaml<7,>=6.0
