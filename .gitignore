@@ -358,6 +358,7 @@ paket-files/
 **/.ruff_cache/
 .github/skills/experimental/mural/tests/corpus/[0-9a-f]*
 *.pyc
+*.egg-info/
 venv/
 .venv/
 

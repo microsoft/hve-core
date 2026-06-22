@@ -36,6 +36,10 @@ class LazyGEval:
 
 
 def require_deepeval_llm_enabled() -> None:
+    """Guard function that ensures DeepEval LLM tests run only when explicitly enabled and credentials are present.
+
+    Skips tests with clear messaging if DEEPEVAL_RUN_LLM=1 is not set or if no LLM provider credentials are available.
+    """
     if os.getenv("DEEPEVAL_RUN_LLM") != "1":
         pytest.skip("Set DEEPEVAL_RUN_LLM=1 to run DeepEval LLM-judge tests.")
     if not (os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")):
@@ -47,6 +51,19 @@ def build_comparison_test_case(
     without_subagents: CapturedOutput,
     with_subagents: CapturedOutput,
 ) -> LLMTestCase:
+    """Construct an LLMTestCase for DeepEval grading from scenario and fixture outputs.
+
+    Combines outputs from both no-subagent and with-subagents variants into a single test case,
+    with the expected output derived from the scenario's requirements and grading focus.
+
+    Args:
+        scenario: Scenario metadata including prompt, required evidence, and grading focus.
+        without_subagents: Captured output from running without subagents.
+        with_subagents: Captured output from running with subagents.
+
+    Returns:
+        LLMTestCase ready for DeepEval assert_test evaluation.
+    """
     return LLMTestCase(
         input=scenario.prompt,
         actual_output=(
@@ -64,7 +81,22 @@ def build_comparison_test_case(
     )
 
 
-def build_metrics() -> list[LazyGEval | GEval]:
+def build_metrics() -> list[LazyGEval]:
+    """Build the set of DeepEval GEval metrics for task researcher comparison.
+
+    Returns five LazyGEval metrics that evaluate task researcher output:
+    - Evidence Coverage: required evidence presence and with-subagents improvement
+    - Citation Precision: workspace-relative citations and external URL relevance
+    - Actionability: selected approach, alternatives, and next steps
+    - Noise Control: focus and avoidance of unrelated research
+    - Mode Compliance: adherence to no-subagent vs. with-subagents behavior patterns
+
+    LazyGEval wrappers defer LLM model initialization until metrics are actually used,
+    allowing definition-only tests to pass without credentials.
+
+    Returns:
+        List of LazyGEval metrics with 0.7 threshold each.
+    """
     params = [
         SingleTurnParams.INPUT,
         SingleTurnParams.ACTUAL_OUTPUT,
