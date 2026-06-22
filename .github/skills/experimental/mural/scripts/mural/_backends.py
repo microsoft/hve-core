@@ -242,15 +242,18 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
                 if file_path.exists():
                     _check_credential_file_perms(file_path, os.environ)
                 file_entries = file_backend._read_all()
-                file_populated = any(file_entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS)
+                file_populated = any(
+                    file_entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS
+                )
                 if file_populated:
                     if profile not in _state.seen_fallback_warn():
                         _state.seen_fallback_warn().add(profile)
-                        _emit(
-                            f"keyring backend available but empty for profile {profile!r}; "
-                            f"using file backend at {file_path}",
-                            level=logging.WARNING,
+                        msg = (
+                            f"keyring backend available but empty for "
+                            f"profile {profile!r}; "
+                            f"using file backend at {file_path}"
                         )
+                        _emit(msg, level=logging.WARNING)
                     selected = file_backend
         except _KeyringUnavailable as exc:
             if profile not in _state.seen_fallback_warn():
