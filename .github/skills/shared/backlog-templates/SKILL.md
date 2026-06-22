@@ -24,7 +24,7 @@ Callers:
 * RAI Planner (`rai-planner` skill `references/backlog-handoff.md`)
 * Security Planner (`.github/agents/security/security-planner.agent.md`; security-specific handoff details in `.github/skills/project-planning/security-planning/references/backlog-formats.md`)
 * SSSC Planner (`.github/instructions/security/sssc-planner.instructions.md`)
-* Accessibility Planner (`accessibility-planner-playbook` skill `references/backlog-handoff.md`)
+* Accessibility Planner (`accessibility/accessibility` skill `references/phases/backlog-handoff.md`)
 
 What stays per-planner (NOT in this skill):
 

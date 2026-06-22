@@ -1,1 +1,0 @@
-../../../../../.github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md

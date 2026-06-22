@@ -40,7 +40,7 @@ Load `brd-author#define` first. Author full BRD content using the canonical temp
 
 Dispatch the `BRD Quality Reviewer` subagent to grade the draft. A single invocation returns a `BRD_STANDARD_FINDINGS_V1` payload and an aggregated `BRD_QUALITY_REPORT_V1` payload; treat both as the evidence for the Define gate. Define does not exit until the quality report's gate decision permits advancement.
 
-Author ordinary BRD process diagrams inline through the canonical BRD template guidance. The Arch Diagram Builder can provide optional infrastructure context when a BRD section needs architecture-specific interpretation, but it is not required for the BRD workflow.
+Author ordinary BRD process diagrams inline through the canonical BRD template guidance. When a BRD section needs infrastructure-specific interpretation or an architecture/network diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, choosing ASCII or Mermaid output for the diagram. That skill is the authoritative source for its own conventions and output format; ordinary BRD process diagrams remain optional inline and do not require a separate diagram-specific handoff.
 
 ### Govern
 

@@ -31,7 +31,7 @@ items:
     kind: agent
     maturity: experimental
   # Subagents
-  - path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
+  - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
     kind: agent
     maturity: experimental
   # Prompts
