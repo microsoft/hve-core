@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hve-core-task-researcher-comparison"
+version = "0.1.0"
+description = "DeepEval and deterministic comparison harness for Task Researcher subagent behavior"
+requires-python = ">=3.11"
+dependencies = [
+    "deepeval>=3.0,<4",
+    "pyyaml>=6.0,<7",
+]
+
+[tool.setuptools]
+packages = ["task_researcher_comparison"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "deepeval: tests that require DeepEval LLM judge credentials",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
