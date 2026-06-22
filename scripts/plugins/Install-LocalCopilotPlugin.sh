@@ -41,6 +41,19 @@ log() {
   printf "==> %s\n" "$1"
 }
 
+print_reinstall_instructions() {
+  cat <<INSTRUCTIONS
+
+To reinstall the marketplace plugin after local testing:
+
+  copilot plugin uninstall ${plugin_id}
+  copilot plugin marketplace add microsoft/hve-core
+  copilot plugin install ${plugin_id}@hve-core
+
+Restart Copilot CLI after reinstalling.
+INSTRUCTIONS
+}
+
 err() {
   printf "ERROR: %s\n" "$1" >&2
   exit 1
@@ -190,6 +203,7 @@ main() {
   install_local_plugin "${root}"
 
   log "Restart Copilot CLI, then test: /hve-core:task-research topic=\"...\" subagents=true mode=lanes"
+  print_reinstall_instructions
 }
 
 main "$@"

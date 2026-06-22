@@ -5,9 +5,7 @@ user-invocable: false
 tools:
   - read
   - search
-model:
-  - MAI-Code-1-Flash (copilot)
-  - Claude Sonnet 4.6 (copilot)
+model: MAI-Code-1-Flash (copilot)
 ---
 
 # Implementation Validator
