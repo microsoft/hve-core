@@ -29,6 +29,7 @@
     "dependency-pinning-artifacts/**",
     "evals/results/**",
     "evals/beval/**/results/**"
+    "evals/agent-behavior/eval.yaml"
   ],
   "ignoreRegExpList": [
     "/#.*/g",

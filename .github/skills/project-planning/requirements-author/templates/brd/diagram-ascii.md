@@ -40,11 +40,11 @@ This fragment is used when `brd_frontmatter.diagram_format: "ascii"`.
 
 *Guidance*: Provide a brief narrative explanation of the process steps, decision points, and outcomes. Keep to 2-3 paragraphs.
 
-## Optional: Technical Context via Architecture Diagram Builder
+## Optional: Technical Context via Architecture Diagrams Skill
 
 {{arch_diagram_ref}}
 
-*Guidance*: Reference external architecture diagrams via `arch-diagram-builder` subagent if this process depends on infrastructure or system integration details. Otherwise, leave blank.
+*Guidance*: When this process depends on infrastructure or system integration details, use the `architecture-diagrams` skill and follow its workflow, conventions, arrow types, grouping, layout, resource identification, output format, worked example, and authoring guidelines. Otherwise, leave blank.
 
 ---
 

@@ -7,7 +7,7 @@ description: Authoring skill for Architecture Decision Records (ADRs) supporting
 
 ## Overview
 
-This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
+This skill encodes the per-phase authoring conventions for Architecture Decision Records consumed by the ADR Creator agent. It also supports direct invocation when no ADR Creator state file exists. Direct callers first run the session recovery and bootstrap protocol from `adr-identity.instructions.md`: resolve or create `.copilot-tracking/adr-plans/{projectSlug}/state.json`, confirm `entryMode`, `projectSlug`, and `outputTemplate`, then continue at the phase recorded in state. It supports three entry modes and two output templates and converges all of them at the Govern phase, where the final ADR file is written and lineage is updated atomically.
 
 Entry modes (`state.entryMode`):
 
@@ -41,7 +41,7 @@ Activities:
 - **Drivers** — list decision drivers (functional needs, business goals).
 - **Constraints** — list non-negotiables (regulatory, platform, contractual, time).
 - **ASR trigger evaluation** — required when `state.outputTemplate == 'madr-v4'`. Evaluate triggers against the rubric in `adr-standards.instructions.md` and record results in `state.asrTriggers[]`. Defer the rubric and full taxonomy to that file and to `references/asr-trigger-taxonomy.md`.
-- **Diagram-format prompt** — when `state.userPreferences.diagramFormat` is unset, ask the user `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. Required before Frame can exit.
+- **Diagram-format prompt** — when `state.userPreferences.diagramFormat` is unset, check the architecture-diagrams root state at `.copilot-tracking/architecture-diagrams/state.json`; if that file provides `userPreferences.diagramFormat`, use it. Otherwise ask the user for `ascii` or `mermaid`, persist the answer to `state.userPreferences.diagramFormat`, and persist it to the architecture-diagrams root state for standalone reuse. When a caller, handoff, or existing ADR state already provides `state.userPreferences.diagramFormat`, treat that value as authoritative and do not ask again. Required before Frame can exit.
 
 Hard exit gate (restated from `adr-identity.instructions.md`):
 
@@ -80,7 +80,7 @@ This phase converges all three entry modes and is the only phase that writes ADR
 Activities:
 
 1. **MADR v4 frontmatter assembly** — render the ADR frontmatter from `templates/madr-v4.md`. The template is reproduced verbatim from MADR v4.0.0 (CC0); see `references/standards-excerpts.md` for attribution. Merge `templates/madr-v4-frontmatter-overlay.md` on top to inject hve-core extension fields (`id`, `deciders`, `tags`, `supersedes`, `superseded-by`, `related`, `asr_triggers`) without modifying the verbatim upstream template (GP-17).
-2. **Diagram render** — based on `state.userPreferences.diagramFormat`, embed the diagram body from either `templates/diagram-ascii.md` or `templates/diagram-mermaid.md`. Skill callers do not branch on platform; the template selection is purely data-driven.
+2. **Diagram render** — based on `state.userPreferences.diagramFormat`, embed the diagram body from either `templates/diagram-ascii.md` or `templates/diagram-mermaid.md`. Skill callers do not branch on platform; the template selection is purely data-driven. When the diagram is derived from infrastructure source files (Terraform, Bicep, ARM), invoke the `architecture-diagrams` skill with the authoritative format recorded in `state.userPreferences.diagramFormat`, and embed that output in place of the scaffold fragment. Standalone diagram generation uses the architecture-diagrams root state contract rather than ADR state.
 3. **Lineage validation** — apply the six supersession rules summarized below; full text is in `references/lineage-rules.md`.
 4. **Frontmatter validation** — invoke `scripts/validate_frontmatter.py` against the staged ADR file. The script returns a non-zero exit code on schema or enum violations and is the single authority for frontmatter shape.
 5. **Lineage allocator** — invoke `scripts/update_lineage.py` to mutate `.adr-config.yml`. The allocator is the only writer of `last_decision_id`. Manual edits to `last_decision_id` are forbidden.

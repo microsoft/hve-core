@@ -12,7 +12,7 @@ items:
 - path: .github/agents/accessibility/accessibility-reviewer.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
+- path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
@@ -54,7 +54,7 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/hve-core/documentation.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
   kind: agent
@@ -101,8 +101,6 @@ items:
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
-  kind: agent
-- path: .github/agents/project-planning/arch-diagram-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/brd-builder.agent.md
   kind: agent
@@ -243,8 +241,6 @@ items:
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/doc-ops-update.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
@@ -488,19 +484,7 @@ items:
   kind: instruction
 - path: .github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md
   kind: instruction
-- path: .github/skills/accessibility/aria-apg
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/coga
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/en-301-549
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/section-508
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/wcag-22
+- path: .github/skills/accessibility/accessibility
   kind: skill
   maturity: experimental
 - path: .github/skills/coding-standards/python-foundational
@@ -537,6 +521,11 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/architecture-diagrams
+  kind: skill
+  maturity: experimental
+- path: .github/skills/hve-core/documentation
+  kind: skill
 - path: .github/skills/hve-core/vally-tests
   kind: skill
   maturity: experimental
@@ -544,9 +533,6 @@ items:
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
-- path: .github/skills/project-planning/accessibility-planner-playbook
-  kind: skill
-  maturity: experimental
 - path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental

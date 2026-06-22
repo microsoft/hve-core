@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-21
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -46,14 +46,14 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 
 ### Prompts and Instructions
 
-| Tool                    | Type        | How to Invoke              | Purpose                                     |
-|-------------------------|-------------|----------------------------|---------------------------------------------|
-| task-review             | Prompt      | `/task-review`             | Start a structured task review              |
-| pull-request            | Prompt      | `/pull-request`            | Create a pull request for current changes   |
-| ado-create-pull-request | Prompt      | `/ado-create-pull-request` | Create an ADO-linked pull request           |
-| doc-ops-update          | Prompt      | `/doc-ops-update`          | Update documentation alongside code changes |
-| commit-message          | Instruction | Auto-activated             | Enforces commit message conventions         |
-| community-interaction   | Instruction | Auto-activated             | Enforces community communication standards  |
+| Tool                    | Type        | How to Invoke                  | Purpose                                          |
+|-------------------------|-------------|--------------------------------|--------------------------------------------------|
+| task-review             | Prompt      | `/task-review`                 | Start a structured task review                   |
+| pull-request            | Prompt      | `/pull-request`                | Create a pull request for current changes        |
+| ado-create-pull-request | Prompt      | `/ado-create-pull-request`     | Create an ADO-linked pull request                |
+| documentation           | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation |
+| commit-message          | Instruction | Auto-activated                 | Enforces commit message conventions              |
+| community-interaction   | Instruction | Auto-activated                 | Enforces community communication standards       |
 
 ## Role-Specific Guidance
 
@@ -135,7 +135,7 @@ Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review
 ### Documentation Review
 
 ```text
-/doc-ops-update scope=docs/hve-guide/lifecycle validateOnly=true focus=accuracy
+Select documentation agent in validate mode. Scope docs/hve-guide/lifecycle, validation-only, focus accuracy.
 ```
 
 ## Stage Outputs and Next Stage
