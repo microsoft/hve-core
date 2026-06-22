@@ -10,7 +10,6 @@ from task_researcher_comparison.deepeval_metrics import (
 )
 from task_researcher_comparison.fixtures import load_fixture_pair, load_scenarios
 
-
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
 

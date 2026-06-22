@@ -5,7 +5,6 @@ from task_researcher_comparison.fixtures import load_fixture_pair, load_scenario
 from task_researcher_comparison.report import write_reports
 from task_researcher_comparison.static_metrics import score_pair
 
-
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures"
 
 

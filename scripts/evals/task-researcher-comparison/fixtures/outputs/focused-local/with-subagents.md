@@ -9,13 +9,13 @@ For simple local-only research, Task Researcher should use direct or focused mod
 
 ## Evidence
 
-- .github/agents/hve-core/task-researcher.agent.md:45-60 - Trigger Matrix row for simple/medium local work indicates direct or focused mode.
-- .github/prompts/hve-core/task-research.prompt.md:5-8 - Command input schema shows mode override capability.
+* .github/agents/hve-core/task-researcher.agent.md:45-60 - Trigger Matrix row for simple/medium local work indicates direct or focused mode.
+* .github/prompts/hve-core/task-research.prompt.md:5-8 - Command input schema shows mode override capability.
 
 ## Lane Evidence
 
-- Codebase locator lane identified the relevant matrix rows quickly.
-- No external lanes activated because simple local work does not require external research.
+* Codebase locator lane identified the relevant matrix rows quickly.
+* No external lanes activated because simple local work does not require external research.
 
 ## Recommendation
 

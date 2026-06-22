@@ -9,12 +9,12 @@ Validating a Task Researcher change that depends on an external LLM evaluation f
 
 ## Evidence
 
-- .github/agents/hve-core/task-researcher.agent.md:15-30 - Local eval validation strategy and integration points.
-- evals/README.md:20-45 - Conventions for local-first evaluation and external framework opt-in.
+* .github/agents/hve-core/task-researcher.agent.md:15-30 - Local eval validation strategy and integration points.
+* evals/README.md:20-45 - Conventions for local-first evaluation and external framework opt-in.
 
 ## External References
 
-- https://deepeval.com/docs/introduction - DeepEval supports local-first LLM application and agent evaluation.
+* <https://deepeval.com/docs/introduction> - DeepEval supports local-first LLM application and agent evaluation.
 
 ## Recommendation
 

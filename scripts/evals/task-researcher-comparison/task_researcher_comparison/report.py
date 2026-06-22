@@ -46,7 +46,9 @@ def write_reports(scores: list[PairScore], output_dir: Path) -> tuple[Path, Path
         "|----------|--------------|----------------|-------|----------------|",
     ]
     for score in scores:
-        recommendation = "Prefer with-subagents" if score.delta_total >= 2 else "Prefer no-subagents or tie-break manually"
+        recommendation = (
+            "Prefer with-subagents" if score.delta_total >= 2 else "Prefer no-subagents or tie-break manually"
+        )
         lines.append(
             f"| {score.scenario_id} | {score.without_subagents.total} | "
             f"{score.with_subagents.total} | {score.delta_total} | {recommendation} |"

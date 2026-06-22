@@ -105,33 +105,48 @@ def build_metrics() -> list[LazyGEval]:
     return [
         LazyGEval(
             name="Evidence Coverage",
-            criteria="Score whether both variants cover the scenario's required evidence, and whether the with-subagents variant improves coverage when lane fan-out is expected.",
+            criteria=(
+                "Score whether both variants cover the scenario's required evidence, and whether the "
+                "with-subagents variant improves coverage when lane fan-out is expected."
+            ),
             evaluation_params=params,
             threshold=0.7,
         ),
         LazyGEval(
             name="Citation Precision",
-            criteria="Score whether claims use precise workspace-relative file citations, line ranges where available, and relevant external URLs only when external research is expected.",
+            criteria=(
+                "Score whether claims use precise workspace-relative file citations, line ranges where available, "
+                "and relevant external URLs only when external research is expected."
+            ),
             evaluation_params=params,
             threshold=0.7,
         ),
         LazyGEval(
             name="Actionability",
-            criteria="Score whether outputs provide a selected approach, rejected alternatives, implementation-ready next steps, and validation guidance.",
+            criteria=(
+                "Score whether outputs provide a selected approach, rejected alternatives, "
+                "implementation-ready next steps, and validation guidance."
+            ),
             evaluation_params=params,
             threshold=0.7,
         ),
         LazyGEval(
             name="Noise Control",
-            criteria="Score whether outputs avoid unrelated codebase scanning, external tangents, and excessive detail not needed for the scenario.",
+            criteria=(
+                "Score whether outputs avoid unrelated codebase scanning, external tangents, "
+                "and excessive detail not needed for the scenario."
+            ),
             evaluation_params=params,
             threshold=0.7,
         ),
         LazyGEval(
             name="Mode Compliance",
-            criteria="Score whether the no-subagent and with-subagents variants follow their expected modes, including avoiding lane fan-out for simple local work and using applicable lanes for medium-hard or external-uncertainty cases.",
+            criteria=(
+                "Score whether the no-subagent and with-subagents variants follow their expected modes, "
+                "including avoiding lane fan-out for simple local work and using applicable lanes for "
+                "medium-hard or external-uncertainty cases."
+            ),
             evaluation_params=params,
             threshold=0.7,
         ),
     ]
-

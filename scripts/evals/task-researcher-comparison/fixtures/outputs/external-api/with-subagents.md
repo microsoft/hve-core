@@ -9,21 +9,21 @@ Validating a Task Researcher change that depends on an external LLM evaluation f
 
 ## Evidence
 
-- .github/agents/hve-core/task-researcher.agent.md:15-30 - Local eval validation strategy and integration points.
-- evals/README.md:20-45 - Conventions for local-first evaluation and external framework opt-in.
+* .github/agents/hve-core/task-researcher.agent.md:15-30 - Local eval validation strategy and integration points.
+* evals/README.md:20-45 - Conventions for local-first evaluation and external framework opt-in.
 
 ## External Evidence
 
-- https://deepeval.com/docs/introduction - DeepEval supports local-first LLM application and agent evaluation.
-- https://deepeval.com/docs/metrics-llm-evals - GEval supports custom LLM-as-judge criteria.
+* <https://deepeval.com/docs/introduction> - DeepEval supports local-first LLM application and agent evaluation.
+* <https://deepeval.com/docs/metrics-llm-evals> - GEval supports custom LLM-as-judge criteria.
 
 FAR quality note: Sources are factual, actionable, and relevant for selecting an automated grader.
 
 ## Lane Evidence
 
-- Codebase locator lane identified eval integration points and credential patterns.
-- External research lane found DeepEval documentation and GEval metric capabilities.
-- Pattern analyzer lane connected local deterministic checks with opt-in LLM-judge tests.
+* Codebase locator lane identified eval integration points and credential patterns.
+* External research lane found DeepEval documentation and GEval metric capabilities.
+* Pattern analyzer lane connected local deterministic checks with opt-in LLM-judge tests.
 
 ## Recommendation
 
