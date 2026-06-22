@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 from task_researcher_comparison.fixtures import load_scenarios
@@ -31,14 +32,21 @@ def main() -> int:
         for variant in ("no-subagents", "with-subagents"):
             prompt = build_prompt(scenario.prompt, variant)
             if command_template:
-                completed = subprocess.run(
-                    command_template.format(prompt=prompt),
-                    shell=True,
-                    check=True,
-                    text=True,
-                    capture_output=True,
-                )
-                (scenario_dir / f"{variant}.md").write_text(completed.stdout, encoding="utf-8")
+                try:
+                    completed = subprocess.run(
+                        command_template.format(prompt=prompt),
+                        shell=True,
+                        check=True,
+                        text=True,
+                        capture_output=True,
+                    )
+                    (scenario_dir / f"{variant}.md").write_text(completed.stdout, encoding="utf-8")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: Runner failed for scenario '{scenario.id}' variant '{variant}'", file=sys.stderr)
+                    print(f"Command returned exit code {e.returncode}", file=sys.stderr)
+                    if e.stderr:
+                        print(f"stderr: {e.stderr}", file=sys.stderr)
+                    return 1
             else:
                 (scenario_dir / f"{variant}.prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     return 0
