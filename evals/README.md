@@ -2,7 +2,7 @@
 title: Evaluations
 description: 'Architecture overview and contributor guide for Vally evaluation specs'
 author: HVE Core Team
-ms.date: 2026-05-14
+ms.date: 2026-06-22
 ---
 
 This directory contains [Vally](https://www.npmjs.com/package/@microsoft/vally-cli) evaluation specs for hve-core.
@@ -16,7 +16,8 @@ evals/
 ├── script-validation/    copilot-sdk evals testing deterministic scripts
 ├── baseline-equivalence/ parameterized baseline-vs-customized equivalence suite
 ├── behavior-conformance/ Tier 3 advisory conformance for prompts, instructions, and skill behavior
-└── skill-hygiene/        vally lint structural checks for .github/skills/
+├── skill-hygiene/        vally lint structural checks for .github/skills/
+└── task-researcher-comparison/ DeepEval plus deterministic paired comparison for Task Researcher subagent behavior
 ```
 
 ## Executors
@@ -29,6 +30,7 @@ evals/
 | `baseline-equivalence` | `copilot-sdk` | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
 | `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
 | `skill-hygiene`        | `vally lint`  | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
+| `task-researcher-comparison` | `pytest` / `deepeval` | Compares Task Researcher output quality with subagents disabled and enabled |
 
 The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `vally eval`. It is a README-only suite (no `eval.yaml`) that reuses the lint pipeline's static grader registry to validate the skill catalog on every PR that touches `.github/skills/`. See [`skill-hygiene/README.md`](skill-hygiene/README.md) for coverage and grader detail.
 
@@ -50,6 +52,10 @@ npx vally eval --suite script-validation
 
 # Compare results against baseline
 npx vally compare
+
+# Run Task Researcher comparison
+npm run eval:task-researcher:compare   # deterministic local comparison
+npm run eval:task-researcher:deepeval  # optional LLM-judge scoring
 ```
 
 ## Adding New Evals
