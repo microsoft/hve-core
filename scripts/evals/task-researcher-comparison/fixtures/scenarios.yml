@@ -1,0 +1,45 @@
+scenarios:
+  - id: codebase-lane
+    title: "Medium-hard codebase research"
+    prompt: "Research how Task Researcher chooses between focused and lane-enabled research for codebase work. Compare implementation files, tests, and conventions."
+    expected_mode_without_subagents: "focused"
+    expected_mode_with_subagents: "lanes"
+    required_evidence:
+      - ".github/agents/hve-core/task-researcher.agent.md"
+      - ".github/agents/hve-core/subagents/researcher-subagent.agent.md"
+      - ".github/prompts/hve-core/task-research.prompt.md"
+    grading_focus:
+      coverage: "Identifies parent agent, subagent, command prompt, and eval surfaces."
+      citation_precision: "Uses workspace-relative file paths with line references."
+      actionability: "Selects a recommended verification approach with concrete next steps."
+      noise_control: "Avoids unrelated repository-wide digressions."
+      mode_compliance: "No-subagent output stays focused; subagent output identifies locator, analyzer, and pattern lanes."
+  - id: focused-local
+    title: "Simple local-only focused research"
+    prompt: "Research where Task Researcher documents the lightest mode for simple local work."
+    expected_mode_without_subagents: "direct_or_focused"
+    expected_mode_with_subagents: "direct_or_focused"
+    required_evidence:
+      - ".github/agents/hve-core/task-researcher.agent.md"
+      - ".github/prompts/hve-core/task-research.prompt.md"
+    grading_focus:
+      coverage: "Finds the trigger matrix row for simple/medium local work."
+      citation_precision: "Cites the specific trigger matrix and command input lines."
+      actionability: "Explains when not to fan out."
+      noise_control: "Does not invent external research needs."
+      mode_compliance: "Subagent-enabled variant should not over-fan-out for this simple case."
+  - id: external-api
+    title: "External API uncertainty"
+    prompt: "Research how to validate a Task Researcher change that depends on an external LLM evaluation framework."
+    expected_mode_without_subagents: "focused_plus_external"
+    expected_mode_with_subagents: "lanes_plus_external"
+    required_evidence:
+      - ".github/agents/hve-core/task-researcher.agent.md"
+      - "evals/README.md"
+      - "https://deepeval.com/docs/introduction"
+    grading_focus:
+      coverage: "Includes local eval conventions and external framework evidence."
+      citation_precision: "Separates workspace citations from external URLs."
+      actionability: "Identifies a viable automated-plus-manual grading plan."
+      noise_control: "Avoids adopting external tooling without local integration constraints."
+      mode_compliance: "Subagent-enabled variant includes external research only because external facts matter."
