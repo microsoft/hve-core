@@ -1535,7 +1535,7 @@ Describe 'CI Environment Integration' -Tag 'Unit' {
             Mock Test-SingleFileFrontmatter { throw 'Validation critical error' }
             
             # Act
-            $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1
+            $output = Test-FrontmatterValidation -Files @($errorFile) 2>&1 3>&1 6>&1 | ForEach-Object { [string]$_ }
             
             # Assert - Should attempt to output GitHub annotation on error
             # The error annotation is in the catch block
@@ -1580,8 +1580,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Should output ::error:: annotation
             $output | Where-Object { $_ -like '::error*' } | Should -Not -BeNullOrEmpty
@@ -1597,8 +1597,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Should output ::warning:: annotation
             $output | Where-Object { $_ -like '::warning*' } | Should -Not -BeNullOrEmpty
@@ -1614,8 +1614,8 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
             }
             $summary.AddResult($fileResult)
 
-            # Act - Capture Write-Output
-            $output = Write-CIAnnotations -Summary $summary
+            # Act - Capture host output from workflow command emission
+            $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
 
             # Assert - Annotation should include file path
             $output | Where-Object { $_ -like '*file=*specific-file*' } | Should -Not -BeNullOrEmpty

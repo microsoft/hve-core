@@ -1669,7 +1669,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md*::Test error'
     }
 
@@ -1679,7 +1679,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddWarning('Test warning', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::warning file=test.md*::Test warning'
     }
 
@@ -1690,7 +1690,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Error at line', 'field', 42)
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeLike '::error file=test.md,line=42::Error at line'
     }
 
@@ -1700,7 +1700,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.HasFrontmatter = $true
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -BeNullOrEmpty
     }
 
@@ -1710,7 +1710,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('50% complete', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match '50%25 complete'
     }
 
@@ -1720,7 +1720,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`rline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Dline2'
     }
 
@@ -1730,7 +1730,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError("line1`nline2", 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'line1%0Aline2'
     }
 
@@ -1740,7 +1740,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('scope::value', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'scope%3A%3Avalue'
     }
 
@@ -1750,7 +1750,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=path%3Afile\.md'
     }
 
@@ -1760,7 +1760,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2Cbackup\.md'
     }
 
@@ -1770,7 +1770,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
         $result.AddError('Test error', 'field')
         $summary.AddResult($result)
 
-        $output = Write-CIAnnotations -Summary $summary
+        $output = Write-CIAnnotations -Summary $summary 6>&1 | ForEach-Object { [string]$_ }
         $output | Should -Match 'file=file%2520name\.md'
     }
 

@@ -866,17 +866,25 @@ exit 0
             $shim = Join-Path $stubDir 'python.cmd'
             "@pwsh -NoProfile -File `"$stubScript`" %*" | Set-Content -LiteralPath $shim -Encoding ascii
 
-            return [pscustomobject]@{ Dir = $stubDir; MarkerPath = $markerPath }
+            return [pscustomobject]@{ Dir = $stubDir; MarkerPath = $markerPath; ScriptPath = $stubScript }
         }
     }
 
     BeforeEach {
         $script:OrigPath = $env:PATH
+        $script:OrigModerationPython = $env:HVE_MODERATION_PYTHON
         Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        Remove-Item Env:\HVE_MODERATION_PYTHON -ErrorAction SilentlyContinue
     }
 
     AfterEach {
         $env:PATH = $script:OrigPath
+        if ($null -eq $script:OrigModerationPython) {
+            Remove-Item Env:\HVE_MODERATION_PYTHON -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:HVE_MODERATION_PYTHON = $script:OrigModerationPython
+        }
         Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
     }
 
@@ -884,6 +892,7 @@ exit 0
         $fx = New-ModerationFixture -SpecThreshold '0.9'
         $stub = New-PythonThresholdStub
         $env:PATH = "$($stub.Dir);$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = $stub.ScriptPath
         $env:STUB_VALLY_MODE = 'pass'
 
         & pwsh -NoProfile -File $script:ScriptPath `
@@ -927,6 +936,7 @@ stimuli:
 
         $stub = New-PythonThresholdStub
         $env:PATH = "$($stub.Dir);$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = $stub.ScriptPath
         $env:STUB_VALLY_MODE = 'pass'
 
         & pwsh -NoProfile -File $script:ScriptPath `

@@ -13,6 +13,12 @@ BeforeAll {
 
     $mockPath = Join-Path $PSScriptRoot '../Mocks/GitMocks.psm1'
     Import-Module $mockPath -Force
+
+    function Invoke-HostOutput {
+        param([Parameter(Mandatory)][scriptblock]$ScriptBlock)
+
+        return @(& $ScriptBlock 6>&1 | ForEach-Object { [string]$_ })
+    }
 }
 
 Describe 'Get-StandardTimestamp' -Tag 'Unit' {
@@ -433,42 +439,42 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
         }
 
         It 'Outputs warning annotation' {
-            $output = Write-CIAnnotation -Message 'Test warning' -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test warning' -Level Warning }
             $output | Should -Be '::warning::Test warning'
         }
 
         It 'Outputs error annotation' {
-            $output = Write-CIAnnotation -Message 'Test error' -Level Error
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test error' -Level Error }
             $output | Should -Be '::error::Test error'
         }
 
         It 'Outputs notice annotation' {
-            $output = Write-CIAnnotation -Message 'Test notice' -Level Notice
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test notice' -Level Notice }
             $output | Should -Be '::notice::Test notice'
         }
 
         It 'Includes file in annotation' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'src/test.ps1'
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'src/test.ps1' }
             $output | Should -Be '::warning file=src/test.ps1::Test'
         }
 
         It 'Normalizes backslashes to forward slashes' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'src\path\test.ps1'
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'src\path\test.ps1' }
             $output | Should -Be '::warning file=src/path/test.ps1::Test'
         }
 
         It 'Includes line number in annotation' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 }
             $output | Should -Be '::warning file=test.ps1,line=42::Test'
         }
 
         It 'Includes column number in annotation' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 -Column 10
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 -Column 10 }
             $output | Should -Be '::warning file=test.ps1,line=42,col=10::Test'
         }
 
         It 'Defaults to Warning level' {
-            $output = Write-CIAnnotation -Message 'Test message'
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test message' }
             $output | Should -Be '::warning::Test message'
         }
     }
@@ -480,27 +486,27 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
         }
 
         It 'Outputs task.logissue for warning' {
-            $output = Write-CIAnnotation -Message 'Test warning' -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test warning' -Level Warning }
             $output | Should -Be '##vso[task.logissue type=warning]Test warning'
         }
 
         It 'Outputs task.logissue for error' {
-            $output = Write-CIAnnotation -Message 'Test error' -Level Error
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test error' -Level Error }
             $output | Should -Be '##vso[task.logissue type=error]Test error'
         }
 
         It 'Maps Notice to info type' {
-            $output = Write-CIAnnotation -Message 'Test notice' -Level Notice
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test notice' -Level Notice }
             $output | Should -Be '##vso[task.logissue type=info]Test notice'
         }
 
         It 'Includes sourcepath for file' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'src/test.ps1'
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'src/test.ps1' }
             $output | Should -Be '##vso[task.logissue type=warning;sourcepath=src/test.ps1]Test'
         }
 
         It 'Includes line and column numbers' {
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 -Column 10
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File 'test.ps1' -Line 42 -Column 10 }
             $output | Should -Be '##vso[task.logissue type=warning;sourcepath=test.ps1;linenumber=42;columnnumber=10]Test'
         }
     }
@@ -533,34 +539,34 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
 
         It 'Escapes newlines in message to prevent command injection' {
             $maliciousMessage = "Test`n::set-output name=pwned::true"
-            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message $maliciousMessage -Level Warning }
             $output | Should -Not -Match '::set-output'
             $output | Should -Match '%0A'
         }
 
         It 'Escapes carriage returns in message' {
             $maliciousMessage = "Test`r::error::Injected"
-            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message $maliciousMessage -Level Warning }
             $output | Should -Not -Match '::error::Injected'
             $output | Should -Match '%0D'
         }
 
         It 'Escapes percent signs in message' {
             $maliciousMessage = 'Test %0A injection attempt'
-            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message $maliciousMessage -Level Warning }
             $output | Should -Match '%250A'
         }
 
         It 'Escapes colons and commas in file path' {
             $maliciousFile = 'file:injection,col=1'
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Match '%3A'
             $output | Should -Match '%2C'
         }
 
         It 'Prevents full command injection via file parameter' {
             $maliciousFile = "path`n::error::Pwned"
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Not -Match '::error::Pwned'
         }
     }
@@ -573,26 +579,26 @@ Describe 'Write-CIAnnotation' -Tag 'Unit' {
 
         It 'Escapes newlines in message to prevent command injection' {
             $maliciousMessage = "Test`n##vso[task.setvariable variable=pwned]true"
-            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message $maliciousMessage -Level Warning }
             $output | Should -Not -Match '##vso\[task\.setvariable'
             $output | Should -Match '%AZP0A'
         }
 
         It 'Escapes closing brackets in file path' {
             $maliciousFile = 'path]##vso[task.setvariable variable=pwned]true'
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Match '%AZP5D'
         }
 
         It 'Escapes semicolons in file path' {
             $maliciousFile = 'path;linenumber=999'
-            $output = Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message 'Test' -Level Warning -File $maliciousFile }
             $output | Should -Match '%AZP3B'
         }
 
         It 'Prevents full command injection via message' {
             $maliciousMessage = "Test`n##vso[task.complete result=Failed]"
-            $output = Write-CIAnnotation -Message $maliciousMessage -Level Warning
+            $output = Invoke-HostOutput { Write-CIAnnotation -Message $maliciousMessage -Level Warning }
             $output | Should -Not -Match '##vso\[task\.complete'
         }
     }
@@ -629,7 +635,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
                 )
             }
 
-            $output = Write-CIAnnotations -Summary $summary
+            $output = Invoke-HostOutput { Write-CIAnnotations -Summary $summary }
             $output | Should -Contain '::error file=test.md,line=42::Test error'
             $output | Should -Contain '::warning file=test.md,line=1::Test warning'
         }
@@ -646,7 +652,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
                 )
             }
 
-            $output = Write-CIAnnotations -Summary $summary
+            $output = Invoke-HostOutput { Write-CIAnnotations -Summary $summary }
             $output | Should -Match 'line1%0Aline2'
         }
     }
@@ -669,7 +675,7 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
                 )
             }
 
-            $output = Write-CIAnnotations -Summary $summary
+            $output = Invoke-HostOutput { Write-CIAnnotations -Summary $summary }
             $output | Should -Be '##vso[task.logissue type=error;sourcepath=test.md;linenumber=10;columnnumber=4]Test error'
         }
     }
