@@ -70,6 +70,16 @@ Follow instructions from the prompt file(s) exactly as written (unless side-effe
 3. Repeat the Required Steps as needed to ensure completeness of your execution log file.
 4. Cleanup and finalize the execution log file, interpret the file for your response and Execution Findings.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the execution log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/sandbox/2026-02-23/execution-log.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 Return your Execution Findings and include the following requirements:
@@ -78,4 +88,5 @@ Return your Execution Findings and include the following requirements:
 * The relative path to your execution log.
 * The status of the execution log: Complete, In-Progress, Blocked, etc.
 * The important details from the execution log based on your interpretation.
+* Emit the sandbox-folder and log paths as plain-text workspace-relative paths, not backtick-wrapped or markdown links.
 * Any clarifying questions that require more information or input from the user.

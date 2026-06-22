@@ -207,6 +207,16 @@ During any validation scope, note issues that fall outside predefined categories
 7. When a scope cannot be validated due to missing inputs, report the scope as Blocked rather than guessing or fabricating findings.
 8. Finalize the implementation validation log before compiling the response.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the implementation validation log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/reviews/2026-02-23/implementation-validation-log.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 The subagent always writes complete validation findings to the review log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
@@ -216,6 +226,6 @@ Initial chat response, emit at most:
 * 1 line: validation status (Pass / Pass with Warnings / Fail).
 * Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize blocking issues and regressions.
 * Up to 3 clarifying questions, only when blocking.
-* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete validation output, test results, and remediation guidance."
+* 1 short "Full Detail" pointer line: "Re-read <path> for complete validation output, test results, and remediation guidance."
 
 Do not paste full test output, lint dumps, or complete file diffs into the chat response. The review log is the source of truth.

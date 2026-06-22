@@ -96,6 +96,16 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 4. Repeat the Required Steps as needed to ensure completeness of the evaluation log file.
 5. Cleanup and finalize the evaluation log, interpret the file for your response and Evaluation Findings.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the evaluation log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/sandbox/2026-02-23/evaluation-log.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 Return Evaluation Findings and include the following requirements:
@@ -105,4 +115,5 @@ Return Evaluation Findings and include the following requirements:
 * The status of the evaluation: Complete, In-Progress, Blocked, etc.
 * The important details from the evaluation log based on your interpretation.
 * A checklist of recommended modifications ordered by (and including) severity for specific prompt instruction file(s).
+* Emit the sandbox-folder and log paths as plain-text workspace-relative paths, not backtick-wrapped or markdown links.
 * Any clarifying questions that requires more information or input from the user.

@@ -154,7 +154,7 @@ Subagents follow the same authoring standards as other agent files. Include a Re
 
 #### Subagent Structural Template
 
-All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents. Include a Required Protocol section when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit it for simpler subagents where the Required Steps section is self-contained. For instance, a research-only subagent that reads files and writes findings needs no Required Protocol because its steps are self-contained.
+All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents. Include a Required Protocol section when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit it for simpler subagents where the Required Steps section is self-contained. For instance, a research-only subagent that reads files and writes findings needs no Required Protocol because its steps are self-contained. Subagents that write references into .copilot-tracking artifacts should include a File Reference Formatting section; simpler subagents that return a structured template to the parent rather than writing artifacts may omit it, just as you can omit Required Protocol when the Required Steps section is self-contained.
 
 ```markdown
 # Agent Name                    <!-- H1 matching the agent name -->
@@ -197,6 +197,10 @@ Create and update the artifact progressively documenting:
 2. Repeat as needed to ensure completeness.
 3. Finalize the output artifact.
 
+## File Reference Formatting   <!-- Plain-text paths for .copilot-tracking artifact content -->
+
+State the plain-text path rule for workspace-relative references written into .copilot-tracking artifacts.
+
 ## Response Format              <!-- Structured return to parent agent -->
 
 Return structured findings including:
@@ -206,6 +210,13 @@ Return structured findings including:
 * Key details and recommendations.
 * Clarifying questions.
 ```
+
+### Surface A: Artifact Content References
+
+References written into .copilot-tracking artifact content use plain-text workspace-relative paths. Do not use markdown links, #file: directives, or backticks for those paths because VS Code resolves them and reports missing-target errors that flood the Problems tab. External URLs may still use markdown link syntax.
+
+- .copilot-tracking/plans/2026-01-24-task-plan.instructions.md
+- .copilot-tracking/research/2026-01-24-research.md
 
 ### Instructions Files
 
@@ -682,6 +693,8 @@ When instructions describe how to respond to users in conversation:
 * Use workspace-relative paths for file links.
 * Do not wrap file paths or links in backticks. Backticks prevent the conversation viewer from rendering clickable links.
 * Use placeholders like `{{YYYY-MM-DD}}` or `{{task}}` for dynamic path segments.
+
+This markdown-link guidance applies to in-conversation responses to the user (chat); references written into .copilot-tracking artifact content use plain-text paths instead, as described in the Surface A rule above.
 
 ```markdown
 <!-- Avoid backticks around file paths -->
