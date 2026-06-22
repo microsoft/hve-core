@@ -10,6 +10,7 @@ Task Researcher should use focused research for small local gaps and lane-enable
 ## Evidence
 
 * .github/agents/hve-core/task-researcher.agent.md:61-74 - Lane Trigger Matrix defines mode selection.
+* .github/agents/hve-core/subagents/researcher-subagent.agent.md:10-30 - Researcher subagent response contract includes lane status.
 * .github/prompts/hve-core/task-research.prompt.md:11-14 - Command exposes mode and subagents inputs.
 
 ## Lane Evidence

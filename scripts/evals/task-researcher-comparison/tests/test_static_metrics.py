@@ -18,17 +18,17 @@ def test_with_subagents_scores_lane_markers_for_codebase_case() -> None:
     score = score_pair(scenario, without, with_subagents)
 
     assert score.with_subagents.mode_compliance == 2
-    assert score.with_subagents.coverage >= score.without_subagents.coverage
+    assert score.with_subagents.coverage > score.without_subagents.coverage
     assert score.delta_total >= 0
 
 
-def test_focused_case_penalizes_unnecessary_lane_fanout() -> None:
+def test_focused_case_rewards_no_lane_fanout() -> None:
     scenario = next(item for item in load_scenarios(FIXTURE_ROOT / "scenarios.yml") if item.id == "focused-local")
     without, with_subagents = load_fixture_pair(FIXTURE_ROOT, scenario.id)
 
     score = score_pair(scenario, without, with_subagents)
 
-    assert score.with_subagents.mode_compliance >= 1
+    assert score.with_subagents.mode_compliance == 2
     assert score.with_subagents.noise_control >= 1
 
 
@@ -40,3 +40,4 @@ def test_external_case_detects_far_quality_note() -> None:
 
     assert score.with_subagents.coverage == 2
     assert score.with_subagents.citation_precision == 2
+    assert score.with_subagents.mode_compliance == 2

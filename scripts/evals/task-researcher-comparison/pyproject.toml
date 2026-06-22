@@ -25,7 +25,7 @@ ignore = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
+python_files = ["test_*.py", "fuzz_harness.py"]
 addopts = [
     "-v",
     "--strict-markers",
@@ -39,4 +39,7 @@ markers = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+]
+fuzz = [
+    "atheris>=3.0",
 ]

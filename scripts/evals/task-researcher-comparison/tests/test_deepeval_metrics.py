@@ -28,7 +28,6 @@ def test_deepeval_metric_definitions_are_available() -> None:
 @pytest.mark.deepeval
 def test_codebase_lane_output_with_deepeval() -> None:
     require_deepeval_llm_enabled()
-    pytest.importorskip("deepeval")
     scenario = next(item for item in load_scenarios(FIXTURE_ROOT / "scenarios.yml") if item.id == "codebase-lane")
     without, with_subagents = load_fixture_pair(FIXTURE_ROOT, scenario.id)
     test_case = build_comparison_test_case(scenario, without, with_subagents)
