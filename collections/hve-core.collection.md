@@ -10,7 +10,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 | Name                         | Description                                                                                                                              |
 |------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| **doc-ops**                  | Documentation operations agent for pattern compliance, accuracy verification, and gap detection                                          |
+| **documentation**            | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                  |
 | **implementation-validator** | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
 | **memory**                   | Conversation memory persistence for session continuity                                                                                   |
 | **phase-implementor**        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |
@@ -35,7 +35,6 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | Name                   | Description                                                                        |
 |------------------------|------------------------------------------------------------------------------------|
 | **checkpoint**         | Save or restore conversation context using memory files                            |
-| **doc-ops-update**     | Run the doc-ops agent for documentation quality assurance and updates              |
 | **git-commit**         | Stage all changes, generate a conventional commit message, and commit              |
 | **git-commit-message** | Generate a conventional commit message from all branch changes                     |
 | **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling   |
@@ -76,6 +75,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 | Name                      | Description                                                                                                                                                                                                                                                                                      |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **documentation**         | Canonical documentation capability for audit, drift, validate, and author modes in hve-core.                                                                                                                                                                                                     |
 | **mural**                 | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                            |
 | **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |

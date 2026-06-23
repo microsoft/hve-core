@@ -1,0 +1,154 @@
+# Bucket-A expectations for experiment-designer
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: experiment-designer
+class: planner-coach
+agent_file: .github/agents/experimental/experiment-designer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/experiment-designer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/experiment-designer.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: mve-tracking-path
+    summary: MVE artifacts are written under `.copilot-tracking/mve/{YYYY-MM-DD}/{experiment-name}/`.
+    signal: Output names a path matching `.copilot-tracking/mve/\d{4}-\d{2}-\d{2}/[a-z0-9-]+/`.
+    pass_criteria: |
+      When the workflow describes creating context, hypotheses, vetting,
+      design, plan, or backlog artifacts, the response cites at least one
+      workspace path under `.copilot-tracking/mve/<YYYY-MM-DD>/<experiment-name>/`
+      with a kebab-case experiment name derived from the problem statement.
+    failure_modes:
+      - Reports `~\.copilot\session-state\…\files\price-slider-mve.md` (current 2026-05-28 output).
+      - Drops the dated subdirectory (e.g. `.copilot-tracking/mve/price-slider/`).
+      - Writes to `.copilot-tracking/plans/` instead of `.copilot-tracking/mve/`.
+      - Single flat filename under `.copilot-tracking/mve/` with no experiment slug subdir.
+    priority: high
+    contract_ref: "agent §Phase 1 › Tracking Setup (`.copilot-tracking/mve/{{YYYY-MM-DD}}/{{experiment-name}}/`)"
+
+  - expectation_id: line-start-phase-marker
+    summary: Phase/step structure appears at the start of a line, not inside a table cell or inline bold.
+    signal: At least one line begins with `##`, `###`, `Phase N`, `Step N`, or `N.`.
+    pass_criteria: |
+      Output contains a line matching `(?m)^(##|###|Step \d+|Phase \d+|\d+\.)`.
+      Phase labels inside a single table cell (e.g. `1) Baseline → 2) Build`)
+      or inline-bolded headings do NOT satisfy this expectation.
+    failure_modes:
+      - Phases collapsed into one cell of a summary table (current 2026-05-28 failure).
+      - Inline-bolded `**Phases**` with no per-phase leading marker.
+      - Prose summary that mentions phases without numbered or headed structure.
+    priority: high
+    contract_ref: "agent §Required Phases (Phase 1–6 each declared as `### Phase N: <name>`); stimulus grader `phase-marker-present`"
+
+  - expectation_id: hypothesis-template-shape
+    summary: Hypotheses use the declared three-part template.
+    signal: Output contains "We believe ... We will test this by ... We will know ... when ...".
+    pass_criteria: |
+      For each named hypothesis, the response uses the documented template
+      structure: a belief clause, a test-method clause, and a measurable
+      outcome clause. Exact wording may vary but all three components must be
+      present and falsifiable.
+    failure_modes:
+      - Hypothesis written as a single declarative sentence with no test method or success threshold (current 2026-05-28 output: "A price slider on the listing page lifts purchase conversion ≥ 5%" — has belief and outcome but no explicit test method clause).
+      - Multiple assumptions conflated into one hypothesis.
+      - No measurable outcome (no threshold, no measurement).
+    priority: high
+    contract_ref: "agent §Phase 2: Hypothesis Formation (`We believe [assumption]. We will test this by [method]. We will know we are right/wrong when [measurable outcome].`)"
+
+  - expectation_id: six-phase-sequence
+    summary: Phased outlines name the agent's declared 6 phases in order.
+    signal: Output names Problem and Context Discovery, Hypothesis Formation, MVE Vetting and Red Flag Check, Experiment Design, MVE Plan Output, and (when triggered) Backlog Bridge.
+    pass_criteria: |
+      For a "lay out phases" stimulus, the response names at minimum Phases
+      1–5 in declared order: Discovery → Hypothesis Formation → Vetting →
+      Experiment Design → MVE Plan Output. Phase 6 (Backlog Bridge) is only
+      expected when the user asks for backlog work items.
+    failure_modes:
+      - Substitutes a generic 4-phase scientific-method outline (Baseline → Build → A/B Test → Analyze) for the agent's declared phases (current 2026-05-28 output).
+      - Drops vetting/red-flag phase entirely.
+      - Lists phases out of order.
+    priority: high
+    contract_ref: "agent §Required Phases (Phase 1 Problem and Context Discovery through Phase 6 Backlog Bridge)"
+
+  - expectation_id: success-and-failure-criteria
+    summary: Design outputs define both success AND failure criteria, not just success.
+    signal: Output names a success threshold AND describes what an invalidated outcome looks like.
+    pass_criteria: |
+      Response includes both (a) a measurable success threshold (e.g. ≥ 5%
+      relative lift) and (b) explicit invalidation conditions OR an
+      acknowledgment that "both outcomes provide invaluable learning" per the
+      agent's §Phase 4 › Success and Failure Criteria.
+    failure_modes:
+      - Lists success metric only; no failure threshold or invalidation criteria.
+      - Frames "no lift" as a degenerate case to avoid rather than a valid learning outcome.
+    priority: medium
+    contract_ref: "agent §Phase 4 › Success and Failure Criteria (`Both outcomes provide invaluable learning`)"
+
+  - expectation_id: red-flag-or-vetting-mentioned
+    summary: Phased outlines surface the vetting / red flag step explicitly.
+    signal: Output references at least one of {vetting, red flag, viability check, RAI, responsible AI}.
+    pass_criteria: |
+      The response mentions vetting, red flags, or viability checks as a
+      distinct phase or step, OR explicitly applies one of the four vetting
+      categories (business sense, problem statement clarity, Responsible AI,
+      clear next steps).
+    failure_modes:
+      - Goes straight from hypothesis to experiment design with no vetting step.
+      - Red flags listed but not tied to the experiment under design.
+    priority: medium
+    contract_ref: "agent §Phase 3: MVE Vetting and Red Flag Check (Vetting Criteria + Red Flag Checklist)"
+
+  - expectation_id: scope-and-timeline-bounded
+    summary: Experiment design names a timeline in weeks and explicit out-of-scope items.
+    signal: Output names a duration measured in weeks AND lists at least one out-of-scope item.
+    pass_criteria: |
+      Phase 4 / design content includes (a) a duration measured in weeks (not
+      months or quarters) and (b) at least one explicit out-of-scope or
+      excluded item to prevent scope creep.
+    failure_modes:
+      - No timeline named, or timeline measured in months/quarters.
+      - No out-of-scope items listed; everything described as in scope.
+      - Scope phrased as "minimum viable" without naming an exclusion.
+    priority: medium
+    contract_ref: "agent §Phase 4 › Scope and Timeline (`weeks, not months`; `what is explicitly out of scope`)"
+
+  - expectation_id: progressive-artifact-writes
+    summary: Phase outputs map to the declared per-phase artifact filenames.
+    signal: Output references at least two of {context.md, hypotheses.md, vetting.md, experiment-design.md, mve-plan.md}.
+    pass_criteria: |
+      When the response describes writing artifacts, the named files include
+      at least two of the per-phase artifact filenames declared in the agent
+      file: `context.md` (Phase 1), `hypotheses.md` (Phase 2), `vetting.md`
+      (Phase 3), `experiment-design.md` (Phase 4), `mve-plan.md` (Phase 5).
+    failure_modes:
+      - Reports only a single consolidated file (e.g. `price-slider-mve.md`) with no per-phase artifact names (current 2026-05-28 output).
+      - Renames artifacts (e.g. `plan.md` instead of `mve-plan.md`).
+    priority: medium
+    contract_ref: "agent §Required Protocol item 4 (`Update tracking artifacts progressively`); per-phase artifact filenames in §Phase 1–5"
+
+  - expectation_id: no-source-edit-during-design
+    summary: Design responses do not claim to edit source-tree files.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Designer claims to modify source files as part of an experiment plan.
+      - Designer edits `package.json` to add an experiment runner script.
+    priority: medium
+    contract_ref: "agent §Required Protocol item 2 (`All artifacts ... are written to the session tracking directory under .copilot-tracking/mve/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Output substantively addresses the stimulus's price-slider conversion experiment.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `experiment-designer-class-recipe` stimulus, response contains
+      terms from {price, slider, conversion, A/B, lift} so the design is
+      anchored to the stated scenario rather than generic MVE prose.
+    failure_modes:
+      - Off-topic response (no price-slider terms).
+      - Generic A/B test framework with no slider-specific design choices.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

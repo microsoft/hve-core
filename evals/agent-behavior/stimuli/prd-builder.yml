@@ -1,0 +1,20 @@
+stimuli:
+  - name: prd-builder-class-recipe
+    prompt: |
+      Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `.copilot-tracking/prd-sessions/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](prd-sessions|research)'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(product|requirement|user story|success|notification|preference)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

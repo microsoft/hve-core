@@ -40,23 +40,29 @@
     Defaults to `logs/`. Created if it does not exist.
 
 .PARAMETER Model
-    Model passed to `vally eval --model`. Defaults to `claude-opus-4.7` to
-    match the PR-tier model used by `Invoke-BaselineEquivalence.ps1`.
+    Model passed to `vally eval --model`. Also forwarded to
+    `Invoke-BaselineEquivalence.ps1` when baseline equivalence is explicitly
+    enabled. Defaults to `claude-haiku-4.5`.
 
 .PARAMETER VallyCommand
     Path or name of the vally executable. Defaults to `vally`. Tests pass the
     absolute path to `scripts/tests/evals/fixtures/stub-vally.ps1`.
 
 .PARAMETER EquivalenceDriverPath
-    Path to the baseline-equivalence driver script. Defaults to
+    Path to the baseline-equivalence driver script used when
+    `-EnableBaselineEquivalence` is set. Defaults to
     `<RepoRoot>/scripts/evals/Invoke-BaselineEquivalence.ps1`. Tests override this
-    to point at a stub script. Invoked once per `kind = 'agent'` artifact via
-    `pwsh -NoProfile -File <path> -Agent <slug> -Tier <tier> -RepoRoot <root> -OutputPath <json>`.
+    to point at a stub script.
 
 .PARAMETER EquivalenceTier
     Tier passed to the equivalence driver (`pr` or `nightly`). Defaults to `pr`.
-    Per DD-01, PR-tier equivalence dispatch is advisory: failures surface in
-    summary JSON but do not increment `failedSpecs` or change exit code.
+    Applies only when `-EnableBaselineEquivalence` is set. Per DD-01, PR-tier
+    equivalence dispatch is advisory: failures surface in summary JSON but do
+    not increment `failedSpecs` or change exit code.
+
+.PARAMETER EnableBaselineEquivalence
+    Enables Tier 2 baseline-equivalence dispatch for changed or affected agents.
+    Disabled by default for PR-time eval execution.
 
 .PARAMETER FailFast
     Stop after the first spec invocation that returns a non-zero exit code or
@@ -91,11 +97,14 @@ param(
     [string]$ManifestPath,
     [string]$EvalRoot,
     [string]$LogsDir,
-    [string]$Model = 'claude-opus-4.7',
+    [ValidateSet('agent','prompt','instruction','skill')]
+    [string[]]$Kind = @(),
+    [string]$Model = 'claude-haiku-4.5',
     [string]$VallyCommand = 'vally',
     [string]$EquivalenceDriverPath,
     [ValidateSet('pr','nightly')]
     [string]$EquivalenceTier = 'pr',
+    [switch]$EnableBaselineEquivalence,
     [switch]$FailFast,
     [switch]$SkipInputModeration,
     [switch]$SkipOutputModeration,
@@ -325,13 +334,34 @@ if ($null -ne $manifest -and $null -ne $manifest.artifacts) {
     $artifacts = @($manifest.artifacts | Where-Object { [string]$_.status -ne 'D' })
 }
 
+# Per-kind shard filter. When -Kind is supplied, the stimulus artifacts[] loop
+# is narrowed to the matching kind(s) only. Baseline equivalence is cross-kind
+# (an instruction/skill change can promote a parent agent), so it stays owned by
+# the shard that includes 'agent' (or by an unfiltered run) and always reads the
+# manifest's full, unfiltered affectedAgents[] set.
+$kindFilter = @($Kind | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
+$shardOwnsEquivalence = ($kindFilter.Count -eq 0) -or ($kindFilter -contains 'agent')
+if ($kindFilter.Count -gt 0) {
+    $artifacts = @($artifacts | Where-Object { $kindFilter -contains [string]$_.kind })
+}
+
 $summaryPath = Join-Path -Path $resolvedLogsDir -ChildPath 'eval-summary.json'
 
-if ($artifacts.Count -eq 0) {
+# Equivalence work can remain even when this shard has zero changed stimulus
+# artifacts (e.g. a skill-only PR whose changed skill promotes a parent agent).
+# Only take the empty-summary fast path when no equivalence work is pending.
+$affectedAgentCount = 0
+if ($null -ne $manifest -and $manifest.PSObject.Properties.Name -contains 'affectedAgents' -and $null -ne $manifest.affectedAgents) {
+    $affectedAgentCount = @($manifest.affectedAgents | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) }).Count
+}
+$equivalenceWorkPending = $EnableBaselineEquivalence -and $shardOwnsEquivalence -and $affectedAgentCount -gt 0
+
+if ($artifacts.Count -eq 0 -and -not $equivalenceWorkPending) {
     $emptySummary = [ordered]@{
         manifestPath = $resolvedManifest
         evalRoot     = $resolvedEvalRoot
         model        = $Model
+        kindFilter   = @($kindFilter)
         totals       = [ordered]@{
             artifacts        = 0
             specs            = 0
@@ -361,12 +391,12 @@ $equivalenceSpecs = @{}
 $missingSpecs   = [System.Collections.Generic.List[hashtable]]::new()
 
 foreach ($artifact in $artifacts) {
-    $kind       = [string]$artifact.kind
-    $artifactId = [string]$artifact.artifactId
-    $specs      = Test-StimulusCoverage -Index $index -Kind $kind -ArtifactId $artifactId
+    $artifactKind = [string]$artifact.kind
+    $artifactId   = [string]$artifact.artifactId
+    $specs        = Test-StimulusCoverage -Index $index -Kind $artifactKind -ArtifactId $artifactId
 
     if ($specs.Count -eq 0) {
-        $missingSpecs.Add(@{ kind = $kind; artifactId = $artifactId; path = [string]$artifact.path })
+        $missingSpecs.Add(@{ kind = $artifactKind; artifactId = $artifactId; path = [string]$artifact.path })
         continue
     }
 
@@ -376,7 +406,7 @@ foreach ($artifact in $artifacts) {
         }
     }
 
-    if ($kind -eq 'agent') {
+    if ($EnableBaselineEquivalence -and $artifactKind -eq 'agent') {
         $equivKey = "equivalence:$artifactId"
         if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
             $equivalenceSpecs[$equivKey] = $artifactId
@@ -384,7 +414,7 @@ foreach ($artifact in $artifacts) {
     }
 
     $artifactPlan.Add(@{
-        kind        = $kind
+        kind        = $artifactKind
         artifactId  = $artifactId
         path        = [string]$artifact.path
         status      = [string]$artifact.status
@@ -416,7 +446,7 @@ foreach ($specRel in $uniqueSpecs.Keys) {
     $specLog = Join-Path -Path $resolvedLogsDir -ChildPath "vally-eval-$specKey.log"
 
     # Pre-eval content moderation (input)
-    $inputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null }
+    $inputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null; error = $false }
     $specThreshold = Get-SpecModerationThreshold -SpecPath $specAbs
     $effectiveThreshold = if ($null -ne $specThreshold) { $specThreshold } else { $ModerationThreshold }
     if ($null -ne $specThreshold) {
@@ -449,6 +479,24 @@ foreach ($specRel in $uniqueSpecs.Keys) {
             $failedSpecs++
             continue
         }
+        elseif ($inputModeration.error) {
+            Write-Host "::error file=$specRel::Input content moderation could not run (infrastructure error); eval blocked"
+            $specResults[$specRel] = @{
+                specPath         = $specAbs
+                exitCode         = 0
+                runDir           = $null
+                assertionsPassed = 0
+                assertionsFailed = 0
+                durationMs       = 0
+                trials           = 0
+                resultsPath      = $null
+                moderationInput  = $inputModeration
+                moderationOutput = $null
+                status           = 'content-moderation-error-input'
+            }
+            $failedSpecs++
+            continue
+        }
     }
 
     Write-Host "Running: vally eval --eval-spec $specRel --model $Model" -ForegroundColor Cyan
@@ -460,7 +508,7 @@ foreach ($specRel in $uniqueSpecs.Keys) {
         -LogPath $specLog
 
     # Post-eval content moderation (output)
-    $outputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null }
+    $outputModeration = @{ flagged = $false; flaggedCount = 0; outputPath = $null; error = $false }
     if (-not $SkipOutputModeration -and $result.runDir) {
         Write-Verbose "Post-eval content moderation for spec: $specRel"
         $outputModeration = Test-SpecOutputModeration `
@@ -474,6 +522,9 @@ foreach ($specRel in $uniqueSpecs.Keys) {
             Write-Host "::warning file=$specRel::Content moderation flagged $($outputModeration.flaggedCount) model output(s)"
             $result.status = 'content-moderation-output'
             $result.assertionsFailed = [Math]::Max($result.assertionsFailed, $outputModeration.flaggedCount)
+        }
+        elseif ($outputModeration.error) {
+            Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error)"
         }
     }
 
@@ -528,14 +579,17 @@ foreach ($specRel in $uniqueSpecs.Keys) {
 
         $specResults[$specRel] = $result
 
-        $promote = $authoritativeFailed -gt 0 -or $outputModeration.flagged
+        $promote = $authoritativeFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0) {
             $promote = $true
         }
 
         if ($promote) {
             $failedSpecs++
-            if ($advisoryFailed -gt 0) {
+            if ($outputModeration.error) {
+                Write-Host "::error file=$specRel::Output content moderation could not run (infrastructure error); promoting to CI failure"
+            }
+            elseif ($authoritativeFailed -gt 0 -and $advisoryFailed -gt 0) {
                 Write-Host "::warning file=$specRel::Per-stimulus advisory failures coexist with authoritative failures; promoting to CI failure"
             }
             if ($FailFast) {
@@ -556,8 +610,8 @@ foreach ($specRel in $uniqueSpecs.Keys) {
 
         $specResults[$specRel] = $result
 
-        if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0 -or $outputModeration.flagged) {
-            if ($isAdvisory) {
+        if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error) {
+            if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
                 Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
             }
@@ -577,68 +631,75 @@ foreach ($specRel in $uniqueSpecs.Keys) {
 # `affectedAgents` field is precomputed by Get-ChangedAIArtifact.ps1 via the
 # AffectedAgents module, which also refreshes logs/agent-dependency-map.json
 # when stale.
-$manifestAffected = @()
-if ($null -ne $manifest -and $manifest.PSObject.Properties.Name -contains 'affectedAgents' -and $null -ne $manifest.affectedAgents) {
-    $manifestAffected = @($manifest.affectedAgents)
-}
-foreach ($slug in $manifestAffected) {
-    if ([string]::IsNullOrWhiteSpace($slug)) { continue }
-    $equivKey = "equivalence:$slug"
-    if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
-        $equivalenceSpecs[$equivKey] = $slug
+if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
+    $manifestAffected = @()
+    if ($null -ne $manifest -and $manifest.PSObject.Properties.Name -contains 'affectedAgents' -and $null -ne $manifest.affectedAgents) {
+        $manifestAffected = @($manifest.affectedAgents)
+    }
+    foreach ($slug in $manifestAffected) {
+        if ([string]::IsNullOrWhiteSpace($slug)) { continue }
+        $equivKey = "equivalence:$slug"
+        if (-not $equivalenceSpecs.ContainsKey($equivKey)) {
+            $equivalenceSpecs[$equivKey] = $slug
+        }
     }
 }
 
 # Equivalence dispatch (Tier 2 baseline-equivalence). Per DD-01, PR-tier failures
 # are advisory: they surface in summary but do not increment $failedSpecs.
+# Only the agent-owning shard dispatches equivalence so cross-kind promotions are
+# not duplicated across parallel per-kind shards.
 $equivalenceResults = [System.Collections.Generic.List[object]]::new()
-foreach ($equivKey in $equivalenceSpecs.Keys) {
-    $agentSlug = $equivalenceSpecs[$equivKey]
-    $equivOutPath = Join-Path -Path $resolvedLogsDir -ChildPath "baseline-equivalence-$agentSlug.json"
-    $equivArgs = @(
-        '-NoProfile', '-File', $EquivalenceDriverPath,
-        '-Agent', $agentSlug,
-        '-Tier', $EquivalenceTier,
-        '-RepoRoot', $resolvedRoot,
-        '-OutputPath', $equivOutPath
-    )
+if ($EnableBaselineEquivalence -and $shardOwnsEquivalence) {
+    foreach ($equivKey in $equivalenceSpecs.Keys) {
+        $agentSlug = $equivalenceSpecs[$equivKey]
+        $equivOutPath = Join-Path -Path $resolvedLogsDir -ChildPath "baseline-equivalence-$agentSlug.json"
+        $equivArgs = @(
+            '-NoProfile', '-File', $EquivalenceDriverPath,
+            '-Agent', $agentSlug,
+            '-Tier', $EquivalenceTier,
+            '-Model', $Model,
+            '-RepoRoot', $resolvedRoot,
+            '-OutputPath', $equivOutPath
+        )
 
-    Write-Host "Running: pwsh $($equivArgs -join ' ')" -ForegroundColor Cyan
-    & pwsh @equivArgs
-    $equivExit = $LASTEXITCODE
+        Write-Host "Running: pwsh $($equivArgs -join ' ')" -ForegroundColor Cyan
+        & pwsh @equivArgs
+        $equivExit = $LASTEXITCODE
 
-    $runs = 0; $invFail = 0; $divFail = 0; $verdict = 'unknown'
-    if (Test-Path -LiteralPath $equivOutPath) {
-        try {
-            $equivSummary = Get-Content -LiteralPath $equivOutPath -Raw | ConvertFrom-Json
-            if ($null -ne $equivSummary.runs)               { $runs    = [int]$equivSummary.runs }
-            if ($null -ne $equivSummary.invariantFailures)  { $invFail = [int]$equivSummary.invariantFailures }
-            if ($null -ne $equivSummary.divergenceFailures) { $divFail = [int]$equivSummary.divergenceFailures }
-            if ($null -ne $equivSummary.verdict)            { $verdict = [string]$equivSummary.verdict }
+        $runs = 0; $invFail = 0; $divFail = 0; $verdict = 'unknown'
+        if (Test-Path -LiteralPath $equivOutPath) {
+            try {
+                $equivSummary = Get-Content -LiteralPath $equivOutPath -Raw | ConvertFrom-Json
+                if ($null -ne $equivSummary.runs)               { $runs    = [int]$equivSummary.runs }
+                if ($null -ne $equivSummary.invariantFailures)  { $invFail = [int]$equivSummary.invariantFailures }
+                if ($null -ne $equivSummary.divergenceFailures) { $divFail = [int]$equivSummary.divergenceFailures }
+                if ($null -ne $equivSummary.verdict)            { $verdict = [string]$equivSummary.verdict }
+            }
+            catch {
+                Write-Host "::warning::Failed to parse equivalence summary $equivOutPath" -ForegroundColor Yellow
+            }
         }
-        catch {
-            Write-Host "::warning::Failed to parse equivalence summary $equivOutPath" -ForegroundColor Yellow
+
+        $assertionsFailed = $invFail + $divFail
+        $assertionsPassed = [Math]::Max(0, $runs - $assertionsFailed)
+
+        $equivalenceResults.Add([ordered]@{
+            agent              = $agentSlug
+            tier               = $EquivalenceTier
+            verdict            = $verdict
+            exitCode           = $equivExit
+            trials             = $runs
+            assertionsPassed   = $assertionsPassed
+            assertionsFailed   = $assertionsFailed
+            invariantFailures  = $invFail
+            divergenceFailures = $divFail
+            resultsPath        = "logs/baseline-equivalence-$agentSlug.json"
+        }) | Out-Null
+
+        if ($EquivalenceTier -ne 'pr' -and ($equivExit -ne 0 -or $assertionsFailed -gt 0)) {
+            $failedSpecs++
         }
-    }
-
-    $assertionsFailed = $invFail + $divFail
-    $assertionsPassed = [Math]::Max(0, $runs - $assertionsFailed)
-
-    $equivalenceResults.Add([ordered]@{
-        agent              = $agentSlug
-        tier               = $EquivalenceTier
-        verdict            = $verdict
-        exitCode           = $equivExit
-        trials             = $runs
-        assertionsPassed   = $assertionsPassed
-        assertionsFailed   = $assertionsFailed
-        invariantFailures  = $invFail
-        divergenceFailures = $divFail
-        resultsPath        = "logs/baseline-equivalence-$agentSlug.json"
-    }) | Out-Null
-
-    if ($EquivalenceTier -ne 'pr' -and ($equivExit -ne 0 -or $assertionsFailed -gt 0)) {
-        $failedSpecs++
     }
 }
 
@@ -743,6 +804,7 @@ $summary = [ordered]@{
     manifestPath = $resolvedManifest
     evalRoot     = $resolvedEvalRoot
     model        = $Model
+    kindFilter   = @($kindFilter)
     totals       = [ordered]@{
         artifacts        = $perArtifact.Count
         specs            = $perSpec.Count
