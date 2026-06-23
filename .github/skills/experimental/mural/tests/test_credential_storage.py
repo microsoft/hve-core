@@ -449,13 +449,26 @@ class TestResolveBackend:
 
         monkeypatch.setattr(mural_module.KeyringBackend, "__init__", _raise_unavailable)
 
+        checked_paths: list[pathlib.Path] = []
+
+        def _raise_bad_perms(path: pathlib.Path, environ: dict[str, str]) -> None:
+            checked_paths.append(path)
+            raise mural_module.MuralError("simulated bad permissions")
+
+        monkeypatch.setattr(
+            mural_module,
+            "_check_credential_file_perms",
+            _raise_bad_perms,
+        )
+
         file_path = mural_module._resolve_credential_file("default", os.environ)
         file_path.parent.mkdir(parents=True, exist_ok=True)
         file_path.write_text("MURAL_CLIENT_ID=from-file\n", encoding="utf-8")
-        os.chmod(file_path, 0o644)
 
-        with pytest.raises(mural_module.MuralError):
+        with pytest.raises(mural_module.MuralError, match="simulated bad permissions"):
             mural_module.resolve_backend("default")
+
+        assert checked_paths == [file_path]
 
     def test_auto_fallback_warn_dedupes_per_profile_per_process(
         self,
