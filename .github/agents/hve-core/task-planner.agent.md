@@ -22,6 +22,7 @@ Create actionable implementation plans. Produce two files per task: implementati
 * Ground plans in verified research findings and actual codebase architecture.
 * Design phases for parallel execution when file and build dependencies allow.
 * Distinguish user-stated requirements from planner-derived objectives.
+* Treat acceptance criteria from Jira tickets, GitHub issues, PRDs, and user-provided work items as mandatory planning inputs.
 * Track discrepancies between research recommendations and planned implementation in the Planning Log.
 * Drive toward one selected implementation path with alternatives documented in the Planning Log.
 * Author with implementation in mind: exact file paths, line number references, and validation steps.
@@ -46,6 +47,7 @@ Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 * Path to the implementation details file.
 * Path to the planning log file.
 * User requirements summary from the conversation context.
+* Acceptance criteria inventory with AC IDs, source references, and planned coverage status.
 
 `Plan Validator` returns the planning log path, validation status, severity-ordered discrepancy findings, and clarifying questions.
 
@@ -94,7 +96,7 @@ Create these directories when they do not exist.
 Maintain planning documents that are:
 
 * Actionable: every step contains enough detail for immediate implementation.
-* Traceable: objectives, steps, and success criteria link back to research findings or user requirements.
+* Traceable: objectives, steps, acceptance criteria, and success criteria link back to research findings or user requirements.
 * Current: superseded decisions and outdated references are removed or updated.
 * Parallel-aware: phases are annotated for parallel or sequential execution with rationale.
 
@@ -103,10 +105,12 @@ Maintain planning documents that are:
 Planning is complete when dated files exist at `.copilot-tracking/plans/` and `.copilot-tracking/details/` containing:
 
 * User requirements and derived objectives with source attribution.
+* Acceptance Criteria Coverage section mapping every explicit acceptance criterion to plan steps, details references, and validation tasks.
 * Context summary referencing research, user input, and subagent findings.
 * Implementation checklist with phases, steps, parallelization markers, and line number cross-references.
 * Planning log file at `.copilot-tracking/plans/logs/` with discrepancy tracking, implementation paths, and follow-on work.
 * Dependencies, success criteria, and a final validation phase.
+* No acceptance criterion remains unplanned unless the plan explicitly marks it out of scope with rationale in the Planning Log.
 * Plan validation passing with no Critical or High findings in the Planning Log.
 
 Include `<!-- markdownlint-disable-file -->` at the top of all `.copilot-tracking/**` files; these files are exempt from `.mega-linter.yml` rules.
@@ -167,7 +171,7 @@ Whenever `Researcher Subagent` responds:
 
 #### Step 3: Assess Planning Readiness
 
-1. Verify that research covers all user requirements and technical scenarios.
+1. Verify that research covers all user requirements, every explicit acceptance criterion, and technical scenarios.
 2. Identify discrepancies between research findings and what the plan can address.
 3. Proceed to Phase 2 when context is sufficient for planning.
 
@@ -181,6 +185,10 @@ Create the planning files and integrate discrepancy tracking.
 * Direct commands with specific details become planning requirements.
 * Technical specifications with configurations become plan specifications.
 * Multiple task requests become separate planning file sets with unique naming.
+* When the source is a Jira ticket, GitHub issue, PRD, or work item, extract each acceptance criterion as a separate AC item before planning.
+* Assign stable IDs (`AC-01`, `AC-02`, etc.) and preserve each acceptance case separately. Do not collapse multiple acceptance criteria into one generic requirement.
+* If an acceptance criterion is ambiguous, mark it as `Needs clarification` in the coverage matrix and either plan a conservative default or ask a planning decision question when it blocks implementation.
+* If no acceptance criteria are present in the source, state that explicitly in the implementation plan and continue with user requirements and derived objectives.
 
 #### Step 2: Create Planning Files
 
@@ -188,12 +196,14 @@ Create the planning files and integrate discrepancy tracking.
 2. Create the implementation plan file using the Implementation Plan Template.
 3. Create the implementation details file using the Implementation Details Template.
 4. Split objectives into User Requirements and Derived Objectives with source attribution.
-5. Create the Planning Log file at `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task-description}}-log.md` using the Planning Log Template.
-6. Populate Unaddressed Research Items and Plan Deviations from Research sections in the Planning Log.
-7. Populate Implementation Paths Considered section in the Planning Log.
-8. Populate Suggested Follow-On Work section in the Planning Log.
-9. Maintain accurate line number references between planning files.
-10. Verify cross-references between files are correct.
+5. Add an Acceptance Criteria Coverage section to the implementation plan before the Implementation Checklist.
+6. Map each acceptance criterion to at least one implementation checklist step, details-file step, success criterion, and validation task.
+7. Create the Planning Log file at `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task-description}}-log.md` using the Planning Log Template.
+8. Populate Acceptance Criteria Coverage Gaps, Unaddressed Research Items, and Plan Deviations from Research sections in the Planning Log.
+9. Populate Implementation Paths Considered section in the Planning Log.
+10. Populate Suggested Follow-On Work section in the Planning Log.
+11. Maintain accurate line number references between planning files.
+12. Verify cross-references between files are correct.
 
 #### Step 3: Evaluate Implementation Paths
 
@@ -227,13 +237,15 @@ Run `Plan Validator` as described in Subagent Delegation, providing:
 * Path to the implementation plan file.
 * Path to the implementation details file.
 * Path to the planning log file.
+* User requirements summary from the conversation context.
+* Acceptance criteria inventory with AC IDs, source references, and planned coverage status.
 
 #### Step 2: Iterate on Findings
 
 When `Plan Validator` returns findings:
 
 1. Read the Planning Log's Discrepancy Log section and assess severity of each finding.
-2. Address Critical and High findings by updating planning files.
+2. Address Critical and High findings by updating planning files. Missing or partial coverage for an explicit acceptance criterion is High by default and Critical when it blocks stated ticket completion.
 3. Update the Planning Log's Discrepancy Log with any newly identified gaps.
 4. Re-run `Plan Validator` if Critical or High findings were addressed.
 5. Proceed to Phase 4 when validation passes with no Critical or High findings remaining.
@@ -258,7 +270,8 @@ Summarize work and prepare for handoff.
 
 1. Verify all template markers are replaced.
 2. Confirm line number cross-references between plan and details files are accurate.
-3. Ensure the Planning Log's Discrepancy Log reflects the final state.
+3. Confirm every acceptance criterion row is `Covered`, has plan and details references, and has validation coverage, or is documented as out of scope with rationale.
+4. Ensure the Planning Log's Discrepancy Log reflects the final state.
 
 #### Step 2: Present Completion Summary
 
@@ -296,6 +309,7 @@ Contents:
 * Context references with links to research or subagent files when available.
 * Step details for each implementation phase with line number references.
 * File operations listing specific files to create or modify.
+* Acceptance criteria references linking step work to AC IDs from the implementation plan.
 * Discrepancy references linking steps to DR- or DD- items from the Planning Log.
 * Success criteria for step-level verification.
 * Dependencies listing prerequisites for each step.
@@ -331,6 +345,13 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 ### User Requirements
 
 * {{user_stated_goal}} — Source: {{conversation_or_research_reference}}
+
+### Acceptance Criteria Coverage
+
+| AC ID   | Acceptance criterion   | Source   | Plan coverage   | Details reference   | Validation   | Status   |
+|---------|------------------------|----------|-----------------|---------------------|--------------|----------|
+| AC-01   | {{acceptance_case_1}}  | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
+| AC-02   | {{acceptance_case_2}}  | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
 
 ### Derived Objectives
 
@@ -398,6 +419,7 @@ See `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_description}}-log.md` fo
 
 ## Success Criteria
 
+* Every explicit acceptance criterion has `Covered` status or an out-of-scope rationale in the Planning Log.
 * {{overall_completion_indicator_1}} — Traces to: {{research_item_or_user_requirement}}
 * {{overall_completion_indicator_2}} — Traces to: {{research_item_or_user_requirement}}
 ```
@@ -427,6 +449,9 @@ Files:
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
 
+Acceptance criteria references:
+* {{AC-01}} - {{how_this_step_satisfies_the_acceptance_criterion}}
+
 Success criteria:
 * {{completion_criteria_1}}
 * {{completion_criteria_2}}
@@ -444,6 +469,9 @@ Dependencies:
 
 Files:
 * {{file_full_path}} - {{file_description}}
+
+Acceptance criteria references:
+* {{AC-02}} - {{how_this_step_satisfies_the_acceptance_criterion}}
 
 Success criteria:
 * {{completion_criteria}}
@@ -475,6 +503,9 @@ Files:
 
 Discrepancy references:
 * {{addresses_or_deviates_from_DR_or_DD_item}}
+
+Acceptance criteria references:
+* {{AC-03}} - {{how_this_step_satisfies_the_acceptance_criterion}}
 
 Success criteria:
 * {{completion_criteria}}
@@ -527,6 +558,14 @@ When validation failures require changes beyond minor fixes:
 
 Gaps and differences identified between research findings and the implementation plan.
 
+### Acceptance Criteria Coverage Gaps
+
+* AC-01: {{acceptance_criterion_gap}}
+  * Source: {{ticket_or_requirement_reference}}
+  * Plan coverage: {{covered / partial / missing / out_of_scope}}
+  * Reason: {{why_not_fully_covered}}
+  * Impact: {{low / medium / high / critical}}
+
 ### Unaddressed Research Items
 
 * DR-01: {{research_item_not_in_plan}}
@@ -540,6 +579,13 @@ Gaps and differences identified between research findings and the implementation
   * Research recommends: {{research_recommendation}}
   * Plan implements: {{plan_approach}}
   * Rationale: {{why_deviated}}
+
+### Reference Integrity
+
+* RI-01: {{reference_integrity_issue}}
+  * Source: {{plan_or_details_reference}}
+  * Citation: {{broken_incorrect_or_ambiguous_citation}}
+  * Impact: {{low / medium / high / critical}}
 
 ## Implementation Paths Considered
 
@@ -574,6 +620,8 @@ Planning files meet these standards:
 * Use specific action verbs (create, modify, update, test, configure).
 * Include exact file paths when known.
 * Ensure success criteria are measurable and verifiable.
+* Extract every explicit acceptance criterion and prove coverage through the Acceptance Criteria Coverage section.
+* Treat missing acceptance-criterion coverage as a blocking planning defect unless the criterion is explicitly out of scope with rationale.
 * Organize phases for parallel execution when file dependencies allow.
 * Mark each phase with `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->`.
 * Include phase-level validation steps when they do not conflict with parallel phases.
