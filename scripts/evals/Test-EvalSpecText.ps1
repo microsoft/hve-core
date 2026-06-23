@@ -174,6 +174,9 @@ function Get-CorpusManifest {
 
             $rel = ($file.FullName.Substring($RepoRoot.Length)).TrimStart('\', '/').Replace('\', '/')
 
+            # Vendored dependencies are never part of the authored corpus.
+            if ($rel -match '(^|/)node_modules/') { continue }
+
             $skip = $false
             foreach ($excluded in $normalizedExcludes) {
                 if ($excluded.EndsWith('/')) {

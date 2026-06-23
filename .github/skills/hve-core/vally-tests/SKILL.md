@@ -118,7 +118,7 @@ Authored stimuli always land in one of the routed Vally eval files. The router i
 |--------------|-------------------------------------------------------|----------------------|
 | prompt       | `evals/behavior-conformance/prompts.eval.yaml`        | behavior-conformance |
 | instructions | `evals/behavior-conformance/instructions.eval.yaml`   | behavior-conformance |
-| agent        | `evals/agent-behavior/stimuli/<slug>.yml`             | agent-behavior       |
+| agent        | `evals/agent-behavior/eval.yaml`                      | agent-behavior       |
 | skill        | `evals/behavior-conformance/skill-behavior.eval.yaml` | behavior-conformance |
 
 Never write to `evals/baseline-equivalence/`, `evals/script-validation/`, or `evals/results/` from this skill. Those targets serve baseline equivalence, script validation, and historical comparison flows that are out of scope for conformance authoring.

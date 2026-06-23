@@ -35,6 +35,12 @@
 .PARAMETER StimulusFilter
     Optional regular expression filtering stimulus names. Defaults to `.*` (all stimuli).
 
+.PARAMETER Model
+    Optional explicit model id for the PR tier. When supplied it overrides the agent's
+    frontmatter `model:` hint and the built-in default, letting callers pin a cheaper
+    model for advisory PR-tier runs. Ignored for the `nightly` tier, which always runs
+    its fixed model array.
+
 .PARAMETER RepoRoot
     Repository root. Defaults to the result of `git rev-parse --show-toplevel`, falling
     back to the parent of `$PSScriptRoot`.
@@ -68,6 +74,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     [string]$StimulusFilter = '.*',
+
+    [Parameter(Mandatory = $false)]
+    [string]$Model,
 
     [Parameter(Mandatory = $false)]
     [string]$RepoRoot,
@@ -191,15 +200,17 @@ function Resolve-ModelList {
     param(
         [Parameter(Mandatory)]
         [string]$Tier,
-        [string]$Hint
+        [string]$Hint,
+        [string]$ModelOverride
     )
 
     if ($Tier -eq 'nightly') {
         return @('gpt-5.5', 'claude-opus-4.6', 'claude-sonnet-latest')
     }
 
+    if ($ModelOverride) { return @($ModelOverride) }
     if ($Hint) { return @($Hint) }
-    return @('claude-opus-4.7')
+    return @('claude-haiku-4.5')
 }
 
 function New-DryRunSummary {
@@ -316,7 +327,11 @@ function Get-PlannedCommands {
         [Parameter(Mandatory)]
         [string]$RunId,
         [Parameter(Mandatory)]
-        [string]$CompareSpecPath
+        [string]$CompareSpecPath,
+        [string]$BaselineWorkspacePath,
+        [string]$BaselineSkillDirPath,
+        [string]$CustomizedWorkspacePath,
+        [string]$CustomizedSkillDirPath
     )
 
     $filterTag = if ($StimulusFilter -eq '.*') { '' } else { "  # filter: $StimulusFilter" }
@@ -324,8 +339,12 @@ function Get-PlannedCommands {
     foreach ($model in $Models) {
         $aDir = Join-Path $OutputRoot "$model/$RunId/baseline"
         $bDir = Join-Path $OutputRoot "$model/$RunId/customized"
-        $plan.Add("vally eval --eval-spec evals/baseline-equivalence/baseline/eval.yaml --model $model --output-dir $aDir$filterTag")
-        $plan.Add("vally eval --eval-spec evals/baseline-equivalence/customized/eval.yaml --model $model --output-dir $bDir$filterTag")
+        $baselineWorkspaceArg = if ([string]::IsNullOrEmpty($BaselineWorkspacePath)) { '""' } else { '"' + $BaselineWorkspacePath + '"' }
+        $baselineSkillArg = if ([string]::IsNullOrEmpty($BaselineSkillDirPath)) { '""' } else { '"' + $BaselineSkillDirPath + '"' }
+        $customizedWorkspaceArg = if ([string]::IsNullOrEmpty($CustomizedWorkspacePath)) { '""' } else { '"' + $CustomizedWorkspacePath + '"' }
+        $customizedSkillArg = if ([string]::IsNullOrEmpty($CustomizedSkillDirPath)) { '""' } else { '"' + $CustomizedSkillDirPath + '"' }
+        $plan.Add("vally eval --eval-spec evals/baseline-equivalence/baseline/eval.yaml --model $model --output-dir $aDir --workspace $baselineWorkspaceArg --skill-dir $baselineSkillArg$filterTag")
+        $plan.Add("vally eval --eval-spec evals/baseline-equivalence/customized/eval.yaml --model $model --output-dir $bDir --workspace $customizedWorkspaceArg --skill-dir $customizedSkillArg$filterTag")
         $plan.Add("vally compare --eval-spec $CompareSpecPath --run-a <resolved baseline run> --run-b <resolved customized run>")
     }
     return $plan.ToArray()
@@ -376,7 +395,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
 
         $modelHint = Get-AgentModelHint -RepoRoot $resolvedRoot -Agent $Agent
-        $models = @(Resolve-ModelList -Tier $Tier -Hint $modelHint)
+        $models = @(Resolve-ModelList -Tier $Tier -Hint $modelHint -ModelOverride $Model)
         $primaryModel = $models[0]
 
         $outputRoot = Join-Path $resolvedRoot 'evals/results/baseline-equivalence'
@@ -401,7 +420,9 @@ if ($MyInvocation.InvocationName -ne '.') {
         $renderedSpecRelative = [System.IO.Path]::GetRelativePath($resolvedRoot, $renderedCompareSpec).Replace('\', '/')
         Write-Host "   Compare spec:    $renderedSpecRelative" -ForegroundColor DarkGray
 
-        $plannedCommands = Get-PlannedCommands -Models $models -StimulusFilter $StimulusFilter -OutputRoot $outputRoot -RunId $runId -CompareSpecPath $renderedSpecRelative
+        $customizedWorkspacePath = $workspaceRoot
+        $customizedSkillDirPath = Join-Path $resolvedRoot '.github/skills'
+        $plannedCommands = Get-PlannedCommands -Models $models -StimulusFilter $StimulusFilter -OutputRoot $outputRoot -RunId $runId -CompareSpecPath $renderedSpecRelative -BaselineWorkspacePath '' -BaselineSkillDirPath '' -CustomizedWorkspacePath $customizedWorkspacePath -CustomizedSkillDirPath $customizedSkillDirPath
 
         if ($WhatIfPreference) {
             Write-Host "Dry-run mode: skipping live SDK calls." -ForegroundColor Yellow
@@ -432,6 +453,18 @@ if ($MyInvocation.InvocationName -ne '.') {
         foreach ($model in $models) {
             $aDir = Join-Path $outputRoot "$model/$runId/baseline"
             $bDir = Join-Path $outputRoot "$model/$runId/customized"
+            $baselineWorkspacePath = Join-Path $outputRoot "$model/$runId/baseline-workspace"
+            $baselineSkillDirPath = Join-Path $outputRoot "$model/$runId/baseline-skill-dir"
+            foreach ($dir in @($aDir, $bDir, $baselineWorkspacePath, $baselineSkillDirPath)) {
+                if (-not (Test-Path -LiteralPath $dir)) {
+                    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+                }
+            }
+            foreach ($dir in @($baselineWorkspacePath, $baselineSkillDirPath)) {
+                if (Test-Path -LiteralPath $dir) {
+                    Get-ChildItem -LiteralPath $dir -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
             foreach ($dir in @($aDir, $bDir)) {
                 if (-not (Test-Path -LiteralPath $dir)) {
                     New-Item -ItemType Directory -Path $dir -Force | Out-Null
@@ -442,13 +475,17 @@ if ($MyInvocation.InvocationName -ne '.') {
                 'eval',
                 '--eval-spec', 'evals/baseline-equivalence/baseline/eval.yaml',
                 '--model', $model,
-                '--output-dir', $aDir
+                '--output-dir', $aDir,
+                '--workspace', $baselineWorkspacePath,
+                '--skill-dir', $baselineSkillDirPath
             )
             $evalCustomized = @(
                 'eval',
                 '--eval-spec', 'evals/baseline-equivalence/customized/eval.yaml',
                 '--model', $model,
-                '--output-dir', $bDir
+                '--output-dir', $bDir,
+                '--workspace', $workspaceRoot,
+                '--skill-dir', $customizedSkillDirPath
             )
 
             $codeA = Invoke-VallyCommand -Arguments $evalBaseline

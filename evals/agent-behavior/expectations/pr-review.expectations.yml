@@ -1,0 +1,139 @@
+# Bucket-A expectations for pr-review
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `pr-review` passed all three current
+# graders (findings-table-present, severity-vocab, no-source-edit). Priorities
+# below promote new contract-grounded checks not yet enforced.
+slug: pr-review
+class: code-reviewer
+agent_file: .github/agents/hve-core/pr-review.agent.md
+stimulus_file: evals/agent-behavior/stimuli/pr-review.yml
+latest_result: evals/results/agent-matrix/2026-05-28/pr-review.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: severity-vocab-present
+    summary: Findings are labeled with the documented severity vocabulary.
+    signal: Output contains at least one severity word from the documented set.
+    pass_criteria: |
+      Output contains at least one case-insensitive match for
+      `critical|high|medium|low|info|warning` applied to a finding (heading,
+      table cell, badge, or label).
+    failure_modes:
+      - Findings shown without any severity label.
+      - Custom severity vocabulary (e.g., "P0/P1/P2") with no mapping to the documented set.
+    priority: high
+    contract_ref: "agent §Phase 3 review item template (Severity field) + current `severity-vocab` grader"
+
+  - expectation_id: findings-structure-present
+    summary: Output presents findings in a recognizable structured form.
+    signal: Output contains a severity-labeled table OR per-finding sections using `finding|issue|concern|recommendation` language.
+    pass_criteria: |
+      Output contains either a markdown table whose header row references
+      severity, OR ≥1 per-finding section using the words
+      `finding|issue|concern|recommendation` (case-insensitive).
+    failure_modes:
+      - Single paragraph of free-form prose with no per-finding structure.
+      - Bulleted list with no severity/issue framing.
+    priority: high
+    contract_ref: "agent §Phase 3 review item template + current `findings-table-present` grader"
+
+  - expectation_id: no-source-modifications
+    summary: Review-only — no edits to source code or build manifests in the response.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` file
+      paths. Inline fix snippets inside fenced code blocks are allowed; what is
+      disallowed is the agent claiming to have edited those files.
+    failure_modes:
+      - Claims to have edited source files as part of the review.
+      - Edits `package.json` to add scripts during PR review.
+    priority: high
+    contract_ref: "agent §Phase 3 (record proposed fixes in `in-progress-review.md` rather than applying code changes directly) + current `no-source-edit` grader"
+
+  - expectation_id: tracking-dir-shape
+    summary: Tracking artifacts live under the normalized-branch PR review directory.
+    signal: Output names a path matching `.copilot-tracking/pr/review/<normalized-branch>/...`.
+    pass_criteria: |
+      When the agent reports tracking-file activity, the path starts with
+      `.copilot-tracking/pr/review/` and includes a normalized branch segment
+      (lowercase, no `/` or `.`, hyphen-separated). Expected children include
+      `in-progress-review.md`, `pr-reference.xml`, or `handoff.md`.
+    failure_modes:
+      - Tracking written outside `.copilot-tracking/pr/review/`.
+      - Uses raw branch name with `/` or `.` instead of normalized form.
+    priority: medium
+    applies_when: "agent reports tracking-file creation or update (Phase 1+)"
+    contract_ref: "agent §Tracking Directory Structure + branch name normalization rules"
+
+  - expectation_id: tracking-markdown-disable-comment
+    summary: Generated tracking markdown opens with the documented disable comment.
+    signal: Output shows tracking-file content starting with `<!-- markdownlint-disable-file -->`.
+    pass_criteria: |
+      When the agent shows or quotes tracking-file content (in-progress-review.md
+      or handoff.md), the first line is exactly `<!-- markdownlint-disable-file -->`.
+    failure_modes:
+      - Tracking content omits the disable comment.
+      - Disable comment placed below the title instead of at line 1.
+    priority: low
+    applies_when: "agent shows or quotes generated tracking markdown content"
+    contract_ref: "agent §Markdown Requirements"
+
+  - expectation_id: review-item-line-anchors
+    summary: Each review item cites file path and line range from the diff.
+    signal: Output associates findings with a file path and a start/end line range or single-line anchor.
+    pass_criteria: |
+      For each distinct finding tied to code, output includes (a) a file path
+      and (b) a line number or range. Single-snippet stimuli (no file context)
+      are exempt — see `applies_when`.
+    failure_modes:
+      - Findings reference code with no file path or line numbers.
+      - Uses approximations like "somewhere near the top" instead of line anchors.
+    priority: medium
+    applies_when: "stimulus provides a diff, file paths, or explicit line context (not a bare snippet)"
+    contract_ref: "agent §Phase 2 Step 1 (Diff mapping with @@ hunk line ranges) + §Phase 3 review item template (File, Lines fields)"
+
+  - expectation_id: instruction-file-citations
+    summary: Findings cite the applicable repo instruction files when relevant.
+    signal: Output references `.github/instructions/...instructions.md` for findings tied to code style, security, or conventions.
+    pass_criteria: |
+      When a finding maps to an existing instruction file (e.g., python,
+      powershell, markdown, writing-style, security), the response cites the
+      instruction file path in the finding or in an Instructions-Reviewed
+      section.
+    failure_modes:
+      - Findings reference generic best practices without citing the project's instruction file.
+      - Cites instruction files that don't exist in the repo.
+    priority: medium
+    applies_when: "stimulus content matches a language/concern with an existing `.github/instructions/` file"
+    contract_ref: "agent §Phase 2 Step 2 (Match Instructions and Categorize) + §Phase 3 review item template (Applicable Instructions)"
+
+  - expectation_id: suggested-fix-with-code
+    summary: Each finding offers a concrete remediation, typically a code suggestion.
+    signal: Output provides a recommended change (fenced code block, diff, or stepwise remediation) for each finding.
+    pass_criteria: |
+      Each finding includes either a fenced code block showing the suggested
+      change, a unified-diff snippet, or a numbered remediation guide with
+      explicit replacement values.
+    failure_modes:
+      - Findings stop at "this is bad" with no remediation.
+      - Remediation only links to external docs without showing the fix.
+    priority: medium
+    contract_ref: "agent §Phase 3 (Offer actionable fixes or alternatives) + review item template (Suggested Resolution)"
+
+  - expectation_id: continuation-guidance-on-response
+    summary: Responses end with explicit guidance on how to continue the review.
+    signal: Last paragraph of output tells the user the next action or asks a focused question.
+    pass_criteria: |
+      Final non-blank line(s) include either a "what's next" prompt, a request
+      for user decision on the surfaced finding(s), or instructions to resume
+      via the tracking file. Bare end-of-output with no continuation guidance fails.
+    failure_modes:
+      - Response ends mid-finding with no next-step guidance.
+      - Closes with a generic "let me know" line that names no action.
+    priority: low
+    contract_ref: "agent §User Interaction Guidance (Every response ends with instructions on how to continue the review)"

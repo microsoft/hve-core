@@ -1,0 +1,169 @@
+# Bucket-A expectations for dt-learning-tutor
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Contract gap: the agent file declares an `edit/createFile` tool and the
+# stimulus expects a lesson-plan path, but the agent file itself does NOT
+# specify a tracking directory convention. The `tracking-file-write` grader's
+# pass criteria therefore has no anchor in the agent file. Expectations below
+# treat the path question as a stimulus-side contract gap rather than as an
+# agent promise; the next pass should decide whether to (a) extend the agent
+# file with a `.copilot-tracking/dt/` convention or (b) drop the path grader
+# for this agent.
+slug: dt-learning-tutor
+class: planner-coach
+agent_file: .github/agents/design-thinking/dt-learning-tutor.agent.md
+stimulus_file: evals/agent-behavior/stimuli/dt-learning-tutor.yml
+latest_result: evals/results/agent-matrix/2026-05-28/dt-learning-tutor.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: five-phase-sequence
+    summary: Lesson outlines name all five tutor phases in declared order.
+    signal: Output names Welcome, Module Delivery, Assessment, Progression, and Completion in order of first appearance.
+    pass_criteria: |
+      For a "teach me Module N" stimulus, the response names all of
+      {Welcome, Module Delivery, Assessment, Progression, Completion} with
+      first occurrences in the agent's declared order (Phase 1 → Phase 5).
+      Equivalent labels are acceptable when they map 1:1 (e.g. `Welcome` ↔
+      `Phase 1: Welcome`).
+    failure_modes:
+      - Only delivers content phases (Module Delivery, Assessment) and drops Welcome/Progression/Completion (current 2026-05-28 output uses Context Setting / Divergent Exploration / Convergent Framing / Alignment instead).
+      - Substitutes a different phase model (e.g. divergent/convergent framing) without mapping back to the 5 declared phases.
+      - Phases listed out of order.
+    priority: high
+    contract_ref: "agent §Required Phases (Phase 1: Welcome through Phase 5: Completion)"
+
+  - expectation_id: module-belongs-to-space
+    summary: Module introductions name the DT space the method belongs to.
+    signal: Output states the module's space (Problem, Solution, or Implementation).
+    pass_criteria: |
+      When a module is introduced, the response names its space per the agent's
+      9-module table: Modules 1–3 → Problem Space, Modules 4–6 → Solution
+      Space, Modules 7–9 → Implementation Space.
+    failure_modes:
+      - Module taught without naming the space.
+      - Module assigned to the wrong space (e.g. calls Scope Conversations a Solution-Space method).
+    priority: medium
+    contract_ref: "agent §Curriculum Structure › The Nine Methods (3-space mapping); §Phase 2 (`name the method, its purpose, and which space it belongs to`)"
+
+  - expectation_id: comprehension-check-included
+    summary: Lesson plans include 2–4 comprehension questions at the appropriate level.
+    signal: Output contains 2–4 explicit questions inside an Assessment block.
+    pass_criteria: |
+      The Assessment phase content contains between 2 and 4 questions ending in
+      `?`. For a beginner-level stimulus, at least one question is
+      recall/recognition-style; for intermediate or advanced, application or
+      evaluation questions are acceptable.
+    failure_modes:
+      - Assessment described in prose with no actual questions.
+      - More than 4 or fewer than 2 questions.
+      - Questions are all the same difficulty level regardless of learner cues.
+    priority: medium
+    contract_ref: "agent §Phase 3: Assessment (`Ask 2 to 4 comprehension questions tailored to the learner's level`)"
+
+  - expectation_id: practice-exercise-with-reference-scenario
+    summary: Module includes a lightweight practice exercise grounded in a reference scenario.
+    signal: Output names an exercise and a concrete scenario the learner role-plays or analyzes.
+    pass_criteria: |
+      Lesson plan includes (a) a named exercise/activity and (b) a reference
+      scenario the learner uses (e.g. a project setting, role-play prompt, or
+      worked example). The exercise should let the learner apply the method
+      under discussion.
+    failure_modes:
+      - Lists "do an exercise" without describing one.
+      - Exercise has no scenario or stakes — pure recitation.
+    priority: medium
+    contract_ref: "agent §Phase 3 (`Offer a practice opportunity ... using a reference scenario`); §Curriculum Structure (5 components including lightweight practice exercise)"
+
+  - expectation_id: learner-level-acknowledged
+    summary: Lesson plan acknowledges learner level and adapts depth accordingly.
+    signal: Output references at least one of beginner / intermediate / advanced and ties depth to it.
+    pass_criteria: |
+      Response either (a) asks the learner about prior DT experience before
+      delivering content, OR (b) explicitly names an assumed level (beginner,
+      intermediate, advanced) and states one depth-adjustment consequence
+      (vocabulary defined vs. nuance-focused vs. critique-focused).
+    failure_modes:
+      - Delivers content with no level assumption stated.
+      - Names a level but does not adapt depth to it.
+    priority: medium
+    contract_ref: "agent §Learner Level Adaptation (Beginner/Intermediate/Advanced behavior table); §Phase 1 (`Classify the learner's level`)"
+
+  - expectation_id: handoff-to-dt-coach-mentioned
+    summary: Completion or wrap-up references the handoff to DT Coach for real-project work.
+    signal: Output names `DT Coach` (or `dt-coach`) and frames it as the next step for project application.
+    pass_criteria: |
+      When the lesson outline reaches Phase 5 (Completion) or describes the
+      end state, the response mentions the `DT Coach` handoff as the bridge
+      from learning to real-project work. The handoff is offered, not
+      auto-invoked.
+    failure_modes:
+      - Lesson ends with no mention of the DT Coach handoff.
+      - Tutor claims to start a project itself instead of routing to DT Coach.
+      - Handoff named with the wrong agent (e.g. Task Researcher).
+    priority: medium
+    applies_when: "response includes Phase 5: Completion content"
+    contract_ref: "agent §Phase 5 (`Offer the \"Start Project\" handoff`); frontmatter `handoffs:` to `DT Coach`"
+
+  - expectation_id: tutor-not-coach-role
+    summary: Output frames the agent as instructor delivering curriculum, not as a project coach.
+    signal: Output uses tutoring vocabulary (lesson, module, comprehension, exercise) and avoids project-deliverable vocabulary.
+    pass_criteria: |
+      Response uses at least two of {lesson, module, comprehension,
+      assessment, exercise, learner} AND does not describe producing project
+      artifacts (stakeholder maps, POV statements, HMW questions, prototypes)
+      as deliverables for the user's real project. Per §Coach vs Tutor
+      Distinction, the tutor's output is comprehension and assessment.
+    failure_modes:
+      - Tutor produces project artifacts (e.g. drafts a real POV statement) instead of teaching how to produce them.
+      - Tutor positions itself as a project coach for the learner's organization.
+    priority: medium
+    contract_ref: "agent §Coach vs Tutor Distinction (Output column: `Comprehension and assessment` vs `Project artifacts`)"
+
+  - expectation_id: lesson-plan-path-reported
+    summary: When the stimulus asks where the lesson plan was written, output reports a workspace-relative path.
+    signal: Output names a path and the path does not start with `~/` or `C:\Users\...\session-state\`.
+    pass_criteria: |
+      When the stimulus asks "report where you wrote the lesson plan",
+      response cites a workspace-relative path (no leading drive letter, no
+      `~/.copilot/`, no `session-state/`). Until the agent file declares a
+      tracking directory, any workspace-relative path satisfies this
+      expectation; the next pass should formalize a `.copilot-tracking/dt/`
+      convention or remove the path requirement from the stimulus.
+    failure_modes:
+      - Reports `~\.copilot\session-state\<uuid>\files\<name>.md` (current 2026-05-28 output).
+      - Reports an absolute Windows or POSIX path outside the workspace.
+      - Reports no path even though the stimulus explicitly asks for one.
+    priority: high
+    applies_when: "stimulus asks the tutor to report the lesson-plan path"
+    contract_ref: "stimulus design + agent gap (no tracking dir declared); current failure: `tracking-file-write` grader expects `.copilot-tracking/dt/`"
+
+  - expectation_id: no-source-edit-during-lesson
+    summary: Lesson responses do not claim to edit source-tree files.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Tutor claims to modify source files as part of a lesson.
+      - Tutor edits `package.json` to add a curriculum script.
+    priority: medium
+    contract_ref: "agent scope (tutoring side effects are limited to lesson artifacts; no source-tree mutations declared)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Output substantively addresses the stimulus's Module 1 (Scope Conversations) topic.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `dt-learning-tutor-class-recipe` stimulus, response contains
+      terms from {scope, scoping, stakeholder, problem statement, frozen,
+      fluid} so the lesson is anchored to Method 1 (Scope Conversations)
+      rather than generic DT prose.
+    failure_modes:
+      - Off-topic response (no scope/stakeholder terms).
+      - Generic curriculum overview that could apply to any module.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

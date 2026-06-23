@@ -1,0 +1,23 @@
+name: fixture-invalid-env-path
+description: Non-compliant spec whose environment paths do not resolve relative to the spec directory.
+type: capability
+defaults:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+scoring:
+  threshold: 0.7
+environment:
+  skills:
+    - this-skill-directory-does-not-exist
+  files:
+    - ./missing-fixture-file.md
+
+stimuli:
+  - name: stimulus-with-bad-env-path
+    prompt: "What is the capital of France?"
+    tags: {category: fixture}
+    graders:
+      - type: output-matches
+        name: mentions-paris
+        config: {pattern: '(?i)\bparis\b'}

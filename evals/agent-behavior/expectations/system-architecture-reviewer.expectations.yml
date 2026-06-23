@@ -1,0 +1,104 @@
+# Bucket-A expectations for system-architecture-reviewer
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: system-architecture-reviewer
+class: code-reviewer
+agent_file: .github/agents/project-planning/system-architecture-reviewer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/system-architecture-reviewer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/system-architecture-reviewer.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-file-location
+    summary: The assessment/ADR document is written under the tracking subtree.
+    signal: Output names a workspace path beginning with `.copilot-tracking/`.
+    pass_criteria: |
+      The response reports a workspace-relative document path beginning with
+      `.copilot-tracking/` for the architecture assessment, satisfying the
+      `tracking-file-write` grader.
+    failure_modes:
+      - Assessment written to a temp directory or absolute path (current
+        2026-05-28 output fails `tracking-file-write` this way).
+      - No document path reported.
+    priority: high
+    contract_ref: "agent §Outputs (assessment/ADR under `.copilot-tracking/`)"
+
+  - expectation_id: strengths-and-risks
+    summary: Assessment documents both strengths and risks of the architecture.
+    signal: Output contains labeled strengths and risks sections.
+    pass_criteria: |
+      The written assessment includes both a strengths section and a risks
+      section for the proposed architecture, not just one side.
+    failure_modes:
+      - Only risks enumerated; strengths omitted.
+      - Strengths and risks merged into undifferentiated prose.
+    priority: high
+    contract_ref: "agent §Assessment (strengths + risks)"
+
+  - expectation_id: pillar-evaluation
+    summary: Assessment evaluates the architecture across the documented quality pillars.
+    signal: Output addresses scalability, reliability, and related pillars.
+    pass_criteria: |
+      The assessment evaluates the architecture across the documented quality
+      pillars (e.g. scalability, reliability, security, operability), not a
+      single dimension.
+    failure_modes:
+      - Only one pillar (e.g. cost) discussed.
+      - Pillars named but not applied to the specific architecture.
+    priority: medium
+    contract_ref: "agent §Evaluate Pillars (quality-attribute evaluation)"
+
+  - expectation_id: identifies-specific-risks
+    summary: Assessment flags the concrete risks in the proposed design.
+    signal: Output flags single-VM SPOF, SQLite concurrency limits, no caching, and SSH deploy risk.
+    pass_criteria: |
+      For the `system-architecture-reviewer-class-recipe` stimulus, the
+      response flags the concrete risks of the proposed design: single-VM
+      single point of failure, SQLite write-concurrency/scaling limits, absence
+      of caching, and brittle SSH-based deployment.
+    failure_modes:
+      - Generic risk language with no design-specific findings.
+      - SPOF or SQLite scaling limits missed.
+    priority: high
+    stimulus_scoped: true
+    contract_ref: "stimulus design (proposed-architecture risks, per-stimulus)"
+
+  - expectation_id: adr-or-decision-handoff
+    summary: Significant decisions are captured as ADRs in the documented location.
+    signal: Output references ADR creation under `docs/decisions/` or a decision handoff.
+    pass_criteria: |
+      When the review yields decisions, the response captures them as ADRs
+      (documented `docs/decisions/<date>-*.md`) or an equivalent decision
+      handoff rather than leaving decisions implicit.
+    failure_modes:
+      - Decisions discussed but no ADR/handoff produced.
+    priority: medium
+    applies_when: "the review yields decisions worth recording"
+    contract_ref: "agent §Create ADRs (docs/decisions/ + decision handoff)"
+
+  - expectation_id: security-delegation
+    summary: Security-deep concerns are delegated to the security planner.
+    signal: Output references handoff to the security planner for security depth.
+    pass_criteria: |
+      When the architecture raises security concerns requiring depth, the
+      response delegates to the security planner rather than producing a full
+      security assessment inline.
+    failure_modes:
+      - Reviewer fabricates a full STRIDE model instead of delegating.
+    priority: low
+    applies_when: "the architecture raises security concerns needing depth"
+    contract_ref: "agent §Escalations (security-planner delegation)"
+
+  - expectation_id: no-source-edit
+    summary: Architecture review does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `package.json` paths. Writes are confined to assessment/ADR documents
+      under tracking or `docs/decisions/`.
+    failure_modes:
+      - Review leads to editing application source files.
+    priority: medium
+    contract_ref: "agent scope (review/assessment-only; no source edits)"

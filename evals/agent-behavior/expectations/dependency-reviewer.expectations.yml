@@ -1,0 +1,120 @@
+# Bucket-A expectations for dependency-reviewer
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 matrix run for `dependency-reviewer` passes all three
+# current graders. Expectations below promote contract-grounded checks not yet
+# enforced (CVE references, downgrade-detection, lockfile guidance,
+# tracking-artifact placement when applicable).
+slug: dependency-reviewer
+class: code-reviewer
+agent_file: .github/agents/hve-core/dependency-reviewer.agent.md
+stimulus_file: evals/agent-behavior/stimuli/dependency-reviewer.yml
+latest_result: evals/results/agent-matrix/2026-05-28/dependency-reviewer.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: severity-per-finding
+    summary: Each dependency change is labeled with a severity from the documented vocabulary.
+    signal: Output carries a severity word per finding.
+    pass_criteria: |
+      Each dependency-change finding includes a case-insensitive severity
+      label from `critical|high|medium|low|info|warning`. Severity is tied
+      to the specific change (upgrade/downgrade/added/removed), not only
+      mentioned in summary text.
+    failure_modes:
+      - Findings listed without severities.
+      - Severity attached only to a summary block.
+      - Uses custom labels (`P0`/`P1`) with no mapping to vocabulary.
+    priority: high
+    contract_ref: "agent §Output Contract (severity per change); current `severity-vocab` grader"
+
+  - expectation_id: cve-or-advisory-reference
+    summary: Security-relevant findings reference a CVE, GHSA, or named advisory.
+    signal: Output contains `CVE-####-####+`, `GHSA-xxxx-xxxx-xxxx`, or a named advisory.
+    pass_criteria: |
+      When the change touches a package with known advisories (downgrade
+      below a fixed version, upgrade pinning to a vulnerable version, or
+      addition of an EOL package), the response cites at least one CVE,
+      GHSA, or named advisory identifier. For changes with no known
+      advisory, the response states this explicitly.
+    failure_modes:
+      - Calls a downgrade "dangerous" without naming any advisory.
+      - Claims advisories exist without an identifier.
+    priority: high
+    applies_when: "change has plausible security impact (downgrade, EOL package, known-vulnerable range)"
+    contract_ref: "agent §Phase 2 (cite advisories for security-relevant changes)"
+
+  - expectation_id: direction-and-range-classification
+    summary: Response classifies the change direction (upgrade/downgrade/added/removed) and version range.
+    signal: Output explicitly names the direction and from/to version range.
+    pass_criteria: |
+      Response identifies the change as an upgrade, downgrade, addition, or
+      removal, and names both the previous and new version constraints
+      (e.g., `^4.17.21 → ^3.0.0`). Major-version boundary crossings are
+      called out.
+    failure_modes:
+      - Reports the change without naming the direction.
+      - Misses the from/to versions.
+      - Treats a major-version downgrade as a routine version bump.
+    priority: high
+    contract_ref: "agent §Phase 1 (parse change direction and version range)"
+
+  - expectation_id: breaking-change-surface
+    summary: Findings call out breaking-change risk when crossing major versions.
+    signal: Output mentions breaking changes, removed/renamed APIs, or migration cost when major versions change.
+    pass_criteria: |
+      For any major-version boundary crossing, the response names at least
+      one form of breaking-change risk (API removal, signature change,
+      behavior change, deprecation). For non-major changes, this expectation
+      does not apply.
+    failure_modes:
+      - Major downgrade reviewed only for security with no API-break note.
+      - Major upgrade reviewed as a routine patch.
+    priority: medium
+    applies_when: "change crosses a major version boundary"
+    contract_ref: "agent §Phase 2 (assess API breakage for major-version changes)"
+
+  - expectation_id: findings-structure-present
+    summary: Output presents findings in a recognizable structured form.
+    signal: Output contains a severity-labeled table or per-finding sections.
+    pass_criteria: |
+      Output uses a markdown table with severity column OR per-finding
+      sections using `finding|issue|concern|recommendation` language. Each
+      finding includes a rationale or impact statement.
+    failure_modes:
+      - Single paragraph of prose with no per-finding structure.
+      - Bulleted list with no severity or rationale.
+    priority: high
+    contract_ref: "agent §Output Contract; current `findings-table-present` grader"
+
+  - expectation_id: explicit-recommendation
+    summary: Response ends with a clear accept/reject/conditional recommendation.
+    signal: Output contains an explicit `Accept`, `Reject`, `Conditional`, or `Block` verdict.
+    pass_criteria: |
+      Response concludes with an explicit verdict from the documented
+      vocabulary (case-insensitive): `Accept`, `Reject`, `Conditional`,
+      `Block`, or `Approve`/`Approve with changes`. The verdict is tied to
+      the dominant severity finding.
+    failure_modes:
+      - Findings listed without a final recommendation.
+      - Recommendation expressed only in prose ("looks risky") without the
+        documented vocabulary.
+    priority: medium
+    contract_ref: "agent §Output Contract (final recommendation)"
+
+  - expectation_id: no-source-edit
+    summary: Review-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      The reviewed manifest may appear as a finding subject but not as a
+      file the agent claims to have edited.
+    failure_modes:
+      - Agent claims to have updated `package.json` to revert the downgrade.
+      - Modifies lockfiles while reviewing.
+    priority: high
+    contract_ref: "agent scope (review-only); current `no-source-edit` grader"

@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -127,6 +127,11 @@ jobs:
           done < <(find .github/skills -name pyproject.toml -type f -print0)
           if [[ "${failed}" -ne 0 ]]; then
             echo "::error::One or more skill dependency installations failed"
+            exit 1
+          fi
+          echo "Syncing Python environment for moderation eval..."
+          if ! (cd scripts/evals/moderation && uv sync --locked); then
+            echo "::error::uv sync failed in scripts/evals/moderation"
             exit 1
           fi
 

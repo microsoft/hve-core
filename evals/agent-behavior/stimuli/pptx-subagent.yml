@@ -1,0 +1,60 @@
+stimuli:
+  - name: pptx-subagent-task-and-paths
+    prompt: |
+      You are the PowerPoint task-executor subagent. The PowerPoint Builder
+      orchestrator hands you this input:
+        - task: build-deck
+        - working_directory: .copilot-tracking/ppt/2026-05-28/quarterly-review/
+        - content_yaml: .copilot-tracking/ppt/2026-05-28/quarterly-review/content.yml
+        - mode: full
+      Acknowledge the task, name the working directory and execution log path,
+      and report your task status and the files you create or modify.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: task-type-acknowledged
+        config:
+          pattern: '(?i)\b(extract|build-content|build-deck|validate|export)\b'
+      - type: output-matches
+        name: working-directory-format
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]ppt[-/\\]\d{4}-\d{2}-\d{2}[-/\\]'
+      - type: output-matches
+        name: status-from-allowed-set
+        config:
+          pattern: '(?i)\b(complete|partial|blocked)\b'
+      - type: output-matches
+        name: files-listed
+        config:
+          pattern: '(?i)files (created|modified)'
+
+  - name: pptx-subagent-partial-rebuild-flags
+    prompt: |
+      You are the PowerPoint task-executor subagent. The orchestrator hands you
+      this input:
+        - task: build-deck
+        - working_directory: .copilot-tracking/ppt/2026-05-28/quarterly-review/
+        - mode: partial
+        - source_deck: .copilot-tracking/ppt/2026-05-28/quarterly-review/deck.pptx
+        - slides_to_rebuild: [3, 4]
+      Describe how you will rebuild only the specified slides while preserving
+      the rest of the deck, and report your task status.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: partial-rebuild-flags
+        config:
+          pattern: '(?i)--source'
+      - type: output-matches
+        name: slides-flag
+        config:
+          pattern: '(?i)--slides'
+      - type: output-matches
+        name: no-template-flag
+        config:
+          pattern: '(?i)--template'
+          negate: true
