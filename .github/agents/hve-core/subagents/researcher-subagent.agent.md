@@ -56,7 +56,7 @@ Files under .copilot-tracking/ are consumed by AI agents, not humans clicking li
 
 * README.md
 * .github/copilot-instructions.md
-* .copilot-tracking/research/2026-02-23/research.md
+* .copilot-tracking/research/subagents/2026-02-23/api-design.md
 
 External URLs may still use markdown link syntax.
 

@@ -102,7 +102,7 @@ Files under .copilot-tracking/ are consumed by AI agents, not humans clicking li
 
 * README.md
 * .github/copilot-instructions.md
-* .copilot-tracking/sandbox/2026-02-23/evaluation-log.md
+* .copilot-tracking/sandbox/2026-02-23-git-commit-001/evaluation-log.md
 
 External URLs may still use markdown link syntax.
 
