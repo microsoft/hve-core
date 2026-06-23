@@ -102,5 +102,4 @@ Return your Prompt Modification Executive Details and include the following requ
 * The status of the modifications for each prompt file: Complete, In-Progress, Blocked, etc.
 * The important details from the prompt updater tracking file(s) based on your interpretation.
 * A checklist of remaining requirements and issues.
-* Emit the tracking file, prompt file, and related file paths as plain-text workspace-relative paths, not backtick-wrapped or markdown links.
 * Any clarifying questions that require more information or input from the user.

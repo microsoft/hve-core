@@ -115,5 +115,4 @@ Return Evaluation Findings and include the following requirements:
 * The status of the evaluation: Complete, In-Progress, Blocked, etc.
 * The important details from the evaluation log based on your interpretation.
 * A checklist of recommended modifications ordered by (and including) severity for specific prompt instruction file(s).
-* Emit the sandbox-folder and log paths as plain-text workspace-relative paths, not backtick-wrapped or markdown links.
 * Any clarifying questions that requires more information or input from the user.

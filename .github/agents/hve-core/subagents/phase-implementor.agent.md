@@ -86,7 +86,7 @@ Files under .copilot-tracking/ are consumed by AI agents, not humans clicking li
 
 * README.md
 * .github/copilot-instructions.md
-* .copilot-tracking/changes/2026-02-23/task-changes.md
+* src/services/auth.ts
 
 External URLs may still use markdown link syntax.
 

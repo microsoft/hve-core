@@ -88,5 +88,4 @@ Return your Execution Findings and include the following requirements:
 * The relative path to your execution log.
 * The status of the execution log: Complete, In-Progress, Blocked, etc.
 * The important details from the execution log based on your interpretation.
-* Emit the sandbox-folder and log paths as plain-text workspace-relative paths, not backtick-wrapped or markdown links.
 * Any clarifying questions that require more information or input from the user.

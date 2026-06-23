@@ -79,7 +79,7 @@ Files under .copilot-tracking/ are consumed by AI agents, not humans clicking li
 
 * README.md
 * .github/copilot-instructions.md
-* .copilot-tracking/reviews/2026-02-23/rpi-validation-log.md
+* .copilot-tracking/reviews/rpi/2026-02-23/auth-feature-001-validation.md
 
 External URLs may still use markdown link syntax.
 
