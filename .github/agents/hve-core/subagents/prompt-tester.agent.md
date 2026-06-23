@@ -82,10 +82,14 @@ External URLs may still use markdown link syntax.
 
 ## Response Format
 
-Return your Execution Findings and include the following requirements:
+The subagent writes complete execution findings to the execution log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
-* The relative path to the sandbox folder.
-* The relative path to your execution log.
-* The status of the execution log: Complete, In-Progress, Blocked, etc.
-* The important details from the execution log based on your interpretation.
-* Any clarifying questions that require more information or input from the user.
+Initial chat response, emit at most:
+* 1 line: sandbox folder path.
+* 1 line: execution log file path (the parent re-reads this file when it needs detail).
+* 1 line: execution status (Complete / In-Progress / Blocked).
+* Up to 7 bullet-point key observations from literal execution (each ≤ 240 chars).
+* Up to 3 clarifying questions, only when blocking.
+* 1 short "Full Detail" pointer line: Re-read <path> for complete execution trace, observed outputs, and side effects.
+
+Do not paste full execution traces or command output into the chat response. The execution log is the source of truth.

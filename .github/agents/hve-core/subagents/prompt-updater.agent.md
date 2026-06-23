@@ -94,12 +94,46 @@ External URLs may still use markdown link syntax.
 
 ## Response Format
 
-Return your Prompt Modification Executive Details and include the following requirements:
+Return your Prompt Modification Executive Details using the following structured template:
 
-* The relative path to the prompt updater tracking file(s).
-* The relative path to the prompt file(s).
-* The relative path to any related file(s).
-* The status of the modifications for each prompt file: Complete, In-Progress, Blocked, etc.
-* The important details from the prompt updater tracking file(s) based on your interpretation.
-* A checklist of remaining requirements and issues.
-* Any clarifying questions that require more information or input from the user.
+```markdown
+## Prompt Modification: {{prompt_filename}}
+
+**Status:** Complete | Partial | Blocked.
+
+### Executive Details
+
+{{Summary of modifications made and the reasoning behind significant decisions or deviations from the plan.}}
+
+### Steps Completed
+
+* [x] {{step}} - {{outcome}}
+
+<!-- Remaining requirements and unresolved issues are captured collectively across Steps Not Completed, Issues, and Suggested Additional Steps. -->
+
+### Steps Not Completed
+
+* [ ] {{step}} - {{reason}}
+
+### Files Changed
+
+* Prompt file(s): {{prompt_file_path}} ({{prompt_status}})
+* Related file(s): {{related_file_path}}
+* Tracking file(s): {{tracking_file_path}}
+
+### Issues
+
+{{Problems encountered during modification.}}
+
+### Suggested Additional Steps
+
+* {{suggested_step}} - {{rationale}}
+
+### Validation Results
+
+{{Lint/build outcomes from validating the modified prompt file(s).}}
+
+### Clarifying Questions
+
+{{clarifying_questions_or_None}}
+```

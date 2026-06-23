@@ -211,6 +211,15 @@ Return structured findings including:
 * Clarifying questions.
 ```
 
+### Response Format Categories
+
+Use one of two canonical categories for subagent responses, based on the primary deliverable.
+
+* Compact Pointer Format: Use for read-only or analysis subagents that write findings to a .copilot-tracking artifact and return an executive summary. Open with the framing that complete findings are written to disk before returning, the chat response is an executive summary only, and full fidelity lives on disk. Include the primary artifact or log path line, plus any additional path lines the parent contract requires, such as a sandbox or working-folder path, keeping path lines minimal, one status line, up to about seven findings each no longer than 240 characters, an optional recommended-next-items checklist, up to three clarifying questions only when blocking, one short "Full Detail" pointer line in the form "Re-read <path> for ...", and a closing sentence stating that the artifact is the source of truth. Use researcher-subagent and the validators as the canonical examples.
+* Structured Template Format: Use for write or modification subagents that change workspace files and return a fenced markdown template. Mirror the phase-implementor section set: Status, Executive Details, Steps Completed, Steps Not Completed, Files Changed (Added/Modified/Removed with plain-text paths), Issues, Suggested Additional Steps, Validation Results, and Clarifying Questions. Preserve the section set, but adapt the Files Changed breakdown to the subagent's domain when that better fits its outputs (for example, a prompt-modification subagent may group changes by prompt, related, and tracking file). Use phase-implementor as the canonical example.
+* Status line rule: Both formats use a Status line, and the status vocabulary may follow the canonical set or the parent contract's vocabulary, but it must be consistent within a given subagent.
+* Selection rule: Classify by primary deliverable. Analysis or findings return a compact pointer; file modifications return a structured template. For any workspace paths used in either format, follow Surface A and use plain-text workspace-relative paths.
+
 ### Surface A: Artifact Content References
 
 References written into .copilot-tracking artifact content use plain-text workspace-relative paths. Do not use markdown links, #file: directives, or backticks for those paths because VS Code resolves them and reports missing-target errors that flood the Problems tab. External URLs may still use markdown link syntax.
