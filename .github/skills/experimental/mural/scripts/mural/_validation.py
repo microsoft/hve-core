@@ -481,6 +481,8 @@ def _build_arrow_body(args: argparse.Namespace) -> dict[str, Any]:
     y2 = _coerce_xy(getattr(args, "y2", None), "--y2")
     origin_x = min(x1, x2)
     origin_y = min(y1, y2)
+    # Clamp bounding-box dimensions to avoid zero-size rectangles rejected by
+    # the API; point coordinates still preserve the true arrow endpoints.
     width = max(abs(x2 - x1), 1.0)
     height = max(abs(y2 - y1), 1.0)
     body: dict[str, Any] = {

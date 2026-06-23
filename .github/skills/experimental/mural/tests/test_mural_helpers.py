@@ -798,6 +798,48 @@ def test_build_arrow_body_invalid_coord(mural_module: Any) -> None:
         mural_module._build_arrow_body(args)
 
 
+def test_build_arrow_body_normalizes_reversed_x(mural_module: Any) -> None:
+    args = _ns(x1=10, y1=2, x2=4, y2=7, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 4.0,
+        "y": 2.0,
+        "width": 6.0,
+        "height": 5.0,
+        "points": [
+            {"x": 6.0, "y": 0.0},
+            {"x": 0.0, "y": 5.0},
+        ],
+    }
+
+
+def test_build_arrow_body_clamps_vertical_width(mural_module: Any) -> None:
+    args = _ns(x1=5, y1=1, x2=5, y2=9, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 5.0,
+        "y": 1.0,
+        "width": 1.0,
+        "height": 8.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 0.0, "y": 8.0},
+        ],
+    }
+
+
+def test_build_arrow_body_clamps_horizontal_height(mural_module: Any) -> None:
+    args = _ns(x1=1, y1=3, x2=8, y2=3, style=None)
+    assert mural_module._build_arrow_body(args) == {
+        "x": 1.0,
+        "y": 3.0,
+        "width": 7.0,
+        "height": 1.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 7.0, "y": 0.0},
+        ],
+    }
+
+
 def test_build_image_body_happy(mural_module: Any) -> None:
     args = _ns(x=10, y=20, width=None, height=None, title="caption")
     body = mural_module._build_image_body(asset_name="asset-1", args=args)
