@@ -33,8 +33,12 @@ from . import (  # noqa: E402 - package siblings defined before this import runs
     _NullBackend,
     _state,
 )
-from ._constants import _KNOWN_CREDENTIAL_KEYS, _LINE_RE, ENV_NONINTERACTIVE
-from ._credentials import _resolve_credential_file, _service_name_for
+from ._constants import _LINE_RE, ENV_NONINTERACTIVE
+from ._credentials import (
+    _backend_has_credentials,
+    _resolve_credential_file,
+    _service_name_for,
+)
 from ._exceptions import MuralError
 from ._protocols import CredentialBackend
 
@@ -233,19 +237,14 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
         try:
             selected = KeyringBackend()
             service = _service_name_for(profile)
-            keyring_populated = False
-            for key in _KNOWN_CREDENTIAL_KEYS:
-                value = selected.get(service, key)
-                if value:
-                    keyring_populated = True
-                    break
+            keyring_populated = _backend_has_credentials(selected, service)
             if not keyring_populated:
                 file_backend = FileBackend(file_path)
-                if file_path.exists():
-                    _check_credential_file_perms(file_path, os.environ)
-                file_entries = file_backend._read_all()
-                file_populated = any(
-                    file_entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS
+                file_populated = _backend_has_credentials(
+                    file_backend,
+                    service,
+                    enforce_file_perms=True,
+                    file_env=os.environ,
                 )
                 if file_populated:
                     if profile not in _state.seen_fallback_warn():
@@ -266,6 +265,12 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
                     level=logging.WARNING,
                 )
             selected = FileBackend(file_path)
+            _backend_has_credentials(
+                selected,
+                _service_name_for(profile),
+                enforce_file_perms=True,
+                file_env=os.environ,
+            )
     else:
         raise MuralError(
             f"MURAL_CREDENTIAL_BACKEND={selector!r} is not one of "

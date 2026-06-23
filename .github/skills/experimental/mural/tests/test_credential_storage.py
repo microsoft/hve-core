@@ -433,6 +433,30 @@ class TestResolveBackend:
         ]
         assert len(warns) == 1
 
+    @pytest.mark.skipif(
+        os.name == "nt", reason="POSIX-only credential file permission semantics"
+    )
+    def test_auto_keyring_unavailable_enforces_file_permissions(
+        self,
+        mural_module: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+    ) -> None:
+        _isolate_credential_env(monkeypatch, tmp_path)
+
+        def _raise_unavailable(self: Any) -> None:
+            raise mural_module._KeyringUnavailable("test-induced")
+
+        monkeypatch.setattr(mural_module.KeyringBackend, "__init__", _raise_unavailable)
+
+        file_path = mural_module._resolve_credential_file("default", os.environ)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("MURAL_CLIENT_ID=from-file\n", encoding="utf-8")
+        os.chmod(file_path, 0o644)
+
+        with pytest.raises(mural_module.MuralError):
+            mural_module.resolve_backend("default")
+
     def test_auto_fallback_warn_dedupes_per_profile_per_process(
         self,
         mural_module: Any,
