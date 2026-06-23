@@ -1084,7 +1084,9 @@ runs:
 
                 $null = Test-GitHubActionsForStaleness
 
-                Should -Invoke Get-BulkGitHubActionsStaleness -Times 1
+                Should -Invoke Get-BulkGitHubActionsStaleness -Times 1 -ParameterFilter {
+                    $ActionRepos -contains 'actions/cache'
+                }
             }
             finally {
                 Pop-Location
