@@ -377,6 +377,38 @@ class TestResolveBackend:
         backend = mural_module.resolve_backend("default")
         assert isinstance(backend, mural_module.KeyringBackend)
 
+    def test_auto_falls_back_to_file_when_keyring_is_empty(
+        self,
+        mural_module: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: pathlib.Path,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        _isolate_credential_env(monkeypatch, tmp_path)
+        monkeypatch.setenv(
+            "MURAL_KEYRING_BACKEND", "keyrings.alt.file.PlaintextKeyring"
+        )
+
+        service = mural_module._service_name_for("default")
+        file_path = mural_module._resolve_credential_file("default", os.environ)
+        file_backend = mural_module.FileBackend(file_path)
+        file_backend.set(service, "MURAL_CLIENT_ID", "from-file")
+
+        caplog.set_level(logging.WARNING, logger="mural")
+        for _ in range(3):
+            backend = mural_module.resolve_backend("default")
+            assert isinstance(backend, mural_module.FileBackend)
+
+        warns = [
+            r
+            for r in caplog.records
+            if r.levelno == logging.WARNING
+            and "keyring backend available but empty for profile 'default'"
+            in r.message
+            and "using file backend" in r.message
+        ]
+        assert len(warns) == 1
+
     def test_auto_falls_back_to_file_on_keyring_unavailable(
         self,
         mural_module: Any,

@@ -212,7 +212,9 @@ def resolve_backend(profile: str = "default") -> CredentialBackend:
     ``MURAL_CREDENTIAL_BACKEND`` selects the backend (``auto`` default,
     ``keyring``, ``file``, ``env-only``). On ``auto``, KeyringBackend is
     tried first and falls back to FileBackend when ``_KeyringUnavailable``
-    is raised; a one-shot WARN per profile records the fallback. After
+    is raised. Auto mode also falls back when keyring is available but has
+    no usable credentials and the file backend is populated. A one-shot
+    WARN per profile records whichever fallback path is taken. After
     backend selection (skipped for env-only), a probe checks whether the
     other persistent backend also holds non-empty values and emits a
     second one-shot WARN per ``(profile, selected_backend)`` pair when so.
