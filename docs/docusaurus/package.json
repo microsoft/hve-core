@@ -46,7 +46,7 @@
     "@types/jest-axe": "3.5.9",
     "@types/react": "19.2.17",
     "@typescript-eslint/parser": "8.61.1",
-    "eslint": "10.5.0",
+    "eslint": "9.39.4",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-mdx": "3.8.1",
     "identity-obj-proxy": "3.0.0",
