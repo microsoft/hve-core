@@ -224,8 +224,8 @@ Use one of two canonical categories for subagent responses, based on the primary
 
 References written into .copilot-tracking artifact content use plain-text workspace-relative paths. Do not use markdown links, #file: directives, or backticks for those paths because VS Code resolves them and reports missing-target errors that flood the Problems tab. External URLs may still use markdown link syntax.
 
-- .copilot-tracking/plans/2026-01-24-task-plan.instructions.md
-- .copilot-tracking/research/2026-01-24-research.md
+* .copilot-tracking/plans/2026-01-24-task-plan.instructions.md
+* .copilot-tracking/research/2026-01-24-research.md
 
 ### Instructions Files
 
