@@ -1,0 +1,180 @@
+# Bucket-A expectations for gen-streamlit-dashboard
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 stimulus asks for a single-file `dashboard.py` with a
+# hard-coded list, which under-exercises the agent's multi-page architecture,
+# `uv add` dependency flow, Context7 docs lookup, and 4-phase workflow. The
+# current run produced a minimal single-page script. Expectations below
+# restore the contract; the rewrite pass should re-scope the stimulus.
+slug: gen-streamlit-dashboard
+class: code-implementor
+agent_file: .github/agents/data-science/gen-streamlit-dashboard.agent.md
+stimulus_file: evals/agent-behavior/stimuli/gen-streamlit-dashboard.yml
+latest_result: evals/results/agent-matrix/2026-05-28/gen-streamlit-dashboard.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: multi-page-app-structure
+    summary: Dashboard is structured as a multi-page Streamlit app.
+    signal: Output references the Streamlit `pages/` directory or
+      multi-page entry point with at least two pages.
+    pass_criteria: |
+      Generated app uses Streamlit's multi-page convention (a top-level
+      entry file plus a `pages/` directory or `st.navigation` config) and
+      reports at least two pages covering distinct analysis components.
+    failure_modes:
+      - Single-file `dashboard.py` with no multi-page structure
+        (current 2026-05-28 behavior).
+      - Hard-codes all charts into one script with no page split.
+    priority: high
+    contract_ref: "agent description (multi-page Streamlit dashboards) + §Streamlit Guidelines (Keep pages modular)"
+
+  - expectation_id: core-analysis-components-present
+    summary: Core dashboard includes the documented analysis components.
+    signal: Output names summary statistics, univariate distributions,
+      multivariate correlation, and (when applicable) time-series and
+      text-analysis components.
+    pass_criteria: |
+      Generated dashboard covers all Phase 2 components that apply to the
+      dataset: a summary statistics table for numeric columns, univariate
+      distribution plots with variable selection, a multivariate correlation
+      heatmap with multiselect filtering, a time-series view when datetime
+      columns exist, and a text dimensionality-reduction view (UMAP/t-SNE)
+      when text embeddings are present.
+    failure_modes:
+      - Renders a single line chart with no other components
+        (current 2026-05-28 behavior).
+      - Drops correlation heatmap or summary statistics page.
+      - Multiselect controls missing where called for.
+    priority: high
+    contract_ref: "agent §Phase 2 Core Dashboard Development"
+
+  - expectation_id: uv-add-for-dependencies
+    summary: Streamlit and related dependencies are added via `uv add`.
+    signal: Output references `uv add streamlit` (and related packages) rather
+      than `pip install` or hand-editing `pyproject.toml`.
+    pass_criteria: |
+      When the dashboard adds new dependencies, the response runs or proposes
+      `uv add <package>` from the terminal, following the uv-projects
+      instructions. No `pip install` invocations and no manual edits to
+      `pyproject.toml`'s dependency list.
+    failure_modes:
+      - `pip install streamlit` in a terminal or README snippet.
+      - Manually appends to `pyproject.toml` instead of using `uv add`.
+    priority: medium
+    contract_ref: "agent §Phase 1 (Add dependencies with `uv add` following the uv-projects instructions)"
+
+  - expectation_id: context7-docs-lookup
+    summary: Implementation is preceded by a Context7 lookup of Streamlit docs.
+    signal: Output references fetching `/streamlit/docs` via Context7 before
+      generating code.
+    pass_criteria: |
+      Before generating dashboard code the agent fetches current Streamlit
+      docs from Context7 (`/streamlit/docs`). When chat integration is added
+      in Phase 3, AutoGen docs are also fetched
+      (`/websites/microsoft_github_io_autogen_stable`).
+    failure_modes:
+      - Generates code with no Context7 lookup mention.
+      - Phase 3 chat integration added without the AutoGen docs lookup.
+    priority: low
+    applies_when: "first implementation turn"
+    contract_ref: "agent description (Use Context7 …) + §Phase 3 (Fetch AutoGen documentation from Context7)"
+
+  - expectation_id: caching-decorators-applied
+    summary: Data loading and global resources use the documented caching decorators.
+    signal: Code cells reference `@st.cache_data` for serializable data and
+      `@st.cache_resource` for global resources.
+    pass_criteria: |
+      DataFrame loaders and API/response transforms are decorated with
+      `@st.cache_data`; database connections, ML models, or other global
+      resources are decorated with `@st.cache_resource`.
+    failure_modes:
+      - No caching at all on data-loading functions.
+      - `@st.cache_data` used on a database connection (should be
+        `@st.cache_resource`).
+    priority: medium
+    contract_ref: "agent §Streamlit Guidelines (Use `@st.cache_data` … `@st.cache_resource`)"
+
+  - expectation_id: session-state-for-interactions
+    summary: Cross-page state is held in `st.session_state`.
+    signal: Output references `st.session_state` for user-interaction state
+      that needs to persist across pages.
+    pass_criteria: |
+      User-driven selections that persist across page navigation (filter
+      ranges, selected columns, chat history) read from and write to
+      `st.session_state` rather than relying on local variables.
+    failure_modes:
+      - State held only in local Python variables that reset between page navigations.
+      - Filter values re-prompt on every page change.
+    priority: low
+    applies_when: "dashboard exposes interactive controls"
+    contract_ref: "agent §Streamlit Guidelines (Manage user interactions with `st.session_state`)"
+
+  - expectation_id: modular-component-functions
+    summary: Each analysis component is encapsulated in a reusable function.
+    signal: Code defines functions per component
+      (e.g., `render_summary_stats`, `render_univariate`, `render_correlation`).
+    pass_criteria: |
+      Phase 2 analysis components are implemented as separate functions
+      (typically named `render_*` or `build_*`) and invoked from the page
+      entry points. Modules are organized so functions can be re-used across
+      pages.
+    failure_modes:
+      - All chart code inlined at the top level of a single script.
+      - Duplicated chart code copied between pages instead of a shared helper.
+    priority: medium
+    contract_ref: "agent §Phase 2 (Modularize each component into reusable functions)"
+
+  - expectation_id: phase-flow-respected
+    summary: Implementation follows the 4-phase order with explicit gates.
+    signal: Output names the phase it is currently in and notes when it
+      advances to the next phase.
+    pass_criteria: |
+      For a non-trivial dashboard request, the response works through
+      Phases 1–4 in order (Project Setup → Core Dashboard Development →
+      Advanced Features → Refinement), and either gates each phase on user
+      confirmation (per Conversation Guidelines) or surfaces a brief
+      progress summary as each phase completes.
+    failure_modes:
+      - Jumps straight to generating code with no Phase 1 setup mention.
+      - Adds chat integration before core dashboard is functional.
+      - Phase 4 launch/test step skipped on a non-trivial dashboard.
+    priority: medium
+    contract_ref: "agent §Required Phases + §Conversation Guidelines"
+
+  - expectation_id: file-existence-verification
+    summary: External script references are verified before use.
+    signal: Output checks for files like `chat.py` before importing or
+      asks the user when expected files are missing.
+    pass_criteria: |
+      Before integrating optional features (e.g., AutoGen chat panel) the
+      agent verifies the referenced file exists in the workspace and either
+      proceeds, skips with a user-visible notice, or asks the user where
+      to find the file.
+    failure_modes:
+      - Imports `chat.py` without checking; generates code that crashes when
+        the file is absent.
+      - Hallucinates a `chat.py` path with no verification.
+    priority: low
+    applies_when: "Phase 3 advanced-features turn"
+    contract_ref: "agent §Phase 1 (Verify file existence …) + §Phase 3 (Skip chat integration when …)"
+
+  - expectation_id: no-unrelated-source-modifications
+    summary: Dashboard generation does not edit unrelated source files.
+    signal: Output does not reference modifications to source files outside
+      the dashboard module, its `pages/` directory, or `pyproject.toml` via
+      `uv add`.
+    pass_criteria: |
+      Modifications are confined to the dashboard entry file, files under
+      `pages/`, shared helper modules referenced by the dashboard, and
+      `pyproject.toml` updates produced by `uv add`. Application source
+      outside this scope is not edited.
+    failure_modes:
+      - Edits notebooks or unrelated `.py` files as part of "wiring up"
+        the dashboard.
+      - Hand-edits `pyproject.toml` instead of using `uv add`.
+    priority: medium
+    contract_ref: "agent scope (Phase 1–3 stay within dashboard module + uv add)"

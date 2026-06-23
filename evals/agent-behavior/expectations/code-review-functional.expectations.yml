@@ -1,0 +1,113 @@
+# Bucket-A expectations for code-review-functional
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: code-review-functional is the functional-correctness sibling of
+# code-review-standards. It reviews behavior, edge cases, error handling,
+# concurrency, and security risk — NOT language style. Findings should be
+# scoped to the diff and persisted under
+# `.copilot-tracking/reviews/code-reviews/<branch>/<run>/functional-review.md`.
+slug: code-review-functional
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review-functional.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review-functional.yml
+latest_result: evals/results/agent-matrix/2026-05-28/code-review-functional.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: functional-scope-only
+    summary: Findings address behavior/correctness, not language style.
+    signal: Output focuses on behavior, edge cases, error handling, concurrency, security, or contracts.
+    pass_criteria: |
+      Findings name functional concerns (incorrect behavior, missing edge
+      cases, error handling, race conditions, security risk, contract
+      violations, performance correctness). Pure style findings (naming,
+      formatting, idiom preference) are absent or deferred to
+      `code-review-standards`.
+    failure_modes:
+      - Findings list formatting/naming/style issues as primary findings.
+      - Mixes language-standards findings into functional review.
+    priority: high
+    contract_ref: "agent §Scope (functional correctness only; style is owned by code-review-standards)"
+
+  - expectation_id: severity-per-finding
+    summary: Each functional finding carries a severity label.
+    signal: Output applies severity words per finding.
+    pass_criteria: |
+      Each functional finding has a case-insensitive severity from
+      `critical|high|medium|low|info|warning`. Severity is per-finding.
+    failure_modes:
+      - Findings unlabeled.
+      - Severities used only in a summary block.
+    priority: high
+    contract_ref: "agent §Output Contract (severity per finding); current `severity-vocab` grader"
+
+  - expectation_id: findings-structure-present
+    summary: Output presents findings in a structured form.
+    signal: Output contains a severity-labeled table or per-finding sections.
+    pass_criteria: |
+      Output uses a markdown table with severity column OR per-finding
+      sections using `finding|issue|concern|recommendation` language with
+      each finding tied to a file path and line range when possible.
+    failure_modes:
+      - Single paragraph with no per-finding structure.
+      - Bulleted list with no severity framing.
+    priority: high
+    contract_ref: "agent §Output Contract; current `findings-table-present` grader"
+
+  - expectation_id: diff-scoped-findings
+    summary: Findings are scoped to the reviewed diff.
+    signal: Findings reference changed files or hunks from the diff.
+    pass_criteria: |
+      Findings cite changed files, line ranges, or hunks from the supplied
+      diff. Findings that step outside the diff are explicitly marked as
+      out-of-scope context or pre-existing risk.
+    failure_modes:
+      - Findings invented for files not in the diff.
+      - Bulk findings about unrelated subsystems.
+    priority: medium
+    contract_ref: "agent §Scope (diff-scoped functional review)"
+
+  - expectation_id: tracking-path-shape
+    summary: Functional review artifact lives at the documented path.
+    signal: Output names a path matching `.copilot-tracking/reviews/code-reviews/<branch>/<run>/functional-review.md`.
+    pass_criteria: |
+      When the agent reports persisting a functional review, the path
+      starts with `.copilot-tracking/reviews/code-reviews/`, includes a
+      normalized branch segment, includes a run identifier, and ends in
+      `functional-review.md`.
+    failure_modes:
+      - Artifact written outside `.copilot-tracking/reviews/code-reviews/`.
+      - Filename other than `functional-review.md`.
+    priority: medium
+    applies_when: "agent reports artifact creation"
+    contract_ref: "agent §Tracking Artifact (functional-review.md)"
+
+  - expectation_id: verdict-stated
+    summary: Functional review ends with a verdict from the documented vocabulary.
+    signal: Output names an overall verdict.
+    pass_criteria: |
+      Response concludes with an overall functional verdict drawn from
+      `approve|approve with changes|request changes|block`. Verdict reflects
+      the highest-severity finding.
+    failure_modes:
+      - No final verdict.
+      - Verdict expressed only in informal prose.
+    priority: medium
+    contract_ref: "agent §Output Contract (functional verdict)"
+
+  - expectation_id: no-source-edit
+    summary: Review-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Proposed fixes appear as recommendations or fenced snippets, not as
+      claimed edits.
+    failure_modes:
+      - Agent claims to apply a fix during functional review.
+      - Edits build manifests while reviewing.
+    priority: high
+    contract_ref: "agent scope (review-only); current `no-source-edit` grader"

@@ -1,0 +1,133 @@
+# Bucket-A expectations for task-planner
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: task-planner
+class: planner-coach
+agent_file: .github/agents/hve-core/task-planner.agent.md
+stimulus_file: evals/agent-behavior/stimuli/task-planner.yml
+latest_result: evals/results/agent-matrix/2026-05-28/task-planner.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: response-header-format
+    summary: Response begins with the agent's branded header line including the task description.
+    signal: First non-blank line of output matches the literal header pattern.
+    pass_criteria: |
+      Output starts with `## 📋 Task Planner: <Task Description>` where
+      <Task Description> is a non-empty phrase (not the literal placeholder).
+    failure_modes:
+      - Header missing entirely (current `header-present` failure on 2026-05-28).
+      - Emoji omitted or replaced.
+      - Colon missing or placeholder left in.
+    priority: high
+    contract_ref: "agent §User Interaction → Response Format"
+
+  - expectation_id: plan-file-under-tracking
+    summary: Implementation plan path is written under the dated tracking plans dir.
+    signal: Output names a path matching `.copilot-tracking/plans/<YYYY-MM-DD>/<slug>-plan.instructions.md`.
+    pass_criteria: |
+      Path is workspace-relative, dated subdir present, suffix
+      `-plan.instructions.md`.
+    failure_modes:
+      - Plan written to a non-`.copilot-tracking/` location (current
+        `tracking-file-write` failure on 2026-05-28: plan reported at
+        `C:\\Users\\...\\.copilot\\session-state\\.../plan.md`).
+      - Missing date subdir or `-plan.instructions.md` suffix.
+      - Plan path given as absolute filesystem path rather than workspace-relative.
+    priority: high
+    contract_ref: "agent §File Locations; §Planning File Structure → Implementation Plan File"
+
+  - expectation_id: details-and-log-paths-named
+    summary: Output names the implementation details and planning log paths alongside the plan.
+    signal: Output mentions paths matching `.copilot-tracking/details/<YYYY-MM-DD>/<slug>-details.md` and `.copilot-tracking/plans/logs/<YYYY-MM-DD>/<slug>-log.md`.
+    pass_criteria: |
+      Both details path and planning log path are present with correct
+      directories and suffixes (`-details.md`, `-log.md`).
+    failure_modes:
+      - Only the plan path is mentioned; details/log omitted.
+      - Paths placed under wrong subdirectory (e.g., details under plans/).
+    priority: high
+    contract_ref: "agent §File Locations; §Success Criteria (planning is complete when dated files exist at plans/, details/, and plans/logs/)"
+
+  - expectation_id: phase-and-step-structure
+    summary: Output presents implementation work organized as numbered phases with steps.
+    signal: Output contains phase/step headings or list markers (e.g., `Phase 1`, `Step 1.1`, or numbered list under a Phase heading).
+    pass_criteria: |
+      Output contains at least one phase marker (e.g., `Phase 1`, `### Phase 1`,
+      `Implementation Phase 1`) AND at least one step marker beneath it
+      (e.g., `Step 1.1`, `1.`, `- [ ]`).
+    failure_modes:
+      - Plan presented as a flat table with no phase/step headings
+        (mirrors current `phase-marker-present` failure on 2026-05-28).
+      - Phases listed without any steps.
+    priority: high
+    contract_ref: "agent §Templates → Implementation Plan Template (Implementation Checklist with phases and steps)"
+
+  - expectation_id: parallelization-markers
+    summary: Each phase is annotated with a parallelization marker.
+    signal: Output contains the HTML comment `<!-- parallelizable: true -->` or `<!-- parallelizable: false -->` per phase, or an equivalent explicit per-phase marker.
+    pass_criteria: |
+      Every implementation phase in the output (or referenced plan summary)
+      carries a parallelization marker. A summary table column named
+      `Parallelizable` with `true|false` values also satisfies this.
+    failure_modes:
+      - No parallelization annotation present.
+      - Some phases marked, others not.
+    priority: medium
+    contract_ref: "agent §Parallelization Design; §Templates (parallelizable comment per phase)"
+
+  - expectation_id: final-validation-phase-present
+    summary: The plan includes a final validation phase covering lint/build/test for the project.
+    signal: Output describes a final phase (or step) running full project validation after implementation phases.
+    pass_criteria: |
+      Output references a final validation phase that runs lint/build/test
+      across modified components, separate from per-phase validation.
+    failure_modes:
+      - No final validation phase mentioned.
+      - Validation referenced only inline within feature phases with no
+        end-of-plan consolidation step.
+    priority: medium
+    contract_ref: "agent §Final Validation Phase; §Templates (Implementation Phase N: Validation)"
+
+  - expectation_id: no-source-modifications
+    summary: Planning-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Filenames may appear inside the planned checklist as targets to modify
+      later, but not as files this agent itself edited.
+    failure_modes:
+      - Claims to edit source files during planning.
+      - Modifies `package.json` while planning (e.g., adding scripts).
+    priority: high
+    contract_ref: "agent §Operational Constraints (Write only to .copilot-tracking/plans/, plans/logs/, details/, and research/)"
+
+  - expectation_id: handoff-summary-table
+    summary: On completion, output provides the structured Planning Completion handoff table.
+    signal: Output contains a markdown table headed `📊 Summary` with rows for Plan File, Details File, Planning Log, Phase Count, and Parallelizable Phases.
+    pass_criteria: |
+      A markdown table is present whose header cell contains `📊 Summary` and
+      whose rows include at least: `Plan File`, `Details File`,
+      `Planning Log`, `Phase Count`, and `Parallelizable Phases`.
+    failure_modes:
+      - Completion described in prose only, no table.
+      - Table missing required rows (e.g., omits Planning Log).
+    priority: medium
+    contract_ref: "agent §User Interaction → Planning Completion"
+    applies_when: "Planning reaches completion; not for clarification-only turns."
+
+  - expectation_id: plain-text-tracking-paths
+    summary: Tracking file references use plain-text workspace-relative paths, not markdown links.
+    signal: Paths under `.copilot-tracking/` appear as bare text, not wrapped in `[...]( ... )` or `#file:` directives.
+    pass_criteria: |
+      Every `.copilot-tracking/` path in the output appears as plain text or
+      inside a code span/fence; none is wrapped in a markdown link target or
+      `#file:` directive.
+    failure_modes:
+      - Plan path rendered as `[plan](./.copilot-tracking/plans/...)`.
+      - Path written as `#file:.copilot-tracking/...`.
+    priority: medium
+    contract_ref: "agent §File Path Conventions (plain-text workspace-relative paths; no markdown links or #file: directives for local files)"

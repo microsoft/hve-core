@@ -10,7 +10,7 @@
     a matrix-style summary.
 
 .DESCRIPTION
-    Drives `npx vally eval --eval-spec evals/agent-behavior/stimuli/<slug>.yml` for either
+    Drives `npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=<slug>` for either
     a curated set of slugs (`-Changed`) or the full inventory (`-All`).
     Emits one per-agent summary plus an aggregate `agent-matrix-summary.json`
     and applies a tier exit policy:
@@ -211,7 +211,7 @@ function Get-PlannedCommand {
         [Parameter(Mandatory)] [string]$Slug,
         [Parameter(Mandatory)] [string]$Model
     )
-    return "npx vally eval --eval-spec evals/agent-behavior/stimuli/$Slug.yml --model $Model"
+    return "npx vally eval --eval-spec evals/agent-behavior/eval.yaml --tag agent=$Slug --model $Model"
 }
 
 function Resolve-NpxExecutable {
@@ -242,7 +242,7 @@ function Invoke-VallyAgentRun {
     )
 
     $npx = Resolve-NpxExecutable
-    $vallyArgs = @('vally', 'eval', '--eval-spec', "evals/agent-behavior/stimuli/$Slug.yml", '--model', $Model)
+    $vallyArgs = @('vally', 'eval', '--eval-spec', 'evals/agent-behavior/eval.yaml', '--tag', "agent=$Slug", '--model', $Model)
     $prev = [Console]::OutputEncoding
     try {
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

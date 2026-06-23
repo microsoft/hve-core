@@ -1,0 +1,931 @@
+name: behavior-conformance-instructions
+description: >
+  Advisory-tier behavior conformance evals for 44 high-signal Markdown-applyTo
+  instructions in `.github/instructions/**` (covers ADO, coding-standards,
+  experimental, GitHub, hve-core, Jira, RAI planning, security, and shared
+  scopes). Each stimulus prompts the model
+  to identify the instruction that applies in a given working context and
+  asserts both `applyTo` path evidence and instruction-specific scope
+  vocabulary. Per DD-05, this is an advisory tier and grader false-positives
+  are absorbed by design.
+type: capability
+defaults:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+stimuli:
+  - name: instruction-ado-backlog-sprint-conformance
+    prompt: |
+      You are preparing sprint planning artifacts under
+      `.copilot-tracking/workitems/sprint/iter-42/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and summarize its top three requirements?
+    tags:
+      category: behavior-conformance
+      instruction: ado-backlog-sprint
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/workitems/sprint|workitems/sprint/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)sprint|iteration|capacity|coverage\\s+analysis"
+
+  - name: instruction-ado-backlog-triage-conformance
+    prompt: |
+      You are about to triage a batch of untriaged Azure DevOps work items
+      under `.copilot-tracking/workitems/triage/q4-cleanup/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and summarize the triage requirements it enforces?
+    tags:
+      category: behavior-conformance
+      instruction: ado-backlog-triage
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/workitems/triage|workitems/triage/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|duplicate|iteration\\s+assignment|field\\s+classification"
+
+  - name: instruction-ado-create-pull-request-conformance
+    prompt: |
+      You are creating an Azure DevOps pull request from artifacts under
+      `.copilot-tracking/pr/new/feature-x/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it require for work item discovery and reviewer
+      identification?
+    tags:
+      category: behavior-conformance
+      instruction: ado-create-pull-request
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/pr/new|pr/new/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)work\\s+item|reviewer|pull\\s+request|automated\\s+linking"
+
+  - name: instruction-ado-get-build-info-conformance
+    prompt: |
+      A user asks about Azure DevOps build status for a branch and you are
+      drafting a response file at `.copilot-tracking/pr/123-build-info.md`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite
+      its path) and what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: ado-get-build-info
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/pr/.*build|pr/.*-build-"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)azure\\s*devops|\\bado\\b|build|pull\\s*request|branch"
+
+  - name: instruction-ado-update-wit-items-conformance
+    prompt: |
+      You are about to execute work item create/update operations from a
+      handoff log at `.copilot-tracking/workitems/sprint-12/handoff-logs.md`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite
+      its path) and what does it require about MCP ADO tools and handoff
+      tracking?
+    tags:
+      category: behavior-conformance
+      instruction: ado-update-wit-items
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)handoff-logs\\.md|workitems/.*handoff"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)mcp|ado|work\\s+item|handoff"
+
+  - name: instruction-ado-wit-discovery-conformance
+    prompt: |
+      You are running ADO work item discovery and writing output under
+      `.copilot-tracking/workitems/discovery/team-roadmap/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: ado-wit-discovery
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/workitems/discovery|workitems/discovery/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)discover|assignment|artifact|planning\\s+file"
+
+  - name: instruction-ado-wit-planning-conformance
+    prompt: |
+      You are writing an ADO work item planning file under
+      `.copilot-tracking/workitems/prd-payments/issues-plan.md`. Which
+      `.github/instructions/**/*.instructions.md` file is the reference
+      specification (cite its path) and what does it require for templates,
+      field definitions, and search protocols?
+    tags:
+      category: behavior-conformance
+      instruction: ado-wit-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/workitems|workitems/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)template|field|search\\s+protocol|planning\\s+file"
+
+  - name: instruction-docusaurus-edits-conformance
+    prompt: |
+      You are creating a new Docusaurus documentation page at
+      `docs/rpi/new-page.md`. Which `.github/instructions/**/*.instructions.md`
+      file applies (cite its path) and what conventions does it require for
+      frontmatter, admonitions, and internal links?
+    tags:
+      category: behavior-conformance
+      instruction: docusaurus-edits
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\bdocs/\\b|^docs/|docs\\s*/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)docusaurus|frontmatter|admonition|internal\\s+link|mermaid"
+
+  - name: instruction-experiment-designer-conformance
+    prompt: |
+      You are working on a Minimum Viable Experimentation session under
+      `.copilot-tracking/mve/payments-latency/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what MVE coaching conventions does it require?
+    tags:
+      category: behavior-conformance
+      instruction: experiment-designer
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/mve|/mve/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bmve\\b|experiment|hypothes|assumption|validate"
+
+  - name: instruction-github-backlog-discovery-conformance
+    prompt: |
+      You are running GitHub issue discovery and writing output under
+      `.copilot-tracking/github-issues/discovery/v2-features/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what discovery paths does it require?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-discovery
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/github-issues/discovery|github-issues/discovery"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)discover|user-centric|artifact-driven|search-based|github\\s+issue"
+
+  - name: instruction-github-backlog-planning-conformance
+    prompt: |
+      You are creating GitHub backlog planning files under
+      `.copilot-tracking/github-issues/v3-roadmap/`. Which
+      `.github/instructions/**/*.instructions.md` file is the reference
+      specification (cite its path) and what does it require for templates,
+      search protocols, and state persistence?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/github-issues|github-issues/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)template|search\\s+protocol|state\\s+persistence|similarity"
+
+  - name: instruction-github-backlog-triage-conformance
+    prompt: |
+      You are triaging untriaged GitHub issues with artifacts under
+      `.copilot-tracking/github-issues/triage/q1-cleanup/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for label suggestion, milestone
+      assignment, and duplicate detection?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-triage
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/github-issues/triage|github-issues/triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|label|milestone|duplicate|conventional\\s+commit"
+
+  - name: instruction-github-backlog-update-conformance
+    prompt: |
+      You are about to execute GitHub issue operations from a handoff log at
+      `.copilot-tracking/github-issues/v2-features/handoff-logs.md`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does the execution workflow require?
+    tags:
+      category: behavior-conformance
+      instruction: github-backlog-update
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)github-issues/.*handoff-logs\\.md|handoff-logs\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|sequential|create|update|link|close|github"
+
+  - name: instruction-markdown-conformance
+    prompt: |
+      You are creating or editing a Markdown file at `docs/example.md`. Which
+      `.github/instructions/**/*.instructions.md` file defines the style
+      guide that applies (cite its path) and what are its top three rules
+      for headings and list formatting?
+    tags:
+      category: behavior-conformance
+      instruction: markdown
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\*/\\*\\.md|\\.md\\b|all\\s+markdown\\s+files"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)markdownlint|heading|atx|list|frontmatter"
+
+  - name: instruction-prompt-builder-conformance
+    prompt: |
+      You are authoring a new custom agent file at
+      `.github/agents/example/my-agent.agent.md`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what authoring standards does it require for prompt
+      engineering artifacts?
+    tags:
+      category: behavior-conformance
+      instruction: prompt-builder
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.agent\\.md|\\.instructions\\.md|\\.prompt\\.md|SKILL\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prompt|agent|instruction|skill|frontmatter|authoring"
+
+  - name: instruction-pull-request-conformance
+    prompt: |
+      You are generating a pull request description from branch diffs and
+      writing tracking artifacts under `.copilot-tracking/pr/main-feature/`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite
+      its path) and what does it require for diff analysis and template
+      handling?
+    tags:
+      category: behavior-conformance
+      instruction: pull-request
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/pr/|/pr/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pull\\s+request|diff|template|checkbox|pr-reference"
+
+  - name: instruction-writing-style-conformance
+    prompt: |
+      You are writing prose in a Markdown documentation file at
+      `docs/getting-started/install.md`. Which
+      `.github/instructions/**/*.instructions.md` file defines the writing
+      style conventions that apply (cite its path) and what are its core
+      voice and tone requirements?
+    tags:
+      category: behavior-conformance
+      instruction: writing-style
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\*/\\*\\.md|\\.md\\b|markdown\\s+content"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)voice|tone|style|formal|instructional|professional"
+
+  - name: instruction-jira-backlog-planning-conformance
+    prompt: |
+      You are creating Jira backlog planning files under
+      `.copilot-tracking/jira-issues/migration-plan/`. Which
+      `.github/instructions/**/*.instructions.md` file is the reference
+      specification (cite its path) and what conventions does it require for
+      planning, search, and state persistence?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/jira-issues|jira-issues/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bjira\\b|template|jql|search|state\\s+persistence"
+
+  - name: instruction-jira-wit-planning-conformance
+    prompt: |
+      You are working on Jira PRD-driven work item planning files under
+      `.copilot-tracking/jira-issues/prds/payments-prd/`. Which
+      `.github/instructions/**/*.instructions.md` file is the reference
+      specification (cite its path) and what does it require for hierarchy
+      mapping and field validation?
+    tags:
+      category: behavior-conformance
+      instruction: jira-wit-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/jira-issues/prds|jira-issues/prds"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bprd\\b|hierarchy|field|handoff|issue\\s+type"
+
+  - name: instruction-rai-identity-conformance
+    prompt: |
+      You are running an RAI planning session with artifacts under
+      `.copilot-tracking/rai-plans/customer-onboarding/`. Which
+      `.github/instructions/**/*.instructions.md` file defines the RAI
+      Planner identity and orchestration (cite its path) and what six-phase
+      workflow does it require?
+    tags:
+      category: behavior-conformance
+      instruction: rai-identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/rai-plans|rai-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)rai|nist|six[-\\s]phase|trustworthi|assessment"
+
+  - name: instruction-rai-risk-classification-conformance
+    prompt: |
+      You are completing Phase 2 risk classification for an RAI session at
+      `.copilot-tracking/rai-plans/credit-scoring/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for the prohibited uses gate and depth
+      tier assignment?
+    tags:
+      category: behavior-conformance
+      instruction: rai-identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/rai-plans|rai-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prohibited\\s+use|risk\\s+(indicator|classification)|depth\\s+tier|basic|standard|comprehensive"
+
+  - name: instruction-backlog-handoff-conformance
+    prompt: |
+      You are completing Phase 5 of a Security Planning session and
+      generating backlog work items under
+      `.copilot-tracking/security-plans/order-service/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what dual-format ADO and GitHub work item templates does it
+      require?
+    tags:
+      category: behavior-conformance
+      instruction: identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/security-plans|security-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)backlog|handoff|ado|github|wi-sec|work\\s+item|stride|mitigation"
+
+  - name: instruction-sssc-assessment-conformance
+    prompt: |
+      You are running an SSSC Phase 2 supply chain assessment with artifacts
+      under `.copilot-tracking/sssc-plans/payments-toolchain/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for the combined capabilities inventory?
+    tags:
+      category: behavior-conformance
+      instruction: sssc-planner
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/sssc-plans|sssc-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)sssc|supply\\s+chain|capabilit|sbom|scorecard|slsa|sigstore"
+
+  - name: instruction-story-quality-conformance
+    prompt: |
+      You are authoring a new ADO User Story or refining one in a custom
+      agent file at `.github/agents/ado/my-backlog-agent.agent.md`. Which
+      `.github/instructions/**/*.instructions.md` file defines the shared
+      story quality conventions (cite its path) and what does it require for
+      titles, descriptions, and acceptance criteria?
+    tags:
+      category: behavior-conformance
+      instruction: story-quality
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.agent\\.md|\\.github/instructions/ado/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)story|title|description|acceptance\\s+criteria|user\\s+story|goal\\s+statement|problem\\s+statement"
+
+  - name: instruction-disclaimer-language-conformance
+    prompt: |
+      You are starting an RAI planning session and need to display the
+      required disclaimer at startup, with artifacts under
+      `.copilot-tracking/rai-plans/new-project/`. Which
+      `.github/instructions/**/*.instructions.md` file centralizes the
+      disclaimer language (cite its path) and what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: disclaimer-language
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/(rai-plans|security-plans|sssc-plans)"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)disclaimer|caution|assistive\\s+tool|professional\\s+review|legal|compliance"
+
+  - name: instruction-powershell-script-conformance
+    prompt: |
+      You are about to author a new PowerShell automation script at
+      `scripts/automation/Invoke-Deploy.ps1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for the shebang, copyright header,
+      `[CmdletBinding()]` param block, and `$ErrorActionPreference`?
+    tags:
+      category: behavior-conformance
+      instruction: powershell
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.ps1|\\*\\.psm1|\\*\\.psd1|powershell\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)cmdletbinding|param\\b|erroractionpreference|comment-based\\s+help|synopsis|\\.ps1|pwsh"
+
+  - name: instruction-powershell-module-conformance
+    prompt: |
+      You are authoring a new PowerShell module at
+      `scripts/lib/Modules/DeploymentHelpers.psm1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and how does the module structure differ from a `.ps1` script
+      (purpose comment, `#Requires`, `Export-ModuleMember`)?
+    tags:
+      category: behavior-conformance
+      instruction: powershell
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.psm1|\\*\\.ps1|powershell\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)export-modulemember|#requires|module|psm1|outputtype|using\\s+module"
+
+  - name: instruction-powershell-data-file-conformance
+    prompt: |
+      You are creating a PowerShell data file (module manifest) at
+      `scripts/lib/Modules/CIHelpers.psd1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it cover for `.psd1` files?
+    tags:
+      category: behavior-conformance
+      instruction: powershell
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.psd1|\\*\\.psm1|\\*\\.ps1|powershell\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\.psd1|manifest|module|powershell"
+
+  - name: instruction-powershell-comment-help-conformance
+    prompt: |
+      You are adding comment-based help to an existing PowerShell script at
+      `scripts/linting/Invoke-Validation.ps1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and which help keywords are required (SYNOPSIS, DESCRIPTION,
+      PARAMETER, EXAMPLE, NOTES)?
+    tags:
+      category: behavior-conformance
+      instruction: powershell
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.ps1|powershell\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\.synopsis|\\.description|\\.parameter|\\.example|\\.notes|comment-based\\s+help"
+
+  - name: instruction-powershell-error-handling-conformance
+    prompt: |
+      You are adding error handling and exit codes to a PowerShell script at
+      `scripts/security/Test-Permissions.ps1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `$ErrorActionPreference`, try/catch
+      placement, `$LASTEXITCODE` checks, and the main execution guard?
+    tags:
+      category: behavior-conformance
+      instruction: powershell
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.ps1|powershell\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)erroractionpreference|try.*catch|lastexitcode|throw|invocation(name)?|exit\\s+1"
+
+  - name: instruction-python-script-cli-conformance
+    prompt: |
+      You are authoring a new Python CLI script at
+      `scripts/automation/process_files.py` that uses argparse. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for argument parsing, type hints, and
+      `main()` entry-point structure?
+    tags:
+      category: behavior-conformance
+      instruction: python-script
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)argparse|click|create_parser|def\\s+main|sys\\.exit|exit\\s+code|type\\s+hint"
+
+  - name: instruction-python-script-pathlib-conformance
+    prompt: |
+      You are updating a Python automation script at
+      `scripts/data/transform_inputs.py` to handle file paths. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it say about `pathlib.Path` versus `os.path`?
+    tags:
+      category: behavior-conformance
+      instruction: python-script
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pathlib|\\bPath\\b|read_text|write_text|os\\.path"
+
+  - name: instruction-python-script-subprocess-conformance
+    prompt: |
+      You are writing a Python helper at `scripts/automation/run_linter.py`
+      that shells out to other tools. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `subprocess.run`, `capture_output`,
+      `check=True`, and error handling?
+    tags:
+      category: behavior-conformance
+      instruction: python-script
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.py|python-script\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)subprocess|capture_output|check=true|calledprocesserror|filenotfounderror"
+
+  - name: instruction-python-tests-pytest-conformance
+    prompt: |
+      You are adding a new pytest test file at
+      `scripts/tests/test_validator.py`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for test naming, AAA structure,
+      mocking, and parametrize usage?
+    tags:
+      category: behavior-conformance
+      instruction: python-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.py|python-tests\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pytest|mocker|monkeypatch|arrange|act|assert|parametrize|test_given_"
+
+  - name: instruction-python-uv-projects-conformance
+    prompt: |
+      You are setting up a new Python skill virtual environment under
+      `.github/skills/data-science/example-skill/` and need to manage
+      dependencies with uv. Which `.github/instructions/**/*.instructions.md`
+      file applies (cite its path) and which uv commands does it prescribe
+      for init, venv creation, dependency add, sync, and lock?
+    tags:
+      category: behavior-conformance
+      instruction: uv-projects
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.py|\\*\\.ipynb|uv-projects\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\buv\\s+(init|venv|add|sync|lock)|pyproject\\.toml|\\.venv|ipykernel|ruff"
+
+  - name: instruction-rust-cargo-conformance
+    prompt: |
+      You are creating a new Rust service crate with `Cargo.toml` at
+      `crates/order-service/Cargo.toml` plus `src/main.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `[package]` metadata, edition,
+      dependency pinning, and the release profile?
+    tags:
+      category: behavior-conformance
+      instruction: rust
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)cargo\\.toml|edition\\s*=\\s*\"?2021|\\[package\\]|\\[profile\\.release\\]|lto|codegen-units"
+
+  - name: instruction-rust-error-handling-conformance
+    prompt: |
+      You are adding error types to a Rust library crate at
+      `crates/order-service/src/error.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `thiserror`, the `Result<T>` alias,
+      `#[from]` delegation, and avoidance of `unwrap()` in production paths?
+    tags:
+      category: behavior-conformance
+      instruction: rust
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)thiserror|anyhow|#\\[from\\]|unwrap|expect|Result<|ServiceError|\\?\\s+operator|error\\s+propagation"
+
+  - name: instruction-rust-naming-conformance
+    prompt: |
+      You are naming new types, traits, functions, and constants in a Rust
+      module at `crates/order-service/src/services.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what naming conventions and type-suffix conventions does it
+      require (PascalCase, snake_case, SCREAMING_SNAKE_CASE, `*Error`,
+      `*Config`, `*Builder`)?
+    tags:
+      category: behavior-conformance
+      instruction: rust
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pascalcase|snake_case|screaming_snake_case|kebab-case|\\*Error|\\*Config|\\*Builder"
+
+  - name: instruction-rust-async-conformance
+    prompt: |
+      You are adding async functions backed by Tokio to a Rust service at
+      `crates/order-service/src/main.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for Tokio runtime flavor selection and
+      `#[tokio::main]` usage?
+    tags:
+      category: behavior-conformance
+      instruction: rust
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)tokio|#\\[tokio::main\\]|async\\s+fn|multi-threaded|runtime"
+
+  - name: instruction-rust-tests-conformance
+    prompt: |
+      You are writing Rust unit tests inside
+      `crates/order-service/src/services.rs` and integration tests under
+      `crates/order-service/tests/integration_test.rs`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `#[cfg(test)]` module placement,
+      `#[tokio::test]`, and test naming?
+    tags:
+      category: behavior-conformance
+      instruction: rust-tests
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.rs|rust-tests\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)#\\[cfg\\(test\\)\\]|#\\[test\\]|#\\[tokio::test\\]|mod\\s+tests|given_.*_when_.*_then_|integration"
+
+  - name: instruction-bash-script-structure-conformance
+    prompt: |
+      You are creating a new bash automation script at
+      `scripts/install/configure-host.sh`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for the shebang, copyright header,
+      strict mode, and `main()` function pattern?
+    tags:
+      category: behavior-conformance
+      instruction: bash
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)#!/usr/bin/env\\s+bash|set\\s+-euo\\s+pipefail|main\\(\\)|copyright|shellcheck"
+
+  - name: instruction-bash-naming-conformance
+    prompt: |
+      You are reviewing variable and function names in a bash script at
+      `scripts/deploy/deploy-app.sh`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what naming conventions does it require for environment
+      variables, constants, local variables, and functions?
+    tags:
+      category: behavior-conformance
+      instruction: bash
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)upper_snake_case|lower_snake_case|readonly|\\blocal\\b|variable\\s+expansion|\\$\\{|braces"
+
+  - name: instruction-bash-error-handling-conformance
+    prompt: |
+      You are adding error handling to a bash script at
+      `scripts/maintenance/cleanup-logs.sh`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `set -euo pipefail`, `err()`
+      functions, and required variable checks?
+    tags:
+      category: behavior-conformance
+      instruction: bash
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.sh|bash\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)set\\s+-euo\\s+pipefail|\\berr\\(\\)|exit\\s+1|stderr|>&2|shellcheck"
+
+  - name: instruction-pptx-conformance
+    prompt: |
+      You are building a PowerPoint deck and authoring content under
+      `.copilot-tracking/ppt/quarterly-review/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what conventions does it require for the agent, subagent,
+      and powerpoint skill workflows?
+    tags:
+      category: behavior-conformance
+      instruction: pptx
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/ppt/|/ppt/|pptx\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"

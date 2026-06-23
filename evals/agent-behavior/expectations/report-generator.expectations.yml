@@ -1,0 +1,141 @@
+# Bucket-A expectations for report-generator
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: report-generator is `user-invocable: false`, so the agent-matrix does
+# not produce a `<slug>.json` result file for it. An advisory stimulus exists
+# at `evals/agent-behavior/stimuli/report-generator.yml`.
+slug: report-generator
+class: subagent  # subtype: security report writer
+agent_file: .github/agents/security/subagents/report-generator.agent.md
+stimulus_file: evals/agent-behavior/stimuli/report-generator.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: report-path-format
+    summary: Report is written to a dated path under .copilot-tracking/security with mode-appropriate prefix.
+    signal: Response cites a report path matching the documented pattern.
+    pass_criteria: |
+      Report path matches `.copilot-tracking/security/<YYYY-MM-DD>/<filename>`
+      where `<filename>` uses the mode-appropriate prefix: `security-report-`
+      for audit, `security-report-diff-` for diff, or `plan-risk-assessment-`
+      for plan.
+    failure_modes:
+      - Report written outside `.copilot-tracking/security/`.
+      - Date subdirectory missing.
+      - Filename prefix does not match the mode.
+    priority: high
+    contract_ref: "agent §Constants (Report path patterns)"
+
+  - expectation_id: sequence-number-zero-padded
+    summary: Sequence number is 3-digit zero-padded and incremented from existing files.
+    signal: Filename includes `-NNN` with zero-padded number.
+    pass_criteria: |
+      Filename contains a `-NNN` suffix where `NNN` is zero-padded to three
+      digits (e.g., `-001`, `-014`). The sequence number is set to one
+      greater than the highest existing same-mode sequence for the date,
+      defaulting to `001` when no prior files exist.
+    failure_modes:
+      - Sequence number missing or not zero-padded (e.g., `-1`, `-14`).
+      - Sequence number resets to 001 despite existing files.
+      - Sequence number skips ahead or duplicates an existing value.
+    priority: high
+    contract_ref: "agent §Constants ({{NNN}}) + §Step 1 Determine Sequence Number"
+
+  - expectation_id: format-version-selected
+    summary: Report format matches the active mode.
+    signal: Response names VULN_REPORT_V1 (audit/diff) or PLAN_REPORT_V1 (plan).
+    pass_criteria: |
+      Response identifies the report format as `VULN_REPORT_V1` for audit or
+      diff modes, and `PLAN_REPORT_V1` for plan mode.
+    failure_modes:
+      - Format version omitted from the response.
+      - Plan mode uses VULN_REPORT_V1 or vice versa.
+      - Custom/undocumented format identifier used.
+    priority: high
+    contract_ref: "agent §Report Formats + §Response Format (Report format used)"
+
+  - expectation_id: severity-sort-order
+    summary: Detailed remediation/mitigation sections are sorted CRITICAL → HIGH → MEDIUM → LOW.
+    signal: Severity subsection order in the response or report follows the documented order.
+    pass_criteria: |
+      Detailed Remediation Guidance (audit/diff) or Mitigation Guidance
+      (plan) is grouped by severity in the order CRITICAL, HIGH, MEDIUM,
+      LOW. Findings tables within each framework also order rows by
+      severity (CRITICAL first).
+    failure_modes:
+      - Severity groups appear in alphabetical or arbitrary order.
+      - LOW findings appear before HIGH or CRITICAL.
+    priority: high
+    contract_ref: "agent §Purpose (Sort detailed remediation by severity) + §Step 3"
+
+  - expectation_id: summary-counts-by-mode
+    summary: Summary counts match the active mode's status and verdict vocabulary.
+    signal: Response reports counts using mode-appropriate buckets.
+    pass_criteria: |
+      Audit and diff modes report counts for PASS, FAIL, PARTIAL, and
+      NOT_ASSESSED plus verification verdicts CONFIRMED, DISPROVED,
+      DOWNGRADED, and UNCHANGED. Plan mode reports RISK, CAUTION, COVERED,
+      and NOT_APPLICABLE counts and omits verification counts entirely.
+    failure_modes:
+      - Plan-mode response includes verification verdict counts.
+      - Audit/diff response omits one or more required count buckets.
+      - Counts use undocumented status vocabulary.
+    priority: high
+    contract_ref: "agent §Step 2 Compute Summary Counts + §Response Format"
+
+  - expectation_id: verified-values-used
+    summary: Summary counts use verified (post-verification) statuses and severities.
+    signal: Counts in audit/diff reports reflect verdicts, not original assessments.
+    pass_criteria: |
+      In audit and diff modes, summary counts are derived from verified
+      statuses and severities (after verifier output), not from the
+      pre-verification original values.
+    failure_modes:
+      - Counts reflect original FAIL/PARTIAL even after DISPROVED verdicts move them to PASS.
+      - Counts mix original and verified values inconsistently.
+    priority: high
+    contract_ref: "agent §Step 2 (Use verified statuses and severities for all counts)"
+
+  - expectation_id: confirmation-line
+    summary: A one-line confirmation `Report saved → <path>` is emitted.
+    signal: Output contains the documented confirmation line.
+    pass_criteria: |
+      Response emits a one-line confirmation in the form
+      `Report saved → <resolved_report_path>` after writing the report.
+    failure_modes:
+      - Confirmation line omitted.
+      - Confirmation uses different wording or punctuation.
+      - Path in the confirmation differs from the actual write target.
+    priority: medium
+    contract_ref: "agent §Step 4 Write Report File (one-line confirmation)"
+
+  - expectation_id: diff-appendix
+    summary: Diff-mode reports include a Changed Files appendix after Skills Used.
+    signal: Diff report contains a Changed Files appendix listing files and change types.
+    pass_criteria: |
+      Diff-mode reports include a `Changed Files` appendix section appended
+      after the `Skills Used` appendix, with one entry per changed file
+      annotated by change type (added, modified, renamed).
+    failure_modes:
+      - Diff report omits the Changed Files appendix.
+      - Appendix placed before Skills Used.
+      - Change types omitted or invented.
+    priority: medium
+    contract_ref: "agent §Step 3 (diff mode appendix) + §Inputs (Changed files list)"
+
+  - expectation_id: no-secrets-in-report
+    summary: Report excludes credentials, secrets, and sensitive environment values.
+    signal: Output is free of API keys, passwords, tokens, or env values.
+    pass_criteria: |
+      Report content does not embed credentials, secrets, API keys, or
+      sensitive environment values. Sensitive content discovered during
+      collation is summarized abstractly when it must be referenced.
+    failure_modes:
+      - Report quotes secrets verbatim from source findings.
+      - Report includes `.env` values or credential strings.
+    priority: high
+    contract_ref: "agent §Pre-requisite §2 (Do not include secrets, credentials, or sensitive environment values)"

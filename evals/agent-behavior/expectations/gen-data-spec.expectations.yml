@@ -1,0 +1,158 @@
+# Bucket-A expectations for gen-data-spec
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 stimulus asks for a one-off "data spec" of a
+# `customers` table without anchoring to the agent's outputs/ folder, four
+# required artifacts, or kebab-case filename convention. The current run
+# wrote to `~\.copilot\session-state\…\customers-table-spec.md` and emitted
+# zero of the four documented artifacts. Expectations below restore the
+# contract; the rewrite pass should re-scope the stimulus.
+slug: gen-data-spec
+class: code-implementor
+agent_file: .github/agents/data-science/gen-data-spec.agent.md
+stimulus_file: evals/agent-behavior/stimuli/gen-data-spec.yml
+latest_result: evals/results/agent-matrix/2026-05-28/gen-data-spec.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: outputs-folder-path
+    summary: Artifacts are written under the workspace `outputs/` folder.
+    signal: Reported paths begin with `outputs/`.
+    pass_criteria: |
+      Every reported artifact path is workspace-relative and starts with
+      `outputs/`. The agent creates the folder when missing.
+    failure_modes:
+      - Writes to `~\.copilot\session-state\...\customers-table-spec.md`
+        (current 2026-05-28 behavior).
+      - Writes to absolute temp paths (`C:\Users\…\AppData\Local\Temp\…`).
+      - Writes to `data/` or repo root instead of `outputs/`.
+    priority: high
+    contract_ref: "agent §Output Artifacts (All outputs go in `outputs/`)"
+
+  - expectation_id: required-artifact-set
+    summary: Four required artifacts are produced for a single dataset.
+    signal: Output lists Markdown dictionary, JSON profile, JSON objectives,
+      and Markdown summary files for the dataset.
+    pass_criteria: |
+      For a single-dataset request the response reports all four required
+      artifact paths in `outputs/`: the data dictionary `.md`, data profile
+      `.json`, objectives `.json`, and summary index `.md`.
+    failure_modes:
+      - Produces only a single markdown file (current 2026-05-28 output is
+        one `customers-table-spec.md` with DDL).
+      - Drops the JSON profile or objectives artifact.
+      - Replaces the summary index with prose in chat instead of a file.
+    priority: high
+    contract_ref: "agent §Output Artifacts items 1–4"
+
+  - expectation_id: filename-convention
+    summary: Output filenames follow the kebab-case `{type}-{dataset}-{YYYY-MM-DD}` pattern.
+    signal: Reported filenames match
+      `outputs/(data-dictionary|data-profile|data-objectives|data-summary)-<dataset>-\d{4}-\d{2}-\d{2}\.(md|json)`.
+    pass_criteria: |
+      Each reported filename is kebab-case, includes the dataset slug, ends
+      with a UTC `YYYY-MM-DD` date, and uses `.md` for dictionary/summary,
+      `.json` for profile/objectives.
+    failure_modes:
+      - Filename omits the date (e.g., `customers-table-spec.md`,
+        current 2026-05-28 behavior).
+      - Filename uses snake_case or CamelCase.
+      - Date is in the future or far past relative to today.
+    priority: medium
+    contract_ref: "agent §Output Artifacts + §Example Filename Set"
+
+  - expectation_id: data-profile-schema-conformance
+    summary: Data profile JSON matches the documented schema.
+    signal: Output shows or describes a JSON object whose top-level keys
+      include `dataset`, `generated_at`, `columns`, `feature_sets`, and
+      `quality_flags`.
+    pass_criteria: |
+      Data profile JSON contains required top-level keys: `dataset`,
+      `generated_at` (ISO8601), `sample_size`, `primary_key_candidates`,
+      `primary_time_column`, `columns` (array), `feature_sets` (object with
+      `numeric`/`categorical`/`text`/`boolean`/`datetime`/`id`),
+      `potential_targets`, `quality_flags`, and `objectives_ref`. Each
+      `columns` entry includes `name`, `inferred_type`, `semantic_role`,
+      `non_null_count`, `missing_pct`, `distinct_count`, `example_values`,
+      `stats`, and `quality_notes`.
+    failure_modes:
+      - Output describes the profile in markdown only with no JSON artifact.
+      - JSON is produced but missing `feature_sets` or `quality_flags`.
+      - Column entries lack `semantic_role` or `quality_notes`.
+    priority: high
+    contract_ref: "agent §Data Profile JSON Schema (Must Follow)"
+
+  - expectation_id: objectives-json-present
+    summary: Objectives JSON is emitted and cross-referenced from the profile.
+    signal: Output reports `outputs/data-objectives-<dataset>-<date>.json` AND
+      the profile's `objectives_ref` field points to that file.
+    pass_criteria: |
+      Objectives JSON is produced with `dataset`, `generated_at`,
+      `analysis_objectives` (typed list), `business_questions`,
+      `critical_metrics`, `success_criteria`, and `notes` keys. The data
+      profile's `objectives_ref` resolves to that file's relative path.
+    failure_modes:
+      - Objectives captured only in prose; no JSON file produced.
+      - `objectives_ref` missing or pointing to a non-existent path.
+    priority: medium
+    contract_ref: "agent §Objectives JSON Schema + §Downstream Consumption Contract"
+
+  - expectation_id: semantic-role-classification
+    summary: Each column gets a documented semantic role.
+    signal: Output references `semantic_role` values drawn from the documented set.
+    pass_criteria: |
+      Every column entry assigns `semantic_role` from
+      `{id, time, metric, category, text, boolean, derived, unknown}`. The
+      summary lists column counts by semantic role.
+    failure_modes:
+      - `semantic_role` absent or free-form (e.g., "primary identifier").
+      - Summary omits the column-counts-by-role section.
+    priority: medium
+    contract_ref: "agent §Step 3 Sample & Infer Schema + §Summary Markdown Must Contain"
+
+  - expectation_id: scope-confirmation-step
+    summary: First turn confirms scope and objectives before profiling.
+    signal: Output asks about primary dataset path(s), intended analyses, and
+      critical entities/metrics, or echoes those answers before generating files.
+    pass_criteria: |
+      For a non-trivial spec request the first response either (a) asks the
+      three Step 1 scope questions (dataset path, intended analyses, critical
+      business entities/metrics) before generating artifacts, or (b) summarizes
+      assumed answers and offers to revise them.
+    failure_modes:
+      - Generates artifacts immediately with no scope confirmation
+        (current 2026-05-28 behavior).
+      - Asks unrelated questions instead of the documented three.
+    priority: medium
+    applies_when: "first turn of a multi-dataset or unclear-scope request"
+    contract_ref: "agent §Step 1 Confirm Scope & Objectives"
+
+  - expectation_id: sample-size-cap
+    summary: Profiling stats come from a bounded sample, not full data dumps.
+    signal: Output references reading the first N (~100) rows or shows
+      `example_values` limited to <=5 entries per column.
+    pass_criteria: |
+      Output indicates sample-based profiling (e.g., reads first ~100 rows)
+      and `example_values` arrays in the profile contain at most 5 entries
+      per column.
+    failure_modes:
+      - Dumps full column value lists into the profile.
+      - Reports stats with no mention of sample size or `sample_size: 0`.
+    priority: low
+    contract_ref: "agent §Step 3 + §Step 4 (sample_size; example_values up to 5) + §Quality Checklist"
+
+  - expectation_id: no-source-modifications
+    summary: Spec generation does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Only `outputs/` artifacts are modified.
+    failure_modes:
+      - Edits `pyproject.toml` to add a profiling dependency.
+      - Modifies application source as part of "wiring up" the dataset.
+    priority: medium
+    contract_ref: "agent scope (Output Artifacts confined to `outputs/`)"

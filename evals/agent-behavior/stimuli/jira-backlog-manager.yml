@@ -1,0 +1,20 @@
+stimuli:
+  - name: jira-backlog-manager-class-recipe
+    prompt: |
+      Draft a Jira story for "As a developer, I want CI to fail fast on lint errors." Include summary, description, issue type, and acceptance criteria. Write the draft under `.copilot-tracking/jira-issues/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(summary|description|issue type|priority|component|sprint|epic|story)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]jira-issues'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

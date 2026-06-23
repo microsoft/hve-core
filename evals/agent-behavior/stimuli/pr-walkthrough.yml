@@ -1,0 +1,20 @@
+stimuli:
+  - name: pr-walkthrough-class-recipe
+    prompt: |
+      Produce a narrative walkthrough of a pull request that refactors an authentication module into a separate service and updates its call sites. Orient a reviewer who has not opened the diff: explain what changed, the architectural shape, which files carry weight, and where human judgment is required. Anchor claims to quoted code fragments. Do not modify any source files.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: walkthrough-narrative
+        config:
+          pattern: '(?i)(walkthrough|narrative|reviewer|architect|design|change|judgment)'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(authentication|auth|service|refactor|call site|module)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

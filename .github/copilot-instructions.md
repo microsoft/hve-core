@@ -112,7 +112,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
 * Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
 * Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
-* Doc Ops (`.copilot-tracking/doc-ops/`) - Documentation operations session tracking.
+* Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
 
@@ -176,7 +176,7 @@ Frontmatter schemas are stored in `scripts/linting/schemas/`. Schema-to-file map
 
 ### Documentation Operations
 
-The doc-ops agent scans these directories for documentation coverage analysis:
+The Documentation agent scans these directories for documentation coverage analysis:
 
 * `docs/` - Primary documentation tree.
 * `scripts/` - Script-level markdown files and inline documentation.

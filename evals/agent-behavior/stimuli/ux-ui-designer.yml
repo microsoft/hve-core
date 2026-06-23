@@ -1,0 +1,20 @@
+stimuli:
+  - name: ux-ui-designer-class-recipe
+    prompt: |
+      Describe a UX flow for a first-run onboarding wizard with three steps (welcome, choose plan, invite teammates). Produce a written design brief under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(onboarding|wizard|step|welcome|plan|invite|flow|ux)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

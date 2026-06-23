@@ -54,7 +54,7 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/hve-core/documentation.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
   kind: agent
@@ -241,8 +241,6 @@ items:
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/doc-ops-update.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
@@ -526,6 +524,8 @@ items:
 - path: .github/skills/hve-core/architecture-diagrams
   kind: skill
   maturity: experimental
+- path: .github/skills/hve-core/documentation
+  kind: skill
 - path: .github/skills/hve-core/vally-tests
   kind: skill
   maturity: experimental

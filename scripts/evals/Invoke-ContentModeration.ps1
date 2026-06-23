@@ -45,6 +45,10 @@
 
 .NOTES
     Runs via: npm run eval:moderate
+
+    The HVE_MODERATION_PYTHON environment variable overrides the interpreter
+    used to run moderate.py. When unset, the uv-managed moderation venv is
+    preferred, falling back to `python` on PATH.
 #>
 [CmdletBinding()]
 param(
@@ -161,13 +165,37 @@ if ($MyInvocation.InvocationName -ne '.') {
         }
 
         Write-Verbose "Invoking moderate.py: threshold=$Threshold model=$Model"
-        $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-        if (-not $pythonCmd) {
-            [Console]::Error.WriteLine("python not found in PATH; ensure Python 3.11+ is installed")
-            exit 2
+
+        # Prefer the uv-managed moderation virtual environment (created by
+        # `uv sync` in scripts/evals/moderation), which has detoxify and torch
+        # installed. An explicit HVE_MODERATION_PYTHON override takes precedence
+        # (used by tests to inject a stub interpreter); otherwise fall back to
+        # `python` on PATH when the venv is absent.
+        $moderationDir = Join-Path $PSScriptRoot 'moderation'
+        $venvPython = if ($IsWindows) {
+            Join-Path $moderationDir '.venv/Scripts/python.exe'
+        }
+        else {
+            Join-Path $moderationDir '.venv/bin/python'
         }
 
-        & python $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        if ($env:HVE_MODERATION_PYTHON) {
+            Write-Verbose "Using interpreter override HVE_MODERATION_PYTHON: $($env:HVE_MODERATION_PYTHON)"
+            & $env:HVE_MODERATION_PYTHON $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
+        elseif (Test-Path -LiteralPath $venvPython) {
+            Write-Verbose "Using moderation venv interpreter: $venvPython"
+            & $venvPython $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
+        else {
+            $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+            if (-not $pythonCmd) {
+                [Console]::Error.WriteLine("Moderation venv not found at $venvPython and python not found in PATH; run 'uv sync' in scripts/evals/moderation or install Python 3.11+")
+                exit 2
+            }
+            Write-Verbose "Moderation venv not found; falling back to python on PATH"
+            & python $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
 
         if ($LASTEXITCODE -ne 0) {
             [Console]::Error.WriteLine("moderate.py exited with code $LASTEXITCODE")

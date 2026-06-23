@@ -1,0 +1,1272 @@
+name: behavior-conformance-prompts
+description: >
+  Advisory-tier behavior conformance evals for high-traffic prompts. Each
+  stimulus invokes the prompt and asserts attribution (the agent role name or
+  the invoked prompt name) plus prompt-specific scope language. Per DD-05, this
+  is an advisory tier and grader false-positives are absorbed by design.
+type: capability
+defaults:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+
+stimuli:
+  - name: prompt-task-research-conformance
+    prompt: |
+      Invoke the `task-research` prompt with topic="evaluate retry strategies
+      for the eval runner". Produce the standard research handoff.
+    tags:
+      category: behavior-conformance
+      prompt: task-research
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+researcher\\b|task-research"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)research|implementation\\s+alternatives|tracking"
+
+  - name: prompt-task-plan-conformance
+    prompt: |
+      Invoke the `task-plan` prompt against an existing research document
+      under `.copilot-tracking/research/`. Produce an implementation plan.
+    tags:
+      category: behavior-conformance
+      prompt: task-plan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+planner\\b|task-plan"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)implementation\\s+plan|planning|deferred|task-plan"
+
+  - name: prompt-task-implement-conformance
+    prompt: |
+      Invoke the `task-implement` prompt with `phaseStop=true`. Execute the
+      first phase of the most recent plan in `.copilot-tracking/plans/`.
+    tags:
+      category: behavior-conformance
+      prompt: task-implement
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+implementor\\b|task-implement|\\bplan\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bphase\\b|\\bstep\\b|implementation\\s+plan|task-implement|\\bplan\\b"
+
+  - name: prompt-task-review-conformance
+    prompt: |
+      Invoke the `task-review` prompt with scope="today". Produce a review
+      log with severity counts.
+    tags:
+      category: behavior-conformance
+      prompt: task-review
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+reviewer\\b|task-review"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)review\\s+log|severity|scope|task-review"
+
+  - name: prompt-task-challenge-conformance
+    prompt: |
+      Invoke the `task-challenge` prompt with focus="error handling" against
+      the most recent changes log.
+    tags:
+      category: behavior-conformance
+      prompt: task-challenge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+challenger\\b|task-challenge"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)challenge|scope|focus"
+
+  - name: prompt-security-review-conformance
+    prompt: |
+      Invoke the `security-review` prompt with mode=audit and
+      targetSkill=owasp-top-10 against the current workspace.
+    tags:
+      category: behavior-conformance
+      prompt: security-review
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+reviewer|security-review"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)OWASP|vulnerabilit|audit|skill|security-review"
+
+  - name: prompt-ado-create-pull-request-conformance
+    prompt: |
+      Invoke the `ado-create-pull-request` prompt with isDraft=true to
+      generate a PR description, discover work items, and identify reviewers.
+    tags:
+      category: behavior-conformance
+      prompt: ado-create-pull-request
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|ado-create-pull-request"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pull\\s+request|work\\s+item|reviewer|Azure\\s+DevOps|ado-create-pull-request"
+
+  - name: prompt-github-execute-backlog-conformance
+    prompt: |
+      Invoke the `github-execute-backlog` prompt with dryRun=true against a
+      sample handoff.md file containing one Create operation.
+    tags:
+      category: behavior-conformance
+      prompt: github-execute-backlog
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|github-execute-backlog"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|issue|create|update|link|close|comment|github-execute-backlog"
+
+  - name: prompt-jira-execute-backlog-conformance
+    prompt: |
+      Invoke the `jira-execute-backlog` prompt with dryRun=true against a
+      sample handoff.md file containing one Create operation.
+    tags:
+      category: behavior-conformance
+      prompt: jira-execute-backlog
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)Jira\\s+backlog\\s+manager|jira-execute-backlog"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|Jira|create|update|transition|comment"
+
+  - name: prompt-dt-start-project-conformance
+    prompt: |
+      Invoke the `dt-start-project` prompt with project-slug=demo-project,
+      industry=manufacturing. Initialize state and begin Method 1.
+    tags:
+      category: behavior-conformance
+      prompt: dt-start-project
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|design\\s+thinking|dt-start-project"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)method\\s*1|scope\\s+conversation|stakeholder|coaching|dt-start-project"
+
+  - name: prompt-ado-add-work-item-conformance
+    prompt: |
+      Invoke the `ado-add-work-item` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-add-work-item
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|work\\s+item|ado-add-work-item"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)work\\s+item|title|description|iteration|parent|tags"
+
+  - name: prompt-ado-discover-work-items-conformance
+    prompt: |
+      Invoke the `ado-discover-work-items` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-discover-work-items
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|discovery"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)WIQL|query|backlog|iteration|work\\s+item"
+
+  - name: prompt-ado-get-build-info-conformance
+    prompt: |
+      Invoke the `ado-get-build-info` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-get-build-info
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO|build|pipeline"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)build|status|logs|pipeline|definition"
+
+  - name: prompt-ado-get-my-work-items-conformance
+    prompt: |
+      Invoke the `ado-get-my-work-items` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-get-my-work-items
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|assigned"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)assigned|my\\s+work|active|in\\s+progress"
+
+  - name: prompt-ado-process-my-work-items-for-task-planning-conformance
+    prompt: |
+      Invoke the `ado-process-my-work-items-for-task-planning` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-process-my-work-items-for-task-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|task\\s+planner|ado-process-my-work-items-for-task-planning"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)task\\s+plan|work\\s+item|handoff|plan"
+
+  - name: prompt-ado-sprint-plan-conformance
+    prompt: |
+      Invoke the `ado-sprint-plan` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-sprint-plan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|sprint"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)sprint|iteration|capacity|coverage|gap"
+
+  - name: prompt-ado-triage-work-items-conformance
+    prompt: |
+      Invoke the `ado-triage-work-items` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-triage-work-items
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|classification|duplicate|iteration|label"
+
+  - name: prompt-ado-update-wit-items-conformance
+    prompt: |
+      Invoke the `ado-update-wit-items` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: ado-update-wit-items
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)ADO\\s+backlog\\s+manager|MCP|ado-update-wit-items"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)update|patch|field|work\\s+item|handoff"
+
+  - name: prompt-checkpoint-conformance
+    prompt: |
+      Invoke the `checkpoint` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: checkpoint
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)memory|checkpoint|session"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)checkpoint|session|memory|state|save|resume"
+
+  - name: prompt-code-review-full-conformance
+    prompt: |
+      Invoke the `code-review-full` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: code-review-full
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)code\\s+review|reviewer|code-review-full"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)diff|review|finding|verdict|standards"
+
+  - name: prompt-code-review-functional-conformance
+    prompt: |
+      Invoke the `code-review-functional` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: code-review-functional
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)code\\s+review|reviewer|functional"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)functional|behavior|review|finding|diff"
+
+  - name: prompt-cspell-config-conformance
+    prompt: |
+      Invoke the `cspell-config` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: cspell-config
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)cspell|spell"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)cspell|dictionary|word|spelling|config"
+
+  - name: prompt-dt-canonical-deck-conformance
+    prompt: |
+      Invoke the `dt-canonical-deck` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-canonical-deck
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|design\\s+thinking|canonical"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)canonical|deck|customer\\s+card|artifact"
+
+  - name: prompt-dt-figma-export-conformance
+    prompt: |
+      Invoke the `dt-figma-export` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-figma-export
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|Figma"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)Figma|export|frame|prototype|asset"
+
+  - name: prompt-dt-handoff-implementation-space-conformance
+    prompt: |
+      Invoke the `dt-handoff-implementation-space` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-handoff-implementation-space
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|handoff"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)implementation\\s+space|handoff|RPI|spec"
+
+  - name: prompt-dt-handoff-problem-space-conformance
+    prompt: |
+      Invoke the `dt-handoff-problem-space` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-handoff-problem-space
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|handoff"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)problem\\s+space|handoff|synthesis|insight"
+
+  - name: prompt-dt-handoff-solution-space-conformance
+    prompt: |
+      Invoke the `dt-handoff-solution-space` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-handoff-solution-space
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|handoff"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)solution\\s+space|handoff|concept|prototype"
+
+  - name: prompt-dt-method-04-convergence-conformance
+    prompt: |
+      Invoke the `dt-method-04-convergence` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-04-convergence
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm|dt-method-04-convergence"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)convergence|cluster|theme|brainstorm"
+
+  - name: prompt-dt-method-04-ideation-conformance
+    prompt: |
+      Invoke the `dt-method-04-ideation` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-04-ideation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm|dt-method-04-ideation"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)ideation|brainstorm|divergent|idea"
+
+  - name: prompt-dt-method-05-concepts-conformance
+    prompt: |
+      Invoke the `dt-method-05-concepts` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-05-concepts
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*5|concept"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)concept|articulate|three\\s*lens|DFV"
+
+  - name: prompt-dt-method-05-evaluation-conformance
+    prompt: |
+      Invoke the `dt-method-05-evaluation` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-05-evaluation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*5|concept|dt-method-05-evaluation"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)evaluation|D/F/V|desirab|feasib|viab"
+
+  - name: prompt-dt-method-06-building-conformance
+    prompt: |
+      Invoke the `dt-method-06-building` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-06-building
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-building"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prototype|lo[-\\s]*fi|scrappy|build"
+
+  - name: prompt-dt-method-06-planning-conformance
+    prompt: |
+      Invoke the `dt-method-06-planning` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-06-planning
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-planning"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prototype|plan|feedback|hypothesis"
+
+  - name: prompt-dt-method-06-testing-conformance
+    prompt: |
+      Invoke the `dt-method-06-testing` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-06-testing
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-testing"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)test|feedback|user|prototype"
+
+  - name: prompt-dt-method-next-conformance
+    prompt: |
+      Invoke the `dt-method-next` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-method-next
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|method"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)method|next|transition|sequence"
+
+  - name: prompt-dt-resume-coaching-conformance
+    prompt: |
+      Invoke the `dt-resume-coaching` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: dt-resume-coaching
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)DT\\s+coach|resume"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)resume|state|session|coaching"
+
+  - name: prompt-git-commit-conformance
+    prompt: |
+      Invoke the `git-commit` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: git-commit
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)git|commit"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)commit|stage|message|scope|conventional"
+
+  - name: prompt-git-commit-message-conformance
+    prompt: |
+      Invoke the `git-commit-message` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: git-commit-message
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)git|commit\\s+message"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)commit|message|scope|conventional|type"
+
+  - name: prompt-git-merge-conformance
+    prompt: |
+      Invoke the `git-merge` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: git-merge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)git|merge|rebase"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)merge|rebase|conflict|branch"
+
+  - name: prompt-git-setup-conformance
+    prompt: |
+      Invoke the `git-setup` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: git-setup
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)git|setup|config"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)setup|config|user|email|remote"
+
+  - name: prompt-github-add-issue-conformance
+    prompt: |
+      Invoke the `github-add-issue` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: github-add-issue
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|issue"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)issue|title|body|label|milestone"
+
+  - name: prompt-github-discover-issues-conformance
+    prompt: |
+      Invoke the `github-discover-issues` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: github-discover-issues
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|discovery|github-discover-issues"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)issue|search|backlog|label|state"
+
+  - name: prompt-github-sprint-plan-conformance
+    prompt: |
+      Invoke the `github-sprint-plan` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: github-sprint-plan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|sprint"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)sprint|milestone|capacity|coverage|gap"
+
+  - name: prompt-github-suggest-conformance
+    prompt: |
+      Invoke the `github-suggest` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: github-suggest
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|suggest"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)suggest|issue|recommendation|backlog"
+
+  - name: prompt-github-triage-issues-conformance
+    prompt: |
+      Invoke the `github-triage-issues` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: github-triage-issues
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|label|duplicate|milestone|classify"
+
+  - name: prompt-incident-response-conformance
+    prompt: |
+      Invoke the `incident-response` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: incident-response
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)incident|response|on[-\\s]*call"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)incident|severity|timeline|mitigation|RCA"
+
+  - name: prompt-jira-discover-issues-conformance
+    prompt: |
+      Invoke the `jira-discover-issues` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: jira-discover-issues
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)Jira\\s+backlog\\s+manager|discovery|jira-discover-issues"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)JQL|issue|backlog|sprint|epic"
+
+  - name: prompt-jira-prd-to-wit-conformance
+    prompt: |
+      Invoke the `jira-prd-to-wit` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: jira-prd-to-wit
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)Jira|PRD|work\\s+item"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)PRD|epic|story|hierarchy|work\\s+item"
+
+  - name: prompt-jira-triage-issues-conformance
+    prompt: |
+      Invoke the `jira-triage-issues` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: jira-triage-issues
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)Jira\\s+backlog\\s+manager|triage"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|label|duplicate|sprint|classify"
+
+  - name: prompt-prompt-analyze-conformance
+    prompt: |
+      Invoke the `prompt-analyze` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: prompt-analyze
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)prompt\\s+builder|analyze"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prompt|analyze|frontmatter|structure|standard"
+
+  - name: prompt-prompt-build-conformance
+    prompt: |
+      Invoke the `prompt-build` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: prompt-build
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)prompt\\s+builder|build"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prompt|build|create|frontmatter|template"
+
+  - name: prompt-prompt-refactor-conformance
+    prompt: |
+      Invoke the `prompt-refactor` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: prompt-refactor
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)prompt\\s+builder|refactor"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)prompt|refactor|frontmatter|structure|improve"
+
+  - name: prompt-pull-request-conformance
+    prompt: |
+      Invoke the `pull-request` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: pull-request
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)pull\\s+request|reviewer|pull-request"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pull\\s+request|PR|diff|description|reviewer"
+
+  - name: prompt-rai-capture-conformance
+    prompt: |
+      Invoke the `rai-capture` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: rai-capture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)RAI\\s+planner|capture"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)RAI|capture|risk|use\\s+case|stakeholder"
+
+  - name: prompt-rai-plan-from-prd-conformance
+    prompt: |
+      Invoke the `rai-plan-from-prd` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: rai-plan-from-prd
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)RAI\\s+planner|PRD"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)RAI|PRD|risk|impact|NIST"
+
+  - name: prompt-rai-plan-from-security-plan-conformance
+    prompt: |
+      Invoke the `rai-plan-from-security-plan` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: rai-plan-from-security-plan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)RAI\\s+planner|security"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)RAI|security|risk|impact|STRIDE"
+
+  - name: prompt-risk-register-conformance
+    prompt: |
+      Invoke the `risk-register` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: risk-register
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)risk|register"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)risk|register|likelihood|impact|mitigation"
+
+  - name: prompt-rpi-conformance
+    prompt: |
+      Invoke the `rpi` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: rpi
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)RPI\\s+agent|research|plan|implement"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)research|plan|implement|review|task"
+
+  - name: prompt-security-capture-conformance
+    prompt: |
+      Invoke the `security-capture` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: security-capture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+planner|capture"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)security|capture|threat|asset|stakeholder"
+
+  - name: prompt-security-plan-from-prd-conformance
+    prompt: |
+      Invoke the `security-plan-from-prd` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: security-plan-from-prd
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+planner|PRD"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)security|PRD|threat|STRIDE|bucket"
+
+  - name: prompt-security-review-llm-conformance
+    prompt: |
+      Invoke the `security-review-llm` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: security-review-llm
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+reviewer|LLM|security-review-llm"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)LLM|OWASP|prompt\\s+injection|review|security-review-llm"
+
+  - name: prompt-security-review-sbd-conformance
+    prompt: |
+      Invoke the `security-review-sbd` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: security-review-sbd
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+reviewer|secure\\s+by\\s+design|security-review-sbd"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)secure\\s+by\\s+design|SBD|principle|review"
+
+  - name: prompt-security-review-web-conformance
+    prompt: |
+      Invoke the `security-review-web` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: security-review-web
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)security\\s+reviewer|web|OWASP"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)OWASP|web|injection|XSS|review"
+
+  - name: prompt-sssc-capture-conformance
+    prompt: |
+      Invoke the `sssc-capture` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: sssc-capture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)SSSC\\s+planner|capture"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)SSSC|supply\\s+chain|scorecard|capability"
+
+  - name: prompt-sssc-from-brd-conformance
+    prompt: |
+      Invoke the `sssc-from-brd` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: sssc-from-brd
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)SSSC\\s+planner|BRD"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)SSSC|BRD|supply\\s+chain|scorecard"
+
+  - name: prompt-sssc-from-prd-conformance
+    prompt: |
+      Invoke the `sssc-from-prd` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: sssc-from-prd
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)SSSC\\s+planner|PRD"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)SSSC|PRD|supply\\s+chain|scorecard"
+
+  - name: prompt-sssc-from-security-plan-conformance
+    prompt: |
+      Invoke the `sssc-from-security-plan` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: sssc-from-security-plan
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)SSSC\\s+planner|security"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)SSSC|security|supply\\s+chain|scorecard"
+
+  - name: prompt-synth-data-generate-conformance
+    prompt: |
+      Invoke the `synth-data-generate` prompt with minimal arguments and explain how it
+      coordinates the workflow.
+    tags:
+      category: behavior-conformance
+      prompt: synth-data-generate
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)synthetic|data|generate"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)synthetic|data|generate|schema|fixture"
+
+  - name: prompt-graph-research-conformance
+    prompt: |
+      Invoke the `graph-research` prompt with topic="what depends on
+      `auth_middleware.py`" against an existing `graphify-out/graph.json`.
+    tags:
+      category: behavior-conformance
+      prompt: graph-research
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+researcher\\b|graph-research|graphify"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)graph|graphify|dependency|structural|research"
+
+  - name: prompt-jira-setup-conformance
+    prompt: |
+      Invoke the `jira-setup` prompt to verify my Jira integration
+      environment is configured for the HVE-Core Jira agents.
+    tags:
+      category: behavior-conformance
+      prompt: jira-setup
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)jira-setup|\\bjira\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)credential|environment|configuration|verify|JIRA_BASE_URL|token"
