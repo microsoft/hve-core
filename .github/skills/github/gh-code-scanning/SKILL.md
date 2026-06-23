@@ -234,5 +234,3 @@ The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded 
 | `bash: jq: command not found`                              | `jq` not installed                             | Install via `brew install jq` (macOS), `apt-get install jq` (Debian/Ubuntu), or from <https://jqlang.github.io/jq/> |
 
 > Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

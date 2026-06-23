@@ -1,0 +1,20 @@
+stimuli:
+  - name: agile-coach-class-recipe
+    prompt: |
+      Help me split this oversized story "Build a complete billing system" into smaller stories with acceptance criteria. Write the drafts under `.copilot-tracking/stories/` and tell me the paths you wrote them to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(title|description|acceptance criteria|priority|label|story|epic)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

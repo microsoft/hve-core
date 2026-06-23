@@ -1,0 +1,20 @@
+stimuli:
+  - name: accessibility-planner-class-recipe
+    prompt: |
+      Begin an accessibility planning session for a public-facing customer portal that must conform to WCAG 2.2 and Section 508. List the next phases of the assessment. Write the planning state under `.copilot-tracking/accessibility/` and report the path you wrote it to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]accessibility'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

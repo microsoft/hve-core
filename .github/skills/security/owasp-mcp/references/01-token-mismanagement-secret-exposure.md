@@ -82,7 +82,3 @@ The model complies in a later unrelated session, leaking tokens.
 * Audit MCP configurations, server endpoints, and stored contexts.
 * Implement redaction pipelines for logs and telemetry.
 * Define organizational policies for credential lifecycle management.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

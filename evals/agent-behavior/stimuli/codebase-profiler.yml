@@ -1,0 +1,38 @@
+stimuli:
+  - name: codebase-profiler-skill-mapping
+    prompt: |
+      Scan the current repository in audit mode and produce a Codebase Profile
+      that maps discovered technology signals (languages, frameworks, IaC,
+      CI/CD) to applicable security skills such as owasp-top-10, owasp-llm,
+      owasp-mcp, owasp-cicd, owasp-infrastructure, and secure-by-design.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: profile-structure-vocabulary
+        config:
+          pattern: '(?i)(codebase profile|primary languages|frameworks|key directories|applicable skills|technology summary)'
+      - type: output-matches
+        name: skill-vocabulary
+        config:
+          pattern: '(?i)(owasp[-_](top[-_]?10|llm|mcp|cicd|infrastructure|agentic)|secure[-_]by[-_]design)'
+
+  - name: codebase-profiler-diff-mode
+    prompt: |
+      As a codebase-profiler subagent, run in diff mode against the changed file
+      list `["src/api/handlers.py", ".github/workflows/ci.yml", "terraform/main.tf"]`
+      and return the Codebase Profile with mode, languages, frameworks, and
+      applicable skills. Include skills when uncertain.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: mode-vocabulary
+        config:
+          pattern: '(?i)(mode\s*:?\s*diff|diff[- ]?mode|changed files)'
+      - type: output-matches
+        name: applicable-skill-vocabulary
+        config:
+          pattern: '(?i)(applicable skills|owasp[-_](cicd|infrastructure|top[-_]?10)|terraform|workflow)'

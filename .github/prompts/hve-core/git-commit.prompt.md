@@ -1,7 +1,9 @@
 ---
 agent: 'agent'
 description: 'Stage all changes, generate a conventional commit message, and commit'
-model: Claude Haiku 4.5 (copilot)
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
 ---
 
 # Stage, Generate, and Commit

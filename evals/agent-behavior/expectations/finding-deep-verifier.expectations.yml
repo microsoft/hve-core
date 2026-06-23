@@ -1,0 +1,145 @@
+# Bucket-A expectations for finding-deep-verifier
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: finding-deep-verifier is `user-invocable: false`, so the agent-matrix
+# does not produce a `<slug>.json` result file for it. No stimulus exists yet;
+# the `stimulus_file` field points to the conventional path that a later
+# Bucket-B pass should populate.
+slug: finding-deep-verifier
+class: subagent  # subtype: adversarial security finding verifier
+agent_file: .github/agents/security/subagents/finding-deep-verifier.agent.md
+stimulus_file: evals/agent-behavior/stimuli/finding-deep-verifier.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: one-verdict-per-finding
+    summary: Every supplied finding receives exactly one verdict block in a single invocation.
+    signal: Response contains one verdict block per finding in the input.
+    pass_criteria: |
+      Output contains exactly one `## Finding: <FINDING_ID>: <FINDING_TITLE>`
+      block per finding supplied in the inputs, returned within a single
+      invocation (no per-finding subagent dispatch).
+    failure_modes:
+      - One or more findings omitted from the response.
+      - Multiple verdict blocks emitted for the same finding.
+      - Subagent defers findings across invocations.
+    priority: high
+    contract_ref: "agent §Purpose (verify every finding in a single invocation)"
+
+  - expectation_id: verdict-vocabulary
+    summary: Each verdict uses the documented vocabulary.
+    signal: Each block's Verdict field names CONFIRMED, DISPROVED, or DOWNGRADED.
+    pass_criteria: |
+      Every verdict block's `**Verdict:**` field is exactly one of
+      `CONFIRMED`, `DISPROVED`, or `DOWNGRADED`.
+    failure_modes:
+      - Verdict omitted.
+      - Verdict uses an undocumented value (e.g., `PASS`, `REJECTED`, `OPEN`).
+      - Verdict spelled inconsistently across blocks.
+    priority: high
+    contract_ref: "agent §Constants (Verdict values)"
+
+  - expectation_id: verdict-status-severity-rules
+    summary: Verified status and severity follow the verdict-specific rules.
+    signal: Verified Status and Verified Severity match the verdict.
+    pass_criteria: |
+      DISPROVED verdicts set `Verified Status` to `PASS` and `Verified
+      Severity` to `—`. DOWNGRADED verdicts set `Verified Status` to
+      `PARTIAL` with a reduced severity (CRITICAL/HIGH/MEDIUM/LOW lower
+      than the original). CONFIRMED verdicts retain the original status
+      and severity.
+    failure_modes:
+      - DISPROVED verdict retains a non-PASS verified status or numeric severity.
+      - DOWNGRADED verdict keeps the original severity or raises it.
+      - CONFIRMED verdict alters status/severity without justification.
+    priority: high
+    contract_ref: "agent §Step 5 (verdict-to-status/severity mapping)"
+
+  - expectation_id: required-section-headings
+    summary: Each verdict block contains every documented subsection.
+    signal: Each block includes the full set of H3 headings.
+    pass_criteria: |
+      Every verdict block contains subsections for `Original Assessment`,
+      `Vulnerability Reference Analysis`, `Vulnerable Location`,
+      `Offending Code`, `Confirming Evidence`, `Contradicting Evidence`,
+      `Verdict`, `Updated Remediation`, and `Example Fix`.
+    failure_modes:
+      - One or more subsections missing.
+      - Subsection headings renamed.
+      - Subsections reordered such that downstream parsers cannot read them.
+    priority: high
+    contract_ref: "agent §Deep Verification Verdict Format"
+
+  - expectation_id: location-link-format
+    summary: Vulnerable location uses workspace-relative markdown links or the disproved sentinel.
+    signal: Vulnerable Location's File field renders a `[path#Ln](path#Ln)` link or `—`.
+    pass_criteria: |
+      `Vulnerable Location` `File` is a workspace-relative markdown link in
+      the form `[path/to/file.ext#L42](path/to/file.ext#L42)`. When the
+      verdict is DISPROVED, both `File` and `Lines` fields are set to `—`.
+    failure_modes:
+      - Location written as bare text or absolute path.
+      - DISPROVED verdict still cites a vulnerable location.
+      - Link target and display text mismatch.
+    priority: medium
+    contract_ref: "agent §Deep Verification Verdict Format (VULN_FILE_LINK)"
+
+  - expectation_id: offending-code-snippet-size
+    summary: Offending Code is a 3–10 line fenced block with a language hint.
+    signal: Offending Code section contains a fenced code block (or disproved sentinel).
+    pass_criteria: |
+      `Offending Code` contains a fenced code block (with language hint)
+      showing 3–10 lines of the vulnerable code centered on the issue.
+      DISPROVED verdicts use the sentinel `Finding disproved: no offending
+      code.` instead.
+    failure_modes:
+      - Offending Code missing or exceeds 10 lines without justification.
+      - Code shown without a fence or without language hint.
+      - DISPROVED block still includes an offending code snippet.
+    priority: medium
+    contract_ref: "agent §Deep Verification Verdict Format (OFFENDING_CODE)"
+
+  - expectation_id: no-new-findings
+    summary: Output only verifies provided findings; no new findings introduced.
+    signal: Verdict blocks reference IDs supplied in the input.
+    pass_criteria: |
+      Every finding ID in the output appears in the input findings list.
+      The subagent does not introduce new vulnerability IDs or surface
+      additional findings outside the verification scope.
+    failure_modes:
+      - New finding IDs appear in the response.
+      - Subagent appends a "Newly discovered" section beyond the verification scope.
+    priority: high
+    contract_ref: "agent §Response Format (only verify the findings provided in the input)"
+
+  - expectation_id: diff-context-note
+    summary: When diff context is supplied, each block carries a Diff Context Note.
+    signal: Original Assessment includes a Diff Context line referencing changed files.
+    pass_criteria: |
+      When the inputs include diff context (changed files list and diff
+      mode flag), each verdict block's `Original Assessment` section includes
+      a `**Diff Context:**` line naming the changed files relevant to the
+      finding. When diff context is not supplied, the field is omitted.
+    failure_modes:
+      - Diff Context omitted when diff context was supplied.
+      - Diff Context emitted in audit mode where it is not applicable.
+      - Diff Context cites files not in the supplied changed files list.
+    priority: medium
+    contract_ref: "agent §Deep Verification Verdict Format (DIFF_CONTEXT_NOTE)"
+
+  - expectation_id: mode-applicability
+    summary: Subagent is invoked only in audit and diff modes, not in plan mode.
+    signal: Response refuses or returns no verdicts when invoked in plan mode.
+    pass_criteria: |
+      In audit and diff modes, the subagent returns verdicts. In plan mode,
+      the subagent does not produce verification verdicts; the scanner
+      skips verification entirely per the agent's stated mode applicability.
+    failure_modes:
+      - Verdicts emitted for plan-mode findings.
+      - Subagent invents code locations for plan-mode findings.
+    priority: medium
+    contract_ref: "agent §Purpose (Invoked only in audit and diff modes)"

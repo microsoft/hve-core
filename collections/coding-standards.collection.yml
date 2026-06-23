@@ -16,12 +16,22 @@ tags:
   - uv
 items:
   # Agents
+  - path: .github/agents/coding-standards/code-review-accessibility.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/coding-standards/code-review-full.agent.md
     kind: agent
     maturity: experimental
   - path: .github/agents/coding-standards/code-review-functional.agent.md
     kind: agent
   - path: .github/agents/coding-standards/code-review-standards.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/accessibility/accessibility-reviewer.agent.md
+    kind: agent
+    maturity: experimental
+  # Subagents
+  - path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
     kind: agent
     maturity: experimental
   # Prompts
@@ -72,7 +82,7 @@ items:
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
-  - path: .github/instructions/coding-standards/code-review-telemetry.instructions.md
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
 display:
   ordering: alpha

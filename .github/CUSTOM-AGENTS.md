@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-03-22
+ms.date: 2026-06-19
 ms.topic: guide
 keywords:
   - copilot
@@ -53,7 +53,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 |----------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | **adr-creation**                 | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
 | **brd-builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
-| **doc-ops**                      | Documentation operations and maintenance                                                                                 | Does not modify source code                                                                                                        |
+| **documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
@@ -74,6 +74,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | Agent                      | Purpose                                                               | Key Constraint                                            |
 |----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
 | **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
+| **pr-walkthrough**         | Narrative PR orientation that builds a reviewer's mental model        | Orientation-only; never renders judgments; experimental   |
 | **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
 | **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
 | **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |
@@ -87,7 +88,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
 | **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
 | **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-| **arch-diagram-builder**    | Builds ASCII block diagrams from Azure IaC         | Parses Terraform, Bicep, ARM scripts |
 
 ### Platform Integration Agents
 
@@ -253,19 +253,19 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
-### doc-ops
+### documentation
 
-**Creates:** Documentation updates and maintenance artifacts:
+**Creates:** Documentation workflow session tracking and documentation updates:
 
-* `.copilot-tracking/doc-ops/{{YYYY-MM-DD}}-session.md` (session tracking for documentation operations)
+* `.copilot-tracking/documentation/{{YYYY-MM-DD}}-session.md` (session tracking for the Documentation workflow)
 
 **Workflow:**
 
-* Review existing documentation for accuracy and completeness
-* Identify gaps, inconsistencies, or outdated content
-* Apply structured documentation updates aligned with repository standards
+* Review existing documentation for scope, accuracy, and completeness
+* Identify drift, gaps, or outdated content in the requested area
+* Author or validate documentation updates using the shared documentation skill
 
-**Critical:** Operates strictly on documentation files and does not modify application or source code
+**Critical:** Uses the Documentation workflow as the canonical entry point for documentation work. It stays focused on documentation artifacts and routes formal accessibility, RAI, and security assessments to the matching planner agents.
 
 ### meeting-analyst
 
@@ -425,17 +425,6 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
 
-### arch-diagram-builder
-
-**Creates:** ASCII architecture diagrams in markdown:
-
-* Inline ASCII block diagrams embedded in markdown (pure ASCII for consistent alignment)
-* Component legend and relationship key
-
-**Workflow:** Discovery → Parsing → Relationship Mapping → Generation
-
-**Critical:** Parses Terraform, Bicep, ARM, or shell scripts. Uses pure ASCII for consistent alignment. Groups by network boundary.
-
 ### github-backlog-manager
 
 **Creates:** Backlog management artifacts under `.copilot-tracking/github-issues/`
@@ -547,7 +536,5 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 * Review generated outputs before using
 * Chain agents together for complex tasks
 * Use the RPI workflow (Researcher → Planner → Implementor) for substantial features
-
----
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

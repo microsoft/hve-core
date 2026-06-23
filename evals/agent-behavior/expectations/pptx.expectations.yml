@@ -1,0 +1,144 @@
+# Bucket-A expectations for pptx (PowerPoint Builder)
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: pptx
+class: planner-coach
+agent_file: .github/agents/experimental/pptx.agent.md
+stimulus_file: evals/agent-behavior/stimuli/pptx.yml
+latest_result: evals/results/agent-matrix/2026-05-28/pptx.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: ppt-tracking-path
+    summary: Plan and artifacts are written under `.copilot-tracking/ppt/{YYYY-MM-DD}/{ppt-name}/`.
+    signal: Output names a path matching `.copilot-tracking/ppt/\d{4}-\d{2}-\d{2}/[a-z0-9-]+/`.
+    pass_criteria: |
+      When the response describes where the plan or deck artifacts will live,
+      it cites a workspace-relative path under
+      `.copilot-tracking/ppt/<YYYY-MM-DD>/<ppt-name>/`. The `ppt-name` segment
+      is kebab-case and derived from the stimulus topic.
+    failure_modes:
+      - Reports `C:/Users/.../.copilot/session-state/<uuid>/plan.md` (current 2026-05-28 output).
+      - Drops the dated subdirectory.
+      - Writes to `.copilot-tracking/plans/` instead of `.copilot-tracking/ppt/`.
+      - Absolute path outside the workspace.
+    priority: high
+    contract_ref: "agent §Phase 1 › Pre-requisite: Create Working Directory (`.copilot-tracking/ppt/{{YYYY-MM-DD}}/{{ppt-name}}/`)"
+
+  - expectation_id: working-directory-subdirs
+    summary: Working directory creation names the declared subdirectory structure.
+    signal: Output references at least two of {changes/, content/, content/global/, research/, slide-deck/}.
+    pass_criteria: |
+      When the response describes setting up the working directory, it names
+      at least two of the five declared subdirectories: `changes/`, `content/`,
+      `content/global/`, `research/`, `slide-deck/`.
+    failure_modes:
+      - Creates a flat working directory with no subdirs.
+      - Substitutes generic subdir names (e.g. `output/`, `src/`).
+    priority: medium
+    contract_ref: "agent §Phase 1 › Pre-requisite (`Create subdirectories: changes/, content/, content/global/, research/, slide-deck/`)"
+
+  - expectation_id: three-phase-pipeline
+    summary: Phased outlines name the agent's three declared phases in order.
+    signal: Output names Research, Build, and Validate in order of first appearance.
+    pass_criteria: |
+      For a "plan a deck" stimulus, the response names all of {Research,
+      Build, Validate} in declared order. A four-step user-friendly mapping
+      (Outline → Draft → Render → Review) is acceptable ONLY when it is
+      explicitly tied back to the agent's Research / Build / Validate phases.
+    failure_modes:
+      - Substitutes a four-phase Outline / Draft / Render / Review sequence with no link to Research / Build / Validate (current 2026-05-28 output).
+      - Drops the Validate phase.
+      - Phases listed out of order.
+    priority: high
+    contract_ref: "agent §Required Phases (Phase 1: Research, Phase 2: Build, Phase 3: Validate)"
+
+  - expectation_id: subagent-delegation-named
+    summary: Phase descriptions name the declared subagents.
+    signal: Output references `Researcher Subagent` or `PowerPoint Subagent` by name.
+    pass_criteria: |
+      For multi-phase plans, the response names `Researcher Subagent` and/or
+      `PowerPoint Subagent` as the actor for at least one phase (topic
+      research, content extraction, content build, deck build, or validation).
+      Per §Required Protocol item 1, subagents are required when available.
+    failure_modes:
+      - All phases described as inline work with no subagent reference.
+      - Subagent referenced by filename instead of by declared name.
+      - Invented subagent names (e.g. `Deck Builder Subagent`).
+    priority: medium
+    contract_ref: "agent frontmatter `agents:` list (Researcher Subagent, PowerPoint Subagent); §Required Phases (`Use subagents with runSubagent or task tools for all phases`)"
+
+  - expectation_id: validation-phase-always-runs
+    summary: Plans for new decks include a Validate phase, not just Outline → Draft → Render.
+    signal: Output explicitly includes a validation step.
+    pass_criteria: |
+      Plan content contains a step or phase that performs validation of the
+      generated deck (visual quality, PPTX properties, or `validate_slides.py`
+      output review) AFTER the deck is built. Pre-build review of content
+      drafts does not satisfy this.
+    failure_modes:
+      - Plan ends after Render with no post-build validation.
+      - Validation merged into "Review" prose without describing visual or
+        property checks (current 2026-05-28 output's Review is content
+        accuracy + branding only, with no validation subagent reference).
+    priority: medium
+    contract_ref: "agent §Phase 3 (`This phase must always run with a subagent, regardless of how many slides were modified`)"
+
+  - expectation_id: yaml-content-mentioned
+    summary: Build/Draft step references YAML content definitions.
+    signal: Output references YAML, `content/global/style.yaml`, or YAML-driven content.
+    pass_criteria: |
+      The build or draft step explicitly references YAML as the content
+      authoring format (per agent description and §Phase 2 Step 1). Acceptable
+      mentions include `style.yaml`, `content YAML`, `YAML-driven`, or
+      `python-pptx` with YAML inputs.
+    failure_modes:
+      - Build step describes "writing slide content" with no mention of YAML.
+      - References JSON or a different content format.
+    priority: low
+    contract_ref: "agent description (`YAML-driven content definitions`); §Phase 2 Step 1 (`Write slide content YAML`)"
+
+  - expectation_id: skill-reference
+    summary: Plan references the `powerpoint` skill for generation, not ad-hoc scripting.
+    signal: Output references the `powerpoint` skill or one of its declared scripts.
+    pass_criteria: |
+      Render/Build content references the `powerpoint` skill OR one of its
+      declared scripts (`extract_content.py`, `build_deck.py`,
+      `validate_slides.py`, `invoke-pptx-pipeline.sh`).
+    failure_modes:
+      - Plan implies inline python-pptx scripting outside the skill.
+      - Render step mentions PowerPoint generation with no skill reference.
+    priority: low
+    contract_ref: "agent §Phase 1 Step 2, §Phase 2 Step 2, §Phase 3 (each delegates to powerpoint skill scripts)"
+
+  - expectation_id: no-source-edit-during-plan
+    summary: Plan responses do not claim to edit source-tree files.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+      Mentions of `extract_content.py` / `build_deck.py` / `validate_slides.py`
+      as skill scripts are acceptable when they describe invocation, not
+      modification.
+    failure_modes:
+      - Plan claims to modify source files as part of deck creation.
+      - Plan edits `package.json` to add a PowerPoint script.
+    priority: medium
+    contract_ref: "agent §Required Protocol item 5 (`All side effects ... stay within the working directory under .copilot-tracking/ppt/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Output substantively addresses the stimulus's Q1 engineering velocity topic.
+    signal: Stimulus-derived keywords appear in slide titles or plan content.
+    pass_criteria: |
+      For the `pptx-class-recipe` stimulus, slide outline contains terms from
+      {Q1, velocity, throughput, cycle time, deploy, engineering} so the deck
+      plan is anchored to the stated topic rather than a generic 5-slide
+      template.
+    failure_modes:
+      - Off-topic response (no velocity / engineering / Q1 terms).
+      - Generic slide titles ("Introduction", "Conclusion") with no domain content.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

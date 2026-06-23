@@ -1,0 +1,134 @@
+# Bucket-A expectations for task-researcher
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: task-researcher
+class: research-writer
+agent_file: .github/agents/hve-core/task-researcher.agent.md
+stimulus_file: evals/agent-behavior/stimuli/task-researcher.yml
+latest_result: evals/results/agent-matrix/2026-05-28/task-researcher.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: response-header-format
+    summary: Response begins with the agent's branded header line.
+    signal: First non-blank line of output matches the literal header pattern.
+    pass_criteria: |
+      Output starts with `## 🔬 Task Researcher: <Research Topic>` where
+      <Research Topic> is a non-empty topic phrase (not the literal placeholder).
+    failure_modes:
+      - Header missing entirely (current `header-present` failure on 2026-05-28).
+      - Emoji omitted or replaced.
+      - Colon missing or topic placeholder left in.
+    priority: high
+    contract_ref: "agent §Response Format"
+
+  - expectation_id: research-file-under-tracking
+    summary: Research artifact is written under the dated tracking research dir.
+    signal: Output names a file path matching `.copilot-tracking/research/<YYYY-MM-DD>/<slug>-research.md`.
+    pass_criteria: Path is workspace-relative, dated subdir present, suffix `-research.md`.
+    failure_modes:
+      - Writes to `.copilot-tracking/research/` root without date subdir.
+      - Writes outside `.copilot-tracking/` (source-tree leak).
+      - Missing `-research.md` suffix.
+    priority: high
+    contract_ref: "agent §File Locations"
+
+  - expectation_id: no-source-modifications
+    summary: Research-only — no edits to source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Claims to edit source files.
+      - Modifies `package.json` to add scripts during research.
+    priority: high
+    contract_ref: "agent §Operational Constraints (Never modify files outside .copilot-tracking/research/)"
+
+  - expectation_id: subagent-delegation-evidence
+    summary: Investigation is delegated to Researcher Subagent, not executed inline.
+    signal: Output mentions invoking `Researcher Subagent` (or notes the tool is unavailable).
+    pass_criteria: |
+      Output contains an explicit reference to running `Researcher Subagent`, OR an
+      explicit notice that `runSubagent`/`task` tooling is unavailable and direct
+      research was used as fallback.
+    failure_modes:
+      - All search/read calls performed directly with no delegation mention.
+      - Delegates but uses filename `researcher-subagent.agent.md` instead of human-readable name.
+    priority: medium
+    contract_ref: "agent §Subagent Delegation"
+
+  - expectation_id: selected-approach-with-rationale
+    summary: Output recommends exactly one approach with rationale and evidence.
+    signal: A "Selected Approach" or equivalent section names one choice with reasons.
+    pass_criteria: |
+      One recommendation is identified, paired with rationale referencing concrete
+      evidence (file path + line range, URL, or research-doc section).
+    failure_modes:
+      - Lists multiple approaches with no selection.
+      - Selection without rationale or without supporting evidence link.
+    priority: medium
+    contract_ref: "agent §Core Principles (Drive toward one recommended approach)"
+
+  - expectation_id: alternatives-considered
+    summary: Non-selected alternatives are presented with reasons for rejection.
+    signal: Output enumerates ≥1 alternative not chosen, each with a rejection reason.
+    pass_criteria: |
+      At least one alternative is named alongside the selected approach, with a
+      one-line reason it was not chosen and a citation (file/URL).
+    failure_modes:
+      - Only the chosen approach is shown.
+      - Alternatives listed but no rejection reasoning.
+    priority: medium
+    contract_ref: "agent §Phase 2 Step 1 + §Response Format presentation order"
+
+  - expectation_id: summary-table-on-completion
+    summary: Completion responses end with the 📊 Summary handoff table.
+    signal: Output contains a markdown table whose header row leads with `| 📊 Summary |`.
+    pass_criteria: |
+      Table rows include Research Document, Selected Approach, Key Discoveries,
+      Alternatives Evaluated, Follow-Up Items (label match, case-insensitive).
+    failure_modes:
+      - Table missing on the "research complete" turn.
+      - Wrong row labels or summary rendered as a bulleted list instead of a table.
+    priority: medium
+    applies_when: "user indicates research is complete OR agent self-declares completion"
+    contract_ref: "agent §Research Completion"
+
+  - expectation_id: ready-for-planning-handoff
+    summary: Completion responses include the three-step planning handoff.
+    signal: Output includes `/clear`, attach instruction for the research file, and `/task-plan`.
+    pass_criteria: All three tokens appear in sequence at the end of a completion response.
+    failure_modes:
+      - Missing `/clear` or `/task-plan`.
+      - Suggests a different next agent (`/task-implement`, etc.) without planning step.
+    priority: low
+    applies_when: "research-complete turn"
+    contract_ref: "agent §Ready for Planning"
+
+  - expectation_id: plain-text-tracking-paths
+    summary: Paths under .copilot-tracking/ render as plain text, not markdown links.
+    signal: Tracking paths in the output do not use `[text](path)` or `#file:` syntax.
+    pass_criteria: |
+      Every occurrence of `.copilot-tracking/` in the output is rendered as plain
+      text (bare or fenced), with no `]( .copilot-tracking/` or `#file:.copilot-tracking/`.
+    failure_modes:
+      - Linkified tracking paths produce VS Code Problems-tab noise.
+    priority: low
+    contract_ref: "agent §File Path Conventions"
+
+  - expectation_id: topic-fidelity
+    summary: Output substantively addresses the stimulus's research question.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `task-researcher-produces-research-writeup` stimulus, response
+      contains terms from {npm, script, lint, markdown, validate} (already
+      grader-checked as `topic-coverage`).
+    failure_modes:
+      - Off-topic response.
+      - Response refers only to the file path with no findings summary.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

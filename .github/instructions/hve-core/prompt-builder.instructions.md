@@ -341,6 +341,8 @@ When prompts, agents, or instructions need a skill's capability, describe the ta
 
 Avoid hardcoded script paths, platform detection logic, or extension fallback code in caller files. Skills handle these concerns internally through their SKILL.md instructions and scripts.
 
+Never load a skill by hardcoding its `SKILL.md` path (for example, instructing the agent to `read_file` on `.github/skills/<collection>/<skill>/SKILL.md`). The `.github/skills/` root does not exist in plugin or extension distributions, so repo-root-relative skill paths break portability. Refer to the skill by its `name` (and slash command where applicable) and let progressive disclosure load `SKILL.md`.
+
 For explicit invocation, reference the slash command `/skill-name` in usage documentation.
 
 Semantic invocation pattern:
@@ -349,8 +351,14 @@ Semantic invocation pattern:
 <!-- Direct script reference (avoid) -->
 Run `./scripts/linting/Validate-SkillStructure.ps1 -WarningsAsErrors` to validate all skill directories.
 
+<!-- Hardcoded SKILL.md load (avoid) -->
+Read `.github/skills/hve-core/architecture-diagrams/SKILL.md`, then follow its instructions.
+
 <!-- Semantic skill invocation (preferred) -->
 Validate all skill directory structures with warnings treated as errors.
+
+<!-- Named skill invocation (preferred) -->
+Use the `architecture-diagrams` skill to render the component diagram.
 ```
 
 When a caller describes a task that semantically matches a skill's `description`, Copilot follows this loading sequence:

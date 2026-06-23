@@ -37,6 +37,17 @@ from pptx.enum.shapes import MSO_SHAPE
 from pptx.util import Inches, Pt
 
 
+def _cairosvg_available() -> bool:
+    try:
+        import cairosvg  # noqa: F401
+    except (ImportError, OSError):
+        return False
+    return True
+
+
+_CAIROSVG_AVAILABLE = _cairosvg_available()
+
+
 class TestHasFormattingVariation:
     """Tests for _has_formatting_variation."""
 
@@ -904,6 +915,7 @@ class TestSaveImageBlob:
         result = _save_image_blob(mock_shape, tmp_path, 1, 1)
         assert result["path"].endswith(".emf")
 
+    @pytest.mark.skipif(not _CAIROSVG_AVAILABLE, reason="cairosvg/libcairo unavailable")
     def test_svg_blob_saved_as_png(self, tmp_path):
         """SVG content is converted to PNG and saved with .png extension."""
         mock_shape = MagicMock()
@@ -984,6 +996,7 @@ class TestSanitizeSvg:
 class TestConvertSvgToPng:
     """Tests for _convert_svg_to_png."""
 
+    @pytest.mark.skipif(not _CAIROSVG_AVAILABLE, reason="cairosvg/libcairo unavailable")
     def test_valid_svg_produces_png(self):
         svg = (
             b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'

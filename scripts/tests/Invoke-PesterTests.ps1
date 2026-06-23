@@ -27,11 +27,26 @@
 .PARAMETER CodeCoverage
     Enables JaCoCo code coverage reporting to logs/coverage.xml.
 
+.PARAMETER Tag
+    Run only tests whose Describe/Context/It blocks carry one of the supplied tags.
+    `-IncludeTag` is accepted as an alias.
+
+.PARAMETER ExcludeTag
+    Exclude tests whose blocks carry any of the supplied tags. When omitted, defaults
+    to @('Integration','Slow') to preserve historical behavior. Passing this parameter
+    (including `-ExcludeTag @()`) replaces the default rather than appending to it.
+
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1
 
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1 -TestPath "scripts/tests/linting/"
+
+.EXAMPLE
+    ./scripts/tests/Invoke-PesterTests.ps1 -Tag Unit
+
+.EXAMPLE
+    ./scripts/tests/Invoke-PesterTests.ps1 -ExcludeTag Slow
 
 .EXAMPLE
     ./scripts/tests/Invoke-PesterTests.ps1 -CI -CodeCoverage
@@ -45,7 +60,14 @@ param(
     [switch]$CI,
 
     [Parameter(Mandatory = $false)]
-    [switch]$CodeCoverage
+    [switch]$CodeCoverage,
+
+    [Parameter(Mandatory = $false)]
+    [Alias('IncludeTag')]
+    [string[]]$Tag,
+
+    [Parameter(Mandatory = $false)]
+    [string[]]$ExcludeTag
 )
 
 $ErrorActionPreference = 'Stop'
@@ -102,6 +124,12 @@ if ($TestPath) {
         $configArgs['TestPath'] = $resolvedPaths
     }
 }
+if ($Tag) {
+    $configArgs['Tag'] = $Tag
+}
+if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
+    $configArgs['ExcludeTag'] = $ExcludeTag
+}
 
 $configuration = & $configScript @configArgs
 
@@ -111,6 +139,13 @@ $configuration.Run.PassThru = $true
 Write-Host "🧪 Running Pester tests..." -ForegroundColor Cyan
 if ($TestPath) {
     Write-Host "   Test paths: $($TestPath -join ', ')" -ForegroundColor Cyan
+}
+if ($Tag) {
+    Write-Host "   Tag filter: $($Tag -join ', ')" -ForegroundColor Cyan
+}
+if ($PSBoundParameters.ContainsKey('ExcludeTag')) {
+    $excludeDisplay = if ($ExcludeTag -and $ExcludeTag.Count -gt 0) { $ExcludeTag -join ', ' } else { '(none)' }
+    Write-Host "   ExcludeTag override: $excludeDisplay" -ForegroundColor Cyan
 }
 
 $result = Invoke-Pester -Configuration $configuration

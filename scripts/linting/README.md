@@ -2,7 +2,7 @@
 title: Linting Scripts
 description: PowerShell scripts for code quality validation and documentation checks
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-06-16
 ms.topic: reference
 keywords:
   - powershell
@@ -407,11 +407,13 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 * Lints each skill directory independently
 * Reports per-skill pass/fail results
 * Supports optional JSON output
+* `-Fix` mode applies `ruff check --fix` followed by `ruff format`; writes results to `python-lint-fix-results.json` instead of `python-lint-results.json`
 
 ##### Parameters
 
 * `-RepoRoot` (string) - Repository root path (default: current directory)
 * `-OutputPath` (string) - Optional path for JSON results
+* `-Fix` (switch) - Applies `ruff check --fix` + `ruff format` to each skill directory; intended for local developer use, not CI gating
 
 ##### Usage
 
@@ -421,6 +423,9 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 # Lint from a specific repository root
 ./scripts/linting/Invoke-PythonLint.ps1 -RepoRoot /path/to/repo
+
+# Apply ruff autofixes and format (local use only)
+./scripts/linting/Invoke-PythonLint.ps1 -Fix
 ```
 
 ##### GitHub Actions Integration
@@ -430,7 +435,7 @@ Purpose: Enforce Python code quality standards across all Python skills in the r
 
 #### `Invoke-PythonTests.ps1`
 
-Runs pytest across Python skills.
+Runs tests across Python skills using `uv run pytest` when `uv` is available, with a fallback to venv or global pytest.
 
 Purpose: Execute Python test suites for all Python skills that include a `tests/` directory, reporting aggregate pass/fail results.
 
@@ -438,7 +443,8 @@ Purpose: Execute Python test suites for all Python skills that include a `tests/
 
 * Discovers Python skills via `pyproject.toml` file search
 * Skips skills without a `tests/` directory
-* Verifies pytest availability before running
+* Prefers `uv run pytest` when `uv` is available; syncs dev dependencies with `uv sync --dev` (or `--locked` when `uv.lock` exists) before running
+* Falls back to venv or global `pytest` when `uv` is not found
 * Reports per-skill test results with pass/fail counts
 * Configurable verbosity level
 
@@ -630,6 +636,38 @@ Markdown link checker configuration.
 * Retry attempts: 3
 * Timeout: 10 seconds
 * Ignore patterns: Localhost, example.com
+
+## Schemas Directory
+
+The `schemas/` directory contains JSON schema files used for frontmatter validation. These schemas ensure that the metadata in various markdown and configuration files adheres to the expected structure.
+
+### Schema Files
+
+The directory includes the following 19 JSON schema files:
+
+* `accessibility-state.schema.json`
+* `adr-config.schema.json`
+* `adr-consistency-rules.schema.json`
+* `adr-frontmatter.schema.json`
+* `agent-frontmatter.schema.json`
+* `ai-artifact-config.schema.json`
+* `base-frontmatter.schema.json`
+* `chatmode-frontmatter.schema.json`
+* `collection-manifest.schema.json`
+* `docs-frontmatter.schema.json`
+* `instruction-frontmatter.schema.json`
+* `marketplace-manifest.schema.json`
+* `model-catalog.schema.json`
+* `prompt-frontmatter.schema.json`
+* `rai-state.schema.json`
+* `root-community-frontmatter.schema.json`
+* `security-state.schema.json`
+* `skill-frontmatter.schema.json`
+* `sssc-state.schema.json`
+
+### Schema Mapping
+
+* `schema-mapping.json`: Maps glob patterns to their corresponding JSON schemas for targeted validation.
 
 ## Testing
 

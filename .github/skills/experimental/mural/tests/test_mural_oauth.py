@@ -554,7 +554,8 @@ def test_run_login_happy_path_persists_record(
     mural_module._save_token_store(target, record)
     import os
 
-    assert oct(os.stat(target).st_mode & 0o777) == "0o600"
+    if os.name != "nt":
+        assert oct(os.stat(target).st_mode & 0o777) == "0o600"
 
 
 def test_run_login_default_http_rejects_token_endpoint_redirect(

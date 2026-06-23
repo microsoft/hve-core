@@ -1,0 +1,37 @@
+stimuli:
+  - name: task-researcher-produces-research-writeup
+    prompt: |
+      You are operating in an isolated sandbox with no repository checked out and
+      no subagents available. Do not attempt to clone, create, or set up a
+      repository, and do not delegate to subagents. Using only the notes provided
+      below, synthesize a structured research writeup.
+
+      Notes to synthesize (npm scripts that validate markdown in a repository):
+      - `npm run lint:md` runs markdownlint across all Markdown files.
+      - `npm run lint:md-links` checks Markdown for broken links.
+      - `npm run lint:frontmatter` validates YAML frontmatter against schemas.
+
+      Produce a structured writeup covering each script, what it validates, and
+      where it is wired into the codebase (the package.json scripts section).
+      Write your research file under `.copilot-tracking/research/` and tell me the
+      path you wrote it to. Limit the work to one pass.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: structured-writeup
+        config:
+          pattern: '(?i)(finding|summary|writeup|section|where|wired|location)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]research'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(npm|script|lint|markdown|validate)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|\.go|\.rs|\.java)'
+          negate: true

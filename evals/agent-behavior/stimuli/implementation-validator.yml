@@ -1,0 +1,38 @@
+stimuli:
+  - name: implementation-validator-full-quality-recipe
+    prompt: |
+      Validate the changed file `src/services/PaymentService.cs` with `full-quality`
+      scope. Produce categorized, severity-graded findings (Critical, Major, Minor)
+      using sequential IV-NNN identifiers, and report where you wrote the
+      implementation validation log.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: validation-log-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]reviews[-/\\].*impl[-_]?validation'
+      - type: output-matches
+        name: findings-vocabulary
+        config:
+          pattern: '(?i)(IV-?\d|critical|major|minor|architecture|design|security|finding|evidence|recommendation)'
+
+  - name: implementation-validator-scope-acknowledgment
+    prompt: |
+      As an implementation-validator subagent invocation, list the validation
+      scopes you accept (architecture, design-principles, dry-analysis, api-usage,
+      version-consistency, refactoring, error-handling, test-coverage, security,
+      full-quality) and explain how findings are organized in the validation log.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: scope-vocabulary
+        config:
+          pattern: '(?i)(architecture|design-principles|dry-analysis|api-usage|version-consistency|refactoring|error-handling|test-coverage|security|full-quality)'
+      - type: output-matches
+        name: log-structure-vocabulary
+        config:
+          pattern: '(?i)(severity|category|evidence|recommendation|impact)'

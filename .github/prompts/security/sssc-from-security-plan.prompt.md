@@ -15,6 +15,8 @@ After the disclaimer, display the framework attribution `OpenSSF Scorecard • S
 
 Activate the SSSC Planner in **from-security-plan mode** for project slug `${input:project-slug}` to extend an existing Security Planner assessment with supply chain security coverage.
 
+The SSSC Planner consults the `supply-chain-security` skill for framework and capabilities-inventory reference content (OpenSSF Scorecard, SLSA, Best Practices Badge, Sigstore, SBOM); do not restate those tables in this prompt.
+
 ## Inputs
 
 * `${input:project-slug}`: (Optional) Project slug for the SSSC plan directory. When omitted, derive from the discovered security plan project name.
@@ -29,7 +31,7 @@ Scan the workspace for Security Planner artifacts and supporting context:
 
 * `.copilot-tracking/security-plans/` for Security Planner project subdirectories. Look for `state.json` within each subdirectory. If multiple plans exist, present all candidates to the user for selection.
 
-Also scan the shared supporting context sources defined in `sssc-identity.instructions.md`.
+Also scan the shared supporting context sources defined in `sssc-planner.instructions.md`.
 
 Present pre-scan results as a checklist:
 

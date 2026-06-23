@@ -17,7 +17,6 @@ import logging
 from collections import Counter
 from pathlib import Path
 
-import cairosvg
 import yaml
 from lxml import etree
 from pptx import Presentation
@@ -117,6 +116,9 @@ def _sanitize_svg(blob: bytes) -> bytes:
 def _convert_svg_to_png(blob: bytes) -> bytes:
     """Sanitize an SVG blob and convert it to PNG via cairosvg."""
     clean_svg = _sanitize_svg(blob)
+
+    import cairosvg
+
     return cairosvg.svg2png(bytestring=clean_svg)
 
 
@@ -902,7 +904,7 @@ def _build_color_map(
             colors["text_white"] = color_hex
         elif brightness < 80 and "text_dark" not in colors:
             colors["text_dark"] = color_hex
-        elif 80 <= brightness <= 200 and "text_gray" not in colors:
+        elif "text_gray" not in colors:
             colors["text_gray"] = color_hex
 
     accent_names = ["accent_blue", "accent_teal", "accent_green"]

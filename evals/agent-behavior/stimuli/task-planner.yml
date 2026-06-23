@@ -1,0 +1,24 @@
+stimuli:
+  - name: task-planner-class-recipe
+    prompt: |
+      Plan the implementation of a "forgot password" feature for a web app. Break it into phases with clear success criteria. Write the plan under `.copilot-tracking/plans/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: success-criteria
+        config:
+          pattern: '(?i)success\s+criteria|criteria'
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]plans'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
