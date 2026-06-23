@@ -1,0 +1,20 @@
+stimuli:
+  - name: network-isa95-planner-class-recipe
+    prompt: |
+      Sketch an ISA-95 level-2-to-level-3 network plan for a single packaging line. List zones, conduits, and primary data flows in a structured document. Write the plan under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(isa.?95|level|zone|conduit|network|plc|scada)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

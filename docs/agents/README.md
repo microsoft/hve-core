@@ -75,7 +75,7 @@ Agents focused on deployment reliability and build pipeline analysis.
 
 ## Meta/Engineering
 
-The prompt builder agent creates and validates prompt engineering artifacts. Supports interactive authoring with sandbox testing for prompts, instructions, agents, and skills. The doc-ops agent manages documentation coverage analysis and freshness tracking across the repository.
+The prompt builder agent creates and validates prompt engineering artifacts. Supports interactive authoring with sandbox testing for prompts, instructions, agents, and skills. The documentation agent coordinates documentation audit, drift, authoring, and validation across the repository through its four modes.
 
 ## Infrastructure
 

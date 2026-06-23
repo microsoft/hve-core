@@ -366,7 +366,7 @@ function Write-CIAnnotation {
                 $annotation += " $($params -join ',')"
             }
             $escapedMessage = ConvertTo-GitHubActionsEscaped -Value $Message
-            Write-Output "$annotation::$escapedMessage"
+            Write-Host "$annotation::$escapedMessage"
         }
         'azdo' {
             $typeMap = @{
@@ -383,7 +383,7 @@ function Write-CIAnnotation {
             if ($Line -gt 0) { $annotation += ";linenumber=$Line" }
             if ($Column -gt 0) { $annotation += ";columnnumber=$Column" }
             $escapedMessage = ConvertTo-AzureDevOpsEscaped -Value $Message
-            Write-Output "$annotation]$escapedMessage"
+            Write-Host "$annotation]$escapedMessage"
         }
         'local' {
             $prefix = switch ($Level) {

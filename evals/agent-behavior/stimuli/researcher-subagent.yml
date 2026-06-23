@@ -1,0 +1,39 @@
+stimuli:
+  - name: researcher-subagent-scope-acknowledgment
+    prompt: |
+      As a researcher subagent, investigate only the question "Which YAML keys
+      does `Build-AgentBehaviorSpec.ps1` require in a stimulus partial?" Do not
+      pursue tangential threads. Write your findings to a subagent research
+      document and report the path.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: subagent-research-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]research[-/\\]subagents'
+      - type: output-matches
+        name: scope-acknowledgment
+        config:
+          pattern: '(?i)(scope|only|stop|do not pursue|original (question|scope)|tangential)'
+
+  - name: researcher-subagent-executive-summary
+    prompt: |
+      You are completing a researcher subagent invocation on the topic
+      "behavior-conformance stimulus authoring". Produce the chat response in the
+      executive-summary shape (file path pointer, status, bullet findings,
+      next-step checklist, optional clarifying questions, full-detail pointer)
+      and report the subagent file path you wrote.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: response-shape-vocabulary
+        config:
+          pattern: '(?i)(status|complete|blocked|finding|next|clarifying|full[- ]?detail)'
+      - type: output-matches
+        name: subagent-research-path
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]research[-/\\]subagents'

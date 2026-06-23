@@ -1,0 +1,58 @@
+stimuli:
+  - name: finding-deep-verifier-verdict-blocks
+    prompt: |
+      You are the Finding Deep Verifier subagent. Verify the following two
+      candidate security findings against the codebase context provided, and
+      return one verdict block per finding in a single response:
+        - finding_id: SEC-001
+          title: SQL injection in user lookup
+          severity: HIGH
+          location: src/db/users.py#L42
+          claim: Raw f-string interpolation of `user_id` into a SQL query.
+        - finding_id: SEC-002
+          title: Hardcoded secret in config loader
+          severity: MEDIUM
+          location: src/config.py#L11
+          claim: A literal API token appears in source.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: verdict-block-per-finding
+        config:
+          pattern: '(?i)##\s*finding:?\s*sec-00[12]'
+      - type: output-matches
+        name: verdict-vocabulary
+        config:
+          pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'
+      - type: output-matches
+        name: required-section-headings
+        config:
+          pattern: '(?i)(original assessment|confirming evidence|updated remediation|example fix)'
+      - type: output-matches
+        name: location-link-format
+        config:
+          pattern: '(?i)(\[[^\]]+#l\d+\]\([^)]+#l\d+\)|—)'
+
+  - name: finding-deep-verifier-no-new-findings
+    prompt: |
+      You are the Finding Deep Verifier subagent. Verify only this single
+      finding and do not introduce any additional findings:
+        - finding_id: SEC-010
+          title: Missing CSRF protection on form POST
+          severity: MEDIUM
+          location: src/web/forms.py#L88
+      Return your verdict block.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: target-finding-present
+        config:
+          pattern: '(?i)sec-010'
+      - type: output-matches
+        name: verdict-vocabulary
+        config:
+          pattern: '(?i)\*\*verdict:?\*\*\s*(confirmed|disproved|downgraded)'

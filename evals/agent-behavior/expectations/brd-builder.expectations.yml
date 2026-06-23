@@ -1,0 +1,167 @@
+# Bucket-A expectations for brd-builder
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the agent file places the BRD itself at `docs/brds/<name>-brd.md` and
+# the session state at `.copilot-tracking/brd-sessions/<name>.state.json`. The
+# current `brd-builder-class-recipe` stimulus' `tracking-file-write` grader
+# expects the BRD path to start with `.copilot-tracking/(brd-sessions|research)/`,
+# which does not match the agent's own contract. Expectations below ground in
+# the agent file; the next pass should either align the grader to `docs/brds/`
+# or expect both paths.
+slug: brd-builder
+class: research-writer
+agent_file: .github/agents/project-planning/brd-builder.agent.md
+stimulus_file: evals/agent-behavior/stimuli/brd-builder.yml
+latest_result: evals/results/agent-matrix/2026-05-28/brd-builder.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: brd-file-location
+    summary: BRD file is written to `docs/brds/<kebab-case-name>-brd.md`.
+    signal: Output names a workspace path matching `docs/brds/<slug>-brd.md`.
+    pass_criteria: |
+      The reported BRD path is workspace-relative, starts with `docs/brds/`,
+      uses a kebab-case slug derived from the initiative name, and ends with
+      `-brd.md`.
+    failure_modes:
+      - BRD written to a temp directory or absolute path
+        (current 2026-05-28 output reports `C:\Users\…\AppData\Local\Temp\vally-eval-…\…-brd.md`).
+      - BRD written to repo root with no `docs/brds/` prefix.
+      - Filename ends with `.md` only (missing `-brd` suffix).
+    priority: high
+    contract_ref: "agent §File Management › File Locations (BRD file: `docs/brds/<kebab-case-name>-brd.md`)"
+
+  - expectation_id: state-file-location
+    summary: State file is written under the BRD-sessions tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/brd-sessions/<slug>.state.json`.
+    pass_criteria: |
+      When the agent creates a BRD it also reports a state-file path beginning
+      with `.copilot-tracking/brd-sessions/` whose filename ends with
+      `.state.json` and whose slug matches the BRD slug.
+    failure_modes:
+      - State file omitted entirely.
+      - State file written next to BRD in `docs/brds/`.
+      - State file written outside `.copilot-tracking/brd-sessions/`.
+    priority: high
+    contract_ref: "agent §File Management › File Locations + §State Tracking"
+
+  - expectation_id: required-brd-sections
+    summary: Drafted BRD contains all required sections from the agent contract.
+    signal: Output references each of the six required section names.
+    pass_criteria: |
+      The response (or the BRD body it summarizes) names all six required
+      sections (case-insensitive): Business Context and Background, Problem
+      Statement and Business Drivers, Business Objectives and Success Metrics,
+      Stakeholders and Roles, Scope, Business Requirements.
+    failure_modes:
+      - Response shows only goals/scope/metrics and omits Stakeholders or
+        Problem Statement.
+      - Conditional sections (Processes, Data, Benefits) substituted for required ones.
+    priority: high
+    contract_ref: "agent §BRD Structure (Required sections list)"
+
+  - expectation_id: requirement-id-format
+    summary: Each requirement has the documented BR-NNN identifier.
+    signal: Requirements use `BR-001`, `BR-002`, etc.
+    pass_criteria: |
+      Listed business requirements use the `BR-<NNN>` ID format documented in
+      §BRD Structure › Requirement Quality, with zero-padded three-digit
+      numbers. Each requirement also includes a testable description and a
+      priority.
+    failure_modes:
+      - Requirements numbered as `R1`, `Req-01`, `1.`, or unnumbered bullets.
+      - IDs present but with no testable description or priority.
+    priority: medium
+    contract_ref: "agent §BRD Structure › Requirement Quality (unique ID `BR-001`, testable description, priority)"
+
+  - expectation_id: frontmatter-fields
+    summary: BRD frontmatter includes the documented metadata fields.
+    signal: Output shows YAML frontmatter with `title`, `description`, `author`, `ms.date`, `ms.topic`.
+    pass_criteria: |
+      The BRD body the agent shows or summarizes includes YAML frontmatter
+      with at least `title`, `description`, `author`, `ms.date`, and
+      `ms.topic` keys, and does NOT include `<!-- markdownlint-disable-file -->`.
+    failure_modes:
+      - No frontmatter shown.
+      - Frontmatter missing one or more required keys.
+      - File begins with `<!-- markdownlint-disable-file -->`.
+    priority: medium
+    contract_ref: "agent §BRD Creation (Include YAML frontmatter with `title`, `description`, `author`, `ms.date`, `ms.topic`; exclude markdownlint disable comment)"
+
+  - expectation_id: ambiguous-request-clarification
+    summary: Vague requests trigger 2–3 initial scope questions before file creation.
+    signal: Output asks initial Business Initiative / Scope Boundaries questions.
+    pass_criteria: |
+      When the stimulus is vague (no initiative name, problem-only statement,
+      or multiple unrelated ideas), the response asks 2–3 essential questions
+      from the documented Initial Questions list (initiative name, business
+      problem, driver, initiative type, primary stakeholders) before creating
+      the BRD file.
+    failure_modes:
+      - Agent immediately creates a BRD file for a vague request with no questioning.
+      - Agent asks ten or more questions, ignoring the 2–3 budget.
+    priority: medium
+    applies_when: "stimulus is vague (no clear initiative name or scope)"
+    contract_ref: "agent §Handling Ambiguous Requests + §Questioning Strategy › Initial Questions"
+
+  - expectation_id: explicit-request-immediate-creation
+    summary: Clear initiative requests trigger immediate file creation, not extended questioning.
+    signal: Output reports a BRD file path on the first turn when the initiative is named.
+    pass_criteria: |
+      When the user provides an explicit initiative name, clear business change,
+      or specific project reference (e.g. "Create a BRD for Claims Automation
+      Program" or "Draft a BRD for self-service password reset"), the response
+      creates the BRD file on the first turn and reports its path, then asks
+      refinement questions afterward.
+    failure_modes:
+      - Agent asks ten clarifying questions before creating the file for an
+        explicit initiative.
+      - Agent never reports a file path for a clear initiative request.
+    priority: medium
+    applies_when: "stimulus names a clear initiative or feature (e.g. `brd-builder-class-recipe`)"
+    contract_ref: "agent §Handling Ambiguous Requests (Create files immediately when the user provides an explicit initiative name)"
+
+  - expectation_id: emoji-checklist-questions
+    summary: Refinement questions use the documented emoji-checklist format.
+    signal: Output uses `[ ] ❓` / `[x] ✅` / `[ ] ❌` markers on numbered question items.
+    pass_criteria: |
+      When the agent presents refinement questions, items appear as
+      `* <id>. [ ] ❓ <question>` (unanswered), `[x] ✅` (answered), or
+      `[ ] ❌` (N/A), grouped under emoji-prefixed area headings (`🎯`, `👥`,
+      `🔄`, `📊`, `⚡`), per §Questioning Strategy › Refinement Questions Checklist.
+    failure_modes:
+      - Questions presented as plain numbered list with no checklist or emoji.
+      - Question IDs renumbered between turns instead of staying stable.
+    priority: low
+    applies_when: "refinement / elicitation turn"
+    contract_ref: "agent §Questioning Strategy › Refinement Questions Checklist + §Initial Questions"
+
+  - expectation_id: no-source-edit
+    summary: BRD authoring does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Drafting a password-reset BRD leads to modifying auth service source files.
+      - Agent claims to update `package.json` as part of BRD work.
+    priority: medium
+    contract_ref: "agent scope (writes are confined to `docs/brds/` and `.copilot-tracking/brd-sessions/`)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the BRD topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `brd-builder-class-recipe` stimulus, the response contains terms
+      from {password, reset, business, requirement, scope, success} and the
+      BRD body addresses password-reset specifics (e.g. self-service flow,
+      MFA, ticket-volume reduction) rather than generic template prose.
+    failure_modes:
+      - Off-topic BRD with no password-reset references.
+      - Requirements written as placeholders ("BR-001: Describe the feature").
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

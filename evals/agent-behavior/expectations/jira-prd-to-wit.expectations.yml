@@ -1,0 +1,124 @@
+# Bucket-A expectations for jira-prd-to-wit
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: jira-prd-to-wit
+class: workitem-manager
+agent_file: .github/agents/jira/jira-prd-to-wit.agent.md
+stimulus_file: evals/agent-behavior/stimuli/jira-prd-to-wit.yml
+latest_result: evals/results/agent-matrix/2026-05-28/jira-prd-to-wit.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-under-jira-prds
+    summary: PRD planning artifacts live under the documented Jira PRD tracking subtree.
+    signal: Reported file path starts with `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>/`.
+    pass_criteria: |
+      Output reports a workspace-relative path beginning with
+      `.copilot-tracking/jira-issues/prds/`, with a normalized artifact name
+      directory between `prds/` and any planning files. Single-file drafts at
+      `.copilot-tracking/jira-issues/<file>.md` do NOT satisfy this.
+    failure_modes:
+      - "Writes to `~/.copilot/session-state/0ffa70f8-…/files/` (current 2026-05-28 matrix failure)."
+      - Writes JSON payload files outside the workspace (e.g. tmp dirs).
+      - Reports no file path even though drafts were created.
+    priority: high
+    contract_ref: "agent §Output (Store all planning files in `.copilot-tracking/jira-issues/prds/<artifact-normalized-name>`)"
+
+  - expectation_id: jira-field-vocabulary-present
+    summary: Drafts use Jira field vocabulary, not GitHub or ADO terms.
+    signal: Output uses Jira-specific field names.
+    pass_criteria: |
+      Output contains at least two of: `Summary`, `Description`, `Issue Type`,
+      `Priority`, `Component`, `Sprint`, `Epic`, `Story` (case-insensitive).
+    failure_modes:
+      - Draft uses ADO `Work Item Type` / `Area Path`.
+      - Draft uses GitHub `title`/`body`/`labels` instead of Jira fields.
+    priority: high
+    contract_ref: "stimulus grader `field-vocab-present`"
+
+  - expectation_id: epic-story-hierarchy
+    summary: PRD output produces an Epic + Story hierarchy (with optional Task / Sub-task) with explicit parent linkage.
+    signal: Output lists items typed as Epic and Story with each Story referencing its parent Epic.
+    pass_criteria: |
+      When the PRD warrants more than one item, output includes one Epic and
+      zero or more Stories under it. Each Story names its parent Epic (or the
+      hierarchy is unambiguous via table / indentation / explicit `parent`
+      field). Sub-tasks (if any) attach to a parent Story.
+    failure_modes:
+      - Lists Stories with no Epic.
+      - Drafts standalone JSON files with no Epic link declared.
+      - Creates more than one Epic without the PRD asking for them.
+    priority: high
+    contract_ref: "agent §Jira Planning Scope + jira-wit-planning hierarchy rules"
+
+  - expectation_id: planning-only-no-jira-mutation
+    summary: Agent stays planning-only and does not call Jira mutation commands.
+    signal: Output does not claim to have run `jira.py create`, `update`, `transition`, or `comment`.
+    pass_criteria: |
+      Output frames artifacts as drafts/plans for a separate Jira execution
+      workflow. Sample `jira.py create` invocations shown as instructions for
+      the user to run later are acceptable; claiming the agent already ran
+      them is not.
+    failure_modes:
+      - Reply says "I created issues PROJ-123, PROJ-124 in Jira".
+      - Reply says it already invoked `jira.py create` and got back keys.
+    priority: medium
+    contract_ref: "agent frontmatter (no Jira mutation tools) + §Jira Planning Scope (planning-only)"
+
+  - expectation_id: fields-validated-via-jira-skill
+    summary: Plan references discovering issue types and required create fields via the Jira skill.
+    signal: Output mentions `jira.py fields <PROJECT-KEY>` or notes it could not validate fields without a project key.
+    pass_criteria: |
+      Output either references `.github/skills/jira/jira/scripts/jira.py
+      fields <PROJECT-KEY>` (or `jira.py fields`) to validate issue types and
+      required create fields, OR explicitly flags that the project key is
+      unknown and field validation is deferred to the execution workflow.
+    failure_modes:
+      - Finalizes a hierarchy with assumed issue types and no validation step or caveat.
+      - 'Hardcodes `"project": { "key": "PROJ" }` placeholders with no note that the user must replace it (a softer issue, but still flagged).'
+    priority: medium
+    contract_ref: "agent §Jira Planning Scope (discover issue types and required create fields)"
+
+  - expectation_id: no-source-modifications
+    summary: PRD planning does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml`. Mere
+      mentions in user-quoted PRD text, or as discovery targets (Phase 2), are
+      allowed. Sample shell snippets that *run* `jira.py` (a `.py` script) as
+      a CLI tool are allowed; only edits to `.py` source files count.
+    failure_modes:
+      - "Modifies source files alongside drafting issues (current 2026-05-28 matrix failure listed `no-source-edit` as failing because the reply embedded a `python scripts/jira.py` shell snippet — re-author the grader to look at edit verbs, not raw extension matches)."
+      - Edits `package.json` as part of PRD planning.
+    priority: medium
+    contract_ref: "stimulus grader `no-source-edit` (current pattern over-triggers on shell snippets — see failure_modes note)"
+
+  - expectation_id: required-planning-files-named
+    summary: PRD output names the documented planning files actually written.
+    signal: Output references `planning-log.md`, `artifact-analysis.md`, `issues-plan.md`, and/or `handoff.md` by name.
+    pass_criteria: |
+      For any non-trivial PRD planning request the reply names at least two of:
+      `planning-log.md`, `artifact-analysis.md`, `issues-plan.md`,
+      `handoff.md` (the four files in agent §Phase Overview).
+    failure_modes:
+      - Reports a single combined "drafts" file with no planning-log / issues-plan / handoff split.
+      - Reports JSON payload files only with no `.md` planning files alongside.
+    priority: medium
+    contract_ref: "agent §Phase Overview + §Required Phases"
+
+  - expectation_id: acceptance-criteria-on-stories
+    summary: Stories carry acceptance criteria.
+    signal: Each drafted Story includes an `Acceptance Criteria` section.
+    pass_criteria: |
+      Every Story drafted has a non-empty `Acceptance Criteria` section listing
+      at least one testable criterion. `Given / When / Then` phrasing preferred
+      but not required.
+    failure_modes:
+      - Story drafted with summary + description only.
+      - Acceptance criteria field present but empty or "TBD".
+    priority: low
+    applies_when: "stimulus draft includes Stories (vs Epic-only sketches)"
+    contract_ref: "agent §Phase 1 actions (extract acceptance criteria)"

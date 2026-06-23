@@ -1,0 +1,147 @@
+# Bucket-A expectations for skill-assessor
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: skill-assessor is `user-invocable: false`, so the agent-matrix does not
+# produce a `<slug>.json` result file for it. No stimulus exists yet; the
+# `stimulus_file` field points to the conventional path that a later Bucket-B
+# pass should populate.
+slug: skill-assessor
+class: subagent  # subtype: single-skill security assessment
+agent_file: .github/agents/security/subagents/skill-assessor.agent.md
+stimulus_file: evals/agent-behavior/stimuli/skill-assessor.yml
+latest_result: null
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: one-skill-per-invocation
+    summary: Each invocation assesses exactly one security skill.
+    signal: Skill Metadata names a single skill.
+    pass_criteria: |
+      Response covers exactly one security skill, named in the Skill
+      Metadata `Skill` field. Findings table contains rows only for
+      vulnerability IDs from that skill's reference index.
+    failure_modes:
+      - Multiple skills assessed in a single invocation.
+      - Findings include vulnerability IDs from a different skill.
+      - Skill name omitted from the metadata.
+    priority: high
+    contract_ref: "agent §Purpose (Assess exactly one security knowledge skill per invocation)"
+
+  - expectation_id: format-version-by-mode
+    summary: Output uses SKILL_FINDINGS_V1 for audit/diff and PLAN_FINDINGS_V1 for plan mode.
+    signal: Response renders the mode-appropriate format.
+    pass_criteria: |
+      Audit and diff modes return SKILL_FINDINGS_V1 (Skill Metadata,
+      Findings Table, Detailed Remediation). Plan mode returns
+      PLAN_FINDINGS_V1 (Skill Metadata, Findings Table, Mitigation
+      Guidance) and uses plan-mode status vocabulary.
+    failure_modes:
+      - Plan-mode response uses SKILL_FINDINGS_V1 or vice versa.
+      - Required format sections missing.
+      - Custom or merged format used.
+    priority: high
+    contract_ref: "agent §Response Format (mode-specific format selection)"
+
+  - expectation_id: skill-metadata-fields
+    summary: Skill Metadata includes Skill, Framework, Version, and Reference fields.
+    signal: Metadata block contains all four labeled fields.
+    pass_criteria: |
+      Skill Metadata contains labeled fields for `Skill`, `Framework`,
+      `Version`, and `Reference`. Values are sourced from the skill's
+      `SKILL.md` (name, framework_revision, content_based_on URL).
+    failure_modes:
+      - One or more metadata fields omitted.
+      - Field values invented rather than read from SKILL.md.
+      - Reference URL omitted or replaced with a non-canonical link.
+    priority: medium
+    contract_ref: "agent §Skill Findings Format (Skill Metadata)"
+
+  - expectation_id: reference-read-before-analysis
+    summary: All vulnerability references are gathered before any analysis begins.
+    signal: Response indicates Step 1 (gather) completed in full before Step 2 (analyze).
+    pass_criteria: |
+      Response demonstrates that every vulnerability reference file in the
+      skill's index was read end-to-end before any codebase or plan-text
+      analysis began. Step 1 ordering is explicitly preserved.
+    failure_modes:
+      - Analysis findings refer only to a subset of the skill's vulnerability IDs.
+      - Reference reading interleaved with analysis (violates Required Protocol §1).
+      - Findings invent IDs not present in the reference index.
+    priority: high
+    contract_ref: "agent §Required Protocol §1 + §Step 1 Gather All Vulnerability References"
+
+  - expectation_id: status-vocabulary-by-mode
+    summary: Findings table statuses use the mode-appropriate vocabulary.
+    signal: Each row's Status uses a documented value for the active mode.
+    pass_criteria: |
+      Audit and diff modes use Status values from `PASS`, `FAIL`, `PARTIAL`,
+      `NOT_ASSESSED`. Plan mode uses Status values from `RISK`, `CAUTION`,
+      `COVERED`, `NOT_APPLICABLE`. No status crosses modes.
+    failure_modes:
+      - Plan-mode row uses PASS/FAIL/PARTIAL/NOT_ASSESSED.
+      - Audit/diff row uses RISK/CAUTION/COVERED/NOT_APPLICABLE.
+      - Status value invented outside both vocabularies.
+    priority: high
+    contract_ref: "agent §Constants (Status Values + Plan Mode Status Values)"
+
+  - expectation_id: severity-restrictions
+    summary: Severity is populated only for actionable findings; other rows use "—".
+    signal: Severity column matches the documented assignment rules.
+    pass_criteria: |
+      Severity is one of CRITICAL/HIGH/MEDIUM/LOW for FAIL and PARTIAL rows
+      (audit/diff) or RISK and CAUTION rows (plan). PASS, NOT_ASSESSED,
+      COVERED, and NOT_APPLICABLE rows use `—`.
+    failure_modes:
+      - Severity populated for PASS, COVERED, or NOT_APPLICABLE rows.
+      - Severity omitted for FAIL or PARTIAL rows.
+      - Severity uses non-documented values.
+    priority: high
+    contract_ref: "agent §Constants (Severity Values) + §Skill Findings Format"
+
+  - expectation_id: location-link-format
+    summary: Findings Table Location uses workspace-relative markdown links or "—".
+    signal: Each Location cell renders a link or the documented sentinel.
+    pass_criteria: |
+      Audit and diff Location cells use markdown links in the form
+      `[path/to/file.ext#L42](path/to/file.ext#L42)` for FAIL/PARTIAL rows
+      and `—` for PASS/NOT_ASSESSED rows. Plan-mode Location is always `—`.
+    failure_modes:
+      - Location written as bare text or absolute path.
+      - Plan-mode row populates Location with a code path.
+      - PASS row points to a code location.
+    priority: medium
+    contract_ref: "agent §Skill Findings Format + §Plan Findings Format (Location column rules)"
+
+  - expectation_id: detailed-remediation-with-fix
+    summary: Each FAIL/PARTIAL finding includes Offending Code and Example Fix snippets.
+    signal: Detailed Remediation subsections include both fenced code blocks.
+    pass_criteria: |
+      Each FAIL or PARTIAL finding has a Detailed Remediation subsection
+      containing a workspace-relative file link, an `Offending Code` fenced
+      block (3–10 lines, language hint) showing the vulnerable snippet, and
+      an `Example Fix` fenced block demonstrating in-place remediation.
+      Guidance is codebase-specific rather than generic boilerplate.
+    failure_modes:
+      - Offending Code or Example Fix omitted.
+      - Code blocks lack language hints or exceed 10 lines without justification.
+      - Remediation guidance is generic boilerplate unrelated to the codebase.
+    priority: high
+    contract_ref: "agent §Skill Findings Format (Detailed Remediation)"
+
+  - expectation_id: no-executive-summary
+    summary: Response stays within the documented format without extra prose.
+    signal: Response contains no executive summary or content outside the format.
+    pass_criteria: |
+      Response renders only the documented sections for the active format
+      (Skill Metadata, Findings Table, Detailed Remediation or Mitigation
+      Guidance). No executive summary, narrative preamble, or post-format
+      commentary is included.
+    failure_modes:
+      - Response opens with an executive summary or narrative intro.
+      - Response appends commentary after the documented sections.
+      - Response merges sections into a single prose block.
+    priority: medium
+    contract_ref: "agent §Required Protocol §6 (no content beyond the output format)"

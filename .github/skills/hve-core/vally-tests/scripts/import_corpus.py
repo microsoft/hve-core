@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml.reader
+
 REQUIRED_COLUMNS: tuple[str, ...] = (
     "prompt",
     "kind",
@@ -205,9 +207,6 @@ def safety_check(
         try:
             Path(tmp.name).unlink(missing_ok=True)
         except OSError:
-            # Best-effort cleanup: the temp file lives in the OS temp dir and a
-            # failed unlink (e.g. lingering handle on Windows) is non-fatal, so
-            # swallow the error rather than masking the subprocess result.
             pass
     output = ((result.stdout or "") + (result.stderr or "")).strip()
     match = SAFETY_CATEGORY_RE.search(output)
@@ -230,6 +229,13 @@ def _indent_block(text: str, prefix: str) -> str:
     return "".join(f"{prefix}{line}\n" for line in lines)
 
 
+# Characters PyYAML rejects when reading a stream. Reuse the reader's own
+# NON_PRINTABLE pattern so this matches PyYAML exactly: a prompt containing any
+# of these bytes cannot ride in a literal block scalar and must be emitted as a
+# double-quoted scalar instead.
+_YAML_NON_PRINTABLE = yaml.reader.Reader.NON_PRINTABLE
+
+
 def _yaml_scalar(value: str) -> str:
     """Render a string as a safely-quoted YAML scalar.
 
@@ -250,13 +256,38 @@ def _comment_value(value: str) -> str:
     return value.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
 
 
+def _block_scalar_safe(prompt: str) -> bool:
+    """Return True when ``prompt`` can ride safely in a literal block scalar.
+
+    A literal block scalar auto-detects its content indentation from the first
+    non-empty line. A leading empty line, or a first line carrying leading
+    whitespace, makes that detection ambiguous: a later, less-indented line
+    de-indents below the detected level, terminates the scalar early, and
+    corrupts the surrounding block mapping. Control characters cannot survive a
+    literal block scalar at all. Such prompts must use a double-quoted scalar.
+    """
+    if _YAML_NON_PRINTABLE.search(prompt):
+        return False
+    lines = prompt.splitlines()
+    if not lines:
+        return False
+    first = lines[0]
+    return first != "" and first[0] not in " \t"
+
+
 def build_patch_entry(row: dict[str, str], digest: str) -> str:
+    prompt = row["prompt"]
+    if _block_scalar_safe(prompt):
+        prompt_lines = ["- prompt: |\n", _indent_block(prompt, "    ")]
+    else:
+        # Fall back to a double-quoted scalar so the patch round-trips through
+        # yaml.safe_load even when a literal block scalar would be ambiguous.
+        prompt_lines = [f"- prompt: {_yaml_scalar(prompt)}\n"]
     parts: list[str] = [
         f"# sha256:{digest}\n",
         f"# kind:{_comment_value(row['kind'])}\n",
         f"# target:{_comment_value(row['target_artifact'])}\n",
-        "- prompt: |\n",
-        _indent_block(row["prompt"], "    "),
+        *prompt_lines,
         f"  grader: {_yaml_scalar(row['grader'] or '<unset>')}\n",
         "  tags:\n",
     ]

@@ -1,0 +1,122 @@
+# Bucket-A expectations for task-implementor
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: task-implementor
+class: code-implementor
+agent_file: .github/agents/hve-core/task-implementor.agent.md
+stimulus_file: evals/agent-behavior/stimuli/task-implementor.yml
+latest_result: evals/results/agent-matrix/2026-05-28/task-implementor.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: response-header-format
+    summary: Response begins with the agent's branded header line including the task description.
+    signal: First non-blank line of output matches the literal header pattern.
+    pass_criteria: |
+      Output starts with `## ⚡ Task Implementor: <Task Description>` where
+      <Task Description> is a non-empty phrase (not the literal placeholder).
+    failure_modes:
+      - Header missing entirely (current `header-present` failure on 2026-05-28).
+      - Emoji omitted or replaced.
+      - Colon missing or placeholder left in.
+    priority: high
+    contract_ref: "agent §User Interaction → Response Format"
+
+  - expectation_id: scope-respect-target-file
+    summary: Output references the exact file path named in the stimulus.
+    signal: Output mentions the requested file path verbatim (e.g., `hello.py`).
+    pass_criteria: |
+      The file path provided in the stimulus appears at least once in the output
+      (in prose, code fence, or file-change list).
+    failure_modes:
+      - Output describes a different filename (current `scope-respect` failure on 2026-05-28).
+      - Output speaks only in generic terms without naming the requested file.
+    priority: high
+    contract_ref: "agent §Core Principles (Follow exact file paths cited in implementation details)"
+    stimulus_scoped: true
+
+  - expectation_id: source-edit-evidence
+    summary: When implementation work is requested, output shows concrete edit evidence.
+    signal: Output contains a fenced code block in the target language, a "Created"/"Added"/"Modified" file entry for the target, or a Files Changed listing the target.
+    pass_criteria: |
+      At least one of: (a) fenced code block whose info string matches the target
+      language; (b) `Added:` or `Modified:` line listing the target file path;
+      (c) explicit "Created <path>" / "Wrote <path>" prose.
+    failure_modes:
+      - Output only asserts work was done without showing or naming the change
+        (current `source-edit-present` failure on 2026-05-28: "Verified — runs and outputs `Hello, World!` as expected.").
+      - Output describes the change in prose without any code fence or file list.
+    priority: high
+    contract_ref: "agent §Core Principles, §Changes Log Format (Added/Modified/Removed)"
+    applies_when: "Stimulus requests implementation (not status/clarification)."
+
+  - expectation_id: validation-invocation
+    summary: Output mentions running a relevant lint/validate/test command for the changed files.
+    signal: Output contains a recognizable validation token (lint/ruff/pylint/format/validate/build/test) tied to the change.
+    pass_criteria: |
+      At least one validation verb or command appears alongside the change
+      description, OR the output explicitly states validation was skipped with
+      a stated reason (e.g., "validation deferred to final phase per plan").
+    failure_modes:
+      - No mention of validation at all (current `lint-invocation` failure on 2026-05-28).
+      - Mentions validation in the abstract without binding it to this work.
+    priority: high
+    contract_ref: "agent §Subagent Delegation (Validation commands to run after completing the phase); §Phase 3 Step 1 (confirm all phases reported passing validation)"
+
+  - expectation_id: changes-log-path-named
+    summary: Output names the changes log path under `.copilot-tracking/changes/<date>/`.
+    signal: Output contains a path matching `.copilot-tracking/changes/<YYYY-MM-DD>/<slug>-changes.md`.
+    pass_criteria: |
+      Path is workspace-relative, dated subdir present, suffix `-changes.md`.
+      The path may appear in prose, the Implementation Completion summary
+      table, or the Ready for Next Steps section.
+    failure_modes:
+      - Changes log not referenced.
+      - Path written outside `.copilot-tracking/changes/` (e.g., session-state directories).
+      - Missing date subdir or `-changes.md` suffix.
+    priority: high
+    contract_ref: "agent §Required Artifacts; §Changes Log Format"
+
+  - expectation_id: subagent-delegation-evidence
+    summary: Phase execution is delegated to Phase Implementor, not performed inline.
+    signal: Output references invoking `Phase Implementor` (or notes the delegation tooling is unavailable).
+    pass_criteria: |
+      Output contains an explicit reference to running `Phase Implementor`
+      (or `Researcher Subagent` for context gaps), OR an explicit notice that
+      `runSubagent`/`task` tooling is unavailable and direct execution was used
+      as fallback.
+    failure_modes:
+      - Edits described inline with no delegation mention and no unavailability notice.
+      - Delegates but uses filename `phase-implementor.agent.md` instead of human-readable name.
+    priority: medium
+    contract_ref: "agent §Subagent Delegation"
+
+  - expectation_id: handoff-summary-table
+    summary: On completion, output provides the structured Implementation Completion handoff table.
+    signal: Output contains a markdown table headed `📊 Summary` with rows for Changes Log, Phases Completed, Files Changed, and Validation Status.
+    pass_criteria: |
+      A markdown table is present whose header cell contains `📊 Summary` and
+      whose rows include at least: `Changes Log`, `Phases Completed`,
+      `Files Changed`, and `Validation Status`.
+    failure_modes:
+      - Completion described in prose only, no table.
+      - Table missing required rows (e.g., omits Validation Status).
+    priority: medium
+    contract_ref: "agent §User Interaction → Implementation Completion"
+    applies_when: "Implementation reaches completion or pause; not for status-only queries."
+
+  - expectation_id: no-tracking-path-leak-outside-workspace
+    summary: Tracking artifacts are written under workspace-relative `.copilot-tracking/`, not absolute or external paths.
+    signal: Any tracking file path mentioned in the output is workspace-relative and starts with `.copilot-tracking/`.
+    pass_criteria: |
+      No occurrences of absolute filesystem paths (e.g., `C:\\Users\\...`,
+      `/home/...`) or external state directories (e.g., `.copilot/session-state/`)
+      for plan, details, changes, or research artifacts.
+    failure_modes:
+      - Plan or changes written to absolute path outside the workspace
+        (mirrors current `task-planner` matrix failure mode).
+      - Tracking files placed under non-`.copilot-tracking/` roots.
+    priority: medium
+    contract_ref: "agent §File Reference Formatting (workspace-relative paths); §Required Artifacts (paths under `.copilot-tracking/`)"

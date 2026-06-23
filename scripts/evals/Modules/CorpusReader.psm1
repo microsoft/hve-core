@@ -69,19 +69,20 @@ function Get-CorpusArtifactPaths {
     }
 
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json
+    $paths = [System.Collections.Generic.List[string]]::new()
     if (-not $manifest.artifacts) {
-        return @()
+        return , $paths.ToArray()
     }
 
     $pattern = '^\.github/(agents|prompts|instructions|skills)/.+\.md$'
-    $paths = foreach ($artifact in $manifest.artifacts) {
+    foreach ($artifact in $manifest.artifacts) {
         $path = ($artifact.path -replace '\\', '/')
         if ($artifact.status -ne 'removed' -and $path -match $pattern) {
-            $path
+            $paths.Add($path)
         }
     }
 
-    return @($paths)
+    return , $paths.ToArray()
 }
 
 Export-ModuleMember -Function @(

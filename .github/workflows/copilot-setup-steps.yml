@@ -129,6 +129,11 @@ jobs:
             echo "::error::One or more skill dependency installations failed"
             exit 1
           fi
+          echo "Syncing Python environment for moderation eval..."
+          if ! (cd scripts/evals/moderation && uv sync --locked); then
+            echo "::error::uv sync failed in scripts/evals/moderation"
+            exit 1
+          fi
 
       - name: Install cosign
         env:

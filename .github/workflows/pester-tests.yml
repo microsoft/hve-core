@@ -165,3 +165,69 @@ jobs:
               exit 1
             }
           }
+
+  pester-integration:
+    name: PowerShell Integration Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser
+          Import-Module Pester -RequiredVersion 5.7.1
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+
+      - name: Run Integration Tests
+        id: pester-integration
+        shell: pwsh
+        run: |
+          # Run the full Integration-tagged suite. Slow remains excluded; passing
+          # -ExcludeTag is required because it replaces (not appends to) the runner's
+          # default exclude list of @('Integration','Slow').
+          ./scripts/tests/Invoke-PesterTests.ps1 -CI -Tag Integration -ExcludeTag Slow
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pester-integration-test-results
+          path: |
+            logs/pester-results.xml
+            logs/pester-summary.json
+            logs/pester-failures.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Check integration results
+        if: "!inputs.soft-fail"
+        shell: pwsh
+        run: |
+          if (Test-Path 'logs/pester-summary.json') {
+            $summary = Get-Content 'logs/pester-summary.json' | ConvertFrom-Json
+            if ($summary.FailedCount -gt 0) {
+              Write-Error "Pester integration tests failed: $($summary.FailedCount) failure(s)"
+              exit 1
+            }
+          }

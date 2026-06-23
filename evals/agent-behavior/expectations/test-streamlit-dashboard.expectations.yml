@@ -1,0 +1,191 @@
+# Bucket-A expectations for test-streamlit-dashboard
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: the 2026-05-28 stimulus asks for a trivial "import dashboard.py and
+# assert render() exists" pytest. The agent passed all three regex graders by
+# happening to mention "test" and "dashboard", but the response did not
+# exercise the documented Playwright-driven, 5-phase workflow. The current
+# run wrote to `C:\Users\…\AppData\Local\Temp\vally-eval-…\test_dashboard.py`.
+# Expectations below restore the contract; the rewrite pass should re-scope
+# the stimulus to a real Streamlit dashboard testing scenario.
+slug: test-streamlit-dashboard
+class: code-implementor
+agent_file: .github/agents/data-science/test-streamlit-dashboard.agent.md
+stimulus_file: evals/agent-behavior/stimuli/test-streamlit-dashboard.yml
+latest_result: evals/results/agent-matrix/2026-05-28/test-streamlit-dashboard.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: playwright-test-stack
+    summary: Tests are authored with Playwright (not stub pytest imports).
+    signal: Generated test code imports from `playwright`/`pytest-playwright`
+      and drives the dashboard through a browser page.
+    pass_criteria: |
+      Test files import Playwright APIs (typically
+      `from playwright.async_api import async_playwright, expect` or
+      `pytest-playwright` fixtures like `page`) and exercise the dashboard
+      via `page.goto`, selectors, and assertions on rendered DOM/text.
+    failure_modes:
+      - Test is a plain pytest module that only `import dashboard` and asserts
+        a function exists (current 2026-05-28 behavior).
+      - No Playwright imports; tests run without a browser.
+    priority: high
+    contract_ref: "agent description (using Playwright) + §Phase 1 (Verify Playwright …) + §Test Structure Reference"
+
+  - expectation_id: workspace-relative-test-path
+    summary: Test files are written under a workspace-relative tests path.
+    signal: Reported test path starts with `tests/` (or another workspace tests
+      directory) and ends with `.py`, not an absolute temp path.
+    pass_criteria: |
+      Test file path is workspace-relative (typically under `tests/` or the
+      workspace's existing test directory) and uses the `test_*.py` naming
+      convention for pytest discovery.
+    failure_modes:
+      - Writes to `C:\Users\…\AppData\Local\Temp\vally-eval-…\test_dashboard.py`
+        (current 2026-05-28 behavior).
+      - Writes outside the workspace.
+      - Filename omits the `test_` prefix.
+    priority: high
+    contract_ref: "agent scope (workspace-bound test artifacts) + pytest convention"
+
+  - expectation_id: environment-setup-prompts
+    summary: Phase 1 confirms dashboard path/port and installs Playwright.
+    signal: Output asks for the Streamlit app path and port (default 8501) and
+      runs or proposes the documented Playwright install commands.
+    pass_criteria: |
+      Phase 1 response either (a) asks for the Streamlit application path
+      and port (default `8501`), or (b) confirms them from prior context, and
+      runs or proposes `pip install playwright pytest-playwright pytest-asyncio`
+      followed by `playwright install chromium` when those packages are
+      missing.
+    failure_modes:
+      - Generates tests with no environment-setup step.
+      - Skips the `playwright install chromium` browser-binary step.
+      - Assumes a port without asking or stating the default.
+    priority: medium
+    applies_when: "first turn (Phase 1) for a non-trivial dashboard test request"
+    contract_ref: "agent §Phase 1 Environment Setup"
+
+  - expectation_id: five-phase-sequence
+    summary: Phased outlines name all five testing phases in order.
+    signal: Output names Environment Setup, Functional Testing, Data
+      Validation, Performance Assessment, and Issue Reporting (case-insensitive).
+    pass_criteria: |
+      For an "outline the testing approach" stimulus or a non-trivial
+      end-to-end request, the response names all five phases — Environment
+      Setup (1), Functional Testing (2), Data Validation (3), Performance
+      Assessment (4), Issue Reporting (5) — with first occurrences in the
+      agent's declared order.
+    failure_modes:
+      - Only mentions environment setup and skips Data Validation /
+        Performance / Reporting.
+      - Phases listed out of order.
+      - Custom phase names substituted with no mapping to the declared five.
+    priority: medium
+    applies_when: "stimulus asks for a phased testing plan"
+    contract_ref: "agent §Required Phases (Phase 1–5)"
+
+  - expectation_id: navigation-and-page-coverage
+    summary: Functional tests cover sidebar navigation and the documented page set.
+    signal: Tests assert page navigation across Summary Statistics, Univariate,
+      Multivariate, Time Series, and Chat Interface (where present).
+    pass_criteria: |
+      Phase 2 tests include explicit navigation assertions across the
+      documented page set (Summary Statistics, Univariate Analysis,
+      Multivariate Analysis, Time Series Analysis, Chat Interface) and
+      page-specific validation for metric display, chart rendering, and
+      interactive controls (dropdowns, multiselect, sliders).
+    failure_modes:
+      - Tests cover only one page.
+      - No navigation assertions (e.g., no `select_option` or sidebar
+        interaction).
+      - Interactive controls untested even though the dashboard exposes them.
+    priority: medium
+    applies_when: "Phase 2 against a dashboard that exposes the documented pages"
+    contract_ref: "agent §Phase 2 (Navigation tests + Page-specific validation)"
+
+  - expectation_id: data-validation-against-spec
+    summary: Phase 3 tests compare displayed data to the documented reference ranges.
+    signal: Tests assert temperature ranges (-3.1°C to 34.6°C outside;
+      11.1°C to 24.2°C inside), signal strength (-89.8 to -30.8 dBm), or
+      record count (~100,002 rows, 13 columns) when the dataset matches.
+    pass_criteria: |
+      For datasets matching the documented reference (Home Assistant), Phase 3
+      tests assert at least one of: row count ~100,002, column count 13,
+      outside temperature range, inside temperature range, or signal-strength
+      range. For other datasets, output references the equivalent data
+      expectations supplied by the user.
+    failure_modes:
+      - Phase 3 absent or covers only edge-case null handling.
+      - Tests assert ranges that contradict the documented reference values.
+    priority: low
+    applies_when: "stimulus exercises the Home Assistant reference dataset"
+    contract_ref: "agent §Phase 3 Data Validation (Reference data expectations)"
+
+  - expectation_id: performance-thresholds
+    summary: Phase 4 measures performance against the documented targets.
+    signal: Output references page-load target under 3 seconds and
+      interactive response target under 1 second.
+    pass_criteria: |
+      Phase 4 tests or measurements report page load times against the
+      "under 3 seconds" target and interactive responses against the
+      "under 1 second" target, and observe `st.cache_data` /
+      `st.cache_resource` caching behavior.
+    failure_modes:
+      - No performance assertions or measurements.
+      - Targets named but no measurement code or assertion.
+    priority: low
+    contract_ref: "agent §Phase 4 Performance Assessment"
+
+  - expectation_id: structured-issue-report
+    summary: Phase 5 produces a test report with severity, category, and pass/fail counts.
+    signal: Output reports a saved test report file containing severity levels
+      and issue categories from the documented taxonomies.
+    pass_criteria: |
+      Phase 5 produces a test report (path confirmed with the user) that
+      includes: pass/fail counts per category, an issue registry with
+      reproduction steps and severity (Critical/High/Medium/Low), performance
+      metrics, and prioritized recommendations. Issues are tagged with the
+      documented categories (Functional, Performance, UI/UX, Data,
+      Accessibility).
+    failure_modes:
+      - Reports findings only in chat with no saved file.
+      - Severity labels outside the documented set.
+      - Categories omitted or replaced with ad-hoc labels.
+    priority: medium
+    applies_when: "Phase 5 turn"
+    contract_ref: "agent §Phase 5 Issue Reporting (Severity levels + Categories)"
+
+  - expectation_id: async-test-pattern
+    summary: Test functions use the documented async pattern.
+    signal: Generated tests are declared with `async def test_*(page):` and use
+      `await page.goto(...)`.
+    pass_criteria: |
+      Test functions follow the §Test Structure Reference pattern: async
+      function signature taking a `page` fixture, `await page.goto(...)`,
+      `await page.select_option(...)`, and `await expect(page).…` assertions.
+    failure_modes:
+      - Synchronous test that imports the dashboard module instead of
+        driving a browser (current 2026-05-28 behavior).
+      - Mixes async and sync calls without awaits.
+    priority: medium
+    contract_ref: "agent §Test Structure Reference"
+
+  - expectation_id: no-source-modifications
+    summary: Test authoring does not edit dashboard source or build manifests.
+    signal: Output does not reference modifications to dashboard source files
+      or `pyproject.toml`/`package.json` outside the test directory.
+    pass_criteria: |
+      Modifications are confined to test files under the workspace tests
+      directory, test fixtures, and the generated report from Phase 5. The
+      dashboard source code under test is not modified.
+    failure_modes:
+      - Edits `dashboard.py` to make it more testable instead of asking the
+        dashboard generator to do so.
+      - Hand-edits `pyproject.toml` instead of using the documented
+        `pip install` / `uv add` flow.
+    priority: medium
+    contract_ref: "agent scope (Phase 1–5 produce tests and reports; do not modify dashboard source)"
