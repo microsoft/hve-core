@@ -348,10 +348,10 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_description}}-changes.
 
 ### Acceptance Criteria Coverage
 
-| AC ID   | Acceptance criterion   | Source   | Plan coverage   | Details reference   | Validation   | Status   |
-|---------|------------------------|----------|-----------------|---------------------|--------------|----------|
-| AC-01   | {{acceptance_case_1}}  | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
-| AC-02   | {{acceptance_case_2}}  | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
+| AC ID | Acceptance criterion  | Source               | Plan coverage            | Details reference          | Validation          | Status                                                           |
+|-------|-----------------------|----------------------|--------------------------|----------------------------|---------------------|------------------------------------------------------------------|
+| AC-01 | {{acceptance_case_1}} | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
+| AC-02 | {{acceptance_case_2}} | {{source_reference}} | {{phase_step_reference}} | {{details_line_reference}} | {{validation_task}} | Covered / Partial / Missing / Needs clarification / Out of scope |
 
 ### Derived Objectives
 
