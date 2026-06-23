@@ -403,8 +403,7 @@ class TestResolveBackend:
             r
             for r in caplog.records
             if r.levelno == logging.WARNING
-            and "keyring backend available but empty for profile 'default'"
-            in r.message
+            and "keyring backend available but empty for profile 'default'" in r.message
             and "using file backend" in r.message
         ]
         assert len(warns) == 1
