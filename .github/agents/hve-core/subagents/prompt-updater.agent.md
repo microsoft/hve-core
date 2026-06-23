@@ -84,7 +84,7 @@ Review all modifications and prompt updater tracking file(s):
 
 ## File Reference Formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the prompt updater tracking file(s), use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the prompt updater tracking file(s), use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
 * README.md
 * .github/copilot-instructions.md

@@ -82,7 +82,9 @@ Return the structured completion report using the Response Format.
 
 ## File Reference Formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the structured completion report, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+This subagent returns a structured template yet keeps this section because the Files Changed paths it reports flow into the parent agent's tracking artifacts, where plain-text formatting must hold.
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the structured completion report, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
 * README.md
 * .github/copilot-instructions.md

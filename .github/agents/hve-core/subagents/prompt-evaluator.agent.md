@@ -98,7 +98,7 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 
 ## File Reference Formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the evaluation log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the evaluation log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
 * README.md
 * .github/copilot-instructions.md

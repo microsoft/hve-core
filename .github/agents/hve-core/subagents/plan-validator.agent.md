@@ -103,7 +103,7 @@ When prior planning logs are available, cross-run comparison notes reference res
 
 ## File Reference Formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the Planning Log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the Planning Log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
 * README.md
 * .github/copilot-instructions.md

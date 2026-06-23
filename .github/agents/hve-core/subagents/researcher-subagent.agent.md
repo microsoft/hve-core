@@ -52,7 +52,7 @@ Read the subagent research document, cleanup and finalize the subagent research 
 
 ## File Reference Formatting
 
-Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the subagent research document, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the subagent research document, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
 * README.md
 * .github/copilot-instructions.md
