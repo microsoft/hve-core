@@ -23,7 +23,7 @@ Researches external sources and records FAR-scored findings.
 
 * Research question that needs external evidence.
 * Optional product, library, standard, or API name.
-* Optional output file path for the external research notes.
+* Output is returned in the chat response for parent synthesis; no file is written.
 
 ## External Research Notes
 

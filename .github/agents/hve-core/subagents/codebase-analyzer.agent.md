@@ -23,7 +23,7 @@ Explains how workspace code works with file and line evidence.
 
 * Research topic or component to analyze.
 * Optional implementation surface, entry point, or behavior focus.
-* Optional output file path for the analysis notes.
+* Output is returned in the chat response for parent synthesis; no file is written.
 
 ## Analysis Notes
 

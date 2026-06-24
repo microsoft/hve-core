@@ -23,7 +23,7 @@ Finds similar workspace examples, conventions, and reusable patterns.
 
 * Research topic or pattern to compare against.
 * Optional component, behavior, or file family to prioritize.
-* Optional output file path for the pattern catalog.
+* Output is returned in the chat response for parent synthesis; no file is written.
 
 ## Pattern Catalog
 

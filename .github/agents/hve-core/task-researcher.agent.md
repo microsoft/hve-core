@@ -140,9 +140,10 @@ Choose the lightest response mode that satisfies the request:
 
 Subagent result handling:
 
-* Treat the subagent's chat response as an index, not the full result.
-* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the summary bullets, re-read the subagent file directly and cite specific sections.
-* Do not re-read the file gratuitously: re-read only when the next action requires evidence the summary does not contain.
+* Treat a focused `Researcher Subagent` chat response as a pointer to its focused scratch document, not the full result.
+* Treat a named lane subagent chat response as the structured findings payload for synthesis, not as an index to a separate file.
+* When a decision (plan structure, phase ordering, accept/reject of an alternative, validation verdict) depends on detail beyond the available chat payload, re-read the focused scratch document for `Researcher Subagent` only.
+* Do not re-read anything gratuitously: re-read only when the next action requires evidence the chat payload does not contain.
 
 ## File Locations
 

@@ -23,7 +23,7 @@ Locates the files, directories, and supporting artifacts relevant to a research 
 
 * Research topic or question to locate in the workspace.
 * Optional focus area, component name, or feature name.
-* Optional output file path for the evidence map.
+* Output is returned in the chat response for parent synthesis; no file is written.
 
 ## Evidence Map
 
