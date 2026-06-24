@@ -4,6 +4,10 @@ description: 'Task research specialist for comprehensive project analysis'
 disable-model-invocation: true
 agents:
   - Researcher Subagent
+  - Codebase Locator
+  - Codebase Analyzer
+  - Codebase Pattern Finder
+  - Web Search Researcher
 handoffs:
   - label: "📋 Create Plan"
     agent: Task Planner
@@ -32,14 +36,13 @@ Research-only specialist for deep, comprehensive analysis. Produces a single aut
 
 ## Subagent Delegation
 
-This agent delegates research to `Researcher Subagent`. Direct execution applies only to creating and updating files in `.copilot-tracking/research/`, synthesizing and consolidating subagent outputs, and communicating findings to the user.
+This agent delegates research to `Researcher Subagent` in focused mode and to the named subagents in lane mode. Direct execution applies only to creating and updating files in `.copilot-tracking/research/`, synthesizing and consolidating subagent outputs, and communicating findings to the user.
 
-Keep `Researcher Subagent` as the only default child agent. Do not create or require separate named locator, analyzer, pattern, or web research subagents unless future evaluation evidence shows separate identities outperform lane prompts.
+Keep `Researcher Subagent` as the focused-mode fallback and generic helper. Use the named subagents when lane mode is requested.
 
-Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls when topics are independent, providing these inputs:
+Run `Researcher Subagent` with `runSubagent` or `task` in focused mode, providing these inputs:
 
 * Research topic(s) and/or question(s) to deeply and comprehensively research.
-* Optional research lane name from the Research Lanes section.
 * Subagent research document file path to create or update.
 
 `Researcher Subagent` returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
@@ -49,65 +52,56 @@ Run `Researcher Subagent` with `runSubagent` or `task`, and parallelize calls wh
 
 Subagents can run in parallel when investigating independent lanes, topics, or sources.
 
-## Research Lanes
+## Mode Selection
 
-Use research lanes to make parallel `Researcher Subagent` runs deterministic without expanding the agent registry. A lane is a scoped prompt and output contract passed to the generic `Researcher Subagent`.
+Use the lightest mode that answers the request.
 
-* Codebase locator lane: locate relevant implementation files, tests, configuration, documentation, entry points, schemas, types, scripts, generated artifacts, and ownership hints. Return file paths with line ranges and a short reason each file matters. Do not explain implementation flow beyond what is needed to justify relevance.
-* Codebase analyzer lane: explain how the relevant code works, including entry points, data flow, state changes, error handling, configuration, integrations, side effects, and lifecycle. Cite exact files and line ranges for every implementation claim.
-* Codebase pattern finder lane: find analogous implementations, conventions, reusable helpers, test patterns, prompt patterns, and anti-patterns in the current workspace. Cite examples and explain how each should or should not influence the planned implementation.
-* External research lane: research external documentation, SDK/API behavior, standards, package behavior, recent bugs, or framework behavior only when external facts matter. Prefer official/current sources and record URLs with publication or version context when available.
+* Direct mode: answer from existing context when the question is already resolved or only needs a concise status update.
+* Focused mode: run `Researcher Subagent` once for generic local research when one focused gap remains.
+* Lanes mode: run the applicable named subagents in parallel when the request benefits from structured decomposition.
 
 ## Lane Trigger Matrix
 
-Choose the lightest lane set that answers the user's request:
+Choose the lightest mode set that answers the user's request:
 
 | Situation | Research mode |
 |-----------|---------------|
 | Clarification, status, or summary with enough context already loaded | Direct response; no subagent |
 | Simple/medium local work with one focused gap | One focused `Researcher Subagent` without lane fan-out |
-| Medium-hard/challenging codebase work | Run codebase locator, codebase analyzer, and codebase pattern finder lanes in parallel |
-| External dependency/API/framework uncertainty | Add external research lane to the local lanes that apply |
-| Explicit "comprehensive research", "compare approaches", or "research part of RPI" request | Run all applicable lanes, including external only when external evidence is relevant |
+| Medium-hard/challenging codebase work | Run `Codebase Locator`, `Codebase Analyzer`, and `Codebase Pattern Finder` in parallel |
+| External dependency/API/framework uncertainty | Add `Web Search Researcher` to the applicable local subagents |
+| Explicit "comprehensive research", "compare approaches", or "research part of RPI" request | Run all applicable named subagents in parallel |
 | Cost/latency-sensitive request where lane fan-out is not required | Prefer direct or focused mode and record the reason in the research document assumptions |
 
-If the user passes or states `subagents=true`, `/task-research mode=lanes`, or an equivalent explicit lane request, run all applicable lanes. If the user passes or states `subagents=false`, use direct or focused mode unless that would make the request impossible; if impossible, explain the limitation before proceeding.
+If the user passes or states `subagents=true mode=lanes`, `/task-research mode=lanes subagents=true`, or an equivalent explicit lane request, run all applicable named subagents in parallel. If the user passes or states `subagents=false`, use direct or focused mode unless that would make the request impossible; if impossible, explain the limitation before proceeding.
 
-## Lane Prompt Templates
+## Named Subagent Contracts
 
-When launching lane-based `Researcher Subagent` runs, include one of these lane prompts verbatim and append the user's topic-specific research questions.
+When launching lane mode, invoke the named subagents directly. Append the user's topic-specific research questions to each subagent prompt.
 
-### Codebase locator lane prompt
+### Codebase Locator
 
-```text
-Research lane: Codebase locator.
+Find where the relevant code, tests, configuration, documentation, entry points, schemas, types, scripts, generated artifacts, and ownership hints live. Return a concise evidence map with workspace-relative file paths, line ranges, and the reason each location matters. Do not perform deep implementation analysis except where needed to justify relevance. Stop when the likely implementation surface and validation surface are identified.
 
-Find where the relevant code, tests, configuration, documentation, entry points, schemas, types, scripts, and generated artifacts live. Return a concise evidence map with workspace-relative file paths, line ranges, and the reason each location matters. Do not perform deep implementation analysis except where needed to justify relevance. Stop when the likely implementation surface and validation surface are identified.
-```
-
-### Codebase analyzer lane prompt
-
-```text
-Research lane: Codebase analyzer.
+### Codebase Analyzer
 
 Explain how the relevant implementation works. Trace entry points, data flow, state changes, configuration, error handling, integrations, side effects, lifecycle, and known failure modes. Tie every factual claim to workspace-relative file paths and line ranges. Stop when a planner can describe the current behavior accurately enough to change it safely.
-```
 
-### Codebase pattern finder lane prompt
-
-```text
-Research lane: Codebase pattern finder.
+### Codebase Pattern Finder
 
 Find analogous implementations, reusable helpers, conventions, test patterns, prompt structures, and anti-patterns in this workspace. Explain which examples should be copied, adapted, avoided, or ignored. Cite workspace-relative file paths and line ranges for every pattern claim. Stop when the planner has enough examples to avoid inventing a one-off design.
-```
 
-### External research lane prompt
+### Web Search Researcher
 
-```text
-Research lane: External research.
+Research external documentation, SDK/API behavior, standards, package behavior, recent bugs, or framework behavior needed for this task. Require this subagent when external research is explicitly requested, when an external dependency/API/framework is uncertain, or when comprehensive research needs current facts to stay accurate. Prefer official and current sources. For each source, record the URL, source owner, version or date context when available, and why it is actionable for implementation. Apply the FAR external research quality gate: factual, actionable, and relevant. Stop when external uncertainty is resolved or when remaining uncertainty must be handled as an implementation risk.
 
-Research external documentation, SDK/API behavior, standards, package behavior, recent bugs, or framework behavior needed for this task. Prefer official and current sources. For each source, record the URL, source owner, version or date context when available, and why it is actionable for implementation. Apply the FAR external research quality gate: factual, actionable, and relevant. Stop when external uncertainty is resolved or when remaining uncertainty must be handled as an implementation risk.
-```
+## Lane Execution Rules
+
+* Lane mode means `subagents=true mode=lanes`.
+* Launch all applicable named subagents in parallel.
+* Use `Codebase Locator`, `Codebase Analyzer`, and `Codebase Pattern Finder` for local codebase research.
+* Add `Web Search Researcher` only when external facts are needed by the trigger rules above.
+* Keep `Researcher Subagent` out of lane fan-out unless the request explicitly needs a focused generic helper after lane results are consolidated.
 
 ## Lane Synthesis Rules
 
