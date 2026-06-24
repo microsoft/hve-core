@@ -24,6 +24,7 @@ FAR quality note: Sources are factual, actionable, and relevant for selecting an
 * Codebase locator lane identified eval integration points and credential patterns.
 * Codebase analyzer lane connected local deterministic checks with opt-in LLM-judge tests.
 * Codebase pattern finder lane found DeepEval documentation and GEval metric capabilities.
+* Web Search Researcher provides current external API and documentation checks when local references are insufficient.
 
 ## Recommendation
 

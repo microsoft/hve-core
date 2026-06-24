@@ -7,7 +7,7 @@ This suite compares Task Researcher outputs with subagents disabled and enabled.
 | Variant | Command intent | Expected behavior |
 |---------|----------------|-------------------|
 | `no-subagents` | `/task-research topic="..." subagents=false` | Direct or focused research unless subagents are required to complete the request. |
-| `with-subagents` | `/task-research topic="..." subagents=true mode=lanes` | Runs all applicable lanes and synthesizes lane outputs. |
+| `with-subagents` | `/task-research topic="..." subagents=true mode=lanes` | Runs the named lanes in parallel, then synthesizes Codebase Locator, Codebase Analyzer, Codebase Pattern Finder, and Web Search Researcher evidence when external facts are needed. |
 
 ## Automated Grading
 
@@ -28,7 +28,7 @@ Score each dimension from 0 to 2.
 | Citation precision | Claims lack citations. | Uses paths or URLs but lacks line/source specificity. | Uses workspace-relative paths with line ranges and clear external URLs. |
 | Actionability | No implementation-ready recommendation. | Recommendation exists but lacks concrete next steps. | Gives a selected approach, rejected alternatives, risks, and validation steps. |
 | Noise control | Includes broad unrelated research. | Some unnecessary detail. | Focused on the scenario and avoids tangents. |
-| Mode compliance | Violates expected mode. | Partially follows mode but over- or under-fans-out. | Matches expected no-subagent or subagent lane behavior. |
+| Mode compliance | Violates expected mode. | Partially follows mode but over- or under-fans-out. | Matches expected no-subagent behavior or names the lane subagents that should fan out. |
 
 ## Interpreting Delta
 

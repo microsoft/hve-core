@@ -5,7 +5,7 @@ Variant: no-subagents
 
 ## Summary
 
-Task Researcher should use focused research for small local gaps and lane-enabled research for medium-hard codebase work.
+Task Researcher should stay in focused research for small local gaps and reserve named lane fan-out for harder codebase work.
 
 ## Evidence
 
@@ -14,4 +14,4 @@ Task Researcher should use focused research for small local gaps and lane-enable
 
 ## Recommendation
 
-Use the no-subagent variant as the latency baseline and compare it against lane-enabled output for evidence coverage and actionability.
+Use the no-subagent variant as the latency baseline and compare it against named-lane output for evidence coverage and actionability.

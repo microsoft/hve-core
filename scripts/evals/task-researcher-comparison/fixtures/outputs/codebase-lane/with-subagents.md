@@ -5,7 +5,7 @@ Variant: with-subagents
 
 ## Summary
 
-Task Researcher should use focused research for small local gaps and lane-enabled research for medium-hard codebase work.
+Task Researcher should use focused research for small local gaps and fan out to named lanes for medium-hard codebase work.
 
 ## Evidence
 
@@ -15,10 +15,11 @@ Task Researcher should use focused research for small local gaps and lane-enable
 
 ## Lane Evidence
 
-* Codebase locator lane found the agent, subagent, command, and eval files.
-* Codebase analyzer lane explained mode selection and synthesis rules.
-* Codebase pattern finder lane found existing Vally and uv eval conventions.
+* Codebase Locator found the agent, subagent, command, and eval files.
+* Codebase Analyzer explained mode selection and synthesis rules.
+* Codebase Pattern Finder found existing Vally and uv eval conventions.
+* Web Search Researcher is only needed when external facts or current API behavior enter the task.
 
 ## Recommendation
 
-Use the no-subagent variant as the latency baseline and compare it against lane-enabled output for evidence coverage and actionability.
+Use the no-subagent variant as the latency baseline and compare it against named-lane output for evidence coverage and actionability.

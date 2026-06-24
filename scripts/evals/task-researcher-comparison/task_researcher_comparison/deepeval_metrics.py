@@ -143,8 +143,8 @@ def build_metrics() -> list[LazyGEval]:
             name="Mode Compliance",
             criteria=(
                 "Score whether the no-subagent and with-subagents variants follow their expected modes, "
-                "including avoiding lane fan-out for simple local work and using applicable lanes for "
-                "medium-hard or external-uncertainty cases."
+                "including avoiding lane fan-out for simple local work and naming the applicable lane "
+                "subagents for medium-hard or external-uncertainty cases."
             ),
             evaluation_params=params,
             threshold=0.7,

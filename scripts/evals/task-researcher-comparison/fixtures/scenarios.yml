@@ -8,12 +8,16 @@ scenarios:
       - ".github/agents/hve-core/task-researcher.agent.md"
       - ".github/agents/hve-core/subagents/researcher-subagent.agent.md"
       - ".github/prompts/hve-core/task-research.prompt.md"
+      - "Codebase Locator"
+      - "Codebase Analyzer"
+      - "Codebase Pattern Finder"
+      - "Web Search Researcher"
     grading_focus:
       coverage: "Identifies parent agent, subagent, command prompt, and eval surfaces."
       citation_precision: "Uses workspace-relative file paths with line references."
       actionability: "Selects a recommended verification approach with concrete next steps."
       noise_control: "Avoids unrelated repository-wide digressions."
-      mode_compliance: "No-subagent output stays focused; subagent output identifies locator, analyzer, and pattern lanes."
+      mode_compliance: "No-subagent output stays focused; subagent output names the four configured lanes and keeps them parallel when applicable."
   - id: focused-local
     title: "Simple local-only focused research"
     prompt: "Research where Task Researcher documents the lightest mode for simple local work."
