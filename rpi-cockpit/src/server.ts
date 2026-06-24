@@ -14,9 +14,13 @@ const TYPES: Record<string, string> = { ".html": "text/html", ".js": "text/javas
 export async function startServer(bridge: Bridge, port = 4399) {
   const httpServer = http.createServer(async (req, res) => {
     const rel = (req.url === "/" || !req.url ? "/index.html" : req.url).split("?")[0];
+    const abs = path.join(PUBLIC, rel);
+    if (abs !== PUBLIC && !abs.startsWith(PUBLIC + path.sep)) {
+      res.writeHead(403); res.end("forbidden"); return;
+    }
     try {
-      const file = await readFile(path.join(PUBLIC, rel));
-      res.writeHead(200, { "content-type": TYPES[path.extname(rel)] ?? "application/octet-stream" });
+      const file = await readFile(abs);
+      res.writeHead(200, { "content-type": TYPES[path.extname(abs)] ?? "application/octet-stream" });
       res.end(file);
     } catch {
       res.writeHead(404); res.end("not found");
@@ -28,17 +32,28 @@ export async function startServer(bridge: Bridge, port = 4399) {
   wss.on("connection", (ws) => {
     send(ws, bridge.state);
     ws.on("message", (data) => {
-      const msg = JSON.parse(String(data));
-      if (msg.type === "decide") bridge.resolveDecision(msg.id, msg.choiceId);
+      let msg: unknown;
+      try { msg = JSON.parse(String(data)); } catch { return; }
+      if (msg && typeof msg === "object" && (msg as { type?: string }).type === "decide") {
+        const m = msg as { id: string; choiceId: string };
+        bridge.resolveDecision(m.id, m.choiceId);
+      }
     });
   });
   const broadcast = (state: SessionState) => { for (const c of wss.clients) if (c.readyState === 1) send(c, state); };
   bridge.on("state", broadcast);
 
   await new Promise<void>((resolve) => httpServer.listen(port, resolve));
-  const actual = (httpServer.address() as { port: number }).port;
+  const addr = httpServer.address();
+  if (!addr || typeof addr === "string") throw new Error("server did not bind a TCP port");
   return {
-    port: actual,
-    close: () => new Promise<void>((resolve) => { bridge.off("state", broadcast); wss.close(); httpServer.close(() => resolve()); }),
+    port: addr.port,
+    close: () => new Promise<void>((resolve, reject) => {
+      bridge.off("state", broadcast);
+      wss.close((err) => {
+        if (err) return reject(err);
+        httpServer.close((e) => (e ? reject(e) : resolve()));
+      });
+    }),
   };
 }
