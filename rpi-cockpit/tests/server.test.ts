@@ -37,4 +37,28 @@ describe("server", () => {
     expect(await choice).toBe("a");
     ws.close();
   });
+
+  it("includes a view model in the pushed frame", async () => {
+    const bridge = new Bridge();
+    const srv = await startServer(bridge, 0);
+    stop = srv.close;
+    const ws = new WebSocket(`ws://127.0.0.1:${srv.port}`);
+    const first = await new Promise<any>((res) => ws.on("message", (d) => res(JSON.parse(String(d)))));
+    expect(first.view.started).toBe(false);
+    expect(first.view.steerMenu.source).toBe("preset");
+    ws.close();
+  });
+
+  it("enqueues a directive from an inbound steer frame", async () => {
+    const bridge = new Bridge();
+    const srv = await startServer(bridge, 0);
+    stop = srv.close;
+    const ws = new WebSocket(`ws://127.0.0.1:${srv.port}`);
+    await new Promise((r) => ws.on("open", r));
+    ws.send(JSON.stringify({ type: "steer", directive: { kind: "note", text: "focus on errors" } }));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(bridge.state.directives).toHaveLength(1);
+    expect(bridge.state.directives[0]).toMatchObject({ kind: "note", text: "focus on errors" });
+    ws.close();
+  });
 });

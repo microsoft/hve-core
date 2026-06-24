@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
 import type { Bridge } from "./bridge.js";
 import type { SessionState } from "./state.js";
+import { toViewModel } from "./render.js";
+import { SteerMsg } from "./events.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "..", "public");
@@ -28,7 +30,7 @@ export async function startServer(bridge: Bridge, port = 4399) {
   });
 
   const wss = new WebSocketServer({ server: httpServer });
-  const send = (ws: WebSocket, state: SessionState) => ws.send(JSON.stringify({ type: "state", state }));
+  const send = (ws: WebSocket, state: SessionState) => ws.send(JSON.stringify({ type: "state", state, view: toViewModel(state) }));
   wss.on("connection", (ws) => {
     send(ws, bridge.state);
     ws.on("message", (data) => {
@@ -39,6 +41,11 @@ export async function startServer(bridge: Bridge, port = 4399) {
         if (typeof m.id === "string" && typeof m.choiceId === "string") {
           bridge.resolveDecision(m.id, m.choiceId);
         }
+      }
+      if (msg && typeof msg === "object" && (msg as { type?: string }).type === "steer") {
+        const parsed = SteerMsg.safeParse(msg);
+        if (parsed.success) bridge.enqueueDirective(parsed.data.directive);
+        return;
       }
     });
   });
