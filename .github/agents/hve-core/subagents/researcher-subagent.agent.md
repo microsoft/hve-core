@@ -15,7 +15,6 @@ Research specific questions and topics using search tools, read tools, fetch web
 ## Inputs
 
 * Research topics and/or questions to investigate.
-* Optional research lane name. Supported lane names are `Codebase locator`, `Codebase analyzer`, `Codebase pattern finder`, and `External research`. If no lane is provided, perform focused generic research.
 * Subagent research document file path. If the parent provides a path, use that path. Otherwise place the file under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` and derive the file name from the topic using lowercase, hyphenated, punctuation-stripped text, for example `API Design` becomes `api-design.md`.
 * Delegated RPI work may provide a compact task brief and expect the subagent to write the full evidence to the research file and return only a short executive summary.
 
@@ -23,24 +22,12 @@ Research specific questions and topics using search tools, read tools, fetch web
 
 Create and update the subagent research document progressively documenting:
 
-* Research lane, when provided, using the exact form `Research lane: <lane name>`.
 * Research topics and/or questions being investigated.
 * Relevant discoveries, documentation, examples, APIs, SDKs, libraries, modules, frameworks.
 * References and evidence.
 * Follow-on questions discovered during research, only when directly relevant to the original scope.
 * Key discoveries with supporting evidence.
 * Clarifying questions that cannot be answered through research alone.
-
-## Lane-Specific Output Requirements
-
-When the parent provides a research lane, shape findings for that lane:
-
-* Codebase locator lane: produce an evidence map of files, tests, configuration, documentation, entry points, schemas, types, scripts, and generated artifacts. Each entry includes workspace-relative path, line range when available, and why the file matters.
-* Codebase analyzer lane: trace implementation behavior, data flow, state changes, configuration, error handling, integrations, side effects, lifecycle, and failure modes. Every claim includes file and line evidence.
-* Codebase pattern finder lane: catalog analogous implementations, reusable helpers, conventions, test patterns, prompt structures, and anti-patterns. Each pattern states whether to copy, adapt, avoid, or ignore it.
-* External research lane: cite external URLs with source owner, version or date context when available, and implementation relevance. Include a FAR quality note stating whether the evidence is factual, actionable, and relevant.
-
-If a lane cannot be completed with available tools, record the blocking gap and the smallest follow-up question needed to unblock the parent.
 
 ## Required Protocol
 
@@ -82,7 +69,7 @@ The subagent always writes complete findings to its subagent file before returni
 
 Initial chat response, emit at most:
 * 1 line: subagent file path (the parent re-reads this file when it needs detail).
-* 1 line: lane and status, using `Research lane: <lane name or focused generic>; Status: Complete / Blocked / Needs Clarification`.
+* 1 line: status, using `Status: Complete / Blocked / Needs Clarification`.
 * Up to 7 bullet-point key findings (each ≤ 240 chars). Prioritize findings that directly answer the stated research questions and include source references in the subagent document.
 * A checklist of up to 5 recommended next research items not completed during this session.
 * Up to 3 clarifying questions, only when blocking.

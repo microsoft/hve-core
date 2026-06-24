@@ -6,9 +6,6 @@ tools:
   - read
   - search
   - glob
-  - edit/createDirectory
-  - edit/createFile
-  - edit/editFiles
 model: MAI-Code-1-Flash (copilot)
 ---
 
@@ -30,7 +27,7 @@ Locates the files, directories, and supporting artifacts relevant to a research 
 
 ## Evidence Map
 
-Create and update the evidence map progressively documenting:
+Return an evidence map documenting:
 
 * Workspace-relative file paths.
 * Line ranges when available.
@@ -42,9 +39,8 @@ Create and update the evidence map progressively documenting:
 
 ### Pre-requisite: Prepare the map
 
-1. Create the evidence map file with placeholders if it does not already exist.
-2. Read any provided topic, component, or scope notes.
-3. Search for likely locations using naming, directory, and file-type patterns.
+1. Read the provided topic and scope notes.
+2. Search for likely locations using naming, directory, and file-type patterns.
 
 ### Step 1: Collect locations
 
@@ -68,7 +64,7 @@ Create and update the evidence map progressively documenting:
 
 Return structured findings including:
 
-* Path to the evidence map file.
 * Research status: Complete, Blocked, or Needs Clarification.
 * Key locations found, grouped by purpose.
+* Evidence entries with workspace-relative paths and line ranges.
 * Any gaps that need follow-up.

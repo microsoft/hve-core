@@ -21,6 +21,7 @@ argument-hint: "topic=... [chat={true|false}] [mode={auto|focused|lanes}] [subag
 * Use `Codebase Pattern Finder` to collect analogous implementations, reusable helpers, conventions, and anti-patterns.
 * Add `Web Search Researcher` only when external documentation, SDK, API, standards, or recent behavior facts are needed.
 * Keep `Researcher Subagent` out of lane fan-out unless a focused follow-up is needed after lane synthesis.
+* Synthesize named subagent findings into the main research document; do not require separate named-lane artifacts.
 
 ## Requirements
 

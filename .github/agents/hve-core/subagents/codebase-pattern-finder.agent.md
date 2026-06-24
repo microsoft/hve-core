@@ -6,9 +6,6 @@ tools:
   - read
   - search
   - glob
-  - edit/createDirectory
-  - edit/createFile
-  - edit/editFiles
 model: MAI-Code-1-Flash (copilot)
 ---
 
@@ -30,7 +27,7 @@ Finds similar workspace examples, conventions, and reusable patterns.
 
 ## Pattern Catalog
 
-Create and update the pattern catalog progressively documenting:
+Return a pattern catalog documenting:
 
 * Similar implementations and examples.
 * Relevant conventions and shared helpers.
@@ -42,9 +39,8 @@ Create and update the pattern catalog progressively documenting:
 
 ### Pre-requisite: Prepare the catalog
 
-1. Create the pattern catalog file with placeholders if it does not already exist.
-2. Read the provided topic and scope notes.
-3. Search for similar names, structures, and patterns across the workspace.
+1. Read the provided topic and scope notes.
+2. Search for similar names, structures, and patterns across the workspace.
 
 ### Step 1: Gather examples
 
@@ -68,7 +64,6 @@ Create and update the pattern catalog progressively documenting:
 
 Return structured findings including:
 
-* Path to the pattern catalog file.
 * Research status: Complete, Blocked, or Needs Clarification.
 * Representative examples and where they live.
 * Pattern labels for each example.

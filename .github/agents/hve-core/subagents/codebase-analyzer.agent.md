@@ -6,9 +6,6 @@ tools:
   - read
   - search
   - glob
-  - edit/createDirectory
-  - edit/createFile
-  - edit/editFiles
 model: MAI-Code-1-Flash (copilot)
 ---
 
@@ -30,7 +27,7 @@ Explains how workspace code works with file and line evidence.
 
 ## Analysis Notes
 
-Create and update the analysis notes progressively documenting:
+Return behavior analysis documenting:
 
 * Entry points and control flow.
 * Data transformations and state changes.
@@ -42,9 +39,8 @@ Create and update the analysis notes progressively documenting:
 
 ### Pre-requisite: Load context
 
-1. Create the analysis notes file with placeholders if it does not already exist.
-2. Read the provided topic and any existing location notes.
-3. Read the relevant source files before describing behavior.
+1. Read the provided topic and scope notes.
+2. Read the relevant source files before describing behavior.
 
 ### Step 1: Trace the code path
 
@@ -68,8 +64,7 @@ Create and update the analysis notes progressively documenting:
 
 Return structured findings including:
 
-* Path to the analysis notes file.
 * Research status: Complete, Blocked, or Needs Clarification.
 * Overview of how the code works.
-* Key entry points, flows, and behaviors.
+* Key entry points, flows, and behaviors with file and line evidence.
 * Any unresolved questions.
