@@ -1,0 +1,25 @@
+{
+  "name": "rpi-cockpit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "rpi-cockpit": "dist/index.js" },
+  "scripts": {
+    "test": "vitest run",
+    "dev": "tsx src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.12",
+    "happy-dom": "^15.7.4",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
