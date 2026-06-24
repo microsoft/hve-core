@@ -1,3 +1,8 @@
+---
+description: Synthetic lane-mode fixture for Task Researcher external API comparison
+ms.date: 2026-06-24
+---
+
 # External Evaluation Framework Research
 
 The selected mode is `subagents=true mode=lanes` with external research because the task depends on current DeepEval behavior.
@@ -16,3 +21,7 @@ The DeepEval source is factual because it is vendor documentation, actionable be
 ## Recommendation
 
 Combine local eval evidence with external framework evidence, then synthesize the selected validation approach into the main research document.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

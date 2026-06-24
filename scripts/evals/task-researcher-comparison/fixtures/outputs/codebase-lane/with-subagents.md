@@ -1,3 +1,8 @@
+---
+description: Synthetic lane-mode fixture for Task Researcher codebase-lane comparison
+ms.date: 2026-06-24
+---
+
 # Task Researcher Mode Selection Research
 
 The selected mode is `subagents=true mode=lanes` because the request asks for medium-hard codebase research across agent instructions, prompts, tests, and generated artifacts.
@@ -15,3 +20,7 @@ Use the three local codebase lanes in parallel, then synthesize their findings i
 ## Validation
 
 Run `npm run eval:task-researcher:compare`, regenerate `evals/agent-behavior/eval.yaml`, and regenerate plugin outputs after source changes.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

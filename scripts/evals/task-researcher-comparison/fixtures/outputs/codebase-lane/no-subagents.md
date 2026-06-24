@@ -1,3 +1,8 @@
+---
+description: Synthetic no-subagent fixture for Task Researcher codebase-lane comparison
+ms.date: 2026-06-24
+---
+
 # Captured Output Fixture
 
 Scenario: codebase-lane
@@ -15,3 +20,7 @@ Task Researcher should stay in focused research for small local gaps and reserve
 ## Recommendation
 
 Use the no-subagent variant as the latency baseline and compare it against named-lane output for evidence coverage and actionability.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

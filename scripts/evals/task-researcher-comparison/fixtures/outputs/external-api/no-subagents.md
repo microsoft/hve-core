@@ -1,3 +1,8 @@
+---
+description: Synthetic no-subagent fixture for Task Researcher external API comparison
+ms.date: 2026-06-24
+---
+
 # Captured Output Fixture
 
 Scenario: external-api
@@ -19,3 +24,7 @@ Validating a Task Researcher change that depends on an external LLM evaluation f
 ## Recommendation
 
 Establish an automated-plus-manual grading plan that runs deterministic checks locally and opt-in DeepEval checks when provider credentials are available. This validates the change in both environments without breaking CI for users without external credentials.
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

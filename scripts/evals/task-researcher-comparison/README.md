@@ -1,3 +1,8 @@
+---
+description: Task Researcher comparison harness usage and grading guidance
+ms.date: 2026-06-24
+---
+
 # Task Researcher Subagent Comparison
 
 This suite compares Task Researcher outputs with subagents disabled and enabled. The committed fixtures are synthetic; live runtime verification is handled separately.
@@ -61,3 +66,7 @@ With a runner, set `TASK_RESEARCHER_RUNNER_ARGV` to a JSON string array. The cap
 TASK_RESEARCHER_RUNNER_ARGV='["your-agent-runner", "--prompt", "{prompt}"]' \
   uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
 ```
+
+---
+
+🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
