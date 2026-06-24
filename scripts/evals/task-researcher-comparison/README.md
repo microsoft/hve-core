@@ -12,7 +12,7 @@ This suite compares Task Researcher outputs with subagents disabled and enabled.
 | Variant | Command intent | Expected behavior |
 |---------|----------------|-------------------|
 | `no-subagents` | `/task-research topic="..." subagents=false` | Direct or focused research unless subagents are required to complete the request. |
-| `with-subagents` | `/task-research topic="..." subagents=true mode=lanes` | Runs the named lanes in parallel, then synthesizes Codebase Locator, Codebase Analyzer, Codebase Pattern Finder, and Web Search Researcher evidence when external facts are needed. |
+| `with-subagents` | `/task-research topic="..." subagents=true` | Runs the named lanes in parallel, then synthesizes Codebase Locator, Codebase Analyzer, Codebase Pattern Finder, and Web Search Researcher evidence when external facts are needed. |
 
 ## Automated Grading
 

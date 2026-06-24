@@ -13,13 +13,13 @@ from task_researcher_comparison.capture import build_prompt, runner_argv_from_en
 def test_given_with_subagents_variant_when_build_prompt_then_uses_lanes() -> None:
     prompt = build_prompt("Research the mode selector", "with-subagents")
 
-    assert prompt == '/task-research topic="Research the mode selector" mode=lanes subagents=true'
+    assert prompt == '/task-research topic="Research the mode selector" subagents=true'
 
 
 def test_given_no_subagents_variant_when_build_prompt_then_uses_focused() -> None:
     prompt = build_prompt("Research the mode selector", "no-subagents")
 
-    assert prompt == '/task-research topic="Research the mode selector" mode=focused subagents=false'
+    assert prompt == '/task-research topic="Research the mode selector" subagents=false'
 
 
 def test_given_runner_argv_json_when_parsed_then_prompt_is_argument(monkeypatch: pytest.MonkeyPatch) -> None:

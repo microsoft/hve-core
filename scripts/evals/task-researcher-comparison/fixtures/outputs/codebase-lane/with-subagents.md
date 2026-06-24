@@ -5,7 +5,7 @@ ms.date: 2026-06-24
 
 # Task Researcher Mode Selection Research
 
-The selected mode is `subagents=true mode=lanes` because the request asks for medium-hard codebase research across agent instructions, prompts, tests, and generated artifacts.
+The selected behavior is `subagents=true` because the request asks for medium-hard codebase research across agent instructions, prompts, tests, and generated artifacts.
 
 ## Named Lane Findings
 

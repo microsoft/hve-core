@@ -14,8 +14,8 @@ from task_researcher_comparison.fixtures import load_scenarios
 
 def build_prompt(topic: str, variant: str) -> str:
     if variant == "with-subagents":
-        return f'/task-research topic="{topic}" mode=lanes subagents=true'
-    return f'/task-research topic="{topic}" mode=focused subagents=false'
+        return f'/task-research topic="{topic}" subagents=true'
+    return f'/task-research topic="{topic}" subagents=false'
 
 
 def runner_argv_from_env(prompt: str) -> list[str] | None:

@@ -81,7 +81,7 @@ Choose the lightest mode set that answers the user's request:
 | Explicit "comprehensive research", "compare approaches", or "research part of RPI" request | Run all applicable named subagents in parallel                                           |
 | Cost/latency-sensitive request where lane fan-out is not required                          | Prefer direct or focused mode and record the reason in the research document assumptions |
 
-If the user passes or states `subagents=true mode=lanes`, `/task-research mode=lanes subagents=true`, or an equivalent explicit lane request, run all applicable named subagents in parallel. If the user passes or states `subagents=false`, use direct or focused mode unless that would make the request impossible; if impossible, explain the limitation before proceeding.
+If the user passes or states `subagents=true`, run all applicable named subagents in parallel. If the user passes or states `subagents=false`, use direct or focused mode unless that would make the request impossible; if impossible, explain the limitation before proceeding.
 
 ## Named Subagent Contracts
 
@@ -105,7 +105,7 @@ Research external documentation, SDK/API behavior, standards, package behavior, 
 
 ## Lane Execution Rules
 
-* Lane mode means `subagents=true mode=lanes`.
+* Lane mode means `subagents=true` or an automatic trigger-matrix decision to use named research lanes.
 * Launch all applicable named subagents in parallel.
 * Use `Codebase Locator`, `Codebase Analyzer`, and `Codebase Pattern Finder` for local codebase research.
 * Add `Web Search Researcher` only when external facts are needed by the trigger rules above.

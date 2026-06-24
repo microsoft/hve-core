@@ -5,7 +5,7 @@ ms.date: 2026-06-24
 
 # External Evaluation Framework Research
 
-The selected mode is `subagents=true mode=lanes` with external research because the task depends on current DeepEval behavior.
+The selected behavior is `subagents=true` with external research because the task depends on current DeepEval behavior.
 
 ## Named Lane Findings
 

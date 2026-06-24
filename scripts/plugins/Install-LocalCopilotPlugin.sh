@@ -173,9 +173,6 @@ verify_source_plugin() {
   [[ -f "${source_path}/commands/hve-core/task-research.md" ]] || \
     err "Missing task-research command in generated plugin"
 
-  grep -q "mode={auto|focused|lanes}" \
-    "${source_path}/commands/hve-core/task-research.md" || \
-    err "Generated task-research command does not include mode input"
   grep -q "subagents={auto|true|false}" \
     "${source_path}/commands/hve-core/task-research.md" || \
     err "Generated task-research command does not include subagents input"
@@ -262,7 +259,7 @@ main() {
 
   install_local_plugin "${root}"
 
-  log "Restart Copilot CLI, then test: /hve-core:task-research topic=\"...\" subagents=true mode=lanes"
+  log "Restart Copilot CLI, then test: /hve-core:task-research topic=\"...\" subagents=true"
   print_reinstall_instructions
 }
 
