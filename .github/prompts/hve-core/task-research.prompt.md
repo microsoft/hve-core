@@ -13,6 +13,15 @@ argument-hint: "topic=... [chat={true|false}] [mode={auto|focused|lanes}] [subag
 * ${input:mode:auto}: (Optional, defaults to auto) Research mode. Use `auto` for trigger-based selection, `focused` for direct or one-subagent research, and `lanes` for lane-enabled research.
 * ${input:subagents:auto}: (Optional, defaults to auto) Subagent fan-out preference. Use `true` to request all applicable research lanes, `false` to avoid lane fan-out unless required, and `auto` to let Task Researcher apply its trigger matrix.
 
+## Named Subagent Fan-Out
+
+* When `subagents=true mode=lanes` is explicit, run the named lane subagents in parallel.
+* Use `Codebase Locator` to map the relevant files, tests, configuration, documentation, schemas, and generated artifacts.
+* Use `Codebase Analyzer` to trace implementation behavior, data flow, state changes, error handling, and side effects.
+* Use `Codebase Pattern Finder` to collect analogous implementations, reusable helpers, conventions, and anti-patterns.
+* Add `Web Search Researcher` only when external documentation, SDK, API, standards, or recent behavior facts are needed.
+* Keep `Researcher Subagent` out of lane fan-out unless a focused follow-up is needed after lane synthesis.
+
 ## Requirements
 
 1. When chat is enabled, incorporate conversation context to refine research scope and identify implicit constraints.
