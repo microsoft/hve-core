@@ -33,6 +33,14 @@ Reviews completed implementation work from `.copilot-tracking/` artifacts. Valid
 * Match `applyTo` patterns from `.github/instructions/` files against changed file types to identify applicable conventions.
 * Subagents return structured, evidence-based responses with severity levels and can ask clarifying questions rather than guessing.
 
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate review progress to the RPI Cockpit following `.github/instructions/hve-core/rpi-cockpit-narration.instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("review")` when review starts.
+* Call `artifact_update(path, summary)` after writing or updating the review log in `.copilot-tracking/reviews/`.
+* When review surfaces a choice for the user, present it through `present_options(prompt, options[])` instead of asking in chat, then act on the returned id.
+
 ## Context Discipline
 
 After any subagent returns, this turn must be lean:

@@ -87,6 +87,17 @@ When a task requires subagents but neither `runSubagent` nor `task` tools are av
 
 Treat the phase guidance below as operating defaults rather than ceremony. Delegate only when it materially improves the outcome.
 
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate this workflow to the RPI Cockpit following `.github/instructions/hve-core/rpi-cockpit-narration.instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `session_begin(task, host)` once when the user request starts.
+* Call `phase_enter(phase)` when entering each phase: `research`, `plan`, `implement`, `review`, and `discover`.
+* Wrap every `Researcher Subagent` and `Phase Implementor` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `validate(check, status)` for each check run in the Phase 3 validation gate.
+* Call `artifact_update(path, summary)` after writing or updating each `.copilot-tracking/` artifact.
+* In Phase 5, present the Suggested Next Work list through `present_options(prompt, options[])` so the user can pick the next item in the cockpit, then act on the returned id.
+
 ## Context Discipline
 
 After any subagent returns, this turn must be lean:

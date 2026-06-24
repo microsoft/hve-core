@@ -54,6 +54,15 @@ Run `Plan Validator` using `runSubagent` or `task`, providing these inputs:
 
 Subagents can run in parallel when investigating independent topics or validating independent concerns.
 
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate planning progress to the RPI Cockpit following `.github/instructions/hve-core/rpi-cockpit-narration.instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("plan")` when planning starts.
+* Wrap every `Researcher Subagent` and `Plan Validator` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `artifact_update(path, summary)` after writing or updating each plan, details, or planning log file in `.copilot-tracking/`.
+* Present Planning Decisions (PD) choices through `present_options(prompt, options[])` instead of asking in chat, then act on the returned id.
+
 ## Context Discipline
 
 After any subagent returns, this turn must be lean:

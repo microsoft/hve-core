@@ -63,6 +63,15 @@ The Researcher Subagent returns deep research findings: subagent research docume
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
 
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate implementation progress to the RPI Cockpit following `.github/instructions/hve-core/rpi-cockpit-narration.instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("implement")` when implementation starts.
+* Wrap every `Phase Implementor` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `validate(check, status)` for each lint, type, test, and build check.
+* Call `artifact_update(path, summary)` after updating the changes log in `.copilot-tracking/changes/`.
+
 ## Context Discipline
 
 After any subagent returns, this turn must be lean:
