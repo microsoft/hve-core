@@ -1,0 +1,5 @@
+# Build output (tsc rootDir src -> outDir dist)
+dist/
+
+# Dependencies
+node_modules/

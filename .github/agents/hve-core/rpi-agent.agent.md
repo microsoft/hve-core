@@ -10,27 +10,27 @@ handoffs:
   - label: "1️⃣"
     agent: RPI Agent
     prompt: "/rpi continue=1"
-    send: true
+    send: false
   - label: "2️⃣"
     agent: RPI Agent
     prompt: "/rpi continue=2"
-    send: true
+    send: false
   - label: "3️⃣"
     agent: RPI Agent
     prompt: "/rpi continue=3"
-    send: true
+    send: false
   - label: "▶️ All"
     agent: RPI Agent
     prompt: "/rpi continue=all"
-    send: true
+    send: false
   - label: "🔄 Suggest"
     agent: RPI Agent
     prompt: "/rpi suggest"
-    send: true
+    send: false
   - label: "💾 Save"
     agent: Memory
     prompt: /checkpoint
-    send: true
+    send: false
 ---
 
 # RPI Agent
@@ -86,6 +86,17 @@ When a task requires subagents but neither `runSubagent` nor `task` tools are av
 > ⚠️ The `runSubagent` or `task` tool is required but not enabled. Enable one of these tools in chat settings or tool configuration.
 
 Treat the phase guidance below as operating defaults rather than ceremony. Delegate only when it materially improves the outcome.
+
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate this workflow to the RPI Cockpit following `rpi-cockpit/agents/cockpit-instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `session_begin(task, host)` once when the user request starts.
+* Call `phase_enter(phase)` when entering each phase: `research`, `plan`, `implement`, `review`, and `discover`.
+* Wrap every `Researcher Subagent` and `Phase Implementor` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `validate(check, status)` for each check run in the Phase 3 validation gate.
+* Call `artifact_update(path, summary)` after writing or updating each `.copilot-tracking/` artifact.
+* In Phase 5, surface the Suggested Next Work list through `present_options(prompt, options[])` so the user can choose the next item in the cockpit. Act only on an explicit user selection; if no selection is made, stop and yield to the user rather than auto-starting the next cycle.
 
 ## Context Discipline
 

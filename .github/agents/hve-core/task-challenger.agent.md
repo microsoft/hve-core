@@ -7,15 +7,15 @@ handoffs:
   - label: "🔬 Research Questions"
     agent: Task Researcher
     prompt: "/task-research Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for the Q&A log and unresolved items: these define the research scope."
-    send: true
+    send: false
   - label: "📋 Revise Plan"
     agent: Task Planner
     prompt: "/task-plan Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for challenge findings and unresolved items before planning."
-    send: true
+    send: false
   - label: "⚡ Implement Changes"
     agent: Task Implementor
     prompt: "/task-implement Address the immediate changes identified through the challenge session. Find and read the most recent challenge tracking document in .copilot-tracking/challenges/ (most recent by date prefix) for findings."
-    send: true
+    send: false
 ---
 
 # Task Challenger

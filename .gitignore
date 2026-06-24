@@ -421,6 +421,7 @@ FodyWeavers.xsd
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+!.vscode/mcp.json
 !.vscode/mcp.json.sample
 !.vscode/README.md
 
@@ -484,6 +485,9 @@ dependency-pinning-artifacts/
 .mcp/*-local.json
 .mcp/*.local.json
 .mcp/.env
+
+# Codex MCP config holds a machine-specific absolute path (rpi-cockpit init) - never commit
+/.codex/
 
 # Docusaurus build artifacts
 docs/docusaurus/build/

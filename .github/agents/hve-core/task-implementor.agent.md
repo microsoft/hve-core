@@ -9,7 +9,7 @@ handoffs:
   - label: "✅ Review"
     agent: Task Reviewer
     prompt: /task-review
-    send: true
+    send: false
 ---
 
 # Task Implementor
@@ -62,6 +62,15 @@ Run `Researcher Subagent` agents as subagents using `runSubagent` or `task` tool
 The Researcher Subagent returns deep research findings: subagent research document path, research status, important discovered details, recommended next research not yet completed, and any clarifying questions.
 
 Subagents can run in parallel when investigating independent topics or executing independent phases.
+
+## Cockpit narration
+
+When the `rpi-cockpit` MCP tools are available, narrate implementation progress to the RPI Cockpit following `rpi-cockpit/agents/cockpit-instructions.md`. Skip silently when the tools are not connected. Map the beats as follows:
+
+* Call `phase_enter("implement")` when implementation starts.
+* Wrap every `Phase Implementor` dispatch with `subagent_start(name, role)` before and `subagent_stop(name, result)` after.
+* Call `validate(check, status)` for each lint, type, test, and build check.
+* Call `artifact_update(path, summary)` after updating the changes log in `.copilot-tracking/changes/`.
 
 ## Context Discipline
 
