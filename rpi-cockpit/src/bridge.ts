@@ -1,7 +1,7 @@
 // rpi-cockpit/src/bridge.ts
 import { EventEmitter } from "node:events";
-import { initialState, applyBeat, type SessionState } from "./state.js";
-import type { Beat, OptionItem } from "./events.js";
+import { initialState, applyBeat, enqueueDirective as reduceEnqueue, drainDirectives as reduceDrain, type SessionState } from "./state.js";
+import type { Beat, OptionItem, InboundDirective, Directive } from "./events.js";
 
 export class Bridge extends EventEmitter {
   state: SessionState = initialState();
@@ -11,6 +11,25 @@ export class Bridge extends EventEmitter {
   emitBeat(beat: Beat): void {
     this.state = applyBeat(this.state, beat, Date.now());
     this.emit("state", this.state);
+  }
+
+  enqueueDirective(directive: InboundDirective): void {
+    const stamped = { ...directive, id: `s${++this.seq}` } as Directive;
+    this.state = reduceEnqueue(this.state, stamped, Date.now());
+    this.emit("state", this.state);
+  }
+
+  drainDirectives(): Directive[] {
+    const { state, drained } = reduceDrain(this.state, Date.now());
+    if (drained.length > 0) {
+      this.state = state;
+      this.emit("state", this.state);
+    }
+    return drained;
+  }
+
+  offerApproaches(label: string, options: OptionItem[]): void {
+    this.emitBeat({ type: "approaches.offer", label, options });
   }
 
   presentOptions(prompt: string, options: OptionItem[], timeoutMs = 0): Promise<string> {
