@@ -67,6 +67,7 @@ Input modes:
 * `task=...`: primary task description or inferred task intent.
 * `continue={1|1,2|all}`: select one or more saved Discover suggestions; each selected suggestion starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in listed priority order.
 * `suggest`: run Discover directly to refresh next-work suggestions.
+* When no explicit `task`, `continue`, or `suggest` input is given, infer the intent from the conversation, attached files, or the current file.
 
 ## Iteration, fallback, and final response rules
 
@@ -79,3 +80,13 @@ Input modes:
 * If review outcome is Complete, include a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
 * If review outcome is Iterate or Escalate, continue from the earliest affected phase and still complete Discover before handing off.
 * Do not end a run without completing Discover, even when the next action is obvious.
+
+## Conversation-history summary contract
+
+When the run ends or conversation history is compacted, include:
+
+* confirmation that state is managed through `.copilot-tracking/` files;
+* the relevant tracking artifact paths with percent complete;
+* the last completed phase and current step;
+* recent Review findings; and
+* recent Discover follow-up work items in order.

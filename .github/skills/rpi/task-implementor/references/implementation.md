@@ -8,7 +8,7 @@ Use this reference for the detailed implementation protocol, templates, and suba
 
 ## Plan Discovery and Artifact Path Derivation
 
-1. Discover the implementation plan from the user request, attached files, the current open file, or the most recent `.copilot-tracking/plans/**/<task>-plan.instructions.md`.
+1. Discover the implementation plan using this priority order: (1) the explicit `plan` input when provided; (2) plan content in the currently open file; (3) a plan reference extracted from an open changes log; (4) the most recent `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task>-plan.instructions.md`.
 2. Derive the canonical task slug and phase tokens before execution:
    * `task_slug = lower-kebab-case(primary task/target)`
    * `task_date = YYYY-MM-DD` at execution time
@@ -29,6 +29,12 @@ Use this reference for the detailed implementation protocol, templates, and suba
 2. Phase 2: Prefer `Phase Implementor` for each phase in the plan order, using `runSubagent` or `task`. Use `Implementation Validator` when the phase plan includes `Validation:` or `required`, when blockers or deviations appear, or when the user asks for review evidence. Use `Researcher Subagent` as the fallback when context is missing. If dispatch tooling is unavailable, perform the equivalent work inline and record it.
 3. Phase 3: Review the full plan, confirm every required phase is complete or explicitly blocked, verify validation evidence, and prepare the review handoff summary.
 4. Bounded run rule: if the user asks for one phase only, stop after that phase, update the changes log, and hand off the current status with blockers or follow-on work. Do not require all phases to be complete before a bounded handoff.
+
+## Pause and resumption contract
+
+1. When `phaseStop` is true, pause after each completed phase and present progress before continuing.
+2. When `stepStop` is true, pause after each completed step within a phase and present progress before continuing.
+3. When execution pauses or stops, summarize completed phases and steps, blockers or clarification requests, and the next resumption point.
 
 ## Phase Implementor Input / Output Contract
 

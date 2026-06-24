@@ -8,17 +8,21 @@ Use this reference to keep the phase loop, sandbox contract, subagent dispatch m
 
 ## Phase loop and return-to-Phase-1 behavior
 
-1. Execution and evaluation: run `Prompt Tester`, then `Prompt Evaluator` in a sandbox folder and inspect the evaluation log.
+The loop builds, tests, evaluates, and updates the prompt artifacts, repeating until the evaluation log shows no remaining issues. Build and modification edits follow the Prompt Design Principles and the Prompt Quality Criteria in `prompt-builder.instructions.md`.
+
+1. Execution and evaluation: run `Prompt Tester`, then `Prompt Evaluator` in a sandbox folder and inspect the evaluation log. Test the target prompt files individually, together, or both: test a file on its own when it is meant to run standalone, and test the files together when they are meant to operate in concert (for example, an agent with its instructions and subagents).
 2. Research: create or update the primary research file and run `Researcher Subagent` in parallel when topics are independent. Consolidate findings into the primary research document and clean and finalize it before moving to the modification phase.
 3. Modifications: run `Prompt Updater` in parallel when prompt files are independent, review all updater tracking files, and return to Phase 1 to execute and evaluate the updated artifacts again.
 
-Repeat each subagent dispatch, answering any clarifying questions it returns, until that step completes. If the prompt file(s) do not yet exist, move to Phase 2 first; once they exist, return to this phase and repeat it. If the evaluation log shows no remaining issues, finalize the run; otherwise continue the loop from the earliest affected phase instead of finishing early.
+Repeat each subagent dispatch, answering any clarifying questions it returns, until the subagent reports the step is finished. If the prompt file(s) do not yet exist, move to Phase 2 first; once they exist, return to this phase and repeat it. If the evaluation log shows no remaining issues, finalize the run; otherwise continue the loop from the earliest affected phase instead of finishing early.
 
 ## Sandbox contract and cross-run continuity
 
 * Sandbox root: `.copilot-tracking/sandbox/`.
 * Folder name pattern: `{{YYYY-MM-DD}}-{{topic}}-{{run-number}}`.
-* Derive `{{topic}}` from the name of the primary target artifact, the skill or prompt folder name, or the file base name without suffixes, in kebab-case.
+* Use today's date as `{{YYYY-MM-DD}}`.
+* When multiple target files are supplied, use the lexically first entry as the primary artifact.
+* Derive `{{topic}}` from the primary target artifact: if the target is a `SKILL.md`, use the parent folder name; otherwise use the artifact's base name with the suffix stripped (`.prompt.md`, `.instructions.md`, `.agent.md`), in kebab-case.
 * Run-number discovery: inspect existing `.copilot-tracking/sandbox/{{YYYY-MM-DD}}-{{topic}}-*` folders and choose the next available `-001`, `-002`, and so on before starting a new iteration.
 * Test subagents create and edit only inside the assigned sandbox folder.
 * The sandbox mirrors the target folder structure.
