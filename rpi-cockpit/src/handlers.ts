@@ -2,6 +2,15 @@
 import type { Bridge } from "./bridge.js";
 import type { OptionItem, Phase, ValidationStatus } from "./events.js";
 
+// A decision must not block the agent forever: if the user never responds, fall
+// back to the recommended option after a finite timeout. Configurable via env
+// (default 30 min). A non-positive/NaN value leaves the default in place.
+const DEFAULT_DECISION_TIMEOUT_MS = 1_800_000;
+function decisionTimeoutMs(): number {
+  const raw = Number(process.env.RPI_COCKPIT_DECISION_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_DECISION_TIMEOUT_MS;
+}
+
 export const handlers = {
   session_begin: (b: Bridge, a: { task: string; host: string }) => {
     b.emitBeat({ type: "session.begin", task: a.task, host: a.host });
@@ -28,5 +37,5 @@ export const handlers = {
     return `${a.check}=${a.status}`;
   },
   present_options: (b: Bridge, a: { prompt: string; options: OptionItem[] }) =>
-    b.presentOptions(a.prompt, a.options),
+    b.presentOptions(a.prompt, a.options, decisionTimeoutMs()),
 };

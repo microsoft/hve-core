@@ -7,8 +7,11 @@
   "scripts": {
     "test": "vitest run",
     "dev": "tsx src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "postbuild": "chmod +x dist/index.js",
+    "prepare": "npm run build"
   },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "ws": "^8.18.0",

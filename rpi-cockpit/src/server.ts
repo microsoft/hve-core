@@ -45,7 +45,26 @@ export async function startServer(bridge: Bridge, port = 4399) {
   const broadcast = (state: SessionState) => { for (const c of wss.clients) if (c.readyState === 1) send(c, state); };
   bridge.on("state", broadcast);
 
-  await new Promise<void>((resolve) => httpServer.listen(port, resolve));
+  // ws re-emits the underlying http server's "listening" and "error" events on
+  // the WebSocketServer, so bind outcomes must be observed on wss to be caught.
+  const listen = (p: number) =>
+    new Promise<void>((resolve, reject) => {
+      const onError = (err: NodeJS.ErrnoException) => { wss.off("listening", onListening); reject(err); };
+      const onListening = () => { wss.off("error", onError); resolve(); };
+      wss.once("error", onError);
+      wss.once("listening", onListening);
+      httpServer.listen(p, "127.0.0.1");
+    });
+
+  try {
+    await listen(port);
+  } catch (err) {
+    if (port !== 0 && (err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+      await listen(0); // requested port taken; fall back to an ephemeral one
+    } else {
+      throw err;
+    }
+  }
   const addr = httpServer.address();
   if (!addr || typeof addr === "string") throw new Error("server did not bind a TCP port");
   return {
