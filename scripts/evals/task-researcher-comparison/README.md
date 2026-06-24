@@ -47,7 +47,7 @@ The DeepEval score is not a replacement for the manual rubric. Use it to identif
 
 ## Capturing Live Outputs
 
-The comparison tests grade the committed synthetic fixtures under `fixtures/outputs/`.
+The comparison tests grade the committed synthetic fixtures under `fixtures/outputs/`. Live captures are separate runtime verification, not part of the synthetic fixture set.
 
 Without a runner, the capture helper writes prompt files:
 

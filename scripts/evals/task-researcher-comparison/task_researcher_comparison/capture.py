@@ -37,7 +37,7 @@ def main() -> int:
     parser.add_argument("--output-root", type=Path, default=Path("logs/task-researcher-comparison/captures"))
     args = parser.parse_args()
 
-    runner_configured = os.getenv("TASK_RESEARCHER_RUNNER_ARGV") is not None
+    runner_configured = bool(os.getenv("TASK_RESEARCHER_RUNNER_ARGV"))
     if not runner_configured:
         print("TASK_RESEARCHER_RUNNER_ARGV is not set; write prompts under logs for manual capture.")
 
@@ -47,7 +47,11 @@ def main() -> int:
         scenario_dir.mkdir(parents=True, exist_ok=True)
         for variant in ("no-subagents", "with-subagents"):
             prompt = build_prompt(scenario.prompt, variant)
-            argv = runner_argv_from_env(prompt)
+            try:
+                argv = runner_argv_from_env(prompt)
+            except ValueError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                return 2
             if argv:
                 try:
                     completed = subprocess.run(
@@ -63,9 +67,6 @@ def main() -> int:
                     if e.stderr:
                         print(f"stderr: {e.stderr}", file=sys.stderr)
                     return 1
-                except ValueError as e:
-                    print(f"Error: {e}", file=sys.stderr)
-                    return 2
             else:
                 (scenario_dir / f"{variant}.prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     return 0
