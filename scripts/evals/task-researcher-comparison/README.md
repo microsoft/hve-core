@@ -55,9 +55,9 @@ Without a runner, the capture helper writes prompt files:
 uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
 ```
 
-With a runner, set `TASK_RESEARCHER_RUNNER` to a command template that accepts `{prompt}` and writes the assistant output to stdout. These captures are for separate live runtime verification, not for the synthetic fixture set:
+With a runner, set `TASK_RESEARCHER_RUNNER_ARGV` to a JSON string array. The capture helper substitutes `{prompt}` inside individual argv entries and executes the command with `shell=False`.
 
 ```bash
-TASK_RESEARCHER_RUNNER='your-agent-runner --prompt "{prompt}"' \
+TASK_RESEARCHER_RUNNER_ARGV='["your-agent-runner", "--prompt", "{prompt}"]' \
   uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
 ```

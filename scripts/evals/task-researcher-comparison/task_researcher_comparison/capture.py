@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -17,15 +18,28 @@ def build_prompt(topic: str, variant: str) -> str:
     return f'/task-research topic="{topic}" mode=focused subagents=false'
 
 
+def runner_argv_from_env(prompt: str) -> list[str] | None:
+    raw = os.getenv("TASK_RESEARCHER_RUNNER_ARGV")
+    if not raw:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("TASK_RESEARCHER_RUNNER_ARGV must be a JSON string array") from exc
+    if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+        raise ValueError("TASK_RESEARCHER_RUNNER_ARGV must be a JSON string array")
+    return [item.replace("{prompt}", prompt) for item in parsed]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Capture Task Researcher comparison outputs.")
     parser.add_argument("--fixtures-root", type=Path, default=Path("scripts/evals/task-researcher-comparison/fixtures"))
     parser.add_argument("--output-root", type=Path, default=Path("logs/task-researcher-comparison/captures"))
     args = parser.parse_args()
 
-    command_template = os.getenv("TASK_RESEARCHER_RUNNER")
-    if not command_template:
-        print("TASK_RESEARCHER_RUNNER is not set; write prompts under logs for manual capture.")
+    runner_configured = os.getenv("TASK_RESEARCHER_RUNNER_ARGV") is not None
+    if not runner_configured:
+        print("TASK_RESEARCHER_RUNNER_ARGV is not set; write prompts under logs for manual capture.")
 
     scenarios = load_scenarios(args.fixtures_root / "scenarios.yml")
     for scenario in scenarios:
@@ -33,11 +47,11 @@ def main() -> int:
         scenario_dir.mkdir(parents=True, exist_ok=True)
         for variant in ("no-subagents", "with-subagents"):
             prompt = build_prompt(scenario.prompt, variant)
-            if command_template:
+            argv = runner_argv_from_env(prompt)
+            if argv:
                 try:
                     completed = subprocess.run(
-                        command_template.format(prompt=prompt),
-                        shell=True,
+                        argv,
                         check=True,
                         text=True,
                         capture_output=True,
@@ -49,6 +63,9 @@ def main() -> int:
                     if e.stderr:
                         print(f"stderr: {e.stderr}", file=sys.stderr)
                     return 1
+                except ValueError as e:
+                    print(f"Error: {e}", file=sys.stderr)
+                    return 2
             else:
                 (scenario_dir / f"{variant}.prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     return 0
