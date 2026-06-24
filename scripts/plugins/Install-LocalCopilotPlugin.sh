@@ -118,8 +118,34 @@ require_command() {
   fi
 }
 
+validate_plugin_id() {
+  local value="$1"
+  if [[ ! "${value}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
+    err "Plugin id must be a safe slug containing only letters, numbers, dots, underscores, or hyphens"
+  fi
+}
+
 repo_root() {
   git rev-parse --show-toplevel
+}
+
+safe_installed_path() {
+  local candidate="$1"
+  local resolved_install_root
+  local resolved_candidate_parent
+
+  resolved_install_root="$(cd "${INSTALL_ROOT}" && pwd -P)"
+  mkdir -p "$(dirname "${candidate}")"
+  resolved_candidate_parent="$(cd "$(dirname "${candidate}")" && pwd -P)"
+
+  case "${resolved_candidate_parent}/$(basename "${candidate}")" in
+    "${resolved_install_root}"/*)
+      return 0
+      ;;
+    *)
+      err "Refusing to modify path outside ${INSTALL_ROOT}: ${candidate}"
+      ;;
+  esac
 }
 
 verify_source_plugin() {
@@ -137,6 +163,16 @@ verify_source_plugin() {
   grep -q "subagents={auto|true|false}" \
     "${source_path}/commands/hve-core/task-research.md" || \
     err "Generated task-research command does not include subagents input"
+
+  local required_subagent
+  for required_subagent in \
+    codebase-analyzer \
+    codebase-locator \
+    codebase-pattern-finder \
+    web-search-researcher; do
+    [[ -e "${source_path}/agents/hve-core/subagents/${required_subagent}.md" ]] || \
+      err "Missing generated named subagent: ${required_subagent}"
+  done
 }
 
 backup_existing_install() {
@@ -174,6 +210,9 @@ install_local_plugin() {
   fi
 
   log "Removing stale installed plugin directories"
+  mkdir -p "${INSTALL_ROOT}" "${INSTALL_ROOT}/_direct"
+  safe_installed_path "${marketplace_plugin_root}"
+  safe_installed_path "${direct_plugin_root}"
   run rm -rf "${marketplace_plugin_root}" "${direct_plugin_root}"
 
   log "Installing local plugin from ${source_path}"
@@ -186,6 +225,7 @@ install_local_plugin() {
 
 main() {
   parse_args "$@"
+  validate_plugin_id "${plugin_id}"
   require_command git
   require_command copilot
 

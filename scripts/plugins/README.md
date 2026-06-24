@@ -49,6 +49,8 @@ runs `copilot plugin install` against the local `plugins/hve-core` directory.
 Use `--generate` first when PowerShell is available and plugin outputs need
 regeneration.
 
+The installer validates the generated `task-research` command, verifies the named Task Researcher lane subagents are present, restricts plugin IDs to safe slug characters, and refuses to remove paths outside `~/.copilot/installed-plugins`.
+
 ---
 
 <!-- markdownlint-disable MD036 -->
