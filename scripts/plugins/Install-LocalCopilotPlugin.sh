@@ -132,10 +132,29 @@ repo_root() {
 safe_installed_path() {
   local candidate="$1"
   local resolved_install_root
+  local resolved_candidate
 
-  resolved_install_root="$(cd "$(dirname "${INSTALL_ROOT}")" && pwd -P)/$(basename "${INSTALL_ROOT}")"
+  if [[ "${dry_run}" == "false" ]]; then
+    # INSTALL_ROOT is guaranteed to exist after the mkdir -p above.
+    resolved_install_root="$(cd "${INSTALL_ROOT}" && pwd -P)"
+    resolved_candidate="$(cd "$(dirname "${candidate}")" && pwd -P)/$(basename "${candidate}")"
+  else
+    # dry-run: resolve via pwd -P when the directory exists; lexical fallback otherwise.
+    if [[ -d "${INSTALL_ROOT}" ]]; then
+      resolved_install_root="$(cd "${INSTALL_ROOT}" && pwd -P)"
+    else
+      resolved_install_root="${INSTALL_ROOT}"
+    fi
+    local candidate_parent
+    candidate_parent="$(dirname "${candidate}")"
+    if [[ -d "${candidate_parent}" ]]; then
+      resolved_candidate="$(cd "${candidate_parent}" && pwd -P)/$(basename "${candidate}")"
+    else
+      resolved_candidate="${candidate}"
+    fi
+  fi
 
-  case "${candidate}" in
+  case "${resolved_candidate}" in
     "${resolved_install_root}"|"${resolved_install_root}"/*)
       return 0
       ;;
@@ -194,6 +213,11 @@ install_local_plugin() {
   local direct_plugin_root="${INSTALL_ROOT}/_direct/${plugin_id}"
 
   verify_source_plugin "${source_path}"
+
+  if [[ "${dry_run}" == "false" ]]; then
+    mkdir -p "${INSTALL_ROOT}" "${INSTALL_ROOT}/_direct"
+  fi
+
   backup_existing_install "${marketplace_plugin_root}" "marketplace"
   backup_existing_install "${direct_plugin_root}" "direct"
 
