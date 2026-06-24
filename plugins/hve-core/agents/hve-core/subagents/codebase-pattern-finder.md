@@ -1,0 +1,1 @@
+../../../../../.github/agents/hve-core/subagents/codebase-pattern-finder.agent.md

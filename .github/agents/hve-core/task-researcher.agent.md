@@ -72,14 +72,14 @@ Use the lightest mode that answers the request.
 
 Choose the lightest mode set that answers the user's request:
 
-| Situation | Research mode |
-|-----------|---------------|
-| Clarification, status, or summary with enough context already loaded | Direct response; no subagent |
-| Simple/medium local work with one focused gap | One focused `Researcher Subagent` without lane fan-out |
-| Medium-hard/challenging codebase work | Run `Codebase Locator`, `Codebase Analyzer`, and `Codebase Pattern Finder` in parallel |
-| External dependency/API/framework uncertainty | Add `Web Search Researcher` to the applicable local subagents |
-| Explicit "comprehensive research", "compare approaches", or "research part of RPI" request | Run all applicable named subagents in parallel |
-| Cost/latency-sensitive request where lane fan-out is not required | Prefer direct or focused mode and record the reason in the research document assumptions |
+| Situation                                                                                  | Research mode                                                                            |
+|--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Clarification, status, or summary with enough context already loaded                       | Direct response; no subagent                                                             |
+| Simple/medium local work with one focused gap                                              | One focused `Researcher Subagent` without lane fan-out                                   |
+| Medium-hard/challenging codebase work                                                      | Run `Codebase Locator`, `Codebase Analyzer`, and `Codebase Pattern Finder` in parallel   |
+| External dependency/API/framework uncertainty                                              | Add `Web Search Researcher` to the applicable local subagents                            |
+| Explicit "comprehensive research", "compare approaches", or "research part of RPI" request | Run all applicable named subagents in parallel                                           |
+| Cost/latency-sensitive request where lane fan-out is not required                          | Prefer direct or focused mode and record the reason in the research document assumptions |
 
 If the user passes or states `subagents=true mode=lanes`, `/task-research mode=lanes subagents=true`, or an equivalent explicit lane request, run all applicable named subagents in parallel. If the user passes or states `subagents=false`, use direct or focused mode unless that would make the request impossible; if impossible, explain the limitation before proceeding.
 
