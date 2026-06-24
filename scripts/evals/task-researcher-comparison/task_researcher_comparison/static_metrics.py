@@ -47,10 +47,8 @@ def _score_actionability(output: CapturedOutput) -> int:
 
 
 def _score_noise_control(output: CapturedOutput) -> int:
-    text = output.text.lower()
-    unrelated_signals = ["unrelated", "speculative tangent", "broad repository scan", "not relevant"]
-    if any(signal in text for signal in unrelated_signals):
-        return 0
+    # Penalize only on word count — phrases documenting intentional exclusions
+    # (e.g. "unrelated", "not relevant") are noise-control evidence, not noise.
     if len(output.text.split()) > 1200:
         return 1
     return 2
