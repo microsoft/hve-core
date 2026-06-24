@@ -531,7 +531,7 @@ requires-dist = [
     { name = "cairosvg" },
     { name = "github-copilot-sdk" },
     { name = "pillow" },
-    { name = "pymupdf" },
+    { name = "pymupdf", specifier = ">=1.27.1,<2.0" },
     { name = "python-pptx" },
     { name = "pyyaml" },
     { name = "ruamel-yaml" },
