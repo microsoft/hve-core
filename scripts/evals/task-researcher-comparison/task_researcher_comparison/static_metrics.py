@@ -8,12 +8,12 @@ from task_researcher_comparison.models import CapturedOutput, PairScore, Scenari
 
 PATH_WITH_LINE_RE = re.compile(r"(?:^|\s)(?:\.github|evals|scripts|docs|README\.md)[^\s:]*:\d+(?:-\d+)?")
 URL_RE = re.compile(r"https?://[^\s)]+")
-NAMED_SUBAGENT_MARKERS = (
+LOCAL_LANE_MARKERS = (
     "codebase locator",
     "codebase analyzer",
     "codebase pattern finder",
-    "web search researcher",
 )
+WEB_LANE_MARKER = "web search researcher"
 
 
 def _score_coverage(scenario: Scenario, output: CapturedOutput) -> int:
@@ -58,17 +58,19 @@ def _score_noise_control(output: CapturedOutput) -> int:
 
 def _score_mode_compliance(scenario: Scenario, output: CapturedOutput) -> int:
     text = output.text.lower()
-    has_named_subagent_markers = all(signal in text for signal in NAMED_SUBAGENT_MARKERS)
+    has_any_lane_marker = any(signal in text for signal in (*LOCAL_LANE_MARKERS, WEB_LANE_MARKER))
+    has_local_lane_markers = all(signal in text for signal in LOCAL_LANE_MARKERS)
+    has_web_lane_marker = WEB_LANE_MARKER in text
     has_external = "far quality note" in text or "external evidence" in text
     if output.variant == "with-subagents":
         if scenario.id == "focused-local":
-            return 1 if has_named_subagent_markers else 2
+            return 1 if has_any_lane_marker else 2
         if scenario.id == "external-api":
-            return 2 if has_named_subagent_markers and has_external else 1
-        return 2 if has_named_subagent_markers else 1
-    if scenario.id == "focused-local" and not has_named_subagent_markers:
+            return 2 if has_local_lane_markers and has_web_lane_marker and has_external else 1
+        return 2 if has_local_lane_markers and not has_web_lane_marker else 1
+    if scenario.id == "focused-local" and not has_any_lane_marker:
         return 2
-    return 1 if has_named_subagent_markers else 2
+    return 1 if has_any_lane_marker else 2
 
 
 def score_output(scenario: Scenario, output: CapturedOutput) -> StaticScore:

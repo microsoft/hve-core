@@ -1,25 +1,17 @@
-# Captured Output Fixture
+# Task Researcher Mode Selection Research
 
-Scenario: codebase-lane
-Variant: with-subagents
+The selected mode is `subagents=true mode=lanes` because the request asks for medium-hard codebase research across agent instructions, prompts, tests, and generated artifacts.
 
-## Summary
+## Named Lane Findings
 
-Task Researcher should use focused research for small local gaps and fan out to named lanes for medium-hard codebase work.
-
-## Evidence
-
-* .github/agents/hve-core/task-researcher.agent.md:61-74 - Lane Trigger Matrix defines mode selection.
-* .github/agents/hve-core/subagents/researcher-subagent.agent.md:10-30 - Researcher subagent response contract includes lane status.
-* .github/prompts/hve-core/task-research.prompt.md:11-14 - Command exposes mode and subagents inputs.
-
-## Lane Evidence
-
-* Codebase Locator found the agent, subagent, command, and eval files.
-* Codebase Analyzer explained mode selection and synthesis rules.
-* Codebase Pattern Finder found existing Vally and uv eval conventions.
-* Web Search Researcher is only needed when external facts or current API behavior enter the task.
+* Codebase Locator maps .github/agents/hve-core/task-researcher.agent.md:55-115, .github/agents/hve-core/subagents/codebase-locator.agent.md, .github/agents/hve-core/subagents/codebase-analyzer.agent.md, .github/agents/hve-core/subagents/codebase-pattern-finder.agent.md, .github/prompts/hve-core/task-research.prompt.md:9-31, and scripts/evals/task-researcher-comparison/fixtures/scenarios.yml:1-50.
+* Codebase Analyzer traces how mode selection flows from the slash-command inputs into Task Researcher's trigger matrix at .github/agents/hve-core/task-researcher.agent.md:55-76.
+* Codebase Pattern Finder compares the named subagent structure with existing hve-core subagents under .github/agents/hve-core/subagents/.
 
 ## Recommendation
 
-Use the no-subagent variant as the latency baseline and compare it against named-lane output for evidence coverage and actionability.
+Use the three local codebase lanes in parallel, then synthesize their findings into the primary `.copilot-tracking/research/{{YYYY-MM-DD}}/<topic>-research.md` document. Do not add external research lanes unless external framework or API facts are needed.
+
+## Validation
+
+Run `npm run eval:task-researcher:compare`, regenerate `evals/agent-behavior/eval.yaml`, and regenerate plugin outputs after source changes.

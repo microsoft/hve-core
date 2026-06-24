@@ -1,31 +1,18 @@
-# Captured Output Fixture
+# External Evaluation Framework Research
 
-Scenario: external-api
-Variant: with-subagents
+The selected mode is `subagents=true mode=lanes` with external research because the task depends on current DeepEval behavior.
 
-## Summary
+## Named Lane Findings
 
-Validating a Task Researcher change that depends on an external LLM evaluation framework requires understanding both local eval conventions and the external framework's integration approach.
+* Codebase Locator maps evals/README.md:1-80, .github/agents/hve-core/task-researcher.agent.md, and scripts/evals/task-researcher-comparison/README.md:12-46.
+* Codebase Analyzer traces local deterministic grading in scripts/evals/task-researcher-comparison/task_researcher_comparison/static_metrics.py:59-71.
+* Codebase Pattern Finder compares this harness with existing eval conventions in evals/README.md:1-80.
+* Web Search Researcher (.github/agents/hve-core/subagents/web-search-researcher.agent.md) checks the external source https://deepeval.com/docs/introduction for current DeepEval behavior.
 
-## Evidence
+## FAR Quality Note
 
-* .github/agents/hve-core/task-researcher.agent.md:15-30 - Local eval validation strategy and integration points.
-* evals/README.md:20-45 - Conventions for local-first evaluation and external framework opt-in.
-
-## External Evidence
-
-* <https://deepeval.com/docs/introduction> - DeepEval supports local-first LLM application and agent evaluation.
-* <https://deepeval.com/docs/metrics-llm-evals> - GEval supports custom LLM-as-judge criteria.
-
-FAR quality note: Sources are factual, actionable, and relevant for selecting an automated grader.
-
-## Lane Evidence
-
-* Codebase locator lane identified eval integration points and credential patterns.
-* Codebase analyzer lane connected local deterministic checks with opt-in LLM-judge tests.
-* Codebase pattern finder lane found DeepEval documentation and GEval metric capabilities.
-* Web Search Researcher provides current external API and documentation checks when local references are insufficient.
+The DeepEval source is factual because it is vendor documentation, actionable because it explains the current framework entry point, and relevant because this task depends on optional LLM-judge behavior.
 
 ## Recommendation
 
-Establish an automated-plus-manual grading plan that runs deterministic checks locally and opt-in DeepEval checks when provider credentials are available. This validates the change in both environments without breaking CI for users without external credentials. Subagent-enabled variant provides stronger evidence for external framework selection and integration trade-offs.
+Combine local eval evidence with external framework evidence, then synthesize the selected validation approach into the main research document.
