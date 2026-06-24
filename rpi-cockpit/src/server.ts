@@ -36,16 +36,15 @@ export async function startServer(bridge: Bridge, port = 4399) {
     ws.on("message", (data) => {
       let msg: unknown;
       try { msg = JSON.parse(String(data)); } catch { return; }
+      // Inbound frame types are mutually exclusive — keep the branches symmetric.
       if (msg && typeof msg === "object" && (msg as { type?: string }).type === "decide") {
         const m = msg as { id?: unknown; choiceId?: unknown };
         if (typeof m.id === "string" && typeof m.choiceId === "string") {
           bridge.resolveDecision(m.id, m.choiceId);
         }
-      }
-      if (msg && typeof msg === "object" && (msg as { type?: string }).type === "steer") {
+      } else if (msg && typeof msg === "object" && (msg as { type?: string }).type === "steer") {
         const parsed = SteerMsg.safeParse(msg);
         if (parsed.success) bridge.enqueueDirective(parsed.data.directive);
-        return;
       }
     });
   });

@@ -89,6 +89,8 @@ document.addEventListener("click", (e) => {
     if (text) { sendMsg({ type: "steer", directive: { kind: "note", text } }); note.value = ""; return; }
     const sel = document.getElementById("steer-select");
     if (sel && sel.value) {
+      // The agent reads the rendered label (see summarizeDirective); `value` is advisory,
+      // not a stable enum to switch on (preset ids carry no session meaning).
       const opt = sel.options[sel.selectedIndex];
       sendMsg({ type: "steer", directive: { kind: "approach", value: sel.value, label: opt ? opt.textContent : sel.value } });
     }
