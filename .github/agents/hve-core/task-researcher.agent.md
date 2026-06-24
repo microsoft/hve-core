@@ -45,6 +45,8 @@ In focused mode, run `Researcher Subagent` with these inputs:
 * Research topic or question to investigate.
 * Focused subagent research document path under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/`.
 
+Researcher Subagent returns its focused scratch document path, status, key findings, recommended next research, and blocking clarifying questions.
+
 In lane mode, run named subagents with these inputs:
 
 * User topic and research questions.
