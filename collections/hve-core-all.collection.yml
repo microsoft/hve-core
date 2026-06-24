@@ -12,7 +12,7 @@ items:
 - path: .github/agents/accessibility/accessibility-reviewer.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/accessibility/subagents/accessibility-skill-assessor.agent.md
+- path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
@@ -54,12 +54,15 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/hve-core/documentation.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
   kind: agent
 - path: .github/agents/hve-core/pr-review.agent.md
   kind: agent
+- path: .github/agents/hve-core/pr-walkthrough.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/prompt-builder.agent.md
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
@@ -99,8 +102,6 @@ items:
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
   kind: agent
-- path: .github/agents/project-planning/arch-diagram-builder.agent.md
-  kind: agent
 - path: .github/agents/project-planning/brd-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/meeting-analyst.agent.md
@@ -121,6 +122,12 @@ items:
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
 - path: .github/agents/rai-planning/rai-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/rai-planning/rai-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
@@ -234,8 +241,6 @@ items:
 - path: .github/prompts/github/github-triage-issues.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
-  kind: prompt
-- path: .github/prompts/hve-core/doc-ops-update.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
@@ -417,6 +422,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/licensing-posture.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/markdown.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/prompt-builder.instructions.md
@@ -447,37 +454,13 @@ items:
 - path: .github/instructions/project-planning/adr-standards.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/rai-planning/rai-identity.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-security-model.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-standards.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/backlog-handoff.instructions.md
+- path: .github/instructions/rai-planning/rai-license-posture.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security/identity.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/operational-buckets.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/security-model.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security/sssc-planner.instructions.md
@@ -499,21 +482,11 @@ items:
   kind: instruction
 - path: .github/instructions/shared/telemetry-overlay.instructions.md
   kind: instruction
+- path: .github/instructions/shared/untrusted-content-boundary.instructions.md
+  kind: instruction
 - path: .github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md
   kind: instruction
-- path: .github/skills/accessibility/aria-apg
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/coga
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/en-301-549
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/section-508
-  kind: skill
-  maturity: experimental
-- path: .github/skills/accessibility/wcag-22
+- path: .github/skills/accessibility/accessibility
   kind: skill
   maturity: experimental
 - path: .github/skills/coding-standards/python-foundational
@@ -550,6 +523,11 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/architecture-diagrams
+  kind: skill
+  maturity: experimental
+- path: .github/skills/hve-core/documentation
+  kind: skill
 - path: .github/skills/hve-core/prompt-builder
   kind: skill
 - path: .github/skills/hve-core/vally-tests
@@ -559,14 +537,20 @@ items:
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
-- path: .github/skills/project-planning/accessibility-planner-playbook
+- path: .github/skills/project-planning/adr-author
   kind: skill
   maturity: experimental
-- path: .github/skills/project-planning/adr-author
+- path: .github/skills/project-planning/rai-planner
   kind: skill
   maturity: experimental
 - path: .github/skills/project-planning/requirements-author
   kind: skill
+- path: .github/skills/project-planning/security-planning
+  kind: skill
+  maturity: experimental
+- path: .github/skills/rai/rai-standards
+  kind: skill
+  maturity: experimental
 - path: .github/skills/rpi/rpi
   kind: skill
 - path: .github/skills/rpi/task-implementor

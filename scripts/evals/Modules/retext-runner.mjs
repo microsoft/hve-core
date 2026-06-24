@@ -13,7 +13,7 @@
 // Report schema:
 //   { "results": [ { spec, stimulus, source, messages: [{rule, message, line, column}] } ] }
 
-import { stdin as input, stdout as output, exit, stderr } from 'node:process';
+import { stdin as input, stdout as output, stderr } from 'node:process';
 import { text as alexText } from 'alex';
 import { unified } from 'unified';
 import retextEnglish from 'retext-english';
@@ -77,7 +77,7 @@ const PHRASE_ALLOWLIST = {
         /\bwhite[- ]?paper\b/i,
         /\bwhite[- ]?box\b/i,
         /\bwhite[- ]?hat\b/i,
-        /\bwhite[- ]?space\b/i,
+        /\bwhite[- ]?spac(e|es|ing)\b/i,
         /\bwhite\s+(background|text|fill|colou?r)\b/i,
         /\bblack[- ]?and[- ]?white\b/i,
         /\bplain\s+white\b/i,
@@ -110,14 +110,38 @@ const PHRASE_ALLOWLIST = {
         /\bblack[- ]?list(ed|ing|s)?\b/i,
         /\bblack[- ]?hat\b/i,
         /\bBlack\s+(formatter|format|compatible)\b/,
+        /\bBlack\s+Friday\b/i,
     ],
     trap: [
         /\b(trap[- ]?door|trap\s+handler|trap\s+event|debug\s+trap|signal\s+trap|stack\s+trap|error\s+trap)\b/i,
         /\b(common|easy|classic|usual|interface|design|prompt|mockup|fidelity)\W+trap\b/i,
+        /\b(keyboard|focus|tab|mouse|character[- ]key)\s+trap\b/i,
+        /\bno\s+keyboard\s+trap\b/i,
+        /\bfocus[- ]trap\b/i,
+        /\btrap\s+(focus|pages?|the\s+user|zone)\b/i,
+        /\b(break|order)\s+or\s+trap\b/i,
+        /\bmaintenance\s+trap\b/i,
+        /\|\s*Trap\s*\|/,
+    ],
+    traps: [
+        /\b(keyboard|focus|tab|mouse|character[- ]key)\s+traps\b/i,
+        /\btraps\s+(keyboard\s+)?focus\b/i,
     ],
     devils: [/\bdevil['\u2019]s\s+advocate\b/i],
-    god: [/\bgod[- ]?(object|class(es)?|mode|method(s)?)\b/i],
-    drug: [/\bdrug\s+(data|dosage|administration|trial|interaction|safety|protocol|delivery)\b/i],
+    god: [/\bgod[- ]?(object|class(es)?|mode|method(s)?|node(s)?)\b/i],
+    drug: [
+        /\bdrug[- ]drug\b/i,
+        /\bdrug\s+(data|dosage|administration|trial|interaction|safety|protocol|delivery|works?|for|provide|application|development|discovery|candidate|product|pricing|class|target|efficacy|approval|label|repurposing|substance|molecule|pipeline|formulation|company|maker|manufacturer|incentives?)\b/i,
+        /\b(new|orphan|investigational|approved|existing|better|active|single[- ]pathway|generic|branded|prescription|specialty|biologic|small[- ]molecule|a|the|novel|psychiatric|oncology|cardiovascular)\s+drugs?\b/i,
+    ],
+    drugs: [
+        /\b(new|orphan|investigational|approved|existing|better|active|single[- ]pathway|generic|branded|prescription|specialty|biologic|small[- ]molecule|the|novel|psychiatric|oncology|cardiovascular|of)\s+drugs\b/i,
+        /\bdrugs\s+(already|exist|and|or|are|were|that|which|for|in|to)\b/i,
+    ],
+    sexual: [/\bsexual\s+(dysfunction|health|function|activity|behaviou?r|orientation|wellbeing|well[- ]being|side[- ]effects?)\b/i],
+    gross: [/\bgross\s+(margin|profit|revenue|sales|income|weight|domestic|product|value|amount|booking|bookings)\b/i],
+    fu: [/\bxin\s+fu\b/i],
+    ass: [/\bAS['\u2019]s\b/],
 };
 
 const CONTEXT_RADIUS = 60;
@@ -186,7 +210,8 @@ async function main() {
     const raw = await readStdin();
     if (!raw.trim()) {
         output.write(JSON.stringify({ results: [] }) + '\n');
-        exit(0);
+        process.exitCode = 0;
+        return;
     }
 
     let manifest;
@@ -194,12 +219,14 @@ async function main() {
         manifest = JSON.parse(raw);
     } catch (err) {
         stderr.write(`retext-runner: failed to parse manifest JSON — ${err.message}\n`);
-        exit(2);
+        process.exitCode = 2;
+        return;
     }
 
     if (!Array.isArray(manifest)) {
         stderr.write('retext-runner: manifest must be a JSON array\n');
-        exit(2);
+        process.exitCode = 2;
+        return;
     }
 
     const results = [];
@@ -225,10 +252,10 @@ async function main() {
     }
 
     output.write(JSON.stringify({ results }) + '\n');
-    exit(flagged > 0 ? 1 : 0);
+    process.exitCode = flagged > 0 ? 1 : 0;
 }
 
 main().catch((err) => {
     stderr.write(`retext-runner: unexpected error — ${err.stack ?? err.message}\n`);
-    exit(2);
+    process.exitCode = 2;
 });

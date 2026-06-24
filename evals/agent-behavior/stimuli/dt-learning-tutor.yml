@@ -1,0 +1,20 @@
+stimuli:
+  - name: dt-learning-tutor-class-recipe
+    prompt: |
+      Teach me Module 1 of the Design Thinking curriculum (Scope Conversations). Outline the phases of the lesson and an exercise. Write the lesson plan under `.copilot-tracking/dt/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: phase-marker-present
+        config:
+          pattern: '(?im)(^\s*(#{2,3}\s|step\s+\d+|phase\s+\d+|\d+[.)])|\|\s*\d+\s*[—–-]|\bphases?\b)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]dt'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

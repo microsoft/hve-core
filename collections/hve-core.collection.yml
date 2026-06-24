@@ -21,7 +21,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/memory.agent.md
     kind: agent
-  - path: .github/agents/hve-core/doc-ops.agent.md
+  - path: .github/agents/hve-core/documentation.agent.md
     kind: agent
   - path: .github/agents/hve-core/prompt-builder.agent.md
     kind: agent
@@ -36,6 +36,9 @@ items:
     maturity: experimental
   - path: .github/agents/hve-core/pr-review.agent.md
     kind: agent
+  - path: .github/agents/hve-core/pr-walkthrough.agent.md
+    kind: agent
+    maturity: experimental
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
@@ -70,8 +73,6 @@ items:
     maturity: experimental
   - path: .github/prompts/hve-core/checkpoint.prompt.md
     kind: prompt
-  - path: .github/prompts/hve-core/doc-ops-update.prompt.md
-    kind: prompt
   # Git prompts
   - path: .github/prompts/hve-core/git-commit-message.prompt.md
     kind: prompt
@@ -94,6 +95,8 @@ items:
   - path: .github/instructions/hve-core/writing-style.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/markdown.instructions.md
+    kind: instruction
+  - path: .github/instructions/hve-core/licensing-posture.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
@@ -130,6 +133,8 @@ items:
     kind: instruction
   # Skills
   - path: .github/skills/shared/pr-reference
+    kind: skill
+  - path: .github/skills/hve-core/documentation
     kind: skill
   - path: .github/skills/experimental/mural
     kind: skill

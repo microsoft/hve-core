@@ -1,0 +1,20 @@
+stimuli:
+  - name: accessibility-reviewer-class-recipe
+    prompt: |
+      Run an accessibility audit of a web UI that includes an unlabeled icon button and a modal dialog without focus management. Summarize the accessibility findings with severity, citing the relevant success criteria.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|barrier)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

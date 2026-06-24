@@ -69,8 +69,9 @@ function Get-MarkdownFiles {
         return @($files | Where-Object { Test-Path $_ -PathType Leaf })
     }
 
-    $excludePatterns = @('node_modules', '.git', 'logs', '.copilot-tracking', 'CHANGELOG.md', 'plugins')
-    $allFiles = @()
+    $excludeDirNames = @('node_modules', '.git', 'logs', '.copilot-tracking', 'plugins')
+    $excludeFileNames = @('CHANGELOG.md')
+    $allFiles = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
 
     # Bypass exclusions only when the caller passes a single explicit file path.
     # Directory paths (including '.' or absolute paths) always receive standard exclusions.
@@ -82,31 +83,56 @@ function Get-MarkdownFiles {
             continue
         }
 
-        $files = @(Get-ChildItem -Path $path -Recurse -Include '*.md' -File -ErrorAction SilentlyContinue)
+        $resolvedRoot = (Resolve-Path -LiteralPath $path).Path
 
-        $allFiles += @($files | Where-Object {
-            $file = $_
-
-            if ($isExplicitFilePath) {
-                return $true
+        if ($isExplicitFilePath) {
+            if ([System.IO.Path]::GetExtension($resolvedRoot) -eq '.md') {
+                $allFiles.Add([System.IO.FileInfo]::new($resolvedRoot))
             }
+            continue
+        }
 
-            $excluded = $false
-            foreach ($pattern in $excludePatterns) {
-                if ($file.FullName -like "*$([System.IO.Path]::DirectorySeparatorChar)$pattern$([System.IO.Path]::DirectorySeparatorChar)*" -or
-                    $file.FullName -like "*$([System.IO.Path]::DirectorySeparatorChar)$pattern" -or
-                    $file.Name -eq $pattern) {
-                    $excluded = $true
-                    break
+        # Stack-based walk that prunes excluded directories during traversal,
+        # avoiding descent into large excluded trees (node_modules, plugins, .git).
+        $pending = [System.Collections.Generic.Stack[string]]::new()
+        $pending.Push($resolvedRoot)
+
+        while ($pending.Count -gt 0) {
+            $currentDir = $pending.Pop()
+
+            try {
+                foreach ($file in [System.IO.Directory]::EnumerateFiles($currentDir, '*.md')) {
+                    if ([System.IO.Path]::GetExtension($file) -ne '.md') {
+                        continue
+                    }
+
+                    if ($excludeFileNames -notcontains [System.IO.Path]::GetFileName($file)) {
+                        $allFiles.Add([System.IO.FileInfo]::new($file))
+                    }
+                }
+
+                foreach ($subDir in [System.IO.Directory]::EnumerateDirectories($currentDir)) {
+                    if ($excludeDirNames -contains [System.IO.Path]::GetFileName($subDir)) {
+                        continue
+                    }
+
+                    # Do not follow reparse points (symlinks/junctions), matching
+                    # the default non-following behavior of Get-ChildItem -Recurse.
+                    if ([System.IO.File]::GetAttributes($subDir) -band [System.IO.FileAttributes]::ReparsePoint) {
+                        continue
+                    }
+
+                    $pending.Push($subDir)
                 }
             }
-
-            -not $excluded
-        })
+            catch {
+                Write-Verbose "Skipping inaccessible directory '$currentDir': $($_.Exception.Message)"
+            }
+        }
     }
 
-    Write-Verbose "Found $(@($allFiles).Count) markdown files"
-    return $allFiles
+    Write-Verbose "Found $($allFiles.Count) markdown files"
+    return $allFiles.ToArray()
 }
 
 function Get-MsDateFromFrontmatter {
@@ -234,76 +260,78 @@ All documentation files with ms.date frontmatter are within the $Threshold-day f
 
 #region Main Logic
 
-Write-Verbose "Starting ms.date freshness check with $ThresholdDays-day threshold"
+if ($MyInvocation.InvocationName -ne '.') {
+    Write-Verbose "Starting ms.date freshness check with $ThresholdDays-day threshold"
 
-$markdownFiles = @(Get-MarkdownFiles -SearchPaths $Paths -ChangedOnly:$ChangedFilesOnly -Base $BaseBranch)
+    $markdownFiles = @(Get-MarkdownFiles -SearchPaths $Paths -ChangedOnly:$ChangedFilesOnly -Base $BaseBranch)
 
-if (@($markdownFiles).Count -eq 0) {
-    Write-Warning "No markdown files found to check"
-    exit 0
-}
+    if (@($markdownFiles).Count -eq 0) {
+        Write-Warning "No markdown files found to check"
+        exit 0
+    }
 
-Write-Verbose "Checking $(@($markdownFiles).Count) markdown files"
+    Write-Verbose "Checking $(@($markdownFiles).Count) markdown files"
 
-$results = [System.Collections.Generic.List[PSCustomObject]]::new()
-$currentDate = Get-Date
+    $results = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $currentDate = Get-Date
 
-foreach ($file in $markdownFiles) {
-    $relativePath = if ($file -is [System.IO.FileInfo]) {
-        $file.FullName.Replace("$PWD$([System.IO.Path]::DirectorySeparatorChar)", '')
+    foreach ($file in $markdownFiles) {
+        $relativePath = if ($file -is [System.IO.FileInfo]) {
+            $file.FullName.Replace("$PWD$([System.IO.Path]::DirectorySeparatorChar)", '')
+        }
+        else {
+            $file.Replace("$PWD$([System.IO.Path]::DirectorySeparatorChar)", '')
+        }
+
+        $msDate = Get-MsDateFromFrontmatter -FilePath $file
+
+        if ($null -eq $msDate) {
+            Write-Verbose "Skipping $relativePath (no ms.date)"
+            continue
+        }
+
+        $age = $currentDate - $msDate
+        $ageDays = [int]$age.TotalDays
+        $isStale = $ageDays -gt $ThresholdDays
+
+        $result = [PSCustomObject]@{
+            File      = $relativePath
+            MsDate    = $msDate.ToString('yyyy-MM-dd')
+            AgeDays   = $ageDays
+            IsStale   = $isStale
+            Threshold = $ThresholdDays
+        }
+
+        $results.Add($result)
+
+        if ($isStale) {
+            Write-Verbose "Stale file detected: $relativePath ($ageDays days old)"
+            Write-CIAnnotation -Message "${relativePath}: ms.date is $ageDays days old (threshold: $ThresholdDays days)" -Level 'Warning' -File $relativePath
+        }
+    }
+
+    if (@($results).Count -eq 0) {
+        Write-Warning "No files with ms.date frontmatter found"
+        exit 0
+    }
+
+    $report = New-MsDateReport -Results $results -Threshold $ThresholdDays
+
+    Write-Host "`nms.date Freshness Check Summary:"
+    Write-Host "  Files Checked: $(@($results).Count)"
+    Write-Host "  Stale Files: $($report.StaleCount)"
+    Write-Host "  Threshold: $ThresholdDays days"
+
+    Write-CIStepSummary -Path $report.MarkdownPath
+
+    if ($report.StaleCount -gt 0) {
+        Write-Host "`n❌ Found $($report.StaleCount) stale documentation file(s)"
+        exit 1
     }
     else {
-        $file.Replace("$PWD$([System.IO.Path]::DirectorySeparatorChar)", '')
+        Write-Host "`n✅ All files are fresh"
+        exit 0
     }
-
-    $msDate = Get-MsDateFromFrontmatter -FilePath $file
-
-    if ($null -eq $msDate) {
-        Write-Verbose "Skipping $relativePath (no ms.date)"
-        continue
-    }
-
-    $age = $currentDate - $msDate
-    $ageDays = [int]$age.TotalDays
-    $isStale = $ageDays -gt $ThresholdDays
-
-    $result = [PSCustomObject]@{
-        File      = $relativePath
-        MsDate    = $msDate.ToString('yyyy-MM-dd')
-        AgeDays   = $ageDays
-        IsStale   = $isStale
-        Threshold = $ThresholdDays
-    }
-
-    $results.Add($result)
-
-    if ($isStale) {
-        Write-Verbose "Stale file detected: $relativePath ($ageDays days old)"
-        Write-CIAnnotation -Message "${relativePath}: ms.date is $ageDays days old (threshold: $ThresholdDays days)" -Level 'Warning' -File $relativePath
-    }
-}
-
-if (@($results).Count -eq 0) {
-    Write-Warning "No files with ms.date frontmatter found"
-    exit 0
-}
-
-$report = New-MsDateReport -Results $results -Threshold $ThresholdDays
-
-Write-Host "`nms.date Freshness Check Summary:"
-Write-Host "  Files Checked: $(@($results).Count)"
-Write-Host "  Stale Files: $($report.StaleCount)"
-Write-Host "  Threshold: $ThresholdDays days"
-
-Write-CIStepSummary -Path $report.MarkdownPath
-
-if ($report.StaleCount -gt 0) {
-    Write-Host "`n❌ Found $($report.StaleCount) stale documentation file(s)"
-    exit 1
-}
-else {
-    Write-Host "`n✅ All files are fresh"
-    exit 0
 }
 
 #endregion

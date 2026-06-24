@@ -44,7 +44,7 @@ These skills are the normative reference for findings. Load only the skills rele
 | `section-508` | U.S. Section 508 (Revised) chapters and functional performance criteria                 | U.S. federal procurement scope               |
 | `en-301-549`  | EN 301 549 clauses (web, non-web documents, software, hardware)                         | EU procurement, non-web documents, native UI |
 
-Resolve a skill by reading its `SKILL.md` at `.github/skills/accessibility/<skill>/SKILL.md`, then follow its reference links to the success-criterion roll-up and per-guideline reference files only as needed to substantiate a finding.
+Resolve a skill through the consolidated Accessibility skill contract, then use the matching framework or phase guidance provided by that skill only as needed to substantiate a finding.
 
 ## Review Focus Areas
 
@@ -120,6 +120,7 @@ Use the following format for each finding:
 * Low issues section with all Low-severity findings.
 * Positive changes highlighting accessible patterns observed in the branch.
 * Testing recommendations listing specific assistive-technology checks to perform (screen reader, keyboard-only, zoom/reflow, contrast).
+* When presenting the markdown report to the user (standalone mode), append the Code-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row. Include this section in every presented report, including the no-issues case. Skip in orchestrated mode, where findings are written as JSON and the orchestrator emits the consolidated disclaimer.
 * When no UI surface is in scope, or no barriers are found, include the executive summary, changed files overview, and a confirmation that no accessibility issues were identified.
 
 ## Required Steps
@@ -133,7 +134,7 @@ When a `diff-state.json` path is provided in the input by an orchestrator:
    * If no UI, markup, or document surface is in scope, write an empty findings report (see step 5) noting "No accessibility-relevant surface in diff" and stop.
 3. Issue a single parallel tool-call block to read all files needed by subsequent steps:
    * The diff at `diffPatchPath` — full file, single read (use `startLine: 1` and an `endLine` large enough to cover the full file, e.g. 99999). Skip if the orchestrator provided diff content inline. **Do not re-read the diff for any reason** — no partial re-reads, range extensions, chunk-based reads, or verification reads are permitted. If the first read returns truncated output, work with what was returned.
-   * `SKILL.md` for each in-scope accessibility skill at `.github/skills/accessibility/<skill>/SKILL.md`.
+   * the consolidated Accessibility skill content for each in-scope accessibility skill, including matching framework guidance when needed.
    * `docs/templates/full-review-output-format.md` (Subagent Findings JSON Schema for Step 3).
    All subsequent steps use this cached content. Read per-criterion reference files only when needed to substantiate a specific finding.
 4. Skip all git commands — diff computation is already complete. Proceed directly to Step 2: Accessibility Review.

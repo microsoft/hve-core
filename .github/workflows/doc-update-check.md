@@ -20,7 +20,7 @@ engine: copilot
 timeout-minutes: 15
 
 imports:
-  - ../agents/doc-update-checker.agent.md
+  - ../agents/hve-core/documentation.agent.md
 
 checkout:
   sparse-checkout: |
@@ -51,9 +51,10 @@ safe-outputs:
 
 # Documentation Update Check
 
-When code changes merge to main, check whether related documentation
-still accurately describes the implementation. Open focused issues for
-any documentation that has become stale.
+When code changes merge to main, use the Documentation agent in drift mode
+to check whether related documentation still accurately describes the
+implementation. Open focused issues for any documentation that has become
+stale.
 
 ## Activation Guard
 
@@ -68,7 +69,7 @@ any documentation that has become stale.
 
 1. Read the list of files changed in the push from the event context.
 2. Filter out documentation-only changes.
-3. For each code file changed, identify the documentation references using the mapping in the imported agent instructions.
+3. For each code file changed, use the imported Documentation agent guidance to identify the relevant documentation references and drift signals.
 4. Read each referenced documentation file.
 5. Compare the documentation against the current implementation.
 6. For documentation that no longer accurately describes the implementation, search for existing open issues about the same documentation file.

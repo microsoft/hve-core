@@ -1,0 +1,110 @@
+# Bucket-A expectations for adr-creation
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: adr-creation
+class: research-writer
+agent_file: .github/agents/project-planning/adr-creation.agent.md
+stimulus_file: evals/agent-behavior/stimuli/adr-creation.yml
+latest_result: evals/results/agent-matrix/2026-05-28/adr-creation.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: working-draft-path
+    summary: Working draft is placed under the ADR tracking subtree.
+    signal: Output names a workspace path matching `.copilot-tracking/adrs/<topic>-draft.md`.
+    pass_criteria: |
+      For any "draft the ADR" stimulus, the response reports a working draft path
+      starting with `.copilot-tracking/adrs/` whose filename ends with `-draft.md`
+      and whose `<topic>` slug is derived from the ADR title.
+    failure_modes:
+      - Draft written to repo root with no directory (current 2026-05-28 output reports
+        `adr-adopt-postgresql-for-primary-data-store.md`).
+      - Draft written to `docs/decisions/` directly without a tracking draft.
+      - Path missing the `-draft` suffix or `.copilot-tracking/adrs/` prefix.
+    priority: high
+    contract_ref: "agent §Tool Usage (createFile drafts in `.copilot-tracking/adrs/{{topic-name}}-draft.md`) + §Phase 1 Discovery (place draft at `.copilot-tracking/adrs/{{topic-name}}-draft.md`)"
+
+  - expectation_id: final-location-planned
+    summary: Response identifies a final ADR location separate from the working draft.
+    signal: Output names a `docs/decisions/`, `docs/adr/`, or `docs/architecture/decisions/` path.
+    pass_criteria: |
+      Response includes a final-location plan that uses one of the three documented
+      directories (`docs/decisions/`, `docs/adr/`, `docs/architecture/decisions/`)
+      AND filenames follow the `YYYY-MM-DD-<topic>-v01.md` pattern.
+    failure_modes:
+      - No mention of where the ADR will live after finalization.
+      - Final location placed under `.copilot-tracking/` (tracking is for drafts only).
+      - Filename omits the ISO date prefix or version suffix.
+    priority: high
+    contract_ref: "agent §Phase 1 › ADR Placement Planning + §Phase 4 › Finalization"
+
+  - expectation_id: required-adr-sections
+    summary: Drafted ADR includes the minimal required sections.
+    signal: Output references at least Title, Status, Context, Decision, and Consequences sections.
+    pass_criteria: |
+      The response (or the file body it summarizes) names all five sections from the
+      documented minimal skeleton: Title, Status, Context, Decision, Consequences
+      (case-insensitive label match). Additional sections such as Alternatives
+      are allowed but not required.
+    failure_modes:
+      - Status section omitted (e.g. response shows only Context/Decision/Consequences).
+      - Decision presented as prose only with no labeled section.
+      - Template referenced but not used to structure output.
+    priority: medium
+    contract_ref: "agent §Coaching Principles (minimal ADR: Title, Status, Context, Decision, Consequences) + §Phase 4"
+
+  - expectation_id: alternatives-considered
+    summary: ADR drafts surface at least one alternative considered.
+    signal: Output names an alternative option and contrasts it against the chosen decision.
+    pass_criteria: |
+      For a stimulus that asks for an ADR (especially one that explicitly requests
+      "a single alternative"), the response names at least one named alternative
+      and references its tradeoff against the chosen option.
+    failure_modes:
+      - No alternative named (only the chosen technology discussed).
+      - Alternative listed without any tradeoff or comparison rationale.
+    priority: medium
+    contract_ref: "agent §Phase 3 Analysis (work through trade-offs for each option, build comparison matrix)"
+
+  - expectation_id: socratic-coaching-tone
+    summary: Initial response uses questioning rather than immediate template output.
+    signal: Output contains at least one direct question to the user.
+    pass_criteria: |
+      On a discovery-style stimulus (open-ended ADR request without full context),
+      the response asks at least one open question about decision scope, constraints,
+      stakeholders, or success criteria before finalizing the ADR.
+    failure_modes:
+      - Response goes straight to a finalized ADR file with no clarifying questions.
+      - Questions present but only confirm what was already stated, not exploratory.
+    priority: medium
+    applies_when: "stimulus is open-ended (no full Context/Decision/Consequences already supplied)"
+    contract_ref: "agent §Core Coaching Philosophy + §Phase 1 Discovery (opening questions) + §Coaching Principles (Ask rather than tell)"
+
+  - expectation_id: no-source-edit-during-drafting
+    summary: ADR drafting does not modify source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Drafting an ADR for PostgreSQL leads to modifying `package.json` or app code.
+      - Response claims to update database connection code as part of ADR work.
+    priority: medium
+    contract_ref: "agent scope (createFile/insertEditIntoFile target `.copilot-tracking/adrs/` only)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Response substantively addresses the ADR topic from the stimulus.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `adr-creation-class-recipe` stimulus, the response contains terms
+      from {postgres, postgresql, decision, context, consequence, alternative}
+      and reflects the chosen-vs-alternative comparison rather than generic
+      coaching prose.
+    failure_modes:
+      - Off-topic response with no PostgreSQL references.
+      - ADR labels filled with placeholders instead of stimulus-specific content.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

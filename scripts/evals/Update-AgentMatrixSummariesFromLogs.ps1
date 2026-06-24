@@ -18,6 +18,11 @@
     Use this to backfill richer drill-down data after upgrading the parser in
     `Invoke-AgentMatrix.ps1`, without paying the cost of another live matrix run.
 
+.NOTES
+    Maintenance-only utility. Run it ad hoc when refreshing matrix summaries from
+    existing logs; it is not referenced by package.json eval scripts, CI workflows,
+    or other eval scripts.
+
 .PARAMETER MatrixDir
     Path to the matrix output directory (e.g. `evals/results/agent-matrix/2026-05-28`).
     Defaults to the most recent dated directory under `evals/results/agent-matrix/`.
