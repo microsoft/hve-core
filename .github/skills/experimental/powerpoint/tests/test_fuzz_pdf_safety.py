@@ -63,6 +63,7 @@ class TestFuzzSafeOpenPdf:
                 # escapes the wrapper.
                 pass
         except PdfSafetyError:
+            # Expected: only the typed hierarchy may escape the wrapper.
             pass
 
     @settings(max_examples=50, deadline=None)
@@ -77,4 +78,5 @@ class TestFuzzSafeOpenPdf:
             with safe_open_pdf(path):
                 pass
         except PdfSafetyError:
+            # Expected: only the typed hierarchy may escape the wrapper.
             pass
