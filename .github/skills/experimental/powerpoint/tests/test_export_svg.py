@@ -212,6 +212,28 @@ class TestExportPdfToSvg:
         result = export_pdf_to_svg(pdf, out, slides=[1, 5, 10])
         assert len(result) == 1
 
+    def test_render_failure_is_wrapped_as_pymupdf_error(self, mocker, tmp_path):
+        """A page render failure becomes a typed PyMuPDF error."""
+        mock_page = MagicMock()
+        mock_page.get_svg_image.side_effect = RuntimeError("boom")
+
+        mock_doc = MagicMock()
+        mock_doc.__len__ = MagicMock(return_value=1)
+        mock_doc.__getitem__ = MagicMock(return_value=mock_page)
+        mock_doc.__enter__ = MagicMock(return_value=mock_doc)
+        mock_doc.__exit__ = MagicMock(return_value=False)
+
+        mock_fitz = MagicMock()
+        mock_fitz.open.return_value = mock_doc
+        mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
+
+        pdf = tmp_path / "slides.pdf"
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
+        out = tmp_path / "svg"
+
+        with pytest.raises(PyMuPDFError, match="render failed"):
+            export_pdf_to_svg(pdf, out)
+
 
 class TestFindLibreofficePathlib:
     """Tests for find_libreoffice using Path-based file checks."""

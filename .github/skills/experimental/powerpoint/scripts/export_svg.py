@@ -23,7 +23,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pdf_safety import PdfSafetyError, safe_open_pdf
+from pdf_safety import PdfRenderError, PdfSafetyError, safe_open_pdf
 from pptx_utils import (
     EXIT_ERROR,
     EXIT_FAILURE,
@@ -195,14 +195,22 @@ def export_pdf_to_svg(
 
             exported: list[Path] = []
             for page_num in page_numbers:
-                page = doc[page_num - 1]
-                svg_text = page.get_svg_image()
+                try:
+                    page = doc[page_num - 1]
+                    svg_text = page.get_svg_image()
+                except Exception as exc:
+                    raise PdfRenderError(
+                        f"PDF render failed for page {page_num} of {pdf_path}"
+                    ) from exc
+
                 svg_path = output_dir / f"slide-{page_num:03d}.svg"
                 svg_path.write_text(svg_text, encoding="utf-8")
                 logger.info("Exported slide %d → %s", page_num, svg_path.name)
                 exported.append(svg_path)
     except PdfSafetyError as exc:
         raise PyMuPDFError(f"PDF safety check failed for {pdf_path}: {exc}") from exc
+    except PdfRenderError as exc:
+        raise PyMuPDFError(f"PDF render failed for {pdf_path}: {exc}") from exc
 
     return exported
 

@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 import pytest
 from export_slides import (
     EXIT_FAILURE,
+    EXIT_RENDER,
     EXIT_SUCCESS,
     configure_logging,
     convert_pptx_to_pdf,
@@ -20,7 +21,7 @@ from export_slides import (
     parse_slide_numbers,
     run,
 )
-from pdf_safety import PdfSafetyError
+from pdf_safety import PdfInvalidFormatError, PdfRenderError, PdfSafetyError
 
 
 class TestParseSlideNumbers:
@@ -184,6 +185,62 @@ class TestRun:
         assert result == 0
         mock_filter.assert_called_once()
 
+    def test_render_error_returns_render_exit_code(self, mocker, tmp_path):
+        mock_convert = mocker.patch("export_slides.convert_pptx_to_pdf")
+        mock_filter = mocker.patch(
+            "export_slides.filter_pdf_pages",
+            side_effect=PdfRenderError("render failed"),
+        )
+        pptx_file = tmp_path / "deck.pptx"
+        pptx_file.write_bytes(b"PK\x03\x04")
+        mock_pdf = tmp_path / "deck.pdf"
+        mock_pdf.write_bytes(b"%PDF-1.4")
+        mock_convert.return_value = mock_pdf
+
+        out_path = tmp_path / "output" / "result.pdf"
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pptx_file),
+                "--output",
+                str(out_path),
+                "--slides",
+                "1",
+            ]
+        )
+        result = run(args)
+        assert result == EXIT_RENDER
+        mock_filter.assert_called_once()
+
+    def test_safety_error_returns_failure_exit_code(self, mocker, tmp_path):
+        mock_convert = mocker.patch("export_slides.convert_pptx_to_pdf")
+        mock_filter = mocker.patch(
+            "export_slides.filter_pdf_pages",
+            side_effect=PdfInvalidFormatError("safety failed"),
+        )
+        pptx_file = tmp_path / "deck.pptx"
+        pptx_file.write_bytes(b"PK\x03\x04")
+        mock_pdf = tmp_path / "deck.pdf"
+        mock_pdf.write_bytes(b"%PDF-1.4")
+        mock_convert.return_value = mock_pdf
+
+        out_path = tmp_path / "output" / "result.pdf"
+        parser = create_parser()
+        args = parser.parse_args(
+            [
+                "--input",
+                str(pptx_file),
+                "--output",
+                str(out_path),
+                "--slides",
+                "1",
+            ]
+        )
+        result = run(args)
+        assert result == EXIT_FAILURE
+        mock_filter.assert_called_once()
+
 
 class TestConvertPptxToPdf:
     """Tests for convert_pptx_to_pdf via mocked subprocess."""
@@ -233,6 +290,24 @@ class TestFilterPdfPages:
         result = filter_pdf_pages(pdf_path, [1, 3], out_path)
         assert result == out_path
         assert mock_new_doc.insert_pdf.call_count == 2
+
+    def test_wraps_insert_failure_as_render_error(self, mocker, tmp_path):
+        mocker.patch.dict("sys.modules", {"fitz": MagicMock()})
+        import sys
+
+        mock_fitz = sys.modules["fitz"]
+        mock_doc = MagicMock()
+        mock_doc.__len__ = MagicMock(return_value=3)
+        mock_new_doc = MagicMock()
+        mock_new_doc.insert_pdf.side_effect = RuntimeError("boom")
+        mock_fitz.open.side_effect = [mock_doc, mock_new_doc]
+
+        pdf_path = tmp_path / "full.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n%fake\n")
+        out_path = tmp_path / "filtered.pdf"
+
+        with pytest.raises(PdfRenderError, match="filter failed"):
+            filter_pdf_pages(pdf_path, [1], out_path)
 
 
 class TestConfigureLogging:

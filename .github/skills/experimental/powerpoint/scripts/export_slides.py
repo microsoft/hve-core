@@ -21,11 +21,12 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pdf_safety import PdfSafetyError, safe_open_pdf
+from pdf_safety import PdfRenderError, PdfSafetyError, safe_open_pdf
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_ERROR = 2
+EXIT_RENDER = 3
 
 logger = logging.getLogger(__name__)
 
@@ -164,21 +165,39 @@ def filter_pdf_pages(pdf_path: Path, pages: list[int], output_path: Path) -> Pat
         )
         sys.exit(EXIT_FAILURE)
 
-    with safe_open_pdf(pdf_path) as doc:
-        new_doc = fitz.open()
-        total_pages = len(doc)
-        for page_num in pages:
-            if 1 <= page_num <= total_pages:
-                new_doc.insert_pdf(doc, from_page=page_num - 1, to_page=page_num - 1)
-            else:
-                logger.warning(
-                    "Slide %d out of range (1-%d), skipping",
-                    page_num,
-                    total_pages,
-                )
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        new_doc.save(str(output_path))
-        new_doc.close()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with safe_open_pdf(pdf_path) as doc:
+            new_doc = fitz.open()
+            try:
+                total_pages = len(doc)
+                for page_num in pages:
+                    if 1 <= page_num <= total_pages:
+                        try:
+                            new_doc.insert_pdf(
+                                doc,
+                                from_page=page_num - 1,
+                                to_page=page_num - 1,
+                            )
+                        except Exception as exc:
+                            raise PdfRenderError(
+                                f"PDF filter failed during page insert for {pdf_path}"
+                            ) from exc
+                    else:
+                        logger.warning(
+                            "Slide %d out of range (1-%d), skipping",
+                            page_num,
+                            total_pages,
+                        )
+
+                new_doc.save(str(output_path))
+            finally:
+                new_doc.close()
+    except PdfSafetyError:
+        raise
+    except Exception as exc:
+        raise PdfRenderError(f"PDF filter failed for {pdf_path}") from exc
 
     logger.info("Filtered PDF saved: %s (%d pages)", output_path, len(pages))
     return output_path
@@ -216,6 +235,9 @@ def run(args: argparse.Namespace) -> int:
             logger.info("Filtering to slides: %s", slide_nums)
             try:
                 filter_pdf_pages(full_pdf, slide_nums, output_path)
+            except PdfRenderError as exc:
+                logger.error("PDF render failed for %s: %s", full_pdf, exc)
+                return EXIT_RENDER
             except PdfSafetyError as exc:
                 logger.error("PDF safety check failed for %s: %s", full_pdf, exc)
                 return EXIT_FAILURE
