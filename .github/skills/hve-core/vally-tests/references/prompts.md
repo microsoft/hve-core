@@ -35,7 +35,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: prompt frontmatter MUST include a non-empty `description:` field under 120 characters; OPTIONAL fields `agent:`, `argument-hint:`, and a `---` activation line MAY be present when the prompt delegates or accepts arguments.
 * Suggested stimulus: ask the assistant to summarize the frontmatter of a named prompt under `.github/prompts/hve-core/`, then assert that the description value is surfaced in the response.
 * Grader recommendation: `regex` with pattern `(?m)^description:\s*['"]?.{1,120}['"]?`.
-* Evidence: `.github/prompts/hve-core/task-research.prompt.md` L2-L4 shows `description:`, `agent:`, and `argument-hint:` together.
+* Evidence: `.github/prompts/hve-core/pull-request.prompt.md` L2-L4 shows `description:`, `agent:`, and `argument-hint:` together.
 
 ### Check 2: Agent Delegation Without Duplication
 
@@ -43,7 +43,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt sets `agent:`, it MUST NOT duplicate the delegated agent's Required Phases or Required Steps; instead the prompt references the specific phases or sections that differ and extends rather than substitutes the agent's requirements section.
 * Suggested stimulus: ask the assistant to describe what a delegating prompt adds on top of its agent, naming the delegated agent and any sections that differ.
 * Grader recommendation: `semantic_similarity` with rubric "Does the response identify the delegated agent and confirm that the prompt extends rather than duplicates the agent's protocol?".
-* Evidence: `.github/prompts/hve-core/prompt-build.prompt.md` L6-L8 delegates to the `Prompt Builder` agent and contributes a Requirements section without re-stating the agent's phases.
+* Evidence: `.github/prompts/hve-core/pull-request.prompt.md` sets `agent:` (L3) and contributes a Requirements section (L15-L17) that defers to `pull-request.instructions.md` without re-stating the agent's phases.
 
 ### Check 3: Inputs Documentation Format
 
@@ -51,7 +51,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt defines inputs, the Inputs section MUST document every input variable using `${input:varName}` for required inputs or `${input:varName:defaultValue}` for optional inputs.
 * Suggested stimulus: ask the assistant to list the inputs a named prompt accepts and the default value (if any) for each.
 * Grader recommendation: `regex` with pattern `\$\{input:[a-zA-Z_][a-zA-Z0-9_]*(?::[^}]*)?\}`.
-* Evidence: `.github/prompts/hve-core/task-research.prompt.md` L9-L11 documents `${input:chat:true}` and `${input:topic}` with descriptions.
+* Evidence: `.github/prompts/hve-core/pull-request.prompt.md` L11-L12 documents `${input:branch:origin/main}` and `${input:createPullRequest:false}` with descriptions.
 
 ### Check 4: Argument Hint Format
 
@@ -59,7 +59,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: when the prompt declares `argument-hint:`, the value MUST use `[]` for positional arguments, `key=value` for named arguments, `{option1|option2}` for enumerated choices, and `...` for free-form remainders.
 * Suggested stimulus: ask the assistant to show the argument hint a named prompt advertises in the VS Code picker.
 * Grader recommendation: `regex` with pattern `argument-hint:\s*["'][^"']*(?:\[.*\]|\{.*\|.*\}|=|\.\.\.)`.
-* Evidence: `.github/prompts/hve-core/task-research.prompt.md` L4 shows `argument-hint: "topic=... [chat={true|false}]"`.
+* Evidence: `.github/prompts/hve-core/pull-request.prompt.md` L4 shows `argument-hint: "[branch=origin/main] [createPullRequest=false] [excludeMarkdown={true|false}]"`.
 
 ### Check 5: Protocol Structure Presence
 
@@ -67,7 +67,7 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Testable behavior: a prompt with multiple ordered stages or a complex workflow MUST include either `## Required Steps` (autonomous, step-based) or `## Required Phases` (conversational, phase-based). Single-task prompts MAY omit a protocol section.
 * Suggested stimulus: ask the assistant whether a named prompt uses a step-based or phase-based protocol and to name the section heading.
 * Grader recommendation: `regex` with pattern `(?m)^##\s+Required\s+(Steps|Phases|Protocol)\b`.
-* Evidence: `.github/prompts/hve-core/prompt-build.prompt.md` declares a `## Required Protocol` section that scopes its gate behavior.
+* Evidence: `.github/prompts/hve-core/checkpoint.prompt.md` L18 declares a `## Required Steps` section that scopes its step-based protocol.
 
 ### Check 6: Step and Phase Heading Consistency
 

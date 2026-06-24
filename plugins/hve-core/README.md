@@ -36,24 +36,16 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Prompts
 
-| Name                   | Description                                                                        |
-|------------------------|------------------------------------------------------------------------------------|
-| **checkpoint**         | Save or restore conversation context using memory files                            |
-| **doc-ops-update**     | Run the doc-ops agent for documentation quality assurance and updates              |
-| **git-commit**         | Stage all changes, generate a conventional commit message, and commit              |
-| **git-commit-message** | Generate a conventional commit message from all branch changes                     |
-| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling   |
-| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)      |
-| **prompt-analyze**     | Evaluate prompt engineering artifacts against quality criteria and report findings |
-| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria           |
-| **prompt-refactor**    | Refactor and clean up prompt engineering artifacts through iterative improvement   |
-| **pull-request**       | Generate pull request descriptions from branch diffs                               |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks   |
-| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts       |
-| **task-implement**     | Locate and execute implementation plans using Task Implementor                     |
-| **task-plan**          | Initiate implementation planning from user context or research documents           |
-| **task-research**      | Initiate research for implementation planning from user requirements               |
-| **task-review**        | Initiate implementation review from user context or artifact discovery             |
+| Name                   | Description                                                                      |
+|------------------------|----------------------------------------------------------------------------------|
+| **checkpoint**         | Save or restore conversation context using memory files                          |
+| **doc-ops-update**     | Run the doc-ops agent for documentation quality assurance and updates            |
+| **git-commit**         | Stage all changes, generate a conventional commit message, and commit            |
+| **git-commit-message** | Generate a conventional commit message from all branch changes                   |
+| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling |
+| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)    |
+| **pull-request**       | Generate pull request descriptions from branch diffs                             |
+| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts     |
 
 ### Instructions
 
@@ -82,7 +74,9 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **mural**                 | Mural workspace, room, mural, and widget workflows via the Mural REST API exposed through a Python CLI. Use when you need to read or write Mural content or automate widget creation.                                                                                                            |
 | **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
-| **prompt-builder**        | Orchestrate prompt engineering research, validation, and updates through the prompt-builder phase loop.                                                                                                                                                                                          |
+| **prompt-analyze**        | Execute prompt evaluation for existing prompt artifacts and produce an analysis report without modifying files.                                                                                                                                                                                  |
+| **prompt-builder**        | Create or update prompt artifacts through the full prompt-builder phase loop, routing refactor and analyze requests to the specialized skills.                                                                                                                                                   |
+| **prompt-refactor**       | Refactor existing prompt artifacts against explicit requirements through the full prompt-builder loop.                                                                                                                                                                                           |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 | **vally-tests**           | Authors Vally conformance tests for prompts, instructions, agents, and skills, with explicit refusal of jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, model-refusal-elicitation, and PII-extraction stimuli                                                                        |
 

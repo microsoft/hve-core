@@ -95,10 +95,10 @@ The body contains the guidance Copilot follows when working with matched files: 
 
 The Prompt Builder agent automates instruction file creation and evaluation. Use its commands to generate well-structured instruction files that follow repository conventions.
 
-Create a new instruction file or improve an existing one with `/prompt-build`:
+Create a new instruction file or improve an existing one with `/prompt-builder`:
 
 ```text
-/prompt-build files=.github/instructions/coding-standards/typescript.instructions.md promptFiles=.github/instructions/coding-standards/python-script.instructions.md
+/prompt-builder files=.github/instructions/coding-standards/typescript.instructions.md promptFiles=.github/instructions/coding-standards/python-script.instructions.md
 ```
 
 Provide `files` for reference context (existing instruction files to use as style templates, `copilot-instructions.md` for project conventions) and `promptFiles` for the instruction files to create or update.

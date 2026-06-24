@@ -145,10 +145,10 @@ exercise. A simple coding-style instruction works well:
 
 1. Create a file at `.github/instructions/{collection-id}/my-style.instructions.md`
    with minimal frontmatter (`description` and `applyTo` fields)
-2. Run `/prompt-build` and reference an existing instructions file the team
+2. Run `/prompt-builder` and reference an existing instructions file the team
    uses, so Prompt Builder generates the body following established patterns
 3. Run `/prompt-analyze` against the generated file to check for quality gaps
-4. Iterate with `/prompt-build` to address any issues the analysis found
+4. Iterate with `/prompt-builder` to address any issues the analysis found
 5. Test by opening a Copilot chat and verifying the instructions influence
    responses
 6. Submit the file for review following the team's PR process
@@ -165,8 +165,8 @@ exercise. A simple coding-style instruction works well:
 Follow a structured process when adding new instructions, agents, or skills:
 
 1. Create the artifact file with minimal frontmatter in a feature branch
-2. Run `/prompt-build` with reference files to generate the body
-3. Run `/prompt-analyze` and iterate with `/prompt-build` until quality checks
+2. Run `/prompt-builder` with reference files to generate the body
+3. Run `/prompt-analyze` and iterate with `/prompt-builder` until quality checks
    pass
 4. Run `npm run lint:all` to validate formatting and frontmatter
 5. Update affected collection manifests in `collections/`
@@ -197,7 +197,7 @@ artifacts through these stages:
 To deprecate an artifact:
 
 1. Update the artifact's frontmatter to include `maturity: deprecated`
-2. Run `/prompt-build` to add a deprecation notice pointing to the replacement
+2. Run `/prompt-builder` to add a deprecation notice pointing to the replacement
 3. Announce the deprecation and provide a migration timeline
 4. Remove the artifact after the agreed-upon transition period
 

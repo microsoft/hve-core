@@ -98,13 +98,13 @@ and the setup guides may reference outdated flags or file paths.
 ### Prompt Refinement
 
 ```text
-/prompt-analyze .github/prompts/rpi/task-research.prompt.md
+/prompt-analyze .github/skills/rpi/task-researcher/SKILL.md
 ```
 
 After analysis, apply the suggested improvements:
 
 ```text
-/prompt-refactor .github/prompts/rpi/task-research.prompt.md Remove
+/prompt-refactor .github/skills/rpi/task-researcher/SKILL.md Remove
 duplicate input declarations and consolidate the research scope section
 into a single structured list.
 ```

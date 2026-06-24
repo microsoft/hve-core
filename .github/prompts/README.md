@@ -16,11 +16,11 @@ keywords:
 
 ## GitHub Copilot Prompts
 
-This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus areas: onboarding & planning, source control & commit quality, Azure DevOps integration, development tools, documentation & process, and prompt engineering.
+This directory contains **coaching and guidance prompts** designed to provide step-by-step assistance for specific development tasks. Unlike instructions that focus on systematic implementation, prompts offer educational guidance and context-aware coaching to help you learn and apply best practices. Prompts are organized by workflow focus areas: source control & commit quality, Azure DevOps integration, development tools, and documentation & process.
 
 ## How to Use Prompts
 
-Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/task-research`, `/git-commit`). They provide:
+Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g., `/git-commit`). They provide:
 
 * **Educational Guidance**: Step-by-step coaching approach
 * **Context-Aware Assistance**: Project-specific guidance and examples
@@ -28,12 +28,6 @@ Prompts can be invoked in GitHub Copilot Chat using `/prompt-name` syntax (e.g.,
 * **Interactive Support**: Conversational assistance for complex tasks
 
 ## Available Prompts
-
-### Onboarding & Planning
-
-* **[Task Research](./hve-core/task-research.prompt.md)** - Initiates research for task implementation based on user requirements and conversation context (use `/task-research <topic>` to invoke)
-* **[Task Plan](./hve-core/task-plan.prompt.md)** - Creates implementation plans from research documents (use `/task-plan` to invoke)
-* **[Task Implement](./hve-core/task-implement.prompt.md)** - Executes implementation plans with tracking and stop controls (use `/task-implement` to invoke)
 
 ### Source Control & Commit Quality
 
@@ -95,21 +89,18 @@ Jira workflow support is available through dedicated prompts in this directory. 
 
 ## Quick Start
 
-1. **Researching a complex task?** Use `/task-research <topic>` to investigate with [Task Research](./hve-core/task-research.prompt.md)
-2. **Planning implementation?** Use `/task-plan` with a research file to create actionable plans with [Task Plan](./hve-core/task-plan.prompt.md)
-3. **Executing a plan?** Use `/task-implement` to execute plans with [Task Implement](./hve-core/task-implement.prompt.md)
-4. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
-5. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
-6. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
-7. **Tracking your work?** Run [ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)
-8. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)
-9. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
-10. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
-11. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
-12. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
-13. **Managing Jira work?** Use [Jira Discover Issues](./jira/jira-discover-issues.prompt.md), [Jira Triage Issues](./jira/jira-triage-issues.prompt.md), or [Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)
-14. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/gitlab/gitlab/SKILL.md) for setup and command guidance
-15. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
+1. **Committing changes?** Use [Git Commit Message Generator](./hve-core/git-commit-message.prompt.md) or [Git Commit](./hve-core/git-commit.prompt.md)
+2. **Handling merge conflicts?** Use [Git Merge](./hve-core/git-merge.prompt.md)
+3. **Setting up Git?** Use [Git Setup](./hve-core/git-setup.prompt.md)
+4. **Tracking your work?** Run [ADO Get My Work Items](./ado/ado-get-my-work-items.prompt.md) then [ADO Process My Work Items for Task Planning](./ado/ado-process-my-work-items-for-task-planning.prompt.md)
+5. **Creating Azure DevOps PRs?** Use [ADO Create Pull Request](./ado/ado-create-pull-request.prompt.md)
+6. **Checking build status?** Use [ADO Get Build Info](./ado/ado-get-build-info.prompt.md)
+7. **Creating GitHub issues?** Use [GitHub Add Issue](./github/github-add-issue.prompt.md)
+8. **Working on PRs?** Use [Pull Request](./hve-core/pull-request.prompt.md)
+9. **Responding to Azure incidents?** Use [Incident Response](./security/incident-response.prompt.md)
+10. **Managing Jira work?** Use [Jira Discover Issues](./jira/jira-discover-issues.prompt.md), [Jira Triage Issues](./jira/jira-triage-issues.prompt.md), or [Jira Execute Backlog](./jira/jira-execute-backlog.prompt.md)
+11. **Need GitLab delivery context?** Review the [GitLab Skill](../skills/gitlab/gitlab/SKILL.md) for setup and command guidance
+12. **Running a security review?** Use [Security Review](./security/security-review.prompt.md) for full OWASP assessment
 
 ## Related Resources
 

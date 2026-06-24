@@ -67,10 +67,10 @@ The body contains the actual instructions Copilot follows, including any structu
 
 The Prompt Builder agent automates prompt creation, evaluation, and refinement. Use its three commands instead of authoring prompt files entirely by hand.
 
-Create a new prompt or improve an existing one with `/prompt-build`:
+Create a new prompt or improve an existing one with `/prompt-builder`:
 
 ```text
-/prompt-build files=.github/prompts/contoso/sprint-summary.prompt.md promptFiles=.github/prompts/contoso/release-notes.prompt.md
+/prompt-builder files=.github/prompts/contoso/sprint-summary.prompt.md promptFiles=.github/prompts/contoso/release-notes.prompt.md
 ```
 
 Provide `files` for reference context (existing prompts to use as patterns, instruction files, agent files the prompt delegates to) and `promptFiles` for the prompt files to create or update.

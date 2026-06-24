@@ -50,18 +50,18 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 
 ### Prompts
 
-| Tool               | Type   | How to Invoke         | Purpose                                      |
-|--------------------|--------|-----------------------|----------------------------------------------|
-| rpi                | Prompt | `/rpi`                | Start the full RPI workflow                  |
-| task-research      | Prompt | `/task-research`      | Research requirements for a task             |
-| task-plan          | Prompt | `/task-plan`          | Create an implementation plan from research  |
-| task-implement     | Prompt | `/task-implement`     | Begin implementation of a specific task      |
-| task-review        | Prompt | `/task-review`        | Review implementation against the plan       |
-| prompt-build       | Prompt | `/prompt-build`       | Create a new prompt engineering artifact     |
-| prompt-analyze     | Prompt | `/prompt-analyze`     | Analyze prompt quality and effectiveness     |
-| prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts        |
-| git-commit         | Prompt | `/git-commit`         | Stage and commit changes                     |
-| git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes |
+| Tool               | Type   | How to Invoke         | Purpose                                        |
+|--------------------|--------|-----------------------|------------------------------------------------|
+| rpi                | Prompt | `/rpi`                | Start the full RPI workflow                    |
+| task-research      | Prompt | `/task-research`      | Research requirements for a task               |
+| task-plan          | Prompt | `/task-plan`          | Create an implementation plan from research    |
+| task-implement     | Prompt | `/task-implement`     | Begin implementation of a specific task        |
+| task-review        | Prompt | `/task-review`        | Review implementation against the plan         |
+| prompt-builder     | Prompt | `/prompt-builder`     | Create or update a prompt engineering artifact |
+| prompt-analyze     | Prompt | `/prompt-analyze`     | Analyze prompt quality and effectiveness       |
+| prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts          |
+| git-commit         | Prompt | `/git-commit`         | Stage and commit changes                       |
+| git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes   |
 
 ### Auto-Activated Instructions
 

@@ -123,7 +123,7 @@ Run full-quality validation on the files changed in src/services/auth/ against t
 Select **prompt-tester** agent:
 
 ```text
-Execute .github/prompts/rpi/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
+Execute .github/skills/rpi/task-reviewer/SKILL.md literally in a sandbox to verify the review workflow produces expected validation outputs
 ```
 
 Select **prompt-evaluator** agent:

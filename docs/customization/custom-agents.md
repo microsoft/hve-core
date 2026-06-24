@@ -57,10 +57,10 @@ description: "Reviews code changes for Contoso's TypeScript API standards - Brou
 ---
 ```
 
-**Step 2:** Use `/prompt-build` to generate the agent body. Provide existing agents as reference context with `files` and specify the target file with `promptFiles`:
+**Step 2:** Use `/prompt-builder` to generate the agent body. Provide existing agents as reference context with `files` and specify the target file with `promptFiles`:
 
 ```text
-/prompt-build files=.github/agents/hve-core/implementation-validator.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
+/prompt-builder files=.github/agents/hve-core/implementation-validator.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
 ```
 
 Prompt Builder analyzes the reference agents, generates the protocol body with purpose, steps, and response format, and validates the result against repository conventions.
@@ -73,16 +73,16 @@ Prompt Builder analyzes the reference agents, generates the protocol body with p
 
 This produces a structured report covering purpose, capabilities, issues organized by severity, and an overall quality assessment. Address any critical or major findings before committing.
 
-**Step 4:** Iterate with `/prompt-build` to apply fixes identified by the analysis:
+**Step 4:** Iterate with `/prompt-builder` to apply fixes identified by the analysis:
 
 ```text
-/prompt-build files=.github/agents/contoso/code-reviewer.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
+/prompt-builder files=.github/agents/contoso/code-reviewer.agent.md promptFiles=.github/agents/contoso/code-reviewer.agent.md
 ```
 
 When `promptFiles` points to an existing file, Prompt Builder refines it rather than starting from scratch.
 
 > [!TIP]
-> Run `/prompt-analyze` first to identify quality issues, then use `/prompt-build` to apply fixes. This two-step pattern produces consistent, well-structured agents.
+> Run `/prompt-analyze` first to identify quality issues, then use `/prompt-builder` to apply fixes. This two-step pattern produces consistent, well-structured agents.
 
 **Step 5:** Invoke the agent in Copilot Chat by selecting it from the agent picker or referencing it by name.
 

@@ -80,7 +80,7 @@ of any new database queries.
 ```
 
 ```text
-/prompt-build Create a new instructions file for Python data pipeline
+/prompt-builder Create a new instructions file for Python data pipeline
 development. Cover pandas conventions, type hinting requirements,
 virtual environment setup with uv, and testing patterns using pytest.
 ```

@@ -55,16 +55,6 @@ items:
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
   # Prompts
-  - path: .github/prompts/hve-core/rpi.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-research.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-plan.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-implement.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/task-review.prompt.md
-    kind: prompt
   - path: .github/prompts/hve-core/task-challenge.prompt.md
     kind: prompt
     maturity: experimental
@@ -82,13 +72,6 @@ items:
   - path: .github/prompts/hve-core/git-setup.prompt.md
     kind: prompt
   - path: .github/prompts/hve-core/pull-request.prompt.md
-    kind: prompt
-  # Prompt Engineering prompts
-  - path: .github/prompts/hve-core/prompt-analyze.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/prompt-build.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/prompt-refactor.prompt.md
     kind: prompt
   # Instructions
   - path: .github/instructions/hve-core/writing-style.instructions.md
@@ -134,7 +117,11 @@ items:
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
+  - path: .github/skills/hve-core/prompt-analyze
+    kind: skill
   - path: .github/skills/hve-core/prompt-builder
+    kind: skill
+  - path: .github/skills/hve-core/prompt-refactor
     kind: skill
   - path: .github/skills/hve-core/vally-tests
     kind: skill

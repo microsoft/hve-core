@@ -81,7 +81,7 @@ The [Prompt Builder](pathname://../../.github/agents/hve-core/prompt-builder.age
 
 | Command            | Purpose                                                         |
 |--------------------|-----------------------------------------------------------------|
-| `/prompt-build`    | Create new artifacts or improve existing ones                   |
+| `/prompt-builder`  | Create new artifacts or improve existing ones                   |
 | `/prompt-analyze`  | Evaluate quality and produce a structured assessment report     |
 | `/prompt-refactor` | Consolidate, deduplicate, or restructure related artifact files |
 

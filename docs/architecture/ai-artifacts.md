@@ -250,7 +250,7 @@ items:
     - path: .github/agents/hve-core/rpi-agent.agent.md
         kind: agent
         maturity: stable
-    - path: .github/prompts/hve-core/task-plan.prompt.md
+    - path: .github/prompts/hve-core/pull-request.prompt.md
         kind: prompt
         maturity: preview
 ```

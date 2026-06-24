@@ -111,10 +111,10 @@ All error responses follow this structure:
 
 The Prompt Builder agent automates skill creation and improvement. Use its commands to generate a well-structured SKILL.md and validate existing skills.
 
-Create a new skill or improve an existing one with `/prompt-build`:
+Create a new skill or improve an existing one with `/prompt-builder`:
 
 ```text
-/prompt-build files=.github/skills/shared/pr-reference/SKILL.md promptFiles=.github/skills/contoso/api-review/SKILL.md
+/prompt-builder files=.github/skills/shared/pr-reference/SKILL.md promptFiles=.github/skills/contoso/api-review/SKILL.md
 ```
 
 Provide `files` for reference context (existing skills to use as structural templates, related instruction files) and `promptFiles` for the SKILL.md files to create or update. Prompt Builder follows the progressive disclosure model and organizes reference materials appropriately.

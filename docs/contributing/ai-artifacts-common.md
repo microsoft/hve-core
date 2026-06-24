@@ -170,7 +170,7 @@ items:
   - path: .github/instructions/coding-standards/python-script.instructions.md
     kind: instruction
     maturity: stable
-  - path: .github/prompts/hve-core/task-plan.prompt.md
+  - path: .github/prompts/hve-core/pull-request.prompt.md
     kind: prompt
     maturity: preview
 ```
