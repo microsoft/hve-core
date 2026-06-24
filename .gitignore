@@ -485,6 +485,9 @@ dependency-pinning-artifacts/
 .mcp/*.local.json
 .mcp/.env
 
+# Codex MCP config holds a machine-specific absolute path (rpi-cockpit init) - never commit
+/.codex/
+
 # Docusaurus build artifacts
 docs/docusaurus/build/
 docs/docusaurus/.docusaurus/
