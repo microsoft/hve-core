@@ -2,7 +2,9 @@
 name: Prompt Evaluator
 description: 'Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance'
 user-invocable: false
-model: MAI-Code-1-Flash (copilot)
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Sonnet 4.6 (copilot)
 ---
 
 # Prompt Evaluator

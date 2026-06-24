@@ -1,6 +1,6 @@
 # Task Researcher Subagent Comparison
 
-This suite compares Task Researcher outputs with subagents disabled and enabled.
+This suite compares Task Researcher outputs with subagents disabled and enabled. The committed fixtures are synthetic; live runtime verification is handled separately.
 
 ## Variants
 
@@ -47,7 +47,7 @@ The DeepEval score is not a replacement for the manual rubric. Use it to identif
 
 ## Capturing Live Outputs
 
-The comparison tests can grade committed synthetic fixtures or live captured outputs.
+The comparison tests grade the committed synthetic fixtures under `fixtures/outputs/`.
 
 Without a runner, the capture helper writes prompt files:
 
@@ -55,7 +55,7 @@ Without a runner, the capture helper writes prompt files:
 uv run --project scripts/evals/task-researcher-comparison python -m task_researcher_comparison.capture
 ```
 
-With a runner, set `TASK_RESEARCHER_RUNNER` to a command template that accepts `{prompt}` and writes the assistant output to stdout:
+With a runner, set `TASK_RESEARCHER_RUNNER` to a command template that accepts `{prompt}` and writes the assistant output to stdout. These captures are for separate live runtime verification, not for the synthetic fixture set:
 
 ```bash
 TASK_RESEARCHER_RUNNER='your-agent-runner --prompt "{prompt}"' \

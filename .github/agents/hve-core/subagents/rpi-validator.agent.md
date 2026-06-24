@@ -2,7 +2,9 @@
 name: RPI Validator
 description: 'Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase'
 user-invocable: false
-model: MAI-Code-1-Flash (copilot)
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Sonnet 4.6 (copilot)
 ---
 
 # RPI Validator

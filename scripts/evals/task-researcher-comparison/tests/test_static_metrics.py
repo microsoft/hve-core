@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
 from pathlib import Path
 
 from task_researcher_comparison.fixtures import load_fixture_pair, load_scenarios

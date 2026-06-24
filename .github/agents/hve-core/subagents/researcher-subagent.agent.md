@@ -2,7 +2,10 @@
 name: Researcher Subagent
 description: 'Research subagent using search, read, web-fetch, GitHub repo, and MCP tools'
 user-invocable: false
-model: MAI-Code-1-Flash (copilot)
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Researcher Subagent
