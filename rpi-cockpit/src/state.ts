@@ -43,6 +43,8 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
     }
     case "validate":
       return { ...s, validations: { ...s.validations, [beat.check]: beat.status }, log };
+    case "approaches.offer":
+      return { ...s, log };
   }
 }
 
@@ -54,5 +56,6 @@ function summarize(beat: Beat): string {
     case "subagent.stop": return `${beat.name}: ${beat.result ?? "done"}`;
     case "artifact.update": return `${beat.path} ${beat.summary ?? ""}`.trim();
     case "validate": return `${beat.check}=${beat.status}`;
+    case "approaches.offer": return beat.label;
   }
 }
