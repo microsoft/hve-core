@@ -11,4 +11,4 @@ When the `rpi-cockpit` MCP tools are available, narrate the RPI loop by calling 
   instead of asking in chat. It BLOCKS until the user picks in the cockpit and returns the chosen `id`.
   Act on the returned id.
 
-These calls are narration only; they never change what you decide or do.
+These beats are informational except present_options, which blocks until the user decides and returns the chosen id for the agent to act on.
