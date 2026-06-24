@@ -132,14 +132,11 @@ repo_root() {
 safe_installed_path() {
   local candidate="$1"
   local resolved_install_root
-  local resolved_candidate_parent
 
-  resolved_install_root="$(cd "${INSTALL_ROOT}" && pwd -P)"
-  mkdir -p "$(dirname "${candidate}")"
-  resolved_candidate_parent="$(cd "$(dirname "${candidate}")" && pwd -P)"
+  resolved_install_root="$(cd "$(dirname "${INSTALL_ROOT}")" && pwd -P)/$(basename "${INSTALL_ROOT}")"
 
-  case "${resolved_candidate_parent}/$(basename "${candidate}")" in
-    "${resolved_install_root}"/*)
+  case "${candidate}" in
+    "${resolved_install_root}"|"${resolved_install_root}"/*)
       return 0
       ;;
     *)
@@ -210,7 +207,6 @@ install_local_plugin() {
   fi
 
   log "Removing stale installed plugin directories"
-  mkdir -p "${INSTALL_ROOT}" "${INSTALL_ROOT}/_direct"
   safe_installed_path "${marketplace_plugin_root}"
   safe_installed_path "${direct_plugin_root}"
   run rm -rf "${marketplace_plugin_root}" "${direct_plugin_root}"
