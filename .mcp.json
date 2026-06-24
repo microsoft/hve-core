@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "rpi-cockpit": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR}/rpi-cockpit/dist/index.js"
+      ],
+      "env": {
+        "RPI_COCKPIT_PORT": "4399"
+      }
+    }
+  }
+}
