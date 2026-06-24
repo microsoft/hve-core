@@ -22,6 +22,7 @@ ISA-95 network planning specialist for edge Kubernetes environments that connect
 * SHOULD keep guidance accessible for non-experts with plain-language explanations
 * SHOULD distinguish brownfield and greenfield implementation tracks
 * MUST include effort and confidence for every remediation recommendation
+* BEFORE generating any network or architecture diagram, use the `architecture-diagrams` skill: load its `SKILL.md` and produce the diagram exactly as that skill directs. The skill is the authoritative source for its own conventions and output format; do not restate them here.
 
 ## Required Intake
 

@@ -164,7 +164,7 @@ function Invoke-EvalSpecValidation {
             continue
         }
 
-        $errors = Test-EvalSpecCompliance -Spec $parsed -SpecPath $relPath -RepoRoot $RepoRoot
+        $errors = @(Test-EvalSpecCompliance -Spec $parsed -SpecPath $relPath -RepoRoot $RepoRoot)
         if ($errors.Count -eq 0) {
             $valid.Add($relPath)
         }

@@ -1,0 +1,126 @@
+# Bucket-A expectations for ado-backlog-manager
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: ado-backlog-manager
+class: workitem-manager
+agent_file: .github/agents/ado/ado-backlog-manager.agent.md
+stimulus_file: evals/agent-behavior/stimuli/ado-backlog-manager.yml
+latest_result: evals/results/agent-matrix/2026-05-28/ado-backlog-manager.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: tracking-path-under-workitems
+    summary: Drafts and planning files are written under the ADO workitems tracking subtree.
+    signal: Reported file path starts with `.copilot-tracking/workitems/`.
+    pass_criteria: |
+      Output reports a workspace-relative path beginning with
+      `.copilot-tracking/workitems/` (any of `triage/`, `discovery/`, `sprint/`,
+      `execution/`, `prds/` subdirs, or a single-shot draft file directly under
+      `workitems/`). No reports of session-state, temp, or absolute paths
+      outside the workspace.
+    failure_modes:
+      - Writes to `~/.copilot/session-state/...` (matches an earlier matrix pattern on sibling agents).
+      - Writes under an OS temp dir (e.g. `AppData\Local\Temp\...`).
+      - Reports no path at all when a draft was clearly created.
+    priority: high
+    contract_ref: "agent §State Management + §Phase 2: Workflow Dispatch tracking-path table"
+
+  - expectation_id: ado-field-vocabulary-present
+    summary: Drafts use Azure DevOps field vocabulary, not generic backlog terms.
+    signal: Output includes ADO-specific work item field names.
+    pass_criteria: |
+      Output contains at least two of: `Work Item Type`, `Area Path`,
+      `Iteration Path`, `Acceptance Criteria`, `Priority`, `Tags`, `Epic`,
+      `Feature`, `User Story` (case-insensitive). Generic backlog terms alone
+      (e.g. `summary`, `body`, `labels`) do not satisfy this.
+    failure_modes:
+      - Draft uses GitHub-style fields (`labels`, `assignees`, `body`) without ADO equivalents.
+      - Draft uses Jira-style fields (`issue type`, `components`) without ADO equivalents.
+    priority: high
+    contract_ref: "stimulus grader `field-vocab-present` + agent §Supported Work Item Types (in dispatched workflows)"
+
+  - expectation_id: phase-classification-first
+    summary: Orchestrator classifies the request before dispatching a workflow.
+    signal: Output names a workflow (Triage / Discovery / Sprint Planning / Execution / Single Issue / PRD / Build / PR) or explicitly performs Phase 1 classification.
+    pass_criteria: |
+      For a non-trivial request the output names the dispatched workflow
+      explicitly (one of the agent's documented categories), OR states the
+      single-issue/single-draft path was taken and why.
+    failure_modes:
+      - Jumps straight to drafting without naming a workflow path.
+      - Mis-classifies (e.g. calls a PRD conversion "triage").
+    priority: medium
+    applies_when: "user request is not an obvious single draft (skip when stimulus is a one-shot draft prompt)"
+    contract_ref: "agent §Phase 1: Intent Classification"
+
+  - expectation_id: handoff-summary-on-completion
+    summary: Completion turns surface a structured handoff summary, not just the file path.
+    signal: Output includes a summary of items produced (titles or IDs) and applied fields, not just a path.
+    pass_criteria: |
+      When a draft or set of work items is produced, output lists either the
+      titles/IDs of the items or the key fields applied (Area Path, Priority,
+      Tags, Iteration Path) so a reviewer can audit without opening the file.
+    failure_modes:
+      - Reply is only a file path with no item titles or field summary.
+      - Reply describes process but omits what was actually created.
+    priority: medium
+    contract_ref: "agent §Phase 3: Summary and Handoff › Summary contents"
+
+  - expectation_id: no-source-modifications
+    summary: Backlog drafting does not edit source code or build manifests.
+    signal: Output does not reference modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml`. Mere
+      mentions in user-quoted PRD text or as discovery targets are allowed.
+    failure_modes:
+      - Modifies source files alongside drafting work items.
+      - Edits `package.json` as part of "wiring up" the work item.
+    priority: medium
+    contract_ref: "stimulus grader `no-source-edit`"
+
+  - expectation_id: autonomy-default-partial
+    summary: Mutation workflows respect the documented Partial-autonomy default.
+    signal: Output requests approval before create / state-change / iteration-assignment operations, or reports the active autonomy mode.
+    pass_criteria: |
+      When the request would trigger ADO mutations, output either pauses for
+      approval before the first create/state-change/iteration-assignment
+      operation, or explicitly notes the autonomy mode (Full / Partial / Manual)
+      under which it proceeded.
+    failure_modes:
+      - Performs creates or state changes silently without approval or mode call-out.
+      - Claims to operate in Full mode without user opt-in.
+    priority: medium
+    applies_when: "stimulus implies real ADO mutation (not a draft-only prompt)"
+    contract_ref: "agent §Human Review Interaction"
+
+  - expectation_id: content-sanitization-before-mutation
+    summary: Internal tracking IDs and `.copilot-tracking/` paths are stripped before any ADO-bound content.
+    signal: Output describing ADO-bound content (work item body, comment) does not contain `.copilot-tracking/` paths or planning reference IDs.
+    pass_criteria: |
+      Any quoted "this is what will be sent to ADO" content omits
+      `.copilot-tracking/` paths and planning reference tokens (e.g. `WI001`,
+      `IS002`). Discussion of those paths in the chat reply itself is allowed.
+    failure_modes:
+      - ADO-bound work item body includes a `.copilot-tracking/...` path.
+      - ADO-bound work item body includes a planning reference like `WI001`.
+    priority: medium
+    applies_when: "agent shows the payload it intends to send to ADO"
+    contract_ref: "agent §Core Directives (Content Sanitization Guards)"
+
+  - expectation_id: hierarchy-rules-respected
+    summary: Multi-item drafts respect the documented hierarchy (Epic → Feature → User Story).
+    signal: Output uses the documented parent-child structure when more than one item is produced.
+    pass_criteria: |
+      When more than one work item is drafted, output organizes them as
+      Epic → Feature → User Story (or a documented subset such as
+      Feature → User Story under an existing Epic). Cross-level parents are
+      explicit (Feature under Epic, User Story under Feature).
+    failure_modes:
+      - Drafts a flat list of User Stories with no Feature/Epic parent.
+      - Assigns User Stories directly under an Epic with no Feature in between.
+    priority: low
+    applies_when: "request produces more than one work item"
+    contract_ref: "agent §Supported Work Item Types + ado-wit-planning hierarchy rules"

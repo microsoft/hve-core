@@ -14,6 +14,9 @@
 #>
 
 BeforeAll {
+    # Stub uv when not installed so Pester can mock it
+    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) { function global:uv { } }
+
     $script:RepoRoot = git rev-parse --show-toplevel 2>$null
     if (-not $script:RepoRoot) {
         $script:RepoRoot = Split-Path (Split-Path (Split-Path $PSScriptRoot))
@@ -25,6 +28,8 @@ BeforeAll {
 
 AfterAll {
     Remove-Module TtsVoiceoverHelpers -Force -ErrorAction SilentlyContinue
+    # Remove the uv stub so it does not leak into later test suites
+    Remove-Item -Path 'Function:\uv' -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Test-UvAvailability' -Tag 'Unit' {

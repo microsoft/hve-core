@@ -1,9 +1,11 @@
 ---
 name: Accessibility Reviewer
 description: "Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting"
+user-invocable: true
+disable-model-invocation: true
 agents:
   - Codebase Profiler
-  - Accessibility Skill Assessor
+  - Accessibility Framework Assessor
   - Finding Deep Verifier
   - Report Generator
 tools:
@@ -12,8 +14,6 @@ tools:
   - search/codebase
   - search/fileSearch
   - read/readFile
-user-invocable: true
-disable-model-invocation: true
 ---
 
 # Accessibility Reviewer
@@ -23,9 +23,11 @@ Orchestrate accessibility assessment by delegating to subagents. Profile the cod
 ## Purpose
 
 * Delegate codebase profiling to `Codebase Profiler` to identify technology signals and applicable accessibility skills.
-* Delegate each skill assessment to a separate `Accessibility Skill Assessor` invocation.
+* Delegate each framework assessment to a separate `Accessibility Framework Assessor` invocation.
 * Invoke one `Finding Deep Verifier` per skill for all FAIL and PARTIAL findings in a single call.
 * Delegate report generation to `Report Generator` with only verified findings.
+* Display the canonical accessibility disclaimer from the Accessibility Planner identity instructions at scan start and require the generated report to include it near the report header.
+* Include a review artifact inventory in the generated report so users can see what was scanned or reviewed.
 
 ## Inputs
 
@@ -51,11 +53,12 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 ### Available Skills
 
-* wcag-22
-* aria-apg
-* coga
-* section-508
-* en-301-549
+* `accessibility` - consolidated Accessibility skill entrypoint and reference contract for planning and review guidance
+* `wcag-22` - WCAG 2.2 framework guidance resolved through the consolidated Accessibility skill
+* `aria-apg` - ARIA Authoring Practices framework guidance resolved through the consolidated Accessibility skill
+* `coga` - Cognitive Accessibility guidance resolved through the consolidated Accessibility skill
+* `section-508` - Section 508 framework guidance resolved through the consolidated Accessibility skill
+* `en-301-549` - EN 301 549 framework guidance resolved through the consolidated Accessibility skill
 
 ## Required Steps
 
@@ -66,17 +69,20 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 3. Resolve mode-specific inputs:
    * For `diff`, resolve changed files and exclude non-assessable files.
    * For `plan`, resolve and read the plan document.
+4. Read `## Disclaimer Handling` from `.github/instructions/accessibility/accessibility-identity.instructions.md` and display the canonical accessibility CAUTION block verbatim before scan work begins, using the same disclaimer source as the Accessibility Planner.
+5. Initialize a review artifact inventory with the scanning mode, scope or path focus, changed files for diff mode, plan document reference for plan mode, prior scan report when supplied, and any excluded non-assessable files.
 
 ### Step 1: Profile Codebase
 
 * If `targetSkill` is provided, skip profiler and create a minimal profile stub with that skill.
 * Otherwise run `Codebase Profiler` and capture the profile output.
 * Determine applicable skills by intersecting detected or provided skills with Available Skills.
+* Add assessed skills and framework identifiers to the review artifact inventory.
 * Stop if no applicable skills remain.
 
 ### Step 2: Assess Applicable Skills
 
-* For each applicable skill, run `Accessibility Skill Assessor` as a subagent.
+* For each applicable skill, run `Accessibility Framework Assessor` as a subagent.
 * In `diff` mode, pass changed files; in `plan` mode, pass plan content.
 * Collect findings across successful skill assessments.
 
@@ -89,6 +95,8 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 ### Step 4: Generate Report
 
 * Run `Report Generator` as a subagent using verified findings.
+* Pass Domain `accessibility`, the canonical accessibility disclaimer source, and the review artifact inventory to `Report Generator`.
+* Require the report to include the canonical disclaimer near the report header and a `## Review Artifacts` section with a markdown table before the findings sections.
 * Capture returned report path, summary counts, and severity breakdown.
 * Stop with an error status if report generation fails.
 
@@ -102,7 +110,8 @@ Sequence number resolution: Not applicable for the accessibility domain. Filenam
 
 1. Follow all Required Steps in order from Pre-requisite through Step 5.
 2. Mode determines which steps execute and how subagents are invoked.
-3. Display scan status updates at phase transitions.
-4. After each subagent invocation, handle clarifying questions before proceeding.
-5. If a subagent response is incomplete or malformed, retry once. If it still fails, exclude that skill from subsequent steps and record the reason.
-6. Do not include secrets, credentials, or sensitive environment values in outputs.
+3. Display the canonical accessibility disclaimer before the first scan status update in every run and require the generated accessibility report to preserve that disclaimer near the report header.
+4. Display scan status updates at phase transitions.
+5. After each subagent invocation, handle clarifying questions before proceeding.
+6. If a subagent response is incomplete or malformed, retry once. If it still fails, exclude that skill from subsequent steps and record the reason.
+7. Do not include secrets, credentials, or sensitive environment values in outputs.

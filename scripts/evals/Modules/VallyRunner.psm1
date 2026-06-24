@@ -46,6 +46,73 @@ function Resolve-VallyRunDir {
     return $latest.FullName
 }
 
+function Get-VallySpecThreshold {
+    <#
+    .SYNOPSIS
+    Reads an eval spec's scoring.threshold value when available.
+
+    .DESCRIPTION
+    Some evals report trial success through `gradeResult.score` rather than a
+    hard `gradeResult.passed` boolean. When the spec contains
+    `scoring.threshold`, the runner uses that threshold to interpret those
+    scores.
+
+    .PARAMETER SpecPath
+    Path to the eval spec YAML file.
+
+    .OUTPUTS
+    [double] The configured threshold, or $null when absent.
+    #>
+    [CmdletBinding()]
+    [OutputType([double])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SpecPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($SpecPath) -or -not (Test-Path -LiteralPath $SpecPath -PathType Leaf)) {
+        return $null
+    }
+
+    if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
+        return $null
+    }
+
+    try {
+        Import-Module powershell-yaml -ErrorAction Stop | Out-Null
+    }
+    catch {
+        return $null
+    }
+
+    try {
+        $spec = Get-Content -LiteralPath $SpecPath -Raw -Encoding utf8 | ConvertFrom-Yaml
+    }
+    catch {
+        return $null
+    }
+
+    if ($null -eq $spec) { return $null }
+
+    if ($spec -is [System.Collections.IDictionary]) {
+        if ($spec.Contains('scoring')) {
+            $scoring = $spec['scoring']
+            if ($scoring -is [System.Collections.IDictionary] -and $scoring.Contains('threshold')) {
+                return [double]$scoring['threshold']
+            }
+        }
+        return $null
+    }
+
+    $scoring = $spec.PSObject.Properties['scoring']
+    if ($null -eq $scoring -or $null -eq $scoring.Value) { return $null }
+
+    $threshold = $scoring.Value.PSObject.Properties['threshold']
+    if ($null -eq $threshold -or $null -eq $threshold.Value) { return $null }
+
+    return [double]$threshold.Value
+}
+
 function Read-VallyResultsJsonl {
     <#
     .SYNOPSIS
@@ -70,7 +137,8 @@ function Read-VallyResultsJsonl {
         [Parameter(Mandatory = $true)]
         [AllowNull()]
         [AllowEmptyString()]
-        [string]$RunDir
+        [string]$RunDir,
+        [Nullable[double]]$Threshold
     )
 
     $empty = @{
@@ -108,9 +176,22 @@ function Read-VallyResultsJsonl {
         $trials++
 
         $trialPassed = $false
-        if ($obj.PSObject.Properties['gradeResult'] -and $obj.gradeResult -and
-            $obj.gradeResult.PSObject.Properties['passed'] -and $null -ne $obj.gradeResult.passed) {
-            $trialPassed = [bool]$obj.gradeResult.passed
+        $gradeResult = $null
+        if ($obj.PSObject.Properties['gradeResult']) {
+            $gradeResult = $obj.gradeResult
+        }
+        $hasScore = $false
+        $scoreValue = $null
+        if ($gradeResult -and $gradeResult.PSObject.Properties['score'] -and $null -ne $gradeResult.score) {
+            $hasScore = $true
+            $scoreValue = [double]$gradeResult.score
+        }
+
+        if ($hasScore -and $PSBoundParameters.ContainsKey('Threshold') -and $null -ne $Threshold) {
+            $trialPassed = $scoreValue -ge [double]$Threshold
+        }
+        elseif ($gradeResult -and $gradeResult.PSObject.Properties['passed'] -and $null -ne $gradeResult.passed) {
+            $trialPassed = [bool]$gradeResult.passed
         }
         if ($trialPassed) { $passed++ } else { $failed++ }
 
@@ -233,7 +314,8 @@ function Invoke-VallySpec {
     }
 
     $runDir = Resolve-VallyRunDir -OutputDir $OutputDir
-    $aggregate = Read-VallyResultsJsonl -RunDir $runDir
+    $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
+    $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold
 
     $durationMs = if ($aggregate.durationMs -gt 0) {
         [int]$aggregate.durationMs
@@ -281,7 +363,7 @@ function Test-SpecInputModeration {
     Repository root. Defaults to git root.
 
     .OUTPUTS
-    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string }
+    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string; error = $bool }
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -317,9 +399,9 @@ function Test-SpecInputModeration {
 
     $records = @()
     $index = 0
-    if ($spec.PSObject.Properties['stimuli'] -and $spec.stimuli) {
+    if ($spec -and $spec.stimuli) {
         foreach ($stimulus in $spec.stimuli) {
-            if ($stimulus.PSObject.Properties['prompt'] -and $stimulus.prompt) {
+            if ($stimulus -and $stimulus.prompt) {
                 $records += @{
                     id   = "input-$ArtifactId-$index"
                     text = [string]$stimulus.prompt
@@ -344,10 +426,12 @@ function Test-SpecInputModeration {
     }
     catch {
         Write-Warning "Content moderation script failed: $_"
-        return @{ flagged = $true; flaggedCount = $records.Count; outputPath = $outFile }
+        return @{ flagged = $false; flaggedCount = 0; outputPath = $outFile; error = $true }
     }
 
-    $flagged = $moderationExitCode -ne 0
+    # Exit 1 = genuine content flag; exit >=2 = moderation infrastructure/usage error.
+    $flagged = $moderationExitCode -eq 1
+    $moderationError = $moderationExitCode -ge 2
     $flaggedCount = 0
     if (Test-Path -LiteralPath $outFile) {
         $output = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
@@ -358,6 +442,7 @@ function Test-SpecInputModeration {
         flagged       = $flagged
         flaggedCount  = $flaggedCount
         outputPath    = $outFile
+        error         = $moderationError
     }
 }
 
@@ -387,7 +472,7 @@ function Test-SpecOutputModeration {
     Repository root.
 
     .OUTPUTS
-    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string }
+    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string; error = $bool }
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -460,10 +545,12 @@ function Test-SpecOutputModeration {
     }
     catch {
         Write-Warning "Content moderation script failed: $_"
-        return @{ flagged = $true; flaggedCount = $records.Count; outputPath = $outFile }
+        return @{ flagged = $false; flaggedCount = 0; outputPath = $outFile; error = $true }
     }
 
-    $flagged = $moderationExitCode -ne 0
+    # Exit 1 = genuine content flag; exit >=2 = moderation infrastructure/usage error.
+    $flagged = $moderationExitCode -eq 1
+    $moderationError = $moderationExitCode -ge 2
     $flaggedCount = 0
     if (Test-Path -LiteralPath $outFile) {
         $output = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
@@ -474,6 +561,7 @@ function Test-SpecOutputModeration {
         flagged       = $flagged
         flaggedCount  = $flaggedCount
         outputPath    = $outFile
+        error         = $moderationError
     }
 }
 

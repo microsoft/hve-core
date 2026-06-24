@@ -1,0 +1,20 @@
+stimuli:
+  - name: system-architecture-reviewer-class-recipe
+    prompt: |
+      Review this proposed architecture: "Single Node.js monolith on one VM, SQLite database, no caching, deployed via SSH." Produce a written assessment with strengths and risks. Write the assessment under `.copilot-tracking/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: topic-coverage
+        config:
+          pattern: '(?i)(architecture|monolith|sqlite|risk|strength|scalability|reliability)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

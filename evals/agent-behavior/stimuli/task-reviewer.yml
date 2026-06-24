@@ -1,0 +1,20 @@
+stimuli:
+  - name: task-reviewer-class-recipe
+    prompt: |
+      Review this implementation summary: "Phase 3 complete. Added forgot-password endpoint, no tests written, no validation run." Produce review findings with severity levels.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

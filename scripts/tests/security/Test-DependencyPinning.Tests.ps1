@@ -676,6 +676,82 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
     }
 }
 
+Describe 'github-actions composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $ghaTestRoot = Join-Path $TestDrive 'gha-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $ghaTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $ghaTestRoot '.github' 'actions' 'setup-ps-modules'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for github-actions files' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files | ForEach-Object { $_.Type | Should -Be 'github-actions' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files.Count | Should -Be 2
+    }
+}
+
+Describe 'workflow-npm-commands composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $npmTestRoot = Join-Path $TestDrive 'npm-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $npmTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $npmTestRoot '.github' 'actions' 'setup-node'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup Node'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for workflow-npm-commands files' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files | ForEach-Object { $_.Type | Should -Be 'workflow-npm-commands' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files.Count | Should -Be 2
+    }
+}
+
 Describe 'Dot-sourced execution protection' -Tag 'Unit' {
     Context 'When script is dot-sourced' {
         It 'Does not execute main block when dot-sourced' {

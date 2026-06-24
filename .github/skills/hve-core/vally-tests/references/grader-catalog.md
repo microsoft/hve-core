@@ -46,6 +46,7 @@ graders:
       prompt: |
         Score 1 if the response explains the prompt's purpose using the
         words "scope" or "objective" with reasoning. Score 0 otherwise.
+      model: gpt-4o-mini
       scoring: scale_1_5
       threshold: 0.85
 ```

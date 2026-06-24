@@ -1,0 +1,20 @@
+stimuli:
+  - name: issue-triage-class-recipe
+    prompt: |
+      Triage this new GitHub issue: "App is super slow on iPhone." Suggest labels, priority, and assignee. Write the triage record under `.copilot-tracking/github-issues/` and report the path along with the triage decision.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: field-vocab-present
+        config:
+          pattern: '(?i)(title|description|acceptance criteria|priority|label|story|epic)'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\]'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

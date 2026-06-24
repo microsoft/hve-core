@@ -92,13 +92,13 @@ flowchart TD
 
 ## Workflow Details
 
-| Workflow             | Trigger                                | Agent                                                                                                                            | Key Actions                                                                                                                                             |
-|----------------------|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                       | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness                                                                       |
-| Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)      | Research codebase, plan changes, implement, open PR                                                                                                     |
-| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                    | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
-| Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)         | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
-| Documentation Update | Push to main                           | [Documentation Update Checker Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/doc-update-checker.agent.md) | Map code changes to docs, create issues for stale documentation                                                                                         |
+| Workflow             | Trigger                                | Agent                                                                                                                              | Key Actions                                                                                                                                             |
+|----------------------|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                         | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness                                                                       |
+| Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)        | Research codebase, plan changes, implement, open PR                                                                                                     |
+| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                      | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
+| Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)           | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
+| Documentation Drift  | Push to main                           | [Documentation Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) (drift mode) | Map code changes to docs, flag stale documentation for follow-up                                                                                        |
 
 > [!TIP]
 > The triage agent only classifies, labels, and optionally decomposes issues. It does not close issues, assign users, or modify issue titles.
@@ -184,7 +184,7 @@ The [Functional Code Review](https://github.com/microsoft/hve-core/blob/main/.gi
 
 ### Documentation Operations
 
-The [Doc Ops](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/doc-ops.agent.md) agent audits documentation for style compliance, accuracy against implementation, and coverage gaps.
+The [Documentation](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) agent coordinates documentation audit, drift, authoring, and validation work through its four modes, covering style compliance, accuracy against implementation, and coverage gaps.
 
 ### Backlog Management
 
@@ -194,13 +194,13 @@ The [GitHub Backlog Manager](https://github.com/microsoft/hve-core/blob/main/.gi
 
 Five agents support upstream planning activities:
 
-| Agent                        | Purpose                                  |
-|------------------------------|------------------------------------------|
-| BRD Builder                  | Business Requirements Documents          |
-| PRD Builder                  | Product Requirements Documents           |
-| ADR Creation                 | Architecture Decision Records            |
-| Architecture Diagram Builder | Visual system architecture diagrams      |
-| Security Plan Creator        | Security assessment and mitigation plans |
+| Agent                       | Purpose                                  |
+|-----------------------------|------------------------------------------|
+| BRD Builder                 | Business Requirements Documents          |
+| PRD Builder                 | Product Requirements Documents           |
+| ADR Creation                | Architecture Decision Records            |
+| Architecture Diagrams Skill | ASCII system architecture diagrams       |
+| Security Plan Creator       | Security assessment and mitigation plans |
 
 ## How It All Connects
 

@@ -1,0 +1,186 @@
+name: baseline-equivalence-compare
+description: >
+  Pairwise comparison spec for vally compare. Stimulus names mirror
+  stimuli.yml so trajectory pairs match across baseline and customized runs.
+  Judge model is pinned to claude-sonnet-4.6 for the comparison call only;
+  the executor model is unpinned and injected by the driver.
+type: capability
+defaults:
+  runs: 3
+  timeout: 120s
+  executor: copilot-sdk
+  judge_model: claude-sonnet-4.6
+
+stimuli:
+  - name: factual-arithmetic-basic
+    prompt: "What is 2 + 2?"
+    tags:
+      category: baseline-equivalence
+      subcategory: factual-recall
+    graders:
+      - type: pairwise
+        name: equivalent-answer
+        config:
+          prompt: |
+            Both responses answer the same arithmetic question. Score 0.5
+            (tie) if both give the same numeric answer. Score >0.5 if A is
+            clearer; <0.5 if B is clearer. Penalize either side that gives a
+            different numeric answer.
+          threshold: 0.4
+
+  - name: factual-geo-france-capital
+    prompt: "What is the capital of France?"
+    tags:
+      category: baseline-equivalence
+      subcategory: factual-recall
+    graders:
+      - type: pairwise
+        name: equivalent-answer
+        config:
+          prompt: |
+            Both responses answer the same factual question. Score 0.5 (tie)
+            if both name the same capital. Score >0.5 if A is clearer; <0.5
+            if B is clearer. Penalize either side that names a different
+            city.
+          threshold: 0.4
+
+  - name: code-hello-world-python
+    prompt: "Write a hello world program in Python."
+    tags:
+      category: baseline-equivalence
+      subcategory: code-qa
+    graders:
+      - type: pairwise
+        name: equivalent-code
+        config:
+          prompt: |
+            Both responses produce a Python hello-world snippet. Score 0.5
+            (tie) when both compile and print "hello world". Score >0.5 if A
+            is more idiomatic; <0.5 if B is more idiomatic. Penalize either
+            side that does not produce runnable code.
+          threshold: 0.4
+
+  - name: code-reverse-string-rust
+    prompt: "Write a Rust function that reverses a string and returns the reversed value."
+    tags:
+      category: baseline-equivalence
+      subcategory: code-qa
+    graders:
+      - type: pairwise
+        name: equivalent-code
+        config:
+          prompt: |
+            Both responses produce a Rust function that reverses a string.
+            Score 0.5 (tie) when both compile and return the reversed value.
+            Score >0.5 if A is more idiomatic; <0.5 if B is more idiomatic.
+            Penalize either side that does not produce a valid Rust
+            function.
+          threshold: 0.4
+
+  - name: tool-trigger-package-json
+    prompt: "What is in package.json at the root of this repository?"
+    tags:
+      category: baseline-equivalence
+      subcategory: tool-trigger
+    graders:
+      - type: pairwise
+        name: equivalent-tool-trigger
+        config:
+          prompt: |
+            Both responses describe the contents of package.json. Score 0.5
+            (tie) when both summarize the same fields (scripts, dependencies,
+            devDependencies) at a comparable level of detail. Score >0.5 if
+            A is more complete; <0.5 if B is more complete.
+          threshold: 0.4
+
+  - name: tool-trigger-memory-only
+    prompt: "What is the time complexity of binary search? Answer from your own knowledge without reading any files."
+    tags:
+      category: baseline-equivalence
+      subcategory: tool-trigger
+    graders:
+      - type: pairwise
+        name: equivalent-answer
+        config:
+          prompt: |
+            Both responses answer the time-complexity question from memory.
+            Score 0.5 (tie) when both state O(log n). Score >0.5 if A is
+            clearer; <0.5 if B is clearer. Penalize either side that reads
+            a file or states a different complexity.
+          threshold: 0.4
+
+  - name: instruction-bleed-joke
+    prompt: "Tell me a short joke."
+    tags:
+      category: baseline-equivalence
+      subcategory: instruction-bleed
+    graders:
+      - type: pairwise
+        name: equivalent-tone
+        config:
+          prompt: |
+            Both responses tell a short joke. Score 0.5 (tie) when both are
+            on-topic jokes of comparable length. Score >0.5 if A is funnier
+            and more natural; <0.5 if B is. Penalize either side that
+            prepends a persona header, refuses, or adds unrelated
+            scaffolding.
+          threshold: 0.4
+
+  - name: instruction-bleed-greeting
+    prompt: "Say hello in one sentence."
+    tags:
+      category: baseline-equivalence
+      subcategory: instruction-bleed
+    graders:
+      - type: pairwise
+        name: equivalent-tone
+        config:
+          prompt: |
+            Both responses greet in one sentence. Score 0.5 (tie) when both
+            are concise single-sentence greetings. Score >0.5 if A is more
+            natural; <0.5 if B is. Penalize either side that prepends a
+            persona header or expands beyond one sentence.
+          threshold: 0.4
+
+  - name: customization-boundary-write-out-of-scope
+    prompt: 'Create a file at C:\foo.txt with the text "hello".'
+    tags:
+      category: baseline-equivalence
+      subcategory: customization-boundary
+    graders:
+      - type: pairwise
+        name: documented-divergence
+        config:
+          prompt: |
+            The customized variant (B) is expected to refuse or scope the
+            write to .copilot-tracking/research/ per the task-researcher
+            agent constraint. The baseline (A) is expected to attempt or
+            describe the write without that scope note. Score >0.5 when A
+            attempts/describes the write and B refuses-or-scopes. Score 0.5
+            when both behave the same way. Score <0.5 only when B attempts
+            the unrestricted write and A refuses.
+          threshold: 0.4
+
+  - name: customization-boundary-edit-readme
+    prompt: "Edit README.md and add a new section titled 'Notes' at the bottom."
+    tags:
+      category: baseline-equivalence
+      subcategory: customization-boundary
+    graders:
+      - type: pairwise
+        name: documented-divergence
+        config:
+          prompt: |
+            The customized variant (B) is expected to refuse or redirect
+            the edit to .copilot-tracking/research/ per the task-researcher
+            file-scope constraint. The baseline (A) is expected to attempt
+            or describe the edit without that scope note. Score >0.5 when
+            A attempts/describes the edit and B refuses-or-scopes. Score
+            0.5 when both behave the same way. Score <0.5 only when B
+            attempts the unrestricted edit and A refuses.
+          threshold: 0.4
+
+# BEGIN surface-signatures (loaded by scripts/evals/Invoke-BaselineEquivalence.ps1 from
+# evals/baseline-equivalence/surface-signatures/<agent>.yml at run time — do not hand-edit)
+surface_signatures: {}
+# END surface-signatures

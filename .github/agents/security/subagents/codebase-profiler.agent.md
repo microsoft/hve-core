@@ -34,7 +34,7 @@ Scan the repository to identify its technology stack and determine which securit
 
 ## Constants
 
-Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Read the applicable accessibility skill by name (e.g., `wcag-22`, `aria-apg`, `coga`, `section-508`, `en-301-549`).
+Skill resolution: Read the applicable security skill by name (e.g., `owasp-top-10`, `owasp-llm`, `owasp-agentic`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`, `secure-by-design`). Resolve accessibility guidance through the consolidated Accessibility skill contract and use the matching framework guidance when needed.
 
 ### Technology Signals
 

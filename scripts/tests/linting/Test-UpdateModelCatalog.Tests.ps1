@@ -65,8 +65,8 @@ Describe 'Merge-ModelData' -Tag 'Unit' {
                 @{ name = 'GPT-5 mini'; release_status = 'Preview' }
             )
             $script:Multipliers = @(
-                @{ name = 'Claude Sonnet 4'; multiplier_paid = 1 }
-                @{ name = 'GPT-5 mini'; multiplier_paid = 0 }
+                @{ model = 'Claude Sonnet 4'; new_multiplier = 1 }
+                @{ model = 'GPT-5 mini'; new_multiplier = 0 }
             )
             $script:Result = @(Merge-ModelData -ReleaseStatus $script:ReleaseStatus -Multipliers $script:Multipliers)
         }
@@ -97,89 +97,79 @@ Describe 'Merge-ModelData' -Tag 'Unit' {
     Context 'tier classification from multiplier values' {
         It 'Assigns free tier for multiplier 0' {
             $release = @(@{ name = 'Free Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Free Model'; multiplier_paid = 0 })
+            $mult = @(@{ model = 'Free Model'; new_multiplier = 0 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'free'
         }
 
         It 'Assigns fast tier for multiplier 0.25' {
             $release = @(@{ name = 'Fast Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Fast Model'; multiplier_paid = 0.25 })
+            $mult = @(@{ model = 'Fast Model'; new_multiplier = 0.25 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'fast'
         }
 
         It 'Assigns fast tier for multiplier 0.33' {
             $release = @(@{ name = 'Fast Edge'; release_status = 'GA' })
-            $mult = @(@{ name = 'Fast Edge'; multiplier_paid = 0.33 })
+            $mult = @(@{ model = 'Fast Edge'; new_multiplier = 0.33 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'fast'
         }
 
         It 'Assigns standard tier for multiplier 0.5' {
             $release = @(@{ name = 'Standard Low'; release_status = 'GA' })
-            $mult = @(@{ name = 'Standard Low'; multiplier_paid = 0.5 })
+            $mult = @(@{ model = 'Standard Low'; new_multiplier = 0.5 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'standard'
         }
 
         It 'Assigns standard tier for multiplier 1' {
             $release = @(@{ name = 'Standard Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Standard Model'; multiplier_paid = 1 })
+            $mult = @(@{ model = 'Standard Model'; new_multiplier = 1 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'standard'
         }
 
         It 'Assigns premium tier for multiplier 3' {
             $release = @(@{ name = 'Premium Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Premium Model'; multiplier_paid = 3 })
+            $mult = @(@{ model = 'Premium Model'; new_multiplier = 3 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'premium'
         }
 
         It 'Assigns premium tier for multiplier 5' {
             $release = @(@{ name = 'Premium Edge'; release_status = 'GA' })
-            $mult = @(@{ name = 'Premium Edge'; multiplier_paid = 5 })
+            $mult = @(@{ model = 'Premium Edge'; new_multiplier = 5 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'premium'
         }
 
         It 'Assigns ultra tier for multiplier 15' {
             $release = @(@{ name = 'Ultra Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Ultra Model'; multiplier_paid = 15 })
+            $mult = @(@{ model = 'Ultra Model'; new_multiplier = 15 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'ultra'
         }
 
         It 'Assigns ultra tier for multiplier 30' {
             $release = @(@{ name = 'Ultra Max'; release_status = 'GA' })
-            $mult = @(@{ name = 'Ultra Max'; multiplier_paid = 30 })
+            $mult = @(@{ model = 'Ultra Max'; new_multiplier = 30 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -Be 'ultra'
         }
 
         It 'Returns a string tier, not an array' {
             $release = @(@{ name = 'Tier Check'; release_status = 'GA' })
-            $mult = @(@{ name = 'Tier Check'; multiplier_paid = 0.25 })
+            $mult = @(@{ model = 'Tier Check'; new_multiplier = 0.25 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].tier | Should -BeOfType [string]
-        }
-    }
-
-    Context 'when multiplier_paid is Not applicable' {
-        It 'Treats Not applicable as multiplier 0 and free tier' {
-            $release = @(@{ name = 'NA Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'NA Model'; multiplier_paid = 'Not applicable' })
-            $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
-            $result[0].multiplier | Should -Be 0
-            $result[0].tier | Should -Be 'free'
         }
     }
 
     Context 'when model has no multiplier entry' {
         It 'Defaults to multiplier 1 and standard tier' {
             $release = @(@{ name = 'No Mult Model'; release_status = 'GA' })
-            $mult = @(@{ name = 'Other Model'; multiplier_paid = 5 })
+            $mult = @(@{ model = 'Other Model'; new_multiplier = 5 })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].multiplier | Should -Be 1
             $result[0].tier | Should -Be 'standard'
@@ -194,9 +184,9 @@ Describe 'Merge-ModelData' -Tag 'Unit' {
                 @{ name = 'Model C'; release_status = 'GA' }
             )
             $mult = @(
-                @{ name = 'Model A'; multiplier_paid = 0 }
-                @{ name = 'Model B'; multiplier_paid = 1 }
-                @{ name = 'Model C'; multiplier_paid = 4 }
+                @{ model = 'Model A'; new_multiplier = 0 }
+                @{ model = 'Model B'; new_multiplier = 1 }
+                @{ model = 'Model C'; new_multiplier = 4 }
             )
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result | Should -HaveCount 3
@@ -209,10 +199,10 @@ Describe 'Merge-ModelData' -Tag 'Unit' {
         }
     }
 
-    Context 'when multiplier_paid is null' {
+    Context 'when new_multiplier is null' {
         It 'Defaults to multiplier 1' {
             $release = @(@{ name = 'Null Mult'; release_status = 'GA' })
-            $mult = @(@{ name = 'Null Mult'; multiplier_paid = $null })
+            $mult = @(@{ model = 'Null Mult'; new_multiplier = $null })
             $result = @(Merge-ModelData -ReleaseStatus $release -Multipliers $mult)
             $result[0].multiplier | Should -Be 1
             $result[0].tier | Should -Be 'standard'
@@ -364,8 +354,8 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 @{ name = 'Model B'; release_status = 'Preview' }
             )
             $mult = @(
-                @{ name = 'Model A'; multiplier_paid = 1 }
-                @{ name = 'Model B'; multiplier_paid = 0.25 }
+                @{ model = 'Model A'; new_multiplier = 1 }
+                @{ model = 'Model B'; new_multiplier = 0.25 }
             )
 
             $script:NewResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:NewCatalogPath
@@ -411,7 +401,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:UnchangedPath -Encoding utf8
 
             $release = @(@{ name = 'Model A'; release_status = 'GA' })
-            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+            $mult = @(@{ model = 'Model A'; new_multiplier = 1 })
 
             $script:UnchangedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:UnchangedPath
         }
@@ -443,8 +433,8 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 @{ name = 'Model B'; release_status = 'Preview' }
             )
             $mult = @(
-                @{ name = 'Model A'; multiplier_paid = 1 }
-                @{ name = 'Model B'; multiplier_paid = 3 }
+                @{ model = 'Model A'; new_multiplier = 1 }
+                @{ model = 'Model B'; new_multiplier = 3 }
             )
 
             $script:AddedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:AddedPath
@@ -478,7 +468,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:RemovedPath -Encoding utf8
 
             $release = @(@{ name = 'Model A'; release_status = 'GA' })
-            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+            $mult = @(@{ model = 'Model A'; new_multiplier = 1 })
 
             $script:RemovedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:RemovedPath
         }
@@ -542,7 +532,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:ChangedPath -Encoding utf8
 
             $release = @(@{ name = 'Model A'; release_status = 'GA' })
-            $mult = @(@{ name = 'Model A'; multiplier_paid = 5 })
+            $mult = @(@{ model = 'Model A'; new_multiplier = 5 })
 
             $script:ChangedResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:ChangedPath
         }
@@ -575,8 +565,8 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
                 @{ name = 'Model B'; release_status = 'GA' }
             )
             $mult = @(
-                @{ name = 'Model A'; multiplier_paid = 1 }
-                @{ name = 'Model B'; multiplier_paid = 3 }
+                @{ model = 'Model A'; new_multiplier = 1 }
+                @{ model = 'Model B'; new_multiplier = 3 }
             )
 
             $script:DryRunResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DryRunPath -DryRun
@@ -610,7 +600,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             $existingCatalog | ConvertTo-Json -Depth 5 | Set-Content -Path $script:DryRunNoChangePath -Encoding utf8
 
             $release = @(@{ name = 'Model A'; release_status = 'GA' })
-            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+            $mult = @(@{ model = 'Model A'; new_multiplier = 1 })
 
             $script:DryRunNoChangeResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DryRunNoChangePath -DryRun
         }
@@ -633,7 +623,7 @@ Describe 'Invoke-ModelCatalogUpdate' -Tag 'Unit' {
             }
 
             $release = @(@{ name = 'Model A'; release_status = 'GA' })
-            $mult = @(@{ name = 'Model A'; multiplier_paid = 1 })
+            $mult = @(@{ model = 'Model A'; new_multiplier = 1 })
 
             $script:DeepResult = Invoke-ModelCatalogUpdate -ReleaseStatus $release -Multipliers $mult -CatalogPath $script:DeepPath
         }

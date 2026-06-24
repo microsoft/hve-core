@@ -73,13 +73,7 @@ def fuzz_build_patch_entry(data: bytes) -> None:
     }
     digest = import_corpus.hash_prompt(import_corpus.normalize_prompt(row["prompt"]))
     block = import_corpus.build_patch_entry(row, digest)
-    try:
-        parsed = yaml.safe_load(block)
-    except yaml.YAMLError:
-        # Hostile input (e.g. NUL/control characters) can produce a block
-        # PyYAML refuses to read or parse. An unparseable block is fail-safe:
-        # it cannot represent a valid single-entry injection escape.
-        return
+    parsed = yaml.safe_load(block)
     assert isinstance(parsed, list)
     assert len(parsed) == 1
     assert parsed[0]["tags"]["advisory"] is True

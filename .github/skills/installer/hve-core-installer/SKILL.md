@@ -938,7 +938,7 @@ Copying agents enables local customization and offline use.
   • product-manager-advisor, security-planner, ux-ui-designer
 
 ⚙️ Generators
-  • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
+  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
   • pr-review, prompt-builder, test-streamlit-dashboard
