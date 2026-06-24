@@ -7,7 +7,7 @@ The selected mode is `subagents=true mode=lanes` with external research because 
 * Codebase Locator maps evals/README.md:1-80, .github/agents/hve-core/task-researcher.agent.md, and scripts/evals/task-researcher-comparison/README.md:12-46.
 * Codebase Analyzer traces local deterministic grading in scripts/evals/task-researcher-comparison/task_researcher_comparison/static_metrics.py:59-71.
 * Codebase Pattern Finder compares this harness with existing eval conventions in evals/README.md:1-80.
-* Web Search Researcher (.github/agents/hve-core/subagents/web-search-researcher.agent.md) checks the external source https://deepeval.com/docs/introduction for current DeepEval behavior.
+* Web Search Researcher (.github/agents/hve-core/subagents/web-search-researcher.agent.md) checks the external source [DeepEval documentation](https://deepeval.com/docs/introduction) for current DeepEval behavior.
 
 ## FAR Quality Note
 
