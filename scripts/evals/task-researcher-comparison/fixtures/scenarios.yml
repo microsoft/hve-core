@@ -18,7 +18,7 @@ scenarios:
       citation_precision: "Uses workspace-relative file paths with line references."
       actionability: "Selects a recommended verification approach with concrete next steps."
       noise_control: "Avoids unrelated repository-wide digressions."
-      mode_compliance: "No-subagent output stays focused; subagent output names the four configured lanes and keeps them parallel when applicable."
+      mode_compliance: "No-subagent output stays focused; subagent output names the three local codebase lanes and does not add Web Search unless external facts are needed."
   - id: focused-local
     title: "Simple local-only focused research"
     prompt: "Research where Task Researcher documents the lightest mode for simple local work."
