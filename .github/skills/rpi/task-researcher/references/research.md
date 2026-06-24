@@ -61,10 +61,11 @@ The template includes these planning-ready sections.
 ### Operational Contract
 
 1. Research and analysis are the two linked phases; move from evidence gathering to synthesis, then re-enter research while material gaps remain.
-2. Write the primary research artifact under `.copilot-tracking/research/YYYY-MM-DD/` and keep it current as new evidence arrives.
-3. Prefer `Researcher Subagent` via `runSubagent` or `task` when available; if dispatch tooling is unavailable, perform the equivalent research inline and record it in the same primary artifact.
-4. After subagent work, summarize the artifact path, status, key findings, recommended next research, and any clarifying questions in the primary research document.
-5. Hard stop only on missing required input, an unresolvable task, or an unwritable research path.
+2. When chat is enabled, incorporate conversation context to refine scope and surface implicit constraints before drafting the research artifact.
+3. Write the primary research artifact under `.copilot-tracking/research/YYYY-MM-DD/` and keep it current as new evidence arrives.
+4. Prefer `Researcher Subagent` via `runSubagent` or `task` when available; if dispatch tooling is unavailable, perform the equivalent research inline and record it in the same primary artifact.
+5. After subagent work, summarize the artifact path, status, key findings, recommended next research, and any clarifying questions in the primary research document.
+6. Hard stop only on missing required input, an unresolvable task, or an unwritable research path.
 
 ### Document Management
 

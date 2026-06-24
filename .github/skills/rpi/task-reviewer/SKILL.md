@@ -1,6 +1,7 @@
 ---
 name: task-reviewer
 description: Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.
+argument-hint: "[task=...] [plan=...] [changes=...]"
 license: MIT
 user-invocable: true
 ---

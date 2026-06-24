@@ -1,6 +1,7 @@
 ---
 name: task-researcher
 description: Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first.
+argument-hint: "[topic=...] [chat]"
 license: MIT
 user-invocable: true
 ---
@@ -19,7 +20,7 @@ Derive `{{task_slug}}` from the primary research target with lower-kebab-case, a
 
 Use [references/research.md](references/research.md) for the research template and deeper protocol detail.
 
-1. Confirm the task scope, target files, and expected outcome.
+1. Confirm the task scope, target files, and expected outcome. Use the supplied topic when available; when it is not, infer an initial topic from the conversation context. When chat context is enabled, incorporate it to refine scope before drafting the research brief.
 2. Create or update the primary research artifact at `.copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md`.
 3. Prefer delegating research to `Researcher Subagent` via `runSubagent` or `task` when available. If neither dispatch tool is available, perform the equivalent research inline and record it in the same research artifact.
 4. Move through research and analysis, then re-enter research while material gaps remain.
@@ -30,6 +31,7 @@ Use [references/research.md](references/research.md) for the research template a
 
 * The primary research artifact exists under `.copilot-tracking/research/YYYY-MM-DD/`.
 * The document covers scope, evidence, key discoveries, technical scenarios or alternatives, open questions, and planning guidance.
+* When no direct topic is supplied, the initial topic is inferred from the conversation context, and enabled chat context is incorporated to refine scope before the research artifact is drafted.
 * The handoff names `/task-planner` and the dated research artifact path for planning.
 
 ## Constraints

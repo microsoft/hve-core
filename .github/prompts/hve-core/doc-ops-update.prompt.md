@@ -23,7 +23,7 @@ Invoke the doc-ops agent for pattern compliance, accuracy verification, and gap 
 
 ## Scope Definition
 
-This prompt processes **documentation files only**. Prompt engineering artifacts (.github/instructions/, prompts/, agents/, skills/) are out of scope. Use prompt-build.prompt.md for those file types.
+This prompt processes **documentation files only**. Prompt engineering artifacts (.github/instructions/, prompts/, agents/, skills/) are out of scope. Use the prompt-builder skill for those file types.
 
 ---
 

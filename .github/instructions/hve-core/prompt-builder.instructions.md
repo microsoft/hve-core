@@ -7,9 +7,32 @@ applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 
 Authoring standards for prompt engineering artifacts govern how prompt, agent, instructions, and skill files are created and maintained. Apply these standards when creating or modifying any of these file types.
 
+## Choosing the Right Artifact Type
+
+A single request often decomposes into several artifact types, and the workflow should help the user separate them before authoring begins.
+
+| Artifact    | Choose when                                                                            | Form                                                    | How it activates                                                               |
+|-------------|----------------------------------------------------------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------|
+| Prompt      | A repeatable, single-session task the user runs on demand to completion                | `.prompt.md`                                            | Invoked on demand as the slash command `/name`                                 |
+| Agent       | A persona or workflow for multi-turn conversation or autonomous bounded task execution | `.agent.md`                                             | Selected as a chat mode or agent                                               |
+| Subagent    | Specialized, isolated, or parallelizable work delegated by a parent agent              | `.agent.md` under a `subagents/` folder                 | Dispatched by a parent agent, not the user                                     |
+| Instruction | Always-on conventions or standards auto-applied to matching files                      | `.instructions.md`                                      | Applied automatically via an `applyTo` glob                                    |
+| Skill       | Self-contained domain knowledge plus optional scripts loaded on demand                 | `SKILL.md` in `.github/skills/<skill-name>/`            | Loaded automatically by semantic match on its description, or as `/skill-name` |
+| Tool        | A concrete capability or action an agent invokes                                       | Provided by VS Code or an MCP server, not authored here | Declared in an agent's `tools:` frontmatter                                    |
+
+### Guiding Questions
+
+* Is this triggered automatically by the files being edited, or run on purpose? Automatic points to an instruction, while on-purpose work points to a prompt.
+* Is it a one-shot task or an ongoing role or conversation? One-shot work points to a prompt, while an ongoing role points to an agent.
+* Does it need reusable domain knowledge or bundled scripts shared across many workflows? That points to a skill.
+* Does a larger agent need to offload isolated or parallel work? That points to a subagent.
+* Does it need a concrete capability rather than guidance? That points to a tool.
+
+When a request spans several of these, propose a breakdown, for example an agent for the workflow, instructions for conventions, and a skill for shared scripts, and confirm scope with the user before building.
+
 ## File Types
 
-This section defines file type selection criteria, authoring patterns, and validation checks. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
+This section defines authoring patterns and validation checks for the artifact types authored here: prompt, agent, instructions, and skill files, with subagents covered under Agent Files as a specialized agent form. Tools are external capabilities provided by VS Code or an MCP server and wired into an agent through its `tools:` frontmatter rather than authored here. Select a type using the Choosing the Right Artifact Type section, then follow the per-type standards below. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
 
 ### Prompt Files
 
@@ -23,11 +46,11 @@ Characteristics:
 * Frontmatter includes `agent:` to delegate to a custom agent using the human-readable name from the agent's `name:` frontmatter (for example, `agent: Prompt Builder`). Quote the value when the agent name contains spaces.
 * Activation lines are optional and apply only to prompt files; agent files and instructions files do not include them. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
-* When the full contents are not required, refer to the file by path or to the relevant section.
+* When the full contents are not required, refer to the file by name or to the relevant section, following Referencing Other Artifacts when the target is another skill, subagent, prompt, or instruction.
 * Example: `#file:path/to/file.md` pulls in the full file contents at that location.
 * Input variables are supported; see the Input Variables section for syntax.
 
-*Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `prompt-refactor.prompt.md`, `git-commit-message.prompt.md`).
+*Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `checkpoint.prompt.md`, `git-commit-message.prompt.md`).
 
 Consider adding sequential steps when the prompt involves multiple distinct actions that benefit from ordered execution. Simple prompts that accomplish a single task do not need protocol structure.
 
@@ -458,7 +481,7 @@ agents:
 handoffs:
   - label: "💡 Update/Create"
     agent: Prompt Builder
-    prompt: "/prompt-build "
+    prompt: "/prompt-builder "
     send: false
 ---
 ```
@@ -726,6 +749,15 @@ The following patterns provide limited value as prompt instructions:
 * Forcing prompt instruction lists to have three or more items when fewer suffice.
 * Avoid using XML tags to organize prompt instruction content. XML comments used by codebase tooling for section extraction are unrelated to this prohibition.
 
+### Referencing Other Artifacts
+
+When prompt instructions refer to another skill, subagent, prompt, or instruction, identify the artifact by its name rather than hard-coding a path into it:
+
+* Refer to the artifact by the `name:` value from its frontmatter, wrapped in backticks so the reader can pick it out (for example, run `Prompt Tester` or route to the `prompt-builder` skill).
+* Instruction files have no `name:` field, so when prompt instructions direct the model to read and follow an instructions file, refer to it by its full `<name>.instructions.md` filename, naming the specific section when only part applies (for example, the Prompt Quality Criteria section in `prompt-builder.instructions.md`). Using the filename keeps instructions distinct from a similarly named skill.
+* For skills, also follow Skill Invocation from Callers: describe the task intent or use the `/skill-name` slash command rather than a path into the skill.
+* Reserve file paths for a skill's own bundled resources relative to its skill root, for artifact output locations such as `.copilot-tracking/` files, and for frontmatter wiring (`agents:`, `agent:`, `applyTo`) or tool-level references that require an identifier. Do not wrap those file paths in backticks.
+
 ## Prompt Design Principles
 
 Successful prompts demonstrate these qualities:
@@ -744,8 +776,8 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 Tool invocation:
 
 * Run the named agent with `runSubagent` or `task` tools. Provide the inputs needed for the task directly to the named agent; do not add extra instructions telling `runSubagent` to read the corresponding `.github/agents/` file.
-* When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter (for example, "Run `Prompt Tester`" or "Run `Researcher Subagent`"). Reserve filename-style identifiers for file paths, glob examples, and tool-level references.
-* Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
+* When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter wrapped in backticks (for example, run `Prompt Tester` or `Researcher Subagent`), following Referencing Other Artifacts.
+* Declare subagent dependencies in the `agents:` frontmatter by `name:` value; the name resolves whether the subagent sits at the agents root or in a `subagents/` folder, so a file path is not needed.
 * Subagents do not run their own subagents (see the Subagents section).
 
 Task specification:
@@ -803,6 +835,7 @@ Every item applies to the entire file. Validation fails if any item is not satis
 * [ ] Frontmatter includes required fields and follows Frontmatter Requirements.
 * [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
 * [ ] Instructions match the Prompt Writing Style.
+* [ ] References to other skills, subagents, prompts, and instructions follow Referencing Other Artifacts, naming each artifact in backticks instead of hard-coding its file path.
 * [ ] Instructions follow all Prompt Design Principles.
 * [ ] Subagent prompts follow Subagent Prompt Criteria when running subagents.
 * [ ] External sources follow External Source Integration when referencing SDKs or APIs.

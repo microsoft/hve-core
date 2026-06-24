@@ -1,6 +1,7 @@
 ---
 name: task-planner
 description: Create implementation-ready planning artifacts and validation evidence for RPI tasks.
+argument-hint: "[research=...] [chat]"
 license: MIT
 user-invocable: true
 ---
@@ -32,12 +33,14 @@ Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, an
 6. Prefer the Plan Validator at `.github/agents/hve-core/subagents/plan-validator.agent.md` via `runSubagent` or `task`, providing the research path, plan path, details path, planning log path, and a concise user-requirements summary. If neither dispatch tool is available, perform the equivalent validation inline and record the findings in the Planning Log Validator Findings section instead of dead-stopping on tooling alone.
 7. Fix Critical and High findings in the planning artifacts, update the Planning Log Discrepancy Log and Validator Findings section, and rerun validation until only non-blocking findings remain.
 8. Re-enter dated artifacts in place, keep completed work, refresh line references, and rerun validation after material edits.
+9. Complete the run by summarizing the implementation plan artifacts created and any scope items deferred for future planning, drawing the deferred items from the planning log.
 
 ## Success criteria
 
 * The dated planning artifact set exists under `.copilot-tracking/plans/`, `.copilot-tracking/details/`, `.copilot-tracking/plans/logs/`, and `.copilot-tracking/research/`.
 * The Plan Validator result is captured and any Critical and High findings are resolved before handoff.
 * The plan includes a final validation phase for full project validation and fix iteration.
+* The completion summary names the implementation plan files created and any scope items deferred for future planning.
 * The implementation handoff names `/task-implementor` and the dated artifact set for the next phase.
 
 ## Constraints

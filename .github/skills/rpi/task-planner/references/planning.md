@@ -87,7 +87,7 @@ Start the file with `<!-- markdownlint-disable-file -->`.
 * Phase 3 input: the four planning artifact paths and the user-requirements summary.
 * Phase 3 output: validator findings, severity labels, and any required follow-up questions.
 * Phase 4 input: validated planning files and any remaining follow-up work.
-* Phase 4 output: concise handoff with the artifact paths, validation status, and next implementation steps.
+* Phase 4 output: concise handoff summarizing the implementation plan artifacts created, any scope items deferred for future planning, validation status, and next implementation steps.
 
 ## Research fallback
 
@@ -109,7 +109,7 @@ When research is absent, incomplete, or stale:
 
 Use `/task-implementor` as the implementation handoff in planner output.
 
-* Return the plan file path, details file path, planning log path, validation status, and next implementation steps.
+* Return the plan file path, details file path, planning log path, validation status, any scope items deferred for future planning, and next implementation steps.
 * Keep the response concise and evidence-based, with the most actionable artifact paths last.
 * When the user needs a decision, present the option table, recommendation, and impact if deferred before the final handoff.
 

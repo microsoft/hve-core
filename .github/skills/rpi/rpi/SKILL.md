@@ -1,6 +1,7 @@
 ---
 name: rpi
 description: Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.
+argument-hint: "[task=...] [continue={1|1,2|all}] [suggest]"
 license: MIT
 user-invocable: true
 ---
@@ -37,7 +38,7 @@ When sub-skill dispatch is unavailable, run the phase inline by dispatching that
 
 ## Inputs
 
-* `task=...`: primary task description or inferred intent.
+* `task=...`: primary task description or inferred intent from the conversation, attached files, or current file when no explicit task input is provided.
 * `continue={1|1,2|all}`: select one or more saved Discover suggestions; each selected suggestion starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in listed priority order.
 * `suggest`: run Discover directly to refresh next-work suggestions.
 * `task_slug`: lower-kebab-case derived from the primary task or target; use the current date in `YYYY-MM-DD` for dated artifacts.
@@ -48,10 +49,21 @@ When sub-skill dispatch is unavailable, run the phase inline by dispatching that
 * Dated artifacts share one `task_slug` and `YYYY-MM-DD` date across every phase of a task.
 * Research, planning, implementation, review, and Discover run in order and stop on blocking findings.
 * The umbrella skill delegates detailed phase work to `/task-researcher`, `/task-planner`, `/task-implementor`, and `/task-reviewer`.
+* When no explicit `task`, `continue`, or `suggest` input is present, infer the next intent from the conversation, attached files, or the current file.
 * When `continue={1|1,2|all}` selects saved suggestions, each selection starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in the saved priority order.
 * The final response includes phase status, iteration count, artifact paths, validation status, review outcome, and Suggested Next Work.
 * When review outcome is Complete, include a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
 * Still run Discover before any user-facing finish, pause, escalation, or handoff.
+
+## Conversation-history summary contract
+
+When the run ends or conversation history is compacted, include:
+
+* confirmation that state is managed through `.copilot-tracking/` files;
+* the tracking artifact paths with percent complete;
+* the last completed phase and current step;
+* recent Review findings; and
+* recent Discover follow-up work items in order.
 
 ## Constraints
 
