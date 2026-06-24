@@ -163,6 +163,10 @@ $summary = [ordered]@{
 
 if ($CodeCoverage -and $result.CodeCoverage) {
     $summary['CoveragePercent'] = [math]::Round($result.CodeCoverage.CoveragePercent, 2)
+    $coverageTarget = $configuration.CodeCoverage.CoveragePercentTarget.Value
+    if ($null -ne $coverageTarget) {
+        $summary['CoverageTarget'] = [math]::Round([double]$coverageTarget, 2)
+    }
 }
 
 $summary | ConvertTo-Json -Depth 3 | Out-File -FilePath $summaryPath -Encoding utf8

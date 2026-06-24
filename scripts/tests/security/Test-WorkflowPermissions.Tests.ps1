@@ -263,6 +263,20 @@ Describe 'Invoke-WorkflowPermissionsCheck' -Tag 'Integration' {
             $content.'$schema' | Should -Not -BeNullOrEmpty
         }
 
+        It 'Should produce console output when workflows are missing permissions' {
+            $testPath = Join-Path $TestDrive 'console-violation-scan'
+            New-Item -ItemType Directory -Path $testPath -Force | Out-Null
+            Copy-Item -Path (Join-Path $script:FixturesPath 'workflow-without-permissions.yml') -Destination $testPath
+
+            $outputPath = Join-Path $TestDrive 'console-results.txt'
+
+            Invoke-WorkflowPermissionsCheck -Path $testPath -Format console -OutputPath $outputPath
+
+            $content = Get-Content $outputPath -Raw
+            $content | Should -Match 'Workflow permissions violations found'
+            $content | Should -Match 'Remediation'
+        }
+
         It 'Should produce JSON output by default' {
             $testPath = Join-Path $TestDrive 'json-scan'
             New-Item -ItemType Directory -Path $testPath -Force | Out-Null
