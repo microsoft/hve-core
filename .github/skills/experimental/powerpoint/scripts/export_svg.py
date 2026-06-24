@@ -207,10 +207,10 @@ def export_pdf_to_svg(
                 svg_path.write_text(svg_text, encoding="utf-8")
                 logger.info("Exported slide %d → %s", page_num, svg_path.name)
                 exported.append(svg_path)
-    except PdfSafetyError as exc:
-        raise PyMuPDFError(f"PDF safety check failed for {pdf_path}: {exc}") from exc
     except PdfRenderError as exc:
         raise PyMuPDFError(f"PDF render failed for {pdf_path}: {exc}") from exc
+    except PdfSafetyError as exc:
+        raise PyMuPDFError(f"PDF safety check failed for {pdf_path}: {exc}") from exc
 
     return exported
 

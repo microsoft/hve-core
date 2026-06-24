@@ -129,9 +129,11 @@ class TestSafeOpenPdf:
         mock_fitz.open.return_value = mock_doc
         mocker.patch.dict("sys.modules", {"fitz": mock_fitz})
 
-        with pytest.raises(ValueError, match="caller bailed"):
+        try:
             with safe_open_pdf(minimal_valid_pdf()):
                 raise ValueError("caller bailed")
+        except ValueError as exc:
+            assert str(exc) == "caller bailed"
 
         mock_doc.close.assert_called_once()
 
