@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -25,6 +25,10 @@
 .PARAMETER ExcludePaths
     Array of paths to exclude from scanning (supports wildcards).
 
+.PARAMETER Fix
+    Rewrite non-canonical headers and insert missing headers in place using the
+    comment prefix appropriate to each file. Idempotent. Default is validation-only.
+
 .EXAMPLE
     ./Test-CopyrightHeaders.ps1
     Scan repository for copyright header compliance.
@@ -34,6 +38,10 @@
     Scan and fail if any files are missing headers.
 
 .EXAMPLE
+    ./Test-CopyrightHeaders.ps1 -Fix
+    Normalize headers in place across the discovered files.
+
+.EXAMPLE
     ./Test-CopyrightHeaders.ps1 -Path "./scripts" -FileExtensions @('*.ps1')
     Scan only PowerShell files in scripts directory.
 
@@ -41,10 +49,10 @@
     Requires PowerShell 7.0 or later for cross-platform compatibility.
 
     Expected header format:
-    - Copyright line: # Copyright (c) Microsoft Corporation.
+    - Copyright line: # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
     - SPDX line: # SPDX-License-Identifier: MIT
 
-    Headers should appear within the first 10 lines of the file,
+    Headers should appear within the first 15 lines of the file,
     accounting for shebang and #Requires statements.
 
 .LINK
@@ -66,7 +74,10 @@ param(
     [switch]$FailOnMissing,
 
     [Parameter(Mandatory = $false)]
-    [string[]]$ExcludePaths
+    [string[]]$ExcludePaths,
+
+    [Parameter(Mandatory = $false)]
+    [switch]$Fix
 )
 
 # Import shared helpers if available
@@ -75,22 +86,105 @@ if (Test-Path $helpersPath) {
     Import-Module $helpersPath -Force
 }
 Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CIHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "../lib/Modules/CopyrightHeader.psm1") -Force
 
 # Canonical default exclusions shared between script-level param and Invoke-CopyrightHeaderCheck
-$DefaultExcludePaths = @('node_modules', '.git', 'vendor', 'logs', '.venv', '.copilot-tracking')
+$DefaultExcludePaths = @('node_modules', '.git', 'vendor', 'logs', '.venv', '.copilot-tracking', 'plugins')
 
 if (-not $PSBoundParameters.ContainsKey('ExcludePaths')) {
     $ExcludePaths = $DefaultExcludePaths
 }
 
-# Header patterns to check
-$CopyrightPattern = '^\s*#\s*Copyright\s*\(c\)\s*Microsoft\s+Corporation\.?\s*$'
-$SpdxPattern = '^\s*#\s*SPDX-License-Identifier:\s*MIT\s*$'
-
 # Lines to check (accounting for shebang, #Requires, etc.)
 $MaxLinesToCheck = 15
 
 #region Functions
+
+function Get-CommentPrefixForFile {
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    $extension = [System.IO.Path]::GetExtension($FilePath)
+    switch ($extension.ToLowerInvariant()) {
+        '.ps1' { return '#' }
+        '.psm1' { return '#' }
+        '.psd1' { return '#' }
+        '.sh' { return '#' }
+        '.py' { return '#' }
+        '.yml' { return '#' }
+        '.yaml' { return '#' }
+        '.ts' { return '//' }
+        '.tsx' { return '//' }
+        '.js' { return '//' }
+        '.jsx' { return '//' }
+        default { return '#' }
+    }
+}
+
+function Repair-FileHeaders {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath
+    )
+
+    $commentPrefix = Get-CommentPrefixForFile -FilePath $FilePath
+    $canonical = Get-CanonicalHeaderLines -CommentPrefix $commentPrefix
+    $escapedPrefix = [regex]::Escape($commentPrefix)
+    $copyrightLoose = "^\s*$escapedPrefix\s*Copyright\s*\(c\)"
+    $licenseLoose = "^\s*$escapedPrefix\s*(?:SPDX-License-Identifier:|Licensed under)"
+    $extension = [System.IO.Path]::GetExtension($FilePath).ToLowerInvariant()
+
+    $raw = Get-Content -Path $FilePath -Raw -ErrorAction Stop
+    if ($null -eq $raw) { $raw = '' }
+    $newline = if ($raw -match "`r`n") { "`r`n" } else { "`n" }
+    $lines = [System.Collections.Generic.List[string]]@($raw -split "`r?`n")
+
+    # Determine insertion index (after a shebang or a YAML document marker)
+    $startIdx = 0
+    if ($lines.Count -gt 0 -and $lines[0] -match '^#!') {
+        $startIdx = 1
+    }
+    elseif (($extension -eq '.yml' -or $extension -eq '.yaml') -and $lines.Count -gt 0 -and $lines[0] -match '^---\s*$') {
+        $startIdx = 1
+    }
+
+    # Locate an existing copyright line within the scan window
+    $windowEnd = [math]::Min($lines.Count, $startIdx + $MaxLinesToCheck)
+    $cpIdx = -1
+    for ($i = $startIdx; $i -lt $windowEnd; $i++) {
+        if ($lines[$i] -match $copyrightLoose) { $cpIdx = $i; break }
+    }
+
+    $original = ($lines.ToArray()) -join $newline
+
+    if ($cpIdx -ge 0) {
+        $lines[$cpIdx] = $canonical[0]
+        if (($cpIdx + 1) -lt $lines.Count -and $lines[$cpIdx + 1] -match $licenseLoose) {
+            $lines[$cpIdx + 1] = $canonical[1]
+        }
+        else {
+            $lines.Insert($cpIdx + 1, $canonical[1])
+        }
+    }
+    else {
+        $lines.Insert($startIdx, $canonical[1])
+        $lines.Insert($startIdx, $canonical[0])
+    }
+
+    $updated = ($lines.ToArray()) -join $newline
+    if ($updated -ne $original) {
+        Set-Content -Path $FilePath -Value $updated -NoNewline -Encoding utf8
+        return $true
+    }
+
+    return $false
+}
 
 function Test-FileHeaders {
     [CmdletBinding()]
@@ -110,6 +204,10 @@ function Test-FileHeaders {
     }
 
     try {
+        $commentPrefix = Get-CommentPrefixForFile -FilePath $FilePath
+        $copyrightRegex = Get-CopyrightLineRegex -CommentPrefix $commentPrefix
+        $spdxRegex = Get-SpdxLineRegex -CommentPrefix $commentPrefix
+
         # Read first N lines of file
         $lines = Get-Content -Path $FilePath -TotalCount $MaxLinesToCheck -ErrorAction Stop
 
@@ -117,12 +215,12 @@ function Test-FileHeaders {
             $line = $lines[$i]
             $lineNum = $i + 1
 
-            if ($line -match $CopyrightPattern) {
+            if ($line -match $copyrightRegex) {
                 $result.hasCopyright = $true
                 $result.copyrightLine = $lineNum
             }
 
-            if ($line -match $SpdxPattern) {
+            if ($line -match $spdxRegex) {
                 $result.hasSpdx = $true
                 $result.spdxLine = $lineNum
             }
@@ -187,7 +285,10 @@ function Invoke-CopyrightHeaderCheck {
         [switch]$FailOnMissing,
 
         [Parameter(Mandatory = $false)]
-        [string[]]$ExcludePaths = $script:DefaultExcludePaths
+        [string[]]$ExcludePaths = $script:DefaultExcludePaths,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Fix
     )
 
     Write-Host "📄 Validating copyright headers..." -ForegroundColor Cyan
@@ -213,8 +314,16 @@ function Invoke-CopyrightHeaderCheck {
     $results = @()
     $filesWithHeaders = 0
     $filesMissingHeaders = 0
+    $filesFixed = 0
 
     foreach ($file in $filesToCheck) {
+        if ($Fix) {
+            if (Repair-FileHeaders -FilePath $file.FullName) {
+                $filesFixed++
+                Write-Host "  🔧 Fixed: $($file.FullName -replace [regex]::Escape($Path), '' -replace '^[\\/]', '')" -ForegroundColor Yellow
+            }
+        }
+
         $fileResult = Test-FileHeaders -FilePath $file.FullName
 
         if ($fileResult.valid) {
@@ -252,6 +361,10 @@ function Invoke-CopyrightHeaderCheck {
     # Write results to file
     $output | ConvertTo-Json -Depth 10 | Set-Content -Path $OutputPath -Encoding UTF8
     Write-Host "`n📊 Results written to: $OutputPath" -ForegroundColor Cyan
+
+    if ($Fix) {
+        Write-Host "🔧 Files fixed: $filesFixed" -ForegroundColor Yellow
+    }
 
     # Summary
     Write-Host "`n📋 Summary:" -ForegroundColor Cyan
@@ -306,7 +419,7 @@ $failingFiles
 
 if ($MyInvocation.InvocationName -ne '.') {
     try {
-        Invoke-CopyrightHeaderCheck -Path $Path -FileExtensions $FileExtensions -OutputPath $OutputPath -FailOnMissing:$FailOnMissing -ExcludePaths $ExcludePaths
+        Invoke-CopyrightHeaderCheck -Path $Path -FileExtensions $FileExtensions -OutputPath $OutputPath -FailOnMissing:$FailOnMissing -ExcludePaths $ExcludePaths -Fix:$Fix
         exit 0
     }
     catch {

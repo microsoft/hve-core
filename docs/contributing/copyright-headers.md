@@ -3,7 +3,7 @@ title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-05-13
+ms.date: 2026-06-24
 ms.topic: reference
 keywords:
   - copyright
@@ -25,7 +25,7 @@ All source files in this repository must include a copyright and license header.
 ### PowerShell Files
 
 ```text
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 ```
 
@@ -34,7 +34,7 @@ Applies to: `.ps1` files
 ### Python Files
 
 ```text
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 ```
 
@@ -51,7 +51,7 @@ Place the header **after** any `#Requires` statements:
 ```powershell
 #Requires -Version 7.0
 #Requires -Modules @{ ModuleName="Pester"; ModuleVersion="5.0" }
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Script content starts here
@@ -62,7 +62,7 @@ Place the header **after** any `#Requires` statements:
 If no `#Requires` statements exist, place the header at the first line:
 
 ```powershell
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 param(
@@ -76,7 +76,7 @@ Place the header **after** any shebang line and **before** PEP 723 inline metada
 
 ```python
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 ```
 

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # ModerationRunner.psm1
 # Purpose: Helpers for content moderation batch processing and orchestration

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import type { Page } from '@playwright/test';
 
 // Shared behavioral focus helpers for keyboard/focus-management specs. These

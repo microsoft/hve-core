@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 import { testFocusTrapEscape, validateRovingTabindex } from './_helpers/focus';
 
