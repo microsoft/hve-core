@@ -22,15 +22,15 @@ evals/
 
 ## Executors
 
-| Suite                  | Executor      | Purpose                                                                                              |
-|------------------------|---------------|------------------------------------------------------------------------------------------------------|
-| `skill-quality`        | `copilot-sdk` | Tests that skills provide accurate guidance via real agent conversation                              |
-| `agent-behavior`       | `copilot-sdk` | Tests that agents respond correctly to domain prompts                                                |
-| `script-validation`    | `copilot-sdk` | Tests agent reasoning about validation rules (will migrate to mock when available)                   |
-| `baseline-equivalence` | `copilot-sdk` | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
-| `behavior-conformance` | `copilot-sdk` | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
-| `skill-hygiene`        | `vally lint`  | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
-| `task-researcher-comparison` | `pytest` / `deepeval` | Compares Task Researcher output quality with subagents disabled and enabled |
+| Suite                        | Executor              | Purpose                                                                                              |
+|------------------------------|-----------------------|------------------------------------------------------------------------------------------------------|
+| `skill-quality`              | `copilot-sdk`         | Tests that skills provide accurate guidance via real agent conversation                              |
+| `agent-behavior`             | `copilot-sdk`         | Tests that agents respond correctly to domain prompts                                                |
+| `script-validation`          | `copilot-sdk`         | Tests agent reasoning about validation rules (will migrate to mock when available)                   |
+| `baseline-equivalence`       | `copilot-sdk`         | Asserts hve-core agent customization preserves baseline model behavior beyond documented divergences |
+| `behavior-conformance`       | `copilot-sdk`         | Tier 3 advisory conformance for prompts, instructions, and skill behavior (does not fail PR builds)  |
+| `skill-hygiene`              | `vally lint`          | Structural checks for every `SKILL.md` under `.github/skills/`; authoritative, no executor calls     |
+| `task-researcher-comparison` | `pytest` / `deepeval` | Compares Task Researcher output quality with subagents disabled and enabled                          |
 
 The `skill-hygiene` suite is the only entry that uses `vally lint` instead of `vally eval`. It is a README-only suite (no `eval.yaml`) that reuses the lint pipeline's static grader registry to validate the skill catalog on every PR that touches `.github/skills/`. See [`skill-hygiene/README.md`](skill-hygiene/README.md) for coverage and grader detail.
 

@@ -8,6 +8,22 @@ from pathlib import Path
 from task_researcher_comparison.models import PairScore
 
 
+def _recommendation(score: PairScore) -> str:
+    """Apply the README rubric: prefer with-subagents when coverage or
+    actionability improve by at least 2 total points without losing more than
+    1 point in noise control. Otherwise defer to a manual tie-break."""
+    coverage_actionability_gain = (
+        score.with_subagents.coverage
+        - score.without_subagents.coverage
+        + score.with_subagents.actionability
+        - score.without_subagents.actionability
+    )
+    noise_control_loss = score.without_subagents.noise_control - score.with_subagents.noise_control
+    if coverage_actionability_gain >= 2 and noise_control_loss <= 1:
+        return "Prefer with-subagents"
+    return "Prefer no-subagents or tie-break manually"
+
+
 def _score_to_dict(score: PairScore) -> dict[str, object]:
     return {
         "scenario_id": score.scenario_id,
@@ -28,6 +44,7 @@ def _score_to_dict(score: PairScore) -> dict[str, object]:
             "total": score.with_subagents.total,
         },
         "delta_total": score.delta_total,
+        "recommendation": _recommendation(score),
     }
 
 
@@ -48,9 +65,7 @@ def write_reports(scores: list[PairScore], output_dir: Path) -> tuple[Path, Path
         "|----------|--------------|----------------|-------|----------------|",
     ]
     for score in scores:
-        recommendation = (
-            "Prefer with-subagents" if score.delta_total >= 2 else "Prefer no-subagents or tie-break manually"
-        )
+        recommendation = _recommendation(score)
         lines.append(
             f"| {score.scenario_id} | {score.without_subagents.total} | "
             f"{score.with_subagents.total} | {score.delta_total} | {recommendation} |"
