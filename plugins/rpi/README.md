@@ -5,7 +5,7 @@ Skill-forward Research, Plan, Implement, and Review entry points with an umbrell
 
 ## Overview
 
-This collection packages the skill-forward RPI entry points for research, planning, implementation, and review. It keeps the current RPI agent-first workflow intact while making the five new phase skills and the umbrella `rpi` skill available as standalone packaged entry points.
+This collection packages the skill-forward RPI entry points for research, planning, implementation, and review. It keeps the current RPI agent-first workflow intact while making the slash-command family /rpi-quick, /rpi-research, /rpi-plan, /rpi-implement, and /rpi-review available as standalone packaged entry points.
 
 ## Local enablement
 
@@ -53,13 +53,13 @@ copilot plugin install rpi@hve-core
 
 ## Skills
 
-| Skill            | Description                                                                                                                                                                                                                             |
-|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| task-researcher  | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first. |
-| task-planner     | Create implementation-ready planning artifacts and validation evidence for RPI tasks.                                                                                                                                                   |
-| task-implementor | Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.                                                                                                                                   |
-| task-reviewer    | Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.                                 |
-| rpi              | Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.                                                                                                    |
+| Skill         | Description                                                                                                                                                                                                                             |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-quick     | Umbrella RPI playbook that sequences Research, Plan, Implement, Review, and Discover for one-shot task execution with quality gates.                                                                                                    |
+| rpi-research  | Research-only RPI playbook that gathers task evidence, writes dated research artifacts under .copilot-tracking/research/, and hands off planning-ready findings. Use when the user needs evidence, alternatives, or task framing first. |
+| rpi-plan      | Create implementation-ready planning artifacts and validation evidence for RPI tasks.                                                                                                                                                   |
+| rpi-implement | Execute approved implementation phases, update tracking artifacts, and hand off review-ready results.                                                                                                                                   |
+| rpi-review    | Review-only RPI playbook that validates implementation evidence, checks phase completion, and closes the loop with explicit next steps. Use when the user needs review coverage or acceptance evidence.                                 |
 
 ---
 

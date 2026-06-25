@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-24
 ms.topic: how-to
 keywords:
   - engineer
@@ -43,10 +43,10 @@ This guide is for you if you write code, implement features, fix bugs, review pu
 
 ## Stage Walkthrough
 
-1. Stage 2: Discovery. Start with the **task-researcher** agent to investigate requirements, explore codebase patterns, and gather evidence for your approach.
-2. Stage 3: Product Definition. Use the **task-planner** agent to transform research into a structured implementation plan with phases, steps, and success criteria.
-3. Stage 6: Implementation. Execute the plan with the **task-implementor** agent or `/rpi mode=auto` for automated phase-based implementation with progress tracking.
-4. Stage 7: Review. Run the **task-reviewer** agent to validate implementation against the plan, check coding standards, and ensure architectural compliance.
+1. Stage 2: Discovery. Start with the **task-researcher** agent or the `/rpi-research` skill to investigate requirements, explore codebase patterns, and gather evidence for your approach.
+2. Stage 3: Product Definition. Use the **task-planner** agent or the `/rpi-plan` skill to transform research into a structured implementation plan with phases, steps, and success criteria.
+3. Stage 6: Implementation. Execute the plan with the **task-implementor** agent, the `/rpi-implement` skill, or `/rpi-quick` for the full workflow with progress tracking.
+4. Stage 7: Review. Run the **task-reviewer** agent or the `/rpi-review` skill to validate implementation against the plan, check coding standards, and ensure architectural compliance.
 5. Stage 8: Delivery. Use `/git-commit` for conventional commit messages, `/pull-request` for PR creation, and `/git-merge` for merge workflows.
 
 ## Starter Prompts

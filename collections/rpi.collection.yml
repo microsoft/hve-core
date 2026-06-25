@@ -9,15 +9,15 @@ tags:
   - review
   - skills
 items:
-  - path: .github/skills/rpi/task-researcher
+  - path: .github/skills/rpi/rpi-quick
     kind: skill
-  - path: .github/skills/rpi/task-planner
+  - path: .github/skills/rpi/rpi-research
     kind: skill
-  - path: .github/skills/rpi/task-implementor
+  - path: .github/skills/rpi/rpi-plan
     kind: skill
-  - path: .github/skills/rpi/task-reviewer
+  - path: .github/skills/rpi/rpi-implement
     kind: skill
-  - path: .github/skills/rpi/rpi
+  - path: .github/skills/rpi/rpi-review
     kind: skill
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent

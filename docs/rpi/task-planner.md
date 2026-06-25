@@ -3,7 +3,7 @@ title: Task Planner Guide
 description: Use the Task Planner custom agent to create actionable implementation plans from research findings
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-05-13
+ms.date: 2026-06-24
 ms.topic: tutorial
 keywords:
   - task planner
@@ -69,6 +69,8 @@ Type `/task-plan` in GitHub Copilot Chat with the research document opened in th
 ```text
 /task-plan
 ```
+
+If you want to invoke the planning step as the skill command instead of the prompt shortcut, use `/rpi-plan`.
 
 If you don't specify a file, Task Planner will search for recent research documents in `.copilot-tracking/research/` and ask you to confirm which one to use.
 
