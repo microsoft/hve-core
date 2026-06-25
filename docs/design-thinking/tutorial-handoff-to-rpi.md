@@ -346,14 +346,14 @@ This log gives the full history: the original handoff, the return to DT with the
 
 ## Quick Reference
 
-| Action                 | Command or Step                                                               |
-|------------------------|-------------------------------------------------------------------------------|
-| Check readiness        | `/dt-method-next` in DT Coach session                                         |
-| Problem Space handoff  | `/dt-handoff-problem-space project-slug=...`                                  |
-| Solution Space handoff | `/dt-handoff-solution-space project-slug=...`                                 |
-| Implementation handoff | `/dt-handoff-implementation-space project-slug=...`                           |
+| Action                           | Command or Step                                                                                                                  |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Check readiness                  | `/dt-method-next` in DT Coach session                                                                                            |
+| Problem Space handoff            | `/dt-handoff-problem-space project-slug=...`                                                                                     |
+| Solution Space handoff           | `/dt-handoff-solution-space project-slug=...`                                                                                    |
+| Implementation handoff           | `/dt-handoff-implementation-space project-slug=...`                                                                              |
 | Switch to RPI skill entry points | `/clear`, open handoff artifact, invoke `/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, or `/rpi-quick` as needed |
-| Return to DT from RPI  | Start new `@dt-coach` session, describe the finding that triggered the return |
+| Return to DT from RPI            | Start new `@dt-coach` session, describe the finding that triggered the return                                                    |
 
 ## Related Resources
 
