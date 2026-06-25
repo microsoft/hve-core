@@ -8,11 +8,11 @@ manifests.
 
 ## Scripts
 
-| Script                       | npm Command               | Description                                         |
-|------------------------------|---------------------------|-----------------------------------------------------|
-| Generate-Plugins.ps1         | `npm run plugin:generate` | Generate plugin directories from collections        |
+| Script                        | npm Command               | Description                                         |
+|-------------------------------|---------------------------|-----------------------------------------------------|
+| Generate-Plugins.ps1          | `npm run plugin:generate` | Generate plugin directories from collections        |
 | Install-LocalCopilotPlugin.sh | (direct script)           | Install generated plugin output for local CLI tests |
-| Modules/PluginHelpers.psm1   | (library)                 | Plugin symlink, manifest, and packaging             |
+| Modules/PluginHelpers.psm1    | (library)                 | Plugin symlink, manifest, and packaging             |
 
 ## Prerequisites
 
