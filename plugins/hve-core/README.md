@@ -24,6 +24,9 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **code-review-security**      | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
 | **code-review-standards**     | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
 | **code-review-walkback**      | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
+| **codebase-analyzer**         | Explains how workspace code works with file and line evidence                                                                                                                             |
+| **codebase-locator**          | Locates the files, directories, and supporting artifacts relevant to a research topic                                                                                                     |
+| **codebase-pattern-finder**   | Finds similar workspace examples, conventions, and reusable patterns                                                                                                                      |
 | **documentation**             | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                   |
 | **implementation-validator**  | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings                                                  |
 | **memory**                    | Conversation memory persistence for session continuity                                                                                                                                    |
@@ -41,6 +44,7 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **task-planner**              | Implementation planner that creates actionable, step-by-step plans                                                                                                                        |
 | **task-researcher**           | Task research specialist for comprehensive project analysis                                                                                                                               |
 | **task-reviewer**             | Reviews completed implementation work for accuracy, completeness, and convention compliance                                                                                               |
+| **web-search-researcher**     | Researches external sources and records FAR-scored findings                                                                                                                               |
 
 ### Prompts
 

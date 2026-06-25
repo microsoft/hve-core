@@ -42,7 +42,7 @@ stimuli:
   - name: task-researcher-lane-fanout
     prompt: "For a medium-hard codebase research request that asks for comprehensive research, describe which named research lanes Task Researcher should launch, whether they can run in parallel, and when Web Search Researcher joins the fan-out."
     tags:
-      advisory: true
+      advisory: "true"
       category: agent-behavior
     graders:
       - type: output-matches
@@ -69,7 +69,7 @@ stimuli:
   - name: task-researcher-focused-mode
     prompt: "For a simple local-only task with one focused research gap, describe the lightest research mode Task Researcher should use."
     tags:
-      advisory: true
+      advisory: "true"
       category: agent-behavior
     graders:
       - type: output-matches
@@ -84,7 +84,7 @@ stimuli:
   - name: task-researcher-generic-subagent
     prompt: "Explain whether Task Researcher should create separate named locator, analyzer, pattern finder, and web search researcher subagents for lane-enabled research."
     tags:
-      advisory: true
+      advisory: "true"
       category: agent-behavior
     graders:
       - type: output-matches
