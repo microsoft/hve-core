@@ -473,11 +473,11 @@ jobs:
               ];
 
               if (artifacts.length > 0) {
-                lines.push('| Artifact | Kind | Status | Passed | Failed |');
-                lines.push('|----------|------|--------|--------|--------|');
+                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed |');
+                lines.push('|----------|------|--------|-------|--------|--------|');
                 for (const a of artifacts) {
                   const icon = a.status === 'pass' ? '✅' : a.status === 'skipped' ? '⏭️' : '❌';
-                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.assertionsPassed} | ${a.assertionsFailed} |`);
+                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${a.assertionsFailed} |`);
                 }
               } else {
                 lines.push('No changed AI artifacts required evaluation.');

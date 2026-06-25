@@ -807,10 +807,10 @@ foreach ($runKey in $specResults.Keys) {
 $totalPassed   = 0
 $totalFailed   = 0
 $totalDuration = 0
-foreach ($a in $perArtifact) {
-    $totalPassed   += [int]$a.assertionsPassed
-    $totalFailed   += [int]$a.assertionsFailed
-    $totalDuration += [int]$a.durationMs
+foreach ($s in $perSpec) {
+    $totalPassed   += [int]$s.assertionsPassed
+    $totalFailed   += [int]$s.assertionsFailed
+    $totalDuration += [int]$s.durationMs
 }
 
 $summary = [ordered]@{

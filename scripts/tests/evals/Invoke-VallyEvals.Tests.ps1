@@ -803,6 +803,45 @@ stimuli:
         ($summary.perSpec.tag | Sort-Object) | Should -Be @('agent=task-research', 'skill=pr-reference')
     }
 
+    It 'Totals assertions from unique spec runs instead of duplicated artifact rows' {
+        $spec = @'
+name: duplicate-artifact
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      skill: pr-reference
+'@
+        $artifacts = @(
+            @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
+            @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
+        )
+        $fx = New-EvalFixture -Artifacts $artifacts -Specs @(@{ Name = 'duplicate-artifact.yaml'; Yaml = $spec })
+
+        $env:STUB_VALLY_MODE = 'pass'
+        try {
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath `
+                -EvalRoot $fx.EvalRoot `
+                -LogsDir $fx.LogsDir `
+                -RepoRoot $fx.Root `
+                -VallyCommand $script:StubPath `
+                -SkipInputModeration `
+                -SkipOutputModeration *> $null
+        }
+        finally {
+            Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+        }
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.artifacts | Should -Be 2
+        $summary.perSpec.Count | Should -Be 1
+        $summary.perArtifact.Count | Should -Be 2
+        $summary.totals.assertionsPassed | Should -Be 2
+        $summary.totals.assertionsFailed | Should -Be 0
+    }
+
     It 'Honors per-spec modes via STUB_VALLY_MODES_JSON for mixed outcomes' {
         $specA = @'
 name: spec-a
