@@ -113,6 +113,7 @@ def read_registry_dirs(registry: Path | None = None) -> list[str]:
     try:
         text = registry.read_text(encoding="utf-8")
     except OSError:
+        # Registry file is missing or unreadable; treat as no registered dirs.
         return []
     dirs: list[str] = []
     seen: set[str] = set()
@@ -143,6 +144,7 @@ def register_telemetry_dir(tel_dir: Path, registry: Path | None = None) -> None:
         with open(registry, "a", encoding="utf-8") as handle:
             handle.write(resolved + "\n")
     except OSError:
+        # Cannot create or append to the registry; skip recording this dir.
         return
 
 
@@ -270,6 +272,7 @@ def write_report_launchers(script_dir: Path | None = None) -> None:
             clean_sh_path.write_text(bash_clean_text, encoding="utf-8")
             clean_sh_path.chmod(0o755)
     except OSError:
+        # Cannot write launchers (e.g., permission denied); skip generation.
         return
 
 
@@ -282,6 +285,7 @@ def find_process_log(state_dir: Path, home: Path) -> str | None:
                 pid = lock_file.split(".")[1]
                 break
     except OSError:
+        # State dir cannot be listed (e.g., does not exist); no log to find.
         return None
     if not pid:
         return None
@@ -301,6 +305,7 @@ def _log_references_interactions(log_path: str, interaction_ids: set[str]) -> bo
                 if "interaction_id" in line and any(iid in line for iid in interaction_ids):
                     return True
     except OSError:
+        # Log cannot be read; treat as not referencing this session.
         return False
     return False
 
@@ -362,6 +367,7 @@ def parse_process_log(log_path: str, interaction_ids: set[str]) -> list[dict]:
                         in_block = False
                         block_lines = []
     except OSError:
+        # Log cannot be read; return whatever was parsed so far.
         return results
     return results
 
@@ -697,6 +703,7 @@ def _token_estimate(path: str) -> int:
         # Ceiling division without importing math.
         return int(-(-os.path.getsize(path) // 4))
     except OSError:
+        # File size unavailable (e.g., missing file); estimate zero tokens.
         return 0
 
 
@@ -719,6 +726,7 @@ class _AgentStack:
                 if isinstance(data, list):
                     return data
             except (OSError, ValueError):
+                # Stack file is unreadable or malformed; treat as empty stack.
                 return []
         return []
 
@@ -970,6 +978,7 @@ def _remove_path(path: Path, dry_run: bool, removed: list[str]) -> None:
         else:
             path.unlink()
     except OSError:
+        # Removal failed (e.g., permission denied); leave the path in place.
         return
     removed.append(str(path))
 
@@ -1040,6 +1049,7 @@ def _mode_list_dirs() -> int:
             with open(registry, "w", encoding="utf-8") as handle:
                 handle.write("".join(d + "\n" for d in live))
         except OSError:
+            # Cannot rewrite the registry; keep stale entries rather than fail.
             pass
     for directory in live:
         sys.stdout.write(directory + "\n")

@@ -152,5 +152,6 @@ items:
   # Hooks
   - path: .github/hooks/shared/telemetry.json
     kind: hook
+    maturity: experimental
 display:
   ordering: manual

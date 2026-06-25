@@ -68,6 +68,24 @@ if (-not (Test-Path $TelemetryDir)) {
 
 # Delegate all JSON processing to the shared Python telemetry engine
 $RawInput = $input | Out-String
+
+# Dump raw input for diagnostics (first 5 events only). This records hook
+# payloads verbatim, including the full prompt text and tool inputs such as
+# file contents and shell command strings, which can contain secrets. The
+# processed sessions-*.jsonl stream already provides the diagnostic signal,
+# so the verbatim dump is a separate explicit opt-in (off by default) layered
+# on top of the telemetry gate. See docs/customization/local-telemetry.md.
+if ($env:HVE_TELEMETRY_RAW -eq '1') {
+    $RawLog = Join-Path $TelemetryDir 'raw-input.jsonl'
+    $RawCount = 0
+    if (Test-Path $RawLog) {
+        $RawCount = (Get-Content -LiteralPath $RawLog).Count
+    }
+    if ($RawCount -lt 5) {
+        Add-Content -LiteralPath $RawLog -Value $RawInput
+    }
+}
+
 try {
     $env:HVE_REPO_ROOT = $RepoRoot
     $env:HVE_TELEMETRY_DIR = $TelemetryDir
