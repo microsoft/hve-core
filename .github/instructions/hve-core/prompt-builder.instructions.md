@@ -7,9 +7,32 @@ applyTo: '**/*.prompt.md, **/*.agent.md, **/*.instructions.md, **/SKILL.md'
 
 Authoring standards for prompt engineering artifacts govern how prompt, agent, instructions, and skill files are created and maintained. Apply these standards when creating or modifying any of these file types.
 
+## Choosing the Right Artifact Type
+
+A single request often decomposes into several artifact types, and the workflow should help the user separate them before authoring begins.
+
+| Artifact    | Choose when                                                                            | Form                                                    | How it activates                                                               |
+|-------------|----------------------------------------------------------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------|
+| Prompt      | A repeatable, single-session task the user runs on demand to completion                | `.prompt.md`                                            | Invoked on demand as the slash command `/name`                                 |
+| Agent       | A persona or workflow for multi-turn conversation or autonomous bounded task execution | `.agent.md`                                             | Selected as a chat mode or agent                                               |
+| Subagent    | Specialized, isolated, or parallelizable work delegated by a parent agent              | `.agent.md` under a `subagents/` folder                 | Dispatched by a parent agent, not the user                                     |
+| Instruction | Always-on conventions or standards auto-applied to matching files                      | `.instructions.md`                                      | Applied automatically via an `applyTo` glob                                    |
+| Skill       | Self-contained domain knowledge plus optional scripts loaded on demand                 | `SKILL.md` in `.github/skills/<skill-name>/`            | Loaded automatically by semantic match on its description, or as `/skill-name` |
+| Tool        | A concrete capability or action an agent invokes                                       | Provided by VS Code or an MCP server, not authored here | Declared in an agent's `tools:` frontmatter                                    |
+
+### Guiding Questions
+
+* Is this triggered automatically by the files being edited, or run on purpose? Automatic points to an instruction, while on-purpose work points to a prompt.
+* Is it a one-shot task or an ongoing role or conversation? One-shot work points to a prompt, while an ongoing role points to an agent.
+* Does it need reusable domain knowledge or bundled scripts shared across many workflows? That points to a skill.
+* Does a larger agent need to offload isolated or parallel work? That points to a subagent.
+* Does it need a concrete capability rather than guidance? That points to a tool.
+
+When a request spans several of these, propose a breakdown, for example an agent for the workflow, instructions for conventions, and a skill for shared scripts, and confirm scope with the user before building.
+
 ## File Types
 
-This section defines file type selection criteria, authoring patterns, and validation checks. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
+This section defines authoring patterns and validation checks for the artifact types authored here: prompt, agent, instructions, and skill files, with subagents covered under Agent Files as a specialized agent form. Tools are external capabilities provided by VS Code or an MCP server and wired into an agent through its `tools:` frontmatter rather than authored here. Select a type using the Choosing the Right Artifact Type section, then follow the per-type standards below. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
 
 ### Prompt Files
 
@@ -23,11 +46,11 @@ Characteristics:
 * Frontmatter includes `agent:` to delegate to a custom agent using the human-readable name from the agent's `name:` frontmatter (for example, `agent: Prompt Builder`). Quote the value when the agent name contains spaces.
 * Activation lines are optional and apply only to prompt files; agent files and instructions files do not include them. Include a `---` followed by an activation instruction when the workflow start point is not obvious, such as prompts using a generic agent, prompts without an `agent:` field, or prompts where the protocol entry point needs clarification. Omit the activation line when delegating to a custom agent whose phases or steps already define the workflow.
 * Use `#file:` only when the prompt must pull in the full contents of another file.
-* When the full contents are not required, refer to the file by path or to the relevant section.
+* When the full contents are not required, refer to the file by name or to the relevant section, following Referencing Other Artifacts when the target is another skill, subagent, prompt, or instruction.
 * Example: `#file:path/to/file.md` pulls in the full file contents at that location.
 * Input variables are supported; see the Input Variables section for syntax.
 
-*Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `prompt-refactor.prompt.md`, `git-commit-message.prompt.md`).
+*Naming*: Use lowercase kebab-case matching the prompt's purpose (for example, `checkpoint.prompt.md`, `git-commit-message.prompt.md`).
 
 Consider adding sequential steps when the prompt involves multiple distinct actions that benefit from ordered execution. Simple prompts that accomplish a single task do not need protocol structure.
 
@@ -252,6 +275,7 @@ Characteristics:
 * Provides step-by-step instructions for task execution.
 * Includes prerequisites, parameters, and troubleshooting sections.
 * Skills without scripts are valid documentation-driven knowledge packages.
+* For skill-forward RPI work, keep the skill body compact and use existing subagents for tool/model/isolation concerns rather than duplicating the full workflow in the skill.
 
 Skill directory structure:
 
@@ -264,8 +288,8 @@ Skill directory structure:
 ├── references/                 # Agents load on demand; keep files focused (optional)
 │   ├── REFERENCE.md            # Detailed technical reference
 │   └── FORMS.md                # Form templates or structured data formats
-└── assets/                     # Templates, images, data files (optional)
-    └── templates/              # Document or configuration templates
+├── templates/                  # Document or configuration templates (optional)
+└── assets/                     # Images, data files, and other static resources (optional)
 ```
 
 #### Optional Directories
@@ -287,17 +311,25 @@ Contains additional documentation that agents read when needed:
 * Domain-specific files such as `finance.md` or `legal.md`.
 * Keep individual reference files focused; agents load these on demand.
 
+##### templates/
+
+Contains reusable document, configuration, or output skeletons that the skill uses to create files:
+
+* Place reusable Markdown, YAML, JSON, or configuration skeletons here when they are primary skill resources.
+* Reference templates from *SKILL.md* or `references/` files with paths relative to the containing file, such as `templates/report.md` from *SKILL.md* or `../templates/report.md` from `references/`.
+* Prefer this top-level directory for skill-specific templates. Use `assets/` only when the template is part of a broader static asset bundle.
+
 ##### assets/
 
 Contains static resources:
 
-* Templates for documents or configuration files.
 * Images such as diagrams or examples.
 * Data files such as lookup tables or schemas.
+* Other non-template resources consumed by scripts, references, or the skill body.
 
 ### Skill Content Structure
 
-Skill files include these sections in order:
+Script-oriented skill files include these sections in order:
 
 1. Title (H1): Clear heading matching skill purpose.
 2. Overview: Brief explanation of what the skill does.
@@ -308,6 +340,21 @@ Skill files include these sections in order:
 7. Troubleshooting: Common issues and solutions.
 8. Attribution: Standard footer.
 
+Playbook-style skills are valid for documentation-driven workflows that delegate detailed execution to agents or subagents instead of bundled scripts. Use this structure in order:
+
+1. Title (H1): Clear heading matching skill purpose.
+2. Goal: The workflow outcome and entry-point responsibility.
+3. Flow, Execution, or What to do: Ordered steps for the delegated workflow.
+4. Inputs: Supported arguments or invocation signals, when applicable.
+5. Success criteria: Completion evidence and quality gates.
+6. Constraints: Scope boundaries, delegation rules, and excluded behavior.
+7. Stop rules: Conditions that block further progress.
+8. Handoff: Next skill, agent, or artifact path.
+9. Final response contract or output format, when the caller requires a specific summary shape.
+10. Attribution: Standard footer.
+
+For playbook-style skills, omit Prerequisites, Quick Start, Parameters Reference, Script Reference, and Troubleshooting when there are no local scripts or operational setup steps.
+
 #### Progressive Disclosure
 
 Structure skills for efficient context usage:
@@ -317,6 +364,10 @@ Structure skills for efficient context usage:
 3. Resources (as needed): Files in `scripts/`, `references/`, or `assets/` load only when required.
 
 Keep the main *SKILL.md* focused. Move detailed reference material to separate files.
+
+Prefer compact, latest-model prompting in the skill body: role → goal → success criteria → constraints → output → stop rules, with progressive disclosure through references rather than long process-heavy prose.
+
+For the RPI migration, use skill-to-subagent dispatch as the selected scoping pattern and avoid thin prompt wrappers. A skill cannot declare `tools`, `model`, `agent`, `handoffs`, or `applyTo` in its frontmatter; those belong to agents, prompts, or instructions.
 
 #### File References
 
@@ -365,11 +416,13 @@ When a caller describes a task that semantically matches a skill's `description`
 
 1. Level 1 (Discovery): Matches the task description against skill frontmatter `name` and `description` fields (~100 tokens per skill).
 2. Level 2 (Instructions): Loads the full SKILL.md body into context with script usage instructions (<5000 tokens recommended).
-3. Level 3 (Resources): Accesses scripts, examples, and references in the skill directory on-demand during execution.
+3. Level 3 (Resources): Accesses scripts, examples, references, templates, and assets in the skill directory on-demand during execution.
 
 Validation guidelines:
 
 * Frontmatter follows the Frontmatter Requirements section, including `name` and `description` fields.
+* Skill frontmatter must not declare `tools`, `model`, `agent`, `handoffs`, or `applyTo`; those are agent/prompt/instruction capabilities, not skill capabilities.
+* For RPI migration, use skill-to-subagent dispatch as the selected scoping pattern instead of thin prompt wrappers.
 * Provide parallel script implementations for bash and PowerShell when targeting cross-platform use.
 * Skills without scripts are valid; omit Parameters Reference and Script Reference sections in that case.
 * Document prerequisites for each supported platform.
@@ -412,11 +465,11 @@ Optional fields available by file type:
 
 * `tools:` - Tool restrictions for agents and subagents. When omitted, all tools are accessible. When specified, list only tools available in the current VS Code context.
 * `handoffs:` - Agent handoff declarations. Each entry includes `label` (display text, supports emoji), `agent` (human-readable name from the target agent's `name:` frontmatter), and optionally `prompt` (slash command to invoke) and `send` (boolean, auto-send the prompt when `true`).
-* `user-invocable:` - Boolean. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for subagents that should not appear in the agent picker or background-only skills that should not appear in the slash command menu.
+* `user-invocable:` - Boolean. Use this spelling consistently for agents, subagents, and skills. Set to `false` to hide the artifact from the user and prevent direct invocation. Defaults to `true` when omitted. Use for background-only artifacts or subagents that should not appear in the picker or command menu.
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification. For **agent files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. For **prompt files**, accepts a single model identifier string only. When omitted, the currently selected model in the model picker is used.
+* `model:` - Model specification. For **agent files** and **prompt files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. When omitted, the currently selected model in the model picker is used.
 * `license:` - SPDX license identifier for skill content (for example, `MIT`, `CC-BY-SA-4.0`). Defaults to the repository license when omitted. Use for skills that incorporate third-party content under a specific license.
 * `metadata:` - Object containing provenance and versioning metadata for skills. Recognized fields include `authors`, `spec_version`, `framework_revision`, `last_updated`, `skill_based_on`, and `content_based_on`.
 
@@ -436,7 +489,7 @@ agents:
 handoffs:
   - label: "💡 Update/Create"
     agent: Prompt Builder
-    prompt: "/prompt-build "
+    prompt: "/prompt-builder "
     send: false
 ---
 ```
@@ -704,6 +757,15 @@ The following patterns provide limited value as prompt instructions:
 * Forcing prompt instruction lists to have three or more items when fewer suffice.
 * Avoid using XML tags to organize prompt instruction content. XML comments used by codebase tooling for section extraction are unrelated to this prohibition.
 
+### Referencing Other Artifacts
+
+When prompt instructions refer to another skill, subagent, prompt, or instruction, identify the artifact by its name rather than hard-coding a path into it:
+
+* Refer to the artifact by the `name:` value from its frontmatter, wrapped in backticks so the reader can pick it out (for example, run `Prompt Tester` or route to the `prompt-builder` skill).
+* Instruction files have no `name:` field, so when prompt instructions direct the model to read and follow an instructions file, refer to it by its full `<name>.instructions.md` filename, naming the specific section when only part applies (for example, the Prompt Quality Criteria section in `prompt-builder.instructions.md`). Using the filename keeps instructions distinct from a similarly named skill.
+* For skills, also follow Skill Invocation from Callers: describe the task intent or use the `/skill-name` slash command rather than a path into the skill.
+* Reserve file paths for a skill's own bundled resources relative to its skill root, for artifact output locations such as `.copilot-tracking/` files, and for frontmatter wiring (`agents:`, `agent:`, `applyTo`) or tool-level references that require an identifier. Do not wrap those file paths in backticks.
+
 ## Prompt Design Principles
 
 Successful prompts demonstrate these qualities:
@@ -722,9 +784,9 @@ Prompt instructions for subagents keep the subagent focused on specific tasks.
 Tool invocation:
 
 * Run the named agent with `runSubagent` or `task` tools. Provide the inputs needed for the task directly to the named agent; do not add extra instructions telling `runSubagent` to read the corresponding `.github/agents/` file.
-* When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter (for example, "Run `Prompt Tester`" or "Run `Researcher Subagent`"). Reserve filename-style identifiers for file paths, glob examples, and tool-level references.
-* Reference subagent files using glob paths like `.github/agents/**/codebase-researcher.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
-* Subagents may run their own subagents when the harness supports nested subagent calls (see the Subagents section).
+* When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter wrapped in backticks (for example, run `Prompt Tester` or `Researcher Subagent`), following Referencing Other Artifacts.
+* Declare subagent dependencies in the `agents:` frontmatter by `name:` value; the name resolves whether the subagent sits at the agents root or in a `subagents/` folder, so a file path is not needed.
+* Subagents do not run their own subagents (see the Subagents section).
 
 Task specification:
 
@@ -781,6 +843,7 @@ Every item applies to the entire file. Validation fails if any item is not satis
 * [ ] Frontmatter includes required fields and follows Frontmatter Requirements.
 * [ ] Protocols follow Protocol Patterns when step-based or phase-based structure is used.
 * [ ] Instructions match the Prompt Writing Style.
+* [ ] References to other skills, subagents, prompts, and instructions follow Referencing Other Artifacts, naming each artifact in backticks instead of hard-coding its file path.
 * [ ] Instructions follow all Prompt Design Principles.
 * [ ] Subagent prompts follow Subagent Prompt Criteria when running subagents.
 * [ ] External sources follow External Source Integration when referencing SDKs or APIs.

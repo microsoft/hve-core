@@ -321,6 +321,26 @@ stimuli:
         config:
           pattern: "(?i)prompt|agent|instruction|skill|frontmatter|authoring"
 
+  - name: instruction-copilot-tracking-conformance
+    prompt: |
+      You are writing implementation planning artifacts under
+      `.copilot-tracking/plans/payment-cleanup/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what artifact conventions does it define?
+    tags:
+      category: behavior-conformance
+      instruction: copilot-tracking
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/(research|plans|details|changes|reviews|sandbox|prompts)"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)tracking|artifact|research|plan|details|changes|review"
+
   - name: instruction-pull-request-conformance
     prompt: |
       You are generating a pull request description from branch diffs and

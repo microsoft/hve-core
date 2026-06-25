@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <Repository Name="PSGallery" Url="https://www.powershellgallery.com/api/v2" APIVersion="V2" Priority="50" Trusted="True" />
+</configuration>

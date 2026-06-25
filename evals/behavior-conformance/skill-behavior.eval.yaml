@@ -1377,3 +1377,155 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
+  - name: skill-prompt-builder-tool-trigger
+    prompt: |
+      I need to create a new prompt artifact, research the existing prompt
+      conventions, validate it, and update the related collection metadata.
+      Which skill under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: prompt-builder
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(prompt-builder|prompt\s+builder|prompt|research|validate|collection)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(prompt|skill|artifact|validation|collection)'
+  - name: skill-prompt-refactor-tool-trigger
+    prompt: |
+      I have an existing `.prompt.md` file and explicit requirements for
+      restructuring it without changing its intent. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: prompt-refactor
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(prompt-refactor|prompt\s+refactor|refactor|prompt|requirements)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(refactor|prompt|skill|artifact|requirements)'
+  - name: skill-prompt-analyze-tool-trigger
+    prompt: |
+      I need to evaluate an existing prompt artifact and produce an analysis
+      report without modifying the source file. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: prompt-analyze
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|analysis|report|prompt)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(analyze|analyse|analysis|prompt|report|skill)'
+  - name: skill-rpi-quick-tool-trigger
+    prompt: |
+      I need an autonomous Research, Plan, Implement, Review, Discover loop
+      that manages state through `.copilot-tracking/` artifacts. Which skill
+      under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: rpi-quick
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-quick|rpi\s+quick|rpi|research|plan|implement|review|discover|copilot-tracking)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(phase|workflow|artifact|research|plan|implement|review|discover)'
+  - name: skill-rpi-research-tool-trigger
+    prompt: |
+      I need a focused research phase for an implementation task, including
+      evidence logging and selected approach rationale. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: rpi-research
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-research|rpi\s+research|research|evidence|approach)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(research|evidence|artifact|scope|assumption|phase)'
+  - name: skill-rpi-plan-tool-trigger
+    prompt: |
+      I have completed task research and need an implementation plan with
+      phases, dependencies, validation criteria, and `.copilot-tracking/`
+      details. Which skill under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-plan|rpi\s+plan|plan|phase|dependency|validation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(plan|phase|dependency|details|validation)'
+  - name: skill-rpi-implement-tool-trigger
+    prompt: |
+      I need to execute a task plan phase, apply the scoped code changes,
+      update change tracking, and run validation. Which skill under
+      `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-implement|rpi\s+implement|implement|change|validation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(implement|phase|change|validation|plan)'
+  - name: skill-rpi-review-tool-trigger
+    prompt: |
+      I need to review completed implementation work against the user
+      requests, validation evidence, and the RPI plan before handoff. Which
+      skill under `.github/skills/**/SKILL.md` applies?
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-review|rpi\s+review|review|validation|fulfillment)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(review|request|validation|evidence|handoff)'
