@@ -60,14 +60,6 @@ Named lane subagents do not create required per-lane artifacts. The primary rese
 
 Subagents can run in parallel when investigating independent lanes, topics, or sources.
 
-## Mode Selection
-
-Use the lightest mode that answers the request.
-
-* Direct mode: answer from existing context when the question is already resolved or only needs a concise status update.
-* Focused mode: run `Researcher Subagent` once for generic local research when one focused gap remains.
-* Lanes mode: run the applicable named subagents in parallel when the request benefits from structured decomposition.
-
 ## Lane Trigger Matrix
 
 Choose the lightest mode set that answers the user's request:
