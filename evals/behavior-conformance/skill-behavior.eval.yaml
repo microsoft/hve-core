@@ -1428,11 +1428,11 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(prompt-analyze|prompt\s+analy[sz]e|analysis|report|prompt)'
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|analysis|report|prompt)'
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(analy[sz]e|analysis|prompt|report|skill)'
+          pattern: '(?i)(analyze|analyse|analysis|prompt|report|skill)'
   - name: skill-rpi-quick-tool-trigger
     prompt: |
       I need an autonomous Research, Plan, Implement, Review, Discover loop
