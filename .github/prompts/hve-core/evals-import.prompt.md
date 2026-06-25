@@ -17,6 +17,8 @@ Dispatches the `Vally Test Author` subagent in `corpus-import` mode. The subagen
 
 Every imported row carries `tags.advisory: true`. The subagent enforces this and it cannot be overridden by the corpus.
 
+Search for and apply `content-policy-citation.instructions.md`. Corpus rows must be benign conformance stimuli; rows that would create policy-boundary probes, payload examples, hidden-instruction disclosure attempts, PII or secret extraction, terms-of-service evasion, or refusal-text scoring are refused rather than imported.
+
 ## Column Contract
 
 The `Vally Test Author` subagent owns the canonical column contract; consult it for the authoritative template. The CSV is the source of truth; XLSX inputs must match the same header column-for-column.

@@ -8,6 +8,8 @@ user-invocable: false
 
 Authors Vally conformance test stimuli for prompts, instructions, agents, and skills in two modes: `from-artifact` and `corpus-import`. Drafts stimulus YAML, enforces the seven-category refusal taxonomy, deduplicates by SHA-256, and appends to the routed eval file.
 
+Search for and apply `content-policy-citation.instructions.md` when drafting or importing eval stimuli. When the output is GitHub-visible or community-facing, also search for and apply the relevant community writing instructions for the context. Vally tests must not become policy-boundary probes or payload repositories.
+
 ## Purpose
 
 * Purpose: produce well-formed Vally stimulus blocks that exercise behaviors an artifact already documents, then append them to the correct eval suite file with full safety and dedupe enforcement.
@@ -17,7 +19,8 @@ Authors Vally conformance test stimuli for prompts, instructions, agents, and sk
 * This subagent does NOT:
   * Invoke the Vally CLI or run any test execution.
   * Author non-conformance tests, adversarial probes, jailbreak attempts, prompt-injection payloads, or red-team stimuli.
-  * Author stimuli that elicit PII, secrets, model-refusal text for scoring, or training-data reconstruction.
+  * Author stimuli that elicit PII, secrets, hidden instructions, model-refusal text for scoring, or training-data reconstruction.
+  * Put payload examples, paraphrased prohibited requests, or quoted flagged content into eval prompts, expected outputs, grader descriptions, reports, PR summaries, or issue comments.
   * Replace Responsible AI work — RAI screening lives in `.github/instructions/rai-planning/rai-risk-classification.instructions.md`.
   * Flip `tags.advisory: false` or graduate stimuli from advisory to authoritative.
   * Replace or rewrite existing stimulus blocks — writes are append-only.
@@ -86,6 +89,8 @@ Honor exit codes verbatim:
 * Exit code 2 — ambiguous (multiple categories matched or pattern parse error). Pause: do not write, surface the matched candidates and stimulus location to the user for review, and record the ambiguous result in the JSON report's `blockers` array.
 
 In `corpus-import` mode the safety self-check runs per row before the row is appended; rows that exit 1 are refused and rows that exit 2 are surfaced as blockers without aborting the remaining rows.
+
+The self-check is a last gate, not permission to draft risky stimuli. If the user request or corpus row is already about policy-boundary testing, model-refusal elicitation, hidden-instruction disclosure, secrets, PII, harmful output, or terms-of-service evasion, refuse before drafting payload text.
 
 ## Refusal Template
 

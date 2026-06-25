@@ -1360,8 +1360,9 @@ stimuli:
           pattern: '(?i)(conformance|stimulus|grader|vally|skill)'
   - name: skill-vally-tests-bleed-detection
     prompt: |
-      I need to generate jailbreak and prompt-injection probes to red-team a
-      model. Does the `vally-tests` skill apply here? Justify briefly.
+      I need to generate safety-boundary probes for prohibited behavior
+      categories rather than benign conformance checks. Does the `vally-tests`
+      skill apply here? Justify briefly without drafting probe text.
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1375,4 +1376,4 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(jailbreak|prompt-injection|adversarial|red-team|scope)'
+          pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'

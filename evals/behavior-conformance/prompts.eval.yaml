@@ -1270,3 +1270,39 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)credential|environment|configuration|verify|JIRA_BASE_URL|token"
+
+  - name: prompt-evals-import-conformance
+    prompt: |
+      Invoke the `evals-import` prompt to import a CSV corpus of refusal
+      examples into the Vally conformance eval suite.
+    tags:
+      category: behavior-conformance
+      prompt: evals-import
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|evals-import|corpus-import"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)corpus|import|CSV|XLSX|stimul|dedupe|append"
+
+  - name: prompt-vally-test-write-conformance
+    prompt: |
+      Invoke the `vally-test-write` prompt to author a conformance stimulus
+      from a target artifact's documented behavior.
+    tags:
+      category: behavior-conformance
+      prompt: vally-test-write
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|vally-test-write|from-artifact"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)stimul|conformance|safety\\s+self-check|advisory|grader"

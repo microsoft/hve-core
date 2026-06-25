@@ -35,6 +35,8 @@ items:
     kind: instruction
   - path: .github/instructions/github/community-interaction.instructions.md
     kind: instruction
+  - path: .github/instructions/shared/content-policy-citation.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills

@@ -137,6 +137,8 @@ items:
   - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/shared/content-policy-citation.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills

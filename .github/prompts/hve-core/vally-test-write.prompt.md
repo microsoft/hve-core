@@ -17,6 +17,8 @@ Dispatches the `Vally Test Author` subagent in `from-artifact` mode for each res
 
 The subagent runs a Safety Self-Check before any write using its seven-category refusal taxonomy (jailbreak, prompt-injection, harmful-elicitation, tos-violation, coc-violation, model-refusal-elicitation, pii-extraction). A matched category triggers the canonical refusal block and skips the write for that stimulus.
 
+Search for and apply `content-policy-citation.instructions.md`. The prompt authors benign conformance tests only; it must not draft or append stimuli that function as policy-boundary probes, payload examples, hidden-instruction disclosure attempts, PII or secret extraction, terms-of-service evasion, or refusal-text scoring.
+
 ## Required Protocol
 
 1. Resolve `files` from the `files=` argument when supplied, otherwise from the current open file or attached file(s) in the conversation.
