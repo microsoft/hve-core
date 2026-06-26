@@ -8,50 +8,47 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 
 ### Chat Agents
 
-| Name                         | Description                                                                                                                                                                                                                                                                                                                     |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **documentation**            | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                                                                                                                                                                                                         |
-| **implementation-validator** | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings                                                                                                                                                                                        |
-| **memory**                   | Conversation memory persistence for session continuity                                                                                                                                                                                                                                                                          |
-| **phase-implementor**        | Executes a single implementation phase from a plan with full codebase access and change tracking                                                                                                                                                                                                                                |
-| **plan-validator**           | Validates implementation plans against research documents with severity-graded findings                                                                                                                                                                                                                                         |
-| **pr-review**                | Pull Request review assistant for code quality, security, and convention compliance                                                                                                                                                                                                                                             |
-| **pr-walkthrough**           | Narrative-driven PR orientation surfacing design forks, implicit bets, and architectural shape for reviewer judgment.                                                                                                                                                                                                           |
-| **prompt-builder**           | Prompt engineering assistant for creating and validating prompts, agents, and instructions                                                                                                                                                                                                                                      |
-| **prompt-evaluator**         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance                                                                                                                                                                                                       |
-| **prompt-tester**            | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value                                                                                                                                                                                                                             |
-| **prompt-updater**           | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions                                                                                                                                                                                                                         |
-| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                                                                                                                                                                     |
-| **rpi-agent**                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                                                                                                                                                                                                           |
-| **rpi-validator**            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                                                                                                                                                                                                         |
-| **task-challenger**          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading                                                                                                                                                                                               |
-| **task-implementor**         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                                                                                                                                                                                                         |
-| **task-planner**             | Implementation planner that creates actionable, step-by-step plans                                                                                                                                                                                                                                                              |
-| **task-researcher**          | Task research specialist for comprehensive project analysis                                                                                                                                                                                                                                                                     |
-| **task-reviewer**            | Reviews completed implementation work for accuracy, completeness, and convention compliance                                                                                                                                                                                                                                     |
-| **vally-test-author**        | Authors Vally conformance test stimuli in two modes: from-artifact (read a prompt, instructions, agent, or skill file and draft a stimulus block) and corpus-import (turn a CSV or XLSX corpus into stimulus blocks), with safety-lint refusal enforcement and SHA-256 dedupe before append-only writes to the routed eval file |
+| Name                         | Description                                                                                                                              |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| **documentation**            | Orchestrates documentation audit, drift, authoring, and validation work through the documentation skill                                  |
+| **implementation-validator** | Validates implementation quality against architectural requirements, design principles, and code standards with severity-graded findings |
+| **memory**                   | Conversation memory persistence for session continuity                                                                                   |
+| **phase-implementor**        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |
+| **plan-validator**           | Validates implementation plans against research documents with severity-graded findings                                                  |
+| **pr-review**                | Pull Request review assistant for code quality, security, and convention compliance                                                      |
+| **pr-walkthrough**           | Narrative-driven PR orientation surfacing design forks, implicit bets, and architectural shape for reviewer judgment.                    |
+| **prompt-builder**           | Prompt engineering assistant for creating and validating prompts, agents, and instructions                                               |
+| **prompt-evaluator**         | Evaluates prompt execution results against Prompt Quality Criteria with severity-graded findings and remediation guidance                |
+| **prompt-tester**            | Tests prompt files by following them literally in a sandbox, without interpreting beyond face value                                      |
+| **prompt-updater**           | Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions                                  |
+| **researcher-subagent**      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
+| **rpi-agent**                | Autonomous RPI orchestrator running Research → Plan → Implement → Review → Discover phases with specialized subagents                    |
+| **rpi-validator**            | Validates a Changes Log against the Implementation Plan, Planning Log, and Research Documents for a specific plan phase                  |
+| **task-challenger**          | Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading        |
+| **task-implementor**         | Executes implementation plans from .copilot-tracking/plans with progressive tracking and change records                                  |
+| **task-planner**             | Implementation planner that creates actionable, step-by-step plans                                                                       |
+| **task-researcher**          | Task research specialist for comprehensive project analysis                                                                              |
+| **task-reviewer**            | Reviews completed implementation work for accuracy, completeness, and convention compliance                                              |
 
 ### Prompts
 
-| Name                   | Description                                                                                           |
-|------------------------|-------------------------------------------------------------------------------------------------------|
-| **checkpoint**         | Save or restore conversation context using memory files                                               |
-| **evals-import**       | Imports a CSV or XLSX corpus into Vally eval suites with safety lint and dedupe                       |
-| **git-commit**         | Stage all changes, generate a conventional commit message, and commit                                 |
-| **git-commit-message** | Generate a conventional commit message from all branch changes                                        |
-| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling                      |
-| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)                         |
-| **prompt-analyze**     | Evaluate prompt engineering artifacts against quality criteria and report findings                    |
-| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria                              |
-| **prompt-refactor**    | Refactor and clean up prompt engineering artifacts through iterative improvement                      |
-| **pull-request**       | Generate pull request descriptions from branch diffs                                                  |
-| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks                      |
-| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts                          |
-| **task-implement**     | Locate and execute implementation plans using Task Implementor                                        |
-| **task-plan**          | Initiate implementation planning from user context or research documents                              |
-| **task-research**      | Initiate research for implementation planning from user requirements                                  |
-| **task-review**        | Initiate implementation review from user context or artifact discovery                                |
-| **vally-test-write**   | Authors Vally conformance test stimuli for an existing prompt, instructions, agent, or skill artifact |
+| Name                   | Description                                                                        |
+|------------------------|------------------------------------------------------------------------------------|
+| **checkpoint**         | Save or restore conversation context using memory files                            |
+| **git-commit**         | Stage all changes, generate a conventional commit message, and commit              |
+| **git-commit-message** | Generate a conventional commit message from all branch changes                     |
+| **git-merge**          | Coordinate Git merge, rebase, and rebase --onto workflows with conflict handling   |
+| **git-setup**          | Interactive, verification-first Git configuration assistant (non-destructive)      |
+| **prompt-analyze**     | Evaluate prompt engineering artifacts against quality criteria and report findings |
+| **prompt-build**       | Build or improve prompt engineering artifacts following quality criteria           |
+| **prompt-refactor**    | Refactor and clean up prompt engineering artifacts through iterative improvement   |
+| **pull-request**       | Generate pull request descriptions from branch diffs                               |
+| **rpi**                | Autonomous Research-Plan-Implement-Review-Discover workflow for completing tasks   |
+| **task-challenge**     | Adversarial What/Why/How interrogation of completed implementation artifacts       |
+| **task-implement**     | Locate and execute implementation plans using Task Implementor                     |
+| **task-plan**          | Initiate implementation planning from user context or research documents           |
+| **task-research**      | Initiate research for implementation planning from user requirements               |
+| **task-review**        | Initiate implementation review from user context or artifact discovery             |
 
 ### Instructions
 
@@ -85,6 +82,5 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
 | **prompt-builder**        | Create or update prompt artifacts through the full prompt-builder phase loop, routing refactor and analyze requests to the specialized skills.                                                                                                                                                   |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
-| **vally-tests**           | Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli                                                                                                     |
 
 <!-- END AUTO-GENERATED ARTIFACTS -->

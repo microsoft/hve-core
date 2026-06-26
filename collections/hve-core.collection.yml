@@ -57,9 +57,6 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
-  - path: .github/agents/hve-core/subagents/vally-test-author.agent.md
-    kind: agent
-    maturity: experimental
   # Prompts
   - path: .github/prompts/hve-core/rpi.prompt.md
     kind: prompt
@@ -94,13 +91,6 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/prompt-refactor.prompt.md
     kind: prompt
-  # Vally / evals prompts
-  - path: .github/prompts/hve-core/vally-test-write.prompt.md
-    kind: prompt
-    maturity: experimental
-  - path: .github/prompts/hve-core/evals-import.prompt.md
-    kind: prompt
-    maturity: experimental
   # Instructions
   - path: .github/instructions/hve-core/writing-style.instructions.md
     kind: instruction
@@ -153,9 +143,6 @@ items:
     maturity: experimental
   - path: .github/skills/hve-core/prompt-builder
     kind: skill
-  - path: .github/skills/hve-core/vally-tests
-    kind: skill
-    maturity: experimental
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
