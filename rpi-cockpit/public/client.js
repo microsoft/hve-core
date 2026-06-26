@@ -62,6 +62,15 @@ function render(v) {
     if (onHome) { renderHome(v); return; }
   }
 
+  const rpiView = document.getElementById("rpi-view");
+  const findingsView = document.getElementById("findings-view");
+  if (rpiView && findingsView) {
+    const review = v.domain === "review";
+    rpiView.hidden = review;
+    findingsView.hidden = !review;
+    if (review) { renderFindings(v); return; }
+  }
+
   setText("crumb-task", v.task || "—");
   setText("phase-title", v.phaseNumber ? `Phase ${v.phaseNumber} · ${v.phaseLabel}` : "RPI session");
   setText("phase-state", v.phase ? "● running" : "");
@@ -180,6 +189,27 @@ const setHtml = (id, h) => { const el = document.getElementById(id); if (el) el.
 const initials = (n) => (n || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const kindCls = (k) => k.indexOf("directive") === 0 ? "s2" : k === "validate" ? "ok" : "";
+
+const SEV_LABEL = { critical: "Critical", high: "High", medium: "Medium", low: "Low", info: "Info" };
+
+function renderFindings(v) {
+  setText("rev-target", v.reviewTarget || "Review");
+  const total = v.findingGroups.reduce((n, g) => n + g.items.length, 0);
+  setText("rev-counts", total === 1 ? "1 finding" : `${total} findings`);
+  setHtml("findings", v.findingGroups.map((g) =>
+    `<div class="sev-group sev-${esc(g.severity)}">
+       <div class="sev-label">${esc(SEV_LABEL[g.severity] || g.severity)} (${g.items.length})</div>
+       ${g.items.map((f) =>
+         `<div class="finding">
+            <div class="finding-top">
+              <span class="finding-title">${esc(f.title)}</span>
+              ${f.file ? `<span class="finding-loc">${esc(f.file)}${f.line != null ? ":" + esc(String(f.line)) : ""}</span>` : ""}
+            </div>
+            ${f.detail ? `<div class="finding-detail">${esc(f.detail)}</div>` : ""}
+          </div>`).join("")}
+     </div>`).join("")
+    || `<div class="meta">No findings.</div>`);
+}
 
 connect();
 

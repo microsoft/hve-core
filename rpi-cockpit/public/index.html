@@ -171,6 +171,18 @@
   .wf-tile:hover .wf-desc { opacity: 1; }
   .crumb-back { font-size: 12px; font-family: inherit; cursor: pointer; border: 1px solid var(--stroke, #3a3a3a); border-radius: 4px; background: var(--layer, #252526); color: var(--text-2, #9D9D9D); padding: 2px 8px; }
   .crumb-back:hover { border-color: var(--stroke-2, #4A4A4A); color: var(--text, #CCCCCC); }
+  .rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .rev-target { font-weight: 500; }
+  .rev-counts { font-size: 12px; opacity: .7; }
+  .sev-group { margin-bottom: 16px; }
+  .sev-label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; margin-bottom: 6px; }
+  .finding { border: 1px solid var(--stroke, #3a3a3a); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .finding-top { display: flex; align-items: baseline; gap: 8px; }
+  .finding-title { font-weight: 500; }
+  .finding-loc { font-size: 12px; opacity: .6; }
+  .finding-detail { font-size: 13px; opacity: .85; margin-top: 6px; white-space: pre-wrap; }
+  .sev-critical .sev-label { color: #e26a6a; }
+  .sev-high .sev-label { color: #e0954b; }
 </style>
 <script>
   /* Apply persisted theme before first paint to avoid flash. */
@@ -211,6 +223,7 @@
     </section>
 
     <section id="loop">
+    <div id="rpi-view">
     <aside class="rail-left">
       <div class="rail-title">RPI loop</div>
       <div id="steps"></div>
@@ -249,6 +262,14 @@
       <div class="rr-sec" style="padding-top:2px"><div class="sec" style="margin:0 0 4px">Activity · AG-UI stream</div></div>
       <div class="stream"></div>
     </aside>
+    </div>
+    <div id="findings-view" hidden>
+      <div class="rev-head">
+        <span id="rev-target" class="rev-target"></span>
+        <span id="rev-counts" class="rev-counts"></span>
+      </div>
+      <div id="findings"></div>
+    </div>
     </section>
   </div>
 </div>
