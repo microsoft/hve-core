@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Three ways to install HVE Core with marketplace extension, selective collections, or developer clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-24
 ms.topic: how-to
 keywords:
   - installation
@@ -28,6 +28,8 @@ Install the **HVE Core** extension for a zero-configuration experience that work
 **Or visit:** [HVE Core on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
 The extension installs the `hve-core` (Flagship) collection containing 40 artifacts for the RPI workflow. Updates arrive automatically through VS Code.
+
+After installation, you can start the workflow with the RPI skills in chat: `/rpi-quick` for the full flow, or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` for the individual phases.
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
@@ -161,7 +163,7 @@ After installing, verify that HVE Core is active:
 
 1. Open Copilot Chat in VS Code.
 2. Type `@` to see available agents.
-3. Look for HVE Core agents like `task-researcher`, `task-planner`, and `task-implementor`.
+3. Look for HVE Core agents like `task-researcher`, `task-planner`, and `task-implementor`, and try the new RPI skills such as `/rpi-research` and `/rpi-plan`.
 
 If you don't see the agents, check the [Troubleshooting](troubleshooting.md) page for common solutions.
 

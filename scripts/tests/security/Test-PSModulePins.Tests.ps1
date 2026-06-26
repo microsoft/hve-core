@@ -290,6 +290,51 @@ Describe 'Invoke-PSModulePinScan' -Tag 'Unit' {
         }
     }
 
+    Context 'when a tracked file uses an alternate supported extension' {
+        It 'Scans the file and records its pin' {
+            $repo = Join-Path $TestDrive 'alt-ext'
+            $files = @{
+                'scripts/module.psm1' = "Import-Module -Name Pester -RequiredVersion 5.7.1"
+            }
+            $configPath = New-PinFixtureRepo -Path $repo -Files $files -ConfigJson $script:CanonicalConfig
+
+            Push-Location $repo
+            try {
+                $exit = Invoke-PSModulePinScan -ConfigPath $configPath
+            } finally {
+                Pop-Location
+            }
+
+            $exit | Should -Be 0
+            $results = Get-Content -Raw (Join-Path $repo 'logs/ps-module-pins-results.json') | ConvertFrom-Json
+            $results.pinsFound | Should -Be 1
+            $results.violationCount | Should -Be 0
+        }
+    }
+
+    Context 'when a tracked file no longer exists on disk' {
+        It 'Skips the file without reporting a violation' {
+            $repo = Join-Path $TestDrive 'missing-file'
+            $files = @{
+                'scripts/ghost.ps1' = "Install-Module -Name Pester -RequiredVersion 9.9.9 -Force"
+            }
+            $configPath = New-PinFixtureRepo -Path $repo -Files $files -ConfigJson $script:CanonicalConfig
+            Remove-Item -LiteralPath (Join-Path $repo 'scripts/ghost.ps1') -Force
+
+            Push-Location $repo
+            try {
+                $exit = Invoke-PSModulePinScan -ConfigPath $configPath
+            } finally {
+                Pop-Location
+            }
+
+            $exit | Should -Be 0
+            $results = Get-Content -Raw (Join-Path $repo 'logs/ps-module-pins-results.json') | ConvertFrom-Json
+            $results.pinsFound | Should -Be 0
+            $results.violationCount | Should -Be 0
+        }
+    }
+
     Context 'results JSON metadata' {
         It 'Records configPath, canonical map, filesScanned, and allowedFiles' {
             $repo = Join-Path $TestDrive 'metadata'

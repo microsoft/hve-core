@@ -3,7 +3,7 @@ title: Task Implementor Guide
 description: Use the Task Implementor custom agent to execute implementation plans with precision and tracking
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-05-13
+ms.date: 2026-06-24
 ms.topic: tutorial
 keywords:
   - task implementor
@@ -67,7 +67,7 @@ After clearing, open your plan file (`.copilot-tracking/plans/<topic>-plan.instr
 
 ### Step 3: Reference Your Plan
 
-Use `/task-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor. Alternatively, provide the path to your plan file directly.
+Use `/task-implement` or `/rpi-implement` to start execution. The prompt automatically locates the plan and switches to Task Implementor. Alternatively, provide the path to your plan file directly.
 
 ### Step 4: Set Stop Controls
 

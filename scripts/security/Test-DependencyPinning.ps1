@@ -127,7 +127,7 @@ $script:GitHubApiBase = Get-GitHubApiBase
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
     'github-actions' = @{
-        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         VersionPatterns = @(
             @{
                 Pattern     = 'uses:\s*([^@\s]+)@([^#\s]+)'
@@ -168,7 +168,7 @@ $DependencyPatterns = @{
     }
 
     'workflow-npm-commands' = @{
-        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         ValidationFunc = 'Get-WorkflowNpmCommandViolations'
         Description    = 'Workflow npm install/update commands should use npm ci'
     }
