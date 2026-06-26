@@ -57,6 +57,8 @@ function render(v) {
     const onHome = v.view === "home";
     home.hidden = !onHome;
     loop.hidden = onHome;
+    const toHomeBtn = document.getElementById("to-home");
+    if (toHomeBtn) toHomeBtn.hidden = onHome;
     if (onHome) { renderHome(v); return; }
   }
 
