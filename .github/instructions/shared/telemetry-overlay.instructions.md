@@ -34,6 +34,7 @@ Always consult the `telemetry-foundations` skill for trace, metric, log, PII, an
 | PRD sessions (`prd-sessions/`)                      | Capture telemetry acceptance criteria in the PRD's "Success Metrics" and "Operational Readiness" sections.                                                                      |
 | Accessibility plans (`accessibility/`)              | No additional mandate beyond steps 1-5; apply the decision tree to any observable accessibility behavior.                                                                       |
 | Privacy plans (`privacy-plans/`)                    | Capture data-processing telemetry decisions, consent-state transitions, and retention/erasure events as auditable log or metric signals when they are observable in production. |
+| Privacy review reports (`privacy-reviews/`)         | Flag privacy findings that involve data-processing or consent-state signals without corresponding auditable log or metric evidence.                                             |
 | Code-review reports (`reviews/code-reviews/`)       | Flag any production code path that emits telemetry without a corresponding semantic-convention reference.                                                                       |
 | Implementation changes (`changes/`)                 | Verify each new emitter's attributes against the skill before marking the implementation step complete.                                                                         |
 

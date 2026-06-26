@@ -6,7 +6,7 @@ user-invocable: false
 metadata:
   authors: "NIST (Privacy Framework and NISTIR 8062); GDPR and CCPA/CPRA sources; OWASP (privacy risks); Microsoft (planning synthesis)"
   spec_version: "NIST Privacy Framework v1.0; NISTIR 8062; GDPR; CCPA/CPRA; OWASP Top 10 Privacy Risks"
-  last_updated: "2026-06"
+  last_updated: "2026-06-26"
   content_based_on: "https://www.nist.gov/privacy-framework; https://doi.org/10.6028/NIST.IR.8062; https://gdpr-info.eu; https://oag.ca.gov/privacy/ccpa; https://owasp.org/www-project-top-10-privacy-risks/"
 ---
 
