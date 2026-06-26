@@ -29,7 +29,37 @@ function setConn(status) {
   setText("conn-label", status === "live" ? "live" : status === "offline" ? "offline" : "connecting…");
 }
 
+const WF_ICON = { build: "</>", review: "✓", plan: "▦", docs: "▤", data: "▥", coach: "✷" };
+
+function renderHome(v) {
+  const wf = v.activeWorkflow ? (v.workflows.find((w) => w.id === v.activeWorkflow) || null) : null;
+  const running = v.started || !!v.activeWorkflow;
+  setHtml("orient", running
+    ? `<span>${esc((wf && wf.name) || v.task || "A loop")} is running. <button id="to-loop" class="crumb-back">Open it</button></span>`
+    : `Nothing running yet. Pick a workflow below to begin.`);
+  setHtml("workflows", v.workflows.map((w) =>
+    `<div class="wf-tile" data-launch="${esc(w.id)}">
+       <div class="wf-ico">${esc(WF_ICON[w.id] || "•")}</div>
+       <div class="wf-name">${esc(w.name)}</div>
+       <div class="wf-hint">${esc(w.hint)}</div>
+       <div class="wf-desc">${esc(w.description)}</div>
+     </div>`).join(""));
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.hidden = localStorage.getItem("hve-welcome-dismissed") === "1";
+  const status = document.getElementById("home-status");
+  if (status) status.textContent = running ? "Loop running" : "No loop running";
+}
+
 function render(v) {
+  const home = document.getElementById("home");
+  const loop = document.getElementById("loop");
+  if (home && loop) {
+    const onHome = v.view === "home";
+    home.hidden = !onHome;
+    loop.hidden = onHome;
+    if (onHome) { renderHome(v); return; }
+  }
+
   setText("crumb-task", v.task || "—");
   setText("phase-title", v.phaseNumber ? `Phase ${v.phaseNumber} · ${v.phaseLabel}` : "RPI session");
   setText("phase-state", v.phase ? "● running" : "");
@@ -115,8 +145,17 @@ function decisionHtml(d) {
     <div class="decide-body"><div class="opts">${opts}</div><div class="btns">${btns}</div></div></div>`;
 }
 
-// Event delegation: decision buttons + the steer "Queue directive" button.
+// Event delegation: home interactions + decision buttons + steer "Queue directive" button.
 document.addEventListener("click", (e) => {
+  const tile = e.target.closest("[data-launch]");
+  if (tile) { sendMsg({ type: "launch", workflowId: tile.dataset.launch }); return; }
+  if (e.target.closest("#to-home")) { sendMsg({ type: "navigate", screen: "home" }); return; }
+  if (e.target.closest("#to-loop")) { sendMsg({ type: "navigate", screen: "loop" }); return; }
+  if (e.target.closest("#welcome-dismiss")) {
+    localStorage.setItem("hve-welcome-dismissed", "1");
+    const w = document.getElementById("welcome"); if (w) w.hidden = true;
+    return;
+  }
   const choice = e.target.closest("#decision [data-choice]");
   if (choice) { sendMsg({ type: "decide", id: choice.dataset.id, choiceId: choice.dataset.choice }); return; }
   if (e.target.closest("#steer-send")) {
@@ -141,3 +180,5 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const kindCls = (k) => k.indexOf("directive") === 0 ? "s2" : k === "validate" ? "ok" : "";
 
 connect();
+
+if (typeof window !== "undefined") window.render = render;
