@@ -676,6 +676,29 @@ stimuli:
         config:
           pattern: "(?i)erroractionpreference|try.*catch|lastexitcode|throw|invocation(name)?|exit\\s+1"
 
+  - name: instruction-pester-tests-conformance
+    prompt: |
+      You are authoring a new Pester test file at
+      `scripts/tests/security/Test-Permissions.Tests.ps1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `.Tests.ps1` naming, the
+      `#Requires -Modules Pester` header ordering, `Describe`/`Context`/`It`
+      structure with `-Tag 'Unit'`, `BeforeAll` SUT import, and
+      `Mock`/`Should -Invoke` usage?
+    tags:
+      category: behavior-conformance
+      instruction: pester
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.Tests\\.ps1|pester\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pester|describe|context|\\bit\\b|should|beforeall|mock|-tag\\s+'?unit|\\.tests\\.ps1"
+
   - name: instruction-python-script-cli-conformance
     prompt: |
       You are authoring a new Python CLI script at
