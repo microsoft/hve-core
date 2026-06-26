@@ -459,7 +459,41 @@ jobs:
                 for (const a of (s.perArtifact || [])) { artifacts.push(a); }
               }
 
-              const header = totals.failedSpecs > 0 ? '❌ **Status**: Failed' : '✅ **Status**: Passed';
+              // Split each artifact's assertion failures into blocking (authoritative)
+              // vs advisory (non-gating). The producer emits these fields directly;
+              // fall back to the artifact status when an older summary omits them.
+              const splitFailures = (a) => {
+                const failed = Number(a.assertionsFailed || 0);
+                let blocking = Number(a.authoritativeFailed);
+                let advisory = Number(a.advisoryFailed);
+                if (!Number.isFinite(blocking) || !Number.isFinite(advisory)) {
+                  if (a.status === 'advisory-fail') { blocking = 0; advisory = failed; }
+                  else if (a.status === 'pass' || a.status === 'skipped') { blocking = 0; advisory = 0; }
+                  else { blocking = failed; advisory = 0; }
+                }
+                return { blocking, advisory };
+              };
+
+              let blockingTotal = 0;
+              let advisoryTotal = 0;
+              for (const a of artifacts) {
+                const { blocking, advisory } = splitFailures(a);
+                blockingTotal += blocking;
+                advisoryTotal += advisory;
+              }
+
+              // Only `failedSpecs` gates the PR. When nothing blocks merge but advisory
+              // assertions failed, say so explicitly so the per-row ⚠️/❌ icons are not
+              // misread as merge blockers.
+              let header;
+              if (totals.failedSpecs > 0) {
+                header = `❌ **Status**: Failed — ${totals.failedSpecs} spec(s) block merge`;
+              } else if (advisoryTotal > 0) {
+                header = `✅ **Status**: Passed — no merge-blocking failures (${advisoryTotal} advisory assertion failure(s) present)`;
+              } else {
+                header = '✅ **Status**: Passed';
+              }
+
               const lines = [
                 marker,
                 '## Eval Execution',
@@ -469,18 +503,24 @@ jobs:
                 `- Artifacts evaluated: ${totals.artifacts}`,
                 `- Specs run: ${totals.specs}`,
                 `- Assertions passed: ${totals.assertionsPassed}`,
-                `- Assertions failed: ${totals.assertionsFailed}`,
-                `- Failed specs: ${totals.failedSpecs}`,
+                `- Assertions failed (blocking): ${blockingTotal}`,
+                `- Assertions failed (advisory): ${advisoryTotal}`,
+                `- Failed specs (merge-blocking): ${totals.failedSpecs}`,
                 '',
               ];
 
               if (artifacts.length > 0) {
-                lines.push('| Artifact | Kind | Status | Passed | Failed |');
-                lines.push('|----------|------|--------|--------|--------|');
+                lines.push('| Artifact | Kind | Status | Specs | Passed | Failed (blocking) | Failed (advisory) |');
+                lines.push('|----------|------|--------|-------|--------|-------------------|-------------------|');
                 for (const a of artifacts) {
-                  const icon = a.status === 'pass' ? '✅' : a.status === 'skipped' ? '⏭️' : '❌';
-                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.assertionsPassed} | ${a.assertionsFailed} |`);
+                  const icon = a.status === 'pass' ? '✅' : a.status === 'skipped' ? '⏭️' : a.status === 'advisory-fail' ? '⚠️' : '❌';
+                  const { blocking, advisory } = splitFailures(a);
+                  lines.push(`| \`${a.artifactId}\` | ${a.kind} | ${icon} ${a.status} | ${a.specCount || 0} | ${a.assertionsPassed} | ${blocking} | ${advisory} |`);
                 }
+                lines.push('');
+                lines.push('> **Legend** — ✅ clean · ⚠️ advisory failures only (non-blocking) · ⏭️ skipped · ❌ merge-blocking failure');
+                lines.push('>');
+                lines.push('> Only **Failed specs (merge-blocking)** gates this PR. Advisory assertion failures are signal-quality checks captured during iteration; review them, but they do not block merge and may be acceptable.');
               } else {
                 lines.push('No changed AI artifacts required evaluation.');
               }

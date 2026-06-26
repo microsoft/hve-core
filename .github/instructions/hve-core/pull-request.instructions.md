@@ -18,6 +18,7 @@ Instructions for generating pull request descriptions from branch diffs using th
 * Evaluate template checkboxes against the diff. Check items with confident evidence from changed files. Leave unchecked when assessment requires human judgment.
 * When the repository conventions file defines section-level handling modes or manual-only exceptions, those take precedence over general checkbox guidance for the specified sections.
 * Preserve template structure and formatting without removing sections.
+* Search for and apply `content-policy-citation.instructions.md` to PR descriptions, PR review summaries, and PR comments before they are posted or used to create a pull request.
 
 ## Canonical Fallback Rules
 
@@ -150,6 +151,8 @@ Create `.copilot-tracking/pr/pr.md` from interpreting `pr-reference-log.md`:
    * Process sections in document order.
 2. If `templatePath` is `None`, apply Canonical Fallback Rules and use the PR Description Format defined below.
 3. Delete `pr.md` before writing a new version if it already exists; do not read the old file.
+
+Before finalizing `pr.md`, remove content-policy classification artifacts copied from review notes or planning files. Do not include category names, rationale notes, quoted snippets, paraphrased flagged content, or payload examples in the PR body. When a concern must be mentioned, use neutral wording and the top-level Microsoft content-policy link from `content-policy-citation.instructions.md`.
 
 Title:
 

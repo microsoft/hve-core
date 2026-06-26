@@ -508,8 +508,13 @@ function Start-PluginGeneration {
         return 0
     }
     catch {
-        Write-Error "Plugin generation failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        $message = $_.Exception.Message
+        Write-Error "Plugin generation failed: $message"
+
+        if (Get-Command -Name Write-CIAnnotation -ErrorAction SilentlyContinue) {
+            Write-CIAnnotation -Message $message -Level Error
+        }
+
         return 1
     }
 }
