@@ -13,6 +13,19 @@ describe("events", () => {
   it("parses an option item", () => {
     expect(OptionItem.parse({ id: "b", title: "Token middleware", recommended: true }).id).toBe("b");
   });
+
+  describe("review beats", () => {
+    it("parses review.start", () => {
+      expect(Beat.safeParse({ type: "review.start", target: "branch x" }).success).toBe(true);
+    });
+    it("parses finding.add with optional file and line", () => {
+      expect(Beat.safeParse({ type: "finding.add", severity: "high", title: "SQL injection", file: "a.ts", line: 12 }).success).toBe(true);
+      expect(Beat.safeParse({ type: "finding.add", severity: "low", title: "nit" }).success).toBe(true);
+    });
+    it("rejects an unknown severity", () => {
+      expect(Beat.safeParse({ type: "finding.add", severity: "blocker", title: "x" }).success).toBe(false);
+    });
+  });
 });
 
 it("parses an approaches.offer beat", () => {

@@ -15,6 +15,18 @@ export const OptionItem = z.object({
 });
 export type OptionItem = z.infer<typeof OptionItem>;
 
+export const Severity = z.enum(["critical", "high", "medium", "low", "info"]);
+export type Severity = z.infer<typeof Severity>;
+
+export const Finding = z.object({
+  severity: Severity,
+  title: z.string(),
+  file: z.string().optional(),
+  line: z.number().int().optional(),
+  detail: z.string().optional(),
+});
+export type Finding = z.infer<typeof Finding>;
+
 export const Beat = z.discriminatedUnion("type", [
   z.object({ type: z.literal("session.begin"), task: z.string(), host: z.string() }),
   z.object({ type: z.literal("phase.enter"), phase: Phase }),
@@ -25,6 +37,8 @@ export const Beat = z.discriminatedUnion("type", [
   z.object({ type: z.literal("approaches.offer"), label: z.string(), options: z.array(OptionItem).min(1) }),
   z.object({ type: z.literal("screen.show"), html: z.string(), title: z.string().optional() }),
   z.object({ type: z.literal("screen.clear") }),
+  z.object({ type: z.literal("review.start"), target: z.string() }),
+  z.object({ type: z.literal("finding.add"), severity: Severity, title: z.string(), file: z.string().optional(), line: z.number().int().optional(), detail: z.string().optional() }),
 ]);
 export type Beat = z.infer<typeof Beat>;
 

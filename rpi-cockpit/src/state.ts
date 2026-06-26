@@ -1,5 +1,5 @@
 // rpi-cockpit/src/state.ts
-import type { Beat, Phase, OptionItem, ValidationStatus, Directive } from "./events.js";
+import type { Beat, Phase, OptionItem, ValidationStatus, Directive, Finding } from "./events.js";
 
 export interface Subagent { name: string; role?: string; status: "active" | "idle"; result?: string; }
 export interface Decision { id: string; prompt: string; options: OptionItem[]; }
@@ -9,6 +9,9 @@ export interface SteerMenu { label: string; options: OptionItem[]; }
 export interface SessionState {
   task: string;
   host: string;
+  domain: "rpi" | "review" | null;
+  reviewTarget: string | null;
+  findings: Finding[];
   view: "home" | "loop";
   activeWorkflow: string | null;
   phase: Phase | null;
@@ -24,14 +27,14 @@ export interface SessionState {
 }
 
 export function initialState(): SessionState {
-  return { task: "", host: "", view: "home", activeWorkflow: null, phase: null, phasesDone: [], subagents: [], validations: {}, artifacts: [], pendingDecision: null, directives: [], steerMenu: null, screen: null, log: [] };
+  return { task: "", host: "", domain: null, reviewTarget: null, findings: [], view: "home", activeWorkflow: null, phase: null, phasesDone: [], subagents: [], validations: {}, artifacts: [], pendingDecision: null, directives: [], steerMenu: null, screen: null, log: [] };
 }
 
 export function applyBeat(s: SessionState, beat: Beat, now: number): SessionState {
   const log = [...s.log, { t: now, kind: beat.type, detail: summarize(beat) }];
   switch (beat.type) {
     case "session.begin":
-      return { ...s, task: beat.task, host: beat.host, view: "loop", log };
+      return { ...s, task: beat.task, host: beat.host, domain: "rpi" as const, view: "loop", log };
     case "phase.enter": {
       const phasesDone = s.phase && s.phase !== beat.phase && !s.phasesDone.includes(s.phase)
         ? [...s.phasesDone, s.phase] : s.phasesDone;
@@ -55,6 +58,10 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
       return { ...s, screen: { html: beat.html, title: beat.title }, log };
     case "screen.clear":
       return { ...s, screen: null, log };
+    case "review.start":
+      return { ...s, domain: "review", reviewTarget: beat.target, findings: [], log };
+    case "finding.add":
+      return { ...s, findings: [...s.findings, { severity: beat.severity, title: beat.title, file: beat.file, line: beat.line, detail: beat.detail }], log };
   }
 }
 
@@ -69,6 +76,8 @@ function summarize(beat: Beat): string {
     case "approaches.offer": return beat.label;
     case "screen.show": return beat.title ?? "screen";
     case "screen.clear": return "cleared";
+    case "review.start": return `review ${beat.target}`;
+    case "finding.add": return `${beat.severity}: ${beat.title}`;
   }
 }
 

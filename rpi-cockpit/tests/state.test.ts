@@ -92,3 +92,27 @@ it("drains to empty when there is nothing queued", () => {
   expect(drained).toHaveLength(0);
   expect(state.log).toHaveLength(0);
 });
+
+describe("review domain", () => {
+  it("defaults domain to null with no findings", () => {
+    expect(initialState().domain).toBeNull();
+    expect(initialState().findings).toEqual([]);
+    expect(initialState().reviewTarget).toBeNull();
+  });
+  it("session.begin sets the rpi domain", () => {
+    const s = applyBeat(initialState(), { type: "session.begin", task: "t", host: "h" }, 1);
+    expect(s.domain).toBe("rpi");
+  });
+  it("review.start sets the review domain, target, and resets findings", () => {
+    let s = applyBeat(initialState(), { type: "finding.add", severity: "low", title: "old" }, 1);
+    s = applyBeat(s, { type: "review.start", target: "PR 7" }, 2);
+    expect(s.domain).toBe("review");
+    expect(s.reviewTarget).toBe("PR 7");
+    expect(s.findings).toEqual([]);
+  });
+  it("finding.add appends a finding", () => {
+    let s = applyBeat(initialState(), { type: "review.start", target: "x" }, 1);
+    s = applyBeat(s, { type: "finding.add", severity: "high", title: "bug", file: "a.ts", line: 3 }, 2);
+    expect(s.findings).toEqual([{ severity: "high", title: "bug", file: "a.ts", line: 3, detail: undefined }]);
+  });
+});
