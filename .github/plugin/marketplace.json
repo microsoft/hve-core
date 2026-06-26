@@ -82,6 +82,12 @@
       "version": "3.3.101"
     },
     {
+      "name": "rpi",
+      "source": "rpi",
+      "description": "Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.",
+      "version": "3.3.101"
+    },
+    {
       "name": "security",
       "source": "security",
       "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",

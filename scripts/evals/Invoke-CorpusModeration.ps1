@@ -111,7 +111,7 @@ $records = foreach ($relPath in $corpusPaths) {
     @{ id = $relPath; text = $body }
 }
 
-$recordsArray = @($records)
+$recordsArray = @($records | Where-Object { $null -ne $_ })
 if ($recordsArray.Count -eq 0) {
     Write-Host "All listed corpus files missing or empty; skipping moderation."
     exit 0

@@ -1,0 +1,19 @@
+stimuli:
+  - name: eval-dataset-creator-class-recipe
+    prompt: |
+      Create a small JSONL evaluation dataset (5 rows) of question/expected-answer pairs about basic arithmetic. Save as `eval-data/arithmetic.jsonl` and report what you produced. State how you would validate the dataset format.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: source-edit-present
+        config:
+          pattern: '(?i)(`|created|modified|edited|wrote|file:)'
+      - type: output-matches
+        name: lint-invocation
+        config:
+          pattern: '(?i)(lint|ruff|pylint|eslint|format|validate|test)'
+      - type: output-matches
+        name: scope-respect
+        config:
+          pattern: '(?i)(eval-data|jsonl|arithmetic)'

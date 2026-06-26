@@ -1,0 +1,25 @@
+stimuli:
+  - name: code-review-accessibility-class-recipe
+    prompt: |
+      Review this diff for accessibility conformance:
+      ```diff
+      +<button onclick="submit()"><img src="send.png"></button>
+      +<div role="dialog">Enter payment details</div>
+      ```
+      List accessibility barriers with severity and cite the success criterion each violates.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|barrier)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

@@ -502,6 +502,31 @@ The build and extraction scripts use shared modules in the `scripts/` directory:
 * Theme colors resolve via `MSO_THEME_COLOR` enum. Brightness adjustments apply through the color format's `brightness` property.
 * Template-based builds load layouts by name or index. Layout name resolution falls back to index 6 (blank) when no match is found.
 
+## Security Considerations
+
+This skill processes PDF files via [PyMuPDF](https://pymupdf.readthedocs.io/), which wraps the MuPDF C library. MuPDF parses untrusted binary structures (cross-reference tables, stream objects, font definitions) and historical CVEs have shown that memory-safety bugs in C parsers can lead to crashes, memory disclosure, or in rare cases code execution.
+
+### Mitigations in place
+
+* `scripts/pdf_safety.py` validates every PDF (existence, regular-file, size <= 100 MB, `%PDF-` magic bytes, page count <= 1000) before calling `fitz.open()`.
+* All `fitz` operations are wrapped in `safe_open_pdf()`, which converts MuPDF exceptions into typed `PdfSafetyError` subclasses (`PdfTooLargeError`, `PdfInvalidFormatError`, `PdfTooManyPagesError`, `PdfParseError`, `PdfRenderError`).
+* `pymupdf` is version-pinned in `pyproject.toml` (`>=1.27.1,<2.0`) to track security fixes without silently adopting a major-version API change.
+
+> **Defense-in-depth note**: the 5-byte `%PDF-` magic check is a necessary but not sufficient guarantee of structural validity. A crafted small file that begins with `%PDF-` still reaches the MuPDF parser, where memory-safety bugs may exist. Callers MUST keep PyMuPDF patched against the latest advisories (tracked via microsoft/hve-core#1020 / `pip-audit`) and continue to treat such inputs as untrusted. The `PdfSafetyError` hierarchy (`PdfTooLargeError`, `PdfInvalidFormatError`, `PdfTooManyPagesError`, `PdfParseError`, `PdfRenderError`) is one defense layer alongside the version pin and CVE monitoring; no single layer is sufficient on its own.
+
+### Accepted risk
+
+These mitigations reduce but do not eliminate the C-extension attack surface. Consumers SHOULD treat PDF inputs from outside this skill's PPTX-to-PDF pipeline as untrusted and apply additional sandboxing (subprocess, container) before feeding adversarial input.
+
+### Update policy
+
+Re-check [NVD](https://nvd.nist.gov) and [OSV](https://osv.dev) advisories for MuPDF and PyMuPDF quarterly and on every pip-audit alert.
+
+### Cross-references
+
+* microsoft/hve-core#1018 — original hardening request
+* microsoft/hve-core#1020 — pip-audit CI for ongoing CVE monitoring (separate effort)
+
 ## Troubleshooting
 
 | Issue                                  | Cause                                              | Solution                                                                                         |

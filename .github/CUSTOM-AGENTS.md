@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-06-17
+ms.date: 2026-06-19
 ms.topic: guide
 keywords:
   - copilot
@@ -53,7 +53,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 |----------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | **adr-creation**                 | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
 | **brd-builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
-| **doc-ops**                      | Documentation operations and maintenance                                                                                 | Does not modify source code                                                                                                        |
+| **documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
@@ -253,19 +253,19 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
-### doc-ops
+### documentation
 
-**Creates:** Documentation updates and maintenance artifacts:
+**Creates:** Documentation workflow session tracking and documentation updates:
 
-* `.copilot-tracking/doc-ops/{{YYYY-MM-DD}}-session.md` (session tracking for documentation operations)
+* `.copilot-tracking/documentation/{{YYYY-MM-DD}}-session.md` (session tracking for the Documentation workflow)
 
 **Workflow:**
 
-* Review existing documentation for accuracy and completeness
-* Identify gaps, inconsistencies, or outdated content
-* Apply structured documentation updates aligned with repository standards
+* Review existing documentation for scope, accuracy, and completeness
+* Identify drift, gaps, or outdated content in the requested area
+* Author or validate documentation updates using the shared documentation skill
 
-**Critical:** Operates strictly on documentation files and does not modify application or source code
+**Critical:** Uses the Documentation workflow as the canonical entry point for documentation work. It stays focused on documentation artifacts and routes formal accessibility, RAI, and security assessments to the matching planner agents.
 
 ### meeting-analyst
 

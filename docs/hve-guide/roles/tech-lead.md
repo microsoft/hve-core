@@ -93,17 +93,17 @@ specificity, and alignment with repository conventions.
 
 ## Key Agents and Workflows
 
-| Agent                     | Purpose                                    | Docs                                            |
-|---------------------------|--------------------------------------------|-------------------------------------------------|
-| **adr-creation**          | Architecture decision record creation      | Agent file                                      |
-| **architecture-diagrams** | ASCII architecture diagram generation      | Skill file                                      |
-| **pr-review**             | Pull request review automation             | Agent file                                      |
-| **task-reviewer**         | Implementation review against plan         | [Task Reviewer](../../rpi/task-reviewer.md)     |
-| **prompt-builder**        | Prompt engineering artifact creation       | Agent file                                      |
-| **task-researcher**       | Deep codebase and architecture research    | [Task Researcher](../../rpi/task-researcher.md) |
-| **task-planner**          | Structured implementation planning         | [Task Planner](../../rpi/task-planner.md)       |
-| **doc-ops**               | Documentation operations and maintenance   | Agent file                                      |
-| **memory**                | Session context and preference persistence | Agent file                                      |
+| Agent                     | Purpose                                               | Docs                                            |
+|---------------------------|-------------------------------------------------------|-------------------------------------------------|
+| **adr-creation**          | Architecture decision record creation                 | Agent file                                      |
+| **architecture-diagrams** | ASCII architecture diagram generation                 | Skill file                                      |
+| **pr-review**             | Pull request review automation                        | Agent file                                      |
+| **task-reviewer**         | Implementation review against plan                    | [Task Reviewer](../../rpi/task-reviewer.md)     |
+| **prompt-builder**        | Prompt engineering artifact creation                  | Agent file                                      |
+| **task-researcher**       | Deep codebase and architecture research               | [Task Researcher](../../rpi/task-researcher.md) |
+| **task-planner**          | Structured implementation planning                    | [Task Planner](../../rpi/task-planner.md)       |
+| **documentation**         | Documentation audit, drift, authoring, and validation | Agent file                                      |
+| **memory**                | Session context and preference persistence            | Agent file                                      |
 
 Prompts complement the agents for cross-cutting workflows:
 

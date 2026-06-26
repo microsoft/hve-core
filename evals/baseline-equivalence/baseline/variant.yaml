@@ -1,0 +1,8 @@
+# Sibling metadata for evals/baseline-equivalence/baseline/eval.yaml.
+# Consumed by scripts/evals/Invoke-BaselineEquivalence.ps1 and the
+# equivalence dashboard. Not read by vally; do not move into eval.yaml.
+kind: baseline
+name: empty
+label: Baseline
+description: Empty workspace, no hve-core artifacts materialized.
+applied: []

@@ -1,7 +1,7 @@
 ---
 id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
-description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and the evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired through repository validation scripts and supported by a vally-tests authoring skill."
+description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
 ms.date: "2026-05-30"
 ms.topic: "reference"
@@ -27,39 +27,42 @@ tags:
 affected_components:
   - "evals/"
   - ".vally.yaml"
+  - "scripts/evals/"
+  - "scripts/evals/moderation/"
   - ".github/skills/hve-core/vally-tests/"
-  - "package.json"
+  - ".github/agents/hve-core/subagents/vally-test-author.agent.md"
+  - ".github/agents/content-policy-citation.agent.md"
   - ".github/workflows/pr-validation.yml"
 supersedes: null
 superseded-by: null
 related: []
 asr_triggers:
   - kind: "maintainability"
-    evidence: "evals/README.md describes the Vally evaluation architecture; the .github/skills/hve-core/vally-tests skill is the maintained authoring surface."
+    evidence: "evals/README.md describes the six-suite evaluation architecture; the .github/skills/hve-core/vally-tests skill is the maintained authoring surface."
     note: "Establishes regression protection for non-code AI artifacts (agents, prompts, instructions, skills) that lack compile-time checks."
   - kind: "maintainability"
-    evidence: ".vally.yaml maps checked-in Vally suites to categories for skill-quality, agent-behavior, and script-validation runs."
+    evidence: "evals/baseline-equivalence/README.md defines pairwise comparison asserting only documented divergences from baseline Copilot model behavior."
     note: "Evolvability surface: guards safe evolution of the customization layer. Captured under maintainability because the closed asr_triggers.kind enum does not admit a separate evolvability value."
   - kind: "compliance"
-    evidence: "The .github/skills/hve-core/vally-tests refusal taxonomy enforces content-policy and Code of Conduct boundaries during test authoring."
-    note: "Keeps test authoring out of adversarial territory with a closed refusal taxonomy."
+    evidence: "The .github/skills/hve-core/vally-tests refusal taxonomy and the scripts/evals/moderation/ pipeline enforce content-policy and Code of Conduct boundaries on generated corpora."
+    note: "Keeps test authoring out of adversarial territory with a closed seven-category refusal taxonomy."
 success_criteria:
   - metric: "ai-artifact-regression-coverage"
-    target: "checked-in evals/ suites lint successfully and can run through the repository Vally commands"
+    target: "every evals/ suite runs green on main and gates PRs that touch covered AI customization artifacts"
     measurement_window: "per-PR after adoption"
     source: "evals/README.md"
-  - metric: "suite-routing-coverage"
-    target: "the root Vally configuration routes each checked-in suite by category"
-    measurement_window: "per validation run"
-    source: ".vally.yaml"
-  - metric: "validation-surface-integration"
-    target: "repository validation keeps ADR, AI artifact, frontmatter, skill, and dependency checks in the PR gate"
+  - metric: "baseline-equivalence-divergence"
+    target: "zero undocumented divergences between the customization layer and the underlying Copilot baseline"
+    measurement_window: "per-PR for baseline-equivalence suite"
+    source: "evals/baseline-equivalence/README.md"
+  - metric: "eval-ci-gating"
+    target: "the evaluation matrix runs in PR CI and blocks merge on authoritative-gate failures"
     measurement_window: "every PR run"
     source: ".github/workflows/pr-validation.yml"
-  - metric: "authoring-safety-enforcement"
-    target: "the vally-tests skill refuses unsafe stimulus authoring before test cases are appended"
-    measurement_window: "per authoring request"
-    source: ".github/skills/hve-core/vally-tests/SKILL.md"
+  - metric: "corpus-moderation-enforcement"
+    target: "generated test corpora pass the moderation pipeline before use, with refusal-taxonomy categories enforced"
+    measurement_window: "per corpus generation"
+    source: "scripts/evals/moderation/moderate.py"
 decisionMetadata:
   driverToTriggerMap:
     "Regression safety": "ASR-maintainability-eval-suite"
@@ -84,18 +87,23 @@ it, and reviewer diligence does not scale to catch divergences across dozens
 of interacting artifacts.
 
 The project needed a repeatable way to evaluate the *behavior* of these
-artifacts, surface customization drift as an explicit choice, and keep test
+artifacts, prove the customization layer does not drift away from the
+underlying Copilot baseline beyond documented divergences, and keep test
 authoring inside safe content boundaries. This decision is retroactive: it
-documents the Vally-based evaluation framework present in the repository. The
-checked-in implementation includes the `evals/` tree with `skill-quality`,
-`agent-behavior`, and `script-validation` suite specs, a root `.vally.yaml`
-configuration, npm evaluation commands in `package.json`, a `vally-tests`
-authoring skill at `.github/skills/hve-core/vally-tests/`, and PR validation
-coverage through `.github/workflows/pr-validation.yml`. How should hve-core
-standardize behavioral evaluation of its AI artifacts?
+documents an active changeset that already introduces a Vally-based evaluation
+framework spanning roughly 344 files. The changeset adds a multi-suite
+`evals/` tree, a root `.vally.yaml` config, a
+PowerShell and Python orchestration layer under `scripts/evals/` (including the
+content-moderation pipeline at `scripts/evals/moderation/`), a `vally-tests`
+authoring skill at `.github/skills/hve-core/vally-tests/`, a
+`.github/agents/hve-core/subagents/vally-test-author.agent.md` subagent, a
+`.github/agents/content-policy-citation.agent.md` agent, and CI wiring through
+changes to `.github/workflows/pr-validation.yml`. How should hve-core standardize
+behavioral evaluation of its AI artifacts?
 
-> Source: `evals/README.md`, Vally evaluation architecture.
-> Source: `.vally.yaml`, suite routing configuration.
+> Source: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`, Frame-phase scope, drivers, constraints, and ASR triggers.
+> Source: `evals/README.md`, six-suite evaluation architecture.
+> Source: `evals/baseline-equivalence/README.md`, baseline-equivalence comparison contract.
 
 ## Decision Drivers
 
@@ -160,8 +168,8 @@ its tag-routed grader catalog matches the multi-suite design, and it is npm-
 and GitHub-Actions-native so it fits existing PR CI and local `npm run`
 workflows.
 
-`vyta/beval` (Option B) is treated as complementary rather than rejected. It
-targets a different layer (runtime, multi-turn agentic behavior with scored
+`vyta/beval` (Option B) is complementary rather than rejected: it targets a
+different layer (runtime, multi-turn agentic behavior with scored
 multi-dimensional metrics and persona-driven conversation simulation over
 ACP/A2A) and is being integrated through open pull requests. It does not
 provide a pairwise baseline-equivalence comparison and therefore cannot replace
@@ -185,7 +193,7 @@ neither wins nor regressions on their own.
 * Good, because it gives non-code AI artifacts a behavioral regression net and a baseline-equivalence proof they previously lacked.
 * Good, because the `vally-tests` skill makes conformance authoring repeatable and grader-routed instead of ad hoc.
 * Good, because tiered enforcement separates authoritative blocking gates from advisory non-deterministic conformance checks.
-* Good, because the framework reuses existing skill-validation and fuzz-harness conventions rather than inventing parallel ones.
+* Good, because the framework reuses existing skill-validation, fuzz-harness, and corpus-moderation conventions rather than inventing parallel ones.
 * Bad, because it adds a new external dependency (`@microsoft/vally-cli`) plus a Copilot-SDK runtime to CI.
 * Bad, because non-deterministic LLM evaluation introduces cost, latency, and flakiness that require multiple runs, tolerant graders, and generous timeouts.
 * Bad, because it lands a large, multi-suite eval-infrastructure footprint that becomes ongoing maintenance surface.
@@ -197,16 +205,17 @@ neither wins nor regressions on their own.
 Compliance with this decision is confirmed by the evaluation framework itself
 running under `autonomyTier: partial` Govern controls:
 
-1. The checked-in `evals/` suites are documented in `evals/README.md` and routed through `.vally.yaml`.
-2. The `package.json` evaluation commands provide local entry points for Vally linting and suite execution.
-3. The `vally-tests` skill provides the repeatable authoring path whose outputs feed the suites above.
-4. The PR validation workflow continues to gate the repository with ADR, AI artifact, frontmatter, skill, and dependency checks.
+1. The evaluation matrix in `.github/workflows/pr-validation.yml` runs the `evals/` suites in PR CI and blocks merge on authoritative-gate failures.
+2. The baseline-equivalence suite (`evals/baseline-equivalence/README.md`) asserts that only documented divergences from the Copilot baseline are present.
+3. The corpus-moderation pipeline (`scripts/evals/moderation/moderate.py`) gates generated test corpora against the closed refusal taxonomy before use.
+4. The `vally-tests` skill provides the repeatable authoring path whose outputs feed the suites above.
 
-These checks map to the recorded success criteria: suite documentation and
-configuration demonstrate regression coverage, the npm commands demonstrate a
-repeatable execution surface, adoption of the skill path demonstrates authoring
-consistency, and PR validation demonstrates that the evaluation framework stays
-inside the repository's normal quality gate.
+These four checks map to the recorded success criteria: a green agent-matrix
+run demonstrates regression coverage, a passing `vally compare` demonstrates
+baseline equivalence, a clean moderation gate demonstrates that generated
+corpora stay inside safety boundaries, and adoption of the skill path
+demonstrates authoring consistency. The decision is considered confirmed for a
+given release when all four hold in PR CI.
 
 ## Pros and Cons of the Options
 
@@ -260,64 +269,58 @@ is exactly the exposure this changeset exists to close.
 ## Architecture
 
 The framework is organized as four cooperating stages. Authoring artifacts (the
-`vally-tests` skill and artifact-specific reference files) produce stimulus and
-expectation files. Those files are gathered into the suite tree under `evals/`.
-The root `.vally.yaml` configuration routes the checked-in suites by category,
-while `package.json` exposes local evaluation commands. PR validation provides
-the surrounding quality gate for ADR, AI artifact, frontmatter, skill, and
-dependency checks. The diagram below traces that flow from authoring on the
-left to validation on the right.
+`vally-tests` skill and the `vally-test-author` subagent) produce stimulus and
+expectation files. Those files, together with the moderation pipeline output,
+are gathered into the suite tree under `evals/`. The suite tree drives two
+consumers: the baseline-equivalence comparison and the PR CI matrix. CI is
+where enforcement happens, with the `pr-validation.yml` workflow running the
+evaluation matrix as the merge gate. The diagram below traces that flow from authoring on the
+left to enforcement on the right.
 
 ```mermaid
 flowchart LR
     subgraph Authoring["Authoring"]
         skill[".github/skills/hve-core/vally-tests"]
-        refs["skill references and assets"]
+        subagent["vally-test-author subagent"]
+        moderation["scripts/evals/moderation"]
     end
 
     subgraph Config["Configuration"]
         vally[".vally.yaml"]
-        package["package.json eval commands"]
     end
 
     subgraph Suites["evals/ suites"]
-        skillQuality["skill-quality"]
-        agentBehavior["agent-behavior"]
-        scriptValidation["script-validation"]
+        suiteTree["six evaluation suites"]
+        baseline["baseline-equivalence"]
     end
 
-    subgraph Validation["Repository validation"]
+    subgraph CI["PR CI"]
         prval["pr-validation.yml"]
     end
 
-    skill --> skillQuality
-    refs --> agentBehavior
-    refs --> scriptValidation
-    vally --> skillQuality
-    vally --> agentBehavior
-    vally --> scriptValidation
-    package --> skillQuality
-    package --> agentBehavior
-    package --> scriptValidation
-    prval --> skill
+    skill --> suiteTree
+    subagent --> suiteTree
+    moderation --> suiteTree
+    vally --> suiteTree
+    suiteTree --> baseline
+    suiteTree --> prval
 ```
 
 ## Risks and Mitigations
 
-* Risk: a new external dependency (`@microsoft/vally-cli`) plus a Copilot-SDK runtime increases build complexity and supply-chain surface. Mitigation: pin the dependency and run it through the existing dependency-pinning checks.
+* Risk: a new external dependency (`@microsoft/vally-cli`) plus a Copilot-SDK runtime in CI increases build complexity and supply-chain surface. Mitigation: pin the dependency, run it through the existing dependency-pinning checks, and isolate the Copilot-SDK runtime to the evaluation matrix workflow.
 * Risk: non-deterministic LLM evaluation produces cost, latency, and flaky results. Mitigation: configure multiple runs (`runs: 3+`), tolerant graders, and generous timeouts; avoid pinned models; route non-deterministic checks to the advisory tier.
-* Risk: the eval-infrastructure footprint becomes ongoing maintenance surface. Mitigation: keep suite behavior data-driven through `.vally.yaml` and the grader catalog, and reuse existing skill-validation and fuzz-harness conventions instead of bespoke tooling.
+* Risk: the large multi-suite eval-infrastructure footprint becomes ongoing maintenance surface. Mitigation: keep suite behavior data-driven through `.vally.yaml` and the grader catalog, and reuse existing skill-validation, fuzz-harness, and moderation conventions instead of bespoke tooling.
 
 ## Rollback / Exit Strategy
 
 If this decision is reversed, the rollback path is:
 
-1. Remove the `evals/` suite tree and `.vally.yaml`.
-2. Remove the `.github/skills/hve-core/vally-tests/` skill.
-3. Remove the `eval:*` npm scripts and the Vally dependency from `package.json` and `package-lock.json`.
-4. Revert any `evals/`-related changes in `.github/workflows/pr-validation.yml`.
-5. Update any collection manifests that reference the removed skill and re-run `npm run plugin:generate`.
-6. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
+1. Remove the `evals/` suite tree, `.vally.yaml`, and the `scripts/evals/` orchestration and moderation layers.
+2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` agent.
+3. Revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
+4. Update any collection manifests that reference the removed skill/agent and re-run `npm run plugin:generate`.
+5. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
 No data migration is required: removing the framework leaves the underlying AI customization artifacts untouched.
 
@@ -325,17 +328,24 @@ No data migration is required: removing the framework leaves the underlying AI c
 
 * evals/
 * .vally.yaml
+* scripts/evals/
+* scripts/evals/moderation/
 * .github/skills/hve-core/vally-tests/
-* package.json
+* .github/agents/hve-core/subagents/vally-test-author.agent.md
+* .github/agents/content-policy-citation.agent.md
 * .github/workflows/pr-validation.yml
 
 ## More Information
 
+* Session state: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`
 * Suite architecture: `evals/README.md` and the `evals/` suite tree
 * Central config: `./.vally.yaml`
+* Orchestration: `scripts/evals/` (PowerShell and Python)
+* Moderation pipeline: `scripts/evals/moderation/`
 * Authoring skill: `.github/skills/hve-core/vally-tests/`
-* Evaluation commands: `package.json`
-* PR validation workflow: `.github/workflows/pr-validation.yml`
+* Test-author subagent: `.github/agents/hve-core/subagents/vally-test-author.agent.md`
+* Content-policy agent: `.github/agents/content-policy-citation.agent.md`
+* PR validation workflow (evaluation matrix gate): `.github/workflows/pr-validation.yml`
 * Complementary runtime framework: [vyta/beval](https://github.com/vyta/beval) (language-agnostic agentic behavioral evaluation; integration in progress via open PRs)
 
 This decision should be re-visited if `vyta/beval` integration matures enough to subsume the customization-artifact regression role, if Vally's Copilot-SDK executor or `vally compare` contract changes materially, or if the cost and flakiness of non-deterministic evaluation outweigh the regression-safety benefit.

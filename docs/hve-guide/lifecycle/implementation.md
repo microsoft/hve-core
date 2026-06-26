@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-24
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -62,6 +62,8 @@ You enter Implementation after completing [Stage 5: Sprint Planning](sprint-plan
 | prompt-refactor    | Prompt | `/prompt-refactor`    | Refactor and improve existing prompts        |
 | git-commit         | Prompt | `/git-commit`         | Stage and commit changes                     |
 | git-commit-message | Prompt | `/git-commit-message` | Generate a commit message for staged changes |
+
+If you want skill-based entry points instead of the prompt shortcuts, use `/rpi-quick`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
 
 ### Auto-Activated Instructions
 

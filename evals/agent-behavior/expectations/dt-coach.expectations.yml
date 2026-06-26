@@ -1,0 +1,158 @@
+# Bucket-A expectations for dt-coach
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: dt-coach
+class: planner-coach
+agent_file: .github/agents/design-thinking/dt-coach.agent.md
+stimulus_file: evals/agent-behavior/stimuli/dt-coach.yml
+latest_result: evals/results/agent-matrix/2026-05-28/dt-coach.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: line-start-phase-marker
+    summary: Phase/step structure appears at the start of a line, not inside a table cell.
+    signal: At least one line begins with `##`, `###`, `Phase N`, `Step N`, or `N.`.
+    pass_criteria: |
+      Output contains a line matching `(?m)^(##|###|Step \d+|Phase \d+|\d+\.)`.
+      Phase labels inside table cells (e.g. `| **1** |`) or inline bold
+      (e.g. "Phases 1–2") do NOT satisfy this expectation.
+    failure_modes:
+      - Phase labels appear only inside a markdown table column (current 2026-05-28 failure: bolded phase numbers in a 3-column table).
+      - Inline-bolded "Phase 1" / "Phase 2" without a leading marker on the line.
+      - Prose response with no headings or numbered phases at all.
+    priority: high
+    contract_ref: "agent §Required Phases (announces Phase 1–4 transitions) + stimulus grader `phase-marker-present`"
+
+  - expectation_id: coaching-state-path
+    summary: New DT projects report a coaching-state file under the dated project slug directory.
+    signal: Output names a path matching `.copilot-tracking/dt/<project-slug>/coaching-state.md`.
+    pass_criteria: |
+      When the request initiates a new DT project, the response cites a
+      workspace-relative path under `.copilot-tracking/dt/<project-slug>/` and
+      the named file is `coaching-state.md` (per §Session Management ›
+      Starting a New Project).
+    failure_modes:
+      - Reports a slug-less file like `.copilot-tracking/dt/cafeteria-night-shift.md` directly under the `dt/` root (current 2026-05-28 output).
+      - Drops the `coaching-state.md` filename in favor of a generic `plan.md` or `scope.md`.
+      - Writes outside `.copilot-tracking/dt/` (e.g. session-state temp dirs).
+    priority: high
+    contract_ref: "agent §Session Management › Starting a New Project (`coaching-state.md`)"
+
+  - expectation_id: project-slug-kebab-case
+    summary: The project slug embedded in the path is kebab-case and matches the topic.
+    signal: Path segment after `.copilot-tracking/dt/` is a single kebab-case identifier.
+    pass_criteria: |
+      The directory segment immediately under `.copilot-tracking/dt/` matches
+      `[a-z0-9]+(-[a-z0-9]+)*` and is derived from the user's topic (e.g.
+      `cafeteria-night-shift`, `factory-floor-maintenance`).
+    failure_modes:
+      - Slug uses spaces, camelCase, or snake_case.
+      - Slug is a generic placeholder like `project` or `dt-project`.
+      - No slug subdirectory (file written directly under `.copilot-tracking/dt/`).
+    priority: medium
+    contract_ref: "agent §Session Management (slug under `.copilot-tracking/dt/{project-slug}/`)"
+
+  - expectation_id: nine-method-vocabulary
+    summary: Method references use the agent's declared 9-method vocabulary.
+    signal: Output references at least one of the nine canonical method names.
+    pass_criteria: |
+      When the response names DT methods, at least one matches the agent's
+      declared list: Scope Conversations, Design Research, Input Synthesis,
+      Brainstorming, User Concepts, Low-Fidelity Prototypes, High-Fidelity
+      Prototypes, User Testing, Iteration at Scale (case-insensitive).
+    failure_modes:
+      - Substitutes external DT vocabulary (Contextual Inquiry, Affinity Mapping, How Might We) without mapping back to the 9 declared methods (current 2026-05-28 output uses Contextual Inquiry / Affinity Mapping / HMW exclusively).
+      - Invents method names not present in the agent file.
+      - Renumbers methods (e.g. calls Design Research "Method 1").
+    priority: high
+    contract_ref: "agent §The 9 Methods (canonical names per space)"
+
+  - expectation_id: think-speak-empower-shape
+    summary: Coaching responses end with a user-facing choice or open question.
+    signal: Last sentence is a question or offers a branching choice.
+    pass_criteria: |
+      Final non-blank line of the response is a question ending in `?` OR
+      offers an explicit choice (`Want to ...`, `Would you like ...`, `Does
+      that resonate?`, `or move forward?`). The closing must invite the user
+      to decide rather than asserting the next step.
+    failure_modes:
+      - Response ends with a directive ("Now do X.") or a flat summary sentence.
+      - Trailing question is rhetorical, not a real branching choice.
+    priority: medium
+    contract_ref: "agent §Core Philosophy: Think, Speak, Empower (`Empower the user by ending with choices, not directives`)"
+
+  - expectation_id: phase-transition-announced
+    summary: Multi-phase outlines announce the phase shift explicitly.
+    signal: Response contains an announcement that names the next phase by number.
+    pass_criteria: |
+      For a stimulus that asks the coach to lay out the next 2–3 methods, the
+      response includes at least one explicit transition statement such as
+      "moving into Phase 2", "shifting to Method N", or "let me shift focus
+      to ..." before delivering the new-phase content.
+    failure_modes:
+      - Phase content delivered with no transition language.
+      - Transition language used but does not name the phase or method by number/name.
+    priority: medium
+    applies_when: "response covers more than one method or phase"
+    contract_ref: "agent §Required Phases (`Announce phase transitions briefly`)"
+
+  - expectation_id: canonical-deck-opt-in-on-new-project
+    summary: First-project responses include the canonical-deck opt-in checkpoint.
+    signal: Output asks the canonical-deck question verbatim or paraphrased.
+    pass_criteria: |
+      On a new-project initiation turn, the response asks the user whether to
+      enable the canonical deck and customer-card workflow (per §Phase 1 final
+      bullet, MANDATORY per `dt-canonical-deck.instructions.md`). Wording may
+      vary but must reference the canonical deck or customer-card workflow as
+      an opt-in.
+    failure_modes:
+      - Project initiated without asking the opt-in question.
+      - Opt-in deferred to a later turn without acknowledging the requirement.
+      - Workflow enabled silently without asking.
+    priority: medium
+    applies_when: "stimulus starts a new DT project (no prior coaching-state file referenced)"
+    contract_ref: "agent §Phase 1 (canonical workflow opt-in checkpoint, MANDATORY)"
+
+  - expectation_id: no-doing-the-work
+    summary: Scoping responses do not prescribe finished solutions for the user.
+    signal: Output frames methods as the user's work, not a deliverable from the coach.
+    pass_criteria: |
+      For a scoping request, the response describes what the user will do in
+      each method (verbs like "you'll observe", "shadow", "cluster") rather
+      than producing finished POV statements, HMW questions, or prioritized
+      solutions on the user's behalf.
+    failure_modes:
+      - Coach writes the user's POV statements or HMW questions itself.
+      - Coach prescribes specific solutions to the cafeteria/topic scenario.
+      - Coach skips method steps to produce a finished output ahead of the user's work.
+    priority: medium
+    contract_ref: "agent §Coaching Boundaries (`Collaborate, do not execute`; `Do not prescribe specific solutions`; `Do not skip method steps`)"
+
+  - expectation_id: no-source-edit-during-coaching
+    summary: Coaching responses do not claim to edit source-tree files.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Coach claims to modify source files as part of a scoping turn.
+      - Coach edits `package.json` to add DT-related scripts.
+    priority: medium
+    contract_ref: "agent scope (coaching writes are confined to `.copilot-tracking/dt/` per §Session Management)"
+
+  - expectation_id: stimulus-topic-fidelity
+    summary: Output substantively addresses the stimulus's DT scoping topic.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `dt-coach-class-recipe` stimulus, response contains terms from
+      {cafeteria, night-shift, night shift, worker, meal, shift} so the
+      scoping plan is anchored to the stated scenario rather than generic
+      DT framework prose.
+    failure_modes:
+      - Off-topic response (no cafeteria/night-shift terms).
+      - Generic 9-method overview that could apply to any project.
+    priority: low
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

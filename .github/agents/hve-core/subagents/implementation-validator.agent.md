@@ -28,6 +28,7 @@ Validates implementation quality against architectural requirements, design prin
 
 * Changed file paths to validate (required).
 * Validation scope: one of `architecture`, `design-principles`, `dry-analysis`, `api-usage`, `version-consistency`, `refactoring`, `error-handling`, `test-coverage`, `security`, or `full-quality`; default to `full-quality` when no scope is specified.
+* Delegated RPI work may use this subagent for concise review-only validation and expect severity-graded findings with file evidence.
 * (Optional) Implementation validation log path. Defaults to `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/{{task}}-impl-validation.md`. Accept a custom path when the parent agent provides one.
 * (Optional) Architecture and design reference files with paths to architecture docs, instruction files, and design patterns.
 * (Optional) Research document path for understanding implementation context and requirements.

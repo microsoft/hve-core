@@ -1,0 +1,61 @@
+stimuli:
+  - name: documentation-audit-class-recipe
+    prompt: |
+      Plan a documentation coverage audit across the `docs/` tree. List phases and success criteria. Write the plan under `.copilot-tracking/documentation/` and tell me the path you wrote it to.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: lists-phases
+        config:
+          pattern: '(?i)\bphases?\b'
+      - type: output-matches
+        name: success-criteria
+        config:
+          pattern: '(?i)success\s+criteria|criteria'
+      - type: output-matches
+        name: tracking-file-write
+        config:
+          pattern: '(?i)\.copilot-tracking[-/\\](documentation|plans)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
+
+  - name: documentation-drift-class-recipe
+    prompt: |
+      Review the following PR diff for documentation drift. Do not ask for more context; analyze only what is shown below.
+
+      ```diff
+      --- a/src/cli.py
+      +++ b/src/cli.py
+      @@ -10,6 +10,9 @@ def build_parser():
+           parser.add_argument("--output", help="Output file path")
+      +    parser.add_argument(
+      +        "--strict",
+      +        action="store_true",
+      +        help="Fail on any warning instead of continuing",
+      +    )
+           return parser
+      ```
+
+      The PR adds a new `--strict` CLI flag but does not update `README.md`, `CHANGELOG.md`, or the `--help` examples. Identify the documentation gaps.
+
+      Report your findings as a markdown table with the columns `Finding | Severity | Recommendation`, using severity levels of High, Medium, or Low. Do not edit or rewrite any source files.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)```\s*(diff|patch|c#|csharp|cs|python|py|typescript|ts|javascript|js|rust|rs|go|java)\b'
+          negate: true

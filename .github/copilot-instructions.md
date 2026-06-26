@@ -52,7 +52,7 @@ The project is organized into these main areas:
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
 * Extension (`extension/`) - VS Code extension source and packaging.
-* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, and issue templates, typically organized into `{collection-id}` subdirectories.
+* GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{collection-id}` subdirectories.
 * Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
 * Logs (`logs/`) - Output from validation and analysis scripts.
 
@@ -112,7 +112,7 @@ The `.copilot-tracking/` directory (gitignored) contains AI-assisted workflow ar
 * GitHub Issues (`.copilot-tracking/github-issues/`) - GitHub issue search, triage, and workflow tracking.
 * Sandbox (`.copilot-tracking/sandbox/`) - Prompt testing sandbox environments.
 * Prompts (`.copilot-tracking/prompts/`) - Prompt updater tracking files.
-* Doc Ops (`.copilot-tracking/doc-ops/`) - Documentation operations session tracking.
+* Documentation (`.copilot-tracking/documentation/`) - Documentation workflow session tracking.
 * Memory (`.copilot-tracking/memory/`) - Cross-session memory files.
 * Challenges (`.copilot-tracking/challenges/`) - Challenge session Q&A logs, unresolved items, and scope records from Task Challenger sessions.
 
@@ -176,7 +176,7 @@ Frontmatter schemas are stored in `scripts/linting/schemas/`. Schema-to-file map
 
 ### Documentation Operations
 
-The doc-ops agent scans these directories for documentation coverage analysis:
+The Documentation agent scans these directories for documentation coverage analysis:
 
 * `docs/` - Primary documentation tree.
 * `scripts/` - Script-level markdown files and inline documentation.
@@ -272,6 +272,19 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
 * `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
+
+### PowerShell Module Installation in Workflows
+
+Workflows install PowerShell modules via the composite action
+`.github/actions/setup-ps-modules/action.yml`. This action caches modules
+keyed on `scripts/security/ps-module-versions.json` and retries installation
+with exponential backoff on PSGallery failures. The action always installs to
+`CurrentUser` scope because the cache path is hardcoded to the CurrentUser
+module location. Do not use inline `Install-Module` steps in workflows; use
+the composite action instead. The `copilot-setup-steps.yml` workflow calls
+`scripts/security/Install-PSModules.ps1` directly with `-Scope AllUsers`
+because AllUsers requires a different module path that the action does not
+cache.
 
 ### Environment Synchronization
 

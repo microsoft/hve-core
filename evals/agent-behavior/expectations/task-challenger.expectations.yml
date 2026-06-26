@@ -1,0 +1,149 @@
+# Bucket-A expectations for task-challenger
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+slug: task-challenger
+class: planner-coach
+agent_file: .github/agents/hve-core/task-challenger.agent.md
+stimulus_file: evals/agent-behavior/stimuli/task-challenger.yml
+latest_result: evals/results/agent-matrix/2026-05-28/task-challenger.json
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: challenge-tracking-path
+    summary: Challenge log is written under `.copilot-tracking/challenges/`.
+    signal: Output names a path matching `.copilot-tracking/challenges/<YYYY-MM-DD>-<topic>-challenge.md`.
+    pass_criteria: |
+      Response cites a workspace path matching
+      `\.copilot-tracking/challenges/\d{4}-\d{2}-\d{2}-[a-z0-9-]+-challenge\.md`
+      whenever the workflow reaches Phase 4 (Challenge) or compiles a session record.
+    failure_modes:
+      - Log placed in `~\.copilot\session-state\...\files\challenge-log.md` instead of tracking dir
+        (current 2026-05-28 failure).
+      - Log written to `.copilot-tracking/plans/` or some other tracking subdir.
+      - Filename omits the `-challenge.md` suffix or the dated prefix.
+    priority: high
+    contract_ref: "agent §Core Principles + §Phase 4 Protocol (Always create the challenge tracking document at .copilot-tracking/challenges/...)"
+
+  - expectation_id: one-question-per-response
+    summary: Challenge-phase responses contain exactly one question.
+    signal: Response body holds a single `?` belonging to one question line.
+    pass_criteria: |
+      During Phase 4 (Challenge) turns, the response is exactly one question and
+      contains exactly one `?`. No preamble, recap, or trailing commentary.
+    failure_modes:
+      - Multiple questions chained in one response.
+      - Question wrapped in prose like "That's a great point. What does ...?".
+      - Acknowledgement or summary precedes the question.
+    priority: high
+    applies_when: "Phase 4 challenge turn (not Scope Phase, not end-of-session summary)"
+    contract_ref: "agent §Core Principles (Ask one question per response) + §Phase 4 Response Format"
+
+  - expectation_id: question-grammar
+    summary: Challenge questions follow `What/Why/How + subject + verb + open object`.
+    signal: Question begins with a `What`, `Why`, or `How` token.
+    pass_criteria: |
+      Each Phase 4 question opens with `What`, `Why`, or `How` (case-insensitive),
+      ends with `?`, and contains no embedded answer set
+      (e.g. `because of X`, `is it Y`).
+    failure_modes:
+      - Yes/no question ("Did you ...?", "Is this ...?").
+      - Question seeded with an answer ("Was this because of latency?").
+      - Contains banned words from the prohibited list: `only`, `just`, `even`,
+        `isn't it`, `don't you think`.
+    priority: high
+    contract_ref: "agent §Question Framework + §Prohibited Behaviors"
+
+  - expectation_id: no-suggestions-or-validation
+    summary: Challenge-phase responses do not suggest, recommend, validate, or praise.
+    signal: Response contains none of the prohibited affirmation or recommendation tokens.
+    pass_criteria: |
+      Phase 4 responses do not contain (case-insensitive) any of:
+      `recommend`, `suggestion`, `you should`, `you might`, `good point`,
+      `that makes sense`, `exactly`, `fair enough`, `interesting`, `I see`,
+      `that's clear`, `top-line finding`, `do not proceed`.
+    failure_modes:
+      - Output begins with "Top-line finding: Do not proceed" and enumerates risks
+        (current 2026-05-28 behavior — agent gave a recommendation instead of a question).
+      - Praise or validation phrase precedes the question.
+      - Lists recommended next steps for the user.
+    priority: high
+    contract_ref: "agent §Prohibited Behaviors"
+
+  - expectation_id: phase-1-scope-confirmation
+    summary: First response runs Scope Phase, not Challenge Phase.
+    signal: First response presents a scope summary (sources, subject area, files) and
+      asks the user to confirm.
+    pass_criteria: |
+      The first response to a fresh challenge request includes a factual scope
+      summary (source, subject area, files/change set in scope) and asks the user
+      to confirm, adjust, or redirect. It does not jump straight to a What/Why/How
+      challenge question.
+    failure_modes:
+      - First response is a challenge question with no scope summary.
+      - First response is a finding/recommendation list rather than a scope summary
+        (current 2026-05-28 behavior).
+      - Scope presented but user not asked to confirm.
+    priority: high
+    contract_ref: "agent §Phase 1 (Step 1.2 Present, Step 1.3 Confirm)"
+
+  - expectation_id: no-source-edit
+    summary: Challenge work does not edit source code or build manifests.
+    signal: Output does not name modifications to source-tree files.
+    pass_criteria: |
+      No occurrences of edit/create verbs paired with `.cs`/`.py`/`.ts`/`.js`/
+      `.go`/`.rs`/`.java`/`package.json`/`pyproject.toml`/`Cargo.toml` paths.
+    failure_modes:
+      - Claims to modify source files as part of a challenge.
+      - Edits build manifests instead of writing the challenge tracking document.
+    priority: medium
+    contract_ref: "agent §Core Principles (interrogate, do not validate/coach) + tool surface (read/search/edit limited to tracking files)"
+
+  - expectation_id: end-of-session-summary
+    summary: On user completion signal, response lists tracking path and unresolved items.
+    signal: Output includes the challenge tracking document path and an "Unresolved Items"
+      enumeration.
+    pass_criteria: |
+      When the user signals completion ("Done", "Stop", "Finish"), the response
+      states the path to the `.copilot-tracking/challenges/...` document and lists
+      all rows from the Unresolved Items table (or notes "none unresolved" when
+      empty). No additional question is asked.
+    failure_modes:
+      - Completion signal answered with another question.
+      - Tracking path omitted from the summary.
+      - Unresolved items listed but the path is the wrong location.
+    priority: medium
+    applies_when: "user signals session completion"
+    contract_ref: "agent §Phase 4 Protocol (end-of-session completion summary)"
+
+  - expectation_id: tracking-document-schema
+    summary: Created challenge document follows the declared schema.
+    signal: Document content (when shown or quoted) includes the declared section headings.
+    pass_criteria: |
+      Any preview of the challenge tracking document begins with
+      `<!-- markdownlint-disable-file -->` and includes the headings
+      `# Challenge Session: <topic>`, `## Confirmed Scope`,
+      `## Challenge Areas`, `## Q&A Log`, and `## Unresolved Items`.
+    failure_modes:
+      - Document missing markdownlint-disable header.
+      - Sections renamed or reordered (e.g. `## Questions` instead of `## Q&A Log`).
+      - Document presented as a numbered list with no `##` headings.
+    priority: low
+    applies_when: "response includes a preview or excerpt of the challenge tracking document"
+    contract_ref: "agent §Challenge Tracking Document Schema"
+
+  - expectation_id: topic-fidelity
+    summary: Scope and challenge work substantively reflect the stimulus task.
+    signal: Stimulus-derived keywords appear in the response body.
+    pass_criteria: |
+      For the `task-challenger-class-recipe` stimulus, the response contains terms
+      from {authentication, auth, vendor, Friday, rewrite} and the scope summary
+      or first question explicitly references the stated task rather than a generic
+      challenge template.
+    failure_modes:
+      - Off-topic response with no reference to authentication or the vendor rewrite.
+      - Generic scope template that could apply to any task.
+    priority: medium
+    stimulus_scoped: true
+    contract_ref: "stimulus design (per-stimulus, not agent-intrinsic)"

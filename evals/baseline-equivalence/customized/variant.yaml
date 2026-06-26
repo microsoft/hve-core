@@ -1,0 +1,10 @@
+# Sibling metadata for evals/baseline-equivalence/customized/eval.yaml.
+# Consumed by scripts/evals/Invoke-BaselineEquivalence.ps1 and the
+# equivalence dashboard. Not read by vally; do not move into eval.yaml.
+# The driver populates `applied` from the actual materialized artifacts
+# at runtime; the list below is a hint for documentation only.
+kind: agent
+name: task-researcher
+label: task-researcher
+description: Workspace materialized with the task-researcher agent and its dependencies.
+applied: []

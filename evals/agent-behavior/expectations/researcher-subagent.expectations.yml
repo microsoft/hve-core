@@ -1,0 +1,145 @@
+# Bucket-A expectations for researcher-subagent
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: researcher-subagent is `user-invocable: false`, so the agent-matrix
+# does not produce a `<slug>.json` result file for it. Stimuli are advisory
+# (see `evals/agent-behavior/stimuli/researcher-subagent.yml`, tag
+# `advisory: "true"`). Expectations below are grounded in the agent file's
+# explicit Response Format promises.
+slug: researcher-subagent
+class: research-subagent
+agent_file: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+stimulus_file: evals/agent-behavior/stimuli/researcher-subagent.yml
+latest_result: ""
+source_review_date: 2026-05-28
+
+expectations:
+  - expectation_id: subagent-research-path
+    summary: Chat response names the subagent research document path it wrote.
+    signal: Output contains a path matching `.copilot-tracking/research/subagents/<YYYY-MM-DD>/<topic>.md`.
+    pass_criteria: |
+      Path is workspace-relative, includes the `research/subagents/` segment,
+      has a dated subdir, and ends with `.md`. The path appears as plain text
+      (not wrapped in a markdown link or `#file:` directive).
+    failure_modes:
+      - File path omitted from chat response.
+      - Path written outside `.copilot-tracking/research/subagents/`.
+      - Missing dated subdir.
+    priority: high
+    contract_ref: "agent §Inputs; §Response Format (1 line: subagent file path)"
+
+  - expectation_id: status-line-present
+    summary: Chat response includes an explicit status line using the allowed vocabulary.
+    signal: Output contains one of `Complete`, `Blocked`, or `Needs Clarification`.
+    pass_criteria: |
+      A status line is present whose value is exactly one of: `Complete`,
+      `Blocked`, `Needs Clarification` (case-insensitive). May appear on its
+      own line or labeled as `Status:`.
+    failure_modes:
+      - Status omitted.
+      - Uses a different vocabulary (e.g., "Done", "Partial") without one of
+        the allowed values.
+    priority: high
+    contract_ref: "agent §Response Format (1 line: status — Complete / Blocked / Needs Clarification)"
+
+  - expectation_id: key-findings-bullets
+    summary: Chat response presents up to 7 bullet-point key findings, each concise.
+    signal: A bulleted list of findings appears in the chat response.
+    pass_criteria: |
+      The response includes between 1 and 7 bullet-style key findings.
+      Each bullet is ≤ 240 characters. Bullets describe discoveries, not
+      narrative reasoning.
+    failure_modes:
+      - More than 7 key-finding bullets.
+      - Any single bullet exceeds 240 characters.
+      - Findings rendered as prose paragraphs with no list markers.
+    priority: medium
+    contract_ref: "agent §Response Format (Up to 7 bullet-point key findings (each ≤ 240 chars))"
+
+  - expectation_id: next-research-checklist
+    summary: Chat response includes a checklist of up to 5 recommended next research items.
+    signal: Output contains a checklist (e.g., `- [ ]`) of recommended-next items.
+    pass_criteria: |
+      A checklist with 0–5 items is present, separate from the key-findings
+      bullets, naming research not completed during this session. When the
+      original scope is fully exhausted, an empty checklist or an explicit
+      "no further research recommended" line is acceptable.
+    failure_modes:
+      - More than 5 next-research items.
+      - Next steps merged into findings list without separation.
+    priority: medium
+    contract_ref: "agent §Response Format (A checklist of up to 5 recommended next research items not completed)"
+
+  - expectation_id: clarifying-questions-bounded
+    summary: Clarifying questions are bounded and only appear when blocking.
+    signal: When present, clarifying questions are limited to 3 and tied to a blocking condition.
+    pass_criteria: |
+      Either: (a) no clarifying questions are present; OR (b) up to 3
+      clarifying questions appear and the status line is `Blocked` or
+      `Needs Clarification`.
+    failure_modes:
+      - More than 3 clarifying questions listed.
+      - Clarifying questions present alongside a `Complete` status with no
+        blocking rationale.
+    priority: medium
+    contract_ref: "agent §Response Format (Up to 3 clarifying questions, only when blocking)"
+
+  - expectation_id: full-detail-pointer
+    summary: Chat response ends with a short Full Detail pointer line to the subagent file.
+    signal: Output contains a single line referencing "Full Detail" / "Re-read" pointing back to the subagent file.
+    pass_criteria: |
+      A one-line pointer is present near the end of the response that
+      directs the parent to re-read the subagent file path for full
+      evidence (e.g., contains "Re-read", "Full Detail", or "complete
+      evidence").
+    failure_modes:
+      - Pointer line omitted.
+      - Pointer line missing the subagent file path reference.
+    priority: medium
+    contract_ref: "agent §Response Format (1 short 'Full Detail' pointer line)"
+
+  - expectation_id: no-full-content-in-chat
+    summary: Chat response does not paste file contents, long quotes, or large code blocks.
+    signal: Output omits multi-line fenced code blocks and long verbatim quotes; the subagent file is the source of truth.
+    pass_criteria: |
+      No fenced code block in the chat response exceeds ~10 lines, and no
+      single quoted passage exceeds ~10 lines. Short inline code spans
+      and small examples (≤ 10 lines total per block) are acceptable.
+    failure_modes:
+      - Multi-screen code block or evidence table pasted into chat.
+      - Long verbatim copy of file contents.
+    priority: medium
+    contract_ref: "agent §Response Format (Do not paste file contents, code blocks, long quotes, or full evidence tables into the chat response.)"
+
+  - expectation_id: scope-discipline
+    summary: Output stays within the original research scope and acknowledges that constraint.
+    signal: Output references scope/stop conditions and avoids tangential threads.
+    pass_criteria: |
+      Output contains at least one of: an explicit scope acknowledgment
+      (e.g., "only", "stop", "do not pursue", "tangential",
+      "original scope"); OR a recommended-next-research item that captures
+      out-of-scope follow-ups instead of pursuing them inline.
+    failure_modes:
+      - Output pursues unrelated topics not in the original questions.
+      - Output expands the topic without recording the expansion as a
+        next-research item.
+    priority: high
+    contract_ref: "agent §Required Protocol (Stop researching when the original questions are answered; do not pursue tangential threads beyond the original scope)"
+    stimulus_scoped: true
+
+  - expectation_id: plain-text-workspace-paths
+    summary: Workspace file references in the chat response use plain-text relative paths.
+    signal: Workspace paths appear as bare text, not as markdown links or `#file:` directives.
+    pass_criteria: |
+      Every workspace-relative path mentioned in the chat response appears
+      as plain text or inside a code span; none is wrapped in a markdown
+      link target or `#file:` directive. External URLs may still use
+      markdown link syntax.
+    failure_modes:
+      - Subagent file path written as `[research](./.copilot-tracking/...)`.
+      - Path written as `#file:.copilot-tracking/...`.
+    priority: low
+    contract_ref: "agent §File Reference Formatting (plain-text workspace-relative paths; no markdown links or #file: directives for local files)"
