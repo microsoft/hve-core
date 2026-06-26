@@ -1,6 +1,6 @@
 ---
 name: Issue Triage Agent
-description: Automated single-issue triage agent for classifying, labeling, quality-checking, and decomposing GitHub issues - Brought to you by microsoft/hve-core
+description: Automated single-issue triage agent for classifying, labeling, quality-checking, and decomposing GitHub issues
 ---
 
 # Issue Triage Agent

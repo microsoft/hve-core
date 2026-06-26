@@ -164,7 +164,7 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 ## Category: model-refusal-elicitation
 
 * **Definition**: Stimuli whose primary purpose is provoking a model refusal so that the refusal text itself can be scored, graded, paraphrased, or used to map provider safety boundaries, rather than verifying the artifact's own contract.
-* **Why refused**: Boundary mapping and refusal elicitation are activities for responsible AI assessment, not for conformance testing. They fall under the prohibited uses gate and safety-critical screening defined in [`rai-risk-classification.instructions.md`](../../../../instructions/rai-planning/rai-risk-classification.instructions.md).
+* **Why refused**: Boundary mapping and refusal elicitation are activities for responsible AI assessment, not for conformance testing. They fall under the prohibited uses gate and safety-critical screening handled by the [RAI Planner agent](../../../../agents/rai-planning/rai-planner.agent.md).
 * **Regex patterns** (source of truth: the lint script reads these verbatim):
 
   ```regex
@@ -190,13 +190,13 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 * **Worked refusal example**:
 
   ```text
-  This skill authors conformance tests only. The request appears to fall under model-refusal-elicitation. Please consult .github/instructions/rai-planning/rai-risk-classification.instructions.md for the appropriate process.
+  This skill authors conformance tests only. The request appears to fall under model-refusal-elicitation. Please consult .github/agents/rai-planning/rai-planner.agent.md for the appropriate process.
   ```
 
 ## Category: pii-extraction
 
 * **Definition**: Attempts to elicit personally identifiable information, credentials, secrets, system prompts, hidden instructions, or reconstructed training data from the model or the artifact under test.
-* **Why refused**: PII extraction probes safety, privacy, and security boundaries that belong in the responsible AI assessment workflow defined in [`rai-risk-classification.instructions.md`](../../../../instructions/rai-planning/rai-risk-classification.instructions.md). Vally conformance tests verify documented artifact behavior; they are not the right vehicle for extraction stimuli.
+* **Why refused**: PII extraction probes safety, privacy, and security boundaries that belong in the responsible AI assessment workflow handled by the [RAI Planner agent](../../../../agents/rai-planning/rai-planner.agent.md). Vally conformance tests verify documented artifact behavior; they are not the right vehicle for extraction stimuli.
 * **Regex patterns** (source of truth: the lint script reads these verbatim):
 
   ```regex
@@ -222,7 +222,7 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 * **Worked refusal example**:
 
   ```text
-  This skill authors conformance tests only. The request appears to fall under pii-extraction. Please consult .github/instructions/rai-planning/rai-risk-classification.instructions.md for the appropriate process.
+  This skill authors conformance tests only. The request appears to fall under pii-extraction. Please consult .github/agents/rai-planning/rai-planner.agent.md for the appropriate process.
   ```
 
 ## Lint script contract
@@ -232,5 +232,3 @@ This reference defines the seven refusal categories the Vally test-authoring ski
 * The lint script joins all regex blocks under a single category using alternation (`|`) and evaluates the combined pattern against the candidate stimulus. Patterns within a category are designed to coexist when alternated.
 * Any match against any category's combined pattern flags the stimulus for refusal. The script emits the matching category, the matching pattern index within that category, and the stimulus location.
 * This file is the only normative source for the regex set. Changes to category names, pattern semantics, or refusal wording propagate through the lint script and the Vally Test Author prompt on the next regeneration; do not duplicate the patterns elsewhere.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

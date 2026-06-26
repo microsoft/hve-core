@@ -1,7 +1,7 @@
 name: fixture-unresolved-backlink
 description: Spec with a stimulus referencing an artifact that does not exist.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
   executor: copilot-sdk

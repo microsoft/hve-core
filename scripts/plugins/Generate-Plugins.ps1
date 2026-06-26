@@ -325,7 +325,11 @@ function Invoke-PluginGeneration {
                     }
 
                     $generatedBlock = $artifactSections.ToString().TrimEnd()
-                    $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+                    $intro = $parsed.Intro.TrimEnd()
+                    if ($intro -notmatch '(?m)^## Included Artifacts\s*$') {
+                        $intro = "$intro`n`n## Included Artifacts"
+                    }
+                    $updatedCollectionMd = "$intro`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
                     if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
                         $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
                     }
@@ -504,8 +508,13 @@ function Start-PluginGeneration {
         return 0
     }
     catch {
-        Write-Error "Plugin generation failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        $message = $_.Exception.Message
+        Write-Error "Plugin generation failed: $message"
+
+        if (Get-Command -Name Write-CIAnnotation -ErrorAction SilentlyContinue) {
+            Write-CIAnnotation -Message $message -Level Error
+        }
+
         return 1
     }
 }

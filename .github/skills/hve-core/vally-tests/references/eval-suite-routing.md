@@ -9,12 +9,12 @@ This reference documents how the `vally-tests` skill routes newly authored stimu
 
 ## Routing Table
 
-| Kind | Primary Target | Fallback | Notes |
-| --- | --- | --- | --- |
-| `prompt` | `evals/behavior-conformance/prompts.eval.yaml` | n/a | One stimulus block per check from `references/prompts.md`. |
-| `instructions` | `evals/behavior-conformance/instructions.eval.yaml` | n/a | One stimulus block per check from `references/instructions.md`. |
-| `agent` | `evals/agent-behavior/stimuli/<slug>.yml` | n/a | One file per agent, slug = agent filename minus `.agent.md`. |
-| `skill` | `evals/behavior-conformance/skill-behavior.eval.yaml` | `evals/skill-quality/eval.yaml` | See DR-03 note below. |
+| Kind           | Primary Target                                        | Fallback                        | Notes                                                           |
+|----------------|-------------------------------------------------------|---------------------------------|-----------------------------------------------------------------|
+| `prompt`       | `evals/behavior-conformance/prompts.eval.yaml`        | n/a                             | One stimulus block per check from `references/prompts.md`.      |
+| `instructions` | `evals/behavior-conformance/instructions.eval.yaml`   | n/a                             | One stimulus block per check from `references/instructions.md`. |
+| `agent`        | `evals/agent-behavior/stimuli/<slug>.yml`             | n/a                             | One file per agent, slug = agent filename minus `.agent.md`.    |
+| `skill`        | `evals/behavior-conformance/skill-behavior.eval.yaml` | `evals/skill-quality/eval.yaml` | See DR-03 note below.                                           |
 
 ## Per-Kind Detail
 
@@ -61,5 +61,3 @@ DR-03 of the Vally Test Authoring plan defers the cutover of the legacy `skill-b
 When the primary `skill`-kind target file is absent at consumption time, the subagent falls back to [evals/skill-quality/eval.yaml](../../../../../evals/skill-quality/eval.yaml) and appends the stimulus block to its existing `stimuli:` array, matching the single-aggregated-file convention observed under `evals/skill-quality/`. The appended block carries a leading YAML comment block of the form `# Deferred cutover per DR-03; see WI-12.` so the provenance survives the eventual migration back to `skill-behavior.eval.yaml`.
 
 WI-12 is the work item tracking the `skill-behavior.eval.yaml` cutover per the plan. If the work item identifier has not yet been created at the time this skill is consumed, the subagent records `WI-12 (pending)` in the comment block and proceeds.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

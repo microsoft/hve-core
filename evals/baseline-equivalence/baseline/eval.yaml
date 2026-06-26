@@ -8,7 +8,7 @@ description: >
   --skill-dir <empty>`. Pairwise graders defined here also drive the
   `vally compare` invocation that joins this run with the customized run.
 type: capability
-config:
+defaults:
   runs: 5
   timeout: 300s
   executor: copilot-sdk

@@ -3,11 +3,11 @@ title: Project Planning Agents
 description: Agents for requirements gathering, architecture decisions, and security planning
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-03-07
+ms.date: 2026-06-19
 ms.topic: concept
 ---
 
-Five agents support structured project planning across requirements, architecture, and security. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans.
+Five agents and one portable skill support structured project planning across requirements, architecture, and security. Each agent follows a guided workflow to produce specific deliverables, from business requirements documents to security assessment plans.
 
 ## Why Use Project Planning Agents
 
@@ -24,13 +24,12 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                           | Sub-Category | Workflow         | Persistence    | Key Output                     |
-|-------------------------------------------------|--------------|------------------|----------------|--------------------------------|
-| [BRD Builder](brd-prd-builders.md)              | Requirements | 7-phase Q&A      | JSON state     | Business requirements document |
-| [PRD Builder](brd-prd-builders.md)              | Requirements | 7-phase Q&A      | JSON state     | Product requirements document  |
-| [ADR Creation Coach](adr-creation.md)           | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record   |
-| [Arch Diagram Builder](arch-diagram-builder.md) | Architecture | 4-stage analysis | None           | ASCII architecture diagram     |
-| [Security Planner](../security/README.md)       | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog     |
+| Agent                                     | Sub-Category | Workflow         | Persistence    | Key Output                     |
+|-------------------------------------------|--------------|------------------|----------------|--------------------------------|
+| [BRD Builder](brd-prd-builders.md)        | Requirements | 7-phase Q&A      | JSON state     | Business requirements document |
+| [PRD Builder](brd-prd-builders.md)        | Requirements | 7-phase Q&A      | JSON state     | Product requirements document  |
+| [ADR Creation Coach](adr-creation.md)     | Architecture | 4-phase Socratic | Markdown draft | Architecture decision record   |
+| [Security Planner](../security/README.md) | Security     | 6-phase STRIDE   | JSON state     | Security model and backlog     |
 
 ## Requirements
 
@@ -43,13 +42,13 @@ See the [BRD & PRD Builders](brd-prd-builders.md) guide for the shared workflow,
 
 ## Architecture
 
-Two agents address architecture documentation from different angles. The ADR Creation Coach uses Socratic questioning to guide users through structured reasoning about technical decisions, producing architecture decision records. The Arch Diagram Builder analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
+Two agents address architecture documentation from different angles. The ADR Creation Coach uses Socratic questioning to guide users through structured reasoning about technical decisions, producing architecture decision records. The [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) analyzes infrastructure-as-code files and project structure to generate ASCII architecture diagrams directly in conversation.
 
 > [!TIP]
-> Pair the ADR Creation Coach with the Arch Diagram Builder: create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
+> Pair the ADR Creation Coach with the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): create an ADR for a design decision, then generate a diagram showing how the chosen approach fits the broader architecture.
 
 * [ADR Creation Coach](adr-creation.md): Guided decision reasoning and documentation
-* [Arch Diagram Builder](arch-diagram-builder.md): Code-to-diagram generation from IaC analysis
+* [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md): Code-to-diagram generation from IaC analysis
 
 ## Security
 
@@ -66,25 +65,25 @@ See the [Security Planning](../security/README.md) guide for the workflow, opera
 * Agent definition files from the `project-planning` collection deployed to `.github/agents/`
 * For Security Planner: agent definition files from the `security` collection
 * For BRD/PRD builders: a writable `.copilot-tracking/` directory for session state persistence
-* For Arch Diagram Builder: infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
+* For diagram generation: the [architecture-diagrams skill](pathname://../../../.github/skills/hve-core/architecture-diagrams/SKILL.md) works with infrastructure-as-code files (Terraform, Bicep, ARM, Kubernetes YAML, or Docker Compose) in the repository
 
 ## Getting Started
 
 Select any agent using the agent picker in the Copilot Chat pane. Each agent starts its guided workflow automatically.
 
-| Scenario               | Agent                      | Purpose                                                                    |
-|------------------------|----------------------------|----------------------------------------------------------------------------|
-| New project kickoff    | BRD Builder or PRD Builder | Capture requirements before making architecture decisions                  |
-| Architecture decisions | ADR Creation Coach         | Evaluate technology choices, design patterns, or infrastructure approaches |
-| Visual documentation   | Arch Diagram Builder       | Generate architecture diagrams for onboarding or reviews                   |
-| Security review        | Security Planner           | Assess threats and plan mitigations after architecture decisions stabilize |
+| Scenario               | Agent                       | Purpose                                                                    |
+|------------------------|-----------------------------|----------------------------------------------------------------------------|
+| New project kickoff    | BRD Builder or PRD Builder  | Capture requirements before making architecture decisions                  |
+| Architecture decisions | ADR Creation Coach          | Evaluate technology choices, design patterns, or infrastructure approaches |
+| Visual documentation   | architecture-diagrams skill | Generate ASCII or Mermaid architecture diagrams for onboarding or reviews  |
+| Security review        | Security Planner            | Assess threats and plan mitigations after architecture decisions stabilize |
 
 ### Recommended Sequencing
 
 For greenfield projects, follow this order to build artifacts that feed into each subsequent step:
 
 1. Start with the BRD Builder to capture business context, then the PRD Builder for product-level details.
-2. Use the ADR Creation Coach to document key design decisions, then the Arch Diagram Builder to visualize the resulting architecture.
+2. Use the ADR Creation Coach to document key design decisions, then the architecture-diagrams skill to visualize the resulting architecture.
 3. Run the Security Planner once the architecture is stable to identify threats and plan mitigations.
 
 ## Related Documentation

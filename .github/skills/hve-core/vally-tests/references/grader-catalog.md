@@ -23,12 +23,12 @@ Suite-level `scoring.threshold` (observed in live eval files such as [`evals/age
 
 ## Grader Reference Table
 
-| Grader id             | Vally CLI 0.4.0 `type:` keyword | Required fields   | Default threshold              | When to use                                                                |
-| --------------------- | ------------------------------- | ----------------- | ------------------------------ | -------------------------------------------------------------------------- |
-| `semantic_similarity` | `prompt`                        | none              | 0.85 (skill convention)        | Open-ended explanations, rubric judgments, behavior intent matching        |
-| `contains`            | `output-contains`               | `substring`       | none (boolean pass/fail)       | Exact phrase, literal substring, or canonical refusal text presence checks |
-| `regex`               | `output-matches`                | `pattern`         | none (boolean pass/fail)       | Frontmatter shapes, naming conventions, structural markers, applyTo globs  |
-| `json_schema`         | NOT SHIPPED IN 0.4.0            | n/a               | n/a                            | Defer until Vally ships the grader; use `regex` envelope as workaround     |
+| Grader id             | Vally CLI 0.4.0 `type:` keyword | Required fields | Default threshold        | When to use                                                                |
+|-----------------------|---------------------------------|-----------------|--------------------------|----------------------------------------------------------------------------|
+| `semantic_similarity` | `prompt`                        | none            | 0.85 (skill convention)  | Open-ended explanations, rubric judgments, behavior intent matching        |
+| `contains`            | `output-contains`               | `substring`     | none (boolean pass/fail) | Exact phrase, literal substring, or canonical refusal text presence checks |
+| `regex`               | `output-matches`                | `pattern`       | none (boolean pass/fail) | Frontmatter shapes, naming conventions, structural markers, applyTo globs  |
+| `json_schema`         | NOT SHIPPED IN 0.4.0            | n/a             | n/a                      | Defer until Vally ships the grader; use `regex` envelope as workaround     |
 
 ## Grader: semantic_similarity
 
@@ -53,12 +53,12 @@ graders:
 
 ### Field Reference
 
-| Field       | Type    | Required | Description                                                                       | Default |
-| ----------- | ------- | -------- | --------------------------------------------------------------------------------- | ------- |
-| `prompt`    | string  | no       | LLM rubric used to score the response under test                                  | none    |
-| `model`     | string  | no       | Model identifier Vally passes to the configured LLM client                        | none    |
-| `scoring`   | enum    | no       | One of `binary`, `scale_1_5`, `scale_1_10`; controls the rubric scale Vally emits | none    |
-| `threshold` | number  | no       | Normalized 0-1 pass bar applied to the scored result                              | none    |
+| Field       | Type   | Required | Description                                                                       | Default |
+|-------------|--------|----------|-----------------------------------------------------------------------------------|---------|
+| `prompt`    | string | no       | LLM rubric used to score the response under test                                  | none    |
+| `model`     | string | no       | Model identifier Vally passes to the configured LLM client                        | none    |
+| `scoring`   | enum   | no       | One of `binary`, `scale_1_5`, `scale_1_10`; controls the rubric scale Vally emits | none    |
+| `threshold` | number | no       | Normalized 0-1 pass bar applied to the scored result                              | none    |
 
 ### Recommended Threshold
 
@@ -121,11 +121,11 @@ graders:
 
 ### Field Reference
 
-| Field            | Type    | Required | Description                                                                          | Default |
-| ---------------- | ------- | -------- | ------------------------------------------------------------------------------------ | ------- |
+| Field            | Type    | Required | Description                                                                            | Default |
+|------------------|---------|----------|----------------------------------------------------------------------------------------|---------|
 | `substring`      | string  | yes      | Literal substring searched in the response under test (alias `value` is also accepted) | none    |
-| `case_sensitive` | boolean | no       | When `false`, the search ignores case differences                                    | `false` |
-| `negate`         | boolean | no       | When `true`, the grader inverts the result (use `output-not-contains` for clarity)   | `false` |
+| `case_sensitive` | boolean | no       | When `false`, the search ignores case differences                                      | `false` |
+| `negate`         | boolean | no       | When `true`, the grader inverts the result (use `output-not-contains` for clarity)     | `false` |
 
 ### Recommended Threshold
 
@@ -184,10 +184,10 @@ graders:
 
 ### Field Reference
 
-| Field     | Type    | Required | Description                                                                        | Default |
-| --------- | ------- | -------- | ---------------------------------------------------------------------------------- | ------- |
-| `pattern` | string  | yes      | Regular expression evaluated against the response under test (PCRE-compatible)     | none    |
-| `negate`  | boolean | no       | When `true`, the grader inverts the result (use `output-not-matches` for clarity)  | `false` |
+| Field     | Type    | Required | Description                                                                       | Default |
+|-----------|---------|----------|-----------------------------------------------------------------------------------|---------|
+| `pattern` | string  | yes      | Regular expression evaluated against the response under test (PCRE-compatible)    | none    |
+| `negate`  | boolean | no       | When `true`, the grader inverts the result (use `output-not-matches` for clarity) | `false` |
 
 ### Recommended Threshold
 
@@ -242,9 +242,9 @@ When a JSON-schema grader ships in a future Vally CLI release, this section is u
 
 ### Field Reference
 
-| Field    | Type | Required | Description                                                  | Default |
-| -------- | ---- | -------- | ------------------------------------------------------------ | ------- |
-| `schema` | n/a  | n/a      | `<unknown - not shipped in Vally CLI 0.4.0>`                 | n/a     |
+| Field    | Type | Required | Description                                  | Default |
+|----------|------|----------|----------------------------------------------|---------|
+| `schema` | n/a  | n/a      | `<unknown - not shipped in Vally CLI 0.4.0>` | n/a     |
 
 ### Recommended Threshold
 
@@ -293,5 +293,3 @@ Not applicable. The grader is not shipped in Vally CLI 0.4.0.
 * Per-kind checks for the `skill` kind: [skills.md](./skills.md).
 * Refusal categories and regex source of truth: [refusal-taxonomy.md](./refusal-taxonomy.md).
 * Eval suite routing by artifact kind: [eval-suite-routing.md](./eval-suite-routing.md).
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

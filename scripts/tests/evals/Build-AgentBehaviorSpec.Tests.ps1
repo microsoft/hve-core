@@ -133,7 +133,7 @@ version: 1
 description: >
   Multi-line
   description block.
-config:
+defaults:
   executor: copilot-sdk
   runs: 3
 stimuli: []

@@ -263,7 +263,7 @@ function ConvertTo-DeterministicJson {
     return $sb.ToString() + "`n"
 }
 
-# --- Main ---
+#region Main Execution
 $resolvedRoot = Resolve-RepoRoot -Override $RepoRoot
 if (-not $OutputPath) {
     $OutputPath = Join-Path $resolvedRoot 'logs/agent-dependency-map.json'
@@ -357,3 +357,4 @@ if ($PSCmdlet.ShouldProcess($OutputPath, 'Write agent dependency map')) {
 }
 
 return $OutputPath
+#endregion Main Execution

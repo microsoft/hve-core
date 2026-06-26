@@ -19,6 +19,11 @@ BeforeAll {
     Mock Write-Host {}
 }
 
+AfterAll {
+    # Remove the cosign stub so it does not leak into later test suites
+    Remove-Item -Path 'Function:\cosign' -Force -ErrorAction SilentlyContinue
+}
+
 Describe 'Get-ArtifactHash' -Tag 'Unit' {
     Context 'SHA-256 computation' {
         It 'Returns a lowercase hex SHA-256 hash for a file' {

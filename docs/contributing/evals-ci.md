@@ -85,7 +85,7 @@ When you add or modify an AI artifact under `.github/agents/`, `.github/prompts/
 Steps to add coverage:
 
 1. Create an eval spec under `evals/` that follows the structure documented in `evals/README.md`.
-2. Set the spec's `stimulus.backlink` field to the absolute repository path of the artifact under test (for example, `.github/agents/coding-standards/researcher-subagent.agent.md`).
+2. Add a `stimuli[].tags.<kind>` backlink whose value is the artifact slug, where `<kind>` is one of `agent`, `prompt`, `instruction`, or `skill`, and the slug is the artifact basename minus its `.agent.md`, `.prompt.md`, `.instructions.md`, or `SKILL.md` suffix (for example, `tags: {agent: researcher-subagent}` for `.github/agents/coding-standards/researcher-subagent.agent.md`).
 3. Ensure the spec declares an executor compatible with the `vally` CLI (typically the `CopilotSdkExecutor` with a `model:` hint).
 4. Run the presence check locally to confirm the artifact is covered:
 
@@ -195,7 +195,7 @@ False-positive lexical matches (e.g., `penetration test`, `attack surface`, `tok
 
 ### Baseline-equivalence specs
 
-`eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](../../evals/baseline-equivalence/) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
+`eval:lint:vally` runs `vally lint --eval evals/`, which validates the eval YAML files immediately under `evals/` but does not recurse into nested subdirectories. The baseline-equivalence suite under [evals/baseline-equivalence/](pathname://../../evals/baseline-equivalence/README.md) ships nested specs (`baseline/eval.yaml`, `customized/eval.yaml`, and `compare.eval.yml`) that need explicit per-file lint invocations:
 
 ```pwsh
 vally lint --eval evals/baseline-equivalence/baseline/eval.yaml
@@ -203,7 +203,7 @@ vally lint --eval evals/baseline-equivalence/customized/eval.yaml
 vally lint --eval evals/baseline-equivalence/compare.eval.yml
 ```
 
-[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
+[scripts/evals/Invoke-BaselineEquivalence.ps1](../../scripts/evals/Invoke-BaselineEquivalence.ps1) runs all three implicitly during `npm run eval:run:equivalence`. See [evals/baseline-equivalence/README.md](pathname://../../evals/baseline-equivalence/README.md) for the suite operator guide and driver-output contract.
 
 ## Running Pester Tests Locally
 

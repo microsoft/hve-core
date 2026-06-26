@@ -224,7 +224,7 @@ function Add-Rule {
     $Set.Ordered.Add([pscustomobject]@{ Name = $Name; Pattern = $Pattern })
 }
 
-# --- Main ---
+#region Main Execution
 $resolvedRoot = Resolve-RepoRoot -Override $RepoRoot
 if (-not $OutputDir) {
     $OutputDir = Join-Path $resolvedRoot 'evals/baseline-equivalence/surface-signatures'
@@ -298,3 +298,4 @@ if ($PSCmdlet.ShouldProcess($outputPath, 'Write signature YAML')) {
 }
 
 return $outputPath
+#endregion Main Execution

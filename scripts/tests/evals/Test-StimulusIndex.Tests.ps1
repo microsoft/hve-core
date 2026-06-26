@@ -95,7 +95,7 @@ Describe 'New-StimulusIndex' -Tag 'Unit' {
         $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ([Guid]::NewGuid().ToString())
         try {
             New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $tempRoot 'broken.yaml') -Value ":\n  - not: [valid"
+            Set-Content -LiteralPath (Join-Path $tempRoot 'broken.yaml') -Value "stimuli:\n  - not: [valid"
             $index = New-StimulusIndex -EvalRoot $tempRoot
             $index.specsScanned | Should -Be 1
             $index.errors.Count | Should -BeGreaterOrEqual 1
@@ -160,7 +160,7 @@ Describe 'Advisory spec detection (Invoke-VallyEvals integration)' -Tag 'Unit' {
             $spec = @{
                 name = 'auth'
                 type = 'capability'
-                config = @{ executor = 'copilot-sdk' }
+                defaults = @{ executor = 'copilot-sdk' }
                 stimuli = @(@{ name = 's1'; prompt = 'hi'; graders = @(@{ type = 'exact-match'; value = 'hi' }) })
             }
             ($spec | ConvertTo-Yaml) | Set-Content -LiteralPath $tempPath -Encoding utf8
@@ -177,7 +177,7 @@ Describe 'Advisory spec detection (Invoke-VallyEvals integration)' -Tag 'Unit' {
             $spec = @{
                 name = 'mixed'
                 type = 'capability'
-                config = @{ executor = 'copilot-sdk' }
+                defaults = @{ executor = 'copilot-sdk' }
                 stimuli = @(
                     @{ name = 's1'; prompt = 'a'; graders = @(@{ type = 'exact-match'; value = 'a' }); tags = @{ advisory = $true } },
                     @{ name = 's2'; prompt = 'b'; graders = @(@{ type = 'exact-match'; value = 'b' }) }

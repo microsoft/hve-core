@@ -1,7 +1,7 @@
 name: fixture-valid-moderation-threshold
 description: Compliant spec that exercises the optional moderation.threshold override.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
   executor: copilot-sdk

@@ -1,6 +1,6 @@
 ---
 name: gitlab
-description: 'Manage GitLab merge requests and pipelines with a Python CLI - Brought to you by microsoft/hve-core'
+description: 'Manage GitLab merge requests and pipelines with a Python CLI'
 license: MIT
 compatibility: 'Requires Python 3.11+. GitLab credentials via GITLAB_URL and GITLAB_TOKEN environment variables.'
 metadata:
@@ -132,5 +132,3 @@ python scripts/gitlab.py job-log 67890
 
 GitLab uses MR IIDs such as `!42` inside a project. This skill expects the
 numeric IID, not the global merge request ID.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

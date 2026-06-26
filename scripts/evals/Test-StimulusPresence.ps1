@@ -74,6 +74,7 @@ param(
     [string[]]$EnforceFullCoverageKinds = @('prompt')
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force

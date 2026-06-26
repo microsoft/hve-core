@@ -1,7 +1,7 @@
 name: fixture-bad-executor
 description: Spec with an executor that is not in the whitelist.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
   executor: not-a-real-executor

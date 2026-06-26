@@ -79,6 +79,7 @@ param(
     [string]$BaseRef = 'origin/main'
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path -Path $PSScriptRoot -ChildPath 'Modules/EvalSpecSchema.psm1') -Force
@@ -163,7 +164,7 @@ function Invoke-EvalSpecValidation {
             continue
         }
 
-        $errors = Test-EvalSpecCompliance -Spec $parsed -SpecPath $relPath -RepoRoot $RepoRoot
+        $errors = @(Test-EvalSpecCompliance -Spec $parsed -SpecPath $relPath -RepoRoot $RepoRoot)
         if ($errors.Count -eq 0) {
             $valid.Add($relPath)
         }

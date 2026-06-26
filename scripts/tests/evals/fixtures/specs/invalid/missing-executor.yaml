@@ -1,7 +1,7 @@
 name: fixture-missing-executor
-description: Spec missing the required config.executor key.
+description: Spec missing the required defaults.executor key.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
 scoring:

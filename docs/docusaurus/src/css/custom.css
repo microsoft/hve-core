@@ -81,6 +81,24 @@ a:visited {
   color: inherit;
 }
 
+/* WI-06 / SC 1.4.1: content links carry an underline so color is not the sole
+   means of distinguishing them from surrounding text */
+.markdown a:not([class*='card']):not([class*='button']) {
+  text-decoration: underline;
+}
+
+/* WI-06 / SC 2.4.7 + 1.4.11: visible keyboard focus indicator (>=3:1 against
+   the page background in both themes via --ifm-color-primary) */
+a:focus-visible,
+button:focus-visible,
+.navbar__link:focus-visible,
+.menu__link:focus-visible,
+.pagination-nav__link:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* Navbar link hover: no underline in nav */
 .navbar__link:hover {
   text-decoration: none;
@@ -88,6 +106,13 @@ a:visited {
 
 .navbar__link:visited {
   color: inherit;
+}
+
+.navbar__search kbd {
+  background-color: #ebedf0;
+  border-color: #6b7680;
+  box-shadow: inset 0 -1px 0 #6b7680;
+  color: #4a5560;
 }
 
 /* Navbar: MS Learn-style sizing */
@@ -325,7 +350,8 @@ a:visited {
   --ifm-color-primary-lightest: #cfe4fa;
   --ifm-background-color: #1f1f1f;
   --ifm-font-color-base: #ffffff;
-  --ifm-link-color: #75b6e7;
+  /* WI-06: lighter link tone for additional dark-mode contrast margin (~11:1 on #1f1f1f) */
+  --ifm-link-color: #b8d7f5;
   --ifm-footer-background-color: #091f2c;
   --ifm-card-background-color: #091f2c;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
@@ -342,3 +368,19 @@ a:visited {
   --ms-learn-success: #2ea043;
   --ms-learn-danger: #f85149;
 }
+
+/* WI-07: search dropdown muted-text contrast.
+   @easyops-cn/docusaurus-search-local colors the breadcrumb path and the
+   "See all results" footer link via `var(--search-local-muted-color, ...)`,
+   whose default (#969faf) fails WCAG 1.4.3 against both the popup (#ffffff) and
+   footer (#f5f6f7) backgrounds in light mode and against the dark popup in dark
+   mode. Overriding the variable raises every consumer above 4.5:1 in one place,
+   avoiding a specificity battle with the library's hashed-class rules. */
+:root {
+  --search-local-muted-color: #505050;
+}
+
+[data-theme='dark'] {
+  --search-local-muted-color: #b8d7f5;
+}
+

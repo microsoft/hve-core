@@ -54,12 +54,12 @@ Under `autonomyTier` `full` and `deep`, any failed required check is a hard refu
 
 ## Tier behavior
 
-| Tier     | Required checks                       | Warnings only                          |
-|----------|---------------------------------------|----------------------------------------|
-| `draft`  | None (informational)                  | All                                    |
-| `guided` | Categories 1, 2, 7                    | Categories 3, 4, 5, 6                  |
-| `full`   | Categories 1, 2, 3, 4, 5, 6, 7        | None                                   |
-| `deep`   | Categories 1, 2, 3, 4, 5, 6, 7 + web-research provenance on prior-art findings | None |
+| Tier     | Required checks                                                                | Warnings only         |
+|----------|--------------------------------------------------------------------------------|-----------------------|
+| `draft`  | None (informational)                                                           | All                   |
+| `guided` | Categories 1, 2, 7                                                             | Categories 3, 4, 5, 6 |
+| `full`   | Categories 1, 2, 3, 4, 5, 6, 7                                                 | None                  |
+| `deep`   | Categories 1, 2, 3, 4, 5, 6, 7 + web-research provenance on prior-art findings | None                  |
 
 ## Failure protocol
 
@@ -67,5 +67,3 @@ Under `autonomyTier` `full` and `deep`, any failed required check is a hard refu
 2. Map back to the originating phase (Frame / Investigate / Decide / Govern).
 3. Re-enter that phase with the failure as targeted input; do not re-run earlier phases.
 4. Re-run the rubric. Maximum two retries before escalating to the user under `full` and `deep`.
-
-🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

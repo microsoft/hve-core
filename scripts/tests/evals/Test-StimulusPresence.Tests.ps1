@@ -141,6 +141,7 @@ Describe 'Test-StimulusPresence.ps1 entry script' -Tag 'Integration' {
             @{ artifacts = $Artifacts } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
 
             return [pscustomobject]@{
+                Dir          = $dir
                 ManifestPath = $manifestPath
                 EvalRoot     = $evalRoot
                 OutFile      = $outFile
@@ -152,7 +153,8 @@ Describe 'Test-StimulusPresence.ps1 entry script' -Tag 'Integration' {
         $fx = New-PresenceFixture -Artifacts @() -SpecYaml @('name: empty')
 
         & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile *> $null
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
         $LASTEXITCODE | Should -Be 0
 
         $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
@@ -180,7 +182,8 @@ stimuli:
         $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
 
         & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile *> $null
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
         $LASTEXITCODE | Should -Be 0
 
         $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
@@ -204,7 +207,8 @@ stimuli:
         $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
 
         & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile *> $null
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
         $LASTEXITCODE | Should -Be 1
 
         $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
@@ -221,7 +225,8 @@ stimuli:
         $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
 
         & pwsh -NoProfile -File $script:ScriptPath `
-            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile *> $null
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
         $LASTEXITCODE | Should -Be 0
 
         $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
@@ -238,5 +243,72 @@ stimuli:
         & pwsh -NoProfile -File $script:ScriptPath `
             -ManifestPath $missing -EvalRoot $evalRoot *> $null
         $LASTEXITCODE | Should -Be 2
+    }
+
+    Context 'Full-coverage enforcement (-EnforceFullCoverageKinds)' {
+        BeforeAll {
+            function New-EnforcementRepo {
+                param([Parameter(Mandatory)][string]$SpecYaml)
+
+                $repo = Join-Path $TestDrive ('repo-' + [Guid]::NewGuid())
+                $collectionDir = Join-Path $repo '.github/prompts/sample-collection'
+                New-Item -ItemType Directory -Path $collectionDir -Force | Out-Null
+
+                # Collection prompt: enforced across the full repo.
+                Set-Content -LiteralPath (Join-Path $collectionDir 'sample.prompt.md') `
+                    -Value '# sample' -Encoding UTF8
+                # Repo-root-only prompt (no collection subdirectory): excluded from enforcement.
+                Set-Content -LiteralPath (Join-Path $repo '.github/prompts/root-only.prompt.md') `
+                    -Value '# root-only' -Encoding UTF8
+
+                $evalRoot = Join-Path $repo 'evals'
+                New-Item -ItemType Directory -Path $evalRoot -Force | Out-Null
+                Set-Content -LiteralPath (Join-Path $evalRoot 'spec.yaml') -Value $SpecYaml -Encoding UTF8
+
+                $manifestPath = Join-Path $repo 'manifest.json'
+                @{ artifacts = @() } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+
+                return [pscustomobject]@{
+                    RepoRoot     = $repo
+                    ManifestPath = $manifestPath
+                    EvalRoot     = $evalRoot
+                    OutFile      = (Join-Path $repo 'report.json')
+                }
+            }
+        }
+
+        It 'Exits 1 and flags uncovered collection prompts while excluding repo-root-only prompts' {
+            $fx = New-EnforcementRepo -SpecYaml 'name: empty'
+
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+                -RepoRoot $fx.RepoRoot -EnforceFullCoverageKinds prompt *> $null
+            $LASTEXITCODE | Should -Be 1
+
+            $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
+            ($report.missing | Where-Object { $_.artifactId -eq 'sample' }) | Should -Not -BeNullOrEmpty
+            ($report.missing | Where-Object { $_.artifactId -eq 'root-only' }) | Should -BeNullOrEmpty
+        }
+
+        It 'Exits 0 when every enforced collection prompt has a stimulus backlink' {
+            $spec = @'
+name: covers-sample
+stimuli:
+  - name: s1
+    prompt: hi
+    tags:
+      prompt: sample
+'@
+            $fx = New-EnforcementRepo -SpecYaml $spec
+
+            & pwsh -NoProfile -File $script:ScriptPath `
+                -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+                -RepoRoot $fx.RepoRoot -EnforceFullCoverageKinds prompt *> $null
+            $LASTEXITCODE | Should -Be 0
+
+            $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
+            ($report.covered | Where-Object { $_.artifactId -eq 'sample' }) | Should -Not -BeNullOrEmpty
+            $report.missing.Count | Should -Be 0
+        }
     }
 }

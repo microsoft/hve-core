@@ -61,6 +61,7 @@ if (-not $PSBoundParameters.ContainsKey('RepoRoot') -or [string]::IsNullOrWhiteS
     }
 }
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $RepoRoot 'scripts/lib/Modules/CIHelpers.psm1') -Force

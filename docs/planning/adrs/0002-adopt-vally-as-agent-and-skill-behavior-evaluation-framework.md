@@ -3,7 +3,7 @@ id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
 description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
-ms.date: "2026-05-30"
+ms.date: "2026-06-24"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-30"
@@ -31,8 +31,7 @@ affected_components:
   - "scripts/evals/moderation/"
   - ".github/skills/hve-core/vally-tests/"
   - ".github/agents/hve-core/subagents/vally-test-author.agent.md"
-  - ".github/agents/content-policy-citation.agent.md"
-  - ".github/workflows/evals-agent-matrix.yml"
+  - ".github/instructions/shared/content-policy-citation.instructions.md"
   - ".github/workflows/pr-validation.yml"
 supersedes: null
 superseded-by: null
@@ -59,7 +58,7 @@ success_criteria:
   - metric: "eval-ci-gating"
     target: "the evaluation matrix runs in PR CI and blocks merge on authoritative-gate failures"
     measurement_window: "every PR run"
-    source: ".github/workflows/evals-agent-matrix.yml"
+    source: ".github/workflows/pr-validation.yml"
   - metric: "corpus-moderation-enforcement"
     target: "generated test corpora pass the moderation pipeline before use, with refusal-taxonomy categories enforced"
     measurement_window: "per corpus generation"
@@ -98,9 +97,8 @@ PowerShell and Python orchestration layer under `scripts/evals/` (including the
 content-moderation pipeline at `scripts/evals/moderation/`), a `vally-tests`
 authoring skill at `.github/skills/hve-core/vally-tests/`, a
 `.github/agents/hve-core/subagents/vally-test-author.agent.md` subagent, a
-`.github/agents/content-policy-citation.agent.md` agent, and CI wiring through
-`.github/workflows/evals-agent-matrix.yml` with changes to
-`.github/workflows/pr-validation.yml`. How should hve-core standardize
+`.github/instructions/shared/content-policy-citation.instructions.md` shared content-policy instruction, and CI wiring through
+changes to `.github/workflows/pr-validation.yml`. How should hve-core standardize
 behavioral evaluation of its AI artifacts?
 
 > Source: `.copilot-tracking/adr-plans/agent-evaluation-framework/state.json`, Frame-phase scope, drivers, constraints, and ASR triggers.
@@ -170,8 +168,8 @@ its tag-routed grader catalog matches the multi-suite design, and it is npm-
 and GitHub-Actions-native so it fits existing PR CI and local `npm run`
 workflows.
 
-`vyta/beval` (Option B) is treated as **complementary rather than rejected**: it
-targets a different layer (runtime, multi-turn agentic behavior with scored
+`vyta/beval` (Option B) is complementary rather than rejected: it targets a
+different layer (runtime, multi-turn agentic behavior with scored
 multi-dimensional metrics and persona-driven conversation simulation over
 ACP/A2A) and is being integrated through open pull requests. It does not
 provide a pairwise baseline-equivalence comparison and therefore cannot replace
@@ -207,7 +205,7 @@ neither wins nor regressions on their own.
 Compliance with this decision is confirmed by the evaluation framework itself
 running under `autonomyTier: partial` Govern controls:
 
-1. The evaluation matrix at `.github/workflows/evals-agent-matrix.yml` runs the `evals/` suites in PR CI and blocks merge on authoritative-gate failures.
+1. The evaluation matrix in `.github/workflows/pr-validation.yml` runs the `evals/` suites in PR CI and blocks merge on authoritative-gate failures.
 2. The baseline-equivalence suite (`evals/baseline-equivalence/README.md`) asserts that only documented divergences from the Copilot baseline are present.
 3. The corpus-moderation pipeline (`scripts/evals/moderation/moderate.py`) gates generated test corpora against the closed refusal taxonomy before use.
 4. The `vally-tests` skill provides the repeatable authoring path whose outputs feed the suites above.
@@ -275,8 +273,8 @@ The framework is organized as four cooperating stages. Authoring artifacts (the
 expectation files. Those files, together with the moderation pipeline output,
 are gathered into the suite tree under `evals/`. The suite tree drives two
 consumers: the baseline-equivalence comparison and the PR CI matrix. CI is
-where enforcement happens, with the agent-matrix workflow feeding the
-PR-validation gate. The diagram below traces that flow from authoring on the
+where enforcement happens, with the `pr-validation.yml` workflow running the
+evaluation matrix as the merge gate. The diagram below traces that flow from authoring on the
 left to enforcement on the right.
 
 ```mermaid
@@ -297,7 +295,6 @@ flowchart LR
     end
 
     subgraph CI["PR CI"]
-        matrix["evals-agent-matrix.yml"]
         prval["pr-validation.yml"]
     end
 
@@ -306,8 +303,7 @@ flowchart LR
     moderation --> suiteTree
     vally --> suiteTree
     suiteTree --> baseline
-    suiteTree --> matrix
-    matrix --> prval
+    suiteTree --> prval
 ```
 
 ## Risks and Mitigations
@@ -321,8 +317,8 @@ flowchart LR
 If this decision is reversed, the rollback path is:
 
 1. Remove the `evals/` suite tree, `.vally.yaml`, and the `scripts/evals/` orchestration and moderation layers.
-2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` agent.
-3. Drop the `.github/workflows/evals-agent-matrix.yml` workflow and revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
+2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` shared instruction.
+3. Revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
 4. Update any collection manifests that reference the removed skill/agent and re-run `npm run plugin:generate`.
 5. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
 
@@ -336,8 +332,7 @@ No data migration is required: removing the framework leaves the underlying AI c
 * scripts/evals/moderation/
 * .github/skills/hve-core/vally-tests/
 * .github/agents/hve-core/subagents/vally-test-author.agent.md
-* .github/agents/content-policy-citation.agent.md
-* .github/workflows/evals-agent-matrix.yml
+* .github/instructions/shared/content-policy-citation.instructions.md
 * .github/workflows/pr-validation.yml
 
 ## More Information
@@ -349,9 +344,8 @@ No data migration is required: removing the framework leaves the underlying AI c
 * Moderation pipeline: `scripts/evals/moderation/`
 * Authoring skill: `.github/skills/hve-core/vally-tests/`
 * Test-author subagent: `.github/agents/hve-core/subagents/vally-test-author.agent.md`
-* Content-policy agent: `.github/agents/content-policy-citation.agent.md`
-* Evaluation matrix workflow: `.github/workflows/evals-agent-matrix.yml`
-* PR validation workflow: `.github/workflows/pr-validation.yml`
+* Content-policy shared instruction: `.github/instructions/shared/content-policy-citation.instructions.md`
+* PR validation workflow (evaluation matrix gate): `.github/workflows/pr-validation.yml`
 * Complementary runtime framework: [vyta/beval](https://github.com/vyta/beval) (language-agnostic agentic behavioral evaluation; integration in progress via open PRs)
 
 This decision should be re-visited if `vyta/beval` integration matures enough to subsume the customization-artifact regression role, if Vally's Copilot-SDK executor or `vally compare` contract changes materially, or if the cost and flakiness of non-deterministic evaluation outweigh the regression-safety benefit.

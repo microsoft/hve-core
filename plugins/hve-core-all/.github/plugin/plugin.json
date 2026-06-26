@@ -3,6 +3,8 @@
   "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
   "version": "3.3.101",
   "agents": [
+    "agents/accessibility/",
+    "agents/accessibility/subagents/",
     "agents/ado/",
     "agents/coding-standards/",
     "agents/data-science/",
@@ -14,7 +16,9 @@
     "agents/hve-core/subagents/",
     "agents/jira/",
     "agents/project-planning/",
+    "agents/project-planning/subagents/",
     "agents/rai-planning/",
+    "agents/rai-planning/subagents/",
     "agents/security/",
     "agents/security/subagents/"
   ],
@@ -31,7 +35,9 @@
     "commands/security/"
   ],
   "skills": [
+    "skills/accessibility/",
     "skills/coding-standards/",
+    "skills/design-thinking/",
     "skills/experimental/",
     "skills/github/",
     "skills/gitlab/",
@@ -39,6 +45,8 @@
     "skills/installer/",
     "skills/jira/",
     "skills/project-planning/",
+    "skills/rai/",
+    "skills/rpi/",
     "skills/security/",
     "skills/shared/"
   ]

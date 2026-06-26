@@ -55,21 +55,21 @@ The driver writes a machine-readable summary to `logs/baseline-equivalence-summa
 
 The driver parses each `vally compare --run-a <baseline> --run-b <customized>` invocation line by line and aggregates the trial verdicts into a single JSON summary. The summary is the contract every downstream consumer (PR bot, nightly dashboard, future change-detection workflow) reads.
 
-| Field                | Type   | Meaning                                                                                                 |
-|----------------------|--------|---------------------------------------------------------------------------------------------------------|
-| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                |
-| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                    |
-| `model`              | string | Primary model the agent's frontmatter resolved to                                                       |
-| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                         |
-| `runs`               | int    | Total trial lines parsed across all compare logs                                                        |
-| `ties`               | int    | Trials the judge marked `tie`; counts toward the equivalence threshold                                  |
-| `aWins`              | int    | Trials the judge preferred run-a (baseline); the customization underperformed                           |
-| `bWins`              | int    | Trials the judge preferred run-b (customized); the customization outperformed                           |
-| `invariantFailures`  | int    | Spec-level invariant violations (model equality, response-length parity, baseline-no-customized-skills) |
-| `divergenceFailures` | int    | `vally compare` exit codes other than zero, or compare runs that emitted no parseable trial lines       |
-| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                   |
-| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                 |
-| `compareLogs`        | list   | Absolute paths to every captured `vally compare` log; failed runs leave the log on disk for inspection  |
+| Field                | Type   | Meaning                                                                                                                                                                        |
+|----------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `agent`              | string | Agent slug under test (matches `-Agent`)                                                                                                                                       |
+| `tier`               | string | `pr` (advisory, exit 0) or `nightly` (authoritative, exit 1 on fail)                                                                                                           |
+| `model`              | string | Primary model for the run: PR tier resolves `-Model` override, then frontmatter `model:` hint, then the cheap default (`claude-haiku-4.5`); nightly runs its fixed model array |
+| `stimulusFilter`     | string | Regex applied to stimulus names; empty when the full corpus ran                                                                                                                |
+| `runs`               | int    | Total trial lines parsed across all compare logs                                                                                                                               |
+| `ties`               | int    | Trials the judge marked `tie`; counts toward the equivalence threshold                                                                                                         |
+| `aWins`              | int    | Trials the judge preferred run-a (baseline); the customization underperformed                                                                                                  |
+| `bWins`              | int    | Trials the judge preferred run-b (customized); the customization outperformed                                                                                                  |
+| `invariantFailures`  | int    | Spec-level invariant violations (model equality, response-length parity, baseline-no-customized-skills)                                                                        |
+| `divergenceFailures` | int    | `vally compare` exit codes other than zero, or compare runs that emitted no parseable trial lines                                                                              |
+| `verdict`            | string | Aggregated verdict; see [Pass and Fail Interpretation](#pass-and-fail-interpretation)                                                                                          |
+| `variants`           | list   | Per-model variant metadata (model id, baseline run directory, customized run directory)                                                                                        |
+| `compareLogs`        | list   | Absolute paths to every captured `vally compare` log; failed runs leave the log on disk for inspection                                                                         |
 
 The verdict field is derived from these counts by `Get-VerdictFromAggregate` in [scripts/evals/lib/EquivalenceParsing.psm1](../../scripts/evals/lib/EquivalenceParsing.psm1); the exact thresholds are documented below.
 
@@ -114,10 +114,8 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | code-review-full             | coding-standards | [surface-signatures/code-review-full.yml](surface-signatures/code-review-full.yml)                         | 2                 | authoritative |
 | code-review-functional       | coding-standards | [surface-signatures/code-review-functional.yml](surface-signatures/code-review-functional.yml)             | 2                 | authoritative |
 | code-review-standards        | coding-standards | [surface-signatures/code-review-standards.yml](surface-signatures/code-review-standards.yml)               | 1                 | authoritative |
-| content-policy-citation      | root             | [surface-signatures/content-policy-citation.yml](surface-signatures/content-policy-citation.yml)           | 0                 | authoritative |
 | dependency-reviewer          | root             | [surface-signatures/dependency-reviewer.yml](surface-signatures/dependency-reviewer.yml)                   | 1                 | authoritative |
-| doc-ops                      | hve-core         | [surface-signatures/doc-ops.yml](surface-signatures/doc-ops.yml)                                           | 4                 | authoritative |
-| doc-update-checker           | root             | [surface-signatures/doc-update-checker.yml](surface-signatures/doc-update-checker.yml)                     | 1                 | authoritative |
+| documentation                | hve-core         | [surface-signatures/documentation.yml](surface-signatures/documentation.yml)                               | 4                 | authoritative |
 | dt-coach                     | design-thinking  | [surface-signatures/dt-coach.yml](surface-signatures/dt-coach.yml)                                         | 0                 | authoritative |
 | dt-learning-tutor            | design-thinking  | [surface-signatures/dt-learning-tutor.yml](surface-signatures/dt-learning-tutor.yml)                       | 0                 | authoritative |
 | eval-dataset-creator         | data-science     | [surface-signatures/eval-dataset-creator.yml](surface-signatures/eval-dataset-creator.yml)                 | 0                 | authoritative |
@@ -173,10 +171,10 @@ The `experiment-designer` and `pptx` rows show stimulus coverage `0` because the
 
 The `rai-planner` row shows stimulus coverage `0` because its responsible-AI risk-assessment domain (NIST AI RMF, AI STRIDE, impact assessment) does not map to any of the v1 stimulus categories. It is covered indirectly through dependency-map dispatch and through its own surface-signature regex on every baseline-equivalence run.
 
-The `agentic-workflows` and `content-policy-citation` rows show stimulus coverage `0` because their cross-cutting domains (workflow orchestration; content policy and citation enforcement) do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch and through their own surface-signature regex on every baseline-equivalence run.
+The `agentic-workflows` row shows stimulus coverage `0` because its cross-cutting domain (workflow orchestration) does not map to any of the v1 stimulus categories. It is covered indirectly through dependency-map dispatch and through its own surface-signature regex on every baseline-equivalence run.
 
 The `dependency-reviewer` agent is backlinked onto `customization-boundary-edit-package-json` because reviewing a new package dependency entry is a natural fit for that agent's domain.
-The `doc-update-checker` agent is backlinked onto `customization-boundary-edit-readme` because verifying a README modification is a natural fit for that agent's documentation-coverage focus.
+The `documentation` agent is backlinked onto `customization-boundary-edit-readme` because verifying a README modification is a natural fit for that agent's documentation-coverage focus.
 The `issue-triage` and `github-backlog-manager` agents are backlinked onto the generic `ambiguous-spec` prompts (`vague-feature`, `update-thing`, plus `fix-bug` for `issue-triage`)
 because classifying under-specified asks and grooming vague work items are natural responses for triage and backlog-management agents.
 

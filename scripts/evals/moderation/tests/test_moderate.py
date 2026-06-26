@@ -140,7 +140,7 @@ def test_load_records_skips_malformed_lines(tmp_path: Path) -> None:
     path.write_text(
         '{"id": "ok-1", "text": "valid"}\n'
         "not-json\n"
-        '{"id": "ok-2"}\n'   # missing text
+        '{"id": "ok-2"}\n'  # missing text
         '{"id": "ok-3", "text": "valid-2"}\n',
         encoding="utf-8",
     )

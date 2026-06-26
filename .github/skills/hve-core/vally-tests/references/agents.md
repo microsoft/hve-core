@@ -16,16 +16,16 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic | Section in prompt-builder.instructions.md | Line range |
-|---|---|---|
-| Frontmatter and metadata | Agent frontmatter structure | L172-L205 |
-| Tool restrictions | Tool-list constraint | L180-L182 |
-| Handoff pattern | Handoff declarations | L183-L188 |
-| Conversational vs autonomous protocol | Protocol distinction | L189-L211 |
-| Subagent pattern | Subagent dependencies and flags | L212-L244 |
-| Subagent structural template | Subagent file template | L245-L312 |
-| Subagent invocation | Invocation by human-readable name | L666-L701 |
-| Phase and step heading conventions | Protocol heading conventions | L569-L657 |
+| Topic                                 | Section in prompt-builder.instructions.md | Line range |
+|---------------------------------------|-------------------------------------------|------------|
+| Frontmatter and metadata              | Agent frontmatter structure               | L172-L205  |
+| Tool restrictions                     | Tool-list constraint                      | L180-L182  |
+| Handoff pattern                       | Handoff declarations                      | L183-L188  |
+| Conversational vs autonomous protocol | Protocol distinction                      | L189-L211  |
+| Subagent pattern                      | Subagent dependencies and flags           | L212-L244  |
+| Subagent structural template          | Subagent file template                    | L245-L312  |
+| Subagent invocation                   | Invocation by human-readable name         | L666-L701  |
+| Phase and step heading conventions    | Protocol heading conventions              | L569-L657  |
 
 ## Conformance Checks
 
@@ -122,5 +122,3 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader catalog and selection rules: [grader-catalog.md](./grader-catalog.md).
 * Refusal categories and regex source of truth: [refusal-taxonomy.md](./refusal-taxonomy.md).
 * Eval target routing for `agent` kind (per-slug stimulus files): [eval-suite-routing.md](./eval-suite-routing.md).
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

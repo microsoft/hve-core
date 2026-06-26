@@ -80,7 +80,8 @@ Describe 'Test-AgentBehaviorCoverage (function)' -Tag 'Unit' {
         $report.parentCount | Should -Be 1
         $report.missing.Count | Should -Be 1
         $report.missing[0].slug | Should -Be 'parent-agent'
-        ($report.covered.slug + $report.missing.slug) | Should -Not -Contain 'helper-subagent'
+        $allSlugs = @($report.covered | ForEach-Object { $_.slug }) + @($report.missing | ForEach-Object { $_.slug })
+        $allSlugs | Should -Not -Contain 'helper-subagent'
     }
 
     It 'Honors -RestrictToSlugs for incremental enforcement' {

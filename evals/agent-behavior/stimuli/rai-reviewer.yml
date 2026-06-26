@@ -1,0 +1,20 @@
+stimuli:
+  - name: rai-reviewer-class-recipe
+    prompt: |
+      Run a Responsible AI assessment of a customer-facing chatbot that uses an LLM to answer billing questions and stores conversation transcripts. Summarize the RAI findings with severity, citing the relevant frameworks (NIST AI RMF, the AI STRIDE overlay, or the EU AI Act). Write the report under `.copilot-tracking/rai-reviews/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|risk)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

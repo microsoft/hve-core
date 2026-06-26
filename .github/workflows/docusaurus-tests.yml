@@ -8,19 +8,75 @@ on:
         required: false
         type: boolean
         default: false
+      changed-files-only:
+        description: 'Only run tests when Docusaurus content or config changed'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
-  docusaurus:
-    name: Docusaurus Unit Tests
+  detect-changes:
+    name: Detect Docusaurus Changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      has-docs-changes: ${{ steps.detect.outputs.has-docs-changes }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Check Docusaurus changes
+        id: detect
+        shell: pwsh
+        run: |
+          if ('${{ inputs.changed-files-only }}' -ne 'true') {
+            'has-docs-changes=true' >> $env:GITHUB_OUTPUT
+            Write-Output 'Docusaurus tests requested for all files.'
+          } else {
+            $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
+            # Trigger on Docusaurus application changes only: the site app, plugins,
+            # configs, and accessibility tests all live under docs/docusaurus/.
+            # Pure markdown content edits elsewhere under docs/ are intentionally
+            # excluded so content-only PRs skip the expensive a11y/build job.
+            # The collections/ tree is included because docusaurus.config.js reads
+            # collections/*.collection.yml at build time (collectionCounts) and the
+            # tests consume it via COLLECTIONS_DIR, so changes there alter site and
+            # test output. The workflow files themselves are included so test/config
+            # changes still trigger a run.
+            $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- `
+              docs/docusaurus `
+              collections `
+              .github/workflows/docusaurus-tests.yml `
+              .github/workflows/deploy-docs.yml)
+
+            if ($changed.Count -gt 0) {
+              'has-docs-changes=true' >> $env:GITHUB_OUTPUT
+              Write-Output "Detected $($changed.Count) changed file(s) affecting the Docusaurus site"
+              $changed | ForEach-Object { Write-Output "- $_" }
+            } else {
+              'has-docs-changes=false' >> $env:GITHUB_OUTPUT
+              Write-Output 'No Docusaurus app or config changes detected'
+            }
+          }
+
+  docusaurus:
+    name: Docusaurus Unit Tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-docs-changes == 'true'
+    permissions:
+      contents: read
+      id-token: write  # Required for Codecov OIDC
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -34,17 +90,88 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
+        env:
+          # pa11y uses the runner's system Google Chrome (provisioned by the
+          # "Provision system Chrome" step below), so skip the puppeteer
+          # postinstall download. That self-download failed deterministically
+          # in CI by extracting a partial browser tree while still exiting 0,
+          # poisoning ~/.cache/puppeteer.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+      - name: Lint accessibility
+        working-directory: docs/docusaurus
+        run: npm run lint:a11y
+
+      - name: Typecheck
+        working-directory: docs/docusaurus
+        run: npm run typecheck
 
       - name: Run tests
         working-directory: docs/docusaurus
-        run: npm test
+        run: npm run test:coverage
         env:
           COLLECTIONS_DIR: ${{ github.workspace }}/collections
         continue-on-error: ${{ inputs.soft-fail }}
 
+      - name: Upload to Codecov
+        if: success()
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          files: docs/docusaurus/coverage/lcov.info
+          use_oidc: true
+          fail_ci_if_error: false
+          verbose: true
+          flags: docusaurus
+          name: docusaurus-coverage
+        continue-on-error: true
+
       - name: Build site
         working-directory: docs/docusaurus
         run: npm run build
+
+      # Both accessibility tools reuse the ubuntu-latest runner's maintained
+      # Google Chrome stable build instead of self-downloading a browser:
+      # pa11y drives it over CDP via puppeteer (honouring
+      # PUPPETEER_EXECUTABLE_PATH because `.pa11yci` sets no `executablePath`),
+      # and Playwright drives it via `channel: 'chrome'` in
+      # playwright.config.ts. Self-downloading failed deterministically in CI:
+      # the archive downloaded in full but extraction silently dropped the
+      # main `chrome` binary while the install still exited 0, so no retry or
+      # disk-space change could recover it. This step is the single source of
+      # the shared Chrome dependency; its presence check and `--version` echo
+      # guard both tools by failing the job loudly here -- with a clear
+      # message -- rather than as an opaque browser-launch error downstream.
+      - name: Provision system Chrome
+        run: |
+          set -u
+          chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          if [ -z "$chrome_bin" ]; then
+            echo "::error::No system Google Chrome found on the runner; pa11y and Playwright both require it"
+            exit 1
+          fi
+          echo "Using system Chrome at: $chrome_bin"
+          "$chrome_bin" --version
+          echo "PUPPETEER_EXECUTABLE_PATH=$chrome_bin" >> "$GITHUB_ENV"
+
+      # `npm run a11y` wraps the scan in start-server-and-test, which starts
+      # `serve:ci`, waits for it, runs pa11y-ci, then tears the server down --
+      # so this step is self-contained and leaves no background process behind.
+      - name: Accessibility scan (pa11y-ci)
+        working-directory: docs/docusaurus
+        run: npm run a11y
+        continue-on-error: ${{ inputs.soft-fail }}
+
+      # Playwright drives Google Chrome stable via `channel: 'chrome'` in
+      # playwright.config.ts, reusing the runner's maintained Chrome build
+      # instead of self-downloading a bundled Chromium, so no browser install
+      # or cache step is needed. The "Provision system Chrome" step above is
+      # the shared dependency and already fails the job loudly when no system
+      # Chrome is present. This step owns its own e2e server (Playwright's
+      # webServer config), independent of the pa11y step above.
+      - name: Accessibility journeys (Playwright)
+        working-directory: docs/docusaurus
+        run: npm run test:e2e
+        continue-on-error: ${{ inputs.soft-fail }}
 
       - name: Upload test results
         if: always()

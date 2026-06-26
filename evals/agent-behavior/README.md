@@ -2,7 +2,7 @@
 title: Agent Behavior Suite
 description: 'Per-agent behavioral evals assembled from per-agent stimulus partials and graded against five class recipes'
 author: HVE Core Team
-ms.date: 2026-05-25
+ms.date: 2026-06-20
 ---
 
 ## Purpose
@@ -11,7 +11,7 @@ This suite covers every user-invocable hve-core agent with at least one function
 
 The complement to [baseline-equivalence](../baseline-equivalence/README.md) is intentional: baseline-equivalence asserts the customization layer does not alter underlying model behavior beyond documented divergences, while agent-behavior asserts each agent actually performs its declared job.
 
-The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The 46-agent inventory at the bottom of this document is the authoritative class assignment.
+The suite is organized around five behavioral classes (research-writer, code-reviewer, code-implementor, workitem-manager, planner-coach). Every parent agent belongs to exactly one class, and class membership selects the stimulus shape and grader template used in [stimuli/](stimuli/). The 49-agent inventory at the bottom of this document is the authoritative class assignment.
 
 ## Layout
 
@@ -49,10 +49,10 @@ Each parent agent belongs to exactly one class. The class selects the stimulus s
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|
 | research-writer | 9       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
-| code-reviewer   | 9       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
+| code-reviewer   | 11      | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
 | code-implementor  | 6       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
 | workitem-manager  | 8       | Convert a raw request into a backlog draft                            | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)`              |
-| planner-coach     | 14      | Plan, sequence, or coach the user through a non-trivial task          | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                             |
+| planner-coach     | 15      | Plan, sequence, or coach the user through a non-trivial task          | `(plan\|step \d+\|next\|approach\|consider\|recommend\|phase)`                             |
 
 The grader counts a stimulus as passing when the regex matches the agent's response at least once. This is a behavioral smoke gate: the suite asserts the agent produced an output shaped like its job, not that the output is correct. Correctness is the responsibility of the per-agent integration tests and the baseline-equivalence harness, not this suite.
 
@@ -103,7 +103,7 @@ When authoring or updating a planner-coach stimulus, copy the canonical pattern 
 
 Agents that investigate topics, analyze data, or produce structured documents as their primary output.
 
-**Members (9):** task-researcher, adr-creation, arch-diagram-builder, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
+**Members (9):** task-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, pr-walkthrough, prd-builder, system-architecture-reviewer, ux-ui-designer
 
 **Required Graders:**
 
@@ -151,7 +151,7 @@ stimuli:
 
 Agents that analyze code, diffs, or artifacts and surface issues, risks, or recommendations.
 
-**Members (9):** code-review-full, code-review-functional, code-review-standards, content-policy-citation, dependency-reviewer, doc-update-checker, pr-review, security-reviewer, task-reviewer
+**Members (10):** code-review-accessibility, code-review-full, code-review-functional, code-review-standards, dependency-reviewer, pr-review, rai-reviewer, accessibility-reviewer, security-reviewer, task-reviewer
 
 **Required Graders:**
 
@@ -289,7 +289,7 @@ stimuli:
 
 Agents that sequence work, plan tasks, coach the user through a process, or orchestrate multi-phase workflows.
 
-**Members (14):** agentic-workflows, doc-ops, dt-coach, dt-learning-tutor, experiment-designer, memory, pptx, prompt-builder, rai-planner, rpi-agent, security-planner, sssc-planner, task-challenger, task-planner
+**Members (15):** accessibility-planner, agentic-workflows, documentation, dt-coach, dt-learning-tutor, experiment-designer, memory, pptx, prompt-builder, rai-planner, rpi-agent, security-planner, sssc-planner, task-challenger, task-planner
 
 **Required Graders:**
 
@@ -299,7 +299,7 @@ Agents that sequence work, plan tasks, coach the user through a process, or orch
 
 **Optional Graders:**
 
-* `header-present` - Only `doc-ops` and `task-planner` declare `Start responses with:` directives. Others omit this grader.
+* `header-present` - Only `task-planner` declares a `Start responses with:` directive. Others omit this grader.
 
 #### Worked Example: task-planner
 
@@ -348,20 +348,20 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 
 | Agent                        | Class            | Cost Tier | Agent File                                                                                                                                           |
 |------------------------------|------------------|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| accessibility-planner        | planner-coach    | light     | [.github/agents/accessibility/accessibility-planner.agent.md](../../.github/agents/accessibility/accessibility-planner.agent.md)                     |
+| accessibility-reviewer       | code-reviewer    | light     | [.github/agents/accessibility/accessibility-reviewer.agent.md](../../.github/agents/accessibility/accessibility-reviewer.agent.md)                   |
 | ado-backlog-manager          | workitem-manager | light     | [.github/agents/ado/ado-backlog-manager.agent.md](../../.github/agents/ado/ado-backlog-manager.agent.md)                                             |
 | ado-prd-to-wit               | workitem-manager | light     | [.github/agents/ado/ado-prd-to-wit.agent.md](../../.github/agents/ado/ado-prd-to-wit.agent.md)                                                       |
 | adr-creation                 | research-writer  | light     | [.github/agents/project-planning/adr-creation.agent.md](../../.github/agents/project-planning/adr-creation.agent.md)                                 |
 | agentic-workflows            | planner-coach    | light     | [.github/agents/agentic-workflows.agent.md](../../.github/agents/agentic-workflows.agent.md)                                                         |
 | agile-coach                  | workitem-manager | light     | [.github/agents/project-planning/agile-coach.agent.md](../../.github/agents/project-planning/agile-coach.agent.md)                                   |
-| arch-diagram-builder         | research-writer  | light     | [.github/agents/project-planning/arch-diagram-builder.agent.md](../../.github/agents/project-planning/arch-diagram-builder.agent.md)                 |
 | brd-builder                  | research-writer  | light     | [.github/agents/project-planning/brd-builder.agent.md](../../.github/agents/project-planning/brd-builder.agent.md)                                   |
+| code-review-accessibility    | code-reviewer    | light     | [.github/agents/coding-standards/code-review-accessibility.agent.md](../../.github/agents/coding-standards/code-review-accessibility.agent.md)       |
 | code-review-full             | code-reviewer    | light     | [.github/agents/coding-standards/code-review-full.agent.md](../../.github/agents/coding-standards/code-review-full.agent.md)                         |
 | code-review-functional       | code-reviewer    | light     | [.github/agents/coding-standards/code-review-functional.agent.md](../../.github/agents/coding-standards/code-review-functional.agent.md)             |
 | code-review-standards        | code-reviewer    | light     | [.github/agents/coding-standards/code-review-standards.agent.md](../../.github/agents/coding-standards/code-review-standards.agent.md)               |
-| content-policy-citation      | code-reviewer    | light     | [.github/agents/content-policy-citation.agent.md](../../.github/agents/content-policy-citation.agent.md)                                             |
 | dependency-reviewer          | code-reviewer    | light     | [.github/agents/dependency-reviewer.agent.md](../../.github/agents/dependency-reviewer.agent.md)                                                     |
-| doc-ops                      | planner-coach    | light     | [.github/agents/hve-core/doc-ops.agent.md](../../.github/agents/hve-core/doc-ops.agent.md)                                                           |
-| doc-update-checker           | code-reviewer    | light     | [.github/agents/doc-update-checker.agent.md](../../.github/agents/doc-update-checker.agent.md)                                                       |
+| documentation                | planner-coach    | light     | [.github/agents/hve-core/documentation.agent.md](../../.github/agents/hve-core/documentation.agent.md)                                               |
 | dt-coach                     | planner-coach    | light     | [.github/agents/design-thinking/dt-coach.agent.md](../../.github/agents/design-thinking/dt-coach.agent.md)                                           |
 | dt-learning-tutor            | planner-coach    | light     | [.github/agents/design-thinking/dt-learning-tutor.agent.md](../../.github/agents/design-thinking/dt-learning-tutor.agent.md)                         |
 | eval-dataset-creator         | code-implementor | light     | [.github/agents/data-science/eval-dataset-creator.agent.md](../../.github/agents/data-science/eval-dataset-creator.agent.md)                         |
@@ -378,10 +378,12 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | network-isa95-planner        | research-writer  | light     | [.github/agents/project-planning/network-isa95-planner.agent.md](../../.github/agents/project-planning/network-isa95-planner.agent.md)               |
 | pptx                         | planner-coach    | light     | [.github/agents/experimental/pptx.agent.md](../../.github/agents/experimental/pptx.agent.md)                                                         |
 | pr-review                    | code-reviewer    | light     | [.github/agents/hve-core/pr-review.agent.md](../../.github/agents/hve-core/pr-review.agent.md)                                                       |
+| pr-walkthrough               | research-writer  | light     | [.github/agents/hve-core/pr-walkthrough.agent.md](../../.github/agents/hve-core/pr-walkthrough.agent.md)                                             |
 | prd-builder                  | research-writer  | light     | [.github/agents/project-planning/prd-builder.agent.md](../../.github/agents/project-planning/prd-builder.agent.md)                                   |
 | product-manager-advisor      | workitem-manager | light     | [.github/agents/project-planning/product-manager-advisor.agent.md](../../.github/agents/project-planning/product-manager-advisor.agent.md)           |
 | prompt-builder               | planner-coach    | light     | [.github/agents/hve-core/prompt-builder.agent.md](../../.github/agents/hve-core/prompt-builder.agent.md)                                             |
 | rai-planner                  | planner-coach    | light     | [.github/agents/rai-planning/rai-planner.agent.md](../../.github/agents/rai-planning/rai-planner.agent.md)                                           |
+| rai-reviewer                 | code-reviewer    | light     | [.github/agents/rai-planning/rai-reviewer.agent.md](../../.github/agents/rai-planning/rai-reviewer.agent.md)                                         |
 | rpi-agent                    | planner-coach    | light     | [.github/agents/hve-core/rpi-agent.agent.md](../../.github/agents/hve-core/rpi-agent.agent.md)                                                       |
 | security-planner             | planner-coach    | light     | [.github/agents/security/security-planner.agent.md](../../.github/agents/security/security-planner.agent.md)                                         |
 | security-reviewer            | code-reviewer    | light     | [.github/agents/security/security-reviewer.agent.md](../../.github/agents/security/security-reviewer.agent.md)                                       |
@@ -395,7 +397,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | test-streamlit-dashboard     | code-implementor | light     | [.github/agents/data-science/test-streamlit-dashboard.agent.md](../../.github/agents/data-science/test-streamlit-dashboard.agent.md)                 |
 | ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
 
-The inventory totals 46 user-invocable parent agents. Subagent-only agents (`codebase-profiler`, `finding-deep-verifier`, `report-generator`, `skill-assessor`) declare `user-invocable: false` in their frontmatter and are excluded from this suite; they remain covered by their parent agents' stimuli and by the dependency-map dispatch path documented in [evals/baseline-equivalence/README.md](../baseline-equivalence/README.md).
+The inventory totals 49 user-invocable parent agents. Subagent-only agents (`codebase-profiler`, `finding-deep-verifier`, `report-generator`, `skill-assessor`) declare `user-invocable: false` in their frontmatter and are excluded from this suite; they remain covered by their parent agents' stimuli and by the dependency-map dispatch path documented in [evals/baseline-equivalence/README.md](../baseline-equivalence/README.md).
 
 ## Related Suites
 

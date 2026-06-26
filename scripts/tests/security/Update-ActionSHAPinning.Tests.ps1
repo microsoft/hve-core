@@ -13,7 +13,7 @@ BeforeAll {
     Save-CIEnvironment
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
 
     # Mock response helpers
     function script:New-MockGitHubGraphQLResponse {
@@ -120,6 +120,30 @@ Describe 'Get-SHAForAction' -Tag 'Unit' {
             $result | Should -BeNullOrEmpty
         }
     }
+
+    Context 'Stale pin updates' {
+        It 'Returns the latest SHA for an already pinned action when UpdateStale is enabled' {
+            Mock Get-LatestCommitSHA { return 'fedcba9876543210fedcba9876543210fedcba98' }
+
+            $result = Get-SHAForAction -ActionRef 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' -UpdateStale
+
+            $result | Should -Be 'actions/checkout@fedcba9876543210fedcba9876543210fedcba98'
+        }
+
+        It 'Keeps the existing SHA when stale update lookup fails' {
+            Mock Get-LatestCommitSHA { return $null }
+
+            $result = Get-SHAForAction -ActionRef 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' -UpdateStale
+
+            $result | Should -Be 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd'
+        }
+
+        It 'Leaves an already pinned action unchanged when UpdateStale is not set' {
+            $result = Get-SHAForAction -ActionRef 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd'
+
+            $result | Should -Be 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd'
+        }
+    }
 }
 
 Describe 'Update-WorkflowFile' -Tag 'Unit' {
@@ -182,6 +206,23 @@ Describe 'Update-WorkflowFile' -Tag 'Unit' {
             $newContent = Get-Content $pinnedTest -Raw
 
             $newContent | Should -Be $originalContent
+        }
+    }
+
+    Context 'Manual review handling' {
+        It 'Records skipped actions when no SHA mapping is available' {
+            $manualReviewSource = Join-Path $script:FixturesPath 'unpinned-workflow.yml'
+            $manualReviewTest = Join-Path $TestDrive 'manual-review-test.yml'
+            Copy-Item $manualReviewSource $manualReviewTest
+
+            Mock Get-SHAForAction { return $null }
+
+            $result = Update-WorkflowFile -FilePath $manualReviewTest
+
+            # unpinned-workflow.yml fixture contains 3 unpinned actions; all are skipped when no mapping resolves
+            $result.ActionsSkipped | Should -Be 3
+            $result.Changes[0].ChangeType | Should -Be 'Requires-Manual-Review'
+            $result.ContentChanged | Should -BeFalse
         }
     }
 }

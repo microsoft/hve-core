@@ -4,6 +4,9 @@
 
 BeforeAll {
     . $PSScriptRoot/../../extension/Prepare-Extension.ps1
+    # Re-import CIHelpers so Pester can resolve Write-CIAnnotation within It-block scope;
+    # the script's own import does not propagate through dot-sourcing in Pester v5.
+    Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 }
 
 #region Package Generation Function Tests
@@ -575,6 +578,8 @@ Old stale artifact list.
             @"
 Writeback intro.
 
+## Included Artifacts
+
 <!-- BEGIN AUTO-GENERATED ARTIFACTS -->
 
 Old content to replace.
@@ -588,8 +593,47 @@ Old content to replace.
             $mdContent = Get-Content -Path $mdPath -Raw
             $mdContent | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
             $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
+            ([regex]::Matches($mdContent, '(?m)^## Included Artifacts$')).Count | Should -Be 1
             $mdContent | Should -Match 'alpha'
             $mdContent | Should -Not -Match 'Old content to replace'
+        }
+
+        It 'Does not inject a duplicate Included Artifacts heading inside markers' {
+            $collection = @{
+                id          = 'no-dup-h2'
+                name        = 'No Duplicate H2'
+                description = 'Ensures intro H2 is not duplicated inside auto-generated block'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'no-dup-h2.collection.md'
+            @"
+# No Duplicate H2
+
+Intro paragraph.
+
+## Included Artifacts
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Old generated content.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.no-dup-h2.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+
+            $mdContent = Get-Content -Path $mdPath -Raw
+            ([regex]::Matches($mdContent, '(?m)^##\s+Included Artifacts\s*$')).Count | Should -Be 1
+
+            $beginIndex = $mdContent.IndexOf('<!-- BEGIN AUTO-GENERATED ARTIFACTS -->')
+            $endIndex = $mdContent.IndexOf('<!-- END AUTO-GENERATED ARTIFACTS -->')
+            $beginIndex | Should -BeGreaterThan -1
+            $endIndex | Should -BeGreaterThan $beginIndex
+            $generatedSection = $mdContent.Substring($beginIndex, $endIndex - $beginIndex)
+            $generatedSection | Should -Not -Match '(?m)^##\s+Included Artifacts\s*$'
         }
 
         It 'Works without markers for backward compatibility' {
@@ -647,6 +691,47 @@ This requires setup first.
             $mdContent | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
             $mdContent | Should -Match '## Prerequisites'
             $mdContent | Should -Match 'This requires setup first'
+        }
+
+        It 'Produces identical output when run twice (idempotent regeneration)' {
+            $collection = @{
+                id          = 'idempotent'
+                name        = 'Idempotent'
+                description = 'Idempotency guard test'
+                items       = @(
+                    @{ kind = 'agent'; path = '.github/agents/alpha.agent.md' },
+                    @{ kind = 'agent'; path = '.github/agents/zebra.agent.md' },
+                    @{ kind = 'prompt'; path = '.github/prompts/my-prompt.prompt.md' },
+                    @{ kind = 'instruction'; path = '.github/instructions/my-instr.instructions.md' },
+                    @{ kind = 'skill'; path = '.github/skills/my-skill/' }
+                )
+            }
+            $mdPath = Join-Path $script:tempDir 'idempotent.collection.md'
+            @"
+Idempotent intro.
+
+<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
+
+Stale artifact placeholder.
+
+<!-- END AUTO-GENERATED ARTIFACTS -->
+
+## Prerequisites
+
+Footer content preserved across runs.
+"@ | Set-Content -Path $mdPath -Encoding utf8NoBOM
+            $outPath = Join-Path $script:tempDir 'README.idempotent.md'
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+            $firstReadme = Get-Content -Path $outPath -Raw
+            $firstMd = Get-Content -Path $mdPath -Raw
+
+            New-CollectionReadme -Collection $collection -CollectionMdPath $mdPath -TemplatePath $script:templatePath -RepoRoot $script:tempDir -OutputPath $outPath
+            $secondReadme = Get-Content -Path $outPath -Raw
+            $secondMd = Get-Content -Path $mdPath -Raw
+
+            $secondReadme | Should -BeExactly $firstReadme
+            $secondMd | Should -BeExactly $firstMd
         }
     }
 }

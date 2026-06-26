@@ -213,7 +213,7 @@ function Format-InventoryYaml {
     return $sb.ToString()
 }
 
-# --- Main ---
+#region Main Execution
 Import-YamlModule
 
 $resolvedRoot = Resolve-RepoRoot -Override $RepoRoot
@@ -260,3 +260,4 @@ if ($PSCmdlet.ShouldProcess($OutputPath, 'Write agent inventory YAML')) {
 }
 
 return $OutputPath
+#endregion Main Execution

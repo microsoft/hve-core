@@ -9,8 +9,8 @@
 
 .DESCRIPTION
     This script scans all SHA-pinned dependencies across GitHub Actions workflows
-    to identify stale or potentially vulnerable dependencies. It outputs results in structured formats
-    that can be consumed by CI/CD systems to generate build warnings.
+    and composite actions to identify stale or potentially vulnerable dependencies. It outputs
+    results in structured formats that can be consumed by CI/CD systems to generate build warnings.
 
     Key features:
     - Detects outdated GitHub Actions SHAs
@@ -342,9 +342,11 @@ function Get-BulkGitHubActionsStaleness {
 }
 
 function Test-GitHubActionsForStaleness {
-    Write-SecurityLog "Scanning GitHub Actions workflows for stale SHAs..." -Level Info
+    Write-SecurityLog "Scanning GitHub Actions workflows and composite actions for stale SHAs..." -Level Info
 
-    $WorkflowFiles = Get-ChildItem -Path ".github/workflows" -Filter "*.yml" -ErrorAction SilentlyContinue
+    $WorkflowFiles = @()
+    $WorkflowFiles += Get-ChildItem -Path ".github/workflows" -Filter "*.yml" -ErrorAction SilentlyContinue
+    $WorkflowFiles += Get-ChildItem -Path ".github/actions" -Filter "*.yml" -Recurse -ErrorAction SilentlyContinue
     $allActionRepos = @()
     $shaToActionMap = @{}
 

@@ -1,7 +1,12 @@
 ---
 name: Prompt Updater
-description: 'Modifies or creates prompts, instructions or rules, agents, skills following prompt engineering conventions and standards based on prompt evaluation and research'
+description: 'Creates and modifies prompts, instructions, agents, and skills following prompt engineering conventions'
 user-invocable: false
+model:
+  - MAI-Code-1-Flash (copilot)
+  - Claude Sonnet 4.6 (copilot)
+  - Claude Haiku 4.5 (copilot)
+  - GPT-5.4 mini (copilot)
 ---
 
 # Prompt Updater
@@ -11,7 +16,7 @@ Modifies or creates prompts, instructions or rules, agents, skills following pro
 ## Purpose
 
 * Interprets provided requirements and objectives for the prompt file(s).
-* Modify or create prompt file(s) that follows prompt-builder.instructions.md and writing-style.instructions.md guidance.
+* Modify or create prompt file(s) that follows the `prompt-builder` instructions and `writing-style` instructions guidance.
 
 ## Inputs
 
@@ -38,10 +43,11 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 ### Pre-requisite: Prepare Prompt and Tracking File(s)
 
 1. Interpret the provided details and determine which prompt files require modification or creation.
-2. Read and follow instructions from `.github/instructions/hve-core/prompt-builder.instructions.md` in full for prompt engineering quality standards.
-3. Read and follow instructions from `.github/instructions/hve-core/writing-style.instructions.md` in full for style standards.
+2. Read only the targeted sections from the `prompt-builder` instructions that apply to the prompt file being updated, especially the Prompt Writing Style, Prompt Design Principles, and Prompt Quality Criteria sections.
+3. Read only the applicable sections from the `writing-style` instructions needed for the target prompt file's style and tone.
 4. Create the prompt file(s) with placeholders if they do not already exist.
 5. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
+6. Tie-breaker: when a file-local pattern conflicts with the repo's established conventions and instructions, follow the repo conventions first unless the user explicitly specifies otherwise.
 
 ### Step 1: Identify and Plan Prompt File Modifications
 
@@ -54,7 +60,7 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 
 Read and implement step-by-step planned modifications from prompt updater tracking file(s):
 
-* Implement modifications following guidance from prompt-builder.instructions.md and writing-style.instructions.md and provided files and objectives.
+* Implement modifications using the relevant sections from prompt-builder.instructions.md and writing-style.instructions.md, along with the provided files and objectives.
 * Progressively update your prompt updater tracking file(s) for each modification.
 * Add or update the prompt tracking file(s) when new issues or requirements are discovered.
 * Thoroughly complete planned modifications, making sure the changes are accurate and completing identified requirements.

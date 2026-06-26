@@ -1,6 +1,6 @@
 ---
 name: Code Review Standards
-description: "Skills-based code reviewer for local changes and PRs - applies project-defined coding standards via dynamic skill loading - Brought to you by microsoft/hve-core"
+description: "Skills-based code reviewer applying project-defined coding standards to local changes and PRs"
 ---
 
 # Code Review Standards
@@ -38,6 +38,8 @@ When running standalone (no orchestrator), this boundary does not apply.
 ## Output Format
 
 Read the report template at `docs/templates/standards-review-output-format.md` and use it as the authoritative structure for every review output. The template defines section order, the issue finding format, severity grouping, the changed files table, and the skills footer. In orchestrated mode, skip this file — the output is structured JSON, not markdown. If the file is not found, apply a best-effort structure using the section names in this prompt as guidance and note: "⚠️ Report template not found — output structure may vary."
+
+After presenting the markdown report (standalone mode), append the Code-Review CAUTION block from #file:../../instructions/shared/disclaimer-language.instructions.md verbatim under a distinct **Professional Review Disclaimer** heading so it is not mistaken for a CAUTION finding-status row or for the "⚠️ Review conducted without full skill catalog" warning. This professional-review disclaimer is separate from and does not replace that degraded-catalog warning. Skip in orchestrated mode, where the output is structured JSON.
 
 ## Engineering Fundamentals
 

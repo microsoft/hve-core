@@ -1,7 +1,7 @@
 name: fixture-moderation-threshold-non-numeric
 description: Spec whose moderation.threshold is not numeric.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
   executor: copilot-sdk

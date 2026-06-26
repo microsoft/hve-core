@@ -16,14 +16,14 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 
 ## Contract Summary
 
-| Topic | Section in prompt-builder.instructions.md | Line range |
-|---|---|---|
-| Frontmatter and applyTo glob | Instructions frontmatter structure | L316-L325 |
-| Scope and applicability statement | Instructions content structure | L326-L345 |
-| Core conventions as bulleted rules | Conventions and counterexamples | L328-L345 |
-| Code examples in fenced blocks | Example presentation | L329-L330 |
-| Patterns to avoid | Anti-pattern guidance | L335-L340 |
-| Validation tooling references | Tooling and verification | L336-L341 |
+| Topic                              | Section in prompt-builder.instructions.md | Line range |
+|------------------------------------|-------------------------------------------|------------|
+| Frontmatter and applyTo glob       | Instructions frontmatter structure        | L316-L325  |
+| Scope and applicability statement  | Instructions content structure            | L326-L345  |
+| Core conventions as bulleted rules | Conventions and counterexamples           | L328-L345  |
+| Code examples in fenced blocks     | Example presentation                      | L329-L330  |
+| Patterns to avoid                  | Anti-pattern guidance                     | L335-L340  |
+| Validation tooling references      | Tooling and verification                  | L336-L341  |
 
 ## Conformance Checks
 
@@ -97,5 +97,3 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader catalog and selection rules: [grader-catalog.md](./grader-catalog.md).
 * Refusal categories and regex source of truth: [refusal-taxonomy.md](./refusal-taxonomy.md).
 * Eval target routing for `instructions` kind: [eval-suite-routing.md](./eval-suite-routing.md).
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

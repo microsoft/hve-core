@@ -1,6 +1,6 @@
 ---
 name: vscode-playwright
-description: 'VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation - Brought to you by microsoft/hve-core'
+description: 'VS Code screenshot capture using Playwright MCP with serve-web for slide decks and documentation'
 license: MIT
 compatibility: 'Requires VS Code CLI (code or code-insiders), Playwright MCP tools, and curl'
 metadata:
@@ -190,5 +190,3 @@ Never use separate `mcp_microsoft_pla_browser_press_key` -> `mcp_microsoft_pla_b
 | Copilot Chat responses non-deterministic                     | Streaming token-by-token output                                  | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay                                        |
 
 > Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -190,7 +190,7 @@ function Invoke-CollectionValidation {
     $errorCount = 0
     $seenIds = @{}
     $validatedCount = 0
-    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated', 'removed')
+    $allowedMaturities = Get-CollectionMaturityVocabulary
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 
@@ -203,8 +203,10 @@ function Invoke-CollectionValidation {
     # Sub-domain folders that group artifacts shared across multiple themed collections
     # but are intentionally not collections themselves.
     $sharedSubdomainFolders = @{
-        'shared'       = $true
-        'rai-planning' = $true
+        'shared'        = $true
+        'rai-planning'  = $true
+        'rai'           = $true
+        'accessibility' = $true
     }
 
     foreach ($file in $collectionFiles) {

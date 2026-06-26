@@ -1,7 +1,7 @@
 name: fixture-valid-spec
 description: Minimal compliant spec used by Test-EvalSpec Pester tests.
 type: capability
-config:
+defaults:
   runs: 1
   timeout: 60s
   executor: copilot-sdk

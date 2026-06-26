@@ -1,12 +1,13 @@
 ---
 name: Prompt Builder
-description: 'Prompt engineering assistant with phase-based workflow for creating and validating prompts, agents, and instructions files - Brought to you by microsoft/hve-core'
+description: 'Prompt engineering assistant for creating and validating prompts, agents, and instructions'
 disable-model-invocation: true
 agents:
   - Prompt Tester
   - Prompt Evaluator
   - Prompt Updater
   - Researcher Subagent
+  - Vally Test Author
 handoffs:
   - label: "💡 Update/Create"
     agent: Prompt Builder
@@ -58,16 +59,6 @@ Cross-run continuity: Subagents can read and reference files from prior sandbox 
 * When using the `runSubagent` tool, select the named agent directly and provide the required inputs listed for that phase.
 * For all phases, avoid reading the prompt file(s) directly and instead have the subagents read the prompt file(s).
 
-### Model Selection for Subagents
-
-Apply cost-first model selection: use a fast model for tasks that do not write or design prompts.
-
-* Researcher Subagent: specify `model: "Claude Haiku 4.5 (copilot)"` (read-only research).
-* Prompt Evaluator: specify `model: "Claude Haiku 4.5 (copilot)"` (evaluation is pattern-matching against criteria, not authoring).
-* Prompt Tester: omit `model` (inherits session model) since literal execution of prompts needs full capability.
-* Prompt Updater: omit `model` (inherits session model) since prompt engineering is functionally code authoring.
-* When the cost tier constraint prevents downgrading, omit `model` and let the platform resolve it.
-
 ## Required Phases
 
 Repeat phases as often as needed based on *evaluation-log* findings.
@@ -100,7 +91,8 @@ Run `Prompt Evaluator` as a subagent with `runSubagent` or `task`, providing the
 
 * Target prompt file path(s).
 * Run number matching the `Prompt Tester` run.
-* Sandbox folder path containing the *execution-log.md* from Step 1.
+* Sandbox folder path from Step 1.
+* Execution log path returned by `Prompt Tester` from Step 1.
 * Prior evaluation log paths when iterating on a previous evaluation.
 
 `Prompt Evaluator` returns evaluation findings: evaluation log path, evaluation status, severity-graded modification checklist, and any clarifying questions.
@@ -184,6 +176,24 @@ Run `Prompt Updater` as a subagent using `runSubagent` or `task`, and paralleliz
 3. Continue to Phase 3 if modifications are needed from repeating Phase 1.
 
 Repeat until the current *evaluation-log* from `Prompt Evaluator` shows no issues.
+
+### Phase 4: Optional Vally Conformance Authoring
+
+Run this phase only when the user asks for conformance test coverage, or offer it once Phase 3 has converged and the modified artifact documents stable behaviors worth pinning. Skip it silently when the user declines or when the changes are too exploratory to pin. Use the `prompt-builder` skill as the canonical orchestration source; its dispatch matrix documents the `Vally Test Author` inputs and outputs used below.
+
+#### Step 1: Dispatch Vally Test Author
+
+Run `Vally Test Author` as a subagent using `runSubagent` or `task`, providing these inputs:
+
+* `mode=from-artifact` and `files=` with the finalized artifact path(s) (`.prompt.md`, `.instructions.md`, `.agent.md`, or a skill's `SKILL.md`).
+* `kind=auto` unless the user specifies a kind.
+
+`Vally Test Author` owns its own routing, safety self-check, dedupe, and append-only writes; do not pre-resolve eval paths or restate its safety mechanics here. It returns the routed eval file path, the stimuli-appended count, any dedupe skips, and its JSON report path.
+
+#### Step 2: Surface Results
+
+1. Report the routed eval file, the count of appended stimuli, and any refusals or blockers the subagent surfaced.
+2. Do not flip `tags.advisory: false` or graduate stimuli — graduation is governed by `evals/behavior-conformance/README.md`.
 
 ## Cleanup Before Finishing
 

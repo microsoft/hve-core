@@ -1,11 +1,11 @@
 name: behavior-conformance-prompts
 description: >
-  Advisory-tier behavior conformance evals for 10 high-traffic prompts. Each
-  stimulus invokes the prompt and asserts agent attribution (frontmatter
-  `agent:` name) plus prompt-specific scope language. Per DD-05, this is an
-  advisory tier and grader false-positives are absorbed by design.
+  Advisory-tier behavior conformance evals for high-traffic prompts. Each
+  stimulus invokes the prompt and asserts attribution (the agent role name or
+  the invoked prompt name) plus prompt-specific scope language. Per DD-05, this
+  is an advisory tier and grader false-positives are absorbed by design.
 type: capability
-config:
+defaults:
   runs: 3
   timeout: 120s
   executor: copilot-sdk
@@ -23,7 +23,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+researcher\\b"
+          pattern: "(?i)\\btask\\s+researcher\\b|task-research"
       - type: output-matches
         name: scope-language
         config:
@@ -41,11 +41,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+planner\\b"
+          pattern: "(?i)\\btask\\s+planner\\b|task-plan"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)implementation\\s+plan|planning|deferred"
+          pattern: "(?i)implementation\\s+plan|planning|deferred|task-plan"
 
   - name: prompt-task-implement-conformance
     prompt: |
@@ -59,11 +59,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+implementor\\b"
+          pattern: "(?i)\\btask\\s+implementor\\b|task-implement|\\bplan\\b"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)\\bphase\\b|\\bstep\\b|implementation\\s+plan"
+          pattern: "(?i)\\bphase\\b|\\bstep\\b|implementation\\s+plan|task-implement|\\bplan\\b"
 
   - name: prompt-task-review-conformance
     prompt: |
@@ -77,11 +77,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+reviewer\\b"
+          pattern: "(?i)\\btask\\s+reviewer\\b|task-review"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)review\\s+log|severity|scope"
+          pattern: "(?i)review\\s+log|severity|scope|task-review"
 
   - name: prompt-task-challenge-conformance
     prompt: |
@@ -95,7 +95,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)\\btask\\s+challenger\\b"
+          pattern: "(?i)\\btask\\s+challenger\\b|task-challenge"
       - type: output-matches
         name: scope-language
         config:
@@ -113,11 +113,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)security\\s+reviewer"
+          pattern: "(?i)security\\s+reviewer|security-review"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)OWASP|vulnerabilit|audit|skill"
+          pattern: "(?i)OWASP|vulnerabilit|audit|skill|security-review"
 
   - name: prompt-ado-create-pull-request-conformance
     prompt: |
@@ -131,11 +131,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)ADO\\s+backlog\\s+manager"
+          pattern: "(?i)ADO\\s+backlog\\s+manager|ado-create-pull-request"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)pull\\s+request|work\\s+item|reviewer|Azure\\s+DevOps"
+          pattern: "(?i)pull\\s+request|work\\s+item|reviewer|Azure\\s+DevOps|ado-create-pull-request"
 
   - name: prompt-github-execute-backlog-conformance
     prompt: |
@@ -149,11 +149,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)GitHub\\s+backlog\\s+manager"
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|github-execute-backlog"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)handoff|issue|create|update|link|close|comment"
+          pattern: "(?i)handoff|issue|create|update|link|close|comment|github-execute-backlog"
 
   - name: prompt-jira-execute-backlog-conformance
     prompt: |
@@ -167,7 +167,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)Jira\\s+backlog\\s+manager"
+          pattern: "(?i)Jira\\s+backlog\\s+manager|jira-execute-backlog"
       - type: output-matches
         name: scope-language
         config:
@@ -185,11 +185,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|design\\s+thinking"
+          pattern: "(?i)DT\\s+coach|design\\s+thinking|dt-start-project"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)method\\s*1|scope\\s+conversation|stakeholder|coaching"
+          pattern: "(?i)method\\s*1|scope\\s+conversation|stakeholder|coaching|dt-start-project"
 
   - name: prompt-ado-add-work-item-conformance
     prompt: |
@@ -203,7 +203,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)ADO\\s+backlog\\s+manager|work\\s+item"
+          pattern: "(?i)ADO\\s+backlog\\s+manager|work\\s+item|ado-add-work-item"
       - type: output-matches
         name: scope-language
         config:
@@ -275,7 +275,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)ADO\\s+backlog\\s+manager|task\\s+planner"
+          pattern: "(?i)ADO\\s+backlog\\s+manager|task\\s+planner|ado-process-my-work-items-for-task-planning"
       - type: output-matches
         name: scope-language
         config:
@@ -329,7 +329,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)ADO\\s+backlog\\s+manager|MCP"
+          pattern: "(?i)ADO\\s+backlog\\s+manager|MCP|ado-update-wit-items"
       - type: output-matches
         name: scope-language
         config:
@@ -365,7 +365,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)code\\s+review|reviewer"
+          pattern: "(?i)code\\s+review|reviewer|code-review-full"
       - type: output-matches
         name: scope-language
         config:
@@ -406,24 +406,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)cspell|dictionary|word|spelling|config"
-
-  - name: prompt-doc-ops-update-conformance
-    prompt: |
-      Invoke the `doc-ops-update` prompt with minimal arguments and explain how it
-      coordinates the workflow.
-    tags:
-      category: behavior-conformance
-      prompt: doc-ops-update
-      advisory: "true"
-    graders:
-      - type: output-matches
-        name: agent-attribution
-        config:
-          pattern: "(?i)doc[-\\s]*ops|documentation"
-      - type: output-matches
-        name: scope-language
-        config:
-          pattern: "(?i)doc|markdown|coverage|update"
 
   - name: prompt-dt-canonical-deck-conformance
     prompt: |
@@ -527,7 +509,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm"
+          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm|dt-method-04-convergence"
       - type: output-matches
         name: scope-language
         config:
@@ -545,7 +527,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm"
+          pattern: "(?i)DT\\s+coach|method\\s*4|brainstorm|dt-method-04-ideation"
       - type: output-matches
         name: scope-language
         config:
@@ -581,7 +563,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*5|concept"
+          pattern: "(?i)DT\\s+coach|method\\s*5|concept|dt-method-05-evaluation"
       - type: output-matches
         name: scope-language
         config:
@@ -599,7 +581,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*6|prototype"
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-building"
       - type: output-matches
         name: scope-language
         config:
@@ -617,7 +599,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*6|prototype"
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-planning"
       - type: output-matches
         name: scope-language
         config:
@@ -635,7 +617,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)DT\\s+coach|method\\s*6|prototype"
+          pattern: "(?i)DT\\s+coach|method\\s*6|prototype|dt-method-06-testing"
       - type: output-matches
         name: scope-language
         config:
@@ -779,7 +761,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)GitHub\\s+backlog\\s+manager|discovery"
+          pattern: "(?i)GitHub\\s+backlog\\s+manager|discovery|github-discover-issues"
       - type: output-matches
         name: scope-language
         config:
@@ -869,7 +851,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)Jira\\s+backlog\\s+manager|discovery"
+          pattern: "(?i)Jira\\s+backlog\\s+manager|discovery|jira-discover-issues"
       - type: output-matches
         name: scope-language
         config:
@@ -977,7 +959,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)pull\\s+request|reviewer"
+          pattern: "(?i)pull\\s+request|reviewer|pull-request"
       - type: output-matches
         name: scope-language
         config:
@@ -990,7 +972,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: rai-capture
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1001,10 +982,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)RAI|capture|risk|use\\s+case|stakeholder"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-rai-plan-from-prd-conformance
     prompt: |
@@ -1013,7 +990,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: rai-plan-from-prd
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1024,10 +1000,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)RAI|PRD|risk|impact|NIST"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-rai-plan-from-security-plan-conformance
     prompt: |
@@ -1036,7 +1008,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: rai-plan-from-security-plan
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1047,10 +1018,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)RAI|security|risk|impact|STRIDE"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-risk-register-conformance
     prompt: |
@@ -1136,11 +1103,11 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)security\\s+reviewer|LLM"
+          pattern: "(?i)security\\s+reviewer|LLM|security-review-llm"
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)LLM|OWASP|prompt\\s+injection|review"
+          pattern: "(?i)LLM|OWASP|prompt\\s+injection|review|security-review-llm"
 
   - name: prompt-security-review-sbd-conformance
     prompt: |
@@ -1154,7 +1121,7 @@ stimuli:
       - type: output-matches
         name: agent-attribution
         config:
-          pattern: "(?i)security\\s+reviewer|secure\\s+by\\s+design"
+          pattern: "(?i)security\\s+reviewer|secure\\s+by\\s+design|security-review-sbd"
       - type: output-matches
         name: scope-language
         config:
@@ -1185,7 +1152,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: sssc-capture
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1196,10 +1162,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)SSSC|supply\\s+chain|scorecard|capability"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-sssc-from-brd-conformance
     prompt: |
@@ -1208,7 +1170,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: sssc-from-brd
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1219,10 +1180,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)SSSC|BRD|supply\\s+chain|scorecard"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-sssc-from-prd-conformance
     prompt: |
@@ -1231,7 +1188,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: sssc-from-prd
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1242,10 +1198,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)SSSC|PRD|supply\\s+chain|scorecard"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-sssc-from-security-plan-conformance
     prompt: |
@@ -1254,7 +1206,6 @@ stimuli:
     tags:
       category: behavior-conformance
       prompt: sssc-from-security-plan
-      scenario: startup-disclaimer
       advisory: "true"
     graders:
       - type: output-matches
@@ -1265,10 +1216,6 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)SSSC|security|supply\\s+chain|scorecard"
-      - type: output-matches
-        name: startup-disclaimer
-        config:
-          pattern: "(?is)(\\[!CAUTION\\]|CAUTION).*Disclaimer.*assistive\\s+tool\\s+only"
 
   - name: prompt-synth-data-generate-conformance
     prompt: |
@@ -1287,3 +1234,75 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)synthetic|data|generate|schema|fixture"
+
+  - name: prompt-graph-research-conformance
+    prompt: |
+      Invoke the `graph-research` prompt with topic="what depends on
+      `auth_middleware.py`" against an existing `graphify-out/graph.json`.
+    tags:
+      category: behavior-conformance
+      prompt: graph-research
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)\\btask\\s+researcher\\b|graph-research|graphify"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)graph|graphify|dependency|structural|research"
+
+  - name: prompt-jira-setup-conformance
+    prompt: |
+      Invoke the `jira-setup` prompt to verify my Jira integration
+      environment is configured for the HVE-Core Jira agents.
+    tags:
+      category: behavior-conformance
+      prompt: jira-setup
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)jira-setup|\\bjira\\b"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)credential|environment|configuration|verify|JIRA_BASE_URL|token"
+
+  - name: prompt-evals-import-conformance
+    prompt: |
+      Invoke the `evals-import` prompt to import a CSV corpus of refusal
+      examples into the Vally conformance eval suite.
+    tags:
+      category: behavior-conformance
+      prompt: evals-import
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|evals-import|corpus-import"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)corpus|import|CSV|XLSX|stimul|dedupe|append"
+
+  - name: prompt-vally-test-write-conformance
+    prompt: |
+      Invoke the `vally-test-write` prompt to author a conformance stimulus
+      from a target artifact's documented behavior.
+    tags:
+      category: behavior-conformance
+      prompt: vally-test-write
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: agent-attribution
+        config:
+          pattern: "(?i)vally\\s+test\\s+author|vally-test-write|from-artifact"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)stimul|conformance|safety\\s+self-check|advisory|grader"

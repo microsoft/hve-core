@@ -1,8 +1,8 @@
 ---
 title: Security Scripts
-description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, and supply chain security
+description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-06-22
 ms.topic: reference
 keywords:
   - powershell
@@ -31,17 +31,28 @@ The security scripts share common modules and follow a consistent pattern:
 
 ## Scripts
 
+* [`Test-DependencyPinning.ps1`](#test-dependencypinningps1): dependency pinning compliance
+* [`Test-SHAStaleness.ps1`](#test-shastalenessps1): SHA freshness monitoring
+* [`Test-ActionVersionConsistency.ps1`](#test-actionversionconsistencyps1): action version alignment
+* [`Update-ActionSHAPinning.ps1`](#update-actionshapinningps1): auto-remediation of SHA pins
+* [`Invoke-PipAudit.ps1`](#invoke-pipauditps1): Python dependency audit
+* [`Test-WorkflowPermissions.ps1`](#test-workflowpermissionsps1): workflow permissions validation
+* [`Install-PSModules.ps1`](#install-psmodulesps1): centralized PS module install with retry
+* [`Modules/SecurityClasses.psm1`](#modulessecurityclassespsm1): shared data types
+* [`Modules/SecurityHelpers.psm1`](#modulessecurityhelperspsm1): shared utilities
+
 ### `Test-DependencyPinning.ps1`
 
-Verifies dependency pinning compliance for all dependencies in GitHub Actions workflows.
+Verifies dependency pinning compliance for all dependencies in GitHub Actions
+workflows and composite actions.
 
 Purpose: Detect unpinned or improperly pinned dependencies to maintain
 supply chain security.
 
 #### Features
 
-* Scans workflow files for GitHub Actions, Docker images, and other dependency
-  types
+* Scans workflow files and composite actions (`.github/actions/`) for GitHub
+  Actions, Docker images, and other dependency types
 * Categorizes violations by type (Unpinned, Stale, VersionMismatch,
   MissingVersionComment)
 * Outputs results in JSON, SARIF, CSV, Markdown, or table format
@@ -76,7 +87,8 @@ supply chain security.
 ### `Test-SHAStaleness.ps1`
 
 Monitors SHA-pinned dependencies for staleness by checking whether newer
-versions are available.
+versions are available. Scans both `.github/workflows/` and
+`.github/actions/` (composite actions) for SHA-pinned references.
 
 Purpose: Identify pinned dependencies that have fallen behind upstream
 releases.
@@ -249,6 +261,74 @@ OpenSSF Scorecard Token-Permissions failures.
 
 # Export SARIF results
 ./scripts/security/Test-WorkflowPermissions.ps1 -Format sarif -FailOnViolation
+```
+
+### `Install-PSModules.ps1`
+
+Installs PowerShell modules declared in `ps-module-versions.json` with
+exponential-backoff retry for PSGallery transient failures.
+
+Purpose: Provide a single, testable entry point for PS module provisioning
+across CI workflows, devcontainers, and local development. Retry logic lives
+here so the composite action (`.github/actions/setup-ps-modules/`) stays a
+thin cache-then-call wrapper.
+
+#### Colocation rationale
+
+This script lives in `scripts/security/` because it
+consumes `ps-module-versions.json` (the pinned-version manifest that the
+security scanners enforce) and its correct operation is a supply-chain security
+concern. If the scope later expands beyond security-module provisioning, move
+it to `scripts/lib/`.
+
+#### Contract
+
+| Aspect       | Detail                                                                                                                                     |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Error mode   | `$ErrorActionPreference = 'Stop'`; throws on exhausted retries                                                                             |
+| Exit code    | 0 on success, 1 on any module install failure                                                                                              |
+| Logging      | Timestamped `Write-Host` (green success, yellow retry, red failure); emits `::warning::` annotations when `$env:GITHUB_ACTIONS -eq 'true'` |
+| Idempotent   | Skips modules already present at the required version (`Get-Module -ListAvailable`) unless `-Force` is specified                           |
+| Side effects | `Import-Module` each installed module into the session when `-Import` is specified                                                         |
+
+#### Parameters
+
+| Parameter           | Type     | Default                                                                     | Description                                                             |
+|---------------------|----------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| `-ConfigPath`       | `string` | `scripts/security/ps-module-versions.json` (resolved relative to repo root) | Path to the JSON version manifest                                       |
+| `-Scope`            | `string` | `CurrentUser`                                                               | `Install-Module` scope (`CurrentUser` or `AllUsers`)                    |
+| `-Repository`       | `string` | `PSGallery`                                                                 | PowerShell repository name                                              |
+| `-Import`           | `switch` | `$false`                                                                    | Import each module after install                                        |
+| `-Force`            | `switch` | `$false`                                                                    | Re-install even if the module is already present at the correct version |
+| `-MaxAttempts`      | `int`    | `3`                                                                         | Maximum retry attempts per module                                       |
+| `-BaseDelaySeconds` | `int`    | `10`                                                                        | Initial backoff delay; doubles each retry                               |
+
+#### Environment variable overrides
+
+| Variable                | Overrides     | Purpose                                                                          |
+|-------------------------|---------------|----------------------------------------------------------------------------------|
+| `PS_MODULE_CONFIG_PATH` | `-ConfigPath` | Allows CI steps to point at an alternate manifest without changing the call site |
+| `PS_MODULE_SCOPE`       | `-Scope`      | Allows `copilot-setup-steps.yml` to set `AllUsers` at the environment level      |
+
+Parameters take precedence over environment variables.
+
+#### Usage
+
+```powershell
+# Default: install all modules for current user, no import
+./scripts/security/Install-PSModules.ps1
+
+# CI composite action call (import after install)
+./scripts/security/Install-PSModules.ps1 -Import
+
+# copilot-setup-steps.yml (needs AllUsers for pre-installed runner)
+./scripts/security/Install-PSModules.ps1 -Scope AllUsers -Import
+
+# Local dev: ensure modules present, skip if satisfied
+./scripts/security/Install-PSModules.ps1 -Import
+
+# Force reinstall (troubleshooting)
+./scripts/security/Install-PSModules.ps1 -Force -Import
 ```
 
 ## Modules

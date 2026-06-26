@@ -25,7 +25,7 @@ BeforeAll {
     Save-CIEnvironment
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Security'
 }
 
 AfterAll {
@@ -1055,6 +1055,38 @@ jobs:
                 $null = Test-GitHubActionsForStaleness
 
                 Should -Invoke Get-BulkGitHubActionsStaleness -Times 1
+            }
+            finally {
+                Pop-Location
+            }
+        }
+    }
+
+    Context 'Composite action scanning' {
+        It 'Detects SHA-pinned actions in composite action files' {
+            $actionsDir = Join-Path $TestDrive '.github' 'actions' 'setup-ps-modules'
+            New-Item -ItemType Directory -Path $actionsDir -Force | Out-Null
+
+            $sha = 'b' * 40
+            $ymlContent = @"
+name: Setup PS Modules
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@$sha
+"@
+            Set-Content (Join-Path $actionsDir 'action.yml') -Value $ymlContent
+
+            Push-Location $TestDrive
+            try {
+                Mock Write-SecurityLog { }
+                Mock Get-BulkGitHubActionsStaleness { return @() }
+
+                $null = Test-GitHubActionsForStaleness
+
+                Should -Invoke Get-BulkGitHubActionsStaleness -Times 1 -ParameterFilter {
+                    $ActionRepos -contains 'actions/cache'
+                }
             }
             finally {
                 Pop-Location

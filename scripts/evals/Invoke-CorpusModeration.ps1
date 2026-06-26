@@ -47,9 +47,13 @@ param(
     [string]$Model = 'unbiased',
 
     [Parameter(Mandatory = $false)]
-    [string]$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? $PSScriptRoot
+    [string]$RepoRoot = $(
+        $detectedRoot = git rev-parse --show-toplevel 2>$null
+        if ($detectedRoot) { $detectedRoot } else { $PSScriptRoot }
+    )
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/CorpusReader.psm1') -Force
@@ -107,7 +111,7 @@ $records = foreach ($relPath in $corpusPaths) {
     @{ id = $relPath; text = $body }
 }
 
-$recordsArray = @($records)
+$recordsArray = @($records | Where-Object { $null -ne $_ })
 if ($recordsArray.Count -eq 0) {
     Write-Host "All listed corpus files missing or empty; skipping moderation."
     exit 0

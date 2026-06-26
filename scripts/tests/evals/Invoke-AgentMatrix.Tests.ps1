@@ -6,6 +6,13 @@ BeforeAll {
     $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Invoke-AgentMatrix.ps1'
     $script:RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '../../..') | Select-Object -ExpandProperty Path
     $script:InventoryPath = Join-Path $script:RepoRoot 'evals/agent-behavior/AGENTS.yml'
+
+    # Dot-source the script (guarded main is skipped) so the inventory readers are
+    # available, then derive the expected slug set from the live inventory. Tests
+    # assert conformance against this set rather than a hard-coded agent count.
+    . $script:ScriptPath
+    $script:Inventory = Read-AgentInventory -RepoRoot $script:RepoRoot
+    $script:InventorySlugs = @($script:Inventory | ForEach-Object { $_['slug'] } | Sort-Object -Unique)
 }
 
 Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
@@ -44,10 +51,12 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
             $script:Summary.overall | Should -Be 'dry-run'
         }
 
-        It 'Enumerates exactly 46 parent agents (DD-09)' {
-            $script:Summary.agentCount | Should -Be 46
-            $script:Summary.results.Count | Should -Be 46
-            $script:Summary.plannedCommands.Count | Should -Be 46
+        It 'Enumerates every inventory agent exactly once (DD-09)' {
+            $resultSlugs = @($script:Summary.results | ForEach-Object { $_.slug } | Sort-Object -Unique)
+            $script:Summary.agentCount | Should -Be $script:InventorySlugs.Count
+            $script:Summary.results.Count | Should -Be $script:InventorySlugs.Count
+            $script:Summary.plannedCommands.Count | Should -Be $script:InventorySlugs.Count
+            $resultSlugs | Should -Be $script:InventorySlugs
         }
 
         It 'Records a class and cost_tier for every result row' {
@@ -59,9 +68,9 @@ Describe 'Invoke-AgentMatrix.ps1 (dry-run)' -Tag 'Unit' {
             }
         }
 
-        It 'Plans a vally command per slug using --eval-spec for the slug stimulus file' {
+        It 'Plans a vally command per slug using --eval-spec eval.yaml with an agent tag' {
             $first = $script:Summary.plannedCommands[0]
-            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/stimuli/[^/]+\.yml$'
+            $first | Should -Match '^npx vally eval --eval-spec evals/agent-behavior/eval\.yaml --tag agent=[^ ]+ --model \S+$'
         }
     }
 
@@ -253,8 +262,9 @@ Describe 'Invoke-AgentMatrix helper functions' -Tag 'Unit' {
 
         It 'Returns every inventory slug in All mode' {
             $slugs = Resolve-SlugSet -RepoRoot $script:RepoRoot -Inventory $script:Inventory -ParameterSet 'All'
+            $expected = @($script:Inventory | ForEach-Object { $_['slug'] } | Sort-Object -Unique)
             $slugs.Count | Should -Be $script:Inventory.Count
-            $slugs.Count | Should -Be 46
+            $slugs | Should -Be $expected
         }
 
         It 'Filters Changed inputs to known slugs' {

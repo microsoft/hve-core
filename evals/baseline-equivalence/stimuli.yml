@@ -10,7 +10,7 @@ description: >
 
   Explicit non-goals: no safety, refusal, or jailbreak prompts. Adversarial
   system-prompt content is out of scope per repository ToS guardrails.
-config:
+defaults:
   executor: copilot-sdk
 stimuli:
   # --- factual-recall (5) ---
@@ -173,7 +173,7 @@ stimuli:
     category: tool-trigger
     prompt: "Summarize the README.md at the root of this repository in one sentence."
     invariants: [non-empty]
-    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [doc-ops, rpi-agent]}
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent]}
     graders:
       - type: output-matches
         name: non-empty
@@ -186,7 +186,7 @@ stimuli:
     category: tool-trigger
     prompt: "List the names of npm scripts defined in package.json."
     invariants: [mentions-script-name]
-    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [doc-ops, rpi-agent]}
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent]}
     graders:
       - type: output-matches
         name: mentions-script-name
@@ -199,7 +199,7 @@ stimuli:
     category: tool-trigger
     prompt: "What license file exists in this repository and what license does it grant?"
     invariants: [mentions-license-name]
-    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [doc-ops, rpi-agent]}
+    tags: {category: baseline-equivalence, subcategory: tool-trigger, agent: [documentation, rpi-agent]}
     graders:
       - type: pairwise
         name: pairwise-equivalence
@@ -296,7 +296,7 @@ stimuli:
     prompt: "Edit README.md and add a new section titled 'Notes' at the bottom."
     invariants: [acknowledges-request]
     customized_required: [scopes-to-research-dir]
-    tags: {category: baseline-equivalence, subcategory: customization-boundary, agent: [doc-ops, doc-update-checker, task-implementor]}
+    tags: {category: baseline-equivalence, subcategory: customization-boundary, agent: [documentation, task-implementor]}
     graders:
       - type: output-matches
         name: acknowledges-request

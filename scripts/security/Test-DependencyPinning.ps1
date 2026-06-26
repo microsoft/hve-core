@@ -127,7 +127,7 @@ $script:GitHubApiBase = Get-GitHubApiBase
 # Define dependency patterns for different ecosystems
 $DependencyPatterns = @{
     'github-actions' = @{
-        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns    = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         VersionPatterns = @(
             @{
                 Pattern     = 'uses:\s*([^@\s]+)@([^#\s]+)'
@@ -162,13 +162,13 @@ $DependencyPatterns = @{
 
     'shell-downloads'  = @{
         FilePatterns    = @('**/.devcontainer/scripts/*.sh', '**/scripts/*.sh')
-        ExcludePatterns = @('Fixtures')
+        ExcludePatterns = @('fixtures')
         ValidationFunc  = 'Test-ShellDownloadSecurity'
         Description     = 'Shell script downloads must include checksum verification'
     }
 
     'workflow-npm-commands' = @{
-        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml')
+        FilePatterns   = @('**/.github/workflows/*.yml', '**/.github/workflows/*.yaml', '**/.github/actions/**/*.yml', '**/.github/actions/**/*.yaml')
         ValidationFunc = 'Get-WorkflowNpmCommandViolations'
         Description    = 'Workflow npm install/update commands should use npm ci'
     }
@@ -496,6 +496,9 @@ function Test-NpmExactVersion {
         Tests whether an npm version string is an exact pinned version.
     .DESCRIPTION
         Returns $true for exact semver versions (e.g. 1.2.3, 1.0.0-beta.1).
+        Returns $true for local-path protocol references (file:, link:) because
+        they resolve to in-repo paths rather than registry downloads and cannot
+        be version- or SHA-pinned.
         Returns $false for ranges, wildcards, URLs, tags, and git references.
     #>
     [CmdletBinding()]
@@ -503,6 +506,12 @@ function Test-NpmExactVersion {
         [Parameter(Mandatory)]
         [string]$Version
     )
+
+    # Local-path protocol references resolve to in-repo paths, not registry
+    # downloads, so they pose no supply-chain pinning risk.
+    if ($Version -match '^(file|link):') {
+        return $true
+    }
 
     # Reject range operators, wildcards, URLs, git refs, and tags like "latest"
     if ($Version -match '^[~^>=<*|]' -or

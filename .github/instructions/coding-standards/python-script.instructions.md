@@ -1,6 +1,6 @@
 ---
 applyTo: '**/*.py'
-description: 'Instructions for Python scripting implementation - Brought to you by microsoft/hve-core'
+description: 'Python scripting conventions'
 ---
 
 # Python Script Instructions

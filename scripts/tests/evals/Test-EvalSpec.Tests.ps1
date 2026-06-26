@@ -39,6 +39,14 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
 
             $errors.Count | Should -Be 0
         }
+
+        It 'Reports zero errors when environment paths resolve relative to the spec directory' {
+            $relPath = 'scripts/tests/evals/fixtures/specs/valid/valid-env-path.yaml'
+            $path = Join-Path $script:RepoRoot $relPath
+            $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
+            ($errors | Where-Object { $_.field -like 'environment.*' }).Count | Should -Be 0
+        }
     }
 
     Context 'Invalid fixtures' {
@@ -46,7 +54,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $path = Join-Path $script:InvalidFixturesRoot 'missing-executor.yaml'
             $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'missing-executor.yaml' -RepoRoot $script:RepoRoot
-            ($errors | Where-Object { $_.field -eq 'config.executor' }).Count | Should -BeGreaterOrEqual 1
+            ($errors | Where-Object { $_.field -eq 'defaults.executor' }).Count | Should -BeGreaterOrEqual 1
         }
 
         It 'Flags executor not in whitelist' {
@@ -83,6 +91,14 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath 'moderation-threshold-non-numeric.yaml' -RepoRoot $script:RepoRoot
             ($errors | Where-Object { $_.field -eq 'moderation.threshold' }).Count | Should -BeGreaterOrEqual 1
         }
+
+        It 'Flags environment paths that do not resolve relative to the spec directory' {
+            $relPath = 'scripts/tests/evals/fixtures/specs/invalid/env-path-unresolved.yaml'
+            $path = Join-Path $script:RepoRoot $relPath
+            $spec = ConvertFrom-Yaml -Yaml (Get-Content -LiteralPath $path -Raw)
+            $errors = Test-EvalSpecCompliance -Spec $spec -SpecPath $relPath -RepoRoot $script:RepoRoot
+            ($errors | Where-Object { $_.field -like 'environment.*' -and $_.message -like '*does not resolve*' }).Count | Should -BeGreaterOrEqual 2
+        }
     }
 
     Context 'Optional moderation block' {
@@ -97,7 +113,7 @@ Describe 'Test-EvalSpecCompliance (module)' -Tag 'Unit' {
             foreach ($v in @(0.0, 1.0)) {
                 $spec = @{
                     name = 'boundary'
-                    config = @{ executor = 'copilot-sdk' }
+                    defaults = @{ executor = 'copilot-sdk' }
                     moderation = @{ threshold = $v }
                     stimuli = @(@{ name = 's'; prompt = 'p'; graders = @(@{ type = 'noop' }) })
                 }
@@ -117,7 +133,8 @@ Describe 'Test-EvalSpec.ps1 (entry script)' -Tag 'Unit' {
         & $script:ScriptPath `
             -Root 'scripts/tests/evals/fixtures/specs/valid' `
             -RepoRoot $script:RepoRoot `
-            -OutputPath $script:OutputPath *> $null
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
         $exit = $LASTEXITCODE
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
 
@@ -130,7 +147,8 @@ Describe 'Test-EvalSpec.ps1 (entry script)' -Tag 'Unit' {
         & $script:ScriptPath `
             -Root 'scripts/tests/evals/fixtures/specs/invalid' `
             -RepoRoot $script:RepoRoot `
-            -OutputPath $script:OutputPath *> $null
+            -OutputPath $script:OutputPath `
+            -SkipAgentCoverage *> $null
         $exit = $LASTEXITCODE
         $report = Get-Content -LiteralPath $script:OutputPath -Raw | ConvertFrom-Json
 

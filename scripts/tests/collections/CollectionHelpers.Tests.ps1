@@ -658,4 +658,271 @@ display:
     }
 }
 
+Describe 'Maturity vocabulary drift guard' {
+    BeforeAll {
+        $script:allowedMaturities = Get-CollectionMaturityVocabulary
+        $script:maturityRank = Get-CollectionMaturityRank
+        $script:rankKeys = @($script:maturityRank.Keys)
+    }
+
+    It 'Exposes a non-empty allowed maturity vocabulary' {
+        $script:allowedMaturities.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Exposes a non-empty maturity rank map' {
+        $script:rankKeys.Count | Should -BeGreaterThan 0
+    }
+
+    It 'Ranks every allowed maturity so propagation never hits a null rank' {
+        foreach ($maturity in $script:allowedMaturities) {
+            $script:rankKeys | Should -Contain $maturity -Because "maturity '$maturity' is in the vocabulary and must have a rank for Update-HveCoreAllCollection propagation"
+        }
+    }
+
+    It 'Does not rank maturities absent from the allowed vocabulary' {
+        foreach ($key in $script:rankKeys) {
+            $script:allowedMaturities | Should -Contain $key -Because "maturity rank key '$key' has no matching entry in the allowed maturity vocabulary"
+        }
+    }
+
+    It 'Returns a stable rank order matching vocabulary strictness' {
+        for ($i = 0; $i -lt $script:allowedMaturities.Count; $i++) {
+            $script:maturityRank[$script:allowedMaturities[$i]] | Should -Be $i -Because 'rank must equal the vocabulary index so strictest maturity wins'
+        }
+    }
+}
+
+Describe 'Get-CollectionMaturityRank - null-rank regression' {
+    BeforeAll {
+        $script:vocabulary = Get-CollectionMaturityVocabulary
+        $script:rank = Get-CollectionMaturityRank
+    }
+
+    # Regression guard for the PowerShell `$null -gt 0` pitfall: an unranked
+    # maturity returns $null from the rank map, and `$null -gt 0` is $false,
+    # so a missing rank would silently lose the strictest-wins comparison
+    # during propagation. Every vocabulary entry must resolve to a non-null
+    # integer rank.
+    It 'Assigns a non-null integer rank to every vocabulary entry' {
+        foreach ($maturity in $script:vocabulary) {
+            $resolved = $script:rank[$maturity]
+            $resolved | Should -Not -BeNullOrEmpty -Because "maturity '$maturity' must have a rank or propagation hits the `$null -gt 0 pitfall"
+            $resolved | Should -BeOfType [int]
+        }
+    }
+
+    It 'Produces ranks that compare correctly without a null short-circuit' {
+        $stableRank = $script:rank['stable']
+        $removedRank = $script:rank['removed']
+        ($removedRank -gt $stableRank) | Should -BeTrue -Because 'strictest maturity must win the comparison'
+        # A null rank would make this comparison silently $false.
+        ($null -gt $stableRank) | Should -BeFalse
+    }
+}
+
+Describe 'Update-HveCoreAllCollection - experimental maturity propagation' {
+    BeforeAll {
+        $script:repoRoot = Join-Path $TestDrive 'repo-experimental-propagation'
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test-collection'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'exp.agent.md') -Value "---`ndescription: experimental agent`n---`nBody"
+
+        $collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
+
+        # Source themed collection declares the item as experimental
+        $themeYaml = @"
+id: test-theme
+name: Test Theme
+description: Theme collection
+tags: []
+items:
+- path: .github/agents/test-collection/exp.agent.md
+  kind: agent
+  maturity: experimental
+"@
+        Set-Content -Path (Join-Path $collectionsDir 'test-theme.collection.yml') -Value $themeYaml -Encoding utf8 -NoNewline
+    }
+
+    It 'Propagates experimental maturity from a source collection into the aggregated manifest' {
+        # hve-core-all starts with the item as stable (no maturity key)
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/exp.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'exp\.agent\.md'
+        $output | Should -Match 'maturity: experimental'
+    }
+}
+
+Describe 'Resolve-StrictSafeMaturity' {
+    BeforeAll {
+        $script:vocabulary = Get-CollectionMaturityVocabulary
+    }
+
+    It 'Returns every known maturity unchanged' {
+        foreach ($maturity in $script:vocabulary) {
+            Resolve-StrictSafeMaturity -Maturity $maturity -WarningAction SilentlyContinue |
+                Should -Be $maturity -Because "ranked maturity '$maturity' must pass through untouched"
+        }
+    }
+
+    It 'Does not warn for a known maturity' {
+        Resolve-StrictSafeMaturity -Maturity 'preview' -WarningVariable knownWarnings -WarningAction SilentlyContinue | Out-Null
+        $knownWarnings | Should -BeNullOrEmpty
+    }
+
+    It 'Errs toward experimental for an unrankable maturity' {
+        Resolve-StrictSafeMaturity -Maturity 'beta' -WarningAction SilentlyContinue |
+            Should -Be 'experimental' -Because 'strict-safe resolution must prefer experimental over stable'
+    }
+
+    It 'Treats an empty maturity as experimental rather than stable' {
+        # Resolve-CollectionItemMaturity converts empty to 'stable' before this
+        # runs, so a literal empty value reaching here is itself unrankable.
+        Resolve-StrictSafeMaturity -Maturity '' -WarningAction SilentlyContinue |
+            Should -Be 'experimental'
+    }
+
+    It 'Emits a deep warning with remediation guidance for an unrankable maturity' {
+        Resolve-StrictSafeMaturity -Maturity 'beta' -Source 'theme.collection.yml (agent foo)' -WarningVariable badWarnings -WarningAction SilentlyContinue | Out-Null
+        $badWarnings | Should -Not -BeNullOrEmpty
+        $warningText = $badWarnings -join "`n"
+        $warningText | Should -Match "Unrankable maturity 'beta'"
+        $warningText | Should -Match 'theme\.collection\.yml \(agent foo\)'
+        $warningText | Should -Match 'Remediation:'
+        foreach ($maturity in $script:vocabulary) {
+            $warningText | Should -Match ([regex]::Escape($maturity)) -Because "remediation must list valid value '$maturity'"
+        }
+    }
+}
+
+Describe 'Update-HveCoreAllCollection - strictest-wins propagation' {
+    BeforeEach {
+        $script:repoRoot = Join-Path $TestDrive ([System.Guid]::NewGuid().ToString())
+        $script:agentsDir = Join-Path $script:repoRoot '.github/agents/test-collection'
+        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $script:agentsDir 'item.agent.md') -Value "---`ndescription: item agent`n---`nBody"
+
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Does not downgrade a stricter aggregate maturity from a less-strict source' {
+        # Source declares the item stable; aggregate already has it experimental.
+        $themeYaml = @"
+id: test-theme
+name: Test Theme
+description: Theme collection
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+  maturity: stable
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-theme.collection.yml') -Value $themeYaml -Encoding utf8 -NoNewline
+
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+  maturity: experimental
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: experimental'
+    }
+
+    It 'Errs toward experimental and warns when a source maturity is unrankable' {
+        $themeYaml = @"
+id: test-theme
+name: Test Theme
+description: Theme collection
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+  maturity: beta
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-theme.collection.yml') -Value $themeYaml -Encoding utf8 -NoNewline
+
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot -WarningVariable propWarnings -WarningAction SilentlyContinue | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: experimental' -Because 'an unrankable source maturity must err toward experimental'
+
+        $warningText = $propWarnings -join "`n"
+        $warningText | Should -Match "Unrankable maturity 'beta'"
+        $warningText | Should -Match 'Remediation:'
+    }
+
+    It 'Excludes the item when a source escalates it to deprecated (strictest wins)' {
+        $themeYaml = @"
+id: test-theme
+name: Test Theme
+description: Theme collection
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+  maturity: deprecated
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'test-theme.collection.yml') -Value $themeYaml -Encoding utf8 -NoNewline
+
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/item.agent.md
+  kind: agent
+  maturity: experimental
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Raw
+        $output | Should -Not -Match 'item\.agent\.md' -Because 'deprecated is stricter than experimental and must exclude the item'
+    }
+}
+
+
 

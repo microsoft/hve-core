@@ -5,7 +5,7 @@ description: >
   Judge model is pinned to claude-sonnet-4.6 for the comparison call only;
   the executor model is unpinned and injected by the driver.
 type: capability
-config:
+defaults:
   runs: 3
   timeout: 120s
   executor: copilot-sdk

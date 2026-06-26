@@ -140,17 +140,17 @@ function Test-EvalSpecCompliance {
     }
 
     $executor = $null
-    if ($Spec.ContainsKey('config') -and $Spec['config'] -is [System.Collections.IDictionary]) {
-        if ($Spec['config'].ContainsKey('executor')) {
-            $executor = [string]$Spec['config']['executor']
+    if ($Spec.ContainsKey('defaults') -and $Spec['defaults'] -is [System.Collections.IDictionary]) {
+        if ($Spec['defaults'].ContainsKey('executor')) {
+            $executor = [string]$Spec['defaults']['executor']
         }
     }
     if ([string]::IsNullOrWhiteSpace($executor)) {
-        $errors.Add(@{ path = $SpecPath; field = 'config.executor'; message = 'Missing required key: config.executor' })
+        $errors.Add(@{ path = $SpecPath; field = 'defaults.executor'; message = 'Missing required key: defaults.executor' })
     }
     elseif ($script:AllowedExecutors -notcontains $executor) {
         $allowed = $script:AllowedExecutors -join ', '
-        $errors.Add(@{ path = $SpecPath; field = 'config.executor'; message = "Executor '$executor' is not in the whitelist ($allowed)" })
+        $errors.Add(@{ path = $SpecPath; field = 'defaults.executor'; message = "Executor '$executor' is not in the whitelist ($allowed)" })
     }
 
     if ($Spec.ContainsKey('moderation')) {
@@ -172,6 +172,30 @@ function Test-EvalSpecCompliance {
             }
             elseif ($thresholdValue -lt 0.0 -or $thresholdValue -gt 1.0) {
                 $errors.Add(@{ path = $SpecPath; field = 'moderation.threshold'; message = "moderation.threshold ($thresholdValue) must be between 0.0 and 1.0 inclusive" })
+            }
+        }
+    }
+
+    if ($Spec.ContainsKey('environment')) {
+        $environment = $Spec['environment']
+        if ($environment -is [System.Collections.IDictionary]) {
+            $specDir = Split-Path -Path (Join-Path -Path $RepoRoot -ChildPath $SpecPath) -Parent
+            foreach ($entryKey in @('skills', 'files')) {
+                if (-not $environment.ContainsKey($entryKey)) { continue }
+                $entryPaths = @($environment[$entryKey])
+                $entryIndex = -1
+                foreach ($rawPath in $entryPaths) {
+                    $entryIndex++
+                    $pathString = [string]$rawPath
+                    if ([string]::IsNullOrWhiteSpace($pathString)) {
+                        $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "Empty environment.$entryKey path" })
+                        continue
+                    }
+                    $resolved = [System.IO.Path]::GetFullPath((Join-Path -Path $specDir -ChildPath $pathString))
+                    if (-not (Test-Path -LiteralPath $resolved)) {
+                        $errors.Add(@{ path = $SpecPath; field = "environment.$entryKey[$entryIndex]"; message = "environment.$entryKey path '$pathString' does not resolve to an existing path (resolved to '$resolved'); vally resolves it relative to the spec directory" })
+                    }
+                }
             }
         }
     }

@@ -25,8 +25,17 @@ Set-Content -LiteralPath `$outPath -Value '$jsonLiteral' -Encoding utf8 -NoNewli
 if (`$json.summary.flaggedCount -gt 0) { exit 1 } else { exit 0 }
 "@ | Set-Content -LiteralPath $stubScript -Encoding utf8 -NoNewline
 
-        $shim = Join-Path $stubDir 'python.cmd'
-        "@pwsh -NoProfile -File `"$stubScript`" %*" | Set-Content -LiteralPath $shim -Encoding ascii -NoNewline
+        if ($IsWindows) {
+            $shim = Join-Path $stubDir 'python.cmd'
+            "@pwsh -NoProfile -File `"$stubScript`" %*" | Set-Content -LiteralPath $shim -Encoding ascii -NoNewline
+        }
+        else {
+            # `.cmd` shims are not honored by PATH lookups on Linux/macOS CI, so
+            # emit an extensionless executable that `Get-Command python` resolves.
+            $shim = Join-Path $stubDir 'python'
+            "#!/usr/bin/env sh`npwsh -NoProfile -File `"$stubScript`" `"`$@`"`n" | Set-Content -LiteralPath $shim -Encoding ascii -NoNewline
+            & chmod +x $shim
+        }
         return $stubDir
     }
 
@@ -49,6 +58,7 @@ if (`$json.summary.flaggedCount -gt 0) { exit 1 } else { exit 0 }
 Describe 'Invoke-CorpusModeration.ps1' -Tag 'Unit' {
     AfterEach {
         $env:PATH = $script:OrigPath
+        Remove-Item Env:HVE_MODERATION_PYTHON -ErrorAction SilentlyContinue
     }
 
     It 'Writes empty corpus result and exits 0 when manifest is missing' {
@@ -112,7 +122,8 @@ Describe 'Invoke-CorpusModeration.ps1' -Tag 'Unit' {
         )
 
         $stubDir = New-PythonStub -OutputJson '{"records":[{"id":".github/agents/clean.agent.md","scores":{"toxicity":0.05},"flagged":false,"flaggedLabels":[]}],"summary":{"total":1,"flaggedCount":0}}'
-        $env:PATH = "$stubDir;$($script:OrigPath)"
+        $env:PATH = "$stubDir$([System.IO.Path]::PathSeparator)$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = 'python'
 
         & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $manifest -OutFile $outFile -RepoRoot $repo 2>$null
         $LASTEXITCODE | Should -Be 0
@@ -132,7 +143,8 @@ Describe 'Invoke-CorpusModeration.ps1' -Tag 'Unit' {
         )
 
         $stubDir = New-PythonStub -OutputJson '{"records":[{"id":".github/prompts/bad.prompt.md","scores":{"toxicity":0.92},"flagged":true,"flaggedLabels":["toxicity"]}],"summary":{"total":1,"flaggedCount":1}}'
-        $env:PATH = "$stubDir;$($script:OrigPath)"
+        $env:PATH = "$stubDir$([System.IO.Path]::PathSeparator)$($script:OrigPath)"
+        $env:HVE_MODERATION_PYTHON = 'python'
 
         & pwsh -NoProfile -File $script:ScriptPath -ManifestPath $manifest -OutFile $outFile -RepoRoot $repo 2>$null
         $LASTEXITCODE | Should -Be 1

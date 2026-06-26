@@ -46,6 +46,73 @@ function Resolve-VallyRunDir {
     return $latest.FullName
 }
 
+function Get-VallySpecThreshold {
+    <#
+    .SYNOPSIS
+    Reads an eval spec's scoring.threshold value when available.
+
+    .DESCRIPTION
+    Some evals report trial success through `gradeResult.score` rather than a
+    hard `gradeResult.passed` boolean. When the spec contains
+    `scoring.threshold`, the runner uses that threshold to interpret those
+    scores.
+
+    .PARAMETER SpecPath
+    Path to the eval spec YAML file.
+
+    .OUTPUTS
+    [double] The configured threshold, or $null when absent.
+    #>
+    [CmdletBinding()]
+    [OutputType([double])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SpecPath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($SpecPath) -or -not (Test-Path -LiteralPath $SpecPath -PathType Leaf)) {
+        return $null
+    }
+
+    if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
+        return $null
+    }
+
+    try {
+        Import-Module powershell-yaml -ErrorAction Stop | Out-Null
+    }
+    catch {
+        return $null
+    }
+
+    try {
+        $spec = Get-Content -LiteralPath $SpecPath -Raw -Encoding utf8 | ConvertFrom-Yaml
+    }
+    catch {
+        return $null
+    }
+
+    if ($null -eq $spec) { return $null }
+
+    if ($spec -is [System.Collections.IDictionary]) {
+        if ($spec.Contains('scoring')) {
+            $scoring = $spec['scoring']
+            if ($scoring -is [System.Collections.IDictionary] -and $scoring.Contains('threshold')) {
+                return [double]$scoring['threshold']
+            }
+        }
+        return $null
+    }
+
+    $scoring = $spec.PSObject.Properties['scoring']
+    if ($null -eq $scoring -or $null -eq $scoring.Value) { return $null }
+
+    $threshold = $scoring.Value.PSObject.Properties['threshold']
+    if ($null -eq $threshold -or $null -eq $threshold.Value) { return $null }
+
+    return [double]$threshold.Value
+}
+
 function Read-VallyResultsJsonl {
     <#
     .SYNOPSIS
@@ -70,7 +137,8 @@ function Read-VallyResultsJsonl {
         [Parameter(Mandatory = $true)]
         [AllowNull()]
         [AllowEmptyString()]
-        [string]$RunDir
+        [string]$RunDir,
+        [Nullable[double]]$Threshold
     )
 
     $empty = @{
@@ -108,9 +176,22 @@ function Read-VallyResultsJsonl {
         $trials++
 
         $trialPassed = $false
-        if ($obj.PSObject.Properties['gradeResult'] -and $obj.gradeResult -and
-            $obj.gradeResult.PSObject.Properties['passed'] -and $null -ne $obj.gradeResult.passed) {
-            $trialPassed = [bool]$obj.gradeResult.passed
+        $gradeResult = $null
+        if ($obj.PSObject.Properties['gradeResult']) {
+            $gradeResult = $obj.gradeResult
+        }
+        $hasScore = $false
+        $scoreValue = $null
+        if ($gradeResult -and $gradeResult.PSObject.Properties['score'] -and $null -ne $gradeResult.score) {
+            $hasScore = $true
+            $scoreValue = [double]$gradeResult.score
+        }
+
+        if ($hasScore -and $PSBoundParameters.ContainsKey('Threshold') -and $null -ne $Threshold) {
+            $trialPassed = $scoreValue -ge [double]$Threshold
+        }
+        elseif ($gradeResult -and $gradeResult.PSObject.Properties['passed'] -and $null -ne $gradeResult.passed) {
+            $trialPassed = [bool]$gradeResult.passed
         }
         if ($trialPassed) { $passed++ } else { $failed++ }
 
@@ -184,8 +265,14 @@ function Invoke-VallySpec {
     .PARAMETER LogPath
     Optional path to tee stdout/stderr to a log file.
 
+    .PARAMETER Tag
+    Optional `kind=slug` filter passed to `vally eval --tag`. Scopes execution
+    to the stimuli whose `tags.<kind>` matches the slug. Used when a single
+    shared spec is backlinked by multiple artifacts so each artifact runs only
+    its own stimuli.
+
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; tag }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -194,7 +281,8 @@ function Invoke-VallySpec {
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$Model,
         [string]$VallyCommand = 'vally',
-        [string]$LogPath
+        [string]$LogPath,
+        [string]$Tag
     )
 
     if (-not (Test-Path -LiteralPath $OutputDir)) {
@@ -207,6 +295,9 @@ function Invoke-VallySpec {
         '--model', $Model
         '--output-dir', $OutputDir
     )
+    if (-not [string]::IsNullOrWhiteSpace($Tag)) {
+        $vallyArgs += @('--tag', $Tag)
+    }
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $prev = [Console]::OutputEncoding
@@ -233,7 +324,8 @@ function Invoke-VallySpec {
     }
 
     $runDir = Resolve-VallyRunDir -OutputDir $OutputDir
-    $aggregate = Read-VallyResultsJsonl -RunDir $runDir
+    $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
+    $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold
 
     $durationMs = if ($aggregate.durationMs -gt 0) {
         [int]$aggregate.durationMs
@@ -252,6 +344,7 @@ function Invoke-VallySpec {
         trials           = $aggregate.trials
         resultsPath      = $aggregate.resultsPath
         perStimulus      = $aggregate.perStimulus
+        tag              = $Tag
     }
 }
 
@@ -281,7 +374,7 @@ function Test-SpecInputModeration {
     Repository root. Defaults to git root.
 
     .OUTPUTS
-    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string }
+    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string; error = $bool }
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -294,7 +387,8 @@ function Test-SpecInputModeration {
     )
 
     if (-not $RepoRoot) {
-        $RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '../../..')
+        $RepoRoot = git rev-parse --show-toplevel 2>$null
+        if (-not $RepoRoot) { $RepoRoot = Join-Path $PSScriptRoot '../../..' }
     }
     if (-not $ModerationScript) {
         $ModerationScript = Join-Path $RepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
@@ -316,9 +410,9 @@ function Test-SpecInputModeration {
 
     $records = @()
     $index = 0
-    if ($spec.PSObject.Properties['stimuli'] -and $spec.stimuli) {
+    if ($spec -and $spec.stimuli) {
         foreach ($stimulus in $spec.stimuli) {
-            if ($stimulus.PSObject.Properties['prompt'] -and $stimulus.prompt) {
+            if ($stimulus -and $stimulus.prompt) {
                 $records += @{
                     id   = "input-$ArtifactId-$index"
                     text = [string]$stimulus.prompt
@@ -343,10 +437,12 @@ function Test-SpecInputModeration {
     }
     catch {
         Write-Warning "Content moderation script failed: $_"
-        return @{ flagged = $true; flaggedCount = $records.Count; outputPath = $outFile }
+        return @{ flagged = $false; flaggedCount = 0; outputPath = $outFile; error = $true }
     }
 
-    $flagged = $moderationExitCode -ne 0
+    # Exit 1 = genuine content flag; exit >=2 = moderation infrastructure/usage error.
+    $flagged = $moderationExitCode -eq 1
+    $moderationError = $moderationExitCode -ge 2
     $flaggedCount = 0
     if (Test-Path -LiteralPath $outFile) {
         $output = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
@@ -357,6 +453,7 @@ function Test-SpecInputModeration {
         flagged       = $flagged
         flaggedCount  = $flaggedCount
         outputPath    = $outFile
+        error         = $moderationError
     }
 }
 
@@ -386,7 +483,7 @@ function Test-SpecOutputModeration {
     Repository root.
 
     .OUTPUTS
-    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string }
+    [hashtable] @{ flagged = $bool; flaggedCount = $int; outputPath = $string; error = $bool }
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -399,7 +496,8 @@ function Test-SpecOutputModeration {
     )
 
     if (-not $RepoRoot) {
-        $RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? (Join-Path $PSScriptRoot '../../..')
+        $RepoRoot = git rev-parse --show-toplevel 2>$null
+        if (-not $RepoRoot) { $RepoRoot = Join-Path $PSScriptRoot '../../..' }
     }
     if (-not $ModerationScript) {
         $ModerationScript = Join-Path $RepoRoot 'scripts/evals/Invoke-ContentModeration.ps1'
@@ -458,10 +556,12 @@ function Test-SpecOutputModeration {
     }
     catch {
         Write-Warning "Content moderation script failed: $_"
-        return @{ flagged = $true; flaggedCount = $records.Count; outputPath = $outFile }
+        return @{ flagged = $false; flaggedCount = 0; outputPath = $outFile; error = $true }
     }
 
-    $flagged = $moderationExitCode -ne 0
+    # Exit 1 = genuine content flag; exit >=2 = moderation infrastructure/usage error.
+    $flagged = $moderationExitCode -eq 1
+    $moderationError = $moderationExitCode -ge 2
     $flaggedCount = 0
     if (Test-Path -LiteralPath $outFile) {
         $output = Get-Content -LiteralPath $outFile -Raw | ConvertFrom-Json
@@ -472,6 +572,141 @@ function Test-SpecOutputModeration {
         flagged       = $flagged
         flaggedCount  = $flaggedCount
         outputPath    = $outFile
+        error         = $moderationError
+    }
+}
+
+function Get-VallySpecBacklinkCount {
+    <#
+    .SYNOPSIS
+    Counts how many distinct artifacts the stimulus index backlinks to each spec.
+
+    .DESCRIPTION
+    Walks the index `coverage` map (coverage key -> array of spec-relative paths)
+    and tallies, per spec, the number of coverage keys that reference it. A spec
+    backlinked by more than one artifact runs once PER artifact with a
+    `--tag kind=slug` filter so each artifact is scored only on its own stimuli
+    instead of inheriting another artifact's results.
+
+    .PARAMETER Index
+    The stimulus index hashtable produced by New-StimulusIndex. The optional
+    `coverage` key maps each coverage key to an array of spec-relative paths.
+
+    .OUTPUTS
+    [hashtable] mapping a spec-relative path to its backlink count.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Index
+    )
+
+    $specBacklinkCount = @{}
+    if ($Index.ContainsKey('coverage') -and $null -ne $Index['coverage']) {
+        foreach ($covKey in $Index['coverage'].Keys) {
+            foreach ($covSpec in $Index['coverage'][$covKey]) {
+                if (-not $specBacklinkCount.ContainsKey($covSpec)) { $specBacklinkCount[$covSpec] = 0 }
+                $specBacklinkCount[$covSpec]++
+            }
+        }
+    }
+
+    return $specBacklinkCount
+}
+
+function Get-VallySpecRunPlan {
+    <#
+    .SYNOPSIS
+    Builds the per-artifact spec-run plan, keying each run by a composite
+    spec+tag runKey so a shared spec runs once per backlinking artifact.
+
+    .DESCRIPTION
+    When a spec is backlinked by more than one artifact (SpecBacklinkCount > 1),
+    each artifact runs only its own stimuli via a `kind=artifactId` tag,
+    producing a distinct runKey of the form `specRel|tag`. Specs backlinked by a
+    single artifact run untagged with a runKey equal to specRel. Artifacts with
+    no covering spec are collected into missingSpecs.
+
+    .PARAMETER Artifact
+    Array of artifact descriptors. Each is a hashtable with keys: kind,
+    artifactId, path, status, and specs (an array of spec-relative paths;
+    empty when no spec covers the artifact).
+
+    .PARAMETER SpecBacklinkCount
+    Hashtable mapping a spec-relative path to the number of artifacts that
+    backlink it.
+
+    .PARAMETER IndexRoot
+    Root path used to resolve each specRel to an absolute spec path.
+
+    .OUTPUTS
+    [hashtable] with keys: uniqueSpecRuns (runKey -> @{ specRel; specAbs; tag }),
+    artifactPlan (array of @{ kind; artifactId; path; status; specRuns }), and
+    missingSpecs (array of @{ kind; artifactId; path }).
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable[]]$Artifact,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$SpecBacklinkCount,
+
+        [Parameter(Mandatory = $true)]
+        [string]$IndexRoot
+    )
+
+    $uniqueSpecRuns = @{}
+    $artifactPlan   = [System.Collections.Generic.List[hashtable]]::new()
+    $missingSpecs   = [System.Collections.Generic.List[hashtable]]::new()
+
+    foreach ($a in $Artifact) {
+        $artifactKind = [string]$a.kind
+        $artifactId   = [string]$a.artifactId
+        $specs        = @($a.specs)
+
+        if ($specs.Count -eq 0) {
+            $missingSpecs.Add(@{ kind = $artifactKind; artifactId = $artifactId; path = [string]$a.path })
+            continue
+        }
+
+        $artifactSpecRuns = [System.Collections.Generic.List[string]]::new()
+        foreach ($specRel in $specs) {
+            $shared = ($SpecBacklinkCount.ContainsKey($specRel) -and $SpecBacklinkCount[$specRel] -gt 1)
+            if ($shared) {
+                $tag    = "$artifactKind=$artifactId"
+                $runKey = "$specRel|$tag"
+            }
+            else {
+                $tag    = ''
+                $runKey = $specRel
+            }
+            if (-not $uniqueSpecRuns.ContainsKey($runKey)) {
+                $uniqueSpecRuns[$runKey] = @{
+                    specRel = $specRel
+                    specAbs = Join-Path -Path $IndexRoot -ChildPath $specRel
+                    tag     = $tag
+                }
+            }
+            $artifactSpecRuns.Add($runKey) | Out-Null
+        }
+
+        $artifactPlan.Add(@{
+            kind        = $artifactKind
+            artifactId  = $artifactId
+            path        = [string]$a.path
+            status      = [string]$a.status
+            specRuns    = @($artifactSpecRuns)
+        })
+    }
+
+    return @{
+        uniqueSpecRuns = $uniqueSpecRuns
+        artifactPlan   = $artifactPlan
+        missingSpecs   = $missingSpecs
     }
 }
 
@@ -480,5 +715,7 @@ Export-ModuleMember -Function @(
     'Read-VallyResultsJsonl',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
-    'Test-SpecOutputModeration'
+    'Test-SpecOutputModeration',
+    'Get-VallySpecBacklinkCount',
+    'Get-VallySpecRunPlan'
 )

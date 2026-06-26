@@ -21,7 +21,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/memory.agent.md
     kind: agent
-  - path: .github/agents/hve-core/doc-ops.agent.md
+  - path: .github/agents/hve-core/documentation.agent.md
     kind: agent
   - path: .github/agents/hve-core/prompt-builder.agent.md
     kind: agent
@@ -36,6 +36,9 @@ items:
     maturity: experimental
   - path: .github/agents/hve-core/pr-review.agent.md
     kind: agent
+  - path: .github/agents/hve-core/pr-walkthrough.agent.md
+    kind: agent
+    maturity: experimental
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
@@ -73,8 +76,6 @@ items:
     maturity: experimental
   - path: .github/prompts/hve-core/checkpoint.prompt.md
     kind: prompt
-  - path: .github/prompts/hve-core/doc-ops-update.prompt.md
-    kind: prompt
   # Git prompts
   - path: .github/prompts/hve-core/git-commit-message.prompt.md
     kind: prompt
@@ -93,6 +94,7 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/prompt-refactor.prompt.md
     kind: prompt
+  # Vally / evals prompts
   - path: .github/prompts/hve-core/vally-test-write.prompt.md
     kind: prompt
     maturity: experimental
@@ -104,21 +106,60 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/markdown.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/licensing-posture.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/commit-message.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/prompt-builder.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/copilot-tracking.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/git-merge.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/pull-request.instructions.md
+    kind: instruction
+  - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/shared/content-policy-citation.instructions.md
     kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/hve-core/documentation
+    kind: skill
+  - path: .github/skills/experimental/mural
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/hve-core/prompt-builder
+    kind: skill
   - path: .github/skills/hve-core/vally-tests
     kind: skill
     maturity: experimental
+  - path: .github/skills/shared/telemetry-foundations
+    kind: skill
+  # Telemetry overlays
+  - path: .github/instructions/shared/telemetry-overlay.instructions.md
+    kind: instruction
 display:
   ordering: manual

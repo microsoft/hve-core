@@ -1,6 +1,6 @@
 ---
 name: Jira PRD to WIT
-description: 'Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira - Brought to you by microsoft/hve-core'
+description: 'Product Manager expert for analyzing PRDs and planning Jira issue hierarchies without mutating Jira'
 tools: ['execute/getTerminalOutput', 'execute/runInTerminal', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web']
 ---
 
@@ -38,7 +38,8 @@ PRD artifacts include:
 
 Plan Jira issue structures that can be executed later by Jira backlog workflows.
 
-* Discover issue types and required create fields with `.github/skills/jira/jira/scripts/jira.py fields <PROJECT-KEY>` before finalizing create payloads.
+* Before any Jira command, confirm `JIRA_BASE_URL` and either `JIRA_API_TOKEN` or `JIRA_PAT` are set. If missing, source `~/.jira.env` when it exists. If credentials are still missing after sourcing, read and follow the [jira-setup prompt](../../prompts/jira/jira-setup.prompt.md) inline to configure them before proceeding.
+* Discover issue types and required create fields by invoking the [`jira` skill](../../skills/jira/jira/SKILL.md) `fields <PROJECT-KEY>` command before finalizing create payloads.
 * Prefer Epic, Story, Task, Bug, and Sub-task only when the target Jira project supports them.
 * Keep the output planning-only. Do not call Jira mutation commands such as `create`, `update`, `transition`, or `comment` from this agent.
 
@@ -87,12 +88,14 @@ Key Tools: execute/runInTerminal, file_search, grep_search, list_dir, read_file
 
 Planning Files: planning-log.md, artifact-analysis.md, issues-plan.md
 
+Verify Jira credentials per Jira Planning Scope before proceeding.
+
 Actions:
 
 * Resolve the Jira project key from the user, artifacts, or workspace context.
-* Discover issue types and required create fields with `.github/skills/jira/jira/scripts/jira.py fields <PROJECT-KEY>`.
-* Search for related Jira issues with `.github/skills/jira/jira/scripts/jira.py search '<jql>' --fields key,fields.summary,fields.status.name,fields.priority.name,fields.labels`.
-* Hydrate promising matches with `.github/skills/jira/jira/scripts/jira.py get <ISSUE-KEY> --fields ...`.
+* Discover issue types and required create fields by invoking the [`jira` skill](../../skills/jira/jira/SKILL.md) `fields <PROJECT-KEY>` command.
+* Search for related Jira issues by invoking the [`jira` skill](../../skills/jira/jira/SKILL.md) `search '<jql>' --fields key,fields.summary,fields.status.name,fields.priority.name,fields.labels` command.
+* Hydrate promising matches by invoking the [`jira` skill](../../skills/jira/jira/SKILL.md) `get <ISSUE-KEY> --fields ...` command.
 * Record potentially related Jira issues and their similarity classifications in planning files.
 
 Phase completion: Summarize discovered Jira coverage in conversation, then proceed to Phase 4.

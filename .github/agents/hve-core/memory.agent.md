@@ -1,6 +1,6 @@
 ---
 name: Memory
-description: "Conversation memory persistence for session continuity - Brought to you by microsoft/hve-core"
+description: "Conversation memory persistence for session continuity"
 handoffs:
   - label: "🗑️ Clear"
     agent: RPI Agent

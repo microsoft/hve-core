@@ -45,14 +45,12 @@ jobs:
       version: ${{ steps.read-version.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
       - name: Setup PowerShell modules
-        shell: pwsh
-        run: |
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Resolve effective version
         id: read-version
@@ -85,7 +83,7 @@ jobs:
       matrix: ${{ fromJson(needs.discover-collections.outputs.matrix) }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -94,14 +92,14 @@ jobs:
         with:
           node-version: "24"
 
+      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
+      # ignore-scripts=true for dev safety). Packaging needs vsce's native
+      # install hooks (@vscode/vsce-sign, keytar) to run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts=false
 
-      - name: Setup PowerShell
-        shell: pwsh
-        run: |
-          Write-Host "PowerShell version: $($PSVersionTable.PSVersion)"
-          Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
 
       - name: Download changelog artifact
         if: inputs.use-changelog

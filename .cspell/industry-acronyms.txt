@@ -87,3 +87,17 @@ ntia
 DSPM
 dspm
 prds
+ASVS
+CAPEC
+COGA
+CSRD
+ESRS
+FAPI
+PKCE
+pkce
+ISTQB
+SSCM
+SSDF
+ssdf
+TCFD
+VPAT

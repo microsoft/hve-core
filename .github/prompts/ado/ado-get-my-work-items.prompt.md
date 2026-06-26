@@ -1,5 +1,5 @@
 ---
-description: "Retrieve user's current Azure DevOps work items and organize them into planning file definitions"
+description: "Retrieve your assigned Azure DevOps work items into a planning file"
 agent: ADO Backlog Manager
 ---
 

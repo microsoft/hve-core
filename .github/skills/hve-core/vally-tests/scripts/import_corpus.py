@@ -26,6 +26,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml.reader
+
 REQUIRED_COLUMNS: tuple[str, ...] = (
     "prompt",
     "kind",
@@ -115,9 +117,7 @@ def read_xlsx_rows(path: Path) -> Iterator[dict[str, str]]:
     try:
         from openpyxl import load_workbook  # noqa: PLC0415
     except ImportError as exc:  # pragma: no cover
-        raise CorpusImportError(
-            "openpyxl is required to import .xlsx files"
-        ) from exc
+        raise CorpusImportError("openpyxl is required to import .xlsx files") from exc
     workbook = load_workbook(filename=str(path), read_only=True, data_only=True)
     sheet = workbook.active
     if sheet is None:
@@ -148,9 +148,7 @@ def read_rows(path: Path) -> Iterator[dict[str, str]]:
         return read_csv_rows(path)
     if suffix in {".xlsx", ".xlsm"}:
         return read_xlsx_rows(path)
-    raise CorpusImportError(
-        f"{path}: unsupported suffix '{suffix}'; use .csv or .xlsx"
-    )
+    raise CorpusImportError(f"{path}: unsupported suffix '{suffix}'; use .csv or .xlsx")
 
 
 def validate_row(row: dict[str, str], line_no: int) -> str | None:
@@ -231,6 +229,13 @@ def _indent_block(text: str, prefix: str) -> str:
     return "".join(f"{prefix}{line}\n" for line in lines)
 
 
+# Characters PyYAML rejects when reading a stream. Reuse the reader's own
+# NON_PRINTABLE pattern so this matches PyYAML exactly: a prompt containing any
+# of these bytes cannot ride in a literal block scalar and must be emitted as a
+# double-quoted scalar instead.
+_YAML_NON_PRINTABLE = yaml.reader.Reader.NON_PRINTABLE
+
+
 def _yaml_scalar(value: str) -> str:
     """Render a string as a safely-quoted YAML scalar.
 
@@ -251,13 +256,38 @@ def _comment_value(value: str) -> str:
     return value.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
 
 
+def _block_scalar_safe(prompt: str) -> bool:
+    """Return True when ``prompt`` can ride safely in a literal block scalar.
+
+    A literal block scalar auto-detects its content indentation from the first
+    non-empty line. A leading empty line, or a first line carrying leading
+    whitespace, makes that detection ambiguous: a later, less-indented line
+    de-indents below the detected level, terminates the scalar early, and
+    corrupts the surrounding block mapping. Control characters cannot survive a
+    literal block scalar at all. Such prompts must use a double-quoted scalar.
+    """
+    if _YAML_NON_PRINTABLE.search(prompt):
+        return False
+    lines = prompt.splitlines()
+    if not lines:
+        return False
+    first = lines[0]
+    return first != "" and first[0] not in " \t"
+
+
 def build_patch_entry(row: dict[str, str], digest: str) -> str:
+    prompt = row["prompt"]
+    if _block_scalar_safe(prompt):
+        prompt_lines = ["- prompt: |\n", _indent_block(prompt, "    ")]
+    else:
+        # Fall back to a double-quoted scalar so the patch round-trips through
+        # yaml.safe_load even when a literal block scalar would be ambiguous.
+        prompt_lines = [f"- prompt: {_yaml_scalar(prompt)}\n"]
     parts: list[str] = [
         f"# sha256:{digest}\n",
         f"# kind:{_comment_value(row['kind'])}\n",
         f"# target:{_comment_value(row['target_artifact'])}\n",
-        "- prompt: |\n",
-        _indent_block(row["prompt"], "    "),
+        *prompt_lines,
         f"  grader: {_yaml_scalar(row['grader'] or '<unset>')}\n",
         "  tags:\n",
     ]
@@ -267,9 +297,7 @@ def build_patch_entry(row: dict[str, str], digest: str) -> str:
     parts.append("    advisory: true\n")
     expected = row.get("expected_refusal_category", "")
     if expected:
-        parts.append(
-            f"  expected_refusal_category: {_yaml_scalar(expected)}\n"
-        )
+        parts.append(f"  expected_refusal_category: {_yaml_scalar(expected)}\n")
     notes = row.get("notes", "")
     if notes:
         parts.append(f"  notes: {_yaml_scalar(notes)}\n")
@@ -320,9 +348,7 @@ def import_corpus(
         if not skip_safety:
             safety = safety_check(row["prompt"], lint_script, pwsh=pwsh)
             if safety["exit_code"] != 0:
-                report.flagged.append(
-                    {"line": index, "safety": safety, "row": row}
-                )
+                report.flagged.append({"line": index, "safety": safety, "row": row})
                 continue
 
         accepted_blocks.append(build_patch_entry(row, digest))
@@ -379,8 +405,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-safety",
         action="store_true",
         help=(
-            "Skip the per-row safety lint subprocess "
-            "(for offline test environments)."
+            "Skip the per-row safety lint subprocess (for offline test environments)."
         ),
     )
     return parser
@@ -393,9 +418,7 @@ def main(argv: list[str] | None = None) -> int:
     target = Path(args.target).resolve() if args.target else None
     report_dir = Path(args.report_dir).resolve()
     lint_script = (
-        Path(args.lint_script).resolve()
-        if args.lint_script
-        else _default_lint_script()
+        Path(args.lint_script).resolve() if args.lint_script else _default_lint_script()
     )
     try:
         report, report_path, patch_path = import_corpus(
@@ -412,12 +435,7 @@ def main(argv: list[str] | None = None) -> int:
     totals = report.totals()
     print(f"report: {report_path}")
     print(f"patch:  {patch_path}")
-    print(
-        " ".join(
-            f"{key}={value}"
-            for key, value in totals.items()
-        )
-    )
+    print(" ".join(f"{key}={value}" for key, value in totals.items()))
     return 0 if (totals["rejected"] == 0 and totals["flagged"] == 0) else 1
 
 

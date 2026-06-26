@@ -10,7 +10,7 @@ description: >
   spec. The driver invokes via `vally eval --eval-spec ... --workspace
   <materialized> --skill-dir <materialized-skills>`.
 type: capability
-config:
+defaults:
   runs: 5
   timeout: 300s
   executor: copilot-sdk

@@ -43,6 +43,9 @@ $script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'example
 # Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
 $script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
 
+# Build artifact directories excluded from unrecognized-subdirectory warnings in any skill (always gitignored)
+$script:BuildArtifactDirs = @('node_modules')
+
 function Get-SkillFrontmatter {
     <#
     .SYNOPSIS
@@ -173,6 +176,15 @@ function Test-PythonSkillConfig {
         if ($content -notmatch '\[tool\.pytest') {
             $errors.Add("pyproject.toml missing [tool.pytest.ini_options] section in '$RelativePath' (tests/ directory exists)")
         }
+
+        # When tests/ exists, [tool.ruff.lint].select must include 'I' (isort)
+        # so import-order regressions in test files cannot ship past lint:py.
+        if ($content -match '\[tool\.ruff\.lint\][\s\S]*?select\s*=\s*\[([\s\S]*?)\]') {
+            $selectArray = $Matches[1]
+            if ($selectArray -notmatch '"I"|''I''') {
+                $errors.Add("pyproject.toml [tool.ruff.lint].select must include 'I' (isort) in '$RelativePath' (tests/ directory exists)")
+            }
+        }
     }
 
     # Require ruff in dev dependencies (inline or multi-line TOML arrays)
@@ -290,7 +302,8 @@ function Test-SkillDirectory {
         $allScriptFiles = Get-ChildItem -Path $scriptsDirPath -File -ErrorAction SilentlyContinue
         $hasPowerShell = @($allScriptFiles | Where-Object { $_.Extension -eq '.ps1' }).Count -gt 0
         $hasBash = @($allScriptFiles | Where-Object { $_.Extension -eq '.sh' }).Count -gt 0
-        $hasPython = @($allScriptFiles | Where-Object { $_.Extension -eq '.py' }).Count -gt 0
+        # Python files may be packaged in subdirectories (e.g., scripts/<pkg>/__init__.py); search recursively.
+        $hasPython = @(Get-ChildItem -Path $scriptsDirPath -File -Recurse -Filter '*.py' -ErrorAction SilentlyContinue).Count -gt 0
 
         if ($isPythonSkill) {
             # Python skills: require at least one .py, OR the traditional .ps1+.sh pair
@@ -332,6 +345,10 @@ function Test-SkillDirectory {
             }
             # Standard Python environment directories are expected in Python skills
             if ($isPythonSkill -and $subdir.Name -in $script:PythonEnvironmentDirs) {
+                continue
+            }
+            # Build artifact directories (e.g. node_modules) are always gitignored and not skill content
+            if ($subdir.Name -in $script:BuildArtifactDirs) {
                 continue
             }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")

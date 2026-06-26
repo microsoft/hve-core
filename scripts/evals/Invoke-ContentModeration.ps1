@@ -45,6 +45,10 @@
 
 .NOTES
     Runs via: npm run eval:moderate
+
+    The HVE_MODERATION_PYTHON environment variable overrides the interpreter
+    used to run moderate.py. When unset, the uv-managed moderation venv is
+    preferred, falling back to `python` on PATH.
 #>
 [CmdletBinding()]
 param(
@@ -69,9 +73,13 @@ param(
     [string]$OutFile,
 
     [Parameter(Mandatory = $false)]
-    [string]$RepoRoot = (git rev-parse --show-toplevel 2>$null) ?? $PSScriptRoot
+    [string]$RepoRoot = $(
+        $detectedRoot = git rev-parse --show-toplevel 2>$null
+        if ($detectedRoot) { $detectedRoot } else { $PSScriptRoot }
+    )
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/ModerationRunner.psm1') -Force
@@ -152,26 +160,50 @@ if ($MyInvocation.InvocationName -ne '.') {
         # Invoke moderate.py
         $moderatePy = Join-Path $PSScriptRoot 'moderation/moderate.py'
         if (-not (Test-Path $moderatePy)) {
-            Write-Error "moderate.py not found at $moderatePy"
+            [Console]::Error.WriteLine("moderate.py not found at $moderatePy")
             exit 2
         }
 
         Write-Verbose "Invoking moderate.py: threshold=$Threshold model=$Model"
-        $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-        if (-not $pythonCmd) {
-            Write-Error "python not found in PATH; ensure Python 3.11+ is installed"
-            exit 2
+
+        # Prefer the uv-managed moderation virtual environment (created by
+        # `uv sync` in scripts/evals/moderation), which has detoxify and torch
+        # installed. An explicit HVE_MODERATION_PYTHON override takes precedence
+        # (used by tests to inject a stub interpreter); otherwise fall back to
+        # `python` on PATH when the venv is absent.
+        $moderationDir = Join-Path $PSScriptRoot 'moderation'
+        $venvPython = if ($IsWindows) {
+            Join-Path $moderationDir '.venv/Scripts/python.exe'
+        }
+        else {
+            Join-Path $moderationDir '.venv/bin/python'
         }
 
-        & python $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        if ($env:HVE_MODERATION_PYTHON) {
+            Write-Verbose "Using interpreter override HVE_MODERATION_PYTHON: $($env:HVE_MODERATION_PYTHON)"
+            & $env:HVE_MODERATION_PYTHON $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
+        elseif (Test-Path -LiteralPath $venvPython) {
+            Write-Verbose "Using moderation venv interpreter: $venvPython"
+            & $venvPython $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
+        else {
+            $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+            if (-not $pythonCmd) {
+                [Console]::Error.WriteLine("Moderation venv not found at $venvPython and python not found in PATH; run 'uv sync' in scripts/evals/moderation or install Python 3.11+")
+                exit 2
+            }
+            Write-Verbose "Moderation venv not found; falling back to python on PATH"
+            & python $moderatePy --input $tempInput --threshold $Threshold --model $Model --output $OutFile
+        }
 
         if ($LASTEXITCODE -ne 0) {
-            Write-Error "moderate.py exited with code $LASTEXITCODE"
+            [Console]::Error.WriteLine("moderate.py exited with code $LASTEXITCODE")
             # Check if output exists and surface errors
             if (Test-Path $OutFile) {
                 $flagged = Test-ModerationOutput -OutputPath $OutFile
                 if ($flagged) {
-                    Write-Error "Content moderation failed for scope: $Scope"
+                    [Console]::Error.WriteLine("Content moderation failed for scope: $Scope")
                     exit 1
                 }
             }
@@ -181,7 +213,7 @@ if ($MyInvocation.InvocationName -ne '.') {
         # Surface any flags
         $flagged = Test-ModerationOutput -OutputPath $OutFile
         if ($flagged) {
-            Write-Error "Content moderation failed for scope: $Scope"
+            [Console]::Error.WriteLine("Content moderation failed for scope: $Scope")
             exit 1
         }
 

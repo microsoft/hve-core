@@ -1,5 +1,5 @@
 ---
-description: "Instructions for PowerShell scripting implementation - Brought to you by microsoft/hve-core"
+description: "PowerShell scripting conventions"
 applyTo: '**/*.ps1, **/*.psm1, **/*.psd1'
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: 'Protocol for discovering Azure DevOps work items via user assignment or artifact analysis with planning file output'
+description: 'Azure DevOps work item discovery via user assignment or artifact analysis with planning file output'
 applyTo: '**/.copilot-tracking/workitems/discovery/**'
 ---
 
