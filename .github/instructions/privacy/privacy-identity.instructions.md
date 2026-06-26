@@ -96,8 +96,8 @@ After the standard privacy risk assessment, evaluate whether the scenario trigge
 ### Phase 6: Handoff
 
 * Entry: Phase 5 complete (impact summary reviewed)
-* Activities: present the complete privacy plan for review, generate the handoff summary, and hand off to backlog or implementation workflows using the Backlog Handoff Contract
-* Exit: user confirms acceptance of the privacy plan
+* Activities: present the complete privacy plan for review, generate the handoff summary, and hand off to backlog or implementation workflows using the [Backlog Handoff Contract](#backlog-handoff-contract)
+* Exit: user confirms acceptance of the privacy plan and handoff
 * Artifacts: final privacy plan, handoff summary
 
 ## Entry Modes
