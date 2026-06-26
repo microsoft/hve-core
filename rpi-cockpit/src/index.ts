@@ -52,7 +52,9 @@ const port = Number(process.env.RPI_COCKPIT_PORT ?? 4399);
 // so the MCP stdio transport connects regardless of the server's outcome.
 try {
   const srv = await startServer(bridge, port);
-  process.stderr.write(`rpi-cockpit: http://127.0.0.1:${srv.port}\n`);
+  // Print the KEYED url: the per-session token must be carried as ?key=… or the
+  // HTTP/WS gates reject the connection. Without it the cockpit is unreachable.
+  process.stderr.write(`rpi-cockpit: ${srv.url}\n`);
 } catch (err) {
   const m = err instanceof Error ? err.message : String(err);
   process.stderr.write(`rpi-cockpit: UI server unavailable (${m}); MCP narration still active.\n`);

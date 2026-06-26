@@ -29,7 +29,7 @@ describe("end to end", () => {
     const client = new Client({ name: "t", version: "0" });
     await client.connect(ct);
 
-    const ws = new WebSocket(`ws://127.0.0.1:${srv.port}`);
+    const ws = new WebSocket(`ws://127.0.0.1:${srv.port}/?key=${srv.token}`);
     const states: any[] = [];
     ws.on("message", (d) => states.push(JSON.parse(String(d))));
     await new Promise((r) => ws.on("open", r));

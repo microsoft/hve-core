@@ -7,7 +7,12 @@ let backoff = 500;
 
 function connect() {
   setConn("connecting");
-  ws = new WebSocket(`ws://${location.host}`);
+  // The per-session token usually rides the same-origin cookie set when this page
+  // loaded via /?key=…. Forward it explicitly from the URL too, so the WS handshake
+  // authenticates even before/without that cookie.
+  const key = new URLSearchParams(location.search).get("key");
+  const suffix = key ? `/?key=${encodeURIComponent(key)}` : "";
+  ws = new WebSocket(`ws://${location.host}${suffix}`);
   ws.onopen = () => { backoff = 500; };
   ws.onmessage = (e) => {
     let msg;
@@ -34,7 +39,7 @@ function render(v) {
 
   setHtml("steps", v.steps.map((st, i) =>
     `<div class="step ${esc(st.status)}"><div class="ring">${st.status === "done" ? "✓" : i + 1}</div>
-      <div><div class="lbl">${i + 1} · ${LABEL[st.phase] ?? esc(st.phase)}</div></div></div>`).join(""));
+      <div><div class="lbl">${i + 1} · ${LABEL[st.phase] ?? esc(st.phase)}</div></div>${i < v.steps.length - 1 ? '<div class="connector"></div>' : ""}</div>`).join(""));
 
   setHtml("subagents", v.subagents.length
     ? v.subagents.map((a) =>
