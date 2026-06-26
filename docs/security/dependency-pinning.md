@@ -3,7 +3,7 @@ title: Dependency Pinning
 description: How HVE Core enforces dependency pinning across GitHub Actions, npm, pip, and shell downloads with automated CI validation
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-08
+ms.date: 2026-06-25
 ms.topic: concept
 keywords:
   - dependency pinning
@@ -12,6 +12,7 @@ keywords:
   - pip
   - github actions
 estimated_reading_time: 8
+ms.date: 2026-06-25
 ---
 
 ## Overview
@@ -77,7 +78,7 @@ GitHub Actions references must use full 40-character commit SHAs because action 
 - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.2.2
 ```
 
-The scanner validates that the SHA is a real 40-character hexadecimal string and optionally checks staleness against the GitHub API.
+The scanner validates that the SHA is a real 40-character hexadecimal string and optionally checks staleness against the GitHub API. SHA-pin validation applies the same expanded scope as the npm-command scan: it covers workflow files (`.github/workflows/*.yml` and `.github/workflows/*.yaml`) and composite action definitions (`.github/actions/**/*.yml` and `.github/actions/**/*.yaml`).
 
 ## DevContainer Features: Lockfile Integrity
 
@@ -166,7 +167,10 @@ Replace flagged commands with `npm ci` for deterministic, lockfile-based install
 
 ### File Scope
 
-The scanner processes files matching `.github/workflows/*.yml` and `.github/workflows/*.yaml`.
+The scanner processes files matching:
+
+* `.github/workflows/*.yml` and `.github/workflows/*.yaml`
+* `.github/actions/**/*.yml` and `.github/actions/**/*.yaml` (composite actions)
 
 ## Shell Downloads: Checksum Verification
 
