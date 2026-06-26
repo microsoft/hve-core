@@ -1,6 +1,6 @@
 ---
 name: PRD Builder
-description: "Product Requirements Document builder with guided Q&A and reference integration"
+description: "Product Requirements Document builder with guided Q&A and references - Brought to you by microsoft/hve-core"
 agents:
   - PRD Quality Reviewer
   - Researcher Subagent
