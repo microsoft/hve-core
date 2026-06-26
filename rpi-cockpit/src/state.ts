@@ -65,7 +65,7 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
     case "finding.add":
       return { ...s, findings: [...s.findings, { severity: beat.severity, title: beat.title, file: beat.file, line: beat.line, detail: beat.detail }], log };
     case "interview.start":
-      return { ...s, view: "loop", domain: "interview", docType: beat.docType, log };
+      return { ...s, view: "loop", domain: "interview", docType: beat.docType, pendingQuestion: null, log };
   }
 }
 

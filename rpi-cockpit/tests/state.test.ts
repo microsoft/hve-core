@@ -100,6 +100,11 @@ describe("interview domain", () => {
     expect(s.view).toBe("loop");
     expect(s.docType).toBe("PRD");
   });
+  it("interview.start clears a stale pendingQuestion", () => {
+    const stale = { ...initialState(), pendingQuestion: { id: "q1", prompt: "old" } };
+    const s = applyBeat(stale, { type: "interview.start", docType: "PRD" }, 1);
+    expect(s.pendingQuestion).toBeNull();
+  });
   it("defaults docType null and pendingQuestion null", () => {
     expect(initialState().docType).toBeNull();
     expect(initialState().pendingQuestion).toBeNull();
