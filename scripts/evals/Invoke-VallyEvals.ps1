@@ -674,15 +674,35 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         }
     }
     else {
-        $isAdvisory = Test-SpecIsAdvisory -SpecPath $specAbs
+        # Per DD-01, baseline-equivalence is advisory at PR tier: equivalence
+        # signal surfaces in the run summary but never gates merge. Its stimuli
+        # corpus is tag-resolved into this authoritative path and runs at a
+        # perfect-score threshold (1.0) against a small model, so a single grader
+        # miss on a file-reading prompt would otherwise hard-fail the spec and
+        # block the build. Treat any baseline-equivalence spec as advisory so the
+        # tag-resolved path honors the same advisory posture as the dedicated
+        # equivalence dispatch.
+        $specIsEquivalence = $specRel -match '(^|/)baseline-equivalence/'
+        $isAdvisory = (Test-SpecIsAdvisory -SpecPath $specAbs) -or $specIsEquivalence
         $result['isAdvisory'] = $isAdvisory
+
+        # A zero vally exit means the spec met its aggregate threshold (the author's
+        # runs/threshold contract), so per-trial assertion dips recorded in
+        # assertionsFailed are sub-threshold noise, not merge blockers. Mirror the
+        # advisory-map branch above and gate only on a nonzero vally exit or a
+        # moderation failure. Without this, a spec that carries no advisory-tagged
+        # stimulus would gate the build on a single sub-threshold dip even though
+        # vally reported an aggregate pass.
+        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or $outputModeration.error
+        $subThresholdDip = (-not $hardFailure) -and ($result.assertionsFailed -gt 0)
+
         if (-not $result.ContainsKey('status')) {
-            $result['status'] = if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0) { 'fail' } else { 'pass' }
+            $result['status'] = if ($hardFailure) { 'fail' } elseif ($subThresholdDip) { 'advisory-fail' } else { 'pass' }
         }
 
         $specResults[$runKey] = $result
 
-        if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error) {
+        if ($hardFailure) {
             if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
                 Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
@@ -694,6 +714,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                     break
                 }
             }
+        }
+        elseif ($subThresholdDip) {
+            Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
         }
     }
 }
@@ -806,7 +829,10 @@ foreach ($plan in $artifactPlan) {
             $artifactAuthoritativeFailed += [int]$r['authoritativeFailed']
             $artifactAdvisoryFailed      += [int]$r['advisoryFailed']
         }
-        elseif ($specIsAdvisory) {
+        elseif ($specIsAdvisory -or $specStatus -eq 'advisory-fail') {
+            # A spec the main loop already demoted to 'advisory-fail' (an advisory
+            # spec, or a no-advisory spec whose per-trial dip rode on a zero vally
+            # exit) contributes only advisory failures, so it never gates the roll-up.
             $artifactAdvisoryFailed += [int]$r.assertionsFailed
         }
         else {
