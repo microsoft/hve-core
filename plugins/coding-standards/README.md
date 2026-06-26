@@ -1,11 +1,15 @@
 <!-- markdownlint-disable-file -->
 # Coding Standards
 
-Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects
+Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
+
+> **⚠️ Maturity** — This bundle includes stable, preview, experimental assets. The preview and experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
 
 ## Overview
 
 Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
+
+> Experimental: This collection includes experimental assets that may change significantly.
 
 ## Included Artifacts
 
@@ -13,20 +17,18 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                                 | Description                                                                                                                                                       |
-|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **accessibility-framework-assessor** | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings                                              |
-| **accessibility-reviewer**           | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                           |
-| **code-review-accessibility**        | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
-| **code-review-full**                 | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
-| **code-review-functional**           | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
-| **code-review-standards**            | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
+| Name                          | Description                                                                                                                                                       |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **code-review-accessibility** | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
+| **code-review-full**          | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
+| **code-review-functional**    | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
+| **code-review-standards**     | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
 
 ### Prompts
 
 | Name                       | Description                                                                                        |
 |----------------------------|----------------------------------------------------------------------------------------------------|
-| **code-review-full**       | Run both functional and standards code reviews on the current branch in a single pass              |
+| **code-review-full**       | Run functional, standards, and accessibility code reviews on the current branch in a single pass   |
 | **code-review-functional** | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps |
 
 ### Instructions
@@ -47,6 +49,7 @@ Enforce language-specific coding conventions and best practices across your proj
 | **coding-standards/rust/rust-tests**              | Rust test code authoring conventions                                                                                                                                                                                                                        |
 | **coding-standards/terraform/terraform**          | Terraform infrastructure-as-code authoring conventions                                                                                                                                                                                                      |
 | **coding-standards/uv-projects**                  | Create and manage Python virtual environments using uv commands                                                                                                                                                                                             |
+| **shared/disclaimer-language**                    | Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment                                                                                                                                     |
 | **shared/hve-core-location**                      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 | **shared/telemetry-overlay**                      | Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts                                                                                                       |
 

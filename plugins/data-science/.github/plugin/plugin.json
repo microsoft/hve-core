@@ -1,11 +1,12 @@
 {
   "name": "data-science",
-  "description": "Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards",
+  "description": "Preview & Experimental: Eval datasets, data specs, Jupyter notebooks, and Streamlit dashboards. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/data-science/",
     "agents/hve-core/subagents/",
-    "agents/rai-planning/"
+    "agents/rai-planning/",
+    "agents/rai-planning/subagents/"
   ],
   "commands": [
     "commands/data-science/",
@@ -13,6 +14,7 @@
   ],
   "skills": [
     "skills/project-planning/",
-    "skills/rai/"
+    "skills/rai/",
+    "skills/shared/"
   ]
 }

@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # GitHub Backlog Management
 
-GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts
+Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
 ## Overview
 

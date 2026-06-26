@@ -42,6 +42,7 @@
     ".github/instructions/github": true,
     ".github/instructions/hve-core": true,
     ".github/instructions/jira": true,
+    ".github/instructions/project-planning": true,
     ".github/instructions/rai-planning": true,
     ".github/instructions/security": true,
     ".github/instructions/shared": true
@@ -62,12 +63,14 @@
     ".github/agents/project-planning": true,
     ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
+    ".github/agents/rai-planning/subagents": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
   },
   "chat.promptFilesLocations": {
     ".github/prompts/ado": true,
     ".github/prompts/coding-standards": true,
+    ".github/prompts/data-science": true,
     ".github/prompts/design-thinking": true,
     ".github/prompts/experimental": true,
     ".github/prompts/github": true,
@@ -84,6 +87,8 @@
     ".github/skills/experimental": true,
     ".github/skills/github": true,
     ".github/skills/gitlab": true,
+    ".github/skills/hve-core": true,
+    ".github/skills/installer": true,
     ".github/skills/jira": true,
     ".github/skills/project-planning": true,
     ".github/skills/rai": true,

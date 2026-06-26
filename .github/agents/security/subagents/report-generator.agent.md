@@ -37,7 +37,7 @@ Collate verified findings from all skill assessments into a single vulnerability
 * (Optional) Changed files list with change types (added, modified, renamed) for diff mode reporting. Included as an appendix in the generated report.
 * (Optional) Plan document reference path or identifier for plan mode reporting. Recorded in the report header.
 * (Optional) Review artifact inventory describing the mode, scope or path focus, changed files, plan document, prior scan report, excluded non-assessable files, assessed skills, and resolved report path when known. Required when Domain is `accessibility`.
-* (Optional) Accessibility disclaimer source. Defaults to `## Disclaimer Handling` in `.github/instructions/accessibility/accessibility-identity.instructions.md` when Domain is `accessibility`.
+* (Optional) Accessibility disclaimer source. Defaults to the `## Disclaimer Handling` section of the accessibility identity instructions when Domain is `accessibility`.
 
 ## Constants
 

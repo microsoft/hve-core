@@ -234,4 +234,3 @@ These sections in *github-backlog-planning.instructions.md* inform discovery ope
 
 ---
 
-Brought to you by microsoft/hve-core

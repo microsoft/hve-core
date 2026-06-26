@@ -10,4 +10,3 @@ This file is the intake for new telemetry vocabulary not yet covered by the pare
 
 No pending additions.
 
-> Brought to you by microsoft/hve-core

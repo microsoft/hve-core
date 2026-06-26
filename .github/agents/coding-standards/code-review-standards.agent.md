@@ -1,5 +1,5 @@
 ---
-name: Code Review Standards
+name: Code Review Standards (pre)
 description: "Skills-based code reviewer applying project-defined coding standards to local changes and PRs"
 ---
 

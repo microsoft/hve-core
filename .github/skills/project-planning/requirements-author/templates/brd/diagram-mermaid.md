@@ -1,5 +1,5 @@
 ---
-description: "Mermaid Process Diagram Fragment for BRD - Brought to you by microsoft/hve-core"
+description: "Mermaid Process Diagram Fragment for BRD"
 ---
 
 # Process Models — Mermaid Diagram Fragment
@@ -40,4 +40,4 @@ graph TD
 
 ---
 
-> Brought to you by microsoft/hve-core
+>

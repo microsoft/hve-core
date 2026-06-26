@@ -4,33 +4,95 @@ import remarkGithubAlert from 'remark-github-blockquote-alert';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const collectionsDir = path.resolve(__dirname, '../../collections');
+const coreManifestPath = path.resolve(__dirname, '../../collections/core-manifest.yml');
 
 /**
- * @param {string} name
+ * Counts shippable artifacts per collection from the central manifest.
+ *
+ * Mirrors the in-memory projection used elsewhere in the repo: an artifact
+ * counts toward a collection when its `collections` membership includes the
+ * collection id and its maturity is shippable (stable, preview, or
+ * experimental). Deprecated, removed, or unknown maturities are excluded.
+ *
+ * @returns {Record<string, number>}
  */
-function countYamlPaths(name) {
-  const yamlPath = path.join(collectionsDir, `${name}.collection.yml`);
+function computeCollectionCounts() {
   let content;
   try {
-    content = fs.readFileSync(yamlPath, 'utf-8');
+    content = fs.readFileSync(coreManifestPath, 'utf-8');
   } catch {
     throw new Error(
-      `[docusaurus.config.js] Cannot read collection manifest: ${yamlPath}\n` +
-      `Ensure "${name}" exists in the collections/ directory.`,
+      `[docusaurus.config.js] Cannot read core manifest: ${coreManifestPath}\n` +
+      'Ensure collections/core-manifest.yml exists in the collections/ directory.',
     );
   }
-  return (content.match(/^\s*- path:/gm) || []).length;
+
+  const artifactSections = new Set(['agents', 'prompts', 'instructions', 'skills']);
+  const shippableMaturities = new Set(['stable', 'preview', 'experimental']);
+  /** @type {Record<string, number>} */
+  const counts = {};
+
+  let inArtifactSection = false;
+  /** @type {string | null} */
+  let currentMaturity = null;
+  /** @type {string[]} */
+  let currentCollections = [];
+  let collectingCollections = false;
+
+  const flush = () => {
+    if (currentMaturity && shippableMaturities.has(currentMaturity)) {
+      for (const id of currentCollections) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+    }
+    currentMaturity = null;
+    currentCollections = [];
+    collectingCollections = false;
+  };
+
+  for (const line of content.split(/\r?\n/)) {
+    const topLevel = line.match(/^([A-Za-z][\w-]*):\s*$/);
+    if (topLevel) {
+      flush();
+      inArtifactSection = artifactSections.has(topLevel[1]);
+      continue;
+    }
+    if (!inArtifactSection) {
+      continue;
+    }
+
+    if (/^ {2}\S.*:\s*$/.test(line)) {
+      flush();
+      continue;
+    }
+
+    const maturityMatch = line.match(/^ {4}maturity:\s*(\S+)\s*$/);
+    if (maturityMatch) {
+      currentMaturity = maturityMatch[1].toLowerCase();
+      collectingCollections = false;
+      continue;
+    }
+
+    if (/^ {4}collections:\s*$/.test(line)) {
+      collectingCollections = true;
+      continue;
+    }
+
+    if (collectingCollections) {
+      const item = line.match(/^ {4}- (\S+)\s*$/);
+      if (item) {
+        currentCollections.push(item[1]);
+        continue;
+      }
+      collectingCollections = false;
+    }
+  }
+  flush();
+
+  return counts;
 }
 
-const collectionNames = [
-  'ado', 'coding-standards', 'data-science', 'design-thinking',
-  'experimental', 'github', 'gitlab', 'hve-core', 'jira',
-  'project-planning', 'security', 'hve-core-all',
-];
-const collectionCounts = Object.fromEntries(
-  collectionNames.map((n) => [n, countYamlPaths(n)]),
-);
+const collectionCounts = computeCollectionCounts();
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -96,18 +158,19 @@ const config = {
     ],
   ],
 
-  themes: [
-    [
-      '@easyops-cn/docusaurus-search-local',
-      /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
-      ({
-        hashed: true,
-        language: ['en'],
-        highlightSearchTermsOnTargetPage: true,
-        explicitSearchResultPath: true,
-      }),
-    ],
-  ],
+  themes:
+    /** @type {import('@docusaurus/types').PluginConfig[]} */ ([
+      [
+        '@easyops-cn/docusaurus-search-local',
+        /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+        ({
+          hashed: true,
+          language: ['en'],
+          highlightSearchTermsOnTargetPage: true,
+          explicitSearchResultPath: true,
+        }),
+      ],
+    ]),
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

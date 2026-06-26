@@ -1,5 +1,5 @@
 ---
-name: Accessibility Framework Assessor
+name: Accessibility Framework Assessor (exp)
 description: "Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings"
 tools:
   - search/codebase

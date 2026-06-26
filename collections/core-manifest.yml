@@ -1,0 +1,2061 @@
+schemaVersion: "1.0"
+collections:
+  ado:
+    path: plugins/ado/.github/plugin/plugin.json
+    name: Azure DevOps Integration
+    display:
+      ordering: manual
+    intro: Manage Azure DevOps work items, monitor builds, create pull requests, and convert requirements documents into structured work item hierarchies - all from within VS Code.
+    tags:
+    - azure-devops
+    - ado
+    - work-items
+    - builds
+    - pull-requests
+    descriptions:
+      - channel: stable
+        text: 'Azure DevOps work item management, build monitoring, and pull request creation'
+      - channel: prerelease
+        text: 'Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  coding-standards:
+    path: plugins/coding-standards/.github/plugin/plugin.json
+    name: Coding Standards
+    display:
+      ordering: alpha
+    intro: Enforce language-specific coding conventions and best practices across your projects, with pre-PR code review agents for catching functional defects early. This collection provides instructions for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform that are automatically applied based on file patterns, plus agents that review branch diffs before opening pull requests.
+    tags:
+    - coding-standards
+    - code-review
+    - pull-request
+    - quality
+    - bash
+    - bicep
+    - csharp
+    - powershell
+    - python
+    - rust
+    - terraform
+    - uv
+    descriptions:
+      - channel: stable
+        text: 'Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects'
+      - channel: prerelease
+        text: 'Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  data-science:
+    path: plugins/data-science/.github/plugin/plugin.json
+    name: Data Science
+    display:
+      ordering: manual
+    intro: Generate data specifications, Jupyter notebooks, and Streamlit dashboards from natural language descriptions. Evaluate AI-powered data systems against Responsible AI standards. This collection includes specialized agents for data science workflows in Python and RAI assessment.
+    caution: The RAI agents and prompts in this collection are **assistive tools only**. They do not replace qualified human review, organizational RAI review boards, or regulatory compliance programs. All AI-generated RAI artifacts **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risks, or produce recommendations that are incomplete or inappropriate for your context.
+    notice: |
+      > [!CAUTION]
+      > This collection includes RAI (Responsible AI) agents and prompts that are **assistive tools only**. They do not replace qualified responsible AI review, ethics board oversight, or established organizational RAI governance processes. All AI-generated RAI assessments, impact analyses, and recommendations **must** be reviewed and validated by qualified professionals before use. AI outputs may contain inaccuracies, miss critical risk categories, or produce recommendations that are incomplete or inappropriate for your context.
+    tags:
+    - data
+    - jupyter
+    - streamlit
+    - dashboards
+    - visualization
+    - data-science
+    - rai
+    - responsible-ai
+    descriptions:
+      - channel: stable
+        text: 'Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards'
+      - channel: prerelease
+        text: 'Preview & Experimental: Eval datasets, data specs, Jupyter notebooks, and Streamlit dashboards. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  design-thinking:
+    path: plugins/design-thinking/.github/plugin/plugin.json
+    name: Design Thinking
+    display:
+      ordering: alpha
+    intro: Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
+    tags:
+    - design-thinking
+    - coaching
+    - methodology
+    - ux
+    descriptions:
+      - channel: stable
+        text: 'Design Thinking coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods'
+      - channel: prerelease
+        text: 'Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  github:
+    path: plugins/github/.github/plugin/plugin.json
+    name: GitHub Backlog Management
+    display:
+      ordering: manual
+    intro: Manage GitHub issue backlogs with agents for discovery, triage, sprint planning, and execution. This collection brings structured backlog management workflows directly into VS Code.
+    tags:
+    - github
+    - issues
+    - backlog
+    - triage
+    - sprint
+    descriptions:
+      - channel: stable
+        text: 'GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts'
+      - channel: prerelease
+        text: 'Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  hve-core-all:
+    path: plugins/hve-core-all/.github/plugin/plugin.json
+    name: HVE Core All
+    display:
+      ordering: alpha
+    intro: |
+      HVE Core provides the complete collection of AI chat agents, prompts, instructions, and skills for VS Code with GitHub Copilot. This edition includes every artifact across all domains: development workflows, architecture, Azure DevOps, GitHub and Jira backlog workflows, data science, design thinking, security, and more.
+
+      Use this edition when you want access to everything without choosing a focused collection.
+    caution: |
+      This collection includes security, responsible AI, and supply chain security agents and prompts that are **assistive tools only**.
+      They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review.
+      All AI-generated security and compliance artifacts **must** be reviewed and validated by qualified professionals before use.
+      AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+    tags:
+    - hve
+    - complete
+    - bundle
+    descriptions:
+      - channel: stable
+        text: 'Full bundle of all HVE Core agents, prompts, instructions, and skills'
+      - channel: prerelease
+        text: 'Preview & Experimental: Full bundle of all HVE Core agents, prompts, instructions, and skills. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  hve-core:
+    path: plugins/hve-core/.github/plugin/plugin.json
+    name: HVE Core Workflow
+    display:
+      ordering: manual
+    intro: HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow for completing complex tasks through a structured four-phase process. The RPI workflow dispatches specialized agents that collaborate autonomously to deliver well-researched, planned, and validated implementations. This collection also includes Git workflow prompts for commit messages, merge operations, repository setup, and pull request management.
+    tags:
+    - workflow
+    - hve-core
+    - rpi
+    - planning
+    - research
+    - implementation
+    - review
+    - git
+    - commits
+    - merge
+    - pull-request
+    descriptions:
+      - channel: stable
+        text: 'HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts'
+      - channel: prerelease
+        text: 'Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  project-planning:
+    path: plugins/project-planning/.github/plugin/plugin.json
+    name: Project Planning
+    display:
+      ordering: manual
+    intro: Create architecture decision records, requirements documents, and diagrams - all through guided AI workflows. Evaluate AI-powered systems against Responsible AI standards and conduct STRIDE-based security model analysis with automated backlog generation. Includes Jira backlog management workflows for discovery, triage, PRD-to-issue conversion, and execution.
+    tags:
+    - documentation
+    - architecture
+    - adr
+    - brd
+    - prd
+    - diagrams
+    - planning
+    - rai
+    - responsible-ai
+    - security
+    descriptions:
+      - channel: stable
+        text: 'PRDs, BRDs, ADRs, and architecture diagrams'
+      - channel: prerelease
+        text: 'Preview & Experimental: PRDs, BRDs, ADRs, and architecture diagrams. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+  security:
+    path: plugins/security/.github/plugin/plugin.json
+    name: Security
+    display:
+      ordering: manual
+    intro: Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments.
+    caution: The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+    notice: |
+      > [!CAUTION]
+      > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
+    tags:
+    - security
+    - incident-response
+    - risk
+    - planning
+    - review
+    - vulnerability
+    - threat-modeling
+    - supply-chain
+    - rai
+    - responsible-ai
+    descriptions:
+      - channel: stable
+        text: 'Security review, planning, incident response, risk assessment, and vulnerability analysis'
+      - channel: prerelease
+        text: 'Preview & Experimental: Security review, planning, incident response, and risk assessment. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues'
+agents:
+  .github/agents/ado/ado-backlog-manager.agent.md:
+    path: .github/agents/ado/ado-backlog-manager.agent.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/agents/ado/ado-prd-to-wit.agent.md:
+    path: .github/agents/ado/ado-prd-to-wit.agent.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/agents/accessibility/accessibility-planner.agent.md:
+    path: .github/agents/accessibility/accessibility-planner.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/accessibility/accessibility-reviewer.agent.md:
+    path: .github/agents/accessibility/accessibility-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md:
+    path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/agents/coding-standards/code-review-accessibility.agent.md:
+    path: .github/agents/coding-standards/code-review-accessibility.agent.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/agents/coding-standards/code-review-full.agent.md:
+    path: .github/agents/coding-standards/code-review-full.agent.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/agents/coding-standards/code-review-functional.agent.md:
+    path: .github/agents/coding-standards/code-review-functional.agent.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/agents/coding-standards/code-review-standards.agent.md:
+    path: .github/agents/coding-standards/code-review-standards.agent.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/agents/data-science/eval-dataset-creator.agent.md:
+    path: .github/agents/data-science/eval-dataset-creator.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/agents/data-science/gen-data-spec.agent.md:
+    path: .github/agents/data-science/gen-data-spec.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/agents/data-science/gen-jupyter-notebook.agent.md:
+    path: .github/agents/data-science/gen-jupyter-notebook.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/agents/data-science/gen-streamlit-dashboard.agent.md:
+    path: .github/agents/data-science/gen-streamlit-dashboard.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/agents/data-science/test-streamlit-dashboard.agent.md:
+    path: .github/agents/data-science/test-streamlit-dashboard.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/agents/design-thinking/dt-coach.agent.md:
+    path: .github/agents/design-thinking/dt-coach.agent.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/agents/design-thinking/dt-learning-tutor.agent.md:
+    path: .github/agents/design-thinking/dt-learning-tutor.agent.md
+    maturity: experimental
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/agents/experimental/experiment-designer.agent.md:
+    path: .github/agents/experimental/experiment-designer.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/agents/experimental/pptx.agent.md:
+    path: .github/agents/experimental/pptx.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/agents/experimental/subagents/pptx-subagent.agent.md:
+    path: .github/agents/experimental/subagents/pptx-subagent.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/agents/github/github-backlog-manager.agent.md:
+    path: .github/agents/github/github-backlog-manager.agent.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/agents/hve-core/documentation.agent.md:
+    path: .github/agents/hve-core/documentation.agent.md
+    maturity: preview
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/memory.agent.md:
+    path: .github/agents/hve-core/memory.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/pr-review.agent.md:
+    path: .github/agents/hve-core/pr-review.agent.md
+    maturity: preview
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/pr-walkthrough.agent.md:
+    path: .github/agents/hve-core/pr-walkthrough.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/prompt-builder.agent.md:
+    path: .github/agents/hve-core/prompt-builder.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/rpi-agent.agent.md:
+    path: .github/agents/hve-core/rpi-agent.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/subagents/implementation-validator.agent.md:
+    path: .github/agents/hve-core/subagents/implementation-validator.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/subagents/phase-implementor.agent.md:
+    path: .github/agents/hve-core/subagents/phase-implementor.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/subagents/plan-validator.agent.md:
+    path: .github/agents/hve-core/subagents/plan-validator.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/subagents/prompt-evaluator.agent.md:
+    path: .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/subagents/prompt-tester.agent.md:
+    path: .github/agents/hve-core/subagents/prompt-tester.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/subagents/prompt-updater.agent.md:
+    path: .github/agents/hve-core/subagents/prompt-updater.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/subagents/researcher-subagent.agent.md:
+    path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    maturity: stable
+    collections:
+    - data-science
+    - hve-core
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/hve-core/subagents/rpi-validator.agent.md:
+    path: .github/agents/hve-core/subagents/rpi-validator.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+    - project-planning
+  .github/agents/hve-core/task-challenger.agent.md:
+    path: .github/agents/hve-core/task-challenger.agent.md
+    maturity: experimental
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/task-implementor.agent.md:
+    path: .github/agents/hve-core/task-implementor.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/task-planner.agent.md:
+    path: .github/agents/hve-core/task-planner.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/task-researcher.agent.md:
+    path: .github/agents/hve-core/task-researcher.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/hve-core/task-reviewer.agent.md:
+    path: .github/agents/hve-core/task-reviewer.agent.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/agents/jira/jira-backlog-manager.agent.md:
+    path: .github/agents/jira/jira-backlog-manager.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/jira/jira-prd-to-wit.agent.md:
+    path: .github/agents/jira/jira-prd-to-wit.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/adr-creation.agent.md:
+    path: .github/agents/project-planning/adr-creation.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/agile-coach.agent.md:
+    path: .github/agents/project-planning/agile-coach.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/brd-builder.agent.md:
+    path: .github/agents/project-planning/brd-builder.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/meeting-analyst.agent.md:
+    path: .github/agents/project-planning/meeting-analyst.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/network-isa95-planner.agent.md:
+    path: .github/agents/project-planning/network-isa95-planner.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/prd-builder.agent.md:
+    path: .github/agents/project-planning/prd-builder.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/product-manager-advisor.agent.md:
+    path: .github/agents/project-planning/product-manager-advisor.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/system-architecture-reviewer.agent.md:
+    path: .github/agents/project-planning/system-architecture-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/ux-ui-designer.agent.md:
+    path: .github/agents/project-planning/ux-ui-designer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md:
+    path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md:
+    path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/agents/rai-planning/rai-planner.agent.md:
+    path: .github/agents/rai-planning/rai-planner.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/rai-planning/rai-reviewer.agent.md:
+    path: .github/agents/rai-planning/rai-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md:
+    path: .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/security/security-planner.agent.md:
+    path: .github/agents/security/security-planner.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/security/security-reviewer.agent.md:
+    path: .github/agents/security/security-reviewer.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/agents/security/sssc-planner.agent.md:
+    path: .github/agents/security/sssc-planner.agent.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/agents/security/subagents/codebase-profiler.agent.md:
+    path: .github/agents/security/subagents/codebase-profiler.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - security
+  .github/agents/security/subagents/finding-deep-verifier.agent.md:
+    path: .github/agents/security/subagents/finding-deep-verifier.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - security
+  .github/agents/security/subagents/report-generator.agent.md:
+    path: .github/agents/security/subagents/report-generator.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - security
+  .github/agents/security/subagents/skill-assessor.agent.md:
+    path: .github/agents/security/subagents/skill-assessor.agent.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - security
+prompts:
+  .github/prompts/ado/ado-add-work-item.prompt.md:
+    path: .github/prompts/ado/ado-add-work-item.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-create-pull-request.prompt.md:
+    path: .github/prompts/ado/ado-create-pull-request.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-discover-work-items.prompt.md:
+    path: .github/prompts/ado/ado-discover-work-items.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-get-build-info.prompt.md:
+    path: .github/prompts/ado/ado-get-build-info.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-get-my-work-items.prompt.md:
+    path: .github/prompts/ado/ado-get-my-work-items.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md:
+    path: .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-sprint-plan.prompt.md:
+    path: .github/prompts/ado/ado-sprint-plan.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-triage-work-items.prompt.md:
+    path: .github/prompts/ado/ado-triage-work-items.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/ado/ado-update-wit-items.prompt.md:
+    path: .github/prompts/ado/ado-update-wit-items.prompt.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/prompts/coding-standards/code-review-full.prompt.md:
+    path: .github/prompts/coding-standards/code-review-full.prompt.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/prompts/coding-standards/code-review-functional.prompt.md:
+    path: .github/prompts/coding-standards/code-review-functional.prompt.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/prompts/data-science/synth-data-generate.prompt.md:
+    path: .github/prompts/data-science/synth-data-generate.prompt.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+  .github/prompts/design-thinking/dt-canonical-deck.prompt.md:
+    path: .github/prompts/design-thinking/dt-canonical-deck.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-figma-export.prompt.md:
+    path: .github/prompts/design-thinking/dt-figma-export.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md:
+    path: .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md:
+    path: .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md:
+    path: .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-04-convergence.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-04-convergence.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-04-ideation.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-04-ideation.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-05-concepts.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-05-concepts.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-05-evaluation.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-05-evaluation.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-06-building.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-06-building.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-06-planning.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-06-planning.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-06-testing.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-06-testing.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-method-next.prompt.md:
+    path: .github/prompts/design-thinking/dt-method-next.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-resume-coaching.prompt.md:
+    path: .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/design-thinking/dt-start-project.prompt.md:
+    path: .github/prompts/design-thinking/dt-start-project.prompt.md
+    maturity: stable
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/prompts/experimental/cspell-config.prompt.md:
+    path: .github/prompts/experimental/cspell-config.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/prompts/experimental/graph-research.prompt.md:
+    path: .github/prompts/experimental/graph-research.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/prompts/github/github-add-issue.prompt.md:
+    path: .github/prompts/github/github-add-issue.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/github/github-discover-issues.prompt.md:
+    path: .github/prompts/github/github-discover-issues.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/github/github-execute-backlog.prompt.md:
+    path: .github/prompts/github/github-execute-backlog.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/github/github-sprint-plan.prompt.md:
+    path: .github/prompts/github/github-sprint-plan.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/github/github-suggest.prompt.md:
+    path: .github/prompts/github/github-suggest.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/github/github-triage-issues.prompt.md:
+    path: .github/prompts/github/github-triage-issues.prompt.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/prompts/hve-core/checkpoint.prompt.md:
+    path: .github/prompts/hve-core/checkpoint.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/git-commit-message.prompt.md:
+    path: .github/prompts/hve-core/git-commit-message.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/git-commit.prompt.md:
+    path: .github/prompts/hve-core/git-commit.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/git-merge.prompt.md:
+    path: .github/prompts/hve-core/git-merge.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/git-setup.prompt.md:
+    path: .github/prompts/hve-core/git-setup.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/prompt-analyze.prompt.md:
+    path: .github/prompts/hve-core/prompt-analyze.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/prompt-build.prompt.md:
+    path: .github/prompts/hve-core/prompt-build.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/prompt-refactor.prompt.md:
+    path: .github/prompts/hve-core/prompt-refactor.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/pull-request.prompt.md:
+    path: .github/prompts/hve-core/pull-request.prompt.md
+    maturity: preview
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/rpi.prompt.md:
+    path: .github/prompts/hve-core/rpi.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/task-challenge.prompt.md:
+    path: .github/prompts/hve-core/task-challenge.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/task-implement.prompt.md:
+    path: .github/prompts/hve-core/task-implement.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/task-plan.prompt.md:
+    path: .github/prompts/hve-core/task-plan.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/task-research.prompt.md:
+    path: .github/prompts/hve-core/task-research.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/hve-core/task-review.prompt.md:
+    path: .github/prompts/hve-core/task-review.prompt.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/prompts/jira/jira-discover-issues.prompt.md:
+    path: .github/prompts/jira/jira-discover-issues.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/prompts/jira/jira-execute-backlog.prompt.md:
+    path: .github/prompts/jira/jira-execute-backlog.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/prompts/jira/jira-prd-to-wit.prompt.md:
+    path: .github/prompts/jira/jira-prd-to-wit.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/prompts/jira/jira-setup.prompt.md:
+    path: .github/prompts/jira/jira-setup.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/prompts/jira/jira-triage-issues.prompt.md:
+    path: .github/prompts/jira/jira-triage-issues.prompt.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/prompts/rai-planning/rai-capture.prompt.md:
+    path: .github/prompts/rai-planning/rai-capture.prompt.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/rai-planning/rai-plan-from-prd.prompt.md:
+    path: .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md:
+    path: .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/incident-response.prompt.md:
+    path: .github/prompts/security/incident-response.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/risk-register.prompt.md:
+    path: .github/prompts/security/risk-register.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/security-capture.prompt.md:
+    path: .github/prompts/security/security-capture.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/security-plan-from-prd.prompt.md:
+    path: .github/prompts/security/security-plan-from-prd.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/security-review-llm.prompt.md:
+    path: .github/prompts/security/security-review-llm.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/prompts/security/security-review-sbd.prompt.md:
+    path: .github/prompts/security/security-review-sbd.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/prompts/security/security-review-web.prompt.md:
+    path: .github/prompts/security/security-review-web.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/prompts/security/security-review.prompt.md:
+    path: .github/prompts/security/security-review.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/prompts/security/sssc-capture.prompt.md:
+    path: .github/prompts/security/sssc-capture.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/sssc-from-brd.prompt.md:
+    path: .github/prompts/security/sssc-from-brd.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/sssc-from-prd.prompt.md:
+    path: .github/prompts/security/sssc-from-prd.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/prompts/security/sssc-from-security-plan.prompt.md:
+    path: .github/prompts/security/sssc-from-security-plan.prompt.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+instructions:
+  .github/instructions/accessibility/accessibility-identity.instructions.md:
+    path: .github/instructions/accessibility/accessibility-identity.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/accessibility/accessibility-license-posture.instructions.md:
+    path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/ado/ado-backlog-sprint.instructions.md:
+    path: .github/instructions/ado/ado-backlog-sprint.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-backlog-triage.instructions.md:
+    path: .github/instructions/ado/ado-backlog-triage.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-create-pull-request.instructions.md:
+    path: .github/instructions/ado/ado-create-pull-request.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-get-build-info.instructions.md:
+    path: .github/instructions/ado/ado-get-build-info.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-interaction-templates.instructions.md:
+    path: .github/instructions/ado/ado-interaction-templates.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-update-wit-items.instructions.md:
+    path: .github/instructions/ado/ado-update-wit-items.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-wit-discovery.instructions.md:
+    path: .github/instructions/ado/ado-wit-discovery.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/ado/ado-wit-planning.instructions.md:
+    path: .github/instructions/ado/ado-wit-planning.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+  .github/instructions/coding-standards/bash/bash.instructions.md:
+    path: .github/instructions/coding-standards/bash/bash.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/bicep/bicep.instructions.md:
+    path: .github/instructions/coding-standards/bicep/bicep.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/code-review/diff-computation.instructions.md:
+    path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/code-review/review-artifacts.instructions.md:
+    path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/csharp/csharp-tests.instructions.md:
+    path: .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/csharp/csharp.instructions.md:
+    path: .github/instructions/coding-standards/csharp/csharp.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/powershell/pester.instructions.md:
+    path: .github/instructions/coding-standards/powershell/pester.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/powershell/powershell.instructions.md:
+    path: .github/instructions/coding-standards/powershell/powershell.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/python-script.instructions.md:
+    path: .github/instructions/coding-standards/python-script.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - data-science
+    - hve-core-all
+  .github/instructions/coding-standards/python-tests.instructions.md:
+    path: .github/instructions/coding-standards/python-tests.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/rust/rust-tests.instructions.md:
+    path: .github/instructions/coding-standards/rust/rust-tests.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/rust/rust.instructions.md:
+    path: .github/instructions/coding-standards/rust/rust.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/terraform/terraform.instructions.md:
+    path: .github/instructions/coding-standards/terraform/terraform.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/instructions/coding-standards/uv-projects.instructions.md:
+    path: .github/instructions/coding-standards/uv-projects.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - data-science
+    - hve-core-all
+  .github/instructions/experimental/experiment-designer.instructions.md:
+    path: .github/instructions/experimental/experiment-designer.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/graphify.instructions.md:
+    path: .github/instructions/experimental/graphify.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-bootstrap.instructions.md:
+    path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-destinations.instructions.md:
+    path: .github/instructions/experimental/mural/mural-destinations.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-human-record.instructions.md:
+    path: .github/instructions/experimental/mural/mural-human-record.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-log-hygiene.instructions.md:
+    path: .github/instructions/experimental/mural/mural-log-hygiene.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md:
+    path: .github/instructions/experimental/mural/mural-seeding-patterns.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md:
+    path: .github/instructions/experimental/mural/mural-writeback-hygiene.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/mural/mural-writing-style.instructions.md:
+    path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/instructions/experimental/pptx.instructions.md:
+    path: .github/instructions/experimental/pptx.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/instructions/github/community-interaction.instructions.md:
+    path: .github/instructions/github/community-interaction.instructions.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/instructions/github/github-backlog-discovery.instructions.md:
+    path: .github/instructions/github/github-backlog-discovery.instructions.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/instructions/github/github-backlog-planning.instructions.md:
+    path: .github/instructions/github/github-backlog-planning.instructions.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/instructions/github/github-backlog-triage.instructions.md:
+    path: .github/instructions/github/github-backlog-triage.instructions.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/instructions/github/github-backlog-update.instructions.md:
+    path: .github/instructions/github/github-backlog-update.instructions.md
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/instructions/hve-core/commit-message.instructions.md:
+    path: .github/instructions/hve-core/commit-message.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/copilot-tracking.instructions.md:
+    path: .github/instructions/hve-core/copilot-tracking.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/git-merge.instructions.md:
+    path: .github/instructions/hve-core/git-merge.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/licensing-posture.instructions.md:
+    path: .github/instructions/hve-core/licensing-posture.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/markdown.instructions.md:
+    path: .github/instructions/hve-core/markdown.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/prompt-builder.instructions.md:
+    path: .github/instructions/hve-core/prompt-builder.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/pull-request.instructions.md:
+    path: .github/instructions/hve-core/pull-request.instructions.md
+    maturity: preview
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/hve-core/writing-style.instructions.md:
+    path: .github/instructions/hve-core/writing-style.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/instructions/jira/jira-backlog-discovery.instructions.md:
+    path: .github/instructions/jira/jira-backlog-discovery.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/jira/jira-backlog-planning.instructions.md:
+    path: .github/instructions/jira/jira-backlog-planning.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/jira/jira-backlog-triage.instructions.md:
+    path: .github/instructions/jira/jira-backlog-triage.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/jira/jira-backlog-update.instructions.md:
+    path: .github/instructions/jira/jira-backlog-update.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/jira/jira-wit-planning.instructions.md:
+    path: .github/instructions/jira/jira-wit-planning.instructions.md
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/project-planning/adr-byo-template.instructions.md:
+    path: .github/instructions/project-planning/adr-byo-template.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/project-planning/adr-handoff.instructions.md:
+    path: .github/instructions/project-planning/adr-handoff.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/project-planning/adr-identity.instructions.md:
+    path: .github/instructions/project-planning/adr-identity.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/project-planning/adr-standards.instructions.md:
+    path: .github/instructions/project-planning/adr-standards.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/instructions/rai-planning/rai-identity.instructions.md:
+    path: .github/instructions/rai-planning/rai-identity.instructions.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/rai-planning/rai-license-posture.instructions.md:
+    path: .github/instructions/rai-planning/rai-license-posture.instructions.md
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/security/identity.instructions.md:
+    path: .github/instructions/security/identity.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/security/sssc-planner.instructions.md:
+    path: .github/instructions/security/sssc-planner.instructions.md
+    maturity: preview
+    collections:
+    - hve-core-all
+    - security
+  .github/instructions/security/standards-mapping.instructions.md:
+    path: .github/instructions/security/standards-mapping.instructions.md
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/coaching-patterns.instructions.md:
+    path: .github/instructions/shared/coaching-patterns.instructions.md
+    maturity: stable
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/disclaimer-language.instructions.md:
+    path: .github/instructions/shared/disclaimer-language.instructions.md
+    maturity: stable
+    collections:
+    - coding-standards
+    - data-science
+    - design-thinking
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/hve-core-location.instructions.md:
+    path: .github/instructions/shared/hve-core-location.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - coding-standards
+    - data-science
+    - design-thinking
+    - github
+    - hve-core
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/planner-identity-base.instructions.md:
+    path: .github/instructions/shared/planner-identity-base.instructions.md
+    maturity: preview
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/story-quality.instructions.md:
+    path: .github/instructions/shared/story-quality.instructions.md
+    maturity: stable
+    collections:
+    - ado
+    - hve-core-all
+    - project-planning
+  .github/instructions/shared/telemetry-overlay.instructions.md:
+    path: .github/instructions/shared/telemetry-overlay.instructions.md
+    maturity: preview
+    collections:
+    - coding-standards
+    - data-science
+    - hve-core
+    - hve-core-all
+    - project-planning
+    - security
+  .github/instructions/shared/untrusted-content-boundary.instructions.md:
+    path: .github/instructions/shared/untrusted-content-boundary.instructions.md
+    maturity: stable
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+skills:
+  .github/skills/accessibility/accessibility:
+    path: .github/skills/accessibility/accessibility
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/coding-standards/python-foundational:
+    path: .github/skills/coding-standards/python-foundational
+    maturity: experimental
+    collections:
+    - coding-standards
+    - hve-core-all
+  .github/skills/design-thinking/dt-coaching-foundation:
+    path: .github/skills/design-thinking/dt-coaching-foundation
+    maturity: preview
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/skills/design-thinking/dt-curriculum:
+    path: .github/skills/design-thinking/dt-curriculum
+    maturity: preview
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/skills/design-thinking/dt-methods:
+    path: .github/skills/design-thinking/dt-methods
+    maturity: preview
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/skills/design-thinking/dt-rpi-integration:
+    path: .github/skills/design-thinking/dt-rpi-integration
+    maturity: preview
+    collections:
+    - design-thinking
+    - hve-core-all
+  .github/skills/experimental/customer-card-render:
+    path: .github/skills/experimental/customer-card-render
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/experimental/powerpoint:
+    path: .github/skills/experimental/powerpoint
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/experimental/tts-voiceover:
+    path: .github/skills/experimental/tts-voiceover
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/experimental/video-to-gif:
+    path: .github/skills/experimental/video-to-gif
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/experimental/vscode-playwright:
+    path: .github/skills/experimental/vscode-playwright
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/experimental/mural:
+    path: .github/skills/experimental/mural
+    maturity: preview
+    collections:
+    - hve-core-all
+  .github/skills/github/gh-code-scanning:
+    path: .github/skills/github/gh-code-scanning
+    maturity: stable
+    collections:
+    - github
+    - hve-core-all
+  .github/skills/gitlab/gitlab:
+    path: .github/skills/gitlab/gitlab
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/hve-core/architecture-diagrams:
+    path: .github/skills/hve-core/architecture-diagrams
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/hve-core/documentation:
+    path: .github/skills/hve-core/documentation
+    maturity: preview
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/prompt-analyze:
+    path: .github/skills/hve-core/prompt-analyze
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/prompt-builder:
+    path: .github/skills/hve-core/prompt-builder
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/prompt-refactor:
+    path: .github/skills/hve-core/prompt-refactor
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/vally-tests:
+    path: .github/skills/hve-core/vally-tests
+    maturity: experimental
+    collections:
+    - hve-core-all
+  .github/skills/installer/hve-core-installer:
+    path: .github/skills/installer/hve-core-installer
+    maturity: stable
+    collections:
+    - hve-core-all
+  .github/skills/jira/jira:
+    path: .github/skills/jira/jira
+    maturity: stable
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/project-planning/adr-author:
+    path: .github/skills/project-planning/adr-author
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/project-planning/rai-planner:
+    path: .github/skills/project-planning/rai-planner
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/skills/project-planning/requirements-author:
+    path: .github/skills/project-planning/requirements-author
+    maturity: preview
+    collections:
+    - hve-core-all
+    - project-planning
+  .github/skills/project-planning/security-planning:
+    path: .github/skills/project-planning/security-planning
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - project-planning
+    - security
+  .github/skills/rai/rai-standards:
+    path: .github/skills/rai/rai-standards
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/skills/rpi/rpi-implement:
+    path: .github/skills/rpi/rpi-implement
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-plan:
+    path: .github/skills/rpi/rpi-plan
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-quick:
+    path: .github/skills/rpi/rpi-quick
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-research:
+    path: .github/skills/rpi/rpi-research
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-review:
+    path: .github/skills/rpi/rpi-review
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/security/owasp-agentic:
+    path: .github/skills/security/owasp-agentic
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/owasp-cicd:
+    path: .github/skills/security/owasp-cicd
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/owasp-docker:
+    path: .github/skills/security/owasp-docker
+    maturity: removed
+    collections:
+    - security
+  .github/skills/security/owasp-infrastructure:
+    path: .github/skills/security/owasp-infrastructure
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/owasp-llm:
+    path: .github/skills/security/owasp-llm
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/owasp-mcp:
+    path: .github/skills/security/owasp-mcp
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/owasp-top-10:
+    path: .github/skills/security/owasp-top-10
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/secure-by-design:
+    path: .github/skills/security/secure-by-design
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/security-reviewer-formats:
+    path: .github/skills/security/security-reviewer-formats
+    maturity: experimental
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/security/supply-chain-security:
+    path: .github/skills/security/supply-chain-security
+    maturity: preview
+    collections:
+    - hve-core-all
+    - security
+  .github/skills/shared/pr-reference:
+    path: .github/skills/shared/pr-reference
+    maturity: stable
+    collections:
+    - ado
+    - coding-standards
+    - hve-core
+    - hve-core-all
+    - security
+  .github/skills/shared/backlog-templates:
+    path: .github/skills/shared/backlog-templates
+    maturity: experimental
+    collections:
+    - data-science
+    - hve-core-all
+    - project-planning
+    - security
+  .github/skills/shared/telemetry-foundations:
+    path: .github/skills/shared/telemetry-foundations
+    maturity: preview
+    collections:
+    - coding-standards
+    - data-science
+    - design-thinking
+    - hve-core
+    - hve-core-all
+    - project-planning
+    - security
+releases:
+  hve-core-all:
+    channel: stable
+    includeMaturity:
+    - stable
+    excludePaths:
+    - .github/skills/installer/hve-core-installer
+    artifacts:
+    - .github/agents/ado/ado-backlog-manager.agent.md
+    - .github/agents/ado/ado-prd-to-wit.agent.md
+    - .github/agents/experimental/experiment-designer.agent.md
+    - .github/agents/experimental/pptx.agent.md
+    - .github/agents/experimental/subagents/pptx-subagent.agent.md
+    - .github/agents/github/github-backlog-manager.agent.md
+    - .github/agents/hve-core/memory.agent.md
+    - .github/agents/hve-core/pr-walkthrough.agent.md
+    - .github/agents/hve-core/prompt-builder.agent.md
+    - .github/agents/hve-core/rpi-agent.agent.md
+    - .github/agents/hve-core/subagents/implementation-validator.agent.md
+    - .github/agents/hve-core/subagents/phase-implementor.agent.md
+    - .github/agents/hve-core/subagents/plan-validator.agent.md
+    - .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+    - .github/agents/hve-core/subagents/prompt-tester.agent.md
+    - .github/agents/hve-core/subagents/prompt-updater.agent.md
+    - .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    - .github/agents/hve-core/subagents/rpi-validator.agent.md
+    - .github/agents/hve-core/task-implementor.agent.md
+    - .github/agents/hve-core/task-planner.agent.md
+    - .github/agents/hve-core/task-researcher.agent.md
+    - .github/agents/hve-core/task-reviewer.agent.md
+    - .github/agents/jira/jira-backlog-manager.agent.md
+    - .github/agents/jira/jira-prd-to-wit.agent.md
+    - .github/agents/security/subagents/codebase-profiler.agent.md
+    - .github/agents/security/subagents/finding-deep-verifier.agent.md
+    - .github/agents/security/subagents/report-generator.agent.md
+    - .github/agents/security/subagents/skill-assessor.agent.md
+    - .github/instructions/ado/ado-backlog-sprint.instructions.md
+    - .github/instructions/ado/ado-backlog-triage.instructions.md
+    - .github/instructions/ado/ado-create-pull-request.instructions.md
+    - .github/instructions/ado/ado-get-build-info.instructions.md
+    - .github/instructions/ado/ado-interaction-templates.instructions.md
+    - .github/instructions/ado/ado-update-wit-items.instructions.md
+    - .github/instructions/ado/ado-wit-discovery.instructions.md
+    - .github/instructions/ado/ado-wit-planning.instructions.md
+    - .github/instructions/experimental/experiment-designer.instructions.md
+    - .github/instructions/experimental/pptx.instructions.md
+    - .github/instructions/github/community-interaction.instructions.md
+    - .github/instructions/github/github-backlog-discovery.instructions.md
+    - .github/instructions/github/github-backlog-planning.instructions.md
+    - .github/instructions/github/github-backlog-triage.instructions.md
+    - .github/instructions/github/github-backlog-update.instructions.md
+    - .github/instructions/jira/jira-backlog-discovery.instructions.md
+    - .github/instructions/jira/jira-backlog-planning.instructions.md
+    - .github/instructions/jira/jira-backlog-triage.instructions.md
+    - .github/instructions/jira/jira-backlog-update.instructions.md
+    - .github/instructions/jira/jira-wit-planning.instructions.md
+    - .github/instructions/shared/coaching-patterns.instructions.md
+    - .github/instructions/shared/disclaimer-language.instructions.md
+    - .github/instructions/shared/hve-core-location.instructions.md
+    - .github/instructions/shared/story-quality.instructions.md
+    - .github/instructions/shared/untrusted-content-boundary.instructions.md
+    - .github/prompts/ado/ado-add-work-item.prompt.md
+    - .github/prompts/ado/ado-create-pull-request.prompt.md
+    - .github/prompts/ado/ado-discover-work-items.prompt.md
+    - .github/prompts/ado/ado-get-build-info.prompt.md
+    - .github/prompts/ado/ado-get-my-work-items.prompt.md
+    - .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md
+    - .github/prompts/ado/ado-sprint-plan.prompt.md
+    - .github/prompts/ado/ado-triage-work-items.prompt.md
+    - .github/prompts/ado/ado-update-wit-items.prompt.md
+    - .github/prompts/design-thinking/dt-canonical-deck.prompt.md
+    - .github/prompts/design-thinking/dt-figma-export.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md
+    - .github/prompts/design-thinking/dt-method-04-convergence.prompt.md
+    - .github/prompts/design-thinking/dt-method-04-ideation.prompt.md
+    - .github/prompts/design-thinking/dt-method-05-concepts.prompt.md
+    - .github/prompts/design-thinking/dt-method-05-evaluation.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-building.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-planning.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-testing.prompt.md
+    - .github/prompts/design-thinking/dt-method-next.prompt.md
+    - .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+    - .github/prompts/design-thinking/dt-start-project.prompt.md
+    - .github/prompts/experimental/cspell-config.prompt.md
+    - .github/prompts/github/github-add-issue.prompt.md
+    - .github/prompts/github/github-discover-issues.prompt.md
+    - .github/prompts/github/github-execute-backlog.prompt.md
+    - .github/prompts/github/github-sprint-plan.prompt.md
+    - .github/prompts/github/github-suggest.prompt.md
+    - .github/prompts/github/github-triage-issues.prompt.md
+    - .github/prompts/jira/jira-discover-issues.prompt.md
+    - .github/prompts/jira/jira-execute-backlog.prompt.md
+    - .github/prompts/jira/jira-prd-to-wit.prompt.md
+    - .github/prompts/jira/jira-triage-issues.prompt.md
+    - .github/skills/experimental/customer-card-render
+    - .github/skills/experimental/powerpoint
+    - .github/skills/experimental/tts-voiceover
+    - .github/skills/experimental/video-to-gif
+    - .github/skills/experimental/vscode-playwright
+    - .github/skills/github/gh-code-scanning
+    - .github/skills/gitlab/gitlab
+    - .github/skills/jira/jira
+    - .github/skills/shared/pr-reference
+    whatNew:
+      source: release-please-config.json
+      changelogPath: CHANGELOG.md
+      sections:
+      - feat
+      - fix
+      - docs
+      - refactor
+      - chore
+  hve-core-all-prerelease:
+    channel: prerelease
+    includeMaturity:
+    - stable
+    - preview
+    - experimental
+    excludePaths:
+    - .github/skills/installer/hve-core-installer
+    artifacts:
+    - .github/agents/ado/ado-backlog-manager.agent.md
+    - .github/agents/ado/ado-prd-to-wit.agent.md
+    - .github/agents/coding-standards/code-review-full.agent.md
+    - .github/agents/coding-standards/code-review-functional.agent.md
+    - .github/agents/coding-standards/code-review-standards.agent.md
+    - .github/agents/data-science/eval-dataset-creator.agent.md
+    - .github/agents/data-science/gen-data-spec.agent.md
+    - .github/agents/data-science/gen-jupyter-notebook.agent.md
+    - .github/agents/data-science/gen-streamlit-dashboard.agent.md
+    - .github/agents/data-science/test-streamlit-dashboard.agent.md
+    - .github/agents/design-thinking/dt-coach.agent.md
+    - .github/agents/design-thinking/dt-learning-tutor.agent.md
+    - .github/agents/experimental/experiment-designer.agent.md
+    - .github/agents/experimental/pptx.agent.md
+    - .github/agents/experimental/subagents/pptx-subagent.agent.md
+    - .github/agents/github/github-backlog-manager.agent.md
+    - .github/agents/hve-core/documentation.agent.md
+    - .github/agents/hve-core/memory.agent.md
+    - .github/agents/hve-core/pr-review.agent.md
+    - .github/agents/hve-core/pr-walkthrough.agent.md
+    - .github/agents/hve-core/prompt-builder.agent.md
+    - .github/agents/hve-core/rpi-agent.agent.md
+    - .github/agents/hve-core/subagents/implementation-validator.agent.md
+    - .github/agents/hve-core/subagents/phase-implementor.agent.md
+    - .github/agents/hve-core/subagents/plan-validator.agent.md
+    - .github/agents/hve-core/subagents/prompt-evaluator.agent.md
+    - .github/agents/hve-core/subagents/prompt-tester.agent.md
+    - .github/agents/hve-core/subagents/prompt-updater.agent.md
+    - .github/agents/hve-core/subagents/researcher-subagent.agent.md
+    - .github/agents/hve-core/subagents/rpi-validator.agent.md
+    - .github/agents/hve-core/task-challenger.agent.md
+    - .github/agents/hve-core/task-implementor.agent.md
+    - .github/agents/hve-core/task-planner.agent.md
+    - .github/agents/hve-core/task-researcher.agent.md
+    - .github/agents/hve-core/task-reviewer.agent.md
+    - .github/agents/jira/jira-backlog-manager.agent.md
+    - .github/agents/jira/jira-prd-to-wit.agent.md
+    - .github/agents/project-planning/adr-creation.agent.md
+    - .github/agents/project-planning/agile-coach.agent.md
+    - .github/agents/project-planning/brd-builder.agent.md
+    - .github/agents/project-planning/meeting-analyst.agent.md
+    - .github/agents/project-planning/network-isa95-planner.agent.md
+    - .github/agents/project-planning/prd-builder.agent.md
+    - .github/agents/project-planning/product-manager-advisor.agent.md
+    - .github/agents/project-planning/system-architecture-reviewer.agent.md
+    - .github/agents/project-planning/ux-ui-designer.agent.md
+    - .github/agents/rai-planning/rai-planner.agent.md
+    - .github/agents/rai-planning/rai-reviewer.agent.md
+    - .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
+    - .github/agents/security/security-planner.agent.md
+    - .github/agents/security/security-reviewer.agent.md
+    - .github/agents/security/sssc-planner.agent.md
+    - .github/agents/security/subagents/codebase-profiler.agent.md
+    - .github/agents/security/subagents/finding-deep-verifier.agent.md
+    - .github/agents/security/subagents/report-generator.agent.md
+    - .github/agents/security/subagents/skill-assessor.agent.md
+    - .github/instructions/ado/ado-backlog-sprint.instructions.md
+    - .github/instructions/ado/ado-backlog-triage.instructions.md
+    - .github/instructions/ado/ado-create-pull-request.instructions.md
+    - .github/instructions/ado/ado-get-build-info.instructions.md
+    - .github/instructions/ado/ado-interaction-templates.instructions.md
+    - .github/instructions/ado/ado-update-wit-items.instructions.md
+    - .github/instructions/ado/ado-wit-discovery.instructions.md
+    - .github/instructions/ado/ado-wit-planning.instructions.md
+    - .github/instructions/coding-standards/bash/bash.instructions.md
+    - .github/instructions/coding-standards/bicep/bicep.instructions.md
+    - .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+    - .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+    - .github/instructions/coding-standards/csharp/csharp-tests.instructions.md
+    - .github/instructions/coding-standards/csharp/csharp.instructions.md
+    - .github/instructions/coding-standards/powershell/pester.instructions.md
+    - .github/instructions/coding-standards/powershell/powershell.instructions.md
+    - .github/instructions/coding-standards/python-script.instructions.md
+    - .github/instructions/coding-standards/python-tests.instructions.md
+    - .github/instructions/coding-standards/rust/rust-tests.instructions.md
+    - .github/instructions/coding-standards/rust/rust.instructions.md
+    - .github/instructions/coding-standards/terraform/terraform.instructions.md
+    - .github/instructions/coding-standards/uv-projects.instructions.md
+    - .github/instructions/experimental/experiment-designer.instructions.md
+    - .github/instructions/experimental/pptx.instructions.md
+    - .github/instructions/github/community-interaction.instructions.md
+    - .github/instructions/github/github-backlog-discovery.instructions.md
+    - .github/instructions/github/github-backlog-planning.instructions.md
+    - .github/instructions/github/github-backlog-triage.instructions.md
+    - .github/instructions/github/github-backlog-update.instructions.md
+    - .github/instructions/hve-core/commit-message.instructions.md
+    - .github/instructions/hve-core/copilot-tracking.instructions.md
+    - .github/instructions/hve-core/git-merge.instructions.md
+    - .github/instructions/hve-core/licensing-posture.instructions.md
+    - .github/instructions/hve-core/markdown.instructions.md
+    - .github/instructions/hve-core/prompt-builder.instructions.md
+    - .github/instructions/hve-core/pull-request.instructions.md
+    - .github/instructions/hve-core/writing-style.instructions.md
+    - .github/instructions/jira/jira-backlog-discovery.instructions.md
+    - .github/instructions/jira/jira-backlog-planning.instructions.md
+    - .github/instructions/jira/jira-backlog-triage.instructions.md
+    - .github/instructions/jira/jira-backlog-update.instructions.md
+    - .github/instructions/jira/jira-wit-planning.instructions.md
+    - .github/instructions/rai-planning/rai-identity.instructions.md
+    - .github/instructions/rai-planning/rai-license-posture.instructions.md
+    - .github/instructions/security/identity.instructions.md
+    - .github/instructions/security/standards-mapping.instructions.md
+    - .github/instructions/shared/coaching-patterns.instructions.md
+    - .github/instructions/shared/disclaimer-language.instructions.md
+    - .github/instructions/shared/hve-core-location.instructions.md
+    - .github/instructions/shared/story-quality.instructions.md
+    - .github/instructions/shared/untrusted-content-boundary.instructions.md
+    - .github/prompts/ado/ado-add-work-item.prompt.md
+    - .github/prompts/ado/ado-create-pull-request.prompt.md
+    - .github/prompts/ado/ado-discover-work-items.prompt.md
+    - .github/prompts/ado/ado-get-build-info.prompt.md
+    - .github/prompts/ado/ado-get-my-work-items.prompt.md
+    - .github/prompts/ado/ado-process-my-work-items-for-task-planning.prompt.md
+    - .github/prompts/ado/ado-sprint-plan.prompt.md
+    - .github/prompts/ado/ado-triage-work-items.prompt.md
+    - .github/prompts/ado/ado-update-wit-items.prompt.md
+    - .github/prompts/coding-standards/code-review-full.prompt.md
+    - .github/prompts/coding-standards/code-review-functional.prompt.md
+    - .github/prompts/data-science/synth-data-generate.prompt.md
+    - .github/prompts/design-thinking/dt-canonical-deck.prompt.md
+    - .github/prompts/design-thinking/dt-figma-export.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-implementation-space.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-problem-space.prompt.md
+    - .github/prompts/design-thinking/dt-handoff-solution-space.prompt.md
+    - .github/prompts/design-thinking/dt-method-04-convergence.prompt.md
+    - .github/prompts/design-thinking/dt-method-04-ideation.prompt.md
+    - .github/prompts/design-thinking/dt-method-05-concepts.prompt.md
+    - .github/prompts/design-thinking/dt-method-05-evaluation.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-building.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-planning.prompt.md
+    - .github/prompts/design-thinking/dt-method-06-testing.prompt.md
+    - .github/prompts/design-thinking/dt-method-next.prompt.md
+    - .github/prompts/design-thinking/dt-resume-coaching.prompt.md
+    - .github/prompts/design-thinking/dt-start-project.prompt.md
+    - .github/prompts/experimental/cspell-config.prompt.md
+    - .github/prompts/github/github-add-issue.prompt.md
+    - .github/prompts/github/github-discover-issues.prompt.md
+    - .github/prompts/github/github-execute-backlog.prompt.md
+    - .github/prompts/github/github-sprint-plan.prompt.md
+    - .github/prompts/github/github-suggest.prompt.md
+    - .github/prompts/github/github-triage-issues.prompt.md
+    - .github/prompts/hve-core/checkpoint.prompt.md
+    - .github/prompts/hve-core/git-commit-message.prompt.md
+    - .github/prompts/hve-core/git-commit.prompt.md
+    - .github/prompts/hve-core/git-merge.prompt.md
+    - .github/prompts/hve-core/git-setup.prompt.md
+    - .github/prompts/hve-core/prompt-analyze.prompt.md
+    - .github/prompts/hve-core/prompt-build.prompt.md
+    - .github/prompts/hve-core/prompt-refactor.prompt.md
+    - .github/prompts/hve-core/pull-request.prompt.md
+    - .github/prompts/hve-core/rpi.prompt.md
+    - .github/prompts/hve-core/task-challenge.prompt.md
+    - .github/prompts/hve-core/task-implement.prompt.md
+    - .github/prompts/hve-core/task-plan.prompt.md
+    - .github/prompts/hve-core/task-research.prompt.md
+    - .github/prompts/hve-core/task-review.prompt.md
+    - .github/prompts/jira/jira-discover-issues.prompt.md
+    - .github/prompts/jira/jira-execute-backlog.prompt.md
+    - .github/prompts/jira/jira-prd-to-wit.prompt.md
+    - .github/prompts/jira/jira-triage-issues.prompt.md
+    - .github/prompts/rai-planning/rai-capture.prompt.md
+    - .github/prompts/rai-planning/rai-plan-from-prd.prompt.md
+    - .github/prompts/rai-planning/rai-plan-from-security-plan.prompt.md
+    - .github/prompts/security/incident-response.prompt.md
+    - .github/prompts/security/risk-register.prompt.md
+    - .github/prompts/security/security-capture.prompt.md
+    - .github/prompts/security/security-plan-from-prd.prompt.md
+    - .github/prompts/security/security-review-llm.prompt.md
+    - .github/prompts/security/security-review-sbd.prompt.md
+    - .github/prompts/security/security-review-web.prompt.md
+    - .github/prompts/security/security-review.prompt.md
+    - .github/prompts/security/sssc-capture.prompt.md
+    - .github/prompts/security/sssc-from-brd.prompt.md
+    - .github/prompts/security/sssc-from-prd.prompt.md
+    - .github/prompts/security/sssc-from-security-plan.prompt.md
+    - .github/skills/coding-standards/python-foundational
+    - .github/skills/experimental/customer-card-render
+    - .github/skills/experimental/powerpoint
+    - .github/skills/experimental/tts-voiceover
+    - .github/skills/experimental/video-to-gif
+    - .github/skills/experimental/vscode-playwright
+    - .github/skills/github/gh-code-scanning
+    - .github/skills/gitlab/gitlab
+    - .github/skills/hve-core/architecture-diagrams
+    - .github/skills/hve-core/documentation
+    - .github/skills/hve-core/prompt-analyze
+    - .github/skills/hve-core/prompt-builder
+    - .github/skills/hve-core/prompt-refactor
+    - .github/skills/jira/jira
+    - .github/skills/project-planning/rai-planner
+    - .github/skills/project-planning/security-planning
+    - .github/skills/rai/rai-standards
+    - .github/skills/rpi/rpi-implement
+    - .github/skills/rpi/rpi-plan
+    - .github/skills/rpi/rpi-quick
+    - .github/skills/rpi/rpi-research
+    - .github/skills/rpi/rpi-review
+    - .github/skills/security/owasp-agentic
+    - .github/skills/security/owasp-cicd
+    - .github/skills/security/owasp-infrastructure
+    - .github/skills/security/owasp-llm
+    - .github/skills/security/owasp-mcp
+    - .github/skills/security/owasp-top-10
+    - .github/skills/security/secure-by-design
+    - .github/skills/security/security-reviewer-formats
+    - .github/skills/shared/pr-reference
+    descriptions:
+      source: collections/core-manifest.yml
+      field: collections[id].descriptions[channel=prerelease].text
+    whatNew:
+      source: release-please-config.json
+      changelogPath: CHANGELOG.md
+      sections:
+      - feat
+      - fix
+      - docs
+      - refactor
+      - chore
+

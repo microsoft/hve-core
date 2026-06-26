@@ -1,4 +1,4 @@
-#Requires -Modules Pester
+﻿#Requires -Modules Pester
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -1296,7 +1296,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/agents/task-planner.agent.md') | Should -BeTrue
     }
@@ -1316,7 +1316,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/prompts/my-prompt.prompt.md') | Should -BeTrue
     }
@@ -1336,7 +1336,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/instructions/commit-message.instructions.md') | Should -BeTrue
     }
@@ -1356,7 +1356,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/skills/video-to-gif') | Should -BeTrue
     }
@@ -1377,7 +1377,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/skills/powerpoint/SKILL.md') | Should -BeTrue
         Test-Path (Join-Path $script:extDir '.github/skills/powerpoint/.venv') | Should -BeFalse
@@ -1401,7 +1401,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/skills/my-skill/SKILL.md') | Should -BeTrue
         Test-Path (Join-Path $script:extDir '.github/skills/my-skill/__pycache__') | Should -BeFalse
@@ -1424,7 +1424,7 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{}
+        Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir
 
         Test-Path (Join-Path $script:extDir '.github/skills/my-skill/SKILL.md') | Should -BeTrue
         Test-Path (Join-Path $script:extDir '.github/skills/my-skill/tests') | Should -BeFalse
@@ -1441,14 +1441,14 @@ Describe 'Copy-CollectionArtifacts' {
         }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir } | Should -Not -Throw
     }
 
     It 'Handles empty contributes sections' {
         $pkgJson = @{ contributes = @{} }
         $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:extDir 'package.json')
 
-        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir -PrepareResult @{} } | Should -Not -Throw
+        { Copy-CollectionArtifacts -RepoRoot $script:repoRoot -ExtensionDirectory $script:extDir } | Should -Not -Throw
     }
 }
 
@@ -1684,5 +1684,273 @@ Describe 'CI Integration - Package-Extension' {
 
             $result.Success | Should -BeTrue
         }
+    }
+}
+
+Describe 'Get-ArtifactMaturityMarker' {
+    It 'Returns empty string when PreRelease is not set' {
+        Get-ArtifactMaturityMarker -Maturity 'experimental' | Should -BeExactly ''
+    }
+
+    It 'Returns empty string for stable maturity on PreRelease channel' {
+        Get-ArtifactMaturityMarker -Maturity 'stable' -PreRelease | Should -BeExactly ''
+    }
+
+    It 'Returns empty string for empty maturity on PreRelease channel' {
+        Get-ArtifactMaturityMarker -Maturity '' -PreRelease | Should -BeExactly ''
+    }
+
+    It 'Returns preview marker for preview maturity on PreRelease channel' {
+        $expected = '> **🧪 Preview** — This artifact is in preview and behavior may change before it stabilizes.'
+        Get-ArtifactMaturityMarker -Maturity 'preview' -PreRelease | Should -BeExactly $expected
+    }
+
+    It 'Returns experimental marker for experimental maturity on PreRelease channel' {
+        $expected = '> **⚗️ Experimental** — This artifact is experimental and may change or be removed without notice.'
+        Get-ArtifactMaturityMarker -Maturity 'experimental' -PreRelease | Should -BeExactly $expected
+    }
+
+    It 'Returns empty string for deprecated maturity on PreRelease channel' {
+        Get-ArtifactMaturityMarker -Maturity 'deprecated' -PreRelease | Should -BeExactly ''
+    }
+}
+
+Describe 'Add-ArtifactMaturityMarker' {
+    It 'Returns content unchanged when marker is empty' {
+        $content = "---`nname: x`n---`n# Body"
+        Add-ArtifactMaturityMarker -Content $content -Marker '' | Should -BeExactly $content
+    }
+
+    It 'Inserts marker immediately after frontmatter block' {
+        $marker = '> **🧪 Preview** — test marker.'
+        $content = "---`nname: x`n---`n# Body"
+        $result = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+        $result | Should -BeExactly "---`nname: x`n---`n$marker`n# Body"
+    }
+
+    It 'Is idempotent when marker is already present' {
+        $marker = '> **⚗️ Experimental** — test marker.'
+        $content = "---`nname: x`n---`n# Body"
+        $first = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+        $second = Add-ArtifactMaturityMarker -Content $first -Marker $marker
+        $second | Should -BeExactly $first
+    }
+
+    It 'Prepends marker with blank line when no frontmatter is present' {
+        $marker = '> **🧪 Preview** — test marker.'
+        $content = "# Body only"
+        $result = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+        $result | Should -BeExactly "$marker`n`n# Body only"
+    }
+
+    It 'Preserves CRLF line endings when inserting' {
+        $marker = '> **🧪 Preview** — test marker.'
+        $content = "---`r`nname: x`r`n---`r`n# Body"
+        $result = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+        $result | Should -BeExactly "---`r`nname: x`r`n---`r`n$marker`r`n# Body"
+    }
+}
+
+Describe 'Copy-CollectionArtifacts - preserves source name metadata' {
+    BeforeAll {
+        $script:nameTestDir = Join-Path ([System.IO.Path]::GetTempPath()) "name-preserve-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:nameExtDir = Join-Path $script:nameTestDir 'extension'
+        $script:nameRepoRoot = Join-Path $script:nameTestDir 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:nameExtDir -ItemType Directory -Force | Out-Null
+        New-Item -Path (Join-Path $script:nameRepoRoot '.github/agents') -ItemType Directory -Force | Out-Null
+
+        $expSource = "---`nname: Foo (exp)`ndescription: Experimental agent`n---`n# Body"
+        $preSource = "---`nname: Bar(pre)`ndescription: Preview agent`n---`n# Body"
+        $stableSource = "---`nname: Baz`ndescription: Stable agent`n---`n# Body"
+        Set-Content -Path (Join-Path $script:nameRepoRoot '.github/agents/foo.agent.md') -Value $expSource -NoNewline -Encoding UTF8
+        Set-Content -Path (Join-Path $script:nameRepoRoot '.github/agents/bar.agent.md') -Value $preSource -NoNewline -Encoding UTF8
+        Set-Content -Path (Join-Path $script:nameRepoRoot '.github/agents/baz.agent.md') -Value $stableSource -NoNewline -Encoding UTF8
+
+        $manifestDir = Join-Path $script:nameRepoRoot 'collections'
+        New-Item -Path $manifestDir -ItemType Directory -Force | Out-Null
+        $script:nameManifestPath = Join-Path $manifestDir 'test.collection.yml'
+        @(
+            'name: test'
+            'displayName: Test'
+            'items:'
+            '  - path: .github/agents/foo.agent.md'
+            '    kind: agent'
+            '    maturity: experimental'
+            '  - path: .github/agents/bar.agent.md'
+            '    kind: agent'
+            '    maturity: preview'
+            '  - path: .github/agents/baz.agent.md'
+            '    kind: agent'
+            '    maturity: stable'
+        ) | Set-Content -Path $script:nameManifestPath -Encoding UTF8
+
+        $pkgJson = @{
+            contributes = @{
+                chatAgents = @(
+                    @{ path = './.github/agents/foo.agent.md' },
+                    @{ path = './.github/agents/bar.agent.md' },
+                    @{ path = './.github/agents/baz.agent.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:nameExtDir 'package.json')
+    }
+
+    AfterEach {
+        if (Test-Path $script:nameTestDir) {
+            Remove-Item -Path $script:nameTestDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Preserves source name line byte-for-byte under PreRelease channel' {
+        Copy-CollectionArtifacts -RepoRoot $script:nameRepoRoot -ExtensionDirectory $script:nameExtDir `
+            -CollectionManifestPath $script:nameManifestPath -PreRelease
+
+        $expNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/foo.agent.md')) | Where-Object { $_ -match '^name:' }
+        $preNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/bar.agent.md')) | Where-Object { $_ -match '^name:' }
+        $stableNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/baz.agent.md')) | Where-Object { $_ -match '^name:' }
+
+        $expNameLine | Should -BeExactly 'name: Foo (exp)'
+        $preNameLine | Should -BeExactly 'name: Bar(pre)'
+        $stableNameLine | Should -BeExactly 'name: Baz'
+    }
+
+    It 'Preserves source name line byte-for-byte under Stable channel' {
+        Copy-CollectionArtifacts -RepoRoot $script:nameRepoRoot -ExtensionDirectory $script:nameExtDir `
+            -CollectionManifestPath $script:nameManifestPath
+
+        $expNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/foo.agent.md')) | Where-Object { $_ -match '^name:' }
+        $preNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/bar.agent.md')) | Where-Object { $_ -match '^name:' }
+        $stableNameLine = (Get-Content -Path (Join-Path $script:nameExtDir '.github/agents/baz.agent.md')) | Where-Object { $_ -match '^name:' }
+
+        $expNameLine | Should -BeExactly 'name: Foo (exp)'
+        $preNameLine | Should -BeExactly 'name: Bar(pre)'
+        $stableNameLine | Should -BeExactly 'name: Baz'
+    }
+}
+
+Describe 'Build-CollectionMaturityMap' {
+    It 'Normalizes backslash paths to forward slashes and trims leading ./' {
+        $manifest = @{
+            items = @(
+                @{ path = './.github\agents\foo.agent.md'; kind = 'agent'; maturity = 'preview' }
+            )
+        }
+        $map = Build-CollectionMaturityMap -CollectionManifest $manifest
+        $map['.github/agents/foo.agent.md'] | Should -BeExactly 'preview'
+    }
+
+    It 'Adds SKILL.md entry for skill kind items' {
+        $manifest = @{
+            items = @(
+                @{ path = '.github/skills/test/my-skill'; kind = 'skill'; maturity = 'experimental' }
+            )
+        }
+        $map = Build-CollectionMaturityMap -CollectionManifest $manifest
+        $map['.github/skills/test/my-skill'] | Should -BeExactly 'experimental'
+        $map['.github/skills/test/my-skill/SKILL.md'] | Should -BeExactly 'experimental'
+    }
+
+    It 'Defaults missing maturity to stable' {
+        $manifest = @{
+            items = @(
+                @{ path = '.github/agents/bar.agent.md'; kind = 'agent' }
+            )
+        }
+        $map = Build-CollectionMaturityMap -CollectionManifest $manifest
+        $map['.github/agents/bar.agent.md'] | Should -BeExactly 'stable'
+    }
+
+    It 'Returns empty map when manifest has no items key' {
+        $map = Build-CollectionMaturityMap -CollectionManifest @{}
+        $map.Count | Should -Be 0
+    }
+}
+
+Describe 'Copy-CollectionArtifacts - maturity markers' {
+    BeforeAll {
+        $script:markerTestDir = Join-Path ([System.IO.Path]::GetTempPath()) "marker-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
+        $script:markerExtDir = Join-Path $script:markerTestDir 'extension'
+        $script:markerRepoRoot = Join-Path $script:markerTestDir 'repo'
+    }
+
+    BeforeEach {
+        New-Item -Path $script:markerExtDir -ItemType Directory -Force | Out-Null
+        New-Item -Path $script:markerRepoRoot -ItemType Directory -Force | Out-Null
+
+        $agentsSrc = Join-Path $script:markerRepoRoot '.github/agents'
+        New-Item -Path $agentsSrc -ItemType Directory -Force | Out-Null
+        $script:markerAgentSrc = Join-Path $agentsSrc 'exp-agent.agent.md'
+        $script:markerAgentContent = "---`nname: exp-agent`ndescription: test`n---`n# Body"
+        Set-Content -Path $script:markerAgentSrc -Value $script:markerAgentContent -NoNewline
+
+        $collectionsDir = Join-Path $script:markerRepoRoot 'collections'
+        New-Item -Path $collectionsDir -ItemType Directory -Force | Out-Null
+        $script:markerManifestPath = Join-Path $collectionsDir 'test.collection.yml'
+        @"
+id: test
+name: Test
+description: Test collection
+items:
+  - path: .github/agents/exp-agent.agent.md
+    kind: agent
+    maturity: experimental
+"@ | Set-Content -Path $script:markerManifestPath
+
+        $pkgJson = @{
+            contributes = @{
+                chatAgents = @(
+                    @{ path = './.github/agents/exp-agent.agent.md' }
+                )
+            }
+        }
+        $pkgJson | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $script:markerExtDir 'package.json')
+    }
+
+    AfterEach {
+        if (Test-Path $script:markerTestDir) {
+            Remove-Item -Path $script:markerTestDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    It 'Writes experimental marker into copied agent on PreRelease channel and preserves source name' {
+        Copy-CollectionArtifacts -RepoRoot $script:markerRepoRoot -ExtensionDirectory $script:markerExtDir -CollectionManifestPath $script:markerManifestPath -PreRelease
+
+        $destPath = Join-Path $script:markerExtDir '.github/agents/exp-agent.agent.md'
+        Test-Path $destPath | Should -BeTrue
+        $rendered = Get-Content -Path $destPath -Raw
+        $rendered | Should -Match '⚗️ Experimental'
+        $rendered | Should -Match 'name: exp-agent(\r?\n)'
+        $rendered | Should -Not -Match 'name: exp-agent \(Experimental\)'
+        $rendered | Should -Match '^---'
+    }
+
+    It 'Does not write marker on Stable channel and preserves source name' {
+        Copy-CollectionArtifacts -RepoRoot $script:markerRepoRoot -ExtensionDirectory $script:markerExtDir -CollectionManifestPath $script:markerManifestPath
+
+        $destPath = Join-Path $script:markerExtDir '.github/agents/exp-agent.agent.md'
+        $rendered = Get-Content -Path $destPath -Raw
+        $rendered | Should -Not -Match '⚗️ Experimental'
+        $rendered | Should -Not -Match '🧪 Preview'
+        $rendered | Should -Match 'name: exp-agent(\r?\n)'
+    }
+
+    It 'Leaves source file unchanged after PreRelease copy' {
+        Copy-CollectionArtifacts -RepoRoot $script:markerRepoRoot -ExtensionDirectory $script:markerExtDir -CollectionManifestPath $script:markerManifestPath -PreRelease
+
+        $sourceContent = Get-Content -Path $script:markerAgentSrc -Raw
+        $sourceContent | Should -BeExactly $script:markerAgentContent
+    }
+
+    It 'Does not write marker or name suffix when no manifest path is provided even on PreRelease' {
+        Copy-CollectionArtifacts -RepoRoot $script:markerRepoRoot -ExtensionDirectory $script:markerExtDir -PreRelease
+
+        $destPath = Join-Path $script:markerExtDir '.github/agents/exp-agent.agent.md'
+        $rendered = Get-Content -Path $destPath -Raw
+        $rendered | Should -Not -Match '⚗️ Experimental'
+        $rendered | Should -Not -Match 'name: exp-agent \(Experimental\)'
     }
 }

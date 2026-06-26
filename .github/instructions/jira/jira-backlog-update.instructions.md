@@ -153,4 +153,3 @@ Execution is complete when:
 
 ---
 
-Brought to you by microsoft/hve-core

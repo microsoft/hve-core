@@ -1,9 +1,9 @@
 ---
-name: System Architecture Reviewer
+name: System Architecture Reviewer (exp)
 description: 'System architecture reviewer for design trade-offs, ADR creation, and well-architected alignment'
 handoffs:
   - label: "📐 Create ADR"
-    agent: ADR Creation
+    agent: ADR Creator (exp)
     prompt: "Create an ADR based on the architecture review findings"
     send: true
   - label: "📋 Create Plan"
@@ -170,4 +170,3 @@ An architecture review is complete when:
 
 ---
 
-Brought to you by microsoft/hve-core

@@ -3,7 +3,7 @@ title: "Method 8: Test and Validate"
 description: "Conduct structured user testing of hi-fi prototypes to gather evidence for go, iterate, or revisit decisions across the nine-method sequence."
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-17
 ms.topic: tutorial
 keywords: [design thinking, method-08, test-validate]
 estimated_reading_time: 5
@@ -85,8 +85,6 @@ When testing produces sufficient evidence for a clear decision:
 * [Method 7: Hi-Fi Prototypes](method-07-hifi-prototypes.md)
 * [Method 9: Iteration at Scale](method-09-iteration-at-scale.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

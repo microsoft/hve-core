@@ -1,5 +1,5 @@
 ---
-name: Network ISA-95 Planner
+name: Network ISA-95 Planner (exp)
 description: 'ISA-95-aligned network planning for secure edge Kubernetes to Azure connectivity and remediation roadmaps'
 disable-model-invocation: true
 tools:
@@ -388,4 +388,3 @@ MUST escalate to human decision-makers when:
 
 ---
 
-Brought to you by microsoft/hve-core

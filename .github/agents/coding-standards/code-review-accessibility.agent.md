@@ -1,5 +1,5 @@
 ---
-name: Code Review Accessibility
+name: Code Review Accessibility (pre)
 description: 'Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills'
 ---
 
@@ -239,4 +239,3 @@ After presenting the report, offer to save it as a markdown file.
 
 ---
 
-Brought to you by microsoft/hve-core

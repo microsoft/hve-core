@@ -511,6 +511,130 @@ function Copy-DirectoryFiltered {
     }
 }
 
+function Get-ArtifactMaturityMarker {
+    <#
+    .SYNOPSIS
+        Returns the generated-output marker text for an artifact's maturity.
+    .DESCRIPTION
+        Computes a deterministic blockquote marker derived from collection item
+        maturity and the package channel. Stable artifacts and the Stable channel
+        always return an empty string so packaged output for the Marketplace
+        Stable channel never displays preview or experimental markers.
+    .PARAMETER Maturity
+        The effective item maturity (stable, preview, experimental, deprecated,
+        removed). Empty values are treated as stable.
+    .PARAMETER PreRelease
+        When set, the package is built for the PreRelease channel and non-stable
+        artifacts receive a marker.
+    .OUTPUTS
+        [string] Marker line ready to insert into markdown, or empty string when
+        no marker applies.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity,
+
+        [Parameter()]
+        [switch]$PreRelease
+    )
+
+    if (-not $PreRelease) { return '' }
+
+    $effective = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity.ToLowerInvariant() }
+
+    switch ($effective) {
+        'preview'      { return '> **🧪 Preview** — This artifact is in preview and behavior may change before it stabilizes.' }
+        'experimental' { return '> **⚗️ Experimental** — This artifact is experimental and may change or be removed without notice.' }
+        default        { return '' }
+    }
+}
+
+function Add-ArtifactMaturityMarker {
+    <#
+    .SYNOPSIS
+        Inserts a maturity marker into markdown content after the frontmatter.
+    .DESCRIPTION
+        Returns the original content when the marker is empty or already present.
+        Otherwise inserts the marker as a blockquote immediately after the
+        closing frontmatter delimiter, preserving line endings.
+    .PARAMETER Content
+        Source markdown content.
+    .PARAMETER Marker
+        Marker text returned by Get-ArtifactMaturityMarker.
+    .OUTPUTS
+        [string] Markdown content with the marker inserted at most once.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Content,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Marker
+    )
+
+    if ([string]::IsNullOrEmpty($Marker)) { return $Content }
+    if ($Content.Contains($Marker)) { return $Content }
+
+    $newline = if ($Content -match "`r`n") { "`r`n" } else { "`n" }
+    $insertion = "$newline$Marker$newline"
+
+    if ($Content -match "(?s)^(---\r?\n.*?\r?\n---)(\r?\n)?") {
+        $frontmatter = $Matches[1]
+        $rest = $Content.Substring($frontmatter.Length)
+        return $frontmatter + $insertion + $rest.TrimStart("`r", "`n")
+    }
+
+    return "$Marker$newline$newline$Content"
+}
+
+function Build-CollectionMaturityMap {
+    <#
+    .SYNOPSIS
+        Builds a normalized-path to effective-maturity lookup from a collection manifest.
+    .DESCRIPTION
+        Iterates manifest items, normalizes each repo-relative path (forward slashes,
+        no leading './'), and records the resolved item maturity. Skill directory
+        paths also receive a SKILL.md entry so package-time lookups by file path
+        match without recomputation.
+    .PARAMETER CollectionManifest
+        Parsed collection manifest hashtable from Get-CollectionManifest.
+    .OUTPUTS
+        [hashtable] Map of normalized path to maturity string.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest
+    )
+
+    $map = @{}
+    if (-not $CollectionManifest.ContainsKey('items')) { return $map }
+
+    foreach ($item in $CollectionManifest.items) {
+        if (-not $item -or -not $item.ContainsKey('path')) { continue }
+        $rawPath = [string]$item.path
+        $normalized = ($rawPath -replace '\\', '/') -replace '^(\./)+', '' -replace '^/+', ''
+        $kind = if ($item.ContainsKey('kind')) { [string]$item.kind } else { '' }
+        $maturity = if ($item.ContainsKey('maturity')) { Resolve-CollectionItemMaturity -Maturity ([string]$item.maturity) } else { 'stable' }
+
+        $map[$normalized] = $maturity
+        if ($kind -eq 'skill') {
+            $map["$($normalized.TrimEnd('/'))/SKILL.md"] = $maturity
+        }
+    }
+
+    return $map
+}
+
 function Copy-CollectionArtifacts {
     <#
     .SYNOPSIS
@@ -518,16 +642,19 @@ function Copy-CollectionArtifacts {
     .DESCRIPTION
         Reads the prepared package.json to determine which artifacts were selected
         by collection filtering, then copies only those files instead of the entire
-        .github directory.
+        .github directory. When a collection manifest path is provided and the
+        package channel is PreRelease, per-artifact maturity markers are rendered
+        into the copied markdown without mutating sources.
     .PARAMETER RepoRoot
         Absolute path to the repository root.
     .PARAMETER ExtensionDirectory
         Absolute path to the extension directory.
-    .PARAMETER PrepareResult
-        Result hashtable from Invoke-PrepareExtension. Reserved for future collection metadata handling.
+    .PARAMETER CollectionManifestPath
+        Optional path to the collection manifest used to derive per-artifact maturity.
+    .PARAMETER PreRelease
+        Indicates the package channel; when set, non-stable items receive a marker.
     #>
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'PrepareResult', Justification = 'Reserved for future collection metadata handling')]
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
@@ -535,58 +662,73 @@ function Copy-CollectionArtifacts {
         [Parameter(Mandatory = $true)]
         [string]$ExtensionDirectory,
 
-        [Parameter(Mandatory = $true)]
-        [hashtable]$PrepareResult
+        [Parameter(Mandatory = $false)]
+        [string]$CollectionManifestPath = '',
+
+        [Parameter(Mandatory = $false)]
+        [switch]$PreRelease
     )
 
     $preparedPkgJson = Get-Content -Path (Join-Path $ExtensionDirectory "package.json") -Raw | ConvertFrom-Json
 
-    # Copy filtered agents
+    $maturityMap = @{}
+    if ($PreRelease -and -not [string]::IsNullOrWhiteSpace($CollectionManifestPath)) {
+        try {
+            $manifest = Get-CollectionManifest -CollectionPath $CollectionManifestPath
+            $maturityMap = Build-CollectionMaturityMap -CollectionManifest $manifest
+        }
+        catch {
+            Write-Warning "Unable to load collection manifest for maturity markers: $($_.Exception.Message)"
+        }
+    }
+
+    $copyArtifact = {
+        param([string]$ContribPath, [string]$ContribName)
+
+        $relPath = $ContribPath -replace '^\.[\\/]', ''
+        $srcPath = Join-Path $RepoRoot $relPath
+        if (-not (Test-Path $srcPath)) {
+            Write-Warning "Skipping missing collection artifact: $srcPath (referenced by $ContribName in package.json)"
+            return
+        }
+        $destPath = Join-Path $ExtensionDirectory $relPath
+        $destDir = Split-Path $destPath -Parent
+        New-Item -Path $destDir -ItemType Directory -Force | Out-Null
+
+        $lookupKey = ($relPath -replace '\\', '/').TrimStart('/')
+        $marker = ''
+        if ($maturityMap.ContainsKey($lookupKey)) {
+            $marker = Get-ArtifactMaturityMarker -Maturity $maturityMap[$lookupKey] -PreRelease:$PreRelease
+        }
+
+        if ([string]::IsNullOrEmpty($marker)) {
+            Copy-Item -Path $srcPath -Destination $destPath -Force
+        }
+        else {
+            $content = Get-Content -Path $srcPath -Raw
+            $rendered = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+            Set-Content -Path $destPath -Value $rendered -NoNewline -Encoding UTF8NoBOM
+        }
+    }
+
     if ($preparedPkgJson.contributes.chatAgents) {
         foreach ($agent in $preparedPkgJson.contributes.chatAgents) {
-            $srcPath = Join-Path $RepoRoot ($agent.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatAgents in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($agent.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
+            & $copyArtifact $agent.path 'contributes.chatAgents'
         }
     }
 
-    # Copy filtered prompts
     if ($preparedPkgJson.contributes.chatPromptFiles) {
         foreach ($prompt in $preparedPkgJson.contributes.chatPromptFiles) {
-            $srcPath = Join-Path $RepoRoot ($prompt.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatPromptFiles in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($prompt.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
+            & $copyArtifact $prompt.path 'contributes.chatPromptFiles'
         }
     }
 
-    # Copy filtered instructions
     if ($preparedPkgJson.contributes.chatInstructions) {
         foreach ($instr in $preparedPkgJson.contributes.chatInstructions) {
-            $srcPath = Join-Path $RepoRoot ($instr.path -replace '^\.[\\/]', '')
-            if (-not (Test-Path $srcPath)) {
-                Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatInstructions in package.json)"
-                continue
-            }
-            $destPath = Join-Path $ExtensionDirectory ($instr.path -replace '^\.[\\/]', '')
-            $destDir = Split-Path $destPath -Parent
-            New-Item -Path $destDir -ItemType Directory -Force | Out-Null
-            Copy-Item -Path $srcPath -Destination $destPath -Force
+            & $copyArtifact $instr.path 'contributes.chatInstructions'
         }
     }
 
-    # Copy filtered skills
     if ($preparedPkgJson.contributes.chatSkills) {
         foreach ($skill in $preparedPkgJson.contributes.chatSkills) {
             $srcPath = Join-Path $RepoRoot ($skill.path -replace '^\.[\\/]', '')
@@ -594,15 +736,23 @@ function Copy-CollectionArtifacts {
                 Write-Warning "Skipping missing collection artifact: $srcPath (referenced by contributes.chatSkills in package.json)"
                 continue
             }
-            # Copy the full skill directory, not just SKILL.md
             $srcDir = Split-Path $srcPath -Parent
             $destPath = Join-Path $ExtensionDirectory ($skill.path -replace '^\.[\\/]', '')
             $destDir = Split-Path $destPath -Parent
             Copy-DirectoryFiltered -Source $srcDir -Destination $destDir
 
-            # Remove co-located test directories from packaged skills
             Get-ChildItem -Path $destDir -Directory -Filter 'tests' -Recurse -ErrorAction SilentlyContinue |
                 Remove-Item -Recurse -Force
+
+            $lookupKey = (($skill.path -replace '^\.[\\/]', '') -replace '\\', '/').TrimStart('/')
+            if ($maturityMap.ContainsKey($lookupKey)) {
+                $marker = Get-ArtifactMaturityMarker -Maturity $maturityMap[$lookupKey] -PreRelease:$PreRelease
+                if (-not [string]::IsNullOrEmpty($marker) -and (Test-Path $destPath)) {
+                    $content = Get-Content -Path $destPath -Raw
+                    $rendered = Add-ArtifactMaturityMarker -Content $content -Marker $marker
+                    Set-Content -Path $destPath -Value $rendered -NoNewline -Encoding UTF8NoBOM
+                }
+            }
         }
     }
 }
@@ -964,7 +1114,7 @@ function Invoke-PackageExtension {
             }
 
             # Copy collection-specific artifacts
-            Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -PrepareResult @{}
+            Copy-CollectionArtifacts -RepoRoot $RepoRoot -ExtensionDirectory $ExtensionDirectory -CollectionManifestPath $Collection -PreRelease:$PreRelease
         } else {
             # Full mode: copy everything, filtering out dev artifacts during copy
             foreach ($spec in $copySpecs) {

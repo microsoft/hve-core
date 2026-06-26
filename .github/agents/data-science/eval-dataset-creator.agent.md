@@ -1,5 +1,5 @@
 ---
-name: Evaluation Dataset Creator
+name: Evaluation Dataset Creator (exp)
 description: 'Creates evaluation datasets and documentation for AI agent testing using interview-driven data curation'
 argument-hint: "create an evaluation dataset for [agent name or description]"
 tools:

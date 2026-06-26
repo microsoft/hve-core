@@ -1,6 +1,6 @@
 name: behavior-conformance-instructions
 description: >
-  Advisory-tier behavior conformance evals for 44 high-signal Markdown-applyTo
+  Advisory-tier behavior conformance evals for 57 high-signal Markdown-applyTo
   instructions in `.github/instructions/**` (covers ADO, coding-standards,
   experimental, GitHub, hve-core, Jira, RAI planning, security, and shared
   scopes). Each stimulus prompts the model
@@ -949,3 +949,270 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"
+
+  - name: instruction-ado-interaction-templates-conformance
+    prompt: |
+      You are authoring a new Azure DevOps instruction file under
+      `.github/instructions/ado/` and need the shared work item description and
+      comment formatting templates. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it standardize?
+    tags:
+      category: behavior-conformance
+      instruction: ado-interaction-templates
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.github/instructions/ado/|ado-interaction-templates\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)work\\s+item|comment|description|template|formatting"
+
+  - name: instruction-diff-computation-conformance
+    prompt: |
+      You are extending a code-review agent under
+      `.github/agents/coding-standards/` and need the rules for computing the
+      review diff. Which `.github/instructions/**/*.instructions.md` file
+      applies (cite its path) and what does it require for branch detection and
+      scope locking?
+    tags:
+      category: behavior-conformance
+      instruction: diff-computation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.github/(agents|prompts)/coding-standards/|diff-computation\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)diff|branch\\s+detection|scope\\s+lock|large[-\\s]diff|non[-\\s]source"
+
+  - name: instruction-review-artifacts-conformance
+    prompt: |
+      You are persisting code review outputs under
+      `.copilot-tracking/reviews/code-reviews/2026-06-pr-123/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it require for folder structure and verdict normalization?
+    tags:
+      category: behavior-conformance
+      instruction: review-artifacts
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/reviews/code-reviews|review-artifacts\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)artifact|folder\\s+structure|metadata|verdict|persist"
+
+  - name: instruction-graphify-conformance
+    prompt: |
+      You are consuming knowledge-graph evidence emitted under `graphify-out/`
+      inside an RPI research step. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what conventions does it set for using that evidence?
+    tags:
+      category: behavior-conformance
+      instruction: graphify
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)graphify-out/|graphify\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)knowledge[-\\s]graph|evidence|graphify|rpi|research"
+
+  - name: instruction-community-interaction-conformance
+    prompt: |
+      You are editing a GitHub backlog instruction file named
+      `github-backlog-triage.instructions.md` and need the shared community
+      voice, tone, and response templates. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it govern?
+    tags:
+      category: behavior-conformance
+      instruction: community-interaction
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)github-backlog-.*\\.instructions\\.md|community-interaction\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)community|voice|tone|response\\s+template|interaction"
+
+  - name: instruction-jira-backlog-discovery-conformance
+    prompt: |
+      You are running Jira backlog discovery with artifacts under
+      `.copilot-tracking/jira-issues/discovery/sprint-7/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what discovery approach does it require?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-discovery
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/jira-issues/discovery|jira-issues/discovery/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)discovery|jql|user[-\\s]centric|artifact[-\\s]driven|jira"
+
+  - name: instruction-jira-backlog-triage-conformance
+    prompt: |
+      You are triaging Jira issues with planning files under
+      `.copilot-tracking/jira-issues/triage/q3/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it require for field recommendations and duplicate
+      detection?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-triage
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/jira-issues/triage|jira-issues/triage/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)triage|field\\s+recommendation|duplicate|jira"
+
+  - name: instruction-jira-backlog-update-conformance
+    prompt: |
+      You are executing Jira backlog operations driven by a
+      `handoff-logs.md` under `.copilot-tracking/jira-issues/update/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what execution protocol does it enforce?
+    tags:
+      category: behavior-conformance
+      instruction: jira-backlog-update
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)jira-issues/.*handoff-logs\\.md|jira-backlog-update\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|sequential|execution|jira\\s+operation|update"
+
+  - name: instruction-adr-byo-template-conformance
+    prompt: |
+      You are configuring a custom ADR template via an `.adr-config.yml` under
+      `docs/planning/adrs/` for the ADR Creator. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it specify for config resolution and the adopt-template
+      lifecycle?
+    tags:
+      category: behavior-conformance
+      instruction: adr-byo-template
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.adr-config\\.yml|docs/planning/adrs|adr-byo-template\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)template|\\.adr-config|config\\s+resolution|adopt[-\\s]template|frontmatter"
+
+  - name: instruction-adr-handoff-conformance
+    prompt: |
+      You are at the Govern phase of an ADR session with plans under
+      `.copilot-tracking/adr-plans/` and need to hand the decision off to a
+      backlog. Which `.github/instructions/**/*.instructions.md` file applies
+      (cite its path) and what does its handoff protocol require?
+    tags:
+      category: behavior-conformance
+      instruction: adr-handoff
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/adr-plans|docs/planning/adrs|adr-handoff\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)handoff|govern|work\\s+item|backlog|peer[-\\s]agent|summary"
+
+  - name: instruction-adr-identity-conformance
+    prompt: |
+      You are operating the ADR Creator and need its phase state machine and the
+      canonical `state.json` schema, with plans under
+      `.copilot-tracking/adr-plans/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what does it define for the per-turn protocol?
+    tags:
+      category: behavior-conformance
+      instruction: adr-identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/adr-plans|docs/planning/adrs|adr-identity\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)state\\s+machine|state\\.json|phase|per[-\\s]turn|autonomy|identity"
+
+  - name: instruction-adr-standards-conformance
+    prompt: |
+      You are authoring an ADR and need the embedded MADR v4.0.0 template, the
+      Y-Statement formula, and the ASR trigger schema, with plans under
+      `.copilot-tracking/adr-plans/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what standards does it embed?
+    tags:
+      category: behavior-conformance
+      instruction: adr-standards
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/adr-plans|docs/planning/adrs|adr-standards\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)madr|y[-\\s]statement|asr\\s+trigger|status\\s+taxonomy|naming"
+
+  - name: instruction-hve-core-location-conformance
+    prompt: |
+      A prompt references a script that is missing at its expected path in the
+      current directory and you must locate the hve-core artifact root to
+      resolve it. Which `.github/instructions/**/*.instructions.md` file applies
+      (cite its path) and what fallback guidance does it provide?
+    tags:
+      category: behavior-conformance
+      instruction: hve-core-location
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)hve-core-location\\.instructions\\.md|artifact\\s+root"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)hve-core|fall\\s*back|walk\\s+up|artifact\\s+root|distribution"

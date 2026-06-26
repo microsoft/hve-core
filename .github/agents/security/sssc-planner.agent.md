@@ -1,5 +1,5 @@
 ---
-name: SSSC Planner
+name: SSSC Planner (exp)
 description: >-
   Six-phase repository supply chain security assessment against OpenSSF
   Scorecard, SLSA, Sigstore, and SBOM standards, producing a prioritized
@@ -8,7 +8,7 @@ agents:
   - Researcher Subagent
 handoffs:
   - label: "Security Planner"
-    agent: Security Planner
+    agent: Security Planner (exp)
     prompt: /security-capture
     send: true
 tools:

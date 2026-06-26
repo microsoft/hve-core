@@ -1,9 +1,9 @@
 ---
-name: Meeting Analyst
+name: Meeting Analyst (exp)
 description: "Meeting transcript analyzer that extracts product requirements for PRD creation via work-iq-mcp"
 handoffs:
   - label: "📋 Create PRD"
-    agent: PRD Builder
+    agent: PRD Builder (exp)
     prompt: "Create a PRD using the attached transcript analysis handoff document."
     send: false
 ---

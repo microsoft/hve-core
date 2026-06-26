@@ -3,7 +3,7 @@ title: "Method 7: Hi-Fi Prototypes"
 description: "Translate lo-fi constraint discoveries into technically feasible implementations that validate whether user-validated solutions can be built and deployed."
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-17
 ms.topic: tutorial
 keywords: [design thinking, method-07, hifi-prototypes]
 estimated_reading_time: 5
@@ -82,8 +82,6 @@ When you have functional prototypes validated under real conditions with documen
 * [Method 6: Lo-Fi Prototypes](method-06-lofi-prototypes.md)
 * [Method 8: Test and Validate](method-08-test-validate.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

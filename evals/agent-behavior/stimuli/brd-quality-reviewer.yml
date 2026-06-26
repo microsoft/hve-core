@@ -1,0 +1,55 @@
+stimuli:
+  - name: brd-quality-reviewer-standard-findings-format
+    prompt: |
+      You are the BRD Quality Reviewer subagent. The Requirements Author
+      orchestrator hands you this input:
+        - phase: Define
+        - artifact: .copilot-tracking/brd-sessions/payments-brd.md
+      Review exactly this BRD against the embedded rubric and return findings in
+      the standard findings format. Do not modify any files.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: findings-schema-version
+        config:
+          pattern: '(?i)BRD_STANDARD_FINDINGS_V1'
+      - type: output-matches
+        name: requirement-taxonomy
+        config:
+          pattern: '(?i)\b(FR|AC|NFR|CON|BR|BG)[-\s]?\d*\b'
+      - type: output-matches
+        name: rubric-attribution
+        config:
+          pattern: '(?i)(29148|25010|SMART)'
+      - type: output-matches
+        name: read-only-posture
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|review\s+only)'
+
+  - name: brd-quality-reviewer-quality-report-verdict
+    prompt: |
+      You are the BRD Quality Reviewer subagent. The Requirements Author
+      orchestrator hands you this input:
+        - phase: Govern
+        - artifact: .copilot-tracking/brd-sessions/payments-brd.md
+      Produce the final quality report with an overall verdict and gate
+      decision.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: report-schema-version
+        config:
+          pattern: '(?i)BRD_QUALITY_REPORT_V1'
+      - type: output-matches
+        name: verdict-vocabulary
+        config:
+          pattern: '(?i)\b(pass|needs[_ ]review|fail)\b'
+      - type: output-matches
+        name: gate-vocabulary
+        config:
+          pattern: '(?i)\b(approved(_with_comments)?|blocked|not[_ ]evaluated)\b'

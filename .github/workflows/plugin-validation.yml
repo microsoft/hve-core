@@ -42,13 +42,36 @@ jobs:
       - name: Validate collection metadata
         run: npm run lint:collections-metadata
 
+      - name: Validate core manifest and asset folder sync
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint:core-manifest 2>&1 | tee logs/core-manifest-console.txt
+
+      - name: Surface asset folder sync remediation
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f logs/core-manifest-console.txt ] && grep -q 'COPY BELOW' logs/core-manifest-console.txt; then
+            {
+              echo "## Asset folder sync failed"
+              echo ""
+              echo "A \`.github\` asset subfolder is out of sync with \`.vscode/settings.json\`."
+              echo "Paste the prompt below to a coding agent to fix it, then re-run \`npm run lint:core-manifest\`."
+              echo ""
+              echo '```text'
+              sed -n '/COPY BELOW/,/COPY ABOVE/p' logs/core-manifest-console.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Validate marketplace manifest
         run: npm run lint:marketplace
 
       - name: Check plugin freshness
         run: |
           npm run plugin:generate
-          if ! git diff --quiet plugins/; then
+          if ! git diff --quiet plugins/ .github/plugin/marketplace.json; then
             echo "::error::Plugins out of date. Run 'npm run plugin:generate' and commit."
             if [ "${{ inputs.soft-fail }}" != "true" ]; then
               exit 1

@@ -1,9 +1,8 @@
 ---
-description: 'Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file'
+description: Execute a GitHub backlog plan by creating, updating, linking, closing, and commenting on issues from a handoff file
 agent: GitHub Backlog Manager
-argument-hint: "handoff=... [autonomy={full|partial|manual}] [dryRun={true|false}]"
+argument-hint: handoff=... [autonomy={full|partial|manual}] [dryRun={true|false}]
 ---
-
 # Execute GitHub Backlog Plan
 
 Process a handoff plan file to execute planned issue operations against the GitHub API. The workflow initializes (or resumes) execution state, processes operations in hierarchy order, and produces a completion report with issue numbers.

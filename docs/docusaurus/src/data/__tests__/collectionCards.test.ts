@@ -2,23 +2,54 @@ import { collectionCardDefinitions, resolveCollectionCards, resolveMetaCollectio
 import type { CollectionCardData } from '../collectionCards';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as yaml from 'js-yaml';
 
 const collectionsDir =
   process.env.COLLECTIONS_DIR ??
   path.resolve(__dirname, '../../../../../collections');
 
-function countYamlPaths(collectionName: string): number {
-  const yamlPath = path.join(
-    collectionsDir,
-    `${collectionName}.collection.yml`,
-  );
-  const content = fs.readFileSync(yamlPath, 'utf-8');
-  return (content.match(/^\s*- path:/gm) || []).length;
+interface ManifestArtifact {
+  collections?: string[];
+}
+
+interface CoreManifest {
+  collections: Record<string, unknown>;
+  agents?: Record<string, ManifestArtifact>;
+  prompts?: Record<string, ManifestArtifact>;
+  instructions?: Record<string, ManifestArtifact>;
+  skills?: Record<string, ManifestArtifact>;
+}
+
+const ARTIFACT_KINDS = ['agents', 'prompts', 'instructions', 'skills'] as const;
+
+function loadCoreManifest(): CoreManifest {
+  const manifestPath = path.join(collectionsDir, 'core-manifest.yml');
+  const content = fs.readFileSync(manifestPath, 'utf-8');
+  return yaml.load(content) as CoreManifest;
+}
+
+const manifest = loadCoreManifest();
+
+// Derive each collection's artifact count from manifest membership, the same
+// source the rendered site counts via the projected collections/*.collection.yml
+// files. hve-core-all is a regular collection name in membership, so the same
+// counting logic applies to it.
+function getArtifactCount(collectionName: string): number {
+  let count = 0;
+  for (const kind of ARTIFACT_KINDS) {
+    const section = manifest[kind] ?? {};
+    for (const artifact of Object.values(section)) {
+      if (artifact.collections?.includes(collectionName)) {
+        count += 1;
+      }
+    }
+  }
+  return count;
 }
 
 const counts = Object.fromEntries(
   [...collectionCardDefinitions.map((c) => c.name), 'hve-core-all'].map(
-    (name) => [name, countYamlPaths(name)],
+    (name) => [name, getArtifactCount(name)],
   ),
 );
 const collectionCards = resolveCollectionCards(counts);
@@ -30,11 +61,8 @@ describe('collectionCards', () => {
     'coding-standards',
     'data-science',
     'design-thinking',
-    'experimental',
     'github',
-    'gitlab',
     'hve-core',
-    'jira',
     'project-planning',
     'security',
   ];
@@ -86,21 +114,5 @@ describe('metaCollections', () => {
       expect(Number.isInteger(value)).toBe(true);
       expect(value).toBeGreaterThan(0);
     }
-  });
-});
-
-describe('artifact count cross-validation', () => {
-  it.each(collectionCards.map((c): [string] => [c.name]))(
-    '%s artifact count matches YAML manifest',
-    (name) => {
-      const card = collectionCards.find((c) => c.name === name)!;
-      const yamlCount = countYamlPaths(name);
-      expect(card.artifacts).toBe(yamlCount);
-    },
-  );
-
-  it('hve-core-all count matches YAML manifest', () => {
-    const yamlCount = countYamlPaths('hve-core-all');
-    expect(metaCollections['hve-core-all']).toBe(yamlCount);
   });
 });

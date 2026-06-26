@@ -1,5 +1,5 @@
 ---
-name: Security Reviewer
+name: Security Reviewer (exp)
 description: "Security skill assessment orchestrator for codebase profiling and vulnerability reporting"
 agents:
   - Codebase Profiler

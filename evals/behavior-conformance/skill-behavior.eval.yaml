@@ -1,10 +1,10 @@
 name: behavior-conformance-skills
 description: >
-  Advisory-tier behavior conformance evals for 25 skills exercised across three
+  Advisory-tier behavior conformance evals for 37 skills exercised across three
   stimulus shapes: knowledge (canonical concept attribution), tool-trigger
   (domain-intent skill attribution from a working context), and bleed-detection
   (correct refusal when an off-topic context superficially resembles the
-  skill's domain). Total: 75 stimuli. Each tool-trigger stimulus uses two
+  skill's domain). Total: 95 stimuli. Each tool-trigger stimulus uses two
   graders with AND logic, and the suite-level scoring threshold gates the
   aggregate pass rate across stimuli.
 type: capability
@@ -1376,6 +1376,236 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(jailbreak|prompt-injection|adversarial|red-team|scope)'
+
+  - name: skill-mural-knowledge
+    prompt: |
+      I want to read and write sticky notes on a Mural board and automate
+      widget creation. Which skill covers this, and what does it provide?
+    tags:
+      category: behavior-conformance
+      skill: mural
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(mural)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(workspace|room|widget|board|rest\s+api|cli)'
+
+  - name: skill-mural-tool-trigger
+    prompt: |
+      Create a new sticky-note widget on a Mural board for our retrospective.
+      Walk me through how the `mural` skill drives this.
+    tags:
+      category: behavior-conformance
+      skill: mural
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(mural)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(widget|sticky|cli|api|create)'
+
+  - name: skill-mural-bleed-detection
+    prompt: |
+      I need to build sticky notes on a Miro board using the Miro SDK. Does the
+      `mural` skill apply here? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: mural
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|out\s+of\s+scope)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(mural|miro|scope)'
+
+  - name: skill-adr-author-knowledge
+    prompt: |
+      I need to write an Architecture Decision Record using the MADR template
+      and capture supersession lineage. Which skill covers this?
+    tags:
+      category: behavior-conformance
+      skill: adr-author
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(adr|architecture\s+decision)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(madr|y[-\s]?statement|supersession|asr)'
+
+  - name: skill-adr-author-tool-trigger
+    prompt: |
+      Draft an ADR for choosing PostgreSQL over MySQL using a Y-Statement and
+      evaluate the ASR triggers. Walk me through the `adr-author` skill.
+    tags:
+      category: behavior-conformance
+      skill: adr-author
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(adr|architecture\s+decision)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(y[-\s]?statement|madr|asr|decision)'
+
+  - name: skill-adr-author-bleed-detection
+    prompt: |
+      I want to write a Product Requirements Document with user stories and
+      acceptance criteria. Does the `adr-author` skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: adr-author
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|out\s+of\s+scope)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(adr|requirements|prd|scope)'
+
+  - name: skill-requirements-author-knowledge
+    prompt: |
+      I need to author a BRD and a PRD moving through Discover, Define, and
+      Govern phases with canonical templates. Which skill covers this?
+    tags:
+      category: behavior-conformance
+      skill: requirements-author
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(requirements|brd|prd)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(discover|define|govern|template)'
+
+  - name: skill-requirements-author-tool-trigger
+    prompt: |
+      Generate a Business Requirements Document for a new payments feature using
+      the canonical template. Walk me through the `requirements-author` skill.
+    tags:
+      category: behavior-conformance
+      skill: requirements-author
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(requirements|brd|prd)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(template|discover|define|govern|handoff)'
+
+  - name: skill-requirements-author-bleed-detection
+    prompt: |
+      I want to record an architecture decision about our database choice using
+      a Y-Statement. Does the `requirements-author` skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: requirements-author
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|out\s+of\s+scope)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(requirements|adr|decision|scope)'
+
+  - name: skill-supply-chain-security-knowledge
+    prompt: |
+      I need to assess our repository's OpenSSF Scorecard, SLSA provenance, and
+      generate an SBOM. Which skill covers this domain?
+    tags:
+      category: behavior-conformance
+      skill: supply-chain-security
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(supply\s+chain)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(scorecard|slsa|sigstore|sbom)'
+
+  - name: skill-supply-chain-security-tool-trigger
+    prompt: |
+      Evaluate our build pipeline against SLSA levels and verify Sigstore
+      signatures. Walk me through the `supply-chain-security` skill.
+    tags:
+      category: behavior-conformance
+      skill: supply-chain-security
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(supply\s+chain)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(slsa|sigstore|scorecard|sbom|provenance)'
+
+  - name: skill-supply-chain-security-bleed-detection
+    prompt: |
+      I want to remediate a SQL injection vulnerability in a running web app.
+      Does the `supply-chain-security` skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: supply-chain-security
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(not\s+apply|does\s+not|inapplicable|different\s+skill|out\s+of\s+scope)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(supply\s+chain|injection|runtime|scope)'
+
+
   - name: skill-prompt-builder-tool-trigger
     prompt: |
       I need to create a new prompt artifact, research the existing prompt
@@ -1395,6 +1625,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(prompt|skill|artifact|validation|collection)'
+
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for
@@ -1414,6 +1645,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(refactor|prompt|skill|artifact|requirements)'
+
   - name: skill-prompt-analyze-tool-trigger
     prompt: |
       I need to evaluate an existing prompt artifact and produce an analysis
@@ -1433,6 +1665,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(analyze|analyse|analysis|prompt|report|skill)'
+
   - name: skill-rpi-quick-tool-trigger
     prompt: |
       I need an autonomous Research, Plan, Implement, Review, Discover loop
@@ -1452,6 +1685,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(phase|workflow|artifact|research|plan|implement|review|discover)'
+
   - name: skill-rpi-research-tool-trigger
     prompt: |
       I need a focused research phase for an implementation task, including
@@ -1471,6 +1705,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(research|evidence|artifact|scope|assumption|phase)'
+
   - name: skill-rpi-plan-tool-trigger
     prompt: |
       I have completed task research and need an implementation plan with
@@ -1490,6 +1725,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(plan|phase|dependency|details|validation)'
+
   - name: skill-rpi-implement-tool-trigger
     prompt: |
       I need to execute a task plan phase, apply the scoped code changes,
@@ -1509,6 +1745,7 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(implement|phase|change|validation|plan)'
+
   - name: skill-rpi-review-tool-trigger
     prompt: |
       I need to review completed implementation work against the user

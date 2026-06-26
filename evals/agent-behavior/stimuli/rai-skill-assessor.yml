@@ -1,0 +1,60 @@
+stimuli:
+  - name: rai-skill-assessor-audit-format
+    prompt: |
+      You are the RAI Skill Assessor subagent. The RAI Planner orchestrator
+      hands you this input:
+        - mode: audit
+        - framework: nist-ai-rmf-govern
+        - scope: docs/planning/rai/
+      Assess exactly this one RAI framework against the scope using the
+      `rai-standards` skill and return findings in the audit format with a
+      status and a findings table. Do not modify any files.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: findings-schema-version
+        config:
+          pattern: '(?i)RAI_FINDINGS_V1'
+      - type: output-matches
+        name: audit-status-vocabulary
+        config:
+          pattern: '(?i)\b(pass|fail|partial|not[_ ]assessed)\b'
+      - type: output-matches
+        name: framework-attribution
+        config:
+          pattern: '(?i)(nist\s+ai\s+rmf|govern|responsible\s+ai)'
+      - type: output-matches
+        name: read-only-posture
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|assessment\s+only)'
+
+  - name: rai-skill-assessor-plan-vocabulary
+    prompt: |
+      You are the RAI Skill Assessor subagent. The RAI Planner orchestrator
+      hands you this input:
+        - mode: plan
+        - framework: ai-stride
+        - plan_text: A design doc describing an LLM agent that summarizes
+          customer support tickets and drafts automated replies.
+      Assess exactly this one framework against the plan text and return findings
+      in the plan-mode format.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: plan-schema-version
+        config:
+          pattern: '(?i)RAI_PLAN_FINDINGS_V1'
+      - type: output-matches
+        name: plan-status-vocabulary
+        config:
+          pattern: '(?i)\b(risk|caution|covered|not[_ ]applicable)\b'
+      - type: output-matches
+        name: mitigation-guidance
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(mitigation|guidance|recommend|remediat)'

@@ -103,4 +103,3 @@ Apply the Non-Source Artifact Skip List and Large Diff Handling rules to the man
 
 ---
 
-Brought to you by microsoft/hve-core

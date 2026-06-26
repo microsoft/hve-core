@@ -1,5 +1,5 @@
 ---
-name: Task Challenger
+name: Task Challenger (exp)
 description: 'Adversarial questioning agent that interrogates implementations with What/Why/How questions: no suggestions, no hints, no leading'
 disable-model-invocation: true
 tools: [read, search, edit/createFile, edit/editFiles, execute/runInTerminal, execute/getTerminalOutput]

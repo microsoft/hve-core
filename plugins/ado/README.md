@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Azure DevOps Integration
 
-Azure DevOps work item management, build monitoring, and pull request creation
+Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
 ## Overview
 
@@ -45,6 +45,7 @@ Manage Azure DevOps work items, monitor builds, create pull requests, and conver
 | **ado/ado-wit-discovery**         | Azure DevOps work item discovery via user assignment or artifact analysis with planning file output                                                                                                                                                         |
 | **ado/ado-wit-planning**          | Azure DevOps work item planning files, templates, field definitions, and search protocols                                                                                                                                                                   |
 | **shared/hve-core-location**      | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| **shared/story-quality**          | Shared story quality conventions for work item creation and evaluation across agents and workflows                                                                                                                                                          |
 
 ### Skills
 

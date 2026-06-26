@@ -453,6 +453,15 @@ extension/README.*.md
 
 # Scanner, linter, and test result files
 *.log
+*.out
+
+# Git state and audit scratch dumps
+git_*.txt
+categorized_changes.txt
+maturity_audit.txt
+
+# Temporary CI step artifacts
+tmp-ci-artifacts/
 
 # Tracked test fixtures that would otherwise match *.log
 !scripts/tests/evals/fixtures/equivalence/vally-compare.log

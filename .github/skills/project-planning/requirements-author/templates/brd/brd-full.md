@@ -347,4 +347,3 @@ Approval date: {{approval_date}}
 
 ---
 
-> Brought to you by microsoft/hve-core

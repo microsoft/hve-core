@@ -1,8 +1,8 @@
 ---
-name: PRD Builder
+name: PRD Builder (exp)
 description: "Product Requirements Document builder with guided Q&A and reference integration"
 agents:
-  - PRD Quality Reviewer
+  - PRD Quality Reviewer (exp)
   - Researcher Subagent
 ---
 

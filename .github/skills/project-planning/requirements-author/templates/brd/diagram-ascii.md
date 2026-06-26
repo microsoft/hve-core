@@ -1,5 +1,5 @@
 ---
-description: "ASCII Process Diagram Fragment for BRD - Brought to you by microsoft/hve-core"
+description: "ASCII Process Diagram Fragment for BRD"
 ---
 
 # Process Models — ASCII Diagram Fragment
@@ -48,4 +48,4 @@ This fragment is used when `brd_frontmatter.diagram_format: "ascii"`.
 
 ---
 
-> Brought to you by microsoft/hve-core
+>

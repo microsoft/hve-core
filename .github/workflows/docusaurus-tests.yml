@@ -46,7 +46,7 @@ jobs:
             # Pure markdown content edits elsewhere under docs/ are intentionally
             # excluded so content-only PRs skip the expensive a11y/build job.
             # The collections/ tree is included because docusaurus.config.js reads
-            # collections/*.collection.yml at build time (collectionCounts) and the
+            # collections/core-manifest.yml at build time (collectionCounts) and the
             # tests consume it via COLLECTIONS_DIR, so changes there alter site and
             # test output. The workflow files themselves are included so test/config
             # changes still trigger a run.

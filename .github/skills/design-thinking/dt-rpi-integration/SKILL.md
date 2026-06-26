@@ -1,6 +1,6 @@
 ---
 name: dt-rpi-integration
-description: Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation - Brought to you by microsoft/hve-core
+description: Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"

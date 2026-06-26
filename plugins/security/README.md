@@ -1,14 +1,20 @@
 <!-- markdownlint-disable-file -->
 # Security
 
-Security review, planning, incident response, risk assessment, and vulnerability analysis
+Preview & Experimental: Security review, planning, incident response, and risk assessment. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
 > [!CAUTION]
 > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.
 
+> **⚠️ Maturity** — This bundle includes stable, preview, experimental assets. The preview and experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
+
 ## Overview
 
 Security review, planning, incident response, risk assessment, vulnerability analysis, supply chain security, and responsible AI assessment for cloud and hybrid environments.
+
+> Experimental: This collection includes experimental assets that may change significantly.
+
+<!-- -->
 
 > [!CAUTION]
 > The security agents and prompts in this collection are **assistive tools only**. They do not replace professional security tooling (SAST, DAST, SCA, penetration testing, compliance scanners) or qualified human review. All AI-generated security artifacts **must** be reviewed and validated by qualified security professionals before use. AI outputs may contain inaccuracies, miss critical threats, or produce recommendations that are incomplete or inappropriate for your environment.

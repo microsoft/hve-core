@@ -1,5 +1,5 @@
 ---
-name: ADR Creator
+name: ADR Creator (exp)
 description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff'
 agents:
   - Researcher Subagent
@@ -7,9 +7,9 @@ handoffs:
   - label: "Task Planner"
     agent: Task Planner
   - label: "RAI Planner"
-    agent: RAI Planner
+    agent: RAI Planner (exp)
   - label: "Security Planner"
-    agent: Security Planner
+    agent: Security Planner (exp)
 tools:
   - read
   - edit/createFile

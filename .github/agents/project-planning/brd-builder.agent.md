@@ -1,8 +1,8 @@
 ---
-name: BRD Builder
+name: BRD Builder (exp)
 description: "Business Requirements Document builder with guided Q&A and reference integration"
 agents:
-  - BRD Quality Reviewer
+  - BRD Quality Reviewer (exp)
   - Researcher Subagent
 ---
 

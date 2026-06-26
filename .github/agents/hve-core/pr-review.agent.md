@@ -1,5 +1,5 @@
 ---
-name: PR Review
+name: PR Review (pre)
 description: 'Pull Request review assistant for code quality, security, and convention compliance'
 ---
 

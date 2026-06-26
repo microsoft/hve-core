@@ -9,6 +9,8 @@
 #Requires -Version 7.0
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
+Import-Module (Join-Path $PSScriptRoot 'CoreManifestHelpers.psm1') -Force
+
 # ---------------------------------------------------------------------------
 # Marker Constants (shared across collection scripts)
 # ---------------------------------------------------------------------------
@@ -57,6 +59,55 @@ function Set-ContentIfChanged {
     }
     Set-Content -LiteralPath $Path -Value $Value -Encoding utf8NoBOM -NoNewline
     return $true
+}
+
+function ConvertTo-PlainHashtable {
+    <#
+    .SYNOPSIS
+        Recursively converts ordered dictionaries to plain hashtables.
+    .DESCRIPTION
+        Walks a structure of [ordered]/OrderedDictionary, hashtable, and array
+        values, returning equivalent plain [hashtable] instances so callers can
+        rely on Hashtable-only members such as .ContainsKey(). Arrays and scalar
+        values are preserved; nested dictionaries and array elements are
+        converted recursively.
+    .PARAMETER InputObject
+        The value to convert.
+    .OUTPUTS
+        The converted value: a [hashtable] for dictionary inputs, an array for
+        enumerable inputs, or the original scalar otherwise.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowNull()]
+        $InputObject
+    )
+
+    if ($null -eq $InputObject) {
+        return $null
+    }
+
+    if ($InputObject -is [System.Collections.IDictionary]) {
+        $result = @{}
+        foreach ($key in $InputObject.Keys) {
+            $result[$key] = ConvertTo-PlainHashtable -InputObject $InputObject[$key]
+        }
+        return $result
+    }
+
+    if ($InputObject -is [string]) {
+        return $InputObject
+    }
+
+    if ($InputObject -is [System.Collections.IEnumerable]) {
+        $converted = foreach ($item in $InputObject) {
+            ConvertTo-PlainHashtable -InputObject $item
+        }
+        return @($converted)
+    }
+
+    return $InputObject
 }
 
 # ---------------------------------------------------------------------------
@@ -167,6 +218,23 @@ function Get-CollectionManifest {
         [string]$CollectionPath
     )
 
+    $collectionFileName = [System.IO.Path]::GetFileName($CollectionPath)
+    $collectionsDir = Split-Path -Path $CollectionPath -Parent
+    $coreManifestPath = if ($collectionsDir) { Join-Path -Path $collectionsDir -ChildPath 'core-manifest.yml' } else { '' }
+
+    if ($collectionFileName -match '^(?<id>.+)\.collection\.ya?ml$' -and
+        -not [string]::IsNullOrWhiteSpace($coreManifestPath) -and
+        (Test-Path -Path $coreManifestPath -PathType Leaf)) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        $projected = ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -CollectionId $Matches['id'] -RepoRoot (Split-Path -Path $collectionsDir -Parent)
+        # ConvertTo-CollectionManifestFromCore returns ordered dictionaries to keep
+        # deterministic YAML render/verify byte-parity. Downstream consumers
+        # (Prepare-Extension) call .ContainsKey(), which OrderedDictionary lacks, so
+        # deep-convert to plain Hashtable at this boundary to honor the [hashtable]
+        # OutputType contract.
+        return ConvertTo-PlainHashtable -InputObject $projected
+    }
+
     if (-not (Test-Path $CollectionPath)) {
         throw "Collection manifest not found: $CollectionPath"
     }
@@ -244,7 +312,7 @@ function Get-ArtifactFrontmatter {
 
     .DESCRIPTION
     Parses the YAML frontmatter block delimited by --- markers at the start
-    of a markdown file. Returns a hashtable with description.
+    of a markdown file. Returns a hashtable with description and name keys.
 
     .PARAMETER FilePath
     Path to the markdown file to parse.
@@ -253,7 +321,7 @@ function Get-ArtifactFrontmatter {
     Default description if none found in frontmatter.
 
     .OUTPUTS
-    [hashtable] With description key.
+    [hashtable] With description and name keys. The name value is $null when frontmatter omits it.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -267,6 +335,7 @@ function Get-ArtifactFrontmatter {
 
     $content = Get-Content -Path $FilePath -Raw
     $description = ''
+    $name = $null
 
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         $yamlContent = $Matches[1] -replace '\r\n', "`n" -replace '\r', "`n"
@@ -274,6 +343,12 @@ function Get-ArtifactFrontmatter {
             $data = ConvertFrom-Yaml -Yaml $yamlContent
             if ($data.ContainsKey('description')) {
                 $description = $data.description
+            }
+            if ($data.ContainsKey('name')) {
+                $rawName = $data.name
+                if ($null -ne $rawName -and -not [string]::IsNullOrWhiteSpace([string]$rawName)) {
+                    $name = [string]$rawName
+                }
             }
         }
         catch {
@@ -283,6 +358,43 @@ function Get-ArtifactFrontmatter {
 
     return @{
         description = if ($description) { $description } else { $FallbackDescription }
+        name        = $name
+    }
+}
+
+function Get-AgentMaturityNameSuffix {
+    <#
+    .SYNOPSIS
+    Returns the picker-name suffix associated with an agent maturity value.
+
+    .DESCRIPTION
+    Maps maturity values to the source-embedded picker suffix. Experimental
+    maps to '(exp)', preview maps to '(pre)', and any other value (stable,
+    deprecated, removed, empty, or unknown) maps to an empty string.
+
+    .PARAMETER Maturity
+    The maturity value to translate.
+
+    .OUTPUTS
+    [string] The suffix to embed in the agent name, or '' when none applies.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter()]
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Maturity
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Maturity)) {
+        return ''
+    }
+
+    switch ($Maturity.ToLowerInvariant()) {
+        'experimental' { return '(exp)' }
+        'preview'      { return '(pre)' }
+        default        { return '' }
     }
 }
 
@@ -338,6 +450,13 @@ function Get-AllCollections {
         [Parameter(Mandatory = $true)]
         [string]$CollectionsDir
     )
+
+    $coreManifestPath = Join-Path -Path $CollectionsDir -ChildPath 'core-manifest.yml'
+    if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $repoRoot = Split-Path -Path $CollectionsDir -Parent
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        return @(ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -All -RepoRoot $repoRoot)
+    }
 
     $files = Get-ChildItem -Path $CollectionsDir -Filter '*.collection.yml' -File
     $collections = @()
@@ -487,6 +606,28 @@ function Update-HveCoreAllCollection {
         [switch]$DryRun
     )
 
+    $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
+    $coreManifestPath = Join-Path -Path $collectionsDir -ChildPath 'core-manifest.yml'
+    if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        $projected = ConvertTo-CollectionManifestFromCore -CoreManifest $coreManifest -CollectionId 'hve-core-all' -RepoRoot $RepoRoot
+        $itemCount = @($projected.items).Count
+
+        Write-Host "`n--- hve-core-all Projection ---" -ForegroundColor Cyan
+        Write-Host "  Source: core-manifest.yml"
+        Write-Host "  Final: $itemCount items"
+        if ($DryRun) {
+            Write-Host '  [DRY RUN] No changes written' -ForegroundColor Yellow
+        }
+
+        return @{
+            ItemCount       = $itemCount
+            AddedCount      = 0
+            RemovedCount    = 0
+            DeprecatedCount = 0
+        }
+    }
+
     $collectionPath = Join-Path -Path $RepoRoot -ChildPath 'collections/hve-core-all.collection.yml'
 
     # Read existing manifest to preserve metadata
@@ -499,30 +640,61 @@ function Update-HveCoreAllCollection {
     # Exclude deprecated items by path (independent of maturity metadata)
     $allItems = @($allItems | Where-Object { -not (Test-DeprecatedPath -Path $_.path) })
 
-    # Filter deprecated based on existing collection item maturity metadata
+    # Capture existing aggregate maturities so deprecated/removed tombstones survive
+    # even when no source manifest still declares them. The aggregate's own stable/
+    # preview/experimental values are NOT preserved; aggregate maturity must always
+    # be recomputed from sources so cleared markers in source manifests propagate.
     $existingItemMaturities = @{}
     foreach ($existingItem in $existing.items) {
         $existingKey = "$($existingItem.kind)|$($existingItem.path)"
         $existingItemMaturities[$existingKey] = Resolve-CollectionItemMaturity -Maturity $existingItem.maturity
     }
 
-    # Propagate authoritative maturities from source collections so tombstones
-    # (maturity: removed) and deprecations declared in any source manifest
-    # carry into the aggregated hve-core-all collection. Strictest maturity
-    # wins: removed > deprecated > preview > stable.
-    $maturityRank = @{ 'stable' = 0; 'preview' = 1; 'deprecated' = 2; 'removed' = 3 }
-    $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
+    # Compute strictest-wins maturity from source collections.
+    # Strictest maturity wins: removed > deprecated > experimental > preview > stable.
+    $maturityRank = @{ 'stable' = 0; 'preview' = 1; 'experimental' = 2; 'deprecated' = 3; 'removed' = 4 }
+    $sourceMaturities = @{}
     $sourceCollections = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ne 'hve-core-all.collection.yml' }
     foreach ($sourceFile in $sourceCollections) {
         $sourceManifest = Get-CollectionManifest -CollectionPath $sourceFile.FullName
         if ($null -eq $sourceManifest -or $null -eq $sourceManifest.items) { continue }
+        $collectionLevelMaturity = if (-not [string]::IsNullOrWhiteSpace([string]$sourceManifest.maturity)) {
+            Resolve-CollectionItemMaturity -Maturity ([string]$sourceManifest.maturity)
+        } else {
+            $null
+        }
         foreach ($sourceItem in $sourceManifest.items) {
             $sourceKey = "$($sourceItem.kind)|$($sourceItem.path)"
-            $sourceMaturity = Resolve-CollectionItemMaturity -Maturity $sourceItem.maturity
-            $currentMaturity = if ($existingItemMaturities.ContainsKey($sourceKey)) { $existingItemMaturities[$sourceKey] } else { 'stable' }
+            $itemRawMaturity = if (-not [string]::IsNullOrWhiteSpace([string]$sourceItem.maturity)) {
+                [string]$sourceItem.maturity
+            } else {
+                $null
+            }
+            $sourceMaturity = if ($null -ne $itemRawMaturity) {
+                Resolve-CollectionItemMaturity -Maturity $itemRawMaturity
+            } elseif ($null -ne $collectionLevelMaturity) {
+                $collectionLevelMaturity
+            } else {
+                'stable'
+            }
+            $currentMaturity = if ($sourceMaturities.ContainsKey($sourceKey)) { $sourceMaturities[$sourceKey] } else { 'stable' }
             if ($maturityRank[$sourceMaturity] -gt $maturityRank[$currentMaturity]) {
-                $existingItemMaturities[$sourceKey] = $sourceMaturity
+                $sourceMaturities[$sourceKey] = $sourceMaturity
+            }
+        }
+    }
+
+    # Authoritative map: source-derived values, with deprecated/removed tombstones
+    # from the existing aggregate preserved when sources no longer declare them.
+    foreach ($sourceKey in $sourceMaturities.Keys) {
+        $existingItemMaturities[$sourceKey] = $sourceMaturities[$sourceKey]
+    }
+    foreach ($existingKey in @($existingItemMaturities.Keys)) {
+        if (-not $sourceMaturities.ContainsKey($existingKey)) {
+            $tombstone = $existingItemMaturities[$existingKey]
+            if ($tombstone -notin @('deprecated', 'removed')) {
+                $existingItemMaturities[$existingKey] = 'stable'
             }
         }
     }
@@ -561,16 +733,14 @@ function Update-HveCoreAllCollection {
         { $_.kind }, `
         { $_.path }
 
-    # Build new items array as ordered hashtables for clean YAML output
+    # Build new items array as ordered hashtables for clean YAML output.
+    # Always publish the resolved maturity so every item carries an explicit tier.
     $newItems = @()
     foreach ($item in $sortedItems) {
         $newItem = [ordered]@{
-            path = $item.path
-            kind = $item.kind
-        }
-
-        if ((Resolve-CollectionItemMaturity -Maturity $item.maturity) -ne 'stable') {
-            $newItem['maturity'] = $item.maturity
+            path     = $item.path
+            kind     = $item.kind
+            maturity = Resolve-CollectionItemMaturity -Maturity $item.maturity
         }
 
         $newItems += $newItem
@@ -605,13 +775,15 @@ function Update-HveCoreAllCollection {
             $displayOrdered['ordering'] = $existing.display['ordering']
         }
         $manifest = [ordered]@{
-            id          = $existing.id
-            name        = $existing.name
-            description = $existing.description
-            tags        = $existing.tags
-            items       = $newItems
-            display     = $displayOrdered
+            id   = $existing.id
+            name = $existing.name
         }
+        if ($existing.ContainsKey('descriptions') -and $null -ne $existing.descriptions) {
+            $manifest['descriptions'] = $existing.descriptions
+        }
+        $manifest['tags'] = $existing.tags
+        $manifest['items'] = $newItems
+        $manifest['display'] = $displayOrdered
 
         $yaml = ConvertTo-Yaml -Data $manifest
         Set-ContentIfChanged -Path $collectionPath -Value $yaml | Out-Null
@@ -720,13 +892,68 @@ function Get-ArtifactDescription {
     return ''
 }
 
+function Resolve-CollectionDescription {
+    <#
+    .SYNOPSIS
+        Resolves a channel-specific collection description.
+    .DESCRIPTION
+        Returns the description text for the matching channel entry in the
+        manifest 'descriptions' array, falling back to the manifest top-level
+        'description' and then to the provided default description when no
+        matching channel entry exists.
+    .PARAMETER CollectionManifest
+        Parsed collection manifest hashtable.
+    .PARAMETER Channel
+        Release channel controlling which override key is considered.
+    .PARAMETER DefaultDescription
+        Fallback description when the manifest provides no usable value.
+    .OUTPUTS
+        [string] Resolved collection description.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$CollectionManifest,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$DefaultDescription
+    )
+
+    $overrideKey = if ($Channel -eq 'PreRelease') { 'prerelease' } else { 'stable' }
+    if ($CollectionManifest.ContainsKey('descriptions') -and $CollectionManifest.descriptions -is [System.Collections.IEnumerable] -and
+        $CollectionManifest.descriptions -isnot [string]) {
+        foreach ($entry in $CollectionManifest.descriptions) {
+            if ($entry -is [System.Collections.IDictionary] -and $entry.Contains('channel') -and $entry.Contains('text') -and
+                [string]$entry['channel'] -eq $overrideKey -and
+                -not [string]::IsNullOrWhiteSpace([string]$entry['text'])) {
+                return [string]$entry['text']
+            }
+        }
+    }
+
+    if ($CollectionManifest.ContainsKey('description') -and
+        -not [string]::IsNullOrWhiteSpace([string]$CollectionManifest.description)) {
+        return [string]$CollectionManifest.description
+    }
+
+    return $DefaultDescription
+}
+
 Export-ModuleMember -Function @(
+    'Get-AgentMaturityNameSuffix',
     'Get-AllCollections',
     'Get-ArtifactDescription',
     'Get-ArtifactFiles',
     'Get-ArtifactFrontmatter',
     'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
+    'Resolve-CollectionDescription',
     'Resolve-CollectionItemMaturity',
     'Set-ContentIfChanged',
     'Split-CollectionMdByMarkers',

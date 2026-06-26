@@ -1,11 +1,11 @@
 ---
-name: Code Review Full
+name: Code Review Full (pre)
 description: "Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report"
 disable-model-invocation: true
 agents:
-  - Code Review Functional
-  - Code Review Standards
-  - Code Review Accessibility
+  - Code Review Functional (pre)
+  - Code Review Standards (pre)
+  - Code Review Accessibility (pre)
 ---
 
 # Code Review Full Agent
@@ -261,4 +261,3 @@ Follow the Report Skeleton and Persist and Present sections from the output form
 
 ---
 
-Brought to you by microsoft/hve-core

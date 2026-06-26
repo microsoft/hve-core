@@ -1,0 +1,61 @@
+stimuli:
+  - name: accessibility-framework-assessor-audit-format
+    prompt: |
+      You are the Accessibility Framework Assessor subagent. The Accessibility
+      Planner orchestrator hands you this input:
+        - mode: audit
+        - framework: wcag-22
+        - scope: src/web/components/
+      Assess exactly this one framework against the scope using the consolidated
+      Accessibility skill and return findings in the audit format with a status
+      and a findings table. Do not modify any files.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: findings-schema-version
+        config:
+          pattern: '(?i)SKILL_FINDINGS_V1'
+      - type: output-matches
+        name: audit-status-vocabulary
+        config:
+          pattern: '(?i)\b(pass|fail|partial|not[_ ]assessed)\b'
+      - type: output-matches
+        name: framework-attribution
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(wcag[-\s]?2\.?2|accessibility|success\s+criteri)'
+      - type: output-matches
+        name: read-only-posture
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|assessment\s+only)'
+
+  - name: accessibility-framework-assessor-plan-vocabulary
+    prompt: |
+      You are the Accessibility Framework Assessor subagent. The Accessibility
+      Planner orchestrator hands you this input:
+        - mode: plan
+        - framework: coga
+        - plan_text: A design doc describing a multi-step onboarding wizard
+          with timed sessions and dense form layouts.
+      Assess exactly this one framework against the plan text and return findings
+      in the plan-mode format.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: plan-schema-version
+        config:
+          pattern: '(?i)PLAN_FINDINGS_V1'
+      - type: output-matches
+        name: plan-status-vocabulary
+        config:
+          pattern: '(?i)\b(risk|caution|covered|not[_ ]applicable)\b'
+      - type: output-matches
+        name: mitigation-guidance
+        config:
+          # cspell:disable-next-line
+          pattern: '(?i)(mitigation|guidance|recommend|remediat)'

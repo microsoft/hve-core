@@ -1,5 +1,5 @@
 ---
-name: Security Planner
+name: Security Planner (exp)
 description: "Phase-based security planner producing security models, standards mappings, and backlog handoffs with AI/ML detection and RAI Planner integration"
 agents:
   - Researcher Subagent
@@ -15,11 +15,11 @@ tools:
   - agent
 handoffs:
   - label: "RAI Planner"
-    agent: RAI Planner
+    agent: RAI Planner (exp)
     prompt: /rai-plan-from-security-plan
     send: true
   - label: "SSSC Planner"
-    agent: SSSC Planner
+    agent: SSSC Planner (exp)
     prompt: /sssc-from-security-plan
     send: true
 ---

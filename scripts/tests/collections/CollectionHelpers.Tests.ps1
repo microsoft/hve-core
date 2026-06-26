@@ -329,7 +329,7 @@ display:
     }
 }
 
-Describe 'Update-HveCoreAllCollection - non-stable maturity key' {
+Describe 'Update-HveCoreAllCollection - source-derived maturity' {
     BeforeAll {
         $script:repoRoot = Join-Path $TestDrive 'repo-maturity-key'
         $ghDir = Join-Path $script:repoRoot '.github'
@@ -342,8 +342,46 @@ Describe 'Update-HveCoreAllCollection - non-stable maturity key' {
         New-Item -ItemType Directory -Path $collectionsDir -Force | Out-Null
     }
 
-    It 'Includes maturity key in output for non-stable items' {
-        $yaml = @"
+    BeforeEach {
+        Get-ChildItem -Path (Join-Path $script:repoRoot 'collections') -Filter '*.collection.yml' -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -ne 'hve-core-all.collection.yml' } |
+            Remove-Item -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Includes maturity from source collection item-level maturity' {
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        $sourceYaml = @"
+id: test-collection
+name: Test Collection
+description: Test artifacts
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+    maturity: preview
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/test-collection.collection.yml') -Value $sourceYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: preview'
+    }
+
+    It 'Emits stable maturity when no source declares it' {
+        $aggregateYaml = @"
 id: hve-core-all
 name: HVE Core All
 description: All artifacts
@@ -355,16 +393,28 @@ items:
 display:
   ordering: alpha
 "@
-        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+        $sourceYaml = @"
+id: test-collection
+name: Test Collection
+description: Test artifacts
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/test-collection.collection.yml') -Value $sourceYaml -Encoding utf8 -NoNewline
 
         Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
 
         $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
-        $output | Should -Match 'maturity: preview'
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: preview'
     }
 
-    It 'Omits maturity key for stable items' {
-        $yaml = @"
+    It 'Inherits source collection-level maturity when item-level is absent' {
+        $aggregateYaml = @"
 id: hve-core-all
 name: HVE Core All
 description: All artifacts
@@ -375,12 +425,145 @@ items:
 display:
   ordering: alpha
 "@
-        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $yaml -Encoding utf8 -NoNewline
+        $sourceYaml = @"
+id: experimental
+name: Experimental
+description: Experimental artifacts
+maturity: experimental
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/experimental.collection.yml') -Value $sourceYaml -Encoding utf8 -NoNewline
 
         Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
 
         $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
-        $output | Should -Not -Match 'maturity:'
+        $output | Should -Match 'maturity: experimental'
+    }
+
+    It 'Item-level maturity overrides source collection-level maturity' {
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        $sourceYaml = @"
+id: experimental
+name: Experimental
+description: Experimental artifacts
+maturity: experimental
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+    maturity: stable
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/experimental.collection.yml') -Value $sourceYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: experimental'
+    }
+
+    It 'Strictest source maturity wins across multiple source collections' {
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+display:
+  ordering: alpha
+"@
+        $stableSourceYaml = @"
+id: alpha
+name: Alpha
+description: Stable source
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+    maturity: stable
+display:
+  ordering: alpha
+"@
+        $previewSourceYaml = @"
+id: beta
+name: Beta
+description: Preview source
+items:
+  - path: .github/agents/test-collection/preview.agent.md
+    kind: agent
+    maturity: preview
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/alpha.collection.yml') -Value $stableSourceYaml -Encoding utf8 -NoNewline
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/beta.collection.yml') -Value $previewSourceYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: preview'
+    }
+
+    It 'Preserves deprecated tombstone when no source declares the item' {
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+  maturity: deprecated
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Not -Match 'preview\.agent\.md'
+    }
+
+    It 'Resets aggregate-only experimental maturity to stable when no source declares it' {
+        $aggregateYaml = @"
+id: hve-core-all
+name: HVE Core All
+description: All artifacts
+tags: []
+items:
+- path: .github/agents/test-collection/preview.agent.md
+  kind: agent
+  maturity: experimental
+display:
+  ordering: alpha
+"@
+        Set-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Value $aggregateYaml -Encoding utf8 -NoNewline
+
+        Update-HveCoreAllCollection -RepoRoot $script:repoRoot | Out-Null
+
+        $output = Get-Content -Path (Join-Path $script:repoRoot 'collections/hve-core-all.collection.yml') -Raw
+        $output | Should -Match 'maturity: stable'
+        $output | Should -Not -Match 'maturity: experimental'
     }
 }
 

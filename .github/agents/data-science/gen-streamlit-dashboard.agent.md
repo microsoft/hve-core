@@ -1,5 +1,5 @@
 ---
-name: DS Gen Streamlit Dashboard
+name: DS Gen Streamlit Dashboard (exp)
 description: 'Develop a multi-page Streamlit dashboard'
 ---
 

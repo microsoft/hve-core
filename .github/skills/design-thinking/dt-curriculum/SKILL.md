@@ -1,6 +1,6 @@
 ---
 name: dt-curriculum
-description: Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice - Brought to you by microsoft/hve-core
+description: Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"

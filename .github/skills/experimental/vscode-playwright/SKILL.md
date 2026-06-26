@@ -189,4 +189,3 @@ Never use separate `mcp_microsoft_pla_browser_press_key` -> `mcp_microsoft_pla_b
 | Screenshot saved to wrong directory                          | `take_screenshot` saves relative to Playwright working directory | Copy screenshots to the target directory after capture                                                           |
 | Copilot Chat responses non-deterministic                     | Streaming token-by-token output                                  | Use `mcp_microsoft_pla_browser_wait_for` with expected text or time delay                                        |
 
-> Brought to you by microsoft/hve-core

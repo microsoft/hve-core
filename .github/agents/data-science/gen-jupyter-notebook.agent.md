@@ -1,5 +1,5 @@
 ---
-name: DS Gen Jupyter Notebook
+name: DS Gen Jupyter Notebook (exp)
 description: 'Create exploratory data analysis (EDA) Jupyter notebooks from data sources and data dictionaries'
 ---
 

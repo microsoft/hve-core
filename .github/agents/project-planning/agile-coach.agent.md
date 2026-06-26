@@ -1,5 +1,5 @@
 ---
-name: Agile Coach
+name: Agile Coach (exp)
 description: Creates and refines goal-oriented user stories with clear acceptance criteria for any tracking tool
 ---
 

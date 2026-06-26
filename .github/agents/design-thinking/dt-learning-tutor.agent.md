@@ -1,5 +1,5 @@
 ---
-name: DT Learning Tutor
+name: DT Learning Tutor (exp)
 description: 'Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing'
 tools:
   - read/readFile

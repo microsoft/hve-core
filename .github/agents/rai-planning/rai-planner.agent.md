@@ -1,11 +1,11 @@
 ---
-name: RAI Planner
+name: RAI Planner (exp)
 description: "Responsible AI assessment planner evaluating against NIST AI RMF 1.0, producing an RAI security model, impact assessment, control surface catalog, and backlog handoff"
 agents:
   - Researcher Subagent
 handoffs:
   - label: "Security Planner"
-    agent: Security Planner
+    agent: Security Planner (exp)
     prompt: /security-capture
     send: true
 tools:

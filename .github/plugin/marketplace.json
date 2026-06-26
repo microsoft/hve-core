@@ -12,85 +12,55 @@
     {
       "name": "ado",
       "source": "ado",
-      "description": "Azure DevOps work item management, build monitoring, and pull request creation",
+      "description": "Preview: Azure DevOps work item management, build monitoring, and PR creation. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "coding-standards",
       "source": "coding-standards",
-      "description": "Language-specific coding instructions and pre-PR code review agents for bash, Bicep, C#, PowerShell, Python, Rust, and Terraform projects",
+      "description": "Preview & Experimental: Coding standards and pre-PR review agents for seven languages. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "data-science",
       "source": "data-science",
-      "description": "Evaluation dataset creation, data specification generation, Jupyter notebooks, and Streamlit dashboards",
+      "description": "Preview & Experimental: Eval datasets, data specs, Jupyter notebooks, and Streamlit dashboards. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "design-thinking",
       "source": "design-thinking",
-      "description": "Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods",
-      "version": "3.3.101"
-    },
-    {
-      "name": "experimental",
-      "source": "experimental",
-      "description": "Experimental and preview artifacts not yet promoted to stable collections",
+      "description": "Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "github",
       "source": "github",
-      "description": "GitHub issue discovery, triage, sprint planning, and backlog execution agents and prompts",
-      "version": "3.3.101"
-    },
-    {
-      "name": "gitlab",
-      "source": "gitlab",
-      "description": "GitLab merge request and pipeline workflows through a Python skill",
+      "description": "Preview: GitHub issue discovery, triage, sprint planning, and backlog execution. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "hve-core",
       "source": "hve-core",
-      "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
+      "description": "Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "hve-core-all",
       "source": "hve-core-all",
-      "description": "Full bundle of all stable HVE Core agents, prompts, instructions, and skills",
-      "version": "3.3.101"
-    },
-    {
-      "name": "installer",
-      "source": "installer",
-      "description": "Decision-driven installer skill for deploying HVE Core artifacts across workspace configurations",
-      "version": "3.3.101"
-    },
-    {
-      "name": "jira",
-      "source": "jira",
-      "description": "Jira backlog management, PRD issue planning, and issue operations through agents, prompts, instructions, and a Python skill",
+      "description": "Preview & Experimental: Full bundle of all HVE Core agents, prompts, instructions, and skills. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "project-planning",
       "source": "project-planning",
-      "description": "PRDs, BRDs, ADRs, and architecture diagrams",
-      "version": "3.3.101"
-    },
-    {
-      "name": "rpi",
-      "source": "rpi",
-      "description": "Skill-forward Research, Plan, Implement, and Review entry points with an umbrella RPI skill and existing subagent dispatch.",
+      "description": "Preview & Experimental: PRDs, BRDs, ADRs, and architecture diagrams. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     },
     {
       "name": "security",
       "source": "security",
-      "description": "Security review, planning, incident response, risk assessment, and vulnerability analysis",
+      "description": "Preview & Experimental: Security review, planning, incident response, and risk assessment. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
       "version": "3.3.101"
     }
   ]

@@ -1,5 +1,5 @@
 ---
-name: Accessibility Planner
+name: Accessibility Planner (exp)
 description: >-
   Phase-based accessibility planner that guides users through structured planning
   for WCAG 2.2, ARIA APG, Cognitive Accessibility, Section 508, and EN 301 549,
@@ -11,19 +11,19 @@ agents:
   - Researcher Subagent
 handoffs:
   - label: "Compact"
-    agent: Accessibility Planner
+    agent: Accessibility Planner (exp)
     prompt: "Compact prior turns into a session-recovery summary and resume the active phase from `state.json`."
     send: true
   - label: "RAI Planner"
-    agent: RAI Planner
+    agent: RAI Planner (exp)
     prompt: /rai-capture
     send: true
   - label: "SSSC Planner"
-    agent: SSSC Planner
+    agent: SSSC Planner (exp)
     prompt: /sssc-capture
     send: true
   - label: "Security Planner"
-    agent: Security Planner
+    agent: Security Planner (exp)
     prompt: /security-capture
     send: true
 tools:

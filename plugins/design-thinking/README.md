@@ -1,15 +1,15 @@
 <!-- markdownlint-disable-file -->
 # Design Thinking
 
-Design Thinking coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods
+Preview: Design Thinking coaching identity and methodology across nine methods. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues
 
-> **🔍 Preview** — This collection is in preview. Core features are complete and functional but refinements may follow.
+> **⚠️ Maturity** — This bundle includes stable, preview, experimental assets. The preview and experimental assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.
 
 ## Overview
 
-Coaching identity, quality constraints, and methodology skills for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
+Coaching identity, quality constraints, and methodology instructions for AI-enhanced design thinking across nine methods. The collection supports the HVE Design Thinking pyramid structure spanning Problem, Solution, and Implementation spaces.
 
-> Preview: Core features are complete and functional. Suitable for adoption with the understanding that refinements may follow.
+> Experimental: This collection includes experimental assets that may change significantly.
 
 ## Included Artifacts
 
@@ -44,10 +44,10 @@ Coaching identity, quality constraints, and methodology skills for AI-enhanced d
 
 ### Instructions
 
-| Name                                                                        | Description                                                                                                                                                                                                                                                 |
-|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **.github/skills/design-thinking/dt-methods/references/dt-coach-telemetry** | Design Thinking Coach telemetry overlay applying telemetry-foundations vocabulary to DT session artifacts                                                                                                                                                   |
-| **shared/hve-core-location**                                                | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
+| Name                           | Description                                                                                                                                                                                                                                                 |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **shared/disclaimer-language** | Centralized disclaimer language for AI-assisted planning and review agents requiring professional review acknowledgment                                                                                                                                     |
+| **shared/hve-core-location**   | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills
 

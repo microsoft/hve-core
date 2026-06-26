@@ -1,6 +1,6 @@
 {
   "name": "hve-core",
-  "description": "HVE Core RPI (Research, Plan, Implement, Review) workflow with Git commit, merge, setup, and pull request prompts",
+  "description": "Preview & Experimental: HVE Core RPI workflow with Git commit, merge, setup, and PR prompts. Unstable; may change or be removed without notice. Feedback: github.com/microsoft/hve-core/issues",
   "version": "3.3.101",
   "agents": [
     "agents/hve-core/",
@@ -10,8 +10,8 @@
     "commands/hve-core/"
   ],
   "skills": [
-    "skills/experimental/",
     "skills/hve-core/",
+    "skills/rpi/",
     "skills/shared/"
   ]
 }

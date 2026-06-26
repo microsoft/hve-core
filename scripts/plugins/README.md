@@ -1,10 +1,10 @@
 ---
 title: Plugin Generation Scripts
-description: PowerShell tooling for generating Copilot CLI plugins from collection manifests
+description: PowerShell tooling for generating Copilot CLI plugins from the core collection manifest
 ---
 
 PowerShell tooling for generating Copilot CLI plugins from collection
-manifests.
+metadata.
 
 ## Scripts
 
@@ -21,9 +21,9 @@ manifests.
 ## Collection to Plugin Pipeline
 
 1. Author artifacts in `.github/` (agents, prompts, skills)
-2. Define collections in `collections/*.collection.yml`
-3. Run `npm run plugin:generate` to produce `plugins/`
-4. Commit generated `plugins/` to the repository
+2. Register artifacts and collection metadata in `collections/core-manifest.yml`
+3. Run `npm run plugin:generate` to regenerate `collections/*.collection.yml` and `plugins/`
+4. Commit generated collection manifests and `plugins/` to the repository
 
 ## Refreshing Plugins After Artifact Changes
 
@@ -31,7 +31,7 @@ manifests.
 npm run plugin:generate
 ```
 
-This regenerates all plugins from their collection manifests.
+This regenerates all plugins from `collections/core-manifest.yml` through the generated collection manifests.
 
 ---
 

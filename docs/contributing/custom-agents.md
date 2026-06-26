@@ -306,18 +306,20 @@ agents:
 
 ## Collection Entry Requirements
 
-All agents must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control selection and maturity.
+All distributed agents must have matching entries in `collections/core-manifest.yml`. Canonical manifest entries control selection and maturity.
 
 ### Adding Your Agent to a Collection
 
-After creating your agent file, add an `items[]` entry to each target collection:
+After creating your agent file, add an entry under `agents` in `collections/core-manifest.yml` and list each target collection:
 
 ```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/agents/{collection-id}/my-new-agent.agent.md
-  kind: agent
-  maturity: stable
+agents:
+  .github/agents/{collection-id}/my-new-agent.agent.md:
+    path: .github/agents/{collection-id}/my-new-agent.agent.md
+    maturity: stable
+    collections:
+      - {collection-id}
+      - hve-core-all
 ```
 
 ### Selecting Collections for Agents
@@ -420,7 +422,6 @@ Include at end of file (MANDATORY):
 ```markdown
 ---
 
-Brought to you by microsoft/hve-core
 ```
 
 ### XML-Style Block Requirements
@@ -505,7 +506,7 @@ Report validation status:
 
 ## Research and External Sources
 
-When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links. See [AI Artifacts Common Standards - Attribution Requirements](ai-artifacts-common.md#attribution-requirements) for guidelines.
+When agents integrate external knowledge, consult authoritative sources and provide minimal, annotated snippets with reference links.
 
 ## Validation Checklist
 

@@ -1,5 +1,5 @@
 ---
-name: DS Gen Data Spec
+name: DS Gen Data Spec (exp)
 description: "Generate data dictionaries, machine-readable data profiles, and summaries for downstream EDA notebooks and dashboards"
 ---
 

@@ -9,6 +9,7 @@
 #Requires -Version 7.0
 
 Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CoreManifestHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
 # Pure Functions (no file system side effects)
@@ -145,16 +146,24 @@ function New-PluginManifestContent {
 
     .DESCRIPTION
     Creates a hashtable representing the plugin manifest with name,
-    description, version, and component path declarations. When explicit
-    path arrays are provided, uses them so the CLI discovers artifacts
-    in nested subdirectories. When omitted, falls back to convention
-    defaults for lightweight marketplace entries.
+    description, version, and component path declarations. The description
+    is resolved from the collection manifest via Resolve-CollectionDescription
+    using the active release channel so plugin.json carries channel-specific
+    text. When explicit path arrays are provided, uses them so the CLI
+    discovers artifacts in nested subdirectories. When omitted, falls back
+    to convention defaults for lightweight marketplace entries.
 
     .PARAMETER CollectionId
     The collection identifier used as the plugin name.
 
-    .PARAMETER Description
-    A short description of the plugin.
+    .PARAMETER Collection
+    Collection manifest hashtable passed to Resolve-CollectionDescription.
+    Must contain a 'description' key and may contain a 'descriptions' array
+    of '{ channel, text }' entries with 'stable' and 'prerelease' overrides.
+
+    .PARAMETER Channel
+    Release channel ('Stable' or 'PreRelease') used to pick the description
+    override. Defaults to 'PreRelease' to match the pipeline default.
 
     .PARAMETER Version
     Semantic version string from the repository package.json.
@@ -179,7 +188,11 @@ function New-PluginManifestContent {
         [string]$CollectionId,
 
         [Parameter(Mandatory = $true)]
-        [string]$Description,
+        [hashtable]$Collection,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease',
 
         [Parameter(Mandatory = $true)]
         [string]$Version,
@@ -197,9 +210,14 @@ function New-PluginManifestContent {
         [string[]]$SkillPaths
     )
 
+    $resolvedDescription = Resolve-CollectionDescription `
+        -CollectionManifest $Collection `
+        -Channel $Channel `
+        -DefaultDescription ''
+
     $manifest = [ordered]@{
         name        = $CollectionId
-        description = $Description
+        description = $resolvedDescription
         version     = $Version
     }
 
@@ -236,7 +254,8 @@ function New-PluginReadmeContent {
 
     .PARAMETER Items
     Array of processed item objects. Each object must have Name, Description,
-    and Kind properties.
+    and Kind properties, and an optional Maturity property used to drive the
+    per-artifact maturity disclaimer.
 
     .PARAMETER Maturity
         Optional collection-level maturity string. When 'experimental', an
@@ -246,6 +265,11 @@ function New-PluginReadmeContent {
     .PARAMETER CollectionContent
         Optional markdown content from the collection .md file. Injected as
         an Overview section between the description and the Install section.
+
+    .PARAMETER Channel
+        Release channel ('Stable' or 'PreRelease') used to resolve the
+        description via Resolve-CollectionDescription. Defaults to
+        'PreRelease' to match the pipeline default.
 
     .OUTPUTS
     [string] Complete README markdown content.
@@ -268,14 +292,23 @@ function New-PluginReadmeContent {
         [Parameter(Mandatory = $false)]
         [AllowNull()]
         [AllowEmptyString()]
-        [string]$CollectionContent
+        [string]$CollectionContent,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease'
     )
+
+    $resolvedDescription = Resolve-CollectionDescription `
+        -CollectionManifest $Collection `
+        -Channel $Channel `
+        -DefaultDescription ''
 
     $sb = [System.Text.StringBuilder]::new()
     [void]$sb.AppendLine('<!-- markdownlint-disable-file -->')
     [void]$sb.AppendLine("# $($Collection.name)")
     [void]$sb.AppendLine()
-    [void]$sb.AppendLine($Collection.description)
+    [void]$sb.AppendLine($resolvedDescription)
 
     # Inject maturity notice when collection is not stable
     $effectiveMaturity = if ([string]::IsNullOrWhiteSpace($Maturity)) { 'stable' } else { $Maturity }
@@ -294,10 +327,45 @@ function New-PluginReadmeContent {
         [void]$sb.AppendLine($Collection.notice.TrimEnd())
     }
 
+    # Inject a consumer-facing maturity disclaimer driven by the per-artifact
+    # maturity tiers actually present in this bundle. This is distinct from the
+    # collection-level maturity notice above and from per-collection CAUTION
+    # admonitions: it tells consumers exactly which stability tiers ship and warns
+    # plainly when any unstable (preview or experimental) assets are included.
+    $presentTiers = @(
+        $Items |
+            ForEach-Object { ([string]$_.Maturity).Trim().ToLowerInvariant() } |
+            Where-Object { $_ -in @('stable', 'preview', 'experimental') } |
+            Select-Object -Unique
+    )
+    $hasStable = $presentTiers -contains 'stable'
+    $hasPreview = $presentTiers -contains 'preview'
+    $hasExperimental = $presentTiers -contains 'experimental'
+
+    if ($hasPreview -or $hasExperimental) {
+        $tierLabels = [System.Collections.Generic.List[string]]::new()
+        if ($hasStable) { [void]$tierLabels.Add('stable') }
+        if ($hasPreview) { [void]$tierLabels.Add('preview') }
+        if ($hasExperimental) { [void]$tierLabels.Add('experimental') }
+        $tierList = [string]::Join(', ', $tierLabels)
+
+        $unstableLabels = [System.Collections.Generic.List[string]]::new()
+        if ($hasPreview) { [void]$unstableLabels.Add('preview') }
+        if ($hasExperimental) { [void]$unstableLabels.Add('experimental') }
+        $unstableList = [string]::Join(' and ', $unstableLabels)
+
+        [void]$sb.AppendLine()
+        [void]$sb.AppendLine("> **`u{26A0}`u{FE0F} Maturity** `u{2014} This bundle includes $tierList assets. The $unstableList assets are unstable: they can change or be removed without notice and are not production-ready. Pin to a specific version and review each asset before relying on it.")
+    }
+
     # Inject collection description content as an Overview section.
     # Strip the leading H1 since the title is already emitted above.
     if (-not [string]::IsNullOrWhiteSpace($CollectionContent)) {
         $overviewText = $CollectionContent -replace '(?m)\A#\s+[^\r\n]+\r?\n\r?\n', ''
+        $overviewText = $overviewText -replace '(?s)(<!-- BEGIN AUTO-GENERATED ARTIFACTS -->\s*)##\s+Included Artifacts\s*', "## Included Artifacts`n`n`${1}"
+        if ($overviewText -notmatch '(?m)^##\s+Included Artifacts\s*$') {
+            $overviewText = $overviewText -replace '(?s)(<!-- BEGIN AUTO-GENERATED ARTIFACTS -->\s*)(?=###\s)', "## Included Artifacts`n`n`${1}"
+        }
         $overviewText = $overviewText.TrimEnd()
 
         if (-not [string]::IsNullOrWhiteSpace($overviewText)) {
@@ -449,13 +517,20 @@ function Write-MarketplaceManifest {
     .DESCRIPTION
     Assembles plugin metadata from generated collections and writes the
     marketplace manifest to .github/plugin/marketplace.json. Creates the
-    directory when it does not exist.
+    directory when it does not exist. Per-entry descriptions are resolved
+    via the shared Resolve-CollectionDescription helper using the active
+    release channel.
 
     .PARAMETER RepoRoot
     Absolute path to the repository root directory.
 
     .PARAMETER Collections
     Array of collection manifest hashtables with id and description.
+
+    .PARAMETER Channel
+    Release channel ('Stable' or 'PreRelease') propagated to
+    New-PluginManifestContent so each entry carries the channel-resolved
+    description. Defaults to 'PreRelease'.
 
     .PARAMETER DryRun
     When specified, logs the action without writing to disk.
@@ -471,6 +546,10 @@ function Write-MarketplaceManifest {
         [array]$Collections,
 
         [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease',
+
+        [Parameter(Mandatory = $false)]
         [switch]$DryRun
     )
 
@@ -481,7 +560,8 @@ function Write-MarketplaceManifest {
     foreach ($collection in ($Collections | Sort-Object { $_.id })) {
         $plugins += New-PluginManifestContent `
             -CollectionId $collection.id `
-            -Description $collection.description `
+            -Collection $collection `
+            -Channel $Channel `
             -Version $packageJson.version
     }
 
@@ -662,6 +742,13 @@ function Write-PluginDirectory {
         Optional collection-level maturity string. Forwarded to
         New-PluginReadmeContent for maturity notice injection.
 
+    .PARAMETER Channel
+        Release channel ('Stable' or 'PreRelease') forwarded to
+        New-PluginManifestContent and New-PluginReadmeContent so the
+        generated plugin.json and README pick up the channel-specific
+        description override from the collection manifest. Defaults to
+        'PreRelease' to match the pipeline default.
+
     .PARAMETER DryRun
     When specified, logs actions without creating files or directories.
 
@@ -691,6 +778,10 @@ function Write-PluginDirectory {
         [AllowNull()]
         [AllowEmptyString()]
         [string]$Maturity,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('Stable', 'PreRelease')]
+        [string]$Channel = 'PreRelease',
 
         [Parameter(Mandatory = $false)]
         [switch]$DryRun,
@@ -777,6 +868,7 @@ function Write-PluginDirectory {
             Name        = $itemName -replace '\.md$', ''
             Description = $description
             Kind        = $kind
+            Maturity    = [string]$item.maturity
         }
 
         # Update counts and collect parent directories for manifest paths
@@ -843,7 +935,8 @@ function Write-PluginDirectory {
     $manifestPath = Join-Path -Path $manifestDir -ChildPath 'plugin.json'
     $manifest = New-PluginManifestContent `
         -CollectionId $collectionId `
-        -Description $Collection.description `
+        -Collection $Collection `
+        -Channel $Channel `
         -Version $Version `
         -AgentPaths @($agentDirs) `
         -CommandPaths @($commandDirs) `
@@ -863,11 +956,12 @@ function Write-PluginDirectory {
 
     # Generate README.md
     $readmePath = Join-Path -Path $pluginRoot -ChildPath 'README.md'
-    $collectionMdPath = Join-Path -Path $RepoRoot -ChildPath "collections/$collectionId.collection.md"
-    $collectionContent = if (Test-Path -Path $collectionMdPath) {
-        Get-Content -Path $collectionMdPath -Raw
+    $coreManifestPath = Join-Path -Path $RepoRoot -ChildPath 'collections/core-manifest.yml'
+    $collectionContent = if (Test-Path -Path $coreManifestPath -PathType Leaf) {
+        $coreManifest = Read-CoreManifest -ManifestPath $coreManifestPath
+        New-CollectionReadmeBodyFromCore -CoreManifest $coreManifest -CollectionId $collectionId -RepoRoot $RepoRoot
     } else { $null }
-    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity -CollectionContent $collectionContent
+    $readmeContent = New-PluginReadmeContent -Collection $Collection -Items $readmeItems -Maturity $Maturity -CollectionContent $collectionContent -Channel $Channel
     [void]$generatedFiles.Add($readmePath)
 
     if ($DryRun) {
@@ -940,7 +1034,7 @@ function Repair-PluginSymlinkIndex {
         [System.StringComparer]::OrdinalIgnoreCase
     )
     $pluginsRel = [System.IO.Path]::GetRelativePath($RepoRoot, $PluginsDir) -replace '\\', '/'
-    $lsOutput = git ls-files --stage -- $pluginsRel 2>$null
+    $lsOutput = git -C $RepoRoot ls-files --stage -- $pluginsRel 2>$null
     if ($lsOutput) {
         foreach ($line in @($lsOutput)) {
             if ($line -match '^(\d+)\s+[0-9a-f]+\s+\d+\t(.+)$') {
@@ -983,7 +1077,7 @@ function Repair-PluginSymlinkIndex {
             continue
         }
 
-        $hashOutput = git hash-object -w -- $file.FullName 2>&1
+        $hashOutput = git -C $RepoRoot hash-object -w -- $file.FullName 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Warning "Failed to hash-object for $repoRelPath"
             continue
@@ -999,7 +1093,7 @@ function Repair-PluginSymlinkIndex {
         # Use --add for untracked files; harmless for already-tracked entries.
         # Avoids --index-info piping which breaks on Windows due to CRLF stdin.
         $addFlag = if (-not $trackedPaths.Contains($repoRelPath)) { '--add' } else { $null }
-        $cacheArgs = @('update-index') + @($addFlag | Where-Object { $_ }) + @('--cacheinfo', "120000,$sha,$repoRelPath")
+        $cacheArgs = @('-C', $RepoRoot, 'update-index') + @($addFlag | Where-Object { $_ }) + @('--cacheinfo', "120000,$sha,$repoRelPath")
         $cacheResult = & git @cacheArgs 2>&1
         if ($LASTEXITCODE -ne 0) {
             $errorMsg = @($cacheResult | ForEach-Object { $_.ToString() }) -join '; '

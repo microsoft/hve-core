@@ -5,12 +5,15 @@
 .SYNOPSIS
     Pester tests for Find-CollectionManifests.ps1 script
 .DESCRIPTION
-    Tests for collection manifest discovery and matrix building:
-    - Empty collections directory returns empty matrix
+    Tests for collection manifest discovery and matrix building. Discovery now
+    reads the central core manifest (collections/core-manifest.yml) and projects
+    per-collection manifests via ConvertTo-CollectionManifestFromCore, so each
+    fixture builds a temp core-manifest.yml with a collections map:
+    - Missing core manifest returns empty matrix
     - Single stable collection returns one matrix item
-    - Deprecated collections are always skipped
-    - Experimental collections skipped for Stable channel
-    - Experimental collections included for Preview channel
+    - Deprecated and removed collections are always skipped
+    - Experimental collections are included for all channels (per-item maturity
+      gating is enforced downstream by Prepare-Extension)
     - Multiple collections produce correct matrix JSON
     - Skipped collections tracked in Skipped property
     - Missing name falls back to id
@@ -26,6 +29,35 @@ BeforeAll {
 
     # Dot-source the script to access Find-CollectionManifestsCore
     . $script:ScriptPath
+
+    # Writes a temp core-manifest.yml with a collections map. Each collection is a
+    # hashtable with an Id key and optional Name and Maturity keys, mirroring the
+    # collection-level metadata that ConvertTo-CollectionManifestFromCore projects.
+    function New-TestCoreManifest {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Dir,
+
+            [Parameter(Mandatory = $true)]
+            [object[]]$Collections
+        )
+
+        $lines = [System.Collections.Generic.List[string]]::new()
+        $lines.Add('schemaVersion: "1.0"')
+        $lines.Add('collections:')
+        foreach ($collection in $Collections) {
+            $lines.Add("  $($collection.Id):")
+            $lines.Add("    path: collections/$($collection.Id).collection.yml")
+            if ($collection.Contains('Name')) {
+                $lines.Add("    name: $($collection.Name)")
+            }
+            if ($collection.Contains('Maturity')) {
+                $lines.Add("    maturity: $($collection.Maturity)")
+            }
+        }
+
+        Set-Content -Path (Join-Path $Dir 'core-manifest.yml') -Value ($lines -join "`n")
+    }
 }
 
 AfterAll {
@@ -34,7 +66,7 @@ AfterAll {
 
 Describe 'Find-CollectionManifests' -Tag 'Unit' {
 
-    Context 'Empty collections directory' {
+    Context 'Missing core manifest' {
         BeforeEach {
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
@@ -60,11 +92,9 @@ Describe 'Find-CollectionManifests' -Tag 'Unit' {
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: test-collection
-name: Test Collection
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'test.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'test-collection'; Name = 'Test Collection'; Maturity = 'stable' }
+            )
         }
 
         AfterEach {
@@ -93,11 +123,9 @@ maturity: stable
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: old-collection
-name: Old Collection
-maturity: deprecated
-"@ | Set-Content -Path (Join-Path $script:TempDir 'old.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'old-collection'; Name = 'Old Collection'; Maturity = 'deprecated' }
+            )
         }
 
         AfterEach {
@@ -121,11 +149,9 @@ maturity: deprecated
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: gone-collection
-name: Gone Collection
-maturity: removed
-"@ | Set-Content -Path (Join-Path $script:TempDir 'gone.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'gone-collection'; Name = 'Gone Collection'; Maturity = 'removed' }
+            )
         }
 
         AfterEach {
@@ -149,31 +175,29 @@ maturity: removed
         }
     }
 
-    Context 'Experimental skipped for Stable channel' {
+    Context 'Experimental included for Stable channel' {
         BeforeEach {
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: exp-collection
-name: Experimental Collection
-maturity: experimental
-"@ | Set-Content -Path (Join-Path $script:TempDir 'exp.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'exp-collection'; Name = 'Experimental Collection'; Maturity = 'experimental' }
+            )
         }
 
         AfterEach {
             Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
         }
 
-        It 'Excludes experimental from Stable channel matrix' {
+        It 'Includes experimental in Stable channel matrix (per-item gating happens downstream)' {
             $result = Find-CollectionManifestsCore -Channel 'Stable' -CollectionsDir $script:TempDir
-            $result.MatrixItems | Should -HaveCount 0
+            $result.MatrixItems | Should -HaveCount 1
+            $result.MatrixItems[0].id | Should -Be 'exp-collection'
         }
 
-        It 'Tracks experimental in Skipped with reason' {
+        It 'Does not track experimental in Skipped' {
             $result = Find-CollectionManifestsCore -Channel 'Stable' -CollectionsDir $script:TempDir
-            $result.Skipped | Should -HaveCount 1
-            $result.Skipped[0].Reason | Should -BeLike '*experimental*'
+            $result.Skipped | Should -HaveCount 0
         }
     }
 
@@ -182,11 +206,9 @@ maturity: experimental
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: exp-collection
-name: Experimental Collection
-maturity: experimental
-"@ | Set-Content -Path (Join-Path $script:TempDir 'exp.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'exp-collection'; Name = 'Experimental Collection'; Maturity = 'experimental' }
+            )
         }
 
         AfterEach {
@@ -205,23 +227,11 @@ maturity: experimental
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: stable-one
-name: Stable One
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'stable-one.collection.yml')
-
-            @"
-id: stable-two
-name: Stable Two
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'stable-two.collection.yml')
-
-            @"
-id: deprecated-one
-name: Deprecated One
-maturity: deprecated
-"@ | Set-Content -Path (Join-Path $script:TempDir 'deprecated-one.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'stable-one'; Name = 'Stable One'; Maturity = 'stable' }
+                @{ Id = 'stable-two'; Name = 'Stable Two'; Maturity = 'stable' }
+                @{ Id = 'deprecated-one'; Name = 'Deprecated One'; Maturity = 'deprecated' }
+            )
         }
 
         AfterEach {
@@ -250,34 +260,21 @@ maturity: deprecated
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: good-one
-name: Good One
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'good.collection.yml')
-
-            @"
-id: dep-one
-name: Deprecated One
-maturity: deprecated
-"@ | Set-Content -Path (Join-Path $script:TempDir 'dep.collection.yml')
-
-            @"
-id: exp-one
-name: Experimental One
-maturity: experimental
-"@ | Set-Content -Path (Join-Path $script:TempDir 'exp.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'good-one'; Name = 'Good One'; Maturity = 'stable' }
+                @{ Id = 'dep-one'; Name = 'Deprecated One'; Maturity = 'deprecated' }
+                @{ Id = 'exp-one'; Name = 'Experimental One'; Maturity = 'experimental' }
+            )
         }
 
         AfterEach {
             Remove-Item -Path $script:TempDir -Recurse -Force -ErrorAction SilentlyContinue
         }
 
-        It 'Tracks all skipped collections' {
+        It 'Tracks only deprecated/removed collections as skipped' {
             $result = Find-CollectionManifestsCore -Channel 'Stable' -CollectionsDir $script:TempDir
-            $result.Skipped | Should -HaveCount 2
+            $result.Skipped | Should -HaveCount 1
             $result.Skipped.Id | Should -Contain 'dep-one'
-            $result.Skipped.Id | Should -Contain 'exp-one'
         }
 
         It 'Includes correct reason for deprecated' {
@@ -286,10 +283,11 @@ maturity: experimental
             $depSkip.Reason | Should -Be 'deprecated'
         }
 
-        It 'Includes correct reason for experimental' {
+        It 'Does not skip experimental on Stable channel' {
             $result = Find-CollectionManifestsCore -Channel 'Stable' -CollectionsDir $script:TempDir
             $expSkip = $result.Skipped | Where-Object { $_.Id -eq 'exp-one' }
-            $expSkip.Reason | Should -BeLike '*experimental*'
+            $expSkip | Should -BeNullOrEmpty
+            $result.MatrixItems.id | Should -Contain 'exp-one'
         }
     }
 
@@ -298,10 +296,9 @@ maturity: experimental
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: no-name-collection
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'noname.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'no-name-collection'; Maturity = 'stable' }
+            )
         }
 
         AfterEach {
@@ -319,10 +316,9 @@ maturity: stable
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: no-maturity
-name: No Maturity
-"@ | Set-Content -Path (Join-Path $script:TempDir 'nomaturity.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'no-maturity'; Name = 'No Maturity' }
+            )
         }
 
         AfterEach {
@@ -341,17 +337,10 @@ name: No Maturity
             $script:TempDir = Join-Path ([System.IO.Path]::GetTempPath()) "pester-$([Guid]::NewGuid().ToString('N').Substring(0,8))"
             New-Item -ItemType Directory -Path $script:TempDir -Force | Out-Null
 
-            @"
-id: stable-guard
-name: Stable Guard
-maturity: stable
-"@ | Set-Content -Path (Join-Path $script:TempDir 'stable.collection.yml')
-
-            @"
-id: dep-guard
-name: Deprecated Guard
-maturity: deprecated
-"@ | Set-Content -Path (Join-Path $script:TempDir 'dep.collection.yml')
+            New-TestCoreManifest -Dir $script:TempDir -Collections @(
+                @{ Id = 'stable-guard'; Name = 'Stable Guard'; Maturity = 'stable' }
+                @{ Id = 'dep-guard'; Name = 'Deprecated Guard'; Maturity = 'deprecated' }
+            )
 
             $script:OutputFile = Join-Path $script:TempDir 'github_output'
             New-Item -ItemType File -Path $script:OutputFile -Force | Out-Null

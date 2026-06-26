@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-16
+ms.date: 2026-06-17
 ms.topic: how-to
 keywords:
   - skills
@@ -99,18 +99,18 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                                      |
-|----------|------------------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                                 |
-| Format   | Single sentence ending with attribution                                                                    |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'` |
+| Property | Value                                                               |
+|----------|---------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                          |
+| Format   | Single sentence describing functionality                            |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'` |
 
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
-description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 ---
 ```
 
@@ -194,7 +194,7 @@ Recognized metadata fields:
 ```yaml
 ---
 name: pr-reference
-description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
+description: 'Generate PR reference XML files with commit history and diffs for pull request workflows'
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
@@ -208,7 +208,7 @@ This example demonstrates a skill configured for both automatic semantic loading
 ```yaml
 ---
 name: owasp-llm
-description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base - Brought to you by microsoft/hve-core'
+description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base'
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -224,18 +224,20 @@ This example demonstrates a skill incorporating third-party content with provena
 
 ## Collection Entry Requirements
 
-All skills must have matching entries in one or more `collections/*.collection.yml` manifests. Collection entries control distribution and maturity.
+All distributed skills must have matching entries in `collections/core-manifest.yml`. Canonical manifest entries control distribution and maturity.
 
 ### Adding Your Skill to a Collection
 
-After creating your skill package, add an `items[]` entry in each target collection manifest:
+After creating your skill package, add an entry under `skills` in `collections/core-manifest.yml` and list each target collection:
 
 ```yaml
-items:
-  # path can reference artifacts from any subfolder
-  - path: .github/skills/{collection-id}/my-skill
-    kind: skill
+skills:
+  .github/skills/{collection-id}/my-skill:
+    path: .github/skills/{collection-id}/my-skill
     maturity: stable
+    collections:
+      - {collection-id}
+      - hve-core-all
 ```
 
 ### Selecting Collections for Skills

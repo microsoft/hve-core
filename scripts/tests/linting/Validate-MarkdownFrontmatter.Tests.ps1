@@ -1374,6 +1374,13 @@ Content
         }
     }
 
+    Context 'Script-level production defaults' {
+        It 'Includes manifest-review collection markdown in the default exclude list' {
+            $scriptText = Get-Content -Path $scriptPath -Raw
+            $scriptText | Should -Match "extension/manifest-review/\*\*/\*\.collection\.md"
+        }
+    }
+
     Context 'FooterExcludePaths integration' {
         It 'Passes FooterExcludePaths to Invoke-FrontmatterValidation' {
             $testFile = Join-Path $TestDrive 'CHANGELOG.md'

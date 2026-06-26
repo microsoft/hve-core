@@ -39,33 +39,15 @@ export const collectionCardDefinitions: CollectionCardDefinition[] = [
     href: '/docs/getting-started/collections',
   },
   {
-    name: 'experimental',
-    description: 'Preview artifacts under active development',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/collections',
-  },
-  {
     name: 'github',
     description: 'GitHub issue backlogs and triage workflows',
     maturity: 'Stable',
     href: '/docs/getting-started/collections',
   },
   {
-    name: 'gitlab',
-    description: 'GitLab merge requests and pipeline workflows',
-    maturity: 'Experimental',
-    href: '/docs/getting-started/collections',
-  },
-  {
     name: 'hve-core',
     description: 'RPI workflow, planning, and implementation',
     maturity: 'Stable',
-    href: '/docs/getting-started/collections',
-  },
-  {
-    name: 'jira',
-    description: 'Jira backlogs, triage, and PRD-driven planning',
-    maturity: 'Experimental',
     href: '/docs/getting-started/collections',
   },
   {

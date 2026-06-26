@@ -35,6 +35,7 @@ param(
         'extension/README.*.md',
         'extension/templates/README.template.md',
         'collections/*.collection.md',
+        'extension/manifest-review/**/*.collection.md',
         'pr.md',
         '.github/PULL_REQUEST_TEMPLATE.md',
         'plugins/**'

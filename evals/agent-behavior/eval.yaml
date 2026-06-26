@@ -23,6 +23,64 @@ scoring:
   threshold: 0.7
 
 stimuli:
+- name: accessibility-framework-assessor-audit-format
+  prompt: |
+    You are the Accessibility Framework Assessor subagent. The Accessibility
+    Planner orchestrator hands you this input:
+      - mode: audit
+      - framework: wcag-22
+      - scope: src/web/components/
+    Assess exactly this one framework against the scope using the consolidated
+    Accessibility skill and return findings in the audit format with a status
+    and a findings table. Do not modify any files.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-framework-assessor
+  graders:
+  - type: output-matches
+    name: findings-schema-version
+    config:
+      pattern: (?i)SKILL_FINDINGS_V1
+  - type: output-matches
+    name: audit-status-vocabulary
+    config:
+      pattern: (?i)\b(pass|fail|partial|not[_ ]assessed)\b
+  - type: output-matches
+    name: framework-attribution
+    config:
+      pattern: (?i)(wcag[-\s]?2\.?2|accessibility|success\s+criteri)
+  - type: output-matches
+    name: read-only-posture
+    config:
+      pattern: (?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|assessment\s+only)
+- name: accessibility-framework-assessor-plan-vocabulary
+  prompt: |
+    You are the Accessibility Framework Assessor subagent. The Accessibility
+    Planner orchestrator hands you this input:
+      - mode: plan
+      - framework: coga
+      - plan_text: A design doc describing a multi-step onboarding wizard
+        with timed sessions and dense form layouts.
+    Assess exactly this one framework against the plan text and return findings
+    in the plan-mode format.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: accessibility-framework-assessor
+  graders:
+  - type: output-matches
+    name: plan-schema-version
+    config:
+      pattern: (?i)PLAN_FINDINGS_V1
+  - type: output-matches
+    name: plan-status-vocabulary
+    config:
+      pattern: (?i)\b(risk|caution|covered|not[_ ]applicable)\b
+  - type: output-matches
+    name: mitigation-guidance
+    config:
+      pattern: (?i)(mitigation|guidance|recommend|remediat)
 - name: accessibility-planner-class-recipe
   prompt: |
     Begin an accessibility planning session for a public-facing customer portal that must conform to WCAG 2.2 and Section 508. List the next phases of the assessment. Write the planning state under `.copilot-tracking/accessibility/` and report the path you wrote it to.
@@ -287,6 +345,60 @@ stimuli:
     config:
       pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: brd-quality-reviewer-standard-findings-format
+  prompt: |
+    You are the BRD Quality Reviewer subagent. The Requirements Author
+    orchestrator hands you this input:
+      - phase: Define
+      - artifact: .copilot-tracking/brd-sessions/payments-brd.md
+    Review exactly this BRD against the embedded rubric and return findings in
+    the standard findings format. Do not modify any files.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: brd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: findings-schema-version
+    config:
+      pattern: (?i)BRD_STANDARD_FINDINGS_V1
+  - type: output-matches
+    name: requirement-taxonomy
+    config:
+      pattern: (?i)\b(FR|AC|NFR|CON|BR|BG)[-\s]?\d*\b
+  - type: output-matches
+    name: rubric-attribution
+    config:
+      pattern: (?i)(29148|25010|SMART)
+  - type: output-matches
+    name: read-only-posture
+    config:
+      pattern: (?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|review\s+only)
+- name: brd-quality-reviewer-quality-report-verdict
+  prompt: |
+    You are the BRD Quality Reviewer subagent. The Requirements Author
+    orchestrator hands you this input:
+      - phase: Govern
+      - artifact: .copilot-tracking/brd-sessions/payments-brd.md
+    Produce the final quality report with an overall verdict and gate
+    decision.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: brd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: report-schema-version
+    config:
+      pattern: (?i)BRD_QUALITY_REPORT_V1
+  - type: output-matches
+    name: verdict-vocabulary
+    config:
+      pattern: (?i)\b(pass|needs[_ ]review|fail)\b
+  - type: output-matches
+    name: gate-vocabulary
+    config:
+      pattern: (?i)\b(approved(_with_comments)?|blocked|not[_ ]evaluated)\b
 - name: code-review-accessibility-class-recipe
   prompt: |
     Review this diff for accessibility conformance:
@@ -1171,6 +1283,60 @@ stimuli:
     config:
       pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: prd-quality-reviewer-standard-findings-format
+  prompt: |
+    You are the PRD Quality Reviewer subagent. The Requirements Author
+    orchestrator hands you this input:
+      - phase: Validate
+      - artifact: .copilot-tracking/prd-sessions/checkout-prd.md
+    Review exactly this PRD against the embedded rubric and return findings in
+    the standard findings format. Do not modify any files.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: prd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: findings-schema-version
+    config:
+      pattern: (?i)PRD_STANDARD_FINDINGS_V1
+  - type: output-matches
+    name: requirement-taxonomy
+    config:
+      pattern: (?i)\b(FR|AC|NFR|CON|GOAL|DD)[-\s]?\d*\b
+  - type: output-matches
+    name: rubric-attribution
+    config:
+      pattern: (?i)(29148|800[-\s]?160|SMART)
+  - type: output-matches
+    name: read-only-posture
+    config:
+      pattern: (?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|review\s+only)
+- name: prd-quality-reviewer-quality-report-verdict
+  prompt: |
+    You are the PRD Quality Reviewer subagent. The Requirements Author
+    orchestrator hands you this input:
+      - phase: Finalize
+      - artifact: .copilot-tracking/prd-sessions/checkout-prd.md
+    Produce the final quality report with an overall verdict and gate
+    decision.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: prd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: report-schema-version
+    config:
+      pattern: (?i)PRD_QUALITY_REPORT_V1
+  - type: output-matches
+    name: verdict-vocabulary
+    config:
+      pattern: (?i)\b(pass|needs[_ ]review|fail)\b
+  - type: output-matches
+    name: gate-vocabulary
+    config:
+      pattern: (?i)\b(approved(_with_comments)?|blocked|not[_ ]evaluated)\b
 - name: product-manager-advisor-class-recipe
   prompt: |
     I want to add "dark mode" to my app. Help me draft a small backlog (epic + 2-3 stories) with acceptance criteria. Write the drafts under `.copilot-tracking/` and report the path.
@@ -1422,6 +1588,64 @@ stimuli:
     config:
       pattern: (?i)(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: rai-skill-assessor-audit-format
+  prompt: |
+    You are the RAI Skill Assessor subagent. The RAI Planner orchestrator
+    hands you this input:
+      - mode: audit
+      - framework: nist-ai-rmf-govern
+      - scope: docs/planning/rai/
+    Assess exactly this one RAI framework against the scope using the
+    `rai-standards` skill and return findings in the audit format with a
+    status and a findings table. Do not modify any files.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rai-skill-assessor
+  graders:
+  - type: output-matches
+    name: findings-schema-version
+    config:
+      pattern: (?i)RAI_FINDINGS_V1
+  - type: output-matches
+    name: audit-status-vocabulary
+    config:
+      pattern: (?i)\b(pass|fail|partial|not[_ ]assessed)\b
+  - type: output-matches
+    name: framework-attribution
+    config:
+      pattern: (?i)(nist\s+ai\s+rmf|govern|responsible\s+ai)
+  - type: output-matches
+    name: read-only-posture
+    config:
+      pattern: (?i)(read[-\s]?only|no\s+(file\s+)?(changes|edits|modif)|assessment\s+only)
+- name: rai-skill-assessor-plan-vocabulary
+  prompt: |
+    You are the RAI Skill Assessor subagent. The RAI Planner orchestrator
+    hands you this input:
+      - mode: plan
+      - framework: ai-stride
+      - plan_text: A design doc describing an LLM agent that summarizes
+        customer support tickets and drafts automated replies.
+    Assess exactly this one framework against the plan text and return findings
+    in the plan-mode format.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: rai-skill-assessor
+  graders:
+  - type: output-matches
+    name: plan-schema-version
+    config:
+      pattern: (?i)RAI_PLAN_FINDINGS_V1
+  - type: output-matches
+    name: plan-status-vocabulary
+    config:
+      pattern: (?i)\b(risk|caution|covered|not[_ ]applicable)\b
+  - type: output-matches
+    name: mitigation-guidance
+    config:
+      pattern: (?i)(mitigation|guidance|recommend|remediat)
 - name: report-generator-vuln-report
   prompt: |
     You are a report-generator subagent invocation. Collate verified findings

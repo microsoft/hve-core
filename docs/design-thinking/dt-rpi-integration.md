@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-17
 ms.topic: how-to
 keywords:
   - design thinking
@@ -166,8 +166,6 @@ Each prompt collects the relevant method outputs, confidence markers, and open q
 * [Design Thinking Guide](README.md): Overview of all nine methods and three spaces
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

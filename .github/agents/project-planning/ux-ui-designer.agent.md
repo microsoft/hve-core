@@ -1,5 +1,5 @@
 ---
-name: UX UI Designer
+name: UX UI Designer (exp)
 description: 'UX research specialist for Jobs-to-be-Done analysis, user journey mapping, and accessibility requirements'
 tools:
   - read
@@ -12,7 +12,7 @@ tools:
   - web
 handoffs:
   - label: "📋 Product Review"
-    agent: Product Manager Advisor
+    agent: Product Manager Advisor (exp)
     prompt: "Review this work from a product management perspective and identify any scope, risk, or alignment issues."
     send: true
   - label: "🔍 Research Topic"
@@ -172,4 +172,3 @@ Involve a human when:
 
 ---
 
-Brought to you by microsoft/hve-core

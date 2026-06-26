@@ -1,5 +1,5 @@
 ---
-description: "BRD frontmatter overlay schema definition - Brought to you by microsoft/hve-core"
+description: "BRD frontmatter overlay schema definition"
 ---
 
 # BRD Frontmatter Overlay Schema
@@ -202,4 +202,4 @@ At Govern approval, update `status` to `approved`, update `version` to `1.0.0` o
 
 ---
 
-> Brought to you by microsoft/hve-core
+>

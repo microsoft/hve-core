@@ -1,6 +1,6 @@
 ---
 name: dt-methods
-description: Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG) - Brought to you by microsoft/hve-core
+description: Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG)
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -16,7 +16,7 @@ Entrypoint for Design Thinking method coaching knowledge. The `dt-coach` agent l
 * Read the method reference for the method currently active in coaching state to ground day-to-day coaching.
 * Read the matching deep reference when the conversation needs advanced facilitation, recovery techniques, or expert frameworks beyond the core method guidance.
 * Read the industry reference when the team has identified one of the nine covered industries as their context, and weave its vocabulary, constraints, and empathy tools into method-specific guidance.
-* Read [dt-coach-telemetry.instructions.md](references/dt-coach-telemetry.instructions.md) when DT session artifacts need observable telemetry expectations grounded in `telemetry-foundations`.
+* Read [dt-coach-telemetry.md](references/dt-coach-telemetry.md) when DT session artifacts need observable telemetry expectations grounded in `telemetry-foundations`.
 
 ## Method references
 
@@ -81,6 +81,6 @@ Load the matching reference when the team identifies its industry context.
     ├── industry-professional-services.md
     ├── industry-public-sector.md
     ├── industry-retail-cpg.md
-    └── dt-coach-telemetry.instructions.md
+    └── dt-coach-telemetry.md
 ```
 

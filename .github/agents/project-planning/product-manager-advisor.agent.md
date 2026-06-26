@@ -1,13 +1,13 @@
 ---
-name: Product Manager Advisor
+name: Product Manager Advisor (exp)
 description: 'Product management advisor for requirements discovery, validation, and issue creation'
 handoffs:
   - label: "📄 Build PRD"
-    agent: PRD Builder
+    agent: PRD Builder (exp)
     prompt: "Create or refine a Product Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "📋 Build BRD"
-    agent: BRD Builder
+    agent: BRD Builder (exp)
     prompt: "Create or refine a Business Requirements Document for this initiative based on our current discussion."
     send: true
   - label: "🔍 Research Topic"
@@ -15,7 +15,7 @@ handoffs:
     prompt: /task-research
     send: true
   - label: "🎨 UX Review"
-    agent: UX UI Designer
+    agent: UX UI Designer (exp)
     prompt: "Run a UX and UI review of the proposed solution and suggest improvements."
     send: true
 ---
@@ -130,4 +130,3 @@ Involve a human product owner or stakeholder when:
 
 ---
 
-Brought to you by microsoft/hve-core

@@ -1,5 +1,5 @@
 ---
-description: "Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting - Brought to you by microsoft/hve-core"
+description: "Research a codebase using an existing graphify knowledge graph, with audit-tagged evidence reporting"
 agent: Task Researcher
 argument-hint: "topic=... [chat={true|false}]"
 ---

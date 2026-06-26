@@ -4,6 +4,108 @@
 
 BeforeAll {
     . $PSScriptRoot/../../collections/Validate-Collections.ps1
+
+    # Builds a collections/core-manifest.yml fixture from collection-intent hashtables.
+    # The rewritten validator reads only core-manifest.yml and projects per-collection
+    # manifests via ConvertTo-CollectionManifestFromCore, so tests express their intent
+    # as central-manifest data rather than committed .collection.yml files.
+    #
+    # Each input collection: @{ id; name; descriptions=@(@{channel;text});
+    #   maturity?(scalar); notice?; tags?; display?; items=@(@{path;kind;maturity}) }
+    # Artifacts are keyed by path within their kind section; a path shared across
+    # multiple input collections merges into a single entry whose collections[] lists
+    # every owning id.
+    function global:New-CoreManifestFixture {
+        param(
+            [Parameter(Mandatory)] [string]$CollectionsDir,
+            [AllowEmptyCollection()] [object[]]$Collections = @()
+        )
+
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $sectionForKind = @{
+            agent       = 'agents'
+            prompt      = 'prompts'
+            instruction = 'instructions'
+            skill       = 'skills'
+        }
+
+        $collectionsMap = [ordered]@{}
+        $sections = [ordered]@{
+            agents       = [ordered]@{}
+            prompts      = [ordered]@{}
+            instructions = [ordered]@{}
+            skills       = [ordered]@{}
+        }
+
+        foreach ($collection in $Collections) {
+            $id = [string]$collection.id
+
+            $meta = [ordered]@{ name = [string]$collection.name }
+            if ($collection.Contains('descriptions') -and $null -ne $collection.descriptions) {
+                $meta['descriptions'] = @($collection.descriptions | ForEach-Object {
+                        [ordered]@{ channel = [string]$_.channel; text = [string]$_.text }
+                    })
+            }
+            if ($collection.Contains('maturity') -and $collection.maturity) {
+                $meta['maturity'] = [string]$collection.maturity
+            }
+            if ($collection.Contains('notice') -and $collection.notice) {
+                $meta['notice'] = [string]$collection.notice
+            }
+            if ($collection.Contains('tags') -and $null -ne $collection.tags) {
+                $meta['tags'] = @($collection.tags)
+            }
+            if ($collection.Contains('display') -and $null -ne $collection.display) {
+                $meta['display'] = $collection.display
+            }
+            $collectionsMap[$id] = $meta
+
+            if ($collection.Contains('items') -and $null -ne $collection.items) {
+                foreach ($item in $collection.items) {
+                    $kind = [string]$item.kind
+                    $section = $sectionForKind[$kind]
+                    if (-not $section) { throw "Unknown item kind '$kind' in fixture." }
+                    $path = [string]$item.path
+
+                    if ($sections[$section].Contains($path)) {
+                        $entry = $sections[$section][$path]
+                        if ($entry.collections -notcontains $id) {
+                            $entry.collections = @($entry.collections) + $id
+                        }
+                    }
+                    else {
+                        $entry = [ordered]@{
+                            path        = $path
+                            maturity    = [string]$item.maturity
+                            collections = @($id)
+                        }
+                        $sections[$section][$path] = $entry
+                    }
+
+                    if ($item.Contains('externalDependencies') -and $null -ne $item.externalDependencies) {
+                        $entry['externalDependencies'] = @($item.externalDependencies)
+                    }
+                }
+            }
+        }
+
+        $manifest = [ordered]@{
+            schemaVersion = '1.0'
+            collections   = $collectionsMap
+            agents        = $sections.agents
+            prompts       = $sections.prompts
+            instructions  = $sections.instructions
+            skills        = $sections.skills
+        }
+
+        if (-not (Test-Path -Path $CollectionsDir)) {
+            New-Item -ItemType Directory -Path $CollectionsDir -Force | Out-Null
+        }
+        $manifestPath = Join-Path $CollectionsDir 'core-manifest.yml'
+        Set-Content -Path $manifestPath -Value (ConvertTo-Yaml -Data $manifest) -Force
+        return $manifestPath
+    }
 }
 
 Describe 'Test-KindSuffix' {
@@ -98,19 +200,13 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
     }
 
     It 'Fails validation for root-level instruction' {
-        $manifest = [ordered]@{
-            id          = 'test-reject-instr'
-            name        = 'Test Reject Instruction'
-            description = 'Tests repo-specific instruction rejection'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/workflows.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-reject-instr.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-reject-instr'; name = 'Test Reject Instruction'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests repo-specific instruction rejection' })
+                items = @(@{ path = '.github/instructions/workflows.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -118,38 +214,26 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
     }
 
     It 'Passes validation for instruction in subdirectory' {
-        $manifest = [ordered]@{
-            id          = 'test-allow-location'
-            name        = 'Test Allow Location'
-            description = 'Tests that subdirectory instructions are allowed'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/shared/hve-core-location.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-allow-location.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-allow-location'; name = 'Test Allow Location'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests that subdirectory instructions are allowed' })
+                items = @(@{ path = '.github/instructions/shared/hve-core-location.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
     }
 
     It 'Fails validation for root-level agent' {
-        $manifest = [ordered]@{
-            id          = 'test-reject-agent'
-            name        = 'Test Reject Agent'
-            description = 'Tests repo-specific agent rejection'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/internal.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-reject-agent.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-reject-agent'; name = 'Test Reject Agent'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests repo-specific agent rejection' })
+                items = @(@{ path = '.github/agents/internal.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -157,19 +241,13 @@ Describe 'Invoke-CollectionValidation - repo-specific path rejection' {
     }
 
     It 'Passes validation for agent in subdirectory' {
-        $manifest = [ordered]@{
-            id          = 'test-allow-agent'
-            name        = 'Test Allow Agent'
-            description = 'Tests that subdirectory agents pass'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/hve-core/rpi-agent.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-allow-agent.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-allow-agent'; name = 'Test Allow Agent'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests that subdirectory agents pass' })
+                items = @(@{ path = '.github/agents/hve-core/rpi-agent.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -197,100 +275,74 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
     }
 
     It 'Passes validation for collection with maturity: experimental' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-experimental'
-            name        = 'Test'
-            description = 'Tests experimental maturity'
-            maturity    = 'experimental'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-experimental.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:repoRoot '.github/agents/test/test.agent.md') -Value "---`nname: Test(exp)`ndescription: test agent`n---"
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-experimental'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests experimental maturity' })
+                maturity = 'experimental'
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'experimental' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
     }
 
     It 'Passes validation for collection with maturity: stable' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-stable'
-            name        = 'Test'
-            description = 'Tests stable maturity'
-            maturity    = 'stable'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-stable.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:repoRoot '.github/agents/test/test.agent.md') -Value "---`nname: Test`ndescription: test agent`n---"
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-stable'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests stable maturity' })
+                maturity = 'stable'
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
     }
 
     It 'Passes validation for collection with maturity: preview' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-preview'
-            name        = 'Test'
-            description = 'Tests preview maturity'
-            maturity    = 'preview'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-preview.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:repoRoot '.github/agents/test/test.agent.md') -Value "---`nname: Test(pre)`ndescription: test agent`n---"
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-preview'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests preview maturity' })
+                maturity = 'preview'
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'preview' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
     }
 
     It 'Passes validation for collection with maturity: deprecated' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-deprecated'
-            name        = 'Test'
-            description = 'Tests deprecated maturity'
-            maturity    = 'deprecated'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-deprecated.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:repoRoot '.github/agents/test/test.agent.md') -Value "---`nname: Test`ndescription: test agent`n---"
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-deprecated'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests deprecated maturity' })
+                maturity = 'deprecated'
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
     }
 
     It 'Fails validation for collection with invalid maturity: beta' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-beta'
-            name        = 'Test'
-            description = 'Tests invalid maturity'
-            maturity    = 'beta'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-beta.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-beta'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests invalid maturity' })
+                maturity = 'beta'
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -298,19 +350,14 @@ Describe 'Invoke-CollectionValidation - collection-level maturity' {
     }
 
     It 'Passes validation for collection with omitted maturity' {
-        $manifest = [ordered]@{
-            id          = 'test-maturity-omitted'
-            name        = 'Test'
-            description = 'Tests omitted maturity'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/test.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'test-maturity-omitted.collection.yml') -Value $yaml
+        Set-Content -Path (Join-Path $script:repoRoot '.github/agents/test/test.agent.md') -Value "---`nname: Test`ndescription: test agent`n---"
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'test-maturity-omitted'; name = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests omitted maturity' })
+                items = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -365,19 +412,13 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Passes when collection-id matches folder name' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection with matching folder'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/my-collection/match.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection with matching folder' })
+                items = @(@{ path = '.github/agents/my-collection/match.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -390,19 +431,13 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Warns but does not fail when collection-id does not match folder name' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection with mismatched folder'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/wrong-folder/mismatch.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection with mismatched folder' })
+                items = @(@{ path = '.github/agents/wrong-folder/mismatch.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -415,30 +450,17 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows items from hve-core/ folder in any collection' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection referencing hve-core item'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/hve-core/core.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
-
-        # Register hve-core as a known collection ID (mirrors real-world hve-core.collection.yml)
-        $hveCoreManifest = [ordered]@{
-            id          = 'hve-core'
-            name        = 'HVE Core'
-            description = 'HVE Core collection'
-            items       = @()
-        }
-        $hveYaml = ConvertTo-Yaml -Data $hveCoreManifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.yml') -Value $hveYaml
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core.collection.md') -Value '# HVE Core'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection referencing hve-core item' })
+                items = @(@{ path = '.github/agents/hve-core/core.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core'; name = 'HVE Core'
+                descriptions = @(@{ channel = 'stable'; text = 'HVE Core collection' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -451,19 +473,13 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows items from shared/ folder in any collection' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection referencing shared item'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/shared/shared.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection referencing shared item' })
+                items = @(@{ path = '.github/instructions/shared/shared.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -476,19 +492,13 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows items from rai-planning/ folder in any collection' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection referencing rai-planning item'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/rai-planning/rai.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection referencing rai-planning item' })
+                items = @(@{ path = '.github/instructions/rai-planning/rai.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -501,19 +511,15 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows items from accessibility/ folder in any collection' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Collection referencing accessibility item'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/accessibility/accessibility.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Collection referencing accessibility item' })
+                items = @(
+                    @{ path = '.github/instructions/accessibility/accessibility.instructions.md'; kind = 'instruction'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -526,40 +532,20 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Allows hve-core-all to reference items from any folder' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'HVE Core All'
-            description = 'Aggregate collection'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/my-collection/match.agent.md'
-                    kind = 'agent'
-                },
-                [ordered]@{
-                    path = '.github/agents/wrong-folder/mismatch.agent.md'
-                    kind = 'agent'
-                },
-                [ordered]@{
-                    path = '.github/instructions/shared/shared.instructions.md'
-                    kind = 'instruction'
-                },
-                [ordered]@{
-                    path = '.github/instructions/rai-planning/rai.instructions.md'
-                    kind = 'instruction'
-                },
-                [ordered]@{
-                    path = '.github/instructions/accessibility/accessibility.instructions.md'
-                    kind = 'instruction'
-                },
-                [ordered]@{
-                    path = '.github/agents/hve-core/core.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'hve-core-all'; name = 'HVE Core All'
+                descriptions = @(@{ channel = 'stable'; text = 'Aggregate collection' })
+                items = @(
+                    @{ path = '.github/agents/my-collection/match.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/wrong-folder/mismatch.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/instructions/shared/shared.instructions.md'; kind = 'instruction'; maturity = 'stable' },
+                    @{ path = '.github/instructions/rai-planning/rai.instructions.md'; kind = 'instruction'; maturity = 'stable' },
+                    @{ path = '.github/instructions/accessibility/accessibility.instructions.md'; kind = 'instruction'; maturity = 'stable' },
+                    @{ path = '.github/agents/hve-core/core.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -572,19 +558,13 @@ Describe 'Invoke-CollectionValidation - collection-to-folder name consistency' {
     It 'Emits warning output for mismatched folder name without failing' {
         Mock Write-Host {}
 
-        $manifest = [ordered]@{
-            id          = 'my-collection'
-            name        = 'My Collection'
-            description = 'Mismatch for warning output test'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/wrong-folder/mismatch.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'my-collection.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'my-collection'; name = 'My Collection'
+                descriptions = @(@{ channel = 'stable'; text = 'Mismatch for warning output test' })
+                items = @(@{ path = '.github/agents/wrong-folder/mismatch.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         # Advisory warning uses Write-Host WARN; validation still passes
@@ -621,151 +601,22 @@ Describe 'Invoke-CollectionValidation - error paths' {
         New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
     }
 
-    It 'Returns success with zero collections when directory is empty' {
+    It 'Returns success with zero collections when manifest defines none' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @() | Out-Null
+
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
         $result.CollectionCount | Should -Be 0
     }
 
-    It 'Fails when required field is missing' {
-        $yaml = @"
-name: No ID Collection
-description: Missing id field
-items:
-  - path: .github/agents/test/a.agent.md
-    kind: agent
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails for invalid id format' {
-        $manifest = [ordered]@{
-            id          = 'INVALID_ID!'
-            name        = 'Bad ID'
-            description = 'Invalid id format'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'bad-id.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails for duplicate ids across collections' {
-        $manifest = [ordered]@{
-            id          = 'dup-id'
-            name        = 'First'
-            description = 'First collection'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'dup1.collection.yml') -Value $yaml
-        Set-Content -Path (Join-Path $script:collectionsDir 'dup2.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
     It 'Fails when item path does not exist' {
-        $manifest = [ordered]@{
-            id          = 'missing-path'
-            name        = 'Missing'
-            description = 'Item path missing'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/nonexistent.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'missing-path.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails when item has no kind' {
-        $yaml = @"
-id: no-kind
-name: No Kind
-description: Item missing kind
-items:
-  - path: .github/agents/test/a.agent.md
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-kind.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails for invalid item maturity' {
-        $manifest = [ordered]@{
-            id          = 'bad-item-mat'
-            name        = 'Bad Item Maturity'
-            description = 'Item with invalid maturity'
-            items       = @(
-                [ordered]@{
-                    path     = '.github/agents/test/a.agent.md'
-                    kind     = 'agent'
-                    maturity = 'alpha'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'bad-item-mat.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails for kind-suffix mismatch' {
-        $manifest = [ordered]@{
-            id          = 'suffix-mismatch'
-            name        = 'Suffix Mismatch'
-            description = 'Agent path with wrong suffix'
-            items       = @(
-                [ordered]@{
-                    path = '.github/instructions/test/test.instructions.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'suffix-mismatch.collection.yml') -Value $yaml
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Fails for instruction kind with wrong suffix' {
-        $manifest = [ordered]@{
-            id          = 'instr-suffix'
-            name        = 'Instruction Suffix'
-            description = 'Instruction item with agent suffix'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'instr-suffix.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'missing-path'; name = 'Missing'
+                descriptions = @(@{ channel = 'stable'; text = 'Item path missing' })
+                items = @(@{ path = '.github/agents/test/nonexistent.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -777,23 +628,16 @@ items:
         New-Item -ItemType Directory -Path $agentsDir2 -Force | Out-Null
         Set-Content -Path (Join-Path $agentsDir2 'a.agent.md') -Value '---\ndescription: same name\n---'
 
-        $manifest = [ordered]@{
-            id          = 'dup-artifact'
-            name        = 'Dup Artifact'
-            description = 'Same artifact key from different paths'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'agent'
-                },
-                [ordered]@{
-                    path = '.github/agents/other/a.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $yaml = ConvertTo-Yaml -Data $manifest
-        Set-Content -Path (Join-Path $script:collectionsDir 'dup-artifact.collection.yml') -Value $yaml
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'dup-artifact'; name = 'Dup Artifact'
+                descriptions = @(@{ channel = 'stable'; text = 'Same artifact key from different paths' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/other/a.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -802,85 +646,26 @@ items:
     It 'Detects shared item missing canonical entry' {
         # Two collections share the same item but neither is hve-core-all;
         # hve-core-all exists but does not include a.agent.md - Check 4 fires.
-        $manifest1 = [ordered]@{
-            id          = 'share-one'
-            name        = 'Share One'
-            description = 'First sharer'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $manifest2 = [ordered]@{
-            id          = 'share-two'
-            name        = 'Share Two'
-            description = 'Second sharer'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/a.agent.md'
-                    kind = 'agent'
-                }
-            )
-        }
-        $canonical = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Canonical - missing a.agent.md'
-            items       = @(
-                [ordered]@{
-                    path = '.github/agents/test/b.agent.md'
-                    kind = 'agent'
-                },
-                [ordered]@{
-                    path = '.github/instructions/test/test.instructions.md'
-                    kind = 'instruction'
-                }
-            )
-        }
-        $yaml1 = ConvertTo-Yaml -Data $manifest1
-        $yaml2 = ConvertTo-Yaml -Data $manifest2
-        $yaml3 = ConvertTo-Yaml -Data $canonical
-        Set-Content -Path (Join-Path $script:collectionsDir 'share-one.collection.yml') -Value $yaml1
-        Set-Content -Path (Join-Path $script:collectionsDir 'share-two.collection.yml') -Value $yaml2
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml3
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-    }
-
-    It 'Detects maturity conflict with canonical collection' {
-        # hve-core-all has the item as stable, another collection has it as experimental
-        $canonical = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Canonical collection'
-            items       = @(
-                [ordered]@{
-                    path     = '.github/agents/test/a.agent.md'
-                    kind     = 'agent'
-                    maturity = 'stable'
-                }
-            )
-        }
-        $other = [ordered]@{
-            id          = 'conflict-col'
-            name        = 'Conflict'
-            description = 'Conflicting maturity'
-            items       = @(
-                [ordered]@{
-                    path     = '.github/agents/test/a.agent.md'
-                    kind     = 'agent'
-                    maturity = 'experimental'
-                }
-            )
-        }
-        $yaml1 = ConvertTo-Yaml -Data $canonical
-        $yaml2 = ConvertTo-Yaml -Data $other
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value $yaml1
-        Set-Content -Path (Join-Path $script:collectionsDir 'conflict-col.collection.yml') -Value $yaml2
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'share-one'; name = 'Share One'
+                descriptions = @(@{ channel = 'stable'; text = 'First sharer' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'share-two'; name = 'Share Two'
+                descriptions = @(@{ channel = 'stable'; text = 'Second sharer' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical - missing a.agent.md' })
+                items = @(
+                    @{ path = '.github/agents/test/b.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/instructions/test/test.instructions.md'; kind = 'instruction'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -918,112 +703,22 @@ Describe 'Invoke-CollectionValidation - new checks' {
         Set-Content -Path (Join-Path $agentsBaseDir 'orphan/orphan.agent.md') -Value '---' -Force
     }
 
-    # Check 3: companion .collection.md
-
-    It 'Warns but passes when .collection.md companion is missing' {
-        $manifest = [ordered]@{
-            id = 'no-companion'; name = 'No Companion'; description = 'Missing companion md'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Passes cleanly when .collection.md companion is present' {
-        $manifest = [ordered]@{
-            id = 'has-companion'; name = 'Has Companion'; description = 'With md'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'has-companion.collection.md') -Value '# Has Companion'
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-    }
-
-    # Check 2: intra-collection duplicate
-
-    It 'Fails when the same item appears twice in one collection' {
-        $manifest = [ordered]@{
-            id = 'intra-dup'; name = 'Intra Dup'; description = 'Dup item'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'intra-dup.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeFalse
-        $result.ErrorCount | Should -BeGreaterOrEqual 1
-    }
-
-    It 'Passes when all items in a collection are distinct' {
-        $agentsDir2 = Join-Path $script:repoRoot '.github/agents/test2'
-        New-Item -ItemType Directory -Path $agentsDir2 -Force | Out-Null
-        Set-Content -Path (Join-Path $agentsDir2 'b.agent.md') -Value '---' -Force
-
-        $manifest = [ordered]@{
-            id = 'distinct-items'; name = 'Distinct'; description = 'Distinct items'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' }
-            )
-        }
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/test2/b.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'distinct-items.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'distinct-items.collection.md') -Value '# Distinct'
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-    }
-
     # Check 4: hve-core-all coverage
 
     It 'Fails when a themed collection item is absent from hve-core-all' {
-        $manifest = [ordered]@{
-            id = 'themed-only'; name = 'Themed Only'; description = 'Item not in hve-core-all'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        # Canonical exists but does NOT include a.agent.md - only orphan - so Check 4 fires
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing themed item'
-            items = @([ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-only.collection.md') -Value '# Themed'
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'themed-only'; name = 'Themed Only'
+                descriptions = @(@{ channel = 'stable'; text = 'Item not in hve-core-all' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                # Canonical exists but does NOT include a.agent.md - only orphan - so Check 4 fires
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical - missing themed item' })
+                items = @(@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -1031,21 +726,21 @@ Describe 'Invoke-CollectionValidation - new checks' {
     }
 
     It 'Passes when all themed items are present in hve-core-all' {
-        $themed = [ordered]@{
-            id = 'themed-covered'; name = 'Themed Covered'; description = 'Covered by canonical'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-covered.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-covered.collection.md') -Value '# Themed Covered'
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'themed-covered'; name = 'Themed Covered'
+                descriptions = @(@{ channel = 'stable'; text = 'Covered by canonical' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -1055,18 +750,18 @@ Describe 'Invoke-CollectionValidation - new checks' {
 
     It 'Fails when an on-disk artifact is absent from hve-core-all' {
         # manifest and canonical cover a.agent.md but NOT orphan/orphan.agent.md
-        $manifest = [ordered]@{
-            id = 'partial-coverage'; name = 'Partial'; description = 'Missing orphan'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical - missing orphan'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'partial-coverage.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'partial-coverage.collection.md') -Value '# Partial'
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'partial-coverage'; name = 'Partial'
+                descriptions = @(@{ channel = 'stable'; text = 'Missing orphan' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical - missing orphan' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeFalse
@@ -1075,21 +770,21 @@ Describe 'Invoke-CollectionValidation - new checks' {
 
     It 'Warns but passes when artifact is in hve-core-all but not in any themed collection' {
         # Themed covers only a.agent.md; canonical covers both - orphan is canonical-only
-        $themed = [ordered]@{
-            id = 'themed-partial'; name = 'Themed Partial'; description = 'Missing orphan in themed'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical - covers orphan'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
-        Set-Content -Path (Join-Path $script:collectionsDir 'themed-partial.collection.md') -Value '# Themed Partial'
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'themed-partial'; name = 'Themed Partial'
+                descriptions = @(@{ channel = 'stable'; text = 'Missing orphan in themed' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical - covers orphan' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -1117,136 +812,25 @@ Describe 'Invoke-CollectionValidation - marker validation' -Tag 'Unit' {
         New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
     }
 
-    It 'Passes when collection.md has valid matched marker pairs' {
-        $manifest = [ordered]@{
-            id = 'valid-markers'; name = 'Valid Markers'; description = 'Matched markers'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        $mdContent = @"
-# Valid Markers
-
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-Generated content.
-<!-- END AUTO-GENERATED ARTIFACTS -->
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'valid-markers.collection.md') -Value $mdContent
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Warns but passes when begin marker exists without end marker' {
-        $manifest = [ordered]@{
-            id = 'begin-only'; name = 'Begin Only'; description = 'Missing end'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        $mdContent = @"
-# Begin Only
-
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-Content without end marker.
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'begin-only.collection.md') -Value $mdContent
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Warns but passes when end marker exists without begin marker' {
-        $manifest = [ordered]@{
-            id = 'end-only'; name = 'End Only'; description = 'Missing begin'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        $mdContent = @"
-# End Only
-
-Content without begin marker.
-<!-- END AUTO-GENERATED ARTIFACTS -->
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'end-only.collection.md') -Value $mdContent
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Does not warn when collection.md has no markers (backward compat)' {
-        $manifest = [ordered]@{
-            id = 'no-markers'; name = 'No Markers'; description = 'Legacy no markers'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-markers.collection.md') -Value '# No Markers - legacy content without any markers'
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-        $result.Success | Should -BeTrue
-        $result.ErrorCount | Should -Be 0
-    }
-
-    It 'Warns but passes when markers appear in wrong order' {
-        $manifest = [ordered]@{
-            id = 'reversed'; name = 'Reversed'; description = 'Wrong order'
-            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        $mdContent = @"
-# Reversed
-
-<!-- END AUTO-GENERATED ARTIFACTS -->
-Content.
-<!-- BEGIN AUTO-GENERATED ARTIFACTS -->
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'reversed.collection.md') -Value $mdContent
-        $canonical = [ordered]@{
-            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
-            items = @(
-                [ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' },
-                [ordered]@{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent' }
-            )
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+    It 'Passes with well-formed auto-generation markers in the projected README body' {
+        # The validator no longer reads committed .collection.md files; it validates the
+        # README body projected from core-manifest.yml, which always emits a matched,
+        # correctly ordered BEGIN/END AUTO-GENERATED ARTIFACTS marker pair.
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'valid-markers'; name = 'Valid Markers'
+                descriptions = @(@{ channel = 'stable'; text = 'Matched markers' })
+                items = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $result.Success | Should -BeTrue
@@ -1262,6 +846,9 @@ Describe 'Collection validation JSON reporting' {
         $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
         New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
         Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---' -Force
+        $orphanDir = Join-Path $script:repoRoot '.github/agents/orphan'
+        New-Item -ItemType Directory -Path $orphanDir -Force | Out-Null
+        Set-Content -Path (Join-Path $orphanDir 'orphan.agent.md') -Value '---' -Force
     }
 
     BeforeEach {
@@ -1271,36 +858,17 @@ Describe 'Collection validation JSON reporting' {
         New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
     }
 
-    It 'Includes structured validation results in the return payload' {
-        $yaml = @"
-name: No ID Collection
-description: Missing id field
-items:
-  - path: .github/agents/test/a.agent.md
-    kind: agent
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.md') -Value '# No ID' -Force
-
-        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
-
-        $result.Success | Should -BeFalse
-        $result.Results | Should -Not -BeNullOrEmpty
-        $missingField = @($result.Results | Where-Object { $_.ErrorType -eq 'MissingRequiredField' })
-        $missingField | Should -Not -BeNullOrEmpty
-        $missingField[0].Collection | Should -Be 'no-id'
-        $missingField[0].Message | Should -Match "missing required field 'id'"
-    }
-
     It 'Exports JSON report with expected schema' {
-        $manifest = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Canonical'
-            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $outputPath = Join-Path $TestDrive 'collection-validation-results.json'
@@ -1320,25 +888,25 @@ items:
     }
 
     It 'Differentiates Severity between warnings and errors in results' {
-        $yaml = @"
-name: No ID Collection
-description: Missing id field
-items:
-  - path: .github/agents/test/a.agent.md
-    kind: agent
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'no-id.collection.yml') -Value $yaml
-
-        # Also create a valid companion-less collection to generate a Warning alongside the Error
-        $validYaml = @"
-id: some-collection
-name: Some Collection
-description: Valid collection missing companion md
-items:
-  - path: .github/agents/test/a.agent.md
-    kind: agent
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'some-collection.collection.yml') -Value $validYaml
+        # PathNotFound (Error) from a themed collection referencing a missing file,
+        # alongside CanonicalOnlyArtifact (Warning) from an artifact present only in
+        # the canonical collection.
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'themed'; name = 'Themed'
+                descriptions = @(@{ channel = 'stable'; text = 'Has a path-not-found error' })
+                items = @(@{ path = '.github/agents/test/nonexistent.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/nonexistent.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
 
@@ -1347,19 +915,21 @@ items:
 
         $errors | Should -Not -BeNullOrEmpty
         $warnings | Should -Not -BeNullOrEmpty
-        $errors[0].ErrorType | Should -Be 'MissingRequiredField'
-        $warnings | Where-Object { $_.ErrorType -eq 'MissingCompanionCollectionMd' } | Should -Not -BeNullOrEmpty
+        $errors | Where-Object { $_.ErrorType -eq 'PathNotFound' } | Should -Not -BeNullOrEmpty
+        $warnings | Where-Object { $_.ErrorType -eq 'CanonicalOnlyArtifact' } | Should -Not -BeNullOrEmpty
     }
 
     It 'Creates output directory when it does not exist' {
-        $manifest = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Canonical'
-            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
         $newDir = Join-Path $TestDrive 'nonexistent-logs-dir'
@@ -1372,38 +942,532 @@ items:
     }
 
     It 'Captures multiple distinct ErrorType values in a single run' {
-        $yaml = @"
-id: multi-error
-name: Multi Error Collection
-description: Has both a path-not-found and a missing-kind error
-items:
-  - path: .github/agents/test/nonexistent.agent.md
-    kind: agent
-  - path: .github/agents/test/a.agent.md
-"@
-        Set-Content -Path (Join-Path $script:collectionsDir 'multi-error.collection.yml') -Value $yaml
+        # PathNotFound from a missing themed file, plus OrphanArtifact from an on-disk
+        # agent that is absent from the canonical collection.
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'themed'; name = 'Themed'
+                descriptions = @(@{ channel = 'stable'; text = 'Has a path-not-found error' })
+                items = @(@{ path = '.github/agents/test/nonexistent.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical missing the orphan' })
+                items = @(
+                    @{ path = '.github/agents/test/nonexistent.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
 
         $result.Success | Should -BeFalse
         $errorTypes = $result.Results | Select-Object -ExpandProperty ErrorType
         $errorTypes | Should -Contain 'PathNotFound'
-        $errorTypes | Should -Contain 'MissingItemKind'
+        $errorTypes | Should -Contain 'OrphanArtifact'
     }
 
     It 'Returns a Results key even when a collection passes validation' {
-        $manifest = [ordered]@{
-            id          = 'hve-core-all'
-            name        = 'All'
-            description = 'Canonical'
-            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
-        }
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $manifest)
-        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id = 'hve-core-all'; name = 'All'
+                descriptions = @(@{ channel = 'stable'; text = 'Canonical' })
+                items = @(
+                    @{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/agents/orphan/orphan.agent.md'; kind = 'agent'; maturity = 'stable' }
+                )
+            }
+        )
 
         $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
 
         $result.Success | Should -BeTrue
         $result.Keys | Should -Contain 'Results'
+    }
+}
+
+Describe 'Invoke-CollectionValidation - AgentMaturityLabelMismatch diagnostic' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'maturity-label-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        $script:agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $script:agentsDir -Force | Out-Null
+
+        function script:Set-AgentFrontmatter {
+            param(
+                [Parameter(Mandatory)] [string]$Name,
+                [switch]$OmitName
+            )
+            $path = Join-Path $script:agentsDir 'a.agent.md'
+            if ($OmitName) {
+                Set-Content -Path $path -Value "---`ndescription: test agent`n---"
+            } else {
+                Set-Content -Path $path -Value "---`nname: $Name`ndescription: test agent`n---"
+            }
+        }
+
+        function script:Set-CollectionManifest {
+            param(
+                [Parameter(Mandatory)] [string]$Id,
+                [string]$Maturity,
+                [string]$ItemMaturity
+            )
+            $itemMat = if ($ItemMaturity) { $ItemMaturity } elseif ($Maturity) { $Maturity } else { 'stable' }
+            $collection = @{
+                id           = $Id
+                name         = 'Test'
+                descriptions = @(@{ channel = 'stable'; text = 'maturity label test' })
+                items        = @(@{ path = '.github/agents/test/a.agent.md'; kind = 'agent'; maturity = $itemMat })
+            }
+            if ($Maturity) { $collection['maturity'] = $Maturity }
+            New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @($collection) | Out-Null
+        }
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    # --- Step 2.1 positive cases ---
+
+    It 'Fires AgentMaturityLabelMismatch for experimental agent missing (exp) suffix' {
+        Set-AgentFrontmatter -Name 'Test'
+        Set-CollectionManifest -Id 'exp-missing' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $mismatches = @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' })
+        $mismatches.Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Does not fire AgentMaturityLabelMismatch for experimental agent with (exp) suffix' {
+        Set-AgentFrontmatter -Name 'Test(exp)'
+        Set-CollectionManifest -Id 'exp-ok' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -Be 0
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for preview agent missing (pre) suffix' {
+        Set-AgentFrontmatter -Name 'Test'
+        Set-CollectionManifest -Id 'pre-missing' -Maturity 'preview'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Does not fire AgentMaturityLabelMismatch for preview agent with (pre) suffix' {
+        Set-AgentFrontmatter -Name 'Test(pre)'
+        Set-CollectionManifest -Id 'pre-ok' -Maturity 'preview'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -Be 0
+    }
+
+    It 'Does not fire AgentMaturityLabelMismatch for stable agent without suffix' {
+        Set-AgentFrontmatter -Name 'Test'
+        Set-CollectionManifest -Id 'stable-ok' -Maturity 'stable'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -Be 0
+    }
+
+    It 'Item-level maturity overrides collection-level when validating suffix' {
+        # Collection is stable but item override is preview -> requires (pre) suffix
+        Set-AgentFrontmatter -Name 'Test(pre)'
+        Set-CollectionManifest -Id 'override-ok' -Maturity 'stable' -ItemMaturity 'preview'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -Be 0
+    }
+
+    # --- Step 2.2 negative cases ---
+
+    It 'Fires AgentMaturityLabelMismatch for experimental agent with wrong (pre) suffix' {
+        Set-AgentFrontmatter -Name 'Test(pre)'
+        Set-CollectionManifest -Id 'exp-wrong' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for preview agent with wrong (exp) suffix' {
+        Set-AgentFrontmatter -Name 'Test(exp)'
+        Set-CollectionManifest -Id 'pre-wrong' -Maturity 'preview'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for experimental agent with obsolete (Experimental) full word' {
+        Set-AgentFrontmatter -Name 'Test(Experimental)'
+        Set-CollectionManifest -Id 'exp-fullword' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for preview agent with obsolete (Preview) full word' {
+        Set-AgentFrontmatter -Name 'Test(Preview)'
+        Set-CollectionManifest -Id 'pre-fullword' -Maturity 'preview'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for stable agent with stale (exp) suffix' {
+        Set-AgentFrontmatter -Name 'Test(exp)'
+        Set-CollectionManifest -Id 'stable-stale-exp' -Maturity 'stable'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for stable agent with stale (pre) suffix' {
+        Set-AgentFrontmatter -Name 'Test(pre)'
+        Set-CollectionManifest -Id 'stable-stale-pre' -Maturity 'stable'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch for agent name ending with stacked (exp)(pre)' {
+        Set-AgentFrontmatter -Name 'Test(exp)(pre)'
+        Set-CollectionManifest -Id 'stacked' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+
+    It 'Fires AgentMaturityLabelMismatch when name field is missing on non-stable agent' {
+        Set-AgentFrontmatter -OmitName -Name 'unused'
+        Set-CollectionManifest -Id 'missing-name' -Maturity 'experimental'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'AgentMaturityLabelMismatch' }).Count | Should -BeGreaterOrEqual 1
+    }
+}
+
+Describe 'Invoke-CollectionValidation - MissingPrereleaseDescription diagnostic' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'missing-prerelease-desc-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'test.agent.md') -Value '---'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Does not fire MissingPrereleaseDescription when descriptions.prerelease is populated' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'test-has-prerelease'
+                name         = 'Test'
+                maturity     = 'experimental'
+                descriptions = @(
+                    @{ channel = 'stable'; text = 'Stable description' },
+                    @{ channel = 'prerelease'; text = 'Experimental: pre-release description' }
+                )
+                items        = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'experimental' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'MissingPrereleaseDescription' }).Count | Should -Be 0
+    }
+
+    It 'Fires MissingPrereleaseDescription as a Warning when no prerelease entry is present' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'test-missing-descriptions'
+                name         = 'Test'
+                maturity     = 'experimental'
+                descriptions = @(@{ channel = 'stable'; text = 'Tests missing prerelease entry' })
+                items        = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'experimental' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $warnings = @($result.Results | Where-Object { $_.ErrorType -eq 'MissingPrereleaseDescription' })
+        $warnings.Count | Should -BeGreaterOrEqual 1
+        $warnings[0].Severity | Should -Be 'Warning'
+    }
+
+    It 'Fires InvalidDescriptions when a prerelease entry text is whitespace-only' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'test-whitespace-prerelease'
+                name         = 'Test'
+                maturity     = 'experimental'
+                descriptions = @(
+                    @{ channel = 'stable'; text = 'Stable description' },
+                    @{ channel = 'prerelease'; text = '   ' }
+                )
+                items        = @(@{ path = '.github/agents/test/test.agent.md'; kind = 'agent'; maturity = 'experimental' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        @($result.Results | Where-Object { $_.ErrorType -eq 'InvalidDescriptions' }).Count | Should -BeGreaterOrEqual 1
+    }
+}
+
+Describe 'Invoke-CollectionValidation - shared-dependency closure' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'shared-closure-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        # Shared instruction asset referenced via the relative shared/<name> form.
+        $sharedInstructionDir = Join-Path $script:repoRoot '.github/instructions/shared'
+        New-Item -ItemType Directory -Path $sharedInstructionDir -Force | Out-Null
+        Set-Content -Path (Join-Path $sharedInstructionDir 'planner-identity-base.instructions.md') -Value @'
+---
+description: shared planner identity base
+---
+Base planner identity guidance.
+'@
+
+        # Shared skill asset referenced via its full repository path.
+        $backlogSkillDir = Join-Path $script:repoRoot '.github/skills/shared/backlog-templates'
+        New-Item -ItemType Directory -Path $backlogSkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $backlogSkillDir 'SKILL.md') -Value '# Backlog Templates'
+
+        # Shared skill asset referenced via its backtick bare name.
+        $telemetrySkillDir = Join-Path $script:repoRoot '.github/skills/shared/telemetry-foundations'
+        New-Item -ItemType Directory -Path $telemetrySkillDir -Force | Out-Null
+        Set-Content -Path (Join-Path $telemetrySkillDir 'SKILL.md') -Value '# Telemetry Foundations'
+
+        # Consumer artifacts live in subdirectories so the repo-specific path check does not reject them.
+        $securityAgentsDir = Join-Path $script:repoRoot '.github/agents/security'
+        $dataScienceAgentsDir = Join-Path $script:repoRoot '.github/agents/data-science'
+        New-Item -ItemType Directory -Path $securityAgentsDir -Force | Out-Null
+        New-Item -ItemType Directory -Path $dataScienceAgentsDir -Force | Out-Null
+
+        # References planner-identity-base via the relative shared/<name> form.
+        Set-Content -Path (Join-Path $securityAgentsDir 'sec-planner.agent.md') -Value @'
+---
+description: security planner agent
+---
+Follow #file:../../instructions/shared/planner-identity-base.instructions.md for identity.
+'@
+
+        # References backlog-templates via the full skill path form.
+        Set-Content -Path (Join-Path $dataScienceAgentsDir 'ds-backlog.agent.md') -Value @'
+---
+description: data-science backlog agent
+---
+Use #file:.github/skills/shared/backlog-templates for templates.
+'@
+
+        # References telemetry-foundations via the backtick bare-name form.
+        Set-Content -Path (Join-Path $securityAgentsDir 'sec-telemetry.agent.md') -Value @'
+---
+description: security telemetry agent
+---
+Apply the `telemetry-foundations` skill conventions.
+'@
+
+        # References planner-identity-base but opts out via externalDependencies.
+        Set-Content -Path (Join-Path $dataScienceAgentsDir 'ds-optout.agent.md') -Value @'
+---
+description: data-science opt-out agent
+---
+Follow #file:../../instructions/shared/planner-identity-base.instructions.md for identity.
+'@
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Fails when a shared instruction (relative form) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(@{ path = '.github/agents/security/sec-planner.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'security'
+        $closure[0].Message | Should -Match 'planner-identity-base'
+    }
+
+    It 'Passes when the shared instruction also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(
+                    @{ path = '.github/agents/security/sec-planner.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Fails when a shared skill (full-path form) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(@{ path = '.github/agents/data-science/ds-backlog.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/skills/shared/backlog-templates'; kind = 'skill'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'data-science'
+        $closure[0].Message | Should -Match 'backlog-templates'
+    }
+
+    It 'Passes when the shared skill also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(
+                    @{ path = '.github/agents/data-science/ds-backlog.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/skills/shared/backlog-templates'; kind = 'skill'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Fails when a shared skill (backtick bare name) is absent from the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(@{ path = '.github/agents/security/sec-telemetry.agent.md'; kind = 'agent'; maturity = 'stable' })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/skills/shared/telemetry-foundations'; kind = 'skill'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        $result.Success | Should -BeFalse
+        $closure = @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' })
+        $closure.Count | Should -BeGreaterOrEqual 1
+        $closure[0].Collection | Should -Be 'security'
+        $closure[0].Message | Should -Match 'telemetry-foundations'
+    }
+
+    It 'Passes when the shared skill referenced by bare name also ships in the consuming themed collection' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'security'
+                name         = 'Security'
+                descriptions = @(@{ channel = 'stable'; text = 'Security collection' })
+                items        = @(
+                    @{ path = '.github/agents/security/sec-telemetry.agent.md'; kind = 'agent'; maturity = 'stable' },
+                    @{ path = '.github/skills/shared/telemetry-foundations'; kind = 'skill'; maturity = 'stable' }
+                )
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
+    }
+
+    It 'Passes when the consumer opts out of the shared dependency via externalDependencies' {
+        New-CoreManifestFixture -CollectionsDir $script:collectionsDir -Collections @(
+            @{
+                id           = 'data-science'
+                name         = 'Data Science'
+                descriptions = @(@{ channel = 'stable'; text = 'Data science collection' })
+                items        = @(@{
+                        path                 = '.github/agents/data-science/ds-optout.agent.md'
+                        kind                 = 'agent'
+                        maturity             = 'stable'
+                        externalDependencies = @('.github/instructions/shared/planner-identity-base.instructions.md')
+                    })
+            },
+            @{
+                id           = 'project-planning'
+                name         = 'Project Planning'
+                descriptions = @(@{ channel = 'stable'; text = 'Project planning collection' })
+                items        = @(@{ path = '.github/instructions/shared/planner-identity-base.instructions.md'; kind = 'instruction'; maturity = 'stable' })
+            }
+        ) | Out-Null
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+
+        @($result.Results | Where-Object { $_.ErrorType -eq 'SharedDependencyNotInCollection' }).Count | Should -Be 0
     }
 }

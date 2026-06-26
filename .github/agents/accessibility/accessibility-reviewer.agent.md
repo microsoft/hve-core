@@ -1,11 +1,11 @@
 ---
-name: Accessibility Reviewer
+name: Accessibility Reviewer (exp)
 description: "Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting"
 user-invocable: true
 disable-model-invocation: true
 agents:
   - Codebase Profiler
-  - Accessibility Framework Assessor
+  - Accessibility Framework Assessor (exp)
   - Finding Deep Verifier
   - Report Generator
 tools:

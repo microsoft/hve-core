@@ -1,5 +1,5 @@
 ---
-name: RAI Skill Assessor
+name: RAI Skill Assessor (exp)
 description: "Assesses a single Responsible AI framework from the rai-standards skill against the codebase, reading framework references and returning structured findings"
 tools:
   - search/codebase

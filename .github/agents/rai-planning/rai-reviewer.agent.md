@@ -1,9 +1,9 @@
 ---
-name: RAI Reviewer
+name: RAI Reviewer (exp)
 description: "Responsible AI standards assessment orchestrator for codebase profiling and RAI findings reporting against NIST AI RMF, the AI STRIDE overlay, and the EU AI Act"
 agents:
   - Codebase Profiler
-  - RAI Skill Assessor
+  - RAI Skill Assessor (exp)
   - Finding Deep Verifier
   - Report Generator
 tools:
