@@ -1244,6 +1244,12 @@ instructions:
     collections:
     - hve-core
     - hve-core-all
+  .github/instructions/hve-core/copilot-tracking.instructions.md:
+    path: .github/instructions/hve-core/copilot-tracking.instructions.md
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
   .github/instructions/hve-core/git-merge.instructions.md:
     path: .github/instructions/hve-core/git-merge.instructions.md
     maturity: stable
@@ -1525,6 +1531,24 @@ skills:
     collections:
     - hve-core
     - hve-core-all
+  .github/skills/hve-core/prompt-analyze:
+    path: .github/skills/hve-core/prompt-analyze
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/prompt-builder:
+    path: .github/skills/hve-core/prompt-builder
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/hve-core/prompt-refactor:
+    path: .github/skills/hve-core/prompt-refactor
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
   .github/skills/hve-core/vally-tests:
     path: .github/skills/hve-core/vally-tests
     maturity: experimental
@@ -1576,6 +1600,36 @@ skills:
     - hve-core-all
     - project-planning
     - security
+  .github/skills/rpi/rpi-implement:
+    path: .github/skills/rpi/rpi-implement
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-plan:
+    path: .github/skills/rpi/rpi-plan
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-quick:
+    path: .github/skills/rpi/rpi-quick
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-research:
+    path: .github/skills/rpi/rpi-research
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
+  .github/skills/rpi/rpi-review:
+    path: .github/skills/rpi/rpi-review
+    maturity: stable
+    collections:
+    - hve-core
+    - hve-core-all
   .github/skills/security/owasp-agentic:
     path: .github/skills/security/owasp-agentic
     maturity: experimental
@@ -1872,6 +1926,7 @@ releases:
     - .github/instructions/github/github-backlog-triage.instructions.md
     - .github/instructions/github/github-backlog-update.instructions.md
     - .github/instructions/hve-core/commit-message.instructions.md
+    - .github/instructions/hve-core/copilot-tracking.instructions.md
     - .github/instructions/hve-core/git-merge.instructions.md
     - .github/instructions/hve-core/licensing-posture.instructions.md
     - .github/instructions/hve-core/markdown.instructions.md
@@ -1970,10 +2025,18 @@ releases:
     - .github/skills/gitlab/gitlab
     - .github/skills/hve-core/architecture-diagrams
     - .github/skills/hve-core/documentation
+    - .github/skills/hve-core/prompt-analyze
+    - .github/skills/hve-core/prompt-builder
+    - .github/skills/hve-core/prompt-refactor
     - .github/skills/jira/jira
     - .github/skills/project-planning/rai-planner
     - .github/skills/project-planning/security-planning
     - .github/skills/rai/rai-standards
+    - .github/skills/rpi/rpi-implement
+    - .github/skills/rpi/rpi-plan
+    - .github/skills/rpi/rpi-quick
+    - .github/skills/rpi/rpi-research
+    - .github/skills/rpi/rpi-review
     - .github/skills/security/owasp-agentic
     - .github/skills/security/owasp-cicd
     - .github/skills/security/owasp-infrastructure

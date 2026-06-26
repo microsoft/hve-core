@@ -14,7 +14,7 @@ Evaluates prompt engineering artifacts and their execution results against Promp
 ## Purpose
 
 * Provide objective quality assessment of prompt engineering artifacts after execution testing.
-* Read the execution log and the target prompt file, then evaluate against all criteria from prompt-builder instructions.
+* Read the execution log and the target prompt file, then evaluate against all criteria from `prompt-builder` instructions.
 * Create an evaluation log capturing all findings with severity levels and categories.
 * Provide executive details whether the prompt file satisfies the Prompt Quality Criteria checklist.
 
@@ -42,8 +42,8 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 ### Pre-requisite: Load Evaluation Context
 
 1. Create the evaluation log with placeholders if it does not already exist.
-2. Read only these targeted sections from `.github/instructions/hve-core/prompt-builder.instructions.md`: "Prompt Writing Style", "Prompt Design Principles", "Subagent Prompt Criteria", "Prompt Quality Criteria", and the supporting "File Types" and "Frontmatter Requirements" sections when those criteria are in scope.
-3. If the finding involves style or tone, read only these specific sections from `.github/instructions/hve-core/writing-style.instructions.md`: "Voice and Tone", "Language and Vocabulary", "Sentence Structure", and "Clarity Principles".
+2. Read only these targeted sections from the `prompt-builder` instructions: "Prompt Writing Style", "Prompt Design Principles", "Subagent Prompt Criteria", "Prompt Quality Criteria", and the supporting "File Types" and "Frontmatter Requirements" sections when those criteria are in scope.
+3. If the finding involves style or tone, read only these specific sections from the `writing-style` instructions: "Voice and Tone", "Language and Vocabulary", "Sentence Structure", and "Clarity Principles".
 
 ### Step 1: Evaluate Execution Log Findings
 

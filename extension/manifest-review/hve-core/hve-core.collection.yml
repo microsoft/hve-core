@@ -123,6 +123,9 @@ items:
 - path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
   maturity: stable
+- path: .github/instructions/hve-core/copilot-tracking.instructions.md
+  kind: instruction
+  maturity: stable
 - path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
   maturity: stable
@@ -150,6 +153,30 @@ items:
 - path: .github/skills/hve-core/documentation
   kind: skill
   maturity: preview
+- path: .github/skills/hve-core/prompt-analyze
+  kind: skill
+  maturity: stable
+- path: .github/skills/hve-core/prompt-builder
+  kind: skill
+  maturity: stable
+- path: .github/skills/hve-core/prompt-refactor
+  kind: skill
+  maturity: stable
+- path: .github/skills/rpi/rpi-implement
+  kind: skill
+  maturity: stable
+- path: .github/skills/rpi/rpi-plan
+  kind: skill
+  maturity: stable
+- path: .github/skills/rpi/rpi-quick
+  kind: skill
+  maturity: stable
+- path: .github/skills/rpi/rpi-research
+  kind: skill
+  maturity: stable
+- path: .github/skills/rpi/rpi-review
+  kind: skill
+  maturity: stable
 - path: .github/skills/shared/pr-reference
   kind: skill
   maturity: stable

@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-25
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -346,14 +346,14 @@ This log gives the full history: the original handoff, the return to DT with the
 
 ## Quick Reference
 
-| Action                 | Command or Step                                                               |
-|------------------------|-------------------------------------------------------------------------------|
-| Check readiness        | `/dt-method-next` in DT Coach session                                         |
-| Problem Space handoff  | `/dt-handoff-problem-space project-slug=...`                                  |
-| Solution Space handoff | `/dt-handoff-solution-space project-slug=...`                                 |
-| Implementation handoff | `/dt-handoff-implementation-space project-slug=...`                           |
-| Switch to RPI agent    | `/clear`, open handoff artifact, invoke `@task-researcher`                    |
-| Return to DT from RPI  | Start new `@dt-coach` session, describe the finding that triggered the return |
+| Action                           | Command or Step                                                                                                                  |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Check readiness                  | `/dt-method-next` in DT Coach session                                                                                            |
+| Problem Space handoff            | `/dt-handoff-problem-space project-slug=...`                                                                                     |
+| Solution Space handoff           | `/dt-handoff-solution-space project-slug=...`                                                                                    |
+| Implementation handoff           | `/dt-handoff-implementation-space project-slug=...`                                                                              |
+| Switch to RPI skill entry points | `/clear`, open handoff artifact, invoke `/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, or `/rpi-quick` as needed |
+| Return to DT from RPI            | Start new `@dt-coach` session, describe the finding that triggered the return                                                    |
 
 ## Related Resources
 
