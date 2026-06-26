@@ -214,11 +214,13 @@ describe("server", () => {
     stop = srv.close;
     const ws = new WebSocket(`ws://127.0.0.1:${srv.port}/?key=${srv.token}`);
     await new Promise<any>((res) => ws.on("message", (d) => res(JSON.parse(String(d)))));
+    const settled = new Promise<void>((res) => bridge.once("state", () => res()));
     ws.send(JSON.stringify({ type: "launch", workflowId: "build" }));
-    await new Promise((r) => setTimeout(r, 30));
+    await settled;
     expect(bridge.state.view).toBe("loop");
     expect(bridge.state.activeWorkflow).toBe("build");
     expect(bridge.state.directives).toHaveLength(1);
+    expect(bridge.state.directives[0]).toMatchObject({ kind: "approach", value: "build" });
     ws.close();
   });
 
@@ -229,8 +231,9 @@ describe("server", () => {
     bridge.navigate("loop");
     const ws = new WebSocket(`ws://127.0.0.1:${srv.port}/?key=${srv.token}`);
     await new Promise<any>((res) => ws.on("message", (d) => res(JSON.parse(String(d)))));
+    const settled = new Promise<void>((res) => bridge.once("state", () => res()));
     ws.send(JSON.stringify({ type: "navigate", screen: "home" }));
-    await new Promise((r) => setTimeout(r, 30));
+    await settled;
     expect(bridge.state.view).toBe("home");
     ws.close();
   });
