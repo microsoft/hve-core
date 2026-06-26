@@ -83,6 +83,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental
@@ -242,6 +245,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/evals-import.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit.prompt.md
@@ -271,6 +277,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/vally-test-write.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/jira/jira-discover-issues.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
@@ -471,6 +480,8 @@ items:
   maturity: experimental
 - path: .github/instructions/shared/coaching-patterns.instructions.md
   kind: instruction
+- path: .github/instructions/shared/content-policy-citation.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/disclaimer-language.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
@@ -504,6 +515,9 @@ items:
 - path: .github/skills/design-thinking/dt-rpi-integration
   kind: skill
   maturity: preview
+- path: .github/skills/experimental/caveman
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/customer-card-render
   kind: skill
 - path: .github/skills/experimental/mural

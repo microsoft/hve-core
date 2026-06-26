@@ -63,6 +63,10 @@ When a "clean up" request is ambiguous, keep substantial create-or-change work i
 * Re-enter the loop when the evaluator identifies outstanding issues.
 * Hard stop and ask for clarification when the target artifacts or intent are too ambiguous to create or update safely.
 
+## Vally conformance authoring (optional)
+
+After the build loop converges and the artifact documents stable behaviors worth pinning, optionally dispatch `Vally Test Author` to author conformance stimuli. Pass `mode=from-artifact`, `files=` the finalized artifact path(s), and `kind=auto` unless the user specifies a kind. The subagent owns its routing, safety self-check, dedupe, and append-only writes; surface its routed eval file, appended-stimuli count, and any refusals. See the `Vally Test Author` row in [references/orchestration.md](references/orchestration.md). Skip this step when the user declines or the changes are too exploratory to pin.
+
 ## Handoff
 
 After the build loop completes, hand off to `/prompt-analyze` for a deeper read-only review when more evaluation coverage is useful, or to `/prompt-refactor` when the remaining work is primarily cleanup-focused.
