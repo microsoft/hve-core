@@ -5,6 +5,7 @@
 // in-pane card against the native elicitation card.
 import type { OptionItem } from "./events.js";
 import type { ElicitResult } from "@modelcontextprotocol/sdk/types.js";
+import type { Bridge } from "./bridge.js";
 
 // A decision must not block the agent forever: fall back to the recommended
 // option after a finite timeout. Configurable via env (default 30 min).
@@ -49,4 +50,50 @@ export function elicitResultToChoice(result: ElicitResult, options: OptionItem[]
   const choice = result.content.choice;
   if (typeof choice !== "string") return null;
   return options.some((o) => o.id === choice) ? choice : null;
+}
+
+// Minimal server surface the orchestrator needs; the real McpServer's underlying
+// Server satisfies it (adapted in mcp.ts).
+export interface ElicitCapableServer {
+  getClientCapabilities(): { elicitation?: unknown } | undefined;
+  elicitInput(params: ElicitFormParams, options?: { signal?: AbortSignal }): Promise<ElicitResult>;
+}
+
+// Show the in-pane card always (rung 2). If the host supports elicitation, also
+// send a native card (rung 1) and race them: the first real answer wins and the
+// loser is dismissed. A declined or cancelled elicitation is ignored so the pane
+// card and the timeout fallback stay in control.
+export async function presentOptionsWithElicitation(
+  server: ElicitCapableServer,
+  bridge: Bridge,
+  prompt: string,
+  options: OptionItem[],
+  timeoutMs: number,
+): Promise<string> {
+  const webPromise = bridge.presentOptions(prompt, options, timeoutMs);
+  const canElicit = server.getClientCapabilities()?.elicitation !== undefined;
+  if (!canElicit) return webPromise;
+
+  const decisionId = bridge.state.pendingDecision?.id ?? null;
+  const ac = new AbortController();
+  return await new Promise<string>((resolve) => {
+    let settled = false;
+    void webPromise.then((choice) => {
+      if (settled) return;
+      settled = true;
+      ac.abort(); // dismiss the native card
+      resolve(choice);
+    });
+    void server
+      .elicitInput(optionsToElicitSchema(prompt, options), { signal: ac.signal })
+      .then((result) => {
+        if (settled) return;
+        const choice = elicitResultToChoice(result, options);
+        if (choice === null) return; // decline / cancel / invalid: let the pane card win
+        settled = true;
+        if (decisionId) bridge.resolveDecision(decisionId, choice); // clears the pane card and resolves webPromise
+        resolve(choice);
+      })
+      .catch(() => { /* aborted or transport error: the pane card and timeout remain */ });
+  });
 }

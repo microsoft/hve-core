@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { optionsToElicitSchema, elicitResultToChoice } from "../src/elicit.js";
+import { optionsToElicitSchema, elicitResultToChoice, presentOptionsWithElicitation } from "../src/elicit.js";
+import { Bridge } from "../src/bridge.js";
 import type { OptionItem } from "../src/events.js";
+import type { ElicitResult } from "@modelcontextprotocol/sdk/types.js";
 
 const OPTS: OptionItem[] = [
   { id: "a", title: "Minimal patch" },
@@ -54,5 +56,75 @@ describe("elicitResultToChoice", () => {
   });
   it("returns null when content is missing", () => {
     expect(elicitResultToChoice({ action: "accept" }, OPTS)).toBeNull();
+  });
+});
+
+function fakeServer(opts: {
+  elicitation: boolean;
+  respond?: (params: any, signal?: AbortSignal) => Promise<ElicitResult>;
+}) {
+  let elicitCalls = 0;
+  return {
+    elicitCalls: () => elicitCalls,
+    getClientCapabilities: () => (opts.elicitation ? { elicitation: {} } : {}),
+    elicitInput: (params: any, o?: { signal?: AbortSignal }) => {
+      elicitCalls += 1;
+      return (opts.respond ?? (() => new Promise<ElicitResult>(() => {})))(params, o?.signal);
+    },
+  };
+}
+
+describe("presentOptionsWithElicitation", () => {
+  const OPTS = [
+    { id: "a", title: "Minimal" },
+    { id: "b", title: "Middleware", recommended: true },
+    { id: "c", title: "Rewrite" },
+  ];
+
+  it("with no elicitation capability, resolves only via the pane card", async () => {
+    const bridge = new Bridge();
+    const srv = fakeServer({ elicitation: false });
+    const p = presentOptionsWithElicitation(srv, bridge, "Which?", OPTS, 0);
+    // The pane card is shown; resolve it like the web decide frame would.
+    const id = bridge.state.pendingDecision!.id;
+    bridge.resolveDecision(id, "a");
+    expect(await p).toBe("a");
+    expect(srv.elicitCalls()).toBe(0);
+  });
+
+  it("when the elicitation accepts first, resolves with the elicited choice and clears the pane card", async () => {
+    const bridge = new Bridge();
+    const srv = fakeServer({ elicitation: true, respond: async () => ({ action: "accept", content: { choice: "c" } }) });
+    const choice = await presentOptionsWithElicitation(srv, bridge, "Which?", OPTS, 0);
+    expect(choice).toBe("c");
+    expect(bridge.state.pendingDecision).toBeNull();
+  });
+
+  it("when the pane card answers first, resolves with the web choice and aborts the elicitation", async () => {
+    const bridge = new Bridge();
+    let aborted = false;
+    const srv = fakeServer({
+      elicitation: true,
+      respond: (_p, signal) =>
+        new Promise<ElicitResult>((_res, rej) => {
+          signal?.addEventListener("abort", () => { aborted = true; rej(new Error("aborted")); });
+        }),
+    });
+    const p = presentOptionsWithElicitation(srv, bridge, "Which?", OPTS, 0);
+    const id = bridge.state.pendingDecision!.id;
+    bridge.resolveDecision(id, "b");
+    expect(await p).toBe("b");
+    expect(aborted).toBe(true);
+  });
+
+  it("a declined elicitation does not resolve the decision; the pane card still can", async () => {
+    const bridge = new Bridge();
+    const srv = fakeServer({ elicitation: true, respond: async () => ({ action: "decline" }) });
+    const p = presentOptionsWithElicitation(srv, bridge, "Which?", OPTS, 0);
+    await new Promise((r) => setTimeout(r, 10)); // let the declined elicitation settle
+    expect(bridge.state.pendingDecision).not.toBeNull();
+    const id = bridge.state.pendingDecision!.id;
+    bridge.resolveDecision(id, "a");
+    expect(await p).toBe("a");
   });
 });
