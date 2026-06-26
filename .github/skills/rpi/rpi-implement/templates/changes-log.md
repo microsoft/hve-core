@@ -1,4 +1,3 @@
-<!-- markdownlint-disable-file -->
 # Release Changes: {{task_name}}
 
 **Task Slug**: {{task_slug}}
@@ -9,6 +8,14 @@
 ## Summary
 
 {{brief_description_of_the_overall_changes}}
+
+## Bounded Run Handoff
+
+* Bounded status: {{phase_or_step_scope_and_status}}
+* Completed work: {{completed_work_for_this_bounded_run}}
+* Blockers / follow-on work: {{blockers_follow_on_work}}
+* Validation evidence: {{validation_commands_and_results}}
+* Next review command: {{/rpi-review_or_other_review_command}}
 
 ## Changes
 

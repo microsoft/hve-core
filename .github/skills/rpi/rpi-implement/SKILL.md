@@ -23,8 +23,8 @@ Execute an approved implementation plan with phase-by-phase tracking, validation
 5. Derive the canonical task slug as `lower-kebab-case(primary task/target) + '-' + YYYY-MM-DD + '-' + <phase>`; when the plan is provided as request text rather than a file, derive the slug from the plan title or the user request summary and keep the same tokens.
 6. When `phaseStop` is true, pause after each completed phase and present progress before continuing; when `stepStop` is true, pause after each completed step within a phase and present progress before continuing.
 7. When execution pauses or stops, summarize completed phases and steps, blockers or clarification requests, and the next resumption point.
-8. Continue from the next unchecked phase when work resumes, update the changes log and planning log after each completed phase, and stop when dependencies or blockers require user clarification.
-9. Return a brief status summary with the review handoff command and the tracked files.
+8. Continue from the next unchecked phase when work resumes, update the implementation plan checklist, changes log, and planning log after each completed phase or bounded step, and stop when dependencies or blockers require user clarification.
+9. Return a brief status summary with the next review command and the tracked files.
 
 ## Inputs
 
@@ -36,12 +36,13 @@ Execute an approved implementation plan with phase-by-phase tracking, validation
 
 * The plan and details are available before implementation starts.
 * The implementation plan is discovered using the priority order of explicit `plan` input, open file, open changes log, or the most recent plan under `.copilot-tracking/plans/`.
-* The changes log and planning log are updated after each phase and remain review-ready.
+* The implementation plan checklist, changes log, and planning log are updated after each phase or bounded step and remain review-ready.
 * Optional `phaseStop` and `stepStop` pause controls are honored, and pause summaries capture completed phases and steps, blockers or clarifications, and the next resumption point.
 * `Phase Implementor`, `Researcher Subagent`, and `Implementation Validator` use `runSubagent` or `task` when available; if they are not available, the work is performed inline and recorded.
 * Validation evidence is captured when the phase plan says `Validation:` or `required`, or when blockers, deviations, or review evidence are present.
+* Planned validation, linting, and testing checks have completed before handoff, or skipped checks are recorded with the reason.
 * The canonical task slug and phase tokens are applied consistently across the handoff and changes log.
-* The review handoff names `/rpi-review`.
+* The next review command is `/rpi-review`.
 
 ## Constraints
 
@@ -54,12 +55,12 @@ Execute an approved implementation plan with phase-by-phase tracking, validation
 
 * Stop if the plan or details file is missing or invalid.
 * Stop if a genuine blocker prevents the current phase from proceeding, even when subagent dispatch is unavailable.
-* For a bounded run such as one phase only, stop after that phase, update the changes log, and hand off the current status with blockers or follow-on work; do not require all phases to complete before a bounded handoff.
+* For a bounded run such as one phase or one step, stop after that phase or step, update the changes log and planning log, capture validation evidence when available, and hand off the current status with blockers or follow-on work and the next review command; do not require all phases to complete before a bounded handoff.
 * Stop if validation finds blocking Critical or High issues that must be resolved before review handoff.
 
 ## Handoff
 
 * End with a brief bullet list of phase status, files changed, validation status, and the next review command.
-* Continue with `/rpi-review` to validate the result and capture review evidence.
+* Name `/rpi-review` as the next review command when review evidence is requested.
 
 > Brought to you by microsoft/hve-core
