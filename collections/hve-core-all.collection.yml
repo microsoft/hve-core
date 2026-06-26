@@ -515,6 +515,9 @@ items:
 - path: .github/skills/design-thinking/dt-rpi-integration
   kind: skill
   maturity: preview
+- path: .github/skills/experimental/caveman
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/customer-card-render
   kind: skill
 - path: .github/skills/experimental/mural

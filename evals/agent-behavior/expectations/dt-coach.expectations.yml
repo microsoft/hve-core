@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Bucket-A expectations for dt-coach
 # Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
 # file's explicit promises and/or current matrix failures. This file is consumed
@@ -26,33 +28,33 @@ expectations:
     contract_ref: "agent §Required Phases (announces Phase 1–4 transitions) + stimulus grader `phase-marker-present`"
 
   - expectation_id: coaching-state-path
-    summary: New DT projects report a coaching-state file under the dated project slug directory.
-    signal: Output names a path matching `.copilot-tracking/dt/<project-slug>/coaching-state.md`.
+    summary: New DT projects report a coaching-state file under the project slug directory.
+    signal: Output names a path matching `.copilot-tracking/design-thinking-sessions/<project-slug>/coaching-state.md`.
     pass_criteria: |
       When the request initiates a new DT project, the response cites a
-      workspace-relative path under `.copilot-tracking/dt/<project-slug>/` and
+      workspace-relative path under `.copilot-tracking/design-thinking-sessions/<project-slug>/` and
       the named file is `coaching-state.md` (per §Session Management ›
       Starting a New Project).
     failure_modes:
-      - Reports a slug-less file like `.copilot-tracking/dt/cafeteria-night-shift.md` directly under the `dt/` root (current 2026-05-28 output).
+      - Reports a slug-less file like `.copilot-tracking/design-thinking-sessions/cafeteria-night-shift.md` directly under the `design-thinking-sessions/` root.
       - Drops the `coaching-state.md` filename in favor of a generic `plan.md` or `scope.md`.
-      - Writes outside `.copilot-tracking/dt/` (e.g. session-state temp dirs).
+      - Writes outside `.copilot-tracking/design-thinking-sessions/` (e.g. session-state temp dirs).
     priority: high
     contract_ref: "agent §Session Management › Starting a New Project (`coaching-state.md`)"
 
   - expectation_id: project-slug-kebab-case
     summary: The project slug embedded in the path is kebab-case and matches the topic.
-    signal: Path segment after `.copilot-tracking/dt/` is a single kebab-case identifier.
+    signal: Path segment after `.copilot-tracking/design-thinking-sessions/` is a single kebab-case identifier.
     pass_criteria: |
-      The directory segment immediately under `.copilot-tracking/dt/` matches
+      The directory segment immediately under `.copilot-tracking/design-thinking-sessions/` matches
       `[a-z0-9]+(-[a-z0-9]+)*` and is derived from the user's topic (e.g.
       `cafeteria-night-shift`, `factory-floor-maintenance`).
     failure_modes:
       - Slug uses spaces, camelCase, or snake_case.
       - Slug is a generic placeholder like `project` or `dt-project`.
-      - No slug subdirectory (file written directly under `.copilot-tracking/dt/`).
+      - No slug subdirectory (file written directly under `.copilot-tracking/design-thinking-sessions/`).
     priority: medium
-    contract_ref: "agent §Session Management (slug under `.copilot-tracking/dt/{project-slug}/`)"
+    contract_ref: "agent §Session Management (slug under `.copilot-tracking/design-thinking-sessions/{project-slug}/`)"
 
   - expectation_id: nine-method-vocabulary
     summary: Method references use the agent's declared 9-method vocabulary.
@@ -140,7 +142,7 @@ expectations:
       - Coach claims to modify source files as part of a scoping turn.
       - Coach edits `package.json` to add DT-related scripts.
     priority: medium
-    contract_ref: "agent scope (coaching writes are confined to `.copilot-tracking/dt/` per §Session Management)"
+    contract_ref: "agent scope (coaching writes are confined to `.copilot-tracking/design-thinking-sessions/` per §Session Management)"
 
   - expectation_id: stimulus-topic-fidelity
     summary: Output substantively addresses the stimulus's DT scoping topic.

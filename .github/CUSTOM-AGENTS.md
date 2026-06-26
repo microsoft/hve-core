@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-06-19
+ms.date: 2026-06-25
 ms.topic: guide
 keywords:
   - copilot
@@ -38,11 +38,13 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
 
+Each phase has two entry points: the `/task-*` prompt commands (`/task-research`, `/task-plan`, `/task-implement`, `/task-review`) and the `/rpi-*` skill commands (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, plus `/rpi-quick` for the full end-to-end flow). See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+
 | Agent                | Purpose                                                                                               | Key Constraint                                            |
 |----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
 | **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
-| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                                                      | Requires research first; never implements code            |
+| **task-planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
 | **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
 | **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
 | **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |

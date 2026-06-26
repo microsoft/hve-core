@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Eval Validation
 
 on:
@@ -86,11 +88,14 @@ jobs:
             '^\.github/prompts/',
             '^\.github/instructions/',
             '^\.github/skills/',
-            '^docs/',
-            '^package\.json$',
-            '^package-lock\.json$',
             '^\.github/workflows/eval-validation\.yml$'
           )
+
+          # package.json and package-lock.json change often for reasons unrelated to
+          # evals. Treat them as eval-relevant only when the change touches the vally
+          # CLI dependency or an eval:* npm script, detected from the diff content.
+          $contentScopedFiles = @('package.json', 'package-lock.json')
+          $evalContentPattern = 'vally|"eval:'
 
           $relevant = $false
           foreach ($file in $changed) {
@@ -102,6 +107,17 @@ jobs:
               }
             }
             if ($relevant) { break }
+
+            if ($contentScopedFiles -contains $file) {
+              $diff = & git diff "$baseBranch...HEAD" -- $file
+              $changedLines = $diff | Where-Object { $_ -match '^[+-]' -and $_ -notmatch '^(\+\+\+|---)' }
+              if ($changedLines -match $evalContentPattern) {
+                $relevant = $true
+                Write-Output "Eval-relevant change (vally tooling): $file"
+                break
+              }
+              Write-Output "Non-eval change in ${file}; not triggering eval suite."
+            }
           }
 
           if ($relevant) {

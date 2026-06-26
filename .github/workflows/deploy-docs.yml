@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Docusaurus documentation site deployment
 # Prerequisite: Enable GitHub Pages in repo Settings → Pages → Source: GitHub Actions
 # and allow the target branch in Settings → Environments → github-pages → Deployment branches
