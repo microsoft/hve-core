@@ -183,6 +183,11 @@
   .finding-detail { font-size: 13px; opacity: .85; margin-top: 6px; white-space: pre-wrap; }
   .sev-critical .sev-label { color: #e26a6a; }
   .sev-high .sev-label { color: #e0954b; }
+  #iv-question { border: 1px solid var(--stroke, #3a3a3a); border-radius: 8px; padding: 12px 14px; }
+  .iv-prompt { font-weight: 500; margin-bottom: 8px; }
+  .iv-input { width: 100%; box-sizing: border-box; min-height: 64px; }
+  .iv-send { margin-top: 8px; }
+  .iv-empty { opacity: .6; font-size: 13px; }
 </style>
 <script>
   /* Apply persisted theme before first paint to avoid flash. */
@@ -269,6 +274,13 @@
         <span id="rev-counts" class="rev-counts"></span>
       </div>
       <div id="findings"></div>
+    </div>
+    <div id="interview-view" hidden>
+      <div class="rev-head">
+        <span id="iv-doctype" class="rev-target"></span>
+      </div>
+      <div id="iv-question"></div>
+      <iframe id="iv-doc" sandbox="" title="Document preview" style="width:100%;min-height:280px;border:1px solid var(--stroke,#3a3a3a);border-radius:8px;margin-top:14px"></iframe>
     </div>
     </section>
   </div>

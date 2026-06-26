@@ -64,10 +64,18 @@ function render(v) {
 
   const rpiView = document.getElementById("rpi-view");
   const findingsView = document.getElementById("findings-view");
+  const interviewView = document.getElementById("interview-view");
   if (rpiView && findingsView) {
+    if (v.domain === "interview") {
+      rpiView.hidden = true; findingsView.hidden = true;
+      if (interviewView) interviewView.hidden = false;
+      renderInterview(v);
+      return;
+    }
     const review = v.domain === "review";
     rpiView.hidden = review;
     findingsView.hidden = !review;
+    if (interviewView) interviewView.hidden = true;
     if (review) { renderFindings(v); return; }
   }
 
@@ -169,6 +177,13 @@ document.addEventListener("click", (e) => {
   }
   const choice = e.target.closest("#decision [data-choice]");
   if (choice) { sendMsg({ type: "decide", id: choice.dataset.id, choiceId: choice.dataset.choice }); return; }
+  if (e.target.closest("#iv-send")) {
+    const btn = e.target.closest("#iv-send");
+    const input = document.getElementById("iv-input");
+    const txt = (input && input.value || "").trim();
+    if (txt) sendMsg({ type: "answer", id: btn.dataset.answer, text: txt });
+    return;
+  }
   if (e.target.closest("#steer-send")) {
     const note = document.getElementById("steer-note");
     const text = (note && note.value || "").trim();
@@ -209,6 +224,20 @@ function renderFindings(v) {
           </div>`).join("")}
      </div>`).join("")
     || `<div class="meta">No findings.</div>`);
+}
+
+function renderInterview(v) {
+  setText("iv-doctype", v.docType ? `Interview: ${v.docType}` : "Interview");
+  if (v.pendingQuestion) {
+    setHtml("iv-question",
+      `<div class="iv-prompt">${esc(v.pendingQuestion.prompt)}</div>
+       <textarea id="iv-input" class="iv-input" placeholder="Type your answer"></textarea>
+       <button id="iv-send" class="iv-send" data-answer="${esc(v.pendingQuestion.id)}">Send answer</button>`);
+  } else {
+    setHtml("iv-question", `<div class="iv-empty">Waiting for the next question.</div>`);
+  }
+  const doc = document.getElementById("iv-doc");
+  if (doc) doc.srcdoc = v.screen ? v.screen.html : "";
 }
 
 connect();
