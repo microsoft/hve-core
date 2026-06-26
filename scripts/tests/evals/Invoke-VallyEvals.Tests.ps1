@@ -1282,6 +1282,47 @@ stimuli:
         $summary.perArtifact[0].authoritativeFailed | Should -Be 0
     }
 
+    It 'Does not promote an all-advisory spec when results carry no per-stimulus name' {
+        # Reproduces the CI advisory-leak: results.jsonl with failing trials but no
+        # resolvable stimulus name leaves perStimulus empty, so attribution must
+        # reconcile the failures as advisory rather than letting the exit-code
+        # fallback gate the build.
+        $spec = @'
+name: skill-cover
+stimuli:
+  - name: stim-a
+    prompt: hi
+    tags:
+      skill: pr-reference
+      advisory: true
+'@
+        $fx = New-PerStimFixture `
+            -SpecName 'advisory-noname.yaml' `
+            -SpecYaml $spec `
+            -Artifact @{ kind = 'skill'; artifactId = 'pr-reference'; path = '.github/skills/shared/pr-reference/SKILL.md'; status = 'M' }
+
+        $env:STUB_VALLY_MODE = 'fail-noname'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+        $summary.perSpec[0].status | Should -Be 'advisory-fail'
+        $summary.perSpec[0].advisoryFailed | Should -Be 2
+        $summary.perSpec[0].authoritativeFailed | Should -Be 0
+        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
+        $summary.perArtifact[0].advisoryFailed | Should -Be 2
+        $summary.perArtifact[0].authoritativeFailed | Should -Be 0
+    }
+
     It 'Promotes when an authoritative stimulus fails alongside an advisory one' {
         $spec = @'
 name: skill-cover

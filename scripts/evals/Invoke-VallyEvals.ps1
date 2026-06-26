@@ -228,7 +228,10 @@ function Get-SpecStimulusAdvisoryMap {
         $advisory = $false
         if ($stimulus.Contains('tags') -and $stimulus['tags'] -is [System.Collections.IDictionary] -and $stimulus['tags'].Contains('advisory')) {
             $sawAdvisoryTag = $true
-            $advisory = [bool]$stimulus['tags']['advisory']
+            $rawAdvisory = $stimulus['tags']['advisory']
+            # YAML yields a real bool or a quoted string; treat only true/1/yes
+            # (case-insensitive) as advisory so a quoted "false" graduates correctly.
+            $advisory = if ($rawAdvisory -is [bool]) { [bool]$rawAdvisory } else { [string]$rawAdvisory -match '^(?i:true|1|yes)$' }
         }
         $map[$name] = $advisory
     }
@@ -567,6 +570,21 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 }
             }
         }
+
+        # Whole-spec advisory posture: true only when every tagged stimulus is advisory.
+        $specAllAdvisory = ($advisoryMap.Values.Count -gt 0) -and (@($advisoryMap.Values | Where-Object { -not $_ }).Count -eq 0)
+
+        # Reconcile failures the per-stimulus parse did not attribute (e.g. an empty
+        # or partial perStimulus map when results.jsonl carries no resolvable stimulus
+        # name). Classify the remainder by the spec's overall advisory posture so
+        # advisory failures are never silently counted as authoritative (which would
+        # gate the build via the exit-code fallback below).
+        $unattributedFailed = [int]$result.assertionsFailed - ($advisoryFailed + $authoritativeFailed)
+        if ($unattributedFailed -gt 0) {
+            if ($specAllAdvisory) { $advisoryFailed += $unattributedFailed }
+            else { $authoritativeFailed += $unattributedFailed }
+        }
+
         $result['advisoryPassed'] = $advisoryPassed
         $result['advisoryFailed'] = $advisoryFailed
         $result['authoritativePassed'] = $authoritativePassed
@@ -581,7 +599,7 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 $result['status'] = 'advisory-fail'
             }
             elseif ($result.exitCode -ne 0) {
-                $result['status'] = 'fail'
+                $result['status'] = if ($specAllAdvisory) { 'advisory-fail' } else { 'fail' }
             }
             else {
                 $result['status'] = 'pass'
@@ -591,7 +609,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $specResults[$runKey] = $result
 
         $promote = $authoritativeFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error
-        if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0) {
+        # A nonzero vally exit with no attributed failures gates only when the spec is
+        # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
+        if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
             $promote = $true
         }
 

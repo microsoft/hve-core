@@ -16,6 +16,8 @@
 # Supported modes:
 #   pass   - two passing trials, exit 0
 #   fail   - two failing trials, exit 1
+#   fail-noname - two failing trials with no trajectory.stimulus.name, exit 1
+#                 (reproduces an empty perStimulus map)
 #   mixed  - one pass, one fail, exit 0 (failed trial drives outer status)
 #   empty  - no trials emitted, exit 0
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
@@ -111,6 +113,20 @@ function New-StubRecord {
 $records = switch ($mode) {
     'pass'  { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $true)) }
     'fail'  { @((New-StubRecord -Name 'stim-1' -Passed $false), (New-StubRecord -Name 'stim-2' -Passed $false)) }
+    'fail-noname' {
+        # Two failing trials whose trajectory carries no resolvable stimulus name,
+        # so Measure-VallyResults counts failures but leaves perStimulus empty.
+        $mk = {
+            [ordered]@{
+                trajectory  = [ordered]@{
+                    output  = 'stub output (no stimulus name)'
+                    metrics = [ordered]@{ wallTimeMs = 12; tokenUsage = [ordered]@{ totalTokens = 7 } }
+                }
+                gradeResult = [ordered]@{ passed = $false; score = 0.0; details = @() }
+            }
+        }
+        @((& $mk), (& $mk))
+    }
     'mixed' { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'empty' { @() }
     'per-stim' {
@@ -143,6 +159,7 @@ Set-Content -LiteralPath $resultsPath -Value $lines -Encoding utf8NoBOM
 Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub eval ($mode)" -Encoding utf8NoBOM
 
 if ($mode -eq 'fail') { exit 1 }
+if ($mode -eq 'fail-noname') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {
         if (-not $r.gradeResult.passed) { exit 1 }
