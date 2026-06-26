@@ -54,7 +54,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-Import-Module PowerShell-Yaml -ErrorAction Stop
+Import-Module powershell-yaml -ErrorAction Stop
 
 #region Functions
 

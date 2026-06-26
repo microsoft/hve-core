@@ -269,7 +269,7 @@ stimuli:
       negate: true
 - name: brd-builder-class-recipe
   prompt: |
-    Draft a Business Requirements Document for a self-service password reset feature. Cover business goals, scope, and success metrics. Write the BRD under `.copilot-tracking/brd-sessions/` and report the path.
+    Draft a Business Requirements Document for a self-service password reset feature. Cover business goals, scope, and success metrics. Write the BRD under `docs/project-planning/` with session state under `.copilot-tracking/brd-sessions/`, and report the paths.
   tags:
     category: agent-behavior
     agent: brd-builder
@@ -277,7 +277,7 @@ stimuli:
   - type: output-matches
     name: tracking-file-write
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](brd-sessions|research)
+      pattern: (?i)(docs[-/\\]project-planning|\.copilot-tracking[-/\\](brd-sessions|research))
   - type: output-matches
     name: topic-coverage
     config:
@@ -514,7 +514,7 @@ stimuli:
       negate: true
 - name: dt-coach-class-recipe
   prompt: |
-    Coach me through scoping a Design Thinking project on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/dt/` and tell me the path you wrote it to.
+    Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/design-thinking-sessions/` and tell me the path you wrote it to.
   tags:
     category: agent-behavior
     agent: dt-coach
@@ -526,7 +526,7 @@ stimuli:
   - type: output-matches
     name: tracking-file-write
     config:
-      pattern: (?i)\.copilot-tracking[-/\\]dt
+      pattern: (?i)\.copilot-tracking[-/\\]design-thinking-sessions
   - type: output-matches
     name: no-source-edit
     config:
@@ -1153,7 +1153,7 @@ stimuli:
       negate: true
 - name: prd-builder-class-recipe
   prompt: |
-    Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `.copilot-tracking/prd-sessions/` and report the path.
+    Draft a Product Requirements Document for a notification preferences page (in-app, email, SMS toggles). Include user stories and success criteria. Write the PRD under `docs/project-planning/` with session state under `.copilot-tracking/prd-sessions/`, and report the paths.
   tags:
     category: agent-behavior
     agent: prd-builder
@@ -1161,7 +1161,7 @@ stimuli:
   - type: output-matches
     name: tracking-file-write
     config:
-      pattern: (?i)\.copilot-tracking[-/\\](prd-sessions|research)
+      pattern: (?i)(docs[-/\\]project-planning|\.copilot-tracking[-/\\](prd-sessions|research))
   - type: output-matches
     name: topic-coverage
     config:

@@ -19,7 +19,9 @@ expectations:
     pass_criteria: |
       The response reports a session-state path beginning with
       `.copilot-tracking/prd-sessions/` whose slug matches the PRD topic. This
-      satisfies the `tracking-file-write` grader (`.copilot-tracking/(prd-sessions|research)`).
+      satisfies the `tracking-file-write` grader, which accepts either the PRD
+      output under `docs/project-planning/` or the state path under
+      `.copilot-tracking/(prd-sessions|research)`.
     failure_modes:
       - State path omitted or only the PRD path reported (current 2026-05-28
         output fails state-file path reporting).

@@ -6,13 +6,13 @@
 # by the next pass that rewrites stimuli + graders end-to-end; do not treat it
 # as a Vally grader file directly.
 #
-# Note: the agent file places the BRD itself at `docs/brds/<name>-brd.md` and
-# the session state at `.copilot-tracking/brd-sessions/<name>.state.json`. The
-# current `brd-builder-class-recipe` stimulus' `tracking-file-write` grader
-# expects the BRD path to start with `.copilot-tracking/(brd-sessions|research)/`,
-# which does not match the agent's own contract. Expectations below ground in
-# the agent file; the next pass should either align the grader to `docs/brds/`
-# or expect both paths.
+# Note: the agent file places the BRD itself at
+# `docs/project-planning/<name>-brd.md` and the session state at
+# `.copilot-tracking/brd-sessions/<name>.state.json`. The
+# `brd-builder-class-recipe` stimulus' `tracking-file-write` grader accepts
+# either the BRD output under `docs/project-planning/` or the state path under
+# `.copilot-tracking/(brd-sessions|research)/`, matching the agent contract.
+# Expectations below ground in the agent file.
 slug: brd-builder
 class: research-writer
 agent_file: .github/agents/project-planning/brd-builder.agent.md

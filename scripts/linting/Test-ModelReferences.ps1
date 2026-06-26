@@ -40,7 +40,7 @@ $ErrorActionPreference = 'Stop'
 $gitRoot = git rev-parse --show-toplevel 2>$null
 $RepoRoot = if ($gitRoot) { $gitRoot } else { (Join-Path $PSScriptRoot '..' '..' | Resolve-Path).Path }
 
-Import-Module PowerShell-Yaml -ErrorAction Stop
+Import-Module powershell-yaml -ErrorAction Stop
 
 #region Functions
 
