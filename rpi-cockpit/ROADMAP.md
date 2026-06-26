@@ -3,25 +3,25 @@
 
 ## Mission
 
-The RPI Cockpit is a host-agnostic visual companion for agentic coding: a beautiful, inviting window into the agent you already have. It makes an agent's work legible (you can see what it is doing), steerable (you can nudge it), and collaborative (it asks the right question at the right moment), and it renders wherever the agent already lives, whether inline in Claude Code, in a VS Code panel, or as a full browser dashboard.
+The RPI Cockpit is a host-agnostic visual companion for agentic coding: a beautiful, inviting window into the agent you already have. It makes an agent's work legible (you can see what it is doing), steerable (you can nudge it), and collaborative (it asks the right question at the right moment), and it renders wherever the agent already lives, whether in the Claude Code Preview pane, a VS Code webview, or a standalone browser dashboard.
 
 The single near-term goal is a genuinely high-quality user interface for the experience we already have, not new agent capabilities. The agent is the engine; the Cockpit is the cockpit.
 
-## The bet: one protocol, many renderers (server-less first)
+## The bet: one web cockpit, many host panes
 
-The durable product is not the web server. It is the beat protocol and view-model: the agent emits small structured "beats" (`phase.enter`, `subagent.start`, `validate`, `present_options`, `screen.show`, and so on); a pure reducer folds them into session state; and `toViewModel(state)` produces exactly what a UI needs to paint. Rendering is a pluggable concern.
+The durable product is not any single renderer. It is the beat protocol and view-model: the agent emits small structured "beats" (`phase.enter`, `subagent.start`, `validate`, `present_options`, `screen.show`, and so on); a pure reducer folds them into session state; and `toViewModel(state)` produces exactly what a UI needs to paint. The web cockpit renders that view-model.
 
-MCP is the data and control wire (beats in, decisions out); it does not draw the UI. So the question that drives this project is not "where does MCP run" but "what can each host render?" That maps cleanly to renderers:
+MCP is the data and control wire (beats in, decisions out); it does not draw the UI. So the question that drives this project is not "where does MCP run" but "what can each host render?" That maps cleanly to surfaces:
 
-| Surface             | Type       | Primary renderer                       | Server?       |
-|---------------------|------------|----------------------------------------|---------------|
-| VS Code (Copilot)   | GUI editor | Webview panel                          | none          |
-| Claude Code         | CLI / TUI  | Rich inline widgets (SVG/HTML)         | none          |
-| Codex / Copilot CLI | CLI        | Browser cockpit pop-out (escape hatch) | local, opt-in |
+| Surface           | Type          | Primary renderer                    | Server?      |
+|-------------------|---------------|-------------------------------------|--------------|
+| VS Code (Copilot) | GUI editor    | Web cockpit in a webview pane       | host-managed |
+| Claude Code       | Desktop / CLI | Web cockpit in the Preview pane     | host-managed |
+| Codex / terminal  | CLI           | Inline snapshot, or browser pop-out | local, opt-in |
 
-Server-less first means rendering natively where the host is capable (VS Code webview, Claude Code inline). The standalone browser cockpit (a local Node server plus WebSocket) is kept only as the escape hatch for terminals that cannot render richly. It is never the foundation.
+The host owns the server. A spike confirmed the cockpit web UI renders fully and interactively in both a VS Code webview and the Claude Code Preview pane, with the host launching and managing the cockpit's local server (Claude Preview assigns the port through the `PORT` environment variable, exactly as a VS Code extension would). So this is not infrastructure you run, it is infrastructure the host runs. One web cockpit, rendered in many host panes; an inline terminal snapshot and a standalone browser pop-out stay as fallbacks where no pane exists.
 
-The cockpit also has to represent more than the RPI loop. HVE Core's full surface (about 65 agents, plus prompts, instructions, and skills) collapses into a handful of workflow archetypes that share a small set of archetype-agnostic primitives: timeline, decision, list, question, screen, and context. That mapping is worked out in [docs/representation-map.md](docs/representation-map.md), and RPI is the first composition of those primitives rather than the whole UI.
+The cockpit also has to represent more than the RPI loop. HVE Core's full surface (about 65 agents, plus prompts, instructions, and skills) collapses into a handful of workflow archetypes that share a small set of archetype-agnostic primitives: timeline, decision, list, question, screen, app frame, and context. That mapping is worked out in [docs/representation-map.md](docs/representation-map.md), and RPI is the first composition of those primitives rather than the whole UI.
 
 ## Current state (v0)
 
@@ -35,19 +35,19 @@ Shipped on `design/rpi-cockpit`:
 | Cross-host launch        | An idempotent `init` command writes the correct MCP config and narration into Claude Code, Codex, and VS Code.                                                                                            |
 | Agent instrumentation    | The HVE Core RPI agents narrate to the Cockpit when its tools are present.                                                                                                                                |
 
-In short, we have the protocol and one heavy renderer. The roadmap is mostly about the light renderers and their polish.
+In short, we have the protocol and the web cockpit. The roadmap is mostly about embedding it cleanly in host panes and generalizing what it can show.
 
 ## Horizons
 
-### Now (v1): render natively and server-less in the primary surfaces
+### Now (v1): embed the one web cockpit in the host's pane
 
-Prove the bet by rendering the existing experience with no server, reusing `toViewModel` unchanged:
+A spike proved the cockpit we already have renders fully and interactively in both a VS Code webview and the Claude Code Preview pane. So v1 is not a new renderer; it is making that web cockpit embed cleanly, and generalizing what it can show.
 
-* A VS Code webview renderer, a panel in the HVE Core extension, with the agent and UI communicating over the extension's `postMessage` rather than HTTP or WS.
-* A Claude Code inline renderer, with the view-model emitted as inline SVG or HTML widgets the host paints in the conversation (the mechanism already demonstrated for diagrams) and click-through back to the agent.
-* Generalize the beat protocol from the RPI-specific phase enum toward the archetype-agnostic primitives in [docs/representation-map.md](docs/representation-map.md), so the renderers paint generic primitives that any HVE Core workflow can drive, with RPI as the first composition.
+* Embed mode: the server reads the host-assigned `PORT`, binds loopback, and trusts the loopback pane without the per-session-token friction (or auto-opens the keyed URL), plus a committed launch config and a preview launcher, so the cockpit loads in a pane with no manual steps.
+* App frame primitive: an `app_frame` pane (a trusted localhost iframe) so the cockpit can embed the app under development beside the RPI loop and steer panel. It is the trusted sibling of the sandboxed `screen` pane, which renders untrusted agent HTML. See [docs/representation-map.md](docs/representation-map.md).
+* Generalize the beat protocol from the RPI-specific phase enum toward the archetype-agnostic primitives in [docs/representation-map.md](docs/representation-map.md), with RPI as the first composition.
 
-This horizon is done when the same session looks good and stays interactive in both VS Code and Claude Code with zero localhost server.
+This horizon is done when the cockpit loads in a pane in both VS Code and Claude Code with no manual steps, embeds the app under development in an `app_frame`, and a non-RPI workflow renders through the generic primitives.
 
 ### Next: make it a genuinely great UX
 
@@ -77,7 +77,7 @@ The rest, parked: a session replay or time-machine scrubber, voice steering, dra
 
 ## Relationship to HVE Core
 
-The Cockpit is a separate companion project that consumes HVE Core's agents, while HVE Core stays deliberately artifacts-only. Notably, the server-less renderers emit content the host renders (that is, artifacts rather than runtime), so the host-inline and webview renderers could later be proposed back into HVE Core without breaking its no-runtime charter. The standalone server cockpit stays here, in the companion project.
+The Cockpit is a separate companion project that consumes HVE Core's agents, while HVE Core stays deliberately artifacts-only. The Cockpit is a host-managed runtime (a local web server the host launches and renders in its pane), which is exactly the runtime HVE Core's charter excludes, so it stays here. Only the thinnest fallback, an inline terminal snapshot the agent paints through a rendering tool, is artifact-shaped enough to consider upstream later.
 
 ## How to influence this roadmap
 

@@ -28,6 +28,7 @@ The cockpit's v0 beats are RPI-specific: the phase value is literally `research`
 | List or findings | Severity-tagged items with file links: review findings, backlog items | Missing |
 | Question | The agent asks, you answer in free form (a generalization of the decision) | Missing |
 | Screen | Arbitrary rich content the agent paints: document previews, generated artifacts, dashboards | Exists (sandboxed iframe) |
+| App frame | A trusted iframe to the app under development (its localhost preview), embedded beside the cockpit | Missing |
 | Context badges | The active instructions, skills, and collection, for legibility | Missing |
 
 ```mermaid
@@ -67,7 +68,7 @@ flowchart LR
   A7 --> P6
 ```
 
-Every archetype can fall back to the screen primitive for anything bespoke, and every archetype benefits from context badges.
+Every archetype can fall back to the screen primitive for anything bespoke, and every archetype benefits from context badges. The app frame is different in kind: it embeds the user's own app under development (a trusted localhost iframe) beside the cockpit, the trusted sibling of the untrusted, sandboxed screen.
 
 ## Where the non-agent features land
 
