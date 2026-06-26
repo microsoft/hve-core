@@ -417,3 +417,5 @@ Ready. Govern gate cleared on 2026-06-20. Quality evidence: `BRD_QUALITY_REPORT_
 > stakeholder commitment.
 
 ---
+
+*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

@@ -695,6 +695,7 @@ objc
 odata
 odbc
 offboarding
+offence
 okera
 okrs
 olas
@@ -720,6 +721,7 @@ organisations
 organised
 otel
 otlp
+overclaiming
 overfitting
 overoptimization
 overprivileged

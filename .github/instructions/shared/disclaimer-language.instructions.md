@@ -5,19 +5,15 @@ applyTo: '**/.copilot-tracking/rai-plans/**, **/.copilot-tracking/rai-reviews/**
 
 # Disclaimer Language
 
-Planning and review agents that generate assessments or findings requiring professional review display a CAUTION block during startup or when presenting results. Each section contains the verbatim disclaimer for the corresponding planner or review family. Prompt files and agents reference the appropriate section via `#file:` to ensure consistent presentation across all entry points.
+Planning and review agents display a CAUTION disclaimer at startup or when presenting findings. Each H2 section below is the verbatim disclaimer for one planner or review family, loaded via `#file:`.
 
 <!--
 Authoring contract (parsed by scripts/linting/Validate-PlannerArtifacts.ps1):
-
-- Each planner or review family gets exactly one H2 section. The first whitespace-delimited word of the heading, lowercased, is the slug. Examples: "RAI Planning" -> "rai"; "Security Planning" -> "security"; "SSSC Planning" -> "sssc"; "Code-Review" -> "code-review". Hyphenated headings yield a single-token slug because the hyphen is not whitespace.
-- The slug derives three downstream identifiers used by ai-artifact footer validation:
-  - planner key: `{slug}-planner`
-  - disclaimer id: `{slug}-full-disclaimer`
-  - disclaimer label: `{heading} Disclaimer` (full heading, not slug)
-- Each H2 section must contain exactly one `> [!CAUTION]` blockquote. Only the first CAUTION block in a section is extracted; additional CAUTION blocks within the same H2 are ignored.
-- The CAUTION block's prose should begin with `**Disclaimer:**` (the trailing colon is optional). This prefix is stripped before the text is matched against artifact footers; prose without it is retained verbatim.
-- Multi-line blockquote prose is joined with single spaces. Keep wrapping natural for source readability.
+- Each planner or review family gets exactly one H2 section. The first whitespace-delimited word of the heading, lowercased, is the slug (e.g. "SSSC Planning" -> "sssc"; "Code-Review" -> "code-review").
+- The slug derives: planner key `{slug}-planner`; disclaimer id `{slug}-full-disclaimer`; disclaimer label `{heading} Disclaimer`.
+- Each H2 must contain exactly one `> [!CAUTION]` blockquote; only the first is extracted.
+- The CAUTION prose should begin with `**Disclaimer:**` (trailing colon optional); the prefix is stripped before matching against artifact footers.
+- Multi-line blockquote prose is joined with single spaces.
 -->
 
 
