@@ -589,12 +589,9 @@ Write-Host "Year"
 
         $results = Get-Content -Path (Join-Path $fixRoot 'plugins.json') -Raw | ConvertFrom-Json
         $results.results.Count | Should -Be 1
-        $resolvedRoot = (Resolve-Path $fixRoot).Path
-        $normalizedFiles = $results.results.file | ForEach-Object {
-            $_ -replace [regex]::Escape($resolvedRoot), '' -replace '^[\\/]', '' -replace '\\', '/'
-        }
-        $normalizedFiles | Should -Contain 'src/kept.ps1'
-        $normalizedFiles | Should -Not -Contain 'plugins/ignored.ps1'
+        $normalizedFiles = $results.results.file | ForEach-Object { $_ -replace '\\', '/' }
+        ($normalizedFiles | Where-Object { $_ -match '(^|/)src/kept\.ps1$' }).Count | Should -Be 1
+        ($normalizedFiles | Where-Object { $_ -match '(^|/)plugins/ignored\.ps1$' }).Count | Should -Be 0
     }
 }
 
