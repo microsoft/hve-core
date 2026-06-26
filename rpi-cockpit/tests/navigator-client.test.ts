@@ -32,13 +32,16 @@ describe("navigator client", () => {
   let env: ReturnType<typeof boot>;
   beforeEach(() => { env = boot(); });
 
-  it("shows the home and renders the six tiles", () => {
+  it("shows the home with the orient strip and no workflow tiles", () => {
     const view = toViewModel(initialState());
     (env.win as any).render(view);
     const doc = env.win.document;
     expect((doc.getElementById("home") as any).hidden).toBe(false);
     expect((doc.getElementById("loop") as any).hidden).toBe(true);
-    expect(doc.querySelectorAll("#workflows [data-launch]").length).toBe(6);
+    // The orient strip is present; the launcher tiles have moved to the chat.
+    expect(doc.getElementById("orient")).not.toBeNull();
+    expect(doc.getElementById("workflows")).toBeNull();
+    expect(doc.querySelectorAll("[data-launch]").length).toBe(0);
   });
 
   it("shows the loop screen when the view is loop", () => {
@@ -46,12 +49,5 @@ describe("navigator client", () => {
     (env.win as any).render(view);
     expect((env.win.document.getElementById("home") as any).hidden).toBe(true);
     expect((env.win.document.getElementById("loop") as any).hidden).toBe(false);
-  });
-
-  it("sends a launch frame when a tile is clicked", () => {
-    (env.win as any).render(toViewModel(initialState()));
-    const tile = env.win.document.querySelector('#workflows [data-launch="review"]') as any;
-    tile.click();
-    expect(env.sent).toContainEqual({ type: "launch", workflowId: "review" });
   });
 });

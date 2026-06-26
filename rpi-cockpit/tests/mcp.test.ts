@@ -5,6 +5,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { ElicitRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { Bridge } from "../src/bridge.js";
 import { buildMcpServer } from "../src/mcp.js";
+import { WORKFLOWS } from "../src/catalog.js";
 
 describe("mcp face", () => {
   it("phase_enter tool advances the bridge", async () => {
@@ -19,7 +20,7 @@ describe("mcp face", () => {
     expect(bridge.state.phase).toBe("review");
   });
 
-  it("registers the steering and screen tools and lists eleven total", async () => {
+  it("registers the steering and screen tools and lists sixteen total", async () => {
     const bridge = new Bridge();
     const server = buildMcpServer(bridge);
     const [clientT, serverT] = InMemoryTransport.createLinkedPair();
@@ -33,7 +34,8 @@ describe("mcp face", () => {
     expect(names).toContain("check_directives");
     expect(names).toContain("show_screen");
     expect(names).toContain("clear_screen");
-    expect(tools).toHaveLength(15);
+    expect(names).toContain("present_workflows");
+    expect(tools).toHaveLength(16);
 
     await client.callTool({ name: "offer_approaches", arguments: { label: "Pick", options: [{ id: "a", title: "A" }] } });
     expect(bridge.state.steerMenu).toMatchObject({ label: "Pick" });
@@ -70,6 +72,26 @@ describe("mcp face", () => {
     });
     const out = (res.content as { type: string; text: string }[])[0].text;
     expect(out).toContain("b");
+
+    await client.close();
+    await server.close();
+  });
+
+  it("present_workflows returns the chosen workflow's intent via a native choice card", async () => {
+    const bridge = new Bridge();
+    const server = buildMcpServer(bridge);
+    const client = new Client(
+      { name: "test-client", version: "0.0.1" },
+      { capabilities: { elicitation: {} } },
+    );
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: "accept", content: { choice: "review" } }));
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    const res = await client.callTool({ name: "present_workflows", arguments: {} });
+    const out = (res.content as { type: string; text: string }[])[0].text;
+    const review = WORKFLOWS.find((w) => w.id === "review")!;
+    expect(out).toContain(review.intent);
 
     await client.close();
     await server.close();

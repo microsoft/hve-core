@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { optionsToElicitSchema, elicitResultToChoice, presentOptionsWithElicitation, questionToElicitSchema, elicitResultToAnswer, askQuestionWithElicitation } from "../src/elicit.js";
+import { optionsToElicitSchema, elicitResultToChoice, presentOptionsWithElicitation, questionToElicitSchema, elicitResultToAnswer, askQuestionWithElicitation, presentWorkflows } from "../src/elicit.js";
 import { Bridge } from "../src/bridge.js";
+import { WORKFLOWS } from "../src/catalog.js";
 import type { OptionItem } from "../src/events.js";
 import type { ElicitResult } from "@modelcontextprotocol/sdk/types.js";
 
@@ -157,5 +158,22 @@ describe("question elicitation", () => {
     const srv = fakeServer({ elicitation: true, respond: async () => ({ action: "accept", content: { answer: "native" } }) });
     expect(await askQuestionWithElicitation(srv, bridge, "Q?", 0)).toBe("native");
     expect(bridge.state.pendingQuestion).toBeNull();
+  });
+});
+
+describe("presentWorkflows", () => {
+  it("returns the chosen workflow's intent when the host accepts a native choice", async () => {
+    const srv = fakeServer({ elicitation: true, respond: async () => ({ action: "accept", content: { choice: "build" } }) });
+    const build = WORKFLOWS.find((w) => w.id === "build")!;
+    expect(await presentWorkflows(srv)).toBe(build.intent);
+    expect(srv.elicitCalls()).toBe(1);
+  });
+
+  it("returns a chat instruction listing the workflow names when the host lacks elicitation", async () => {
+    const srv = fakeServer({ elicitation: false });
+    const out = await presentWorkflows(srv);
+    expect(out).toContain("does not support inline choices");
+    for (const w of WORKFLOWS) expect(out).toContain(w.name);
+    expect(srv.elicitCalls()).toBe(0);
   });
 });

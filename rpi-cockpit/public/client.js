@@ -29,21 +29,12 @@ function setConn(status) {
   setText("conn-label", status === "live" ? "live" : status === "offline" ? "offline" : "connecting…");
 }
 
-const WF_ICON = { build: "</>", review: "✓", plan: "▦", docs: "▤", data: "▥", coach: "✷" };
-
 function renderHome(v) {
   const wf = v.activeWorkflow ? (v.workflows.find((w) => w.id === v.activeWorkflow) || null) : null;
   const running = v.started || !!v.activeWorkflow;
   setHtml("orient", running
     ? `<span>${esc((wf && wf.name) || v.task || "A loop")} is running. <button id="to-loop" class="crumb-back">Open it</button></span>`
-    : `Nothing running yet. Pick a workflow below to begin.`);
-  setHtml("workflows", v.workflows.map((w) =>
-    `<div class="wf-tile" data-launch="${esc(w.id)}">
-       <div class="wf-ico">${esc(WF_ICON[w.id] || "•")}</div>
-       <div class="wf-name">${esc(w.name)}</div>
-       <div class="wf-hint">${esc(w.hint)}</div>
-       <div class="wf-desc">${esc(w.description)}</div>
-     </div>`).join(""));
+    : `Nothing running yet. Ask in chat to start a workflow.`);
   const welcome = document.getElementById("welcome");
   if (welcome) welcome.hidden = localStorage.getItem("hve-welcome-dismissed") === "1";
   const status = document.getElementById("home-status");
@@ -166,8 +157,6 @@ function decisionHtml(d) {
 
 // Event delegation: home interactions + decision buttons + steer "Queue directive" button.
 document.addEventListener("click", (e) => {
-  const tile = e.target.closest("[data-launch]");
-  if (tile) { sendMsg({ type: "launch", workflowId: tile.dataset.launch }); return; }
   if (e.target.closest("#to-home")) { sendMsg({ type: "navigate", screen: "home" }); return; }
   if (e.target.closest("#to-loop")) { sendMsg({ type: "navigate", screen: "loop" }); return; }
   if (e.target.closest("#welcome-dismiss")) {

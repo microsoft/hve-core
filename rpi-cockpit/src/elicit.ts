@@ -6,6 +6,7 @@
 import type { OptionItem } from "./events.js";
 import type { ElicitResult } from "@modelcontextprotocol/sdk/types.js";
 import type { Bridge } from "./bridge.js";
+import { WORKFLOWS } from "./catalog.js";
 
 // A decision must not block the agent forever: fall back to the recommended
 // option after a finite timeout. Configurable via env (default 30 min).
@@ -147,4 +148,24 @@ export async function askQuestionWithElicitation(
     elicitResultToAnswer,
     (id, text) => bridge.resolveQuestion(id, text),
   );
+}
+
+// Native-elicitation-only launcher. The workflow launcher lives in the chat, not
+// the pane: on capability it shows the native choice card and returns the chosen
+// workflow's launch instruction; without capability it returns a text instruction
+// for the agent to ask in chat. It does NOT touch bridge state (the agent launches
+// the chosen workflow by narrating its beats).
+export async function presentWorkflows(server: ElicitCapableServer): Promise<string> {
+  const options = WORKFLOWS.map((w) => ({ id: w.id, title: w.name, detail: w.description }));
+  if (server.getClientCapabilities()?.elicitation === undefined) {
+    return "This host does not support inline choices. Ask the user which workflow to start: " + WORKFLOWS.map((w) => w.name).join(", ") + ".";
+  }
+  try {
+    const result = await server.elicitInput(optionsToElicitSchema("Start a workflow", options));
+    const choice = elicitResultToChoice(result, options);
+    const wf = choice ? WORKFLOWS.find((w) => w.id === choice) : null;
+    return wf ? wf.intent : "The user did not pick a workflow.";
+  } catch {
+    return "The workflow choice was cancelled.";
+  }
 }

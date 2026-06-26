@@ -164,14 +164,6 @@
   .welcome-modal .welcome-text { display: block; font-size: 14px; line-height: 1.55; margin-bottom: 16px; }
   .welcome-x { font-size: 13px; font-family: inherit; cursor: pointer; border: 1px solid var(--stroke-2, #4A4A4A); border-radius: 6px; background: var(--accent, #0e639c); color: #fff; padding: 6px 14px; }
   .orient { padding: 12px 14px; border: 1px dashed var(--stroke, #3a3a3a); border-radius: 8px; margin-bottom: 18px; font-size: 13px; }
-  .home-label { font-size: 13px; opacity: .7; margin-bottom: 10px; }
-  .wf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .wf-tile { position: relative; border: 1px solid var(--stroke, #3a3a3a); border-radius: 12px; padding: 16px; min-height: 92px; cursor: pointer; }
-  .wf-tile:hover { border-color: var(--stroke-2, #666); }
-  .wf-name { font-weight: 500; margin-top: 4px; }
-  .wf-hint { font-size: 12px; opacity: .6; margin-top: 2px; }
-  .wf-desc { position: absolute; inset: 0; padding: 16px; border-radius: 12px; background: var(--layer, #1e1e1e); opacity: 0; transition: opacity .12s; font-size: 13px; display: flex; align-items: center; }
-  .wf-tile:hover .wf-desc { opacity: 1; }
   .crumb-back { font-size: 12px; font-family: inherit; cursor: pointer; border: 1px solid var(--stroke, #3a3a3a); border-radius: 4px; background: var(--layer, #252526); color: var(--text-2, #9D9D9D); padding: 2px 8px; }
   .crumb-back:hover { border-color: var(--stroke-2, #4A4A4A); color: var(--text, #CCCCCC); }
   .rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -229,8 +221,6 @@
         <span id="home-status" class="muted">No loop running</span>
       </div>
       <div id="orient" class="orient"></div>
-      <div class="home-label">Start a workflow</div>
-      <div id="workflows" class="wf-grid"></div>
     </section>
 
     <section id="loop">

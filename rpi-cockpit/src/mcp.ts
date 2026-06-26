@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { Phase, ValidationStatus, OptionItem, Severity } from "./events.js";
 import { handlers } from "./handlers.js";
-import { presentOptionsWithElicitation, askQuestionWithElicitation, decisionTimeoutMs, type ElicitFormParams } from "./elicit.js";
+import { presentOptionsWithElicitation, askQuestionWithElicitation, presentWorkflows, decisionTimeoutMs, type ElicitFormParams } from "./elicit.js";
 import type { Bridge } from "./bridge.js";
 
 const text = (s: string) => ({ content: [{ type: "text" as const, text: s }] });
@@ -125,6 +125,19 @@ export function buildMcpServer(bridge: Bridge): McpServer {
     "clear_screen",
     { description: "Remove the agent-authored screen pane from the cockpit.", inputSchema: {} },
     async () => text(handlers.clear_screen(bridge)),
+  );
+
+  server.registerTool(
+    "present_workflows",
+    { description: "Offer the user the HVE Core workflows as a native choice card and return the chosen workflow's launch instruction. Use to let the user pick what to do.", inputSchema: {} },
+    async () =>
+      text(
+        await presentWorkflows({
+          getClientCapabilities: () => server.server.getClientCapabilities(),
+          elicitInput: (params: ElicitFormParams, opts) =>
+            server.server.elicitInput(params as unknown as Parameters<typeof server.server.elicitInput>[0], opts),
+        }),
+      ),
   );
 
   return server;
