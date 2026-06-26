@@ -8,7 +8,7 @@ description: >
   a specific .agent.md file directly (Vally does not yet support agent routing).
 type: capability
 defaults:
-  runs: 3
+  runs: 5
   timeout: 120s
   executor: copilot-sdk
 
