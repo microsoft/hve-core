@@ -676,13 +676,25 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
     else {
         $isAdvisory = Test-SpecIsAdvisory -SpecPath $specAbs
         $result['isAdvisory'] = $isAdvisory
+
+        # A zero vally exit means the spec met its aggregate threshold (the author's
+        # runs/threshold contract), so per-trial assertion dips recorded in
+        # assertionsFailed are sub-threshold noise, not merge blockers. Mirror the
+        # advisory-map branch above and gate only on a nonzero vally exit or a
+        # moderation failure. Without this, a spec that carries no advisory-tagged
+        # stimulus (for example baseline-equivalence/stimuli.yml) would gate the
+        # build on a single sub-threshold dip even though vally reported an
+        # aggregate pass.
+        $hardFailure = ($result.exitCode -ne 0) -or $outputModeration.flagged -or $outputModeration.error
+        $subThresholdDip = (-not $hardFailure) -and ($result.assertionsFailed -gt 0)
+
         if (-not $result.ContainsKey('status')) {
-            $result['status'] = if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0) { 'fail' } else { 'pass' }
+            $result['status'] = if ($hardFailure) { 'fail' } elseif ($subThresholdDip) { 'advisory-fail' } else { 'pass' }
         }
 
         $specResults[$runKey] = $result
 
-        if ($result.exitCode -ne 0 -or $result.assertionsFailed -gt 0 -or $outputModeration.flagged -or $outputModeration.error) {
+        if ($hardFailure) {
             if ($isAdvisory -and -not $outputModeration.error) {
                 $result['status'] = 'advisory-fail'
                 Write-Host "::warning file=$specRel::Advisory spec failed (exit=$($result.exitCode), assertionsFailed=$($result.assertionsFailed)); not promoting to CI failure"
@@ -694,6 +706,9 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                     break
                 }
             }
+        }
+        elseif ($subThresholdDip) {
+            Write-Host "::warning file=$specRel::Sub-threshold per-trial dips (exit=0, assertionsFailed=$($result.assertionsFailed)); aggregate threshold met, not promoting to CI failure"
         }
     }
 }

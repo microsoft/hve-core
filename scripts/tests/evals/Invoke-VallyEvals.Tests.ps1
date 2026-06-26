@@ -1446,6 +1446,45 @@ stimuli:
         $summary.perSpec[0].PSObject.Properties.Name | Should -Not -Contain 'authoritativeFailed'
         $summary.perSpec[0].PSObject.Properties.Name | Should -Not -Contain 'advisoryFailed'
     }
+
+    It 'Does not gate a no-advisory spec when vally exits 0 despite a per-trial dip' {
+        # Regression: a spec with no advisory-tagged stimulus (for example
+        # baseline-equivalence/stimuli.yml resolved via an agent tag) must not gate
+        # the build on a sub-threshold per-trial dip when vally reports an aggregate
+        # pass (exit 0). The 'mixed' stub mode emits one passing and one failing
+        # trial and exits 0.
+        $spec = @'
+name: agent-cover
+stimuli:
+  - name: stim-a
+    prompt: hi
+    tags:
+      agent: task-research
+'@
+        $fx = New-PerStimFixture `
+            -SpecName 'no-advisory-aggregate-pass.yaml' `
+            -SpecYaml $spec `
+            -Artifact @{ kind = 'agent'; artifactId = 'task-research'; path = '.github/agents/hve-core/task-research.agent.md'; status = 'M' }
+
+        $env:STUB_VALLY_MODE = 'mixed'
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath `
+            -EvalRoot $fx.EvalRoot `
+            -LogsDir $fx.LogsDir `
+            -RepoRoot $fx.Root `
+            -VallyCommand $script:StubPath `
+            -SkipInputModeration `
+            -SkipOutputModeration *> $null
+        $LASTEXITCODE | Should -Be 0
+
+        $summary = Get-Content -LiteralPath $fx.SummaryPath -Raw | ConvertFrom-Json
+        $summary.totals.failedSpecs | Should -Be 0
+        $summary.totals.assertionsFailed | Should -Be 1
+        $summary.perSpec[0].status | Should -Be 'advisory-fail'
+        $summary.perSpec[0].isAdvisory | Should -BeFalse
+        $summary.perArtifact[0].status | Should -Be 'advisory-fail'
+    }
 }
 
 Describe 'Get-SpecStimulusAdvisoryMap tag scoping' -Tag 'Unit' {
