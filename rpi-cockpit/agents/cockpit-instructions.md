@@ -17,3 +17,5 @@ When the `rpi-cockpit` MCP tools are available, narrate the RPI loop by calling 
 
 These beats are informational except present_options, which blocks until the user decides and returns the chosen id.
 check_directives does not block — it returns queued user directives (or "no pending directives") for you to act on.
+
+When the `rpi-cockpit` MCP tools are NOT available, the user's steering is still readable from disk: notes and approach picks are appended to `<state-dir>/directives.jsonl`, and answered decisions to `<state-dir>/decisions.jsonl`, one JSON object per line. The `<state-dir>` is printed on startup (`rpi-cockpit: state dir <state-dir>`).

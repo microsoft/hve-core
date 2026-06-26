@@ -1,7 +1,8 @@
 // rpi-cockpit/src/server.ts
 import http from "node:http";
 import crypto from "node:crypto";
-import { readFile } from "node:fs/promises";
+import os from "node:os";
+import { readFile, mkdir, appendFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer, type WebSocket } from "ws";
@@ -9,6 +10,7 @@ import type { Bridge } from "./bridge.js";
 import type { SessionState } from "./state.js";
 import { toViewModel } from "./render.js";
 import { SteerMsg } from "./events.js";
+import type { Directive } from "./events.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "..", "public");
@@ -35,7 +37,7 @@ function readCookie(cookieHeader: string | undefined, name: string): string | nu
   return null;
 }
 
-export async function startServer(bridge: Bridge, port = 4399) {
+export async function startServer(bridge: Bridge, port = 4399, opts?: { stateDir?: string }) {
   // Per-session token: minted in-memory each run, never persisted. Fail closed —
   // it is always present, so every HTTP request and WS upgrade is gated.
   const token = crypto.randomBytes(32).toString("hex");
@@ -144,12 +146,34 @@ export async function startServer(bridge: Bridge, port = 4399) {
   // the cookie name to whatever port we actually bound so it always matches.
   cookieName = `rpi-cockpit-key-${addr.port}`;
   const url = "http://127.0.0.1:" + addr.port + "/?key=" + token;
+
+  // File sink: durable, append-only record the agent can read WITHOUT the MCP
+  // server connected. Resolve against the bound port so the default is stable.
+  const stateDir = opts?.stateDir
+    ?? process.env.RPI_COCKPIT_STATE_DIR
+    ?? path.join(os.tmpdir(), "rpi-cockpit", String(addr.port));
+  // Best-effort create; if it fails the appends below just no-op on their own.
+  await mkdir(stateDir, { recursive: true }).catch(() => {});
+  // Append one JSON record per line. Never let an fs error escape into the
+  // event path — swallow and continue so narration is unaffected.
+  const append = (file: string, record: unknown): void => {
+    appendFile(path.join(stateDir, file), JSON.stringify(record) + "\n").catch(() => {});
+  };
+  const onDirective = (d: Directive) => append("directives.jsonl", { ...d, ts: Date.now() });
+  const onDecision = (x: { id: string; choiceId: string; prompt?: string }) =>
+    append("decisions.jsonl", { ...x, ts: Date.now() });
+  bridge.on("directive", onDirective);
+  bridge.on("decision", onDecision);
+
   return {
     port: addr.port,
     token,
     url,
+    stateDir,
     close: () => new Promise<void>((resolve, reject) => {
       bridge.off("state", broadcast);
+      bridge.off("directive", onDirective);
+      bridge.off("decision", onDecision);
       wss.close((err) => {
         if (err) return reject(err);
         httpServer.close((e) => (e ? reject(e) : resolve()));

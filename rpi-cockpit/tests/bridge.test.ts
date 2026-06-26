@@ -49,4 +49,37 @@ describe("Bridge", () => {
     b.offerApproaches("Pick", [{ id: "a", title: "A" }]);
     expect(b.state.steerMenu).toMatchObject({ label: "Pick" });
   });
+
+  it("emits a directive event carrying the stamped directive", () => {
+    const b = new Bridge();
+    const seen = vi.fn();
+    b.on("directive", seen);
+    b.enqueueDirective({ kind: "note", text: "focus on errors" });
+    expect(seen).toHaveBeenCalledOnce();
+    const stamped = seen.mock.calls[0][0];
+    expect(stamped).toMatchObject({ kind: "note", text: "focus on errors" });
+    expect(stamped.id).toMatch(/^s\d+$/);
+  });
+
+  it("emits a decision event with {id, choiceId} when a pending decision resolves", () => {
+    const b = new Bridge();
+    const seen = vi.fn();
+    b.on("decision", seen);
+    const p = b.presentOptions("pick", [{ id: "a", title: "A" }, { id: "b", title: "B" }]);
+    const id = b.state.pendingDecision!.id;
+    b.resolveDecision(id, "b");
+    return p.then((choice) => {
+      expect(choice).toBe("b");
+      expect(seen).toHaveBeenCalledOnce();
+      expect(seen.mock.calls[0][0]).toMatchObject({ id, choiceId: "b", prompt: "pick" });
+    });
+  });
+
+  it("does not emit a decision event when resolving an unknown id", () => {
+    const b = new Bridge();
+    const seen = vi.fn();
+    b.on("decision", seen);
+    b.resolveDecision("does-not-exist", "b");
+    expect(seen).not.toHaveBeenCalled();
+  });
 });

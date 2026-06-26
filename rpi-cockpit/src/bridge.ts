@@ -17,6 +17,9 @@ export class Bridge extends EventEmitter {
     const stamped = { ...directive, id: `s${++this.seq}` } as Directive;
     this.state = reduceEnqueue(this.state, stamped, Date.now());
     this.emit("state", this.state);
+    // Granular, additive: lets a file sink durably record the steering directive
+    // for hosts that read it off disk rather than via the in-process MCP drain.
+    this.emit("directive", stamped);
   }
 
   drainDirectives(): Directive[] {
@@ -53,10 +56,15 @@ export class Bridge extends EventEmitter {
     const resolve = this.pending.get(id);
     if (!resolve) return;
     this.pending.delete(id);
+    // Capture the prompt before we clear the pending decision so the granular
+    // "decision" event can carry it for the durable file sink.
+    const prompt = this.state.pendingDecision?.id === id ? this.state.pendingDecision.prompt : undefined;
     if (this.state.pendingDecision?.id === id) {
       this.state = { ...this.state, pendingDecision: null };
       this.emit("state", this.state);
     }
     resolve(choiceId);
+    // Additive: only emitted on a real resolution (unknown ids returned above).
+    this.emit("decision", prompt === undefined ? { id, choiceId } : { id, choiceId, prompt });
   }
 }
