@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Bucket-A expectations for prd-builder
 # Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
 # file's explicit promises and/or current matrix failures. This file is consumed
@@ -17,7 +19,9 @@ expectations:
     pass_criteria: |
       The response reports a session-state path beginning with
       `.copilot-tracking/prd-sessions/` whose slug matches the PRD topic. This
-      satisfies the `tracking-file-write` grader (`.copilot-tracking/(prd-sessions|research)`).
+      satisfies the `tracking-file-write` grader, which accepts either the PRD
+      output under `docs/project-planning/` or the state path under
+      `.copilot-tracking/(prd-sessions|research)`.
     failure_modes:
       - State path omitted or only the PRD path reported (current 2026-05-28
         output fails state-file path reporting).

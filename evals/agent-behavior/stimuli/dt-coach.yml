@@ -1,7 +1,9 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
   - name: dt-coach-class-recipe
     prompt: |
-      Coach me through scoping a Design Thinking project on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/dt/` and tell me the path you wrote it to.
+      Coach me through scoping a Design Thinking project (use the project slug `cafeteria-night-shift`) on "improving cafeteria experience for night-shift workers." Lay out the next 2-3 methods as phases. Write the coaching state under `.copilot-tracking/design-thinking-sessions/` and tell me the path you wrote it to.
     tags:
       category: agent-behavior
     graders:
@@ -12,7 +14,7 @@ stimuli:
       - type: output-matches
         name: tracking-file-write
         config:
-          pattern: '(?i)\.copilot-tracking[-/\\]dt'
+          pattern: '(?i)\.copilot-tracking[-/\\]design-thinking-sessions'
       - type: output-matches
         name: no-source-edit
         config:
