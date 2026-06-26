@@ -1,20 +1,21 @@
 stimuli:
-  - name: code-review-standards-class-recipe
+  - name: supply-chain-reviewer-class-recipe
     prompt: |
-      Review this snippet against Python conventions:
-      ```python
-      def Get_User_Data(USER_ID):
-         x=db.fetch(USER_ID)
-         return x
+      Review this CI workflow change for supply-chain posture concerns with severity levels:
+      ```diff
+      -      - uses: actions/checkout@v4
+      +      - uses: actions/checkout@main
+      -      "lodash": "4.17.21"
+      +      "lodash": "*"
       ```
-      List style violations with severity.
+
     tags:
       category: agent-behavior
     graders:
       - type: output-matches
         name: findings-table-present
         config:
-          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation)'
       - type: output-matches
         name: severity-vocab
         config:

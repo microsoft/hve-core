@@ -17,11 +17,12 @@ Thin explainer subagent for the Code Review orchestrator. It answers factual "wh
 
 ## Skill Reference Contract
 
-At the start of the run, read these `code-review` skill references exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
 
-* `.github/skills/coding-standards/code-review/references/walkthrough-protocol.md`
-* `.github/skills/coding-standards/code-review/references/dispatch-loop.md`
-* `.github/skills/coding-standards/code-review/references/output-formats.md`
+* `SKILL.md` (skill entrypoint)
+* `references/walkthrough-protocol.md`
+* `references/dispatch-loop.md`
+* `references/output-formats.md`
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 

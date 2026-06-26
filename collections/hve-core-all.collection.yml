@@ -34,6 +34,9 @@ items:
 - path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/coding-standards/subagents/code-review-security.agent.md
   kind: agent
   maturity: experimental
@@ -259,6 +262,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/git-setup.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/pr-review.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/prompt-analyze.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/prompt-build.prompt.md

@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-21
+ms.date: 2026-06-25
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -32,7 +32,7 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | Tool                     | Type  | How to Invoke                             | Purpose                                  |
 |--------------------------|-------|-------------------------------------------|------------------------------------------|
 | task-reviewer            | Agent | Select **task-reviewer** agent            | Review implementation against the plan   |
-| code-review              | Agent | Select **code-review** agent              | Evaluate pull requests for quality       |
+| code-review              | Agent | Select **code-review** agent              | Multi-perspective review of code changes |
 | test-streamlit-dashboard | Agent | Select **test-streamlit-dashboard** agent | Test Streamlit dashboard implementations |
 
 ### Supporting Agents
@@ -49,6 +49,7 @@ You enter Review after completing implementation work in [Stage 6: Implementatio
 | Tool                    | Type        | How to Invoke                  | Purpose                                          |
 |-------------------------|-------------|--------------------------------|--------------------------------------------------|
 | task-review             | Prompt      | `/task-review`                 | Start a structured task review                   |
+| pr-review               | Prompt      | `/pr-review`                   | Run a multi-perspective review of a pull request |
 | pull-request            | Prompt      | `/pull-request`                | Create a pull request for current changes        |
 | ado-create-pull-request | Prompt      | `/ado-create-pull-request`     | Create an ADO-linked pull request                |
 | documentation           | Agent       | Select **documentation** agent | Audit, drift, author, and validate documentation |
@@ -90,6 +91,10 @@ Review today's changes to the authentication service against .copilot-tracking/p
 
 ```text
 /ado-create-pull-request adoProject=hve-core baseBranch=origin/main isDraft=true workItemIds=54321,54322
+```
+
+```text
+/pr-review
 ```
 
 Select **code-review** agent:

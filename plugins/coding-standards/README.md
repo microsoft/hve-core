@@ -13,19 +13,20 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                                 | Description                                                                                                                                                                            |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **accessibility-framework-assessor** | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings                                                                   |
-| **accessibility-reviewer**           | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                                                |
-| **code-review**                      | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report       |
-| **code-review-accessibility**        | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                                    |
-| **code-review-explainer**            | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact                                                 |
-| **code-review-functional**           | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                       |
-| **code-review-pr**                   | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow |
-| **code-review-security**             | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                              |
-| **code-review-standards**            | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                 |
-| **code-review-walkback**             | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                              |
-| **researcher-subagent**              | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                            |
+| Name                                 | Description                                                                                                                                                                               |
+|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-framework-assessor** | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings                                                                      |
+| **accessibility-reviewer**           | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                                                   |
+| **code-review**                      | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report          |
+| **code-review-accessibility**        | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                                       |
+| **code-review-explainer**            | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact                                                    |
+| **code-review-functional**           | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                          |
+| **code-review-pr**                   | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow    |
+| **code-review-readiness**            | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
+| **code-review-security**             | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
+| **code-review-standards**            | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
+| **code-review-walkback**             | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
+| **researcher-subagent**              | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                               |
 
 ### Instructions
 

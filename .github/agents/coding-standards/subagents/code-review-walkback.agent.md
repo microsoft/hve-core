@@ -20,11 +20,12 @@ Thin walk-back subagent for the Code Review orchestrator. It does not duplicate 
 
 ## Skill Reference Contract
 
-At the start of the run, read these references exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these references from it (paths are relative to that skill), along with the Researcher Subagent contract, exactly once in a single parallel `read_file` block, then apply them verbatim:
 
-* `.github/skills/coding-standards/code-review/references/dispatch-loop.md`
-* `.github/skills/coding-standards/code-review/references/output-formats.md`
-* `.github/agents/hve-core/subagents/researcher-subagent.agent.md`
+* `SKILL.md` (skill entrypoint)
+* `references/dispatch-loop.md`
+* `references/output-formats.md`
+* the Researcher Subagent agent (`.github/agents/hve-core/subagents/researcher-subagent.agent.md`)
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 

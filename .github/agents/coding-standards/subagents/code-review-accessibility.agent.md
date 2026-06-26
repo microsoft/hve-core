@@ -19,18 +19,19 @@ This perspective is self-contained: it sources its review logic from the `code-r
 
 ## Skill Reference Contract
 
-At the start of the run, read these `code-review` skill references exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
 
-* `.github/skills/coding-standards/code-review/references/lens-checklists.md` (Accessibility review section)
-* `.github/skills/coding-standards/code-review/references/depth-tiers.md`
-* `.github/skills/coding-standards/code-review/references/severity-taxonomy.md`
-* `.github/skills/coding-standards/code-review/references/output-formats.md`
+* `SKILL.md` (skill entrypoint)
+* `references/lens-checklists.md` (Accessibility review section)
+* `references/depth-tiers.md`
+* `references/severity-taxonomy.md`
+* `references/output-formats.md`
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 
 ## Accessibility Skill Catalog
 
-Findings must trace to one of these skills and a specific success criterion or authoring pattern. Load only the skills relevant to the diff by reading `.github/skills/accessibility/<skill>/SKILL.md`, then follow its references only to substantiate a finding:
+Findings must trace to one of these skills and a specific success criterion or authoring pattern. Load only the skills relevant to the diff by locating each accessibility skill by its name from the catalog below and reading its `SKILL.md`, then follow its references only to substantiate a finding:
 
 | Skill         | Covers                                                                    | Typical surfaces                             |
 |---------------|---------------------------------------------------------------------------|----------------------------------------------|

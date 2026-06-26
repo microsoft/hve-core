@@ -17,12 +17,13 @@ Thin perspective subagent for the Code Review orchestrator. It evaluates a preco
 
 ## Skill Reference Contract
 
-At the start of the run, read these `code-review` skill references exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
 
-* `.github/skills/coding-standards/code-review/references/lens-checklists.md` (Functional review section)
-* `.github/skills/coding-standards/code-review/references/depth-tiers.md`
-* `.github/skills/coding-standards/code-review/references/severity-taxonomy.md`
-* `.github/skills/coding-standards/code-review/references/output-formats.md`
+* `SKILL.md` (skill entrypoint)
+* `references/lens-checklists.md` (Functional review section)
+* `references/depth-tiers.md`
+* `references/severity-taxonomy.md`
+* `references/output-formats.md`
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 

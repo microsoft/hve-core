@@ -41,6 +41,9 @@ items:
   - path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
     kind: agent
     maturity: experimental

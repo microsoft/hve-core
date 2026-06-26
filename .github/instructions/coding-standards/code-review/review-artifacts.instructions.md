@@ -120,6 +120,8 @@ markdown report links to the supporting evidence.
 * Write orientation-first artifacts only when the review runs in interactive orientation-first mode; record each produced artifact under the `artifacts` key in `metadata.json` and link it from `review.md`.
 * Keep `walkthrough.md` and `explanations/` artifacts factual (Register 1): no severity grades or verdicts. Keep `walkback/` artifacts in the structured investigation register (Register 2).
 * Create the `explanations/` and `walkback/` subfolders only when at least one explanation or investigation artifact is written.
+* Every `review.md` ends with a **Disclaimer and Human Review** section: the verbatim `## Code-Review` CAUTION disclaimer from `disclaimer-language.instructions.md` followed by an unchecked `- [ ] Reviewed and validated by a qualified human reviewer` checkbox. This section is always present, is always the final section, and the agent never checks the checkbox; only a human may convert `[ ]` to `[x]`.
+* When the review scope targets a pull request or merge request, `review.md` includes a mandatory human-editable **PR Comment Draft** section with an unchecked posting checkbox. This section is the only place the general PR or MR comment is authored; the agent never reproduces the full drafted comment body in the conversational summary. The agent never checks the posting box; only the human may convert `[ ]` to `[x]`, and that check is the gate that authorizes posting the general PR or MR comment.
 
 ---
 

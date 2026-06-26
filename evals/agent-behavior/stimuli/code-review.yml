@@ -1,5 +1,5 @@
 stimuli:
-  - name: code-review-full-class-recipe
+  - name: code-review-class-recipe
     prompt: |
       Review this diff and produce findings with severity:
       ```diff

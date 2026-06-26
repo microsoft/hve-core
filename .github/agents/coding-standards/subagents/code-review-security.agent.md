@@ -19,12 +19,13 @@ This perspective is self-contained: it sources its review logic from the `code-r
 
 ## Skill Reference Contract
 
-At the start of the run, read these `code-review` skill references exactly once in a single parallel `read_file` block, then apply them verbatim:
+At the start of the run, locate the skill named `code-review` and read these files from it once in a single parallel `read_file` block (paths are relative to that skill), then apply them verbatim:
 
-* `.github/skills/coding-standards/code-review/references/lens-checklists.md` (Security review section)
-* `.github/skills/coding-standards/code-review/references/depth-tiers.md`
-* `.github/skills/coding-standards/code-review/references/severity-taxonomy.md`
-* `.github/skills/coding-standards/code-review/references/output-formats.md`
+* `SKILL.md` (skill entrypoint)
+* `references/lens-checklists.md` (Security review section)
+* `references/depth-tiers.md`
+* `references/severity-taxonomy.md`
+* `references/output-formats.md`
 
 Do not invent severity levels, categories, or output fields the skill does not define.
 
