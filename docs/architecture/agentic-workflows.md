@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-03-27
+ms.date: 2026-06-25
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -223,7 +223,7 @@ flowchart LR
         PB["Prompt Builder"]
         SR["Security Reviewer"]
         CR["Code Review"]
-        DOC["Doc Ops"]
+        DOC["Documentation"]
         BM["Backlog Manager"]
         PP["Project Planning"]
     end

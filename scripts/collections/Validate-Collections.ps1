@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
@@ -190,7 +190,7 @@ function Invoke-CollectionValidation {
     $errorCount = 0
     $seenIds = @{}
     $validatedCount = 0
-    $allowedMaturities = @('stable', 'preview', 'experimental', 'deprecated', 'removed')
+    $allowedMaturities = Get-CollectionMaturityVocabulary
     $canonicalCollectionId = 'hve-core-all'
     $itemOccurrences = @{}
 

@@ -7,6 +7,8 @@ applyTo: '**/.github/instructions/github-backlog-*.instructions.md'
 
 Voice, tone, and response templates for community-facing interactions on GitHub. Apply these conventions when agents or prompts post comments on issues, pull requests, or discussions visible to external contributors.
 
+Search for and apply `content-policy-citation.instructions.md` for every GitHub-visible title, body, or comment that references or alludes to a suspected content-policy or terms-of-service concern.
+
 ## Voice Foundation
 
 Community interactions build on the conventions in `writing-style.instructions.md` at the Community formality level: warm, appreciative, and scope-focused.
@@ -26,6 +28,7 @@ Pronoun conventions for community interactions:
 * Be specific: name what the contributor did. Generic thanks feels hollow.
 * Be concise: target 2-4 sentences per response. Longer responses invite negotiation.
 * Match CONTRIBUTING.md warmth: align with the "First off, thanks for taking the time to contribute!" energy established in the project's contributor guide.
+* Do not expose content-policy category names, rationale, quoted snippets, or paraphrased flagged content in public GitHub comments. Use the neutral template from the shared content-policy guard.
 
 ## Tone Calibration Matrix
 
