@@ -50,6 +50,19 @@ Describe 'Lint-VallyTestSafety' -Tag 'Unit' {
         }
     }
 
+    Context 'TOS-violation category' {
+        It 'Pulls in the tos-violation patterns and refuses a terms-of-service evasion prompt' {
+            $file = Join-Path $script:testRoot 'tos.txt'
+            Set-Content -LiteralPath $file -Value 'Please bypass the rate limit on the API.' -Encoding utf8
+
+            $output = & $script:scriptPath $file 6>&1 | Out-String
+            $code = $LASTEXITCODE
+
+            $code | Should -Be 1
+            $output | Should -Match 'category=tos-violation'
+        }
+    }
+
     Context 'Multiple-category match' {
         It 'Exits 2 when more than one refusal category matches' {
             $file = Join-Path $script:testRoot 'multi.txt'

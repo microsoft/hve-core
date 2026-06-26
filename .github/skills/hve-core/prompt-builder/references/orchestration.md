@@ -39,6 +39,7 @@ Use `runSubagent` or `task` whenever those tools are available; the named subage
 | `Prompt Evaluator`    | target prompt file paths, run number, sandbox folder path containing the execution log, prior evaluation logs when iterating                                           | evaluation-log path, evaluation status, severity-graded checklist, clarifying questions                                                |
 | `Researcher Subagent` | research topic or question, subagent research path to create or update                                                                                                 | subagent research path, research status, key findings, suggested next research, clarifying questions                                   |
 | `Prompt Updater`      | prompt files to create or modify, requirements/objectives, evaluation findings and research results, updater tracking path, sandbox/evaluation-log paths when relevant | updater tracking path, changed prompt file paths, related file paths, modification status, outstanding checklist, clarifying questions |
+| `Vally Test Author`   | `mode=from-artifact`, `files=` finalized target artifact path(s), `kind=auto` unless specified                                                                         | routed eval file path, stimuli-appended count, dedupe skips, JSON report path                                                          |
 
 ## Research and update artifact paths
 

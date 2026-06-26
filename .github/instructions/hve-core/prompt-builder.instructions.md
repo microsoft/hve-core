@@ -169,7 +169,7 @@ Characteristics:
 * Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/{collection}/subagents/`) to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
-* Cannot run their own subagents; only the parent agent orchestrates subagent calls.
+* May orchestrate their own subagents when the harness supports nested subagent calls; otherwise the parent agent orchestrates subagent calls.
 
 Create subagents when a parent agent needs to parallelize work or delegate a specialized, repeatable task. When the workflow is linear and does not benefit from isolated execution, keep the logic within the parent agent or use a prompt file.
 
@@ -794,7 +794,7 @@ Task specification:
 * Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
 * Indicate the types of tasks the subagent completes.
 * Provide the subagent a step-based protocol when multiple steps are needed.
-* Subagents complete their work directly without orchestrating other subagents.
+* Subagents complete their work directly, orchestrating other subagents only when the task benefits from delegation and the harness supports it.
 
 Response format:
 
