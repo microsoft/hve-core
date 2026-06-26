@@ -19,6 +19,8 @@ Test files follow a mirror pattern where each script directory has a correspondi
 scripts/
 ├── collections/
 │   └── *.ps1
+├── evals/
+│   └── *.ps1
 ├── extension/
 │   ├── Package-Extension.ps1
 │   └── Prepare-Extension.ps1
@@ -32,6 +34,7 @@ scripts/
 │   └── *.ps1
 └── tests/
     ├── collections/
+    ├── evals/
     ├── extension/
     ├── lib/
     ├── linting/
@@ -67,7 +70,7 @@ Code coverage analyzes scripts in production directories while excluding test fi
 | Output path       | `logs/coverage.xml` |
 | Excluded patterns | `*.Tests.ps1`       |
 
-Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `collections/`, and `tests/`.
+Coverage directories include `linting/`, `security/`, `lib/`, `extension/`, `collections/`, `evals/`, and `tests/`.
 
 When code coverage is enabled, the [pester-tests.yml](https://github.com/microsoft/hve-core/blob/main/.github/workflows/pester-tests.yml)
 workflow enforces the coverage target through its **Coverage Threshold Check** step. The step sources both the measured
