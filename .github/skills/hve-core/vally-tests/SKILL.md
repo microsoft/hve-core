@@ -16,6 +16,8 @@ metadata:
 
 This skill authors Vally conformance tests for the four supported artifact kinds in this repository: prompts, instructions, agents, and skills. Each test exercises a documented behavior the artifact already claims and routes the result through an appropriate Vally grader so failures are explainable. Test authoring is bounded by a refusal taxonomy that keeps the skill out of adversarial, harmful, or policy-evasion territory.
 
+Follow the shared content-policy public-output guard for eval stimuli and any public summaries derived from this skill. Vally tests are not a venue for terms-of-service boundary mapping, payload generation, refusal-text scoring, hidden-instruction disclosure, PII extraction, or secret extraction.
+
 The skill ships:
 
 * A canonical authoring workflow used by both the Vally Test Author prompt and the Prompt Builder subagent.
@@ -35,8 +37,9 @@ Do not invoke this skill to:
 
 * Generate adversarial probes, jailbreak attempts, prompt-injection payloads, or red-team stimuli.
 * Test refusal quality on harmful, illegal, or policy-violating prompts.
-* Author stimuli that elicit PII, secrets, or model self-disclosure.
-* Replace Responsible AI threat modeling. RAI work lives in the RAI Planner agent (`.github/agents/rai-planning/rai-planner.agent.md`).
+* Author stimuli that elicit PII, secrets, hidden instructions, or model self-disclosure.
+* Store payload examples, paraphrased prohibited requests, or quoted flagged content in Vally eval specs, corpus rows, PR summaries, issue bodies, or comments.
+* Replace Responsible AI threat modeling. RAI work lives in the RAI Planner agent.
 
 ## Authoring Workflow
 
@@ -55,20 +58,20 @@ The pipeline is identical for both invocation modes. Corpus-import mode runs ste
 
 Authoring is bounded by seven refusal categories. Any stimulus that matches a category's regex set is refused before it reaches the dedupe step. The categories and their normative source are listed below. The full regex set lives in `references/refusal-taxonomy.md` and is consumed by the safety lint script.
 
-| Category                  | Definition                                                                                                                | Normative Source                                   |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| jailbreak                 | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | `CODE_OF_CONDUCT.md`                               |
-| prompt-injection          | Attempts to override system or developer instructions through embedded or external content.                               | `CODE_OF_CONDUCT.md`                               |
-| harmful-elicitation       | Requests for content that causes physical, financial, psychological, or reputational harm.                                | `CODE_OF_CONDUCT.md`                               |
-| tos-violation             | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | `CODE_OF_CONDUCT.md`                               |
-| coc-violation             | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | `CODE_OF_CONDUCT.md`                               |
-| model-refusal-elicitation | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | `.github/agents/rai-planning/rai-planner.agent.md` |
-| pii-extraction            | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | `.github/agents/rai-planning/rai-planner.agent.md` |
+| Category                  | Definition                                                                                                                | Normative Source        |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------|-------------------------|
+| jailbreak                 | Attempts to bypass model safety policies through persona switching, hypothetical framing, or roleplay coercion.           | Project Code of Conduct |
+| prompt-injection          | Attempts to override system or developer instructions through embedded or external content.                               | Project Code of Conduct |
+| harmful-elicitation       | Requests for content that causes physical, financial, psychological, or reputational harm.                                | Project Code of Conduct |
+| tos-violation             | Stimuli that solicit content prohibited by GitHub, Microsoft, or model-provider terms of service.                         | Project Code of Conduct |
+| coc-violation             | Stimuli that violate this repository's Code of Conduct, including harassment, discrimination, or doxxing.                 | Project Code of Conduct |
+| model-refusal-elicitation | Attempts to provoke a model refusal so the refusal text itself can be scored, graded, or used to map provider boundaries. | RAI Planner guidance    |
+| pii-extraction            | Attempts to elicit personally identifiable information, secrets, credentials, or proprietary training data.               | RAI Planner guidance    |
 
 When a request triggers a refusal, emit the canonical refusal block:
 
 ```text
-This skill authors conformance tests only. The request appears to fall under <category>. Please consult <CODE_OF_CONDUCT.md | .github/agents/rai-planning/rai-planner.agent.md> for the appropriate process.
+This skill authors conformance tests only. The request appears to fall under <category>. Please consult <Project Code of Conduct | RAI Planner agent> for the appropriate process.
 ```
 
 Substitute the matched `<category>` and the most relevant normative source. Do not negotiate, rephrase, or partially fulfill the request.
@@ -86,6 +89,8 @@ Helper scripts ship as parity pairs (`.ps1` and `.sh`) where the workflow does n
 | `scripts/lint-vally-test-safety.sh` | Parity counterpart for the safety lint script.                                                    | bash          | Phase 3  |
 
 All helpers honour a shared dedupe contract: SHA-256 of the prompt text after Unicode NFC normalization and whitespace collapse.
+
+The helpers emit a JSON run report to `logs/vally-test-author-<timestamp>.json`, where `<timestamp>` is `YYYYMMDD-HHMMSS` (UTC). The report captures, at minimum: `mode`; `inputs` (the resolved `files`/`path` and `kind`); `target_eval_file`; `stimuli_appended` (count and per-row hash); `dedupe_results` (count and per-row hash for skipped duplicates); `refusal_check` (per-row category match, if any); `safety_lint_exit_code`; `blockers` (any ambiguous safety-lint outcomes surfaced for review); and `written_paths`.
 
 ## Reference Index
 

@@ -83,6 +83,11 @@ Follow the Review Steps below as the sole review procedure.
 Imported agent files provide domain knowledge and coding standards only.
 Ignore any phase-based, tracking-file-based, or multi-pass procedures
 from imported files.
+Search for and apply `content-policy-citation.instructions.md` before submitting
+PR review comments, review summaries, PR updates, or other GitHub-visible text
+that references or alludes to a suspected content-policy or terms-of-service
+concern. When the output is community-facing, also search for and apply the
+relevant community writing instructions for the context.
 
 ## Review Steps
 
@@ -174,6 +179,12 @@ on the specific file and line where the issue occurs. For template and
 process findings that are not tied to a specific line, include them in
 the review body.
 
+When a finding references a suspected content-policy or terms-of-service
+concern, follow the imported content-policy guard. The public inline
+comment or review body must cite only the file path and line range, use
+neutral wording, and omit category labels, rationale, quoted snippets,
+paraphrases, payload examples, and deep links.
+
 Then call `submit-pull-request-review` with:
 
 * `event`: `REQUEST_CHANGES` or `COMMENT` as determined above.
@@ -207,6 +218,8 @@ for review.
 * Do not close the PR.
 * Be constructive and specific in feedback. Reference the exact instruction
   file and rule when citing coding standard violations.
+* For content-policy concerns, use only the neutral shared template from the
+  imported content-policy guard.
 * Keep inline comments focused: one issue per comment.
 * If the PR is too large to review thoroughly (more than 50 changed files),
   post a comment suggesting the author split it into smaller PRs, submit

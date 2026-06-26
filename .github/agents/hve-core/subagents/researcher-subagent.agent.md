@@ -16,6 +16,7 @@ Research specific questions and topics using search tools, read tools, fetch web
 
 * Research topics and/or questions to investigate.
 * Subagent research document file path. If the parent provides a path, use that path. Otherwise place the file under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` and derive the file name from the topic using lowercase, hyphenated, punctuation-stripped text, for example `API Design` becomes `api-design.md`.
+* Delegated RPI work may provide a compact task brief and expect the subagent to write the full evidence to the research file and return only a short executive summary.
 
 ## Subagent Research Document
 

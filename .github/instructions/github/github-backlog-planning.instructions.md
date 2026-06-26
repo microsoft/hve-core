@@ -73,6 +73,8 @@ Common PR field operations via the Issues API:
 
 When an operation produces a comment visible to external contributors, the comment body follows scenario templates from `community-interaction.instructions.md`. This applies to closure messages, information requests, acknowledgments, and redirects.
 
+When an operation creates or updates GitHub-visible text that references a suspected content-policy or terms-of-service concern, search for and apply `content-policy-citation.instructions.md` before the API call. Public comments and issue bodies must use neutral wording and must not include classification labels, rationale, quoted snippets, paraphrases, or payload examples.
+
 | Operation       | Scenario                                             | Template Guidance                    |
 |-----------------|------------------------------------------------------|--------------------------------------|
 | Close duplicate | Scenario 7: Closing a Duplicate Issue                | Duplicate closure with original link |
@@ -813,6 +815,17 @@ When found:
 2. If the template ID has no known mapping, replace with a descriptive phrase.
 
 Never send planning reference IDs or template ID placeholders to GitHub APIs.
+
+### Content Policy Public Output Guard
+
+Before sending a GitHub-bound title, body, comment, or PR text field, remove any internal content-policy classification details copied from planning files. This includes category names, sub-anchors, rationale notes, quoted snippets, paraphrased flagged content, and payload examples.
+
+When a public GitHub field must identify a concern:
+
+1. Cite only the file path and line range when the concern is tied to repository content.
+2. Search for and apply `content-policy-citation.instructions.md`, then use the neutral shared template.
+3. Link only to `https://learn.microsoft.com/legal/ai-code-of-conduct` when a policy link is needed.
+4. Replace copied classification or payload text with a neutral phrase such as "content-policy review needed" when no file line is available.
 
 ## Three-Tier Autonomy Model
 

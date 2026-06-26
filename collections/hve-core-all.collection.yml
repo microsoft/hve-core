@@ -83,6 +83,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental
@@ -242,6 +245,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/evals-import.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit.prompt.md
@@ -271,6 +277,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/vally-test-write.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/jira/jira-discover-issues.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
@@ -418,6 +427,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/copilot-tracking.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/licensing-posture.instructions.md
@@ -469,6 +480,8 @@ items:
   maturity: experimental
 - path: .github/instructions/shared/coaching-patterns.instructions.md
   kind: instruction
+- path: .github/instructions/shared/content-policy-citation.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/disclaimer-language.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
@@ -502,6 +515,9 @@ items:
 - path: .github/skills/design-thinking/dt-rpi-integration
   kind: skill
   maturity: preview
+- path: .github/skills/experimental/caveman
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/customer-card-render
   kind: skill
 - path: .github/skills/experimental/mural
@@ -526,6 +542,12 @@ items:
   maturity: experimental
 - path: .github/skills/hve-core/documentation
   kind: skill
+- path: .github/skills/hve-core/prompt-analyze
+  kind: skill
+- path: .github/skills/hve-core/prompt-builder
+  kind: skill
+- path: .github/skills/hve-core/prompt-refactor
+  kind: skill
 - path: .github/skills/hve-core/vally-tests
   kind: skill
   maturity: experimental
@@ -547,6 +569,16 @@ items:
 - path: .github/skills/rai/rai-standards
   kind: skill
   maturity: experimental
+- path: .github/skills/rpi/rpi-implement
+  kind: skill
+- path: .github/skills/rpi/rpi-plan
+  kind: skill
+- path: .github/skills/rpi/rpi-quick
+  kind: skill
+- path: .github/skills/rpi/rpi-research
+  kind: skill
+- path: .github/skills/rpi/rpi-review
+  kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental

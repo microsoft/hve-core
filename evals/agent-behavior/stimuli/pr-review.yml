@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Per-agent stimulus partial for the `pr-review` agent slug.
 # The generator (scripts/evals/Build-AgentBehaviorSpec.ps1) injects
 # `tags.agent: pr-review` from this file name; do not add it here.

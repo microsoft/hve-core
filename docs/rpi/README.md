@@ -3,7 +3,7 @@ title: Understanding the RPI Workflow
 description: Learn the Research, Plan, Implement, Review workflow for transforming complex tasks into validated code
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-24
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -75,6 +75,18 @@ This phase transforms working code into validated code.
 * Identifies follow-up work and iteration needs
 * Output: `{{YYYY-MM-DD}}-<topic>-review.md`
 
+## RPI Skill Commands
+
+Use the skill-style slash commands when you want explicit RPI entry points in chat:
+
+* `/rpi-quick` starts the full end-to-end workflow for a task.
+* `/rpi-research` focuses on the research phase.
+* `/rpi-plan` creates the implementation plan from research.
+* `/rpi-implement` executes the plan.
+* `/rpi-review` validates the changes against the plan and evidence.
+
+These commands surface the same workflow stages as the prompt-based shortcuts, but they are the right choice when you want the RPI skills themselves to be the entry point.
+
 ## The Critical Rule: Clear Context Between Phases
 
 🔴 **Always use `/clear` or start a new chat between phases.**
@@ -103,16 +115,16 @@ For the technical explanation of why this matters, see [Context Engineering](con
 ## Quick Start
 
 1. **Define the problem** clearly
-2. **Research** using `/task-research <topic>` (automatically switches to Task Researcher)
+2. **Research** using `/rpi-research <topic>`
 3. **Clear context** with `/clear`
-4. **Plan** using `/task-plan` (automatically switches to Task Planner)
+4. **Plan** using `/rpi-plan`
 5. **Clear context** with `/clear`
-6. **Implement** using `/task-implement` (automatically switches to Task Implementor)
+6. **Implement** using `/rpi-implement`
 7. **Clear context** with `/clear`
-8. **Review** using `/task-review` (automatically switches to Task Reviewer)
+8. **Review** using `/rpi-review`
 
 > [!TIP]
-> The `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` prompts automatically switch to their respective custom agents, so you don't need to manually select them.
+> If you prefer the prompt-based entry points, the `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` prompts still switch to their respective custom agents. The new `/rpi-*` skills are the direct skill-commands for the same workflow but they will not switch their corresponding Agents.
 
 ## Next Steps
 

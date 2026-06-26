@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Detects file collisions before copying HVE-Core agents.
 # Usage: collision-detection.sh <hve_core_base_path> <selection> [collection_agents...]
