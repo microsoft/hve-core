@@ -142,9 +142,29 @@ function buildNarrationBlock(contractText: string): string {
   return `${NARRATION_BEGIN}\n${contractText.trim()}\n${NARRATION_END}`;
 }
 
+// Everything in `text` except an existing narration block, so we can tell a
+// block-only surface (CLAUDE.md, AGENTS.md) from one with its own content.
+function stripBlock(text: string): string {
+  const b = text.indexOf(NARRATION_BEGIN);
+  const e = text.indexOf(NARRATION_END);
+  if (b !== -1 && e !== -1 && e > b) return text.slice(0, b) + text.slice(e + NARRATION_END.length);
+  return text;
+}
+
+// Demote every ATX heading (h1..h5) by one level. Used when the block is
+// embedded in a host doc that already has its own H1 title, so the contract's
+// `# Cockpit instrumentation` becomes `## …` and does not introduce a second
+// top-level heading (markdownlint MD025). h6 is left as-is (no h7).
+function demoteHeadings(md: string): string {
+  return md.split("\n").map((line) => (/^#{1,5}\s/.test(line) ? "#" + line : line)).join("\n");
+}
+
 function writeNarration(filePath: string, contractText: string): string {
-  const block = buildNarrationBlock(contractText);
   const existing = existsSync(filePath) ? readFileSync(filePath, "utf8") : "";
+  // Block-only surfaces keep the H1 (so they satisfy MD041); a surface with its
+  // own content gets the headings demoted (so the block nests under its title).
+  const embedded = stripBlock(existing).trim().length > 0;
+  const block = buildNarrationBlock(embedded ? demoteHeadings(contractText) : contractText);
   let next: string;
   const beginIdx = existing.indexOf(NARRATION_BEGIN);
   const endIdx = existing.indexOf(NARRATION_END);

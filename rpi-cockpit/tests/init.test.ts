@@ -153,6 +153,10 @@ describe("runInit preservation", () => {
     expect(txt).toContain("Keep me intact.");
     expect(txt).toContain("rpi-cockpit:narration");
     expect(txt).toContain(CONTRACT_NEEDLE);
+    // Embedded under the host doc's own H1: the contract's heading is demoted so
+    // it does not introduce a second top-level heading (MD025).
+    expect(txt).toContain("## Cockpit instrumentation");
+    expect(txt).not.toMatch(/^# Cockpit instrumentation$/m);
   });
 });
 
