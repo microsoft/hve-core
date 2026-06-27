@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-walkback-investigation
+    prompt: |
+      As the code-review walk-back investigator, take a deep, Register 2 look at
+      whether this caching change is correct and safe, and explain the
+      implications of a stale cache entry.
+      ```python
+      cache[key] = fetch(key)  # never invalidated
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: investigation-vocabulary
+        config:
+          pattern: '(?i)(implication|stale|invalidate|consistency|correct|safe|risk|because|investigate|consider)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

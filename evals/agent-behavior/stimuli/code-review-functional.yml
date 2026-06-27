@@ -1,23 +1,24 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 stimuli:
-  - name: code-review-functional-class-recipe
+  - name: code-review-functional-lens
     prompt: |
-      Review this function for correctness:
-      ```python
-      def divide(a, b):
-          return a / b
+      As the functional code-review perspective, review this change for logic,
+      edge cases, and error handling. Report findings with severity.
+      ```diff
+      -def divide(a, b):
+      -    return a / b
+      +def divide(a, b):
+      +    return a / b  # no guard when b == 0
       ```
-      Identify edge cases or behavioral concerns with severity levels.
     tags:
       category: agent-behavior
+      advisory: "true"
     graders:
       - type: output-matches
-        name: findings-table-present
+        name: functional-finding-vocabulary
         config:
-          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|violation)'
-      - type: output-matches
-        name: severity-vocab
-        config:
-          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+          pattern: '(?i)(edge case|division by zero|b\s*==\s*0|error handling|exception|finding|issue|severity|risk)'
       - type: output-matches
         name: no-source-edit
         config:

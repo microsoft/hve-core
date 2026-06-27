@@ -24,6 +24,7 @@ Validates implementation plans against research documents for completeness and a
 * Implementation plan file path (required).
 * Implementation details file path (required).
 * Research document file path (required).
+* Delegated RPI work may supply concise phase context and expect the validator to update the planning log and return only the executive summary in chat.
 * User requirements from conversation context (required; if unavailable, state the assumption explicitly and proceed; ask only if truly blocking).
 * Planning log file path (required).
 * (Optional) Prior planning log paths for iteration comparison.

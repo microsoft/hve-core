@@ -17,10 +17,10 @@ Coaching identity, quality constraints, and methodology skills for AI-enhanced d
 
 ### Chat Agents
 
-| Name                  | Description                                                                                                |
-|-----------------------|------------------------------------------------------------------------------------------------------------|
-| **dt-coach**          | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower philosophy |
-| **dt-learning-tutor** | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing  |
+| Name                  | Description                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------|
+| **dt-coach**          | Design Thinking coach guiding teams through the 9-method HVE framework with Think/Speak/Empower           |
+| **dt-learning-tutor** | Design Thinking learning tutor providing structured curriculum, comprehension checks, and adaptive pacing |
 
 ### Prompts
 

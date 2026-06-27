@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Bucket-A expectations for arch-diagram-builder
 # Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
 # file's explicit promises and/or current matrix failures. This file is consumed

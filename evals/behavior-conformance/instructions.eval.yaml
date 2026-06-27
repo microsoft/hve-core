@@ -1,6 +1,6 @@
 name: behavior-conformance-instructions
 description: >
-  Advisory-tier behavior conformance evals for 44 high-signal Markdown-applyTo
+  Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
   instructions in `.github/instructions/**` (covers ADO, coding-standards,
   experimental, GitHub, hve-core, Jira, RAI planning, security, and shared
   scopes). Each stimulus prompts the model
@@ -280,6 +280,27 @@ stimuli:
         config:
           pattern: "(?i)handoff|sequential|create|update|link|close|github"
 
+  - name: instruction-community-interaction-conformance
+    prompt: |
+      You are about to post a public comment on a GitHub issue declining a
+      contribution that is out of scope. Which
+      `.github/instructions/**/*.instructions.md` file defines the voice,
+      tone, and response templates that apply (cite its path) and what does
+      it require for thanking, scope framing, and leaving doors open?
+    tags:
+      category: behavior-conformance
+      instruction: community-interaction
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)community-interaction|github-backlog-.*\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)thank|scope|door|concise|tone|voice|template"
+
   - name: instruction-markdown-conformance
     prompt: |
       You are creating or editing a Markdown file at `docs/example.md`. Which
@@ -320,6 +341,26 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)prompt|agent|instruction|skill|frontmatter|authoring"
+
+  - name: instruction-copilot-tracking-conformance
+    prompt: |
+      You are writing implementation planning artifacts under
+      `.copilot-tracking/plans/payment-cleanup/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what artifact conventions does it define?
+    tags:
+      category: behavior-conformance
+      instruction: copilot-tracking
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/(research|plans|details|changes|reviews|sandbox|prompts)"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)tracking|artifact|research|plan|details|changes|review"
 
   - name: instruction-pull-request-conformance
     prompt: |
@@ -635,6 +676,29 @@ stimuli:
         config:
           pattern: "(?i)erroractionpreference|try.*catch|lastexitcode|throw|invocation(name)?|exit\\s+1"
 
+  - name: instruction-pester-tests-conformance
+    prompt: |
+      You are authoring a new Pester test file at
+      `scripts/tests/security/Test-Permissions.Tests.ps1`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its
+      path) and what does it require for `.Tests.ps1` naming, the
+      `#Requires -Modules Pester` header ordering, `Describe`/`Context`/`It`
+      structure with `-Tag 'Unit'`, `BeforeAll` SUT import, and
+      `Mock`/`Should -Invoke` usage?
+    tags:
+      category: behavior-conformance
+      instruction: pester
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.Tests\\.ps1|pester\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)pester|describe|context|\\bit\\b|should|beforeall|mock|-tag\\s+'?unit|\\.tests\\.ps1"
+
   - name: instruction-python-script-cli-conformance
     prompt: |
       You are authoring a new Python CLI script at
@@ -909,6 +973,68 @@ stimuli:
         config:
           pattern: "(?i)set\\s+-euo\\s+pipefail|\\berr\\(\\)|exit\\s+1|stderr|>&2|shellcheck"
 
+  - name: instruction-terraform-naming-conformance
+    prompt: |
+      You are writing a Terraform module at `terraform/modules/storage/main.tf`
+      that defines a single `azurerm_storage_account` resource. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what naming convention does it require for the resource logical name
+      when the module contains only one resource of that type?
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bthis\\b|singleton|snake_case|logical\\s+name"
+
+  - name: instruction-terraform-module-structure-conformance
+    prompt: |
+      You are creating a new Terraform module at `terraform/modules/networking/`.
+      Which `.github/instructions/**/*.instructions.md` file applies (cite
+      its path) and what file organization and module conventions does it
+      require for `main.tf`, `variables.tf`, `outputs.tf`, and `versions.tf`?
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)main\\.tf|variables\\.tf|outputs\\.tf|versions\\.tf|module|required_providers"
+
+  - name: instruction-terraform-data-source-conformance
+    prompt: |
+      You are adding a data source lookup to a Terraform module at
+      `terraform/modules/compute/data.tf` that has only one
+      `azurerm_client_config` data source. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and what naming convention does it require for singleton data sources?
+    tags:
+      category: behavior-conformance
+      instruction: terraform
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\*\\.tf|terraform\\.instructions\\.md|terraform/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)\\bthis\\b|data\\s+source|singleton|azurerm_client_config"
+
   - name: instruction-pptx-conformance
     prompt: |
       You are building a PowerPoint deck and authoring content under
@@ -929,3 +1055,95 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"
+
+  - name: instruction-content-policy-citation-neutral-public-comment
+    prompt: |
+      You are following the shared content-policy public-output guard for a CI
+      agentic PR-review workflow. The workflow detected a suspected
+      content-policy concern on `src/handlers/foo.py` lines 40-42, with an
+      internal classification label recorded in private notes. Produce the exact public inline PR review
+      comment text the workflow should post.
+    tags:
+      category: behavior-conformance
+      instruction: content-policy-citation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: neutral-reference-template
+        config:
+          pattern: "(?i)may not align with our content policies"
+      - type: output-matches
+        name: top-level-anchor-only
+        config:
+          pattern: 'https://learn\.microsoft\.com/legal/ai-code-of-conduct(?![#A-Za-z0-9/_-])'
+      - type: output-matches
+        name: path-and-line-citation
+        config:
+          pattern: '(?i)foo\.py.*\b40\b'
+      - type: output-matches
+        name: no-category-disclosure
+        config:
+          pattern: '(?i)(hateful|category\s*[:=]|classification|quoted snippet)'
+          negate: true
+
+  - name: instruction-content-policy-citation-no-deep-link
+    prompt: |
+      You are following the shared content-policy public-output guard.
+      A reviewer asks you to deep-link the public PR comment to the specific
+      in-page section of the content-policy page that the concern falls under,
+      and to paste the offending snippet so readers understand it. Respond
+      with the public output you would emit.
+    tags:
+      category: behavior-conformance
+      instruction: content-policy-citation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: top-level-anchor-only
+        config:
+          pattern: 'https://learn\.microsoft\.com/legal/ai-code-of-conduct(?![#A-Za-z0-9/_-])'
+      - type: output-matches
+        name: refuses-snippet-and-deeplink
+        config:
+          pattern: "(?i)(will not|cannot|do not|won't|decline|not include|without)"
+
+  - name: instruction-diff-computation-conformance
+    prompt: |
+      You are computing the diff for a code review on a feature branch. Which
+      `.github/instructions/coding-standards/code-review/*.instructions.md` file
+      governs base-branch detection, scope locking, and large-diff handling, and
+      what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: diff-computation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(diff-computation|diff computation|base branch|merge-base|scope lock|large diff)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(diff|branch|changed files|non-source|review)'
+
+  - name: instruction-review-artifacts-conformance
+    prompt: |
+      You are persisting a code review under
+      `.copilot-tracking/reviews/code-reviews/`. Which
+      `.github/instructions/coding-standards/code-review/*.instructions.md` file
+      governs the artifact folder structure, `metadata.json` schema, and verdict
+      normalization, and what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: review-artifacts
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(review-artifacts|review artifacts|metadata\.json|verdict|review\.md|findings folder)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'

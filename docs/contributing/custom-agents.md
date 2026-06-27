@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-15
+ms.date: 2026-06-19
 ms.topic: how-to
 ---
 
@@ -139,7 +139,7 @@ Agent files are typically organized in a collection subdirectory by convention:
 ### Naming Convention
 
 * Use lowercase kebab-case: `security-reviewer.agent.md`
-* Be descriptive and action-oriented: `task-planner.agent.md`, `pr-review.agent.md`, `rpi-agent.agent.md`
+* Be descriptive and action-oriented: `task-planner.agent.md`, `code-review.agent.md`, `rpi-agent.agent.md`
 * Avoid generic names: `helper.agent.md` ❌ → `ado-work-item-processor.agent.md` ✅
 
 ### File Format

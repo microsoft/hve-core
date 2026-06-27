@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-05-20
+ms.date: 2026-06-25
 ms.topic: overview
 keywords:
   - github copilot
@@ -14,24 +14,23 @@ estimated_reading_time: 5
 
 hve-core organizes specialized agents into functional groups. Each group combines agents, prompts, and instruction files into cohesive workflows for specific engineering tasks.
 
-| Group                                   | Agents   | Complexity  | Documentation                                                                   |
-|-----------------------------------------|----------|-------------|---------------------------------------------------------------------------------|
-| RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                           |
-| [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                            |
-| [PR Walkthrough](#pr-walkthrough)       | 1        | Medium      | [PR Walkthrough](pr-walkthrough/README.md)                                      |
-| GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                     |
-| ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                        |
-| Jira Backlog Management                 | 2 active | Very High   | Backlog Manager                                                                 |
-| [Project Planning](#project-planning)   | 10       | Medium-High | [Project Planning](project-planning/README.md)                                  |
-| [Security Planning](#security-planning) | 3 active | Very High   | [Security Planner](security/README.md), [SSSC Planner](sssc-planning/README.md) |
-| [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                           |
-| [Data Science](#data-science)           | 5        | Medium      | Data Science                                                                    |
-| Experimental                            | 2        | Medium      | Experiment Designer                                                             |
-| DevOps Quality                          | 1        | High        | Planned                                                                         |
-| Meta/Engineering                        | 2        | High        | [Prompt Builder](../contributing/instructions.md), Doc Ops                      |
-| Infrastructure                          | 1        | Very High   | Planned                                                                         |
-| Utility                                 | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence)            |
-| [Design Thinking](#design-thinking)     | 2        | High        | Active                                                                          |
+| Group                                   | Agents   | Complexity  | Documentation                                                                                                                                                      |
+|-----------------------------------------|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| RPI Orchestration                       | 6        | High        | [RPI Documentation](../rpi/README.md)                                                                                                                              |
+| [Code Review](#code-review)             | 3        | Medium      | [Code Review](code-review/README.md)                                                                                                                               |
+| GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                                                                                                        |
+| ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                                                                                                           |
+| Jira Backlog Management                 | 2 active | Very High   | Backlog Manager                                                                                                                                                    |
+| [Project Planning](#project-planning)   | 10       | Medium-High | [Project Planning](project-planning/README.md)                                                                                                                     |
+| [Security Planning](#security-planning) | 3 active | Very High   | [Security Planner](security/README.md), [SSSC Planner](sssc-planning/README.md)                                                                                    |
+| [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                                                                                                              |
+| [Data Science](#data-science)           | 5        | Medium      | Data Science                                                                                                                                                       |
+| Experimental                            | 2        | Medium      | Experiment Designer                                                                                                                                                |
+| DevOps Quality                          | 1        | High        | Planned                                                                                                                                                            |
+| Meta/Engineering                        | 2        | High        | [Prompt Builder](../contributing/instructions.md), [Documentation](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) |
+| Infrastructure                          | 1        | Very High   | Planned                                                                                                                                                            |
+| Utility                                 | 1        | Low-Medium  | [Memory Agent](github-backlog/using-together.md#session-persistence)                                                                                               |
+| [Design Thinking](#design-thinking)     | 2        | High        | Active                                                                                                                                                             |
 
 ## RPI Orchestration
 
@@ -39,11 +38,7 @@ The Research, Plan, Implement methodology separates complex tasks into specializ
 
 ## Code Review
 
-Three agents provide pre-PR code review on local branches. Code Review Functional catches logic errors, edge cases, and error handling gaps across five focus areas. Code Review Standards enforces project-defined conventions through dynamically loaded language skills. Code Review Full orchestrates both in a single pass and produces a merged, deduplicated report. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
-
-## PR Walkthrough
-
-A narrative orientation agent that builds a reviewer's mental model before they open the diff. Produces a flowing essay structured around decisions and design forks rather than a file-by-file summary. Useful for large PRs, cross-cutting refactors, and onboarding reviewers who lack context. Marked experimental. See the [PR Walkthrough Documentation](pr-walkthrough/) for usage.
+A single human-gated Code Review agent provides pre-PR review on local branches. It confirms scope with you, then dispatches the perspectives you choose, functional, standards, accessibility, security, and PR, each to a thin skill-backed subagent, and merges them into one deduplicated report. A depth tier (basic, standard, or comprehensive) controls how deeply each perspective verifies the change. See the [Code Review Documentation](code-review/) for usage guides and skill authoring.
 
 ## GitHub Backlog Management
 

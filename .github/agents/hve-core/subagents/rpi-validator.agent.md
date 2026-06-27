@@ -15,6 +15,7 @@ Validates a Changes Log against the Implementation Plan, Planning Log, and prima
 
 * Plan file path containing the Implementation Plan and Planning Log.
 * Changes log path documenting completed implementation work.
+* Delegated RPI work may provide a specific phase number and expect a compact validation summary backed by the review log.
 * Research document path with requirements and specifications.
 * Phase number identifying the specific plan through-line to validate.
 * Validation file path `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/{{plan-file-name-without-instructions-md}}-{{three-digit-phase-number}}-validation.md` otherwise determined from inputs.

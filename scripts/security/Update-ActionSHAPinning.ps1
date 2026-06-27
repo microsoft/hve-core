@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
@@ -284,7 +284,10 @@ function Get-LatestCommitSHA {
 function Get-SHAForAction {
     param(
         [Parameter(Mandatory)]
-        [string]$ActionRef
+        [string]$ActionRef,
+
+        [Parameter()]
+        [switch]$UpdateStale
     )
 
     # Check if already SHA-pinned (40-character hex string)
@@ -381,7 +384,10 @@ function Update-WorkflowFile {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [string]$FilePath
+        [string]$FilePath,
+
+        [Parameter()]
+        [switch]$UpdateStale
     )
 
     Write-SecurityLog "Processing workflow: $FilePath" -Level 'Info'
@@ -411,7 +417,7 @@ function Update-WorkflowFile {
 
         foreach ($action in $sortedActions) {
             $originalRef = $action.OriginalRef
-            $pinnedRef = Get-SHAForAction -ActionRef $originalRef
+            $pinnedRef = Get-SHAForAction -ActionRef $originalRef -UpdateStale:$UpdateStale
 
             if ($pinnedRef -and $pinnedRef -ne $originalRef) {
                 # Replace the action reference
@@ -626,7 +632,7 @@ function Invoke-ActionSHAPinningUpdate {
 
     $results = @()
     foreach ($workflowFile in $workflowFiles) {
-        $result = Update-WorkflowFile -FilePath $workflowFile.FullName
+        $result = Update-WorkflowFile -FilePath $workflowFile.FullName -UpdateStale:$UpdateStale
         $results += $result
     }
 

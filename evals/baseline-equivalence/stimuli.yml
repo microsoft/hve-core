@@ -110,7 +110,7 @@ stimuli:
     category: code-qa
     prompt: "Explain step by step how a fizzbuzz implementation works for the first 15 numbers."
     invariants: [mentions-fizz-buzz]
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review-full, code-review-functional, pr-review, task-reviewer]}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, task-reviewer]}
     graders:
       - type: output-matches
         name: mentions-fizz-buzz
@@ -123,7 +123,7 @@ stimuli:
     category: code-qa
     prompt: "Explain what this Python error means: IndexError: list index out of range."
     invariants: [mentions-index-or-range]
-    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review-full, code-review-functional, pr-review, task-reviewer]}
+    tags: {category: baseline-equivalence, subcategory: code-qa, agent: [code-review, task-reviewer]}
     graders:
       - type: output-matches
         name: mentions-index-or-range
@@ -352,7 +352,7 @@ stimuli:
     category: multi-turn
     prompt: "Earlier you suggested using a hash map. Now explain why a hash map is preferable to a list for keyed lookups."
     invariants: [mentions-hash-or-lookup]
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [memory, pr-review, task-reviewer]}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [memory, task-reviewer]}
     graders:
       - type: output-matches
         name: mentions-hash-or-lookup
@@ -404,7 +404,7 @@ stimuli:
     category: multi-turn
     prompt: "You assumed Python 2 syntax, but the project uses Python 3. Restate your earlier print example correctly."
     invariants: [mentions-print-paren]
-    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review-standards, memory, pr-review, task-challenger, task-reviewer]}
+    tags: {category: baseline-equivalence, subcategory: multi-turn, agent: [code-review, memory, task-challenger, task-reviewer]}
     graders:
       - type: output-matches
         name: mentions-print-paren

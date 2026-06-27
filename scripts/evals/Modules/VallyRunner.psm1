@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # VallyRunner.psm1
@@ -265,8 +265,14 @@ function Invoke-VallySpec {
     .PARAMETER LogPath
     Optional path to tee stdout/stderr to a log file.
 
+    .PARAMETER Tag
+    Optional `kind=slug` filter passed to `vally eval --tag`. Scopes execution
+    to the stimuli whose `tags.<kind>` matches the slug. Used when a single
+    shared spec is backlinked by multiple artifacts so each artifact runs only
+    its own stimuli.
+
     .OUTPUTS
-    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus }`.
+    [hashtable] `@{ specPath; exitCode; runDir; assertionsPassed; assertionsFailed; durationMs; trials; resultsPath; perStimulus; tag }`.
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
@@ -275,7 +281,8 @@ function Invoke-VallySpec {
         [Parameter(Mandatory = $true)][string]$OutputDir,
         [Parameter(Mandatory = $true)][string]$Model,
         [string]$VallyCommand = 'vally',
-        [string]$LogPath
+        [string]$LogPath,
+        [string]$Tag
     )
 
     if (-not (Test-Path -LiteralPath $OutputDir)) {
@@ -288,6 +295,9 @@ function Invoke-VallySpec {
         '--model', $Model
         '--output-dir', $OutputDir
     )
+    if (-not [string]::IsNullOrWhiteSpace($Tag)) {
+        $vallyArgs += @('--tag', $Tag)
+    }
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $prev = [Console]::OutputEncoding
@@ -334,6 +344,7 @@ function Invoke-VallySpec {
         trials           = $aggregate.trials
         resultsPath      = $aggregate.resultsPath
         perStimulus      = $aggregate.perStimulus
+        tag              = $Tag
     }
 }
 
@@ -565,10 +576,146 @@ function Test-SpecOutputModeration {
     }
 }
 
+function Get-VallySpecBacklinkCount {
+    <#
+    .SYNOPSIS
+    Counts how many distinct artifacts the stimulus index backlinks to each spec.
+
+    .DESCRIPTION
+    Walks the index `coverage` map (coverage key -> array of spec-relative paths)
+    and tallies, per spec, the number of coverage keys that reference it. A spec
+    backlinked by more than one artifact runs once PER artifact with a
+    `--tag kind=slug` filter so each artifact is scored only on its own stimuli
+    instead of inheriting another artifact's results.
+
+    .PARAMETER Index
+    The stimulus index hashtable produced by New-StimulusIndex. The optional
+    `coverage` key maps each coverage key to an array of spec-relative paths.
+
+    .OUTPUTS
+    [hashtable] mapping a spec-relative path to its backlink count.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Index
+    )
+
+    $specBacklinkCount = @{}
+    if ($Index.ContainsKey('coverage') -and $null -ne $Index['coverage']) {
+        foreach ($covKey in $Index['coverage'].Keys) {
+            foreach ($covSpec in $Index['coverage'][$covKey]) {
+                if (-not $specBacklinkCount.ContainsKey($covSpec)) { $specBacklinkCount[$covSpec] = 0 }
+                $specBacklinkCount[$covSpec]++
+            }
+        }
+    }
+
+    return $specBacklinkCount
+}
+
+function Get-VallySpecRunPlan {
+    <#
+    .SYNOPSIS
+    Builds the per-artifact spec-run plan, keying each run by a composite
+    spec+tag runKey so a shared spec runs once per backlinking artifact.
+
+    .DESCRIPTION
+    When a spec is backlinked by more than one artifact (SpecBacklinkCount > 1),
+    each artifact runs only its own stimuli via a `kind=artifactId` tag,
+    producing a distinct runKey of the form `specRel|tag`. Specs backlinked by a
+    single artifact run untagged with a runKey equal to specRel. Artifacts with
+    no covering spec are collected into missingSpecs.
+
+    .PARAMETER Artifact
+    Array of artifact descriptors. Each is a hashtable with keys: kind,
+    artifactId, path, status, and specs (an array of spec-relative paths;
+    empty when no spec covers the artifact).
+
+    .PARAMETER SpecBacklinkCount
+    Hashtable mapping a spec-relative path to the number of artifacts that
+    backlink it.
+
+    .PARAMETER IndexRoot
+    Root path used to resolve each specRel to an absolute spec path.
+
+    .OUTPUTS
+    [hashtable] with keys: uniqueSpecRuns (runKey -> @{ specRel; specAbs; tag }),
+    artifactPlan (array of @{ kind; artifactId; path; status; specRuns }), and
+    missingSpecs (array of @{ kind; artifactId; path }).
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyCollection()]
+        [hashtable[]]$Artifact,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$SpecBacklinkCount,
+
+        [Parameter(Mandatory = $true)]
+        [string]$IndexRoot
+    )
+
+    $uniqueSpecRuns = @{}
+    $artifactPlan   = [System.Collections.Generic.List[hashtable]]::new()
+    $missingSpecs   = [System.Collections.Generic.List[hashtable]]::new()
+
+    foreach ($a in $Artifact) {
+        $artifactKind = [string]$a.kind
+        $artifactId   = [string]$a.artifactId
+        $specs        = @($a.specs)
+
+        if ($specs.Count -eq 0) {
+            $missingSpecs.Add(@{ kind = $artifactKind; artifactId = $artifactId; path = [string]$a.path })
+            continue
+        }
+
+        $artifactSpecRuns = [System.Collections.Generic.List[string]]::new()
+        foreach ($specRel in $specs) {
+            $shared = ($SpecBacklinkCount.ContainsKey($specRel) -and $SpecBacklinkCount[$specRel] -gt 1)
+            if ($shared) {
+                $tag    = "$artifactKind=$artifactId"
+                $runKey = "$specRel|$tag"
+            }
+            else {
+                $tag    = ''
+                $runKey = $specRel
+            }
+            if (-not $uniqueSpecRuns.ContainsKey($runKey)) {
+                $uniqueSpecRuns[$runKey] = @{
+                    specRel = $specRel
+                    specAbs = Join-Path -Path $IndexRoot -ChildPath $specRel
+                    tag     = $tag
+                }
+            }
+            $artifactSpecRuns.Add($runKey) | Out-Null
+        }
+
+        $artifactPlan.Add(@{
+            kind        = $artifactKind
+            artifactId  = $artifactId
+            path        = [string]$a.path
+            status      = [string]$a.status
+            specRuns    = @($artifactSpecRuns)
+        })
+    }
+
+    return @{
+        uniqueSpecRuns = $uniqueSpecRuns
+        artifactPlan   = $artifactPlan
+        missingSpecs   = $missingSpecs
+    }
+}
+
 Export-ModuleMember -Function @(
     'Resolve-VallyRunDir',
     'Read-VallyResultsJsonl',
     'Invoke-VallySpec',
     'Test-SpecInputModeration',
-    'Test-SpecOutputModeration'
+    'Test-SpecOutputModeration',
+    'Get-VallySpecBacklinkCount',
+    'Get-VallySpecRunPlan'
 )

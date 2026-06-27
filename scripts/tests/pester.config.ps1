@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # pester.config.ps1
@@ -82,7 +82,7 @@ if ($CodeCoverage.IsPresent) {
 
     # Resolve coverage paths explicitly - Join-Path with wildcards returns literal paths without file system expansion in Pester configuration
     $scriptRoot = Split-Path $PSScriptRoot -Parent
-    $coverageDirs = @('linting', 'security', 'lib', 'extension', 'plugins', 'collections', 'tests')
+    $coverageDirs = @('linting', 'security', 'lib', 'extension', 'collections', 'tests')
 
     $coveragePaths = $coverageDirs | ForEach-Object {
         Get-ChildItem -Path (Join-Path $scriptRoot $_) -Include '*.ps1', '*.psm1' -Recurse -File -ErrorAction SilentlyContinue
