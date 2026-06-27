@@ -16,9 +16,13 @@
     --accent-cyan:#9CDCFE;--accent-blue:#4FC1FF;
     --fail:#f2b8b5;--fail-bg:#3a1714;--fail-stroke:#5c2622;
     --radius:4px;--radius-sm:3px;
-    --shadow-4:0 2px 8px rgba(0,0,0,.36);--shadow-8:0 8px 16px rgba(0,0,0,.45);
+    --shadow-2:0 1px 3px rgba(0,0,0,.28);--shadow-4:0 2px 8px rgba(0,0,0,.36);--shadow-8:0 8px 16px rgba(0,0,0,.45);
     --bar:#323233;--bar-blur:none;
     --rail:#252526;--rail-blur:none;--card-blur:none;
+    /* Motion tokens: Fluent decelerate easing + a small duration scale, tunable in one place. */
+    --ease-standard:cubic-bezier(0.33, 0, 0.1, 1);
+    --ease-entrance:cubic-bezier(0.1, 0.9, 0.2, 1);
+    --dur-fast:120ms;--dur-normal:200ms;--dur-slow:320ms;
   }
   /* ---- VS Code light (editor-native) ---- */
   html[data-theme="light"]{
@@ -30,7 +34,7 @@
     --av-pi-bg:#EDE7F6;--av-pi-fg:#6F42C1;--av-rs-bg:#E1EFFB;--av-rs-fg:#0A5BA0;
     --accent-cyan:#0B6BB5;--accent-blue:#005FB8;
     --fail:#B42318;--fail-bg:#FDECEA;--fail-stroke:#F1C9C5;
-    --shadow-4:0 1px 3px rgba(0,0,0,.10);--shadow-8:0 6px 16px rgba(0,0,0,.16);
+    --shadow-2:0 1px 2px rgba(0,0,0,.07);--shadow-4:0 1px 3px rgba(0,0,0,.10);--shadow-8:0 6px 16px rgba(0,0,0,.16);
     --bar:#F3F3F3;
     --rail:#F8F8F8;
   }
@@ -236,6 +240,64 @@
   .bcard-chips { display: flex; gap: 6px; margin-top: 6px; }
   .chip-kind, .chip-tier { font-size: 10.5px; padding: 1px 7px; border-radius: 9px; border: 1px solid var(--stroke-2, #4A4A4A); color: var(--text-2, #9D9D9D); }
   .col-empty { height: 6px; }
+
+  /* =========================================================================
+     Fluent depth, material, and motion polish (enhancement, not a rebuild).
+     Layered on top of the existing rules above; no IA / layout / color change.
+     ========================================================================= */
+
+  /* --- Discrete-element entrance animations (flicker-safe) ---
+     Applied ONLY to elements that appear/disappear at discrete moments
+     (display:none -> shown), so the animation runs on appearance, NOT on the
+     innerHTML re-renders that repaint the lists (steps, subagents, gate,
+     findings, board cards, context chips, the log stream, directives). */
+  @keyframes overlayIn { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.985) } to { opacity: 1; transform: none } }
+  @keyframes decideIn { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: none } }
+  @keyframes panelIn { from { opacity: 0; transform: translateX(14px) } to { opacity: 1; transform: none } }
+  @keyframes screenIn { from { opacity: 0 } to { opacity: 1 } }
+  .welcome-overlay { animation: overlayIn var(--dur-normal) var(--ease-standard); }
+  .welcome-modal { animation: modalIn var(--dur-slow) var(--ease-entrance); }
+  #decision .decide { animation: decideIn var(--dur-normal) var(--ease-entrance); }
+  /* #app-frame is shown by removing [hidden]; display:none->flex restarts the
+     animation, so the slide-in runs each time the panel reappears. */
+  #app-frame { animation: panelIn var(--dur-slow) var(--ease-entrance); }
+  #screen { animation: screenIn var(--dur-normal) var(--ease-standard); }
+
+  /* --- Hover elevation / response on PERSISTENT interactive elements ---
+     Hover state, not a re-render, so it is flicker-safe. The existing
+     :hover border-color and :focus-visible outline rules above still apply. */
+  .wf-tile, .iconbtn, .crumb-back, .btn {
+    transition: transform var(--dur-fast) var(--ease-standard),
+                box-shadow var(--dur-fast) var(--ease-standard),
+                background-color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .wf-tile:hover { transform: translateY(-1px); box-shadow: var(--shadow-4); }
+  .iconbtn:hover, .crumb-back:hover { transform: translateY(-1px); }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-4); }
+
+  /* --- Fluent material (acrylic) on the chrome layers, guarded ---
+     Subtle backdrop blur + slight translucency; degrades to the existing solid
+     background where backdrop-filter is unavailable. Kept restrained so the
+     clean editor-native look is preserved. */
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .topbar { background: color-mix(in srgb, var(--bar) 80%, transparent); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%); }
+    .rail-left, .rail-right { background: color-mix(in srgb, var(--rail) 82%, transparent); -webkit-backdrop-filter: blur(18px) saturate(135%); backdrop-filter: blur(18px) saturate(135%); }
+    .context-strip { background: color-mix(in srgb, var(--rail) 82%, transparent); -webkit-backdrop-filter: blur(18px) saturate(135%); backdrop-filter: blur(18px) saturate(135%); }
+    .welcome-modal { background: color-mix(in srgb, var(--layer) 86%, transparent); -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%); }
+    .af-head { background: color-mix(in srgb, var(--bar) 80%, transparent); -webkit-backdrop-filter: blur(18px) saturate(135%); backdrop-filter: blur(18px) saturate(135%); }
+  }
+
+  /* --- Reduced motion (mandatory) ---
+     Neutralize animation and transition durations for users who ask for less. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 <script>
   /* Apply persisted theme before first paint to avoid flash. */
