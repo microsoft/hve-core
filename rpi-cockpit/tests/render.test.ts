@@ -28,6 +28,19 @@ describe("toViewModel", () => {
     expect(vm.lead).toMatch(/Waiting for an RPI session/);
   });
 
+  it("is started for a directly-launched domain with no session.begin", () => {
+    // review/interview/backlog set domain without task/phase; started must be true
+    // so the Home orient strip does not claim "Nothing running" mid-session. (B1)
+    for (const beat of [
+      { type: "review.start", target: "x" },
+      { type: "interview.start", docType: "PRD" },
+      { type: "backlog.start", target: "S", columns: ["Todo"] },
+    ] as const) {
+      const s = applyBeat(initialState(), beat, 1);
+      expect(toViewModel(s).started).toBe(true);
+    }
+  });
+
   it("derives phase label, number, and lead from the active phase", () => {
     const s = applyBeat(initialState(), { type: "phase.enter", phase: "implement" }, 1);
     const vm = toViewModel(s);

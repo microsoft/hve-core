@@ -30,6 +30,10 @@ export interface SessionState {
   pendingDecision: Decision | null;
   directives: Directive[];
   steerMenu: SteerMenu | null;
+  // Single shared screen slot: the RPI screen pane (#screen) and the interview
+  // document pane (#iv-doc) both read this one field. A screen.show or clear_screen
+  // is not domain-scoped, so the agent should clear_screen when switching contexts
+  // (e.g. leaving an interview) or a stale document leaks into the next pane. (B6/M1)
   screen: { html: string; title?: string } | null;
   contextInstructions: string[];
   contextSkills: string[];
@@ -45,7 +49,7 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
   const log = [...s.log, { t: now, kind: beat.type, detail: summarize(beat) }];
   switch (beat.type) {
     case "session.begin":
-      return { ...s, task: beat.task, host: beat.host, domain: "rpi" as const, view: "loop", log };
+      return { ...s, task: beat.task, host: beat.host, domain: "rpi", view: "loop", log };
     case "phase.enter": {
       const phasesDone = s.phase && s.phase !== beat.phase && !s.phasesDone.includes(s.phase)
         ? [...s.phasesDone, s.phase] : s.phasesDone;
@@ -70,7 +74,7 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
     case "screen.clear":
       return { ...s, screen: null, log };
     case "review.start":
-      return { ...s, view: "loop" as const, domain: "review", reviewTarget: beat.target, findings: [], log };
+      return { ...s, view: "loop", domain: "review", reviewTarget: beat.target, findings: [], log };
     case "finding.add":
       return { ...s, findings: [...s.findings, { severity: beat.severity, title: beat.title, file: beat.file, line: beat.line, detail: beat.detail }], log };
     case "interview.start":

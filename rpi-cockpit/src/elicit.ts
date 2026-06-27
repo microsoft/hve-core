@@ -16,6 +16,16 @@ export function decisionTimeoutMs(): number {
   return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_DECISION_TIMEOUT_MS;
 }
 
+// A free-text question (the interview) gets its OWN timeout, defaulting to 0 =
+// no auto-resolve. A silent fallback to "" after 30 min is indistinguishable from
+// a deliberate empty answer, so the interview blocks until the user actually
+// answers. Override via RPI_COCKPIT_QUESTION_TIMEOUT_MS (bridge.askQuestion treats
+// timeoutMs<=0 as "no timeout"). (M3/M4)
+export function questionTimeoutMs(): number {
+  const raw = Number(process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : 0;
+}
+
 export interface ElicitFormParams {
   message: string;
   requestedSchema: { type: "object"; properties: Record<string, unknown>; required?: string[] };

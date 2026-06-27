@@ -124,5 +124,24 @@ describe("Bridge", () => {
       b.navigate("home");
       expect(b.state.view).toBe("home");
     });
+
+    it("openNavigator then closeNavigator toggles navigatorOpen and emits", () => {
+      const b = new Bridge();
+      const seen = vi.fn();
+      b.on("state", seen);
+      b.openNavigator();
+      expect(b.state.navigatorOpen).toBe(true);
+      b.closeNavigator();
+      expect(b.state.navigatorOpen).toBe(false);
+      expect(seen).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("logs a decision.timeout entry on the auto-resolve fallback", async () => {
+    const b = new Bridge();
+    await b.presentOptions("pick", [{ id: "a", title: "A" }, { id: "b", title: "B", recommended: true }], 5);
+    const timeout = b.state.log.find((l) => l.kind === "decision.timeout");
+    expect(timeout).toBeDefined();
+    expect(timeout!.detail).toContain("b");
   });
 });

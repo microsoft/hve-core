@@ -42,6 +42,11 @@ export class Bridge extends EventEmitter {
     this.emit("state", this.state);
   }
 
+  closeNavigator(): void {
+    this.state = setNavigatorOpen(this.state, false);
+    this.emit("state", this.state);
+  }
+
   drainDirectives(): Directive[] {
     const { state, drained } = reduceDrain(this.state, Date.now());
     if (drained.length > 0) {
@@ -73,7 +78,13 @@ export class Bridge extends EventEmitter {
         setTimeout(() => {
           if (this.pending.has(id)) {
             const fallback = options.find((o) => o.recommended)?.id ?? options[0]?.id;
-            if (fallback !== undefined) this.resolveDecision(id, fallback);
+            if (fallback !== undefined) {
+              // Log the auto-resolve so a timeout fallback is distinguishable from a
+              // real user pick (the durable decisions.jsonl records only the choiceId). (B3)
+              this.state = { ...this.state, log: [...this.state.log, { t: Date.now(), kind: "decision.timeout", detail: `auto-resolved to ${fallback}` }] };
+              this.emit("state", this.state);
+              this.resolveDecision(id, fallback);
+            }
           }
         }, timeoutMs);
       }

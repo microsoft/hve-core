@@ -81,7 +81,10 @@ export function toViewModel(s: SessionState): ViewModel {
     })),
   };
   return {
-    started: s.task !== "" || s.phase !== null,
+    // A directly-launched review/interview/backlog sets domain without session.begin
+    // (so task is "" and phase null); treat any active domain as started so the Home
+    // orient strip never claims "Nothing running" mid-session. (B1)
+    started: s.task !== "" || s.phase !== null || s.domain !== null,
     task: s.task,
     host: s.host,
     domain: s.domain,

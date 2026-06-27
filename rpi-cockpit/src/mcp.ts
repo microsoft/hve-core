@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { Phase, ValidationStatus, OptionItem, Severity } from "./events.js";
 import { handlers } from "./handlers.js";
-import { presentOptionsWithElicitation, askQuestionWithElicitation, presentWorkflows, decisionTimeoutMs, type ElicitFormParams } from "./elicit.js";
+import { presentOptionsWithElicitation, askQuestionWithElicitation, presentWorkflows, decisionTimeoutMs, questionTimeoutMs, type ElicitFormParams } from "./elicit.js";
 import type { Bridge } from "./bridge.js";
 
 const text = (s: string) => ({ content: [{ type: "text" as const, text: s }] });
@@ -92,7 +92,7 @@ export function buildMcpServer(bridge: Bridge): McpServer {
 
   server.registerTool(
     "set_context",
-    { description: "Set the active context shown in the cockpit's context strip: the instructions (coding standards), skills, and collection currently in effect. Replaces the whole context, so pass everything currently active.", inputSchema: { instructions: z.array(z.string()).optional(), skills: z.array(z.string()).optional(), collection: z.string().nullable().optional() } },
+    { description: "Set the active context shown in the cockpit's context strip: the instructions (coding standards), skills, and collection currently in effect. Replaces the whole context, so pass everything currently active. Omitting instructions, skills, or collection clears that group.", inputSchema: { instructions: z.array(z.string()).optional(), skills: z.array(z.string()).optional(), collection: z.string().nullable().optional() } },
     async (a) => text(handlers.set_context(bridge, a)),
   );
 
@@ -109,7 +109,10 @@ export function buildMcpServer(bridge: Bridge): McpServer {
           },
           bridge,
           a.prompt,
-          decisionTimeoutMs(),
+          // Free-text answers default to no auto-resolve (see questionTimeoutMs):
+          // an empty timeout fallback is indistinguishable from a deliberate empty
+          // answer, so let the interactive interview block until the user answers.
+          questionTimeoutMs(),
         ),
       ),
   );

@@ -239,6 +239,23 @@ describe("server", () => {
     ws.close();
   });
 
+  it("a navigator frame opens and closes the navigator", async () => {
+    const bridge = new Bridge();
+    const srv = await startServer(bridge, 0);
+    stop = srv.close;
+    const ws = new WebSocket(`ws://127.0.0.1:${srv.port}/?key=${srv.token}`);
+    await new Promise<any>((res) => ws.on("message", (d) => res(JSON.parse(String(d)))));
+    const opened = new Promise<void>((res) => bridge.once("state", () => res()));
+    ws.send(JSON.stringify({ type: "navigator", open: true }));
+    await opened;
+    expect(bridge.state.navigatorOpen).toBe(true);
+    const closed = new Promise<void>((res) => bridge.once("state", () => res()));
+    ws.send(JSON.stringify({ type: "navigator", open: false }));
+    await closed;
+    expect(bridge.state.navigatorOpen).toBe(false);
+    ws.close();
+  });
+
   it("a navigate frame sets the view", async () => {
     const bridge = new Bridge();
     const srv = await startServer(bridge, 0);

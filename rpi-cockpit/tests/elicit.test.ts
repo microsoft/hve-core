@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { optionsToElicitSchema, elicitResultToChoice, presentOptionsWithElicitation, questionToElicitSchema, elicitResultToAnswer, askQuestionWithElicitation, presentWorkflows } from "../src/elicit.js";
+import { optionsToElicitSchema, elicitResultToChoice, presentOptionsWithElicitation, questionToElicitSchema, elicitResultToAnswer, askQuestionWithElicitation, presentWorkflows, questionTimeoutMs } from "../src/elicit.js";
+import { afterEach } from "vitest";
 import { Bridge } from "../src/bridge.js";
 import { WORKFLOWS } from "../src/catalog.js";
 import type { OptionItem } from "../src/events.js";
@@ -158,6 +159,28 @@ describe("question elicitation", () => {
     const srv = fakeServer({ elicitation: true, respond: async () => ({ action: "accept", content: { answer: "native" } }) });
     expect(await askQuestionWithElicitation(srv, bridge, "Q?", 0)).toBe("native");
     expect(bridge.state.pendingQuestion).toBeNull();
+  });
+});
+
+describe("questionTimeoutMs", () => {
+  const saved = process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS;
+  afterEach(() => {
+    if (saved === undefined) delete process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS;
+    else process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS = saved;
+  });
+  it("defaults to 0 (no auto-resolve) so the interview blocks until answered", () => {
+    delete process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS;
+    expect(questionTimeoutMs()).toBe(0);
+  });
+  it("reads a positive override from the env", () => {
+    process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS = "1234";
+    expect(questionTimeoutMs()).toBe(1234);
+  });
+  it("ignores a non-positive or invalid override, falling back to 0", () => {
+    process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS = "-5";
+    expect(questionTimeoutMs()).toBe(0);
+    process.env.RPI_COCKPIT_QUESTION_TIMEOUT_MS = "nope";
+    expect(questionTimeoutMs()).toBe(0);
   });
 });
 

@@ -142,6 +142,9 @@ export async function startServer(
       } else if (msg && typeof msg === "object" && (msg as { type?: string }).type === "answer") {
         const m = msg as { id?: unknown; text?: unknown };
         if (typeof m.id === "string" && typeof m.text === "string") bridge.resolveQuestion(m.id, m.text);
+      } else if (msg && typeof msg === "object" && (msg as { type?: string }).type === "navigator") {
+        const m = msg as { open?: unknown };
+        if (typeof m.open === "boolean") m.open ? bridge.openNavigator() : bridge.closeNavigator();
       }
     });
   });

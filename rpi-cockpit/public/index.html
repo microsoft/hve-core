@@ -151,8 +151,15 @@
   @media (max-width:640px){
     .topbar{gap:9px;padding:0 12px}
     .crumb,.host{display:none}
-    .center{padding:14px 14px}
+    /* C4: stack the RPI stepper above the center column so the rail stops eating
+       horizontal width on a narrow widget. The board keeps its own h-scroll and
+       the welcome modal fits the viewport with the overlay's own padding. */
+    .main{flex-direction:column}
+    .rail-left{width:100%;border-right:none;border-bottom:1px solid var(--stroke)}
+    .center{padding:14px}
     .opts{grid-template-columns:1fr}
+    .welcome-overlay{padding:12px}
+    .welcome-modal{width:100%;max-width:100%}
   }
 
   .context-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 7px 16px; background: var(--rail, #252526); border-bottom: 1px solid var(--stroke, #3C3C3C); }
@@ -163,6 +170,13 @@
   .ctx-chip.collection { background: var(--brand-2, #094771); color: var(--accent-cyan, #9CDCFE); border-color: transparent; }
 
   [hidden] { display: none !important; }
+  /* C2: a visible keyboard focus indicator for every interactive control, in both
+     themes (var(--accent-blue) is defined for dark and light). */
+  .iconbtn:focus-visible, .btn:focus-visible, .wf-tile:focus-visible,
+  .crumb-back:focus-visible, #welcome-dismiss:focus-visible,
+  select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--accent-blue, #4FC1FF); outline-offset: 2px;
+  }
   .home-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .brand-mark { font-weight: 500; }
   .welcome-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 100; }
@@ -239,7 +253,7 @@
     <button class="iconbtn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button>
   </div>
 
-  <div id="welcome" class="welcome-overlay" hidden>
+  <div id="welcome" class="welcome-overlay" hidden role="dialog" aria-modal="true" aria-label="HVE Core Navigator">
     <div class="welcome-modal">
       <span class="welcome-text">What do you want to do? Pick a workflow to start it here, or reopen this any time with the help button.</span>
       <div class="nav-label">Start a workflow</div>
@@ -264,6 +278,11 @@
     </section>
 
     <section id="loop">
+    <!-- present_options is cross-cutting: it can fire in any domain (RPI, review,
+         interview, backlog) without changing the view. The decision card lives
+         here, outside every view section, so client.js paints it regardless of
+         domain (see A1 in the harden pass). -->
+    <div id="decision" aria-live="polite"></div>
     <div id="rpi-view">
     <aside class="rail-left">
       <div class="rail-title">RPI loop</div>
@@ -271,7 +290,7 @@
     </aside>
 
     <section class="center">
-      <div class="h-row"><h1 id="phase-title">HVE Cockpit</h1><span class="state" id="phase-state"></span></div>
+      <div class="h-row" aria-live="polite"><h1 id="phase-title">HVE Cockpit</h1><span class="state" id="phase-state"></span></div>
       <div class="lead" id="lead"></div>
 
       <div class="sec">Live subagents</div>
@@ -281,8 +300,6 @@
 
       <div class="sec">Validation gate</div>
       <div class="gate" id="gate"></div>
-
-      <div id="decision"></div>
 
       <section id="screen" hidden>
         <div class="sec" id="screen-title">Screen</div>
@@ -322,9 +339,9 @@
       <div class="board-head">
         <span class="board-target" id="board-target">Backlog</span>
         <span class="board-count" id="board-count"></span>
-        <span class="board-action" id="board-action" hidden></span>
+        <span class="board-action" id="board-action" aria-live="polite" hidden></span>
       </div>
-      <div class="board" id="board"></div>
+      <div class="board" id="board" aria-label="Backlog board"></div>
     </section>
     </section>
   </div>

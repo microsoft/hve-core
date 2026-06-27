@@ -70,4 +70,30 @@ describe("navigator client", () => {
     (env.win as any).render(toViewModel(setNavigatorOpen(initialState(), true)));
     expect((env.win.document.getElementById("welcome") as any).hidden).toBe(false);
   });
+
+  it("a dismiss sends a navigator-close frame and stays hidden across a re-render", () => {
+    // open_navigator opens the overlay; the dismiss must flow back to the server
+    // (frame) AND survive the next state push with navigatorOpen:false. (A2)
+    (env.win as any).render(toViewModel(setNavigatorOpen(initialState(), true)));
+    const doc = env.win.document;
+    expect((doc.getElementById("welcome") as any).hidden).toBe(false);
+    (doc.getElementById("welcome-dismiss") as any).click();
+    expect(env.sent).toContainEqual({ type: "navigator", open: false });
+    expect((doc.getElementById("welcome") as any).hidden).toBe(true);
+    // The server has now cleared the flag; the next broadcast must NOT reopen it.
+    (env.win as any).render(toViewModel(setNavigatorOpen(initialState(), false)));
+    expect((doc.getElementById("welcome") as any).hidden).toBe(true);
+  });
+
+  it("Enter on a focused workflow tile launches it and closes the pop-up", () => {
+    // Keyboard parity with a click: the tile is role=button/tabindex=0. (C1)
+    (env.win as any).render(toViewModel(setNavigatorOpen(initialState(), true)));
+    const doc = env.win.document;
+    const tile = doc.querySelector('#nav-workflows [data-launch="plan"]') as any;
+    const ev = new (env.win as any).KeyboardEvent("keydown", { key: "Enter", bubbles: true });
+    tile.dispatchEvent(ev);
+    expect(env.sent).toContainEqual({ type: "launch", workflowId: "plan" });
+    expect(env.sent).toContainEqual({ type: "navigator", open: false });
+    expect((doc.getElementById("welcome") as any).hidden).toBe(true);
+  });
 });
