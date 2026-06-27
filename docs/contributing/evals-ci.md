@@ -73,8 +73,10 @@ The pipeline clean-skips eval execution for fork PRs rather than failing the che
 ```yaml
 jobs:
   eval-execute:
-    if: github.event.pull_request.head.repo.fork == false
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
 ```
+
+The `eval-execute` job is also skipped for non-eval-relevant PRs (those that change only documentation or other non-AI-artifact paths) through the `eval-relevant` output gate, independent of the fork policy.
 
 The `eval-presence` and `eval-lint` jobs do run on fork PRs because they require no secrets. Structural problems with eval specs (missing coverage, schema violations, profanity in stimulus text) surface immediately. Eval execution itself runs only after a maintainer merges the fork branch into a trusted topic branch on the upstream repository.
 
