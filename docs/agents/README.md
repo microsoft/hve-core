@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-25
+ms.date: 2026-06-26
 ms.topic: overview
 keywords:
   - github copilot
@@ -21,7 +21,7 @@ hve-core organizes specialized agents into functional groups. Each group combine
 | GitHub Backlog Management               | 1 active | Very High   | [Backlog Manager](github-backlog/README.md)                                                                                                                        |
 | ADO Backlog Management                  | 2 active | Very High   | [Backlog Manager](ado-backlog/README.md)                                                                                                                           |
 | Jira Backlog Management                 | 2 active | Very High   | Backlog Manager                                                                                                                                                    |
-| [Project Planning](#project-planning)   | 10       | Medium-High | [Project Planning](project-planning/README.md)                                                                                                                     |
+| [Project Planning](#project-planning)   | 9        | Medium-High | [Project Planning](project-planning/README.md)                                                                                                                     |
 | [Security Planning](#security-planning) | 3 active | Very High   | [Security Planner](security/README.md), [SSSC Planner](sssc-planning/README.md)                                                                                    |
 | [RAI Planning](#rai-planning)           | 1 active | Very High   | [RAI Planner](rai-planning/README.md)                                                                                                                              |
 | [Data Science](#data-science)           | 5        | Medium      | Data Science                                                                                                                                                       |
@@ -54,7 +54,7 @@ Automates issue discovery, triage, execution, and PRD-to-issue translation acros
 
 ## Project Planning
 
-Ten specialized agents for project planning activities. Includes builders for Business Requirements Documents, Product Requirements Documents, Architecture Decision Records, architecture diagrams, agile coaching, meeting analysis, network ISA-95 planning, product manager advising, system architecture review, and UX/UI design. See the [Project Planning Agents](project-planning/README.md) for detailed documentation.
+Nine specialized agents for project planning activities. Includes builders for Business Requirements Documents, Product Requirements Documents, Architecture Decision Records, agile coaching, meeting analysis, network ISA-95 planning, product manager advising, system architecture review, and UX/UI design. Architecture diagrams are now delivered through the portable architecture-diagrams skill rather than a dedicated agent. See the [Project Planning Agents](project-planning/README.md).
 
 ## Data Science
 
