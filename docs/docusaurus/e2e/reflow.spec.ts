@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
 
 // Curated key pages mirrored from .pa11yci for page parity (the 404 entry is

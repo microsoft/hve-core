@@ -1,65 +1,56 @@
-version: 2
 updates:
-  # NPM dependency updates - Future-proofing configuration
-  # Note: Dependabot will automatically activate this when package.json is added to the repository
-  # No action needed until npm dependencies are introduced
-  - package-ecosystem: "npm"
-    directories:
-      - "/"
-      - "/docs/docusaurus"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    groups:
-      npm-dependencies:
-        patterns:
-          - "*"
-    labels:
-      - "dependencies"
-      - "npm"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-
-  # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-    ignore:
-      # Managed via .github/aw/actions-lock.json; let `gh aw` own these bumps.
-      - dependency-name: "github/gh-aw-actions"
-      - dependency-name: "github/gh-aw-actions/**"
-    labels:
-      - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-
-  # Enable version updates for uv Python dependencies
-  # Activates when pyproject.toml files appear under skills directories
-  - package-ecosystem: "uv"
-    directories:
-      - "/.github/skills/**"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
-    groups:
-      uv-dependencies:
-        patterns:
-          - "*"
-    labels:
-      - "dependencies"
-      - "python"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
+- commit-message:
+    include: scope
+    prefix: chore
+  directories:
+  - /
+  - /docs/docusaurus
+  groups:
+    npm-dependencies:
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - npm
+  open-pull-requests-limit: 10
+  package-ecosystem: npm
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /
+  groups:
+    github-actions:
+      patterns:
+      - "*"
+  ignore:
+  - dependency-name: "github/gh-aw-actions" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  - dependency-name: "github/gh-aw-actions/**"
+  labels:
+  - dependencies
+  - github-actions
+  open-pull-requests-limit: 5
+  package-ecosystem: github-actions
+  schedule:
+    day: monday
+    interval: weekly
+- commit-message:
+    include: scope
+    prefix: chore
+  directories:
+  - /.github/skills/**
+  groups:
+    uv-dependencies:
+      patterns:
+      - "*"
+  labels:
+  - dependencies
+  - python
+  open-pull-requests-limit: 10
+  package-ecosystem: uv
+  schedule:
+    day: monday
+    interval: weekly
+version: 2

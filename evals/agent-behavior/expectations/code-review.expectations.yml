@@ -1,0 +1,125 @@
+# Bucket-A expectations for code-review
+# Format: per-agent YAML, 5–10 grader-worthy expectations grounded in the agent
+# file's explicit promises and/or current matrix failures. This file is consumed
+# by the next pass that rewrites stimuli + graders end-to-end; do not treat it
+# as a Vally grader file directly.
+#
+# Note: code-review is the human-gated orchestrator that bootstraps change
+# context once, confirms scope with the human, produces a factual orientation
+# walkthrough, presents a dispatch board, lets the human pick perspectives
+# (functional, standards, accessibility, security, pr, or full) and a depth
+# tier (basic, standard, comprehensive), dispatches each selected perspective
+# to a thin skill-backed subagent, and merges the findings into one report
+# persisted under `.copilot-tracking/reviews/code-reviews/<branch>/`.
+slug: code-review
+class: code-reviewer
+agent_file: .github/agents/coding-standards/code-review.agent.md
+stimulus_file: evals/agent-behavior/stimuli/code-review.yml
+
+expectations:
+  - expectation_id: perspectives-surfaced
+    summary: Response surfaces the selectable review perspectives including `full`.
+    signal: Output references the perspective lanes the agent can run.
+    pass_criteria: |
+      Response names the selectable perspectives from the documented set
+      (`functional`, `standards`, `accessibility`, `security`, `pr`) and
+      offers `full` as the option that runs every perspective. Naming a
+      subset plus `full` is acceptable when the subset is derived from the
+      confirmed change scope.
+    failure_modes:
+      - Response performs review without surfacing any perspective choice.
+      - Invents perspective lanes the agent does not define.
+      - Omits the `full` option entirely.
+    priority: high
+    contract_ref: "agent §Perspectives + §Step 3 Perspective and Depth Selection"
+
+  - expectation_id: depth-tier-named
+    summary: Response names a depth tier controlling verification rigor.
+    signal: Output references one of the documented depth tiers.
+    pass_criteria: |
+      Response references at least one documented depth tier
+      (`basic`, `standard`, or `comprehensive`) as a verification-rigor dial
+      that is independent of perspective selection.
+    failure_modes:
+      - No depth tier named.
+      - Conflates depth with perspective selection (treats depth as adding
+        or removing lanes).
+      - Uses an undocumented tier name.
+    priority: medium
+    contract_ref: "agent §Step 3 Perspective and Depth Selection (basic|standard|comprehensive)"
+
+  - expectation_id: human-gated-orientation
+    summary: Response produces a factual orientation before assigning severity, and pauses for human confirmation.
+    signal: Output presents an orientation/walkthrough or dispatch board and invites the human to confirm scope before deeper review.
+    pass_criteria: |
+      Response builds a factual orientation walkthrough or dispatch board
+      from the diff and pauses for human confirmation of scope, perspectives,
+      or depth before dispatching deeper review. The orientation register
+      stays factual (no severity or verdict assigned in the walkthrough).
+    failure_modes:
+      - Jumps straight to severity-graded findings with no orientation or
+        scope confirmation.
+      - Assigns severity or a verdict inside the orientation walkthrough.
+    priority: high
+    contract_ref: "agent §Step 2 Orientation Floor and Dispatch-Board Confirmation"
+
+  - expectation_id: subagent-dispatch-evidence
+    summary: Response dispatches selected perspectives to their subagents (or notes unavailability).
+    signal: Output references dispatching perspective subagents or a documented unavailability fallback.
+    pass_criteria: |
+      Response either (a) references dispatching the selected perspectives to
+      their subagents (human-readable names such as `Code Review Functional`
+      acceptable), OR (b) explicitly states the subagent tooling is
+      unavailable and applies the perspective lens inline as the documented
+      fallback.
+    failure_modes:
+      - Performs all review inline with no subagent reference and no
+        unavailability notice.
+      - Dispatches to undocumented subagent names.
+    priority: high
+    contract_ref: "agent §Step 6 Dispatch Selected Perspectives"
+
+  - expectation_id: tracking-dir-shape
+    summary: Findings artifacts live under the normalized review subtree.
+    signal: Output names a path matching `.copilot-tracking/reviews/code-reviews/<branch>/`.
+    pass_criteria: |
+      When the agent reports tracking-file activity, the path starts with
+      `.copilot-tracking/reviews/code-reviews/` and includes a sanitized
+      branch segment (`/` replaced with `-`). Expected children include
+      per-perspective findings JSON, `review.md`, and `metadata.json`.
+    failure_modes:
+      - Tracking written outside `.copilot-tracking/reviews/code-reviews/`.
+      - Uses raw branch name with `/` instead of the sanitized form.
+    priority: medium
+    applies_when: "agent reports tracking-file creation or update"
+    contract_ref: "agent §Step 4 Prepare Dispatch State + §Step 7 Merge, Walk Back, and Persist"
+
+  - expectation_id: unified-report-verdict
+    summary: Merged report carries severity-labeled findings and a normalized verdict.
+    signal: Output references a single merged report with severity vocabulary and an overall verdict.
+    pass_criteria: |
+      The merged report (or response summarizing it) contains findings
+      labeled with severity drawn from the severity taxonomy
+      (`critical|high|medium|low|info|warning`) and concludes with an overall
+      verdict from `approve|approve_with_comments|request_changes`. Any
+      Critical finding forces `request_changes`.
+    failure_modes:
+      - Merged report lists findings without severities.
+      - No overall verdict named.
+      - Verdict uses non-documented vocabulary.
+    priority: high
+    contract_ref: "agent §Step 7 Merge, Walk Back, and Persist (severity-sort + verdict normalization)"
+
+  - expectation_id: no-source-edit
+    summary: Review does not modify reviewed source files.
+    signal: Output does not present edits to the reviewed source files.
+    pass_criteria: |
+      The agent reviews and reports findings without editing the source code
+      under review. Writing tracking artifacts under
+      `.copilot-tracking/reviews/code-reviews/` is expected and does not
+      count as a source edit.
+    failure_modes:
+      - Applies fixes directly to the reviewed source files.
+      - Emits edits to non-tracking source paths during review.
+    priority: high
+    contract_ref: "agent §Read Discipline + tools (read-only review, tracking writes only)"

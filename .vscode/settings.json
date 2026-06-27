@@ -51,6 +51,7 @@
     ".github/agents/accessibility/subagents": true,
     ".github/agents/ado": true,
     ".github/agents/coding-standards": true,
+    ".github/agents/coding-standards/subagents": true,
     ".github/agents/data-science": true,
     ".github/agents/design-thinking": true,
     ".github/agents/experimental": true,
@@ -62,6 +63,7 @@
     ".github/agents/project-planning": true,
     ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
+    ".github/agents/rai-planning/subagents": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
   },
@@ -87,6 +89,7 @@
     ".github/skills/jira": true,
     ".github/skills/project-planning": true,
     ".github/skills/rai": true,
+    ".github/skills/rpi": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },

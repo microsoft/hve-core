@@ -32,6 +32,8 @@ Select all that apply:
 * [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
 * [ ] Copilot skill (`.github/skills/*/SKILL.md`)
+* [ ] Copilot hook (`.github/hooks/*/*.json`)
+* [ ] Eval spec added/updated for changed AI artifacts (`evals/`)
 
 > Note for AI Artifact Contributors:
 >
@@ -98,6 +100,7 @@ The following validation commands must pass before merging:
 * [ ] Skill structure validation: `npm run validate:skills`
 * [ ] Link validation: `npm run lint:md-links`
 * [ ] PowerShell analysis: `npm run lint:ps`
+* [ ] Eval spec schema and coverage (if AI artifacts changed): `npm run eval:lint:schema`
 * [ ] Plugin freshness: `npm run plugin:generate`
 * [ ] Docusaurus tests: `npm run docs:test`
 

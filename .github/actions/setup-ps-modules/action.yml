@@ -1,0 +1,47 @@
+name: Setup PowerShell Modules
+description: Installs pinned PowerShell modules with caching and retry on PSGallery failures
+
+inputs:
+  import:
+    description: 'Import modules into the session after install'
+    required: false
+    default: 'false'
+  force:
+    description: 'Force reinstall even when modules are already present'
+    required: false
+    default: 'false'
+  cache-key-suffix:
+    description: 'Optional suffix appended to the cache key for isolation'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Cache PowerShell modules
+      id: ps-cache
+      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ~/.local/share/powershell/Modules
+        key: ps-modules-${{ runner.os }}-${{ hashFiles('scripts/security/ps-module-versions.json') }}${{ inputs.cache-key-suffix && format('-{0}', inputs.cache-key-suffix) || '' }}
+
+    - name: Install PowerShell modules
+      shell: pwsh
+      run: |
+        $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'scripts/security/Install-PSModules.ps1'
+        $installArgs = @{
+          Scope = 'CurrentUser'
+        }
+        if ('${{ inputs.force }}' -eq 'true') { $installArgs['Force'] = $true }
+        & $scriptPath @installArgs
+
+    - name: Import PowerShell modules
+      if: inputs.import == 'true'
+      shell: pwsh
+      run: |
+        $configPath = Join-Path $env:GITHUB_WORKSPACE 'scripts/security/ps-module-versions.json'
+        $config = Get-Content -Raw $configPath | ConvertFrom-Json
+        foreach ($prop in $config.modules.PSObject.Properties) {
+          Import-Module -Name $prop.Name -RequiredVersion $prop.Value.version -Force -ErrorAction Stop
+          Write-Host "Imported $($prop.Name) $($prop.Value.version)"
+        }

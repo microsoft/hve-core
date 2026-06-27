@@ -1,1 +1,0 @@
-../../../../.github/prompts/coding-standards/code-review-full.prompt.md

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Compares current agent files against the .hve-tracking.json manifest.
 # Requires jq. Outputs per-file status lines.

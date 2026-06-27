@@ -2,7 +2,7 @@
 title: Test Scripts
 description: Pester test runner, changed-file detection, and test directory organization
 author: HVE Core Team
-ms.date: 2026-03-17
+ms.date: 2026-06-24
 ms.topic: reference
 keywords:
   - powershell
@@ -27,7 +27,10 @@ local and CI environments.
 
 #### Features
 
-* Writes `logs/pester-summary.json` with overall pass/fail counts and duration
+* Writes `logs/pester-summary.json` with overall pass/fail counts and duration.
+  When code coverage is enabled, the summary also includes `CoveragePercent`
+  (measured percentage, rounded to two decimal places) and `CoverageTarget`
+  (configured threshold from `pester.config.ps1`)
 * Writes `logs/pester-failures.json` with failure details including test name,
   file path, error message, and stack trace
 * Supports code coverage reporting
@@ -38,6 +41,11 @@ local and CI environments.
 * `-TestPath` - Path to specific test file(s) or directory
 * `-CI` (switch) - Enable CI mode with exit codes and NUnit output
 * `-CodeCoverage` (switch) - Enable code coverage analysis
+* `-Tag` / `-IncludeTag` - Run only tests whose Describe/Context/It blocks carry
+  one of the supplied tags
+* `-ExcludeTag` - Exclude tests whose blocks carry any of the supplied tags;
+  defaults to `@('Integration','Slow')` when omitted, and passing this parameter
+  (including `-ExcludeTag @()`) replaces the default rather than appending to it
 
 #### Usage
 

@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -17,6 +17,12 @@ BeforeAll {
     Mock Write-Host {}
     Mock Write-CIAnnotation {}
     Mock Write-CIStepSummary {}
+}
+
+AfterAll {
+    # Remove the uv/uvx stubs so they do not leak into later test suites
+    Remove-Item -Path 'Function:\uv' -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path 'Function:\uvx' -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Find-PythonProjects' -Tag 'Unit' {

@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-06-08
+ms.date: 2026-06-25
 ms.topic: overview
 ---
 
@@ -105,6 +105,16 @@ Individual validation workflows called by orchestration workflows:
 | `action-version-consistency-scan.yml` | Action version consistency       | `npm run lint:version-consistency`  |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
+
+### Composite Actions
+
+Composite actions package reusable step sequences that workflows invoke directly. Unlike reusable workflows (called via `uses:` at the job level with `workflow_call`), composite actions are referenced as steps within a job.
+
+| Action             | Purpose                                     | Reference                                  |
+|--------------------|---------------------------------------------|--------------------------------------------|
+| `setup-ps-modules` | Cached PowerShell module install with retry | `uses: ./.github/actions/setup-ps-modules` |
+
+The `setup-ps-modules` action caches modules keyed on `scripts/security/ps-module-versions.json` and retries installation with exponential backoff on PSGallery failures. Workflows that need PowerShell modules must use `uses: ./.github/actions/setup-ps-modules` instead of inline `Install-Module` steps, consistent with the convention recorded in `.github/copilot-instructions.md`.
 
 ## PR Validation Pipeline
 

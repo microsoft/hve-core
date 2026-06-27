@@ -24,6 +24,7 @@ Executes a single implementation phase from a plan with full codebase access and
 
 * Phase identifier and step list from the implementation plan.
 * Plan file path (`.copilot-tracking/plans/` file).
+* Delegated RPI work may provide a bounded phase scope and expect a compact completion report plus file-backed progress updates.
 * Details file path (`.copilot-tracking/details/` file) with line ranges for this phase.
 * Research file path when available.
 * Instruction files to read and follow:
@@ -80,6 +81,18 @@ Return the structured completion report using the Response Format.
 3. When a blocking issue is encountered mid-execution, apply the early-return rules from Step 2 rather than guessing or continuing silently.
 4. Report all steps attempted in the completion report, including partial progress on incomplete steps.
 
+## File Reference Formatting
+
+This subagent returns a structured template yet keeps this section because the Files Changed paths it reports flow into the parent agent's tracking artifacts, where plain-text formatting must hold.
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the structured completion report, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* src/services/auth.ts
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 Return completion status using this structure:
@@ -104,9 +117,9 @@ Return completion status using this structure:
 
 ### Files Changed
 
-* Added: {{file_paths}}
-* Modified: {{file_paths}}
-* Removed: {{file_paths}}
+* Added: {{plain-text workspace-relative paths for newly added files}}
+* Modified: {{plain-text workspace-relative paths for modified files}}
+* Removed: {{plain-text workspace-relative paths for removed files}}
 
 ### Issues
 

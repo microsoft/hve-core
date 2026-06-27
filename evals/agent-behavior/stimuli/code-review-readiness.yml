@@ -1,0 +1,21 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-readiness-lens
+    prompt: |
+      As the readiness code-review perspective, assess whether this change is
+      ready to merge: validation evidence, test coverage, and rollout
+      considerations. The change adds a feature flag with no accompanying tests.
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: readiness-vocabulary
+        config:
+          pattern: '(?i)(readiness|ready|test|coverage|validation|evidence|rollout|missing|risk|recommend)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

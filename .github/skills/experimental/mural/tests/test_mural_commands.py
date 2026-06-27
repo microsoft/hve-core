@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """CLI handler tests for mural.py.
 
@@ -1941,7 +1941,16 @@ def test_widget_create_arrow(
 
     assert rc == mural_module.EXIT_SUCCESS
     assert calls[0]["path"].endswith("/widgets/arrow")
-    assert calls[0]["json_body"] == {"x1": 1.0, "y1": 2.0, "x2": 3.0, "y2": 4.0}
+    assert calls[0]["json_body"] == {
+        "x": 1.0,
+        "y": 2.0,
+        "width": 2.0,
+        "height": 2.0,
+        "points": [
+            {"x": 0.0, "y": 0.0},
+            {"x": 2.0, "y": 2.0},
+        ],
+    }
 
 
 def test_widget_create_image_happy_path(

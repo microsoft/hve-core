@@ -1,0 +1,20 @@
+name: fixture-unresolved-backlink
+description: Spec with a stimulus referencing an artifact that does not exist.
+type: capability
+defaults:
+  runs: 1
+  timeout: 60s
+  executor: copilot-sdk
+scoring:
+  threshold: 0.7
+
+stimuli:
+  - name: bad-backlink
+    prompt: "What is 2 + 2?"
+    tags:
+      category: fixture
+      skill: this-skill-does-not-exist-anywhere
+    graders:
+      - type: output-matches
+        name: four
+        config: {pattern: '\b4\b'}
