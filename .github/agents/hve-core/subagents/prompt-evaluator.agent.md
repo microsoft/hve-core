@@ -96,13 +96,27 @@ Create and update an *evaluation-log.md* file in the sandbox folder and progress
 4. Repeat the Required Steps as needed to ensure completeness of the evaluation log file.
 5. Cleanup and finalize the evaluation log, interpret the file for your response and Evaluation Findings.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the evaluation log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/sandbox/2026-02-23-git-commit-001/evaluation-log.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
-Return Evaluation Findings and include the following requirements:
+The subagent writes complete evaluation findings to the evaluation log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
 
-* The relative path to the sandbox folder.
-* The relative path to the evaluation log.
-* The status of the evaluation: Complete, In-Progress, Blocked, etc.
-* The important details from the evaluation log based on your interpretation.
-* A checklist of recommended modifications ordered by (and including) severity for specific prompt instruction file(s).
-* Any clarifying questions that requires more information or input from the user.
+Initial chat response, emit at most:
+* 1 line: sandbox folder path.
+* 1 line: evaluation log file path (the parent re-reads this file when it needs detail).
+* 1 line: evaluation status (Complete / In-Progress / Blocked).
+* Up to 7 bullet-point findings (each ≤ 240 chars) interpreting the evaluation log.
+* A checklist of recommended modifications ordered by and including severity for the target prompt instruction file(s).
+* Up to 3 clarifying questions, only when blocking.
+* 1 short "Full Detail" pointer line: Re-read <path> for complete evaluation findings, severity rationale, and recommended modifications.
+
+Do not paste full evaluation tables or prompt excerpts into the chat response. The evaluation log is the source of truth.

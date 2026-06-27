@@ -2,7 +2,7 @@
 title: Baseline Equivalence Suite
 description: 'Pairs identical probes across baseline and customized environments to assert only documented divergences appear'
 author: HVE Core Team
-ms.date: 2026-05-22
+ms.date: 2026-06-24
 ---
 
 ## Purpose
@@ -111,9 +111,7 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | agile-coach                  | project-planning | [surface-signatures/agile-coach.yml](surface-signatures/agile-coach.yml)                                   | 0                 | authoritative |
 | arch-diagram-builder         | project-planning | [surface-signatures/arch-diagram-builder.yml](surface-signatures/arch-diagram-builder.yml)                 | 0                 | authoritative |
 | brd-builder                  | project-planning | [surface-signatures/brd-builder.yml](surface-signatures/brd-builder.yml)                                   | 2                 | authoritative |
-| code-review-full             | coding-standards | [surface-signatures/code-review-full.yml](surface-signatures/code-review-full.yml)                         | 2                 | authoritative |
-| code-review-functional       | coding-standards | [surface-signatures/code-review-functional.yml](surface-signatures/code-review-functional.yml)             | 2                 | authoritative |
-| code-review-standards        | coding-standards | [surface-signatures/code-review-standards.yml](surface-signatures/code-review-standards.yml)               | 1                 | authoritative |
+| code-review                  | coding-standards | [surface-signatures/code-review.yml](surface-signatures/code-review.yml)                                   | 3                 | authoritative |
 | dependency-reviewer          | root             | [surface-signatures/dependency-reviewer.yml](surface-signatures/dependency-reviewer.yml)                   | 1                 | authoritative |
 | documentation                | hve-core         | [surface-signatures/documentation.yml](surface-signatures/documentation.yml)                               | 4                 | authoritative |
 | dt-coach                     | design-thinking  | [surface-signatures/dt-coach.yml](surface-signatures/dt-coach.yml)                                         | 0                 | authoritative |
@@ -131,7 +129,6 @@ relies on shared corpus coverage rather than per-agent backlinks. New agents lan
 | memory                       | hve-core         | [surface-signatures/memory.yml](surface-signatures/memory.yml)                                             | 6                 | authoritative |
 | network-isa95-planner        | project-planning | [surface-signatures/network-isa95-planner.yml](surface-signatures/network-isa95-planner.yml)               | 0                 | authoritative |
 | pptx                         | experimental     | [surface-signatures/pptx.yml](surface-signatures/pptx.yml)                                                 | 0                 | advisory      |
-| pr-review                    | hve-core         | [surface-signatures/pr-review.yml](surface-signatures/pr-review.yml)                                       | 4                 | authoritative |
 | prd-builder                  | project-planning | [surface-signatures/prd-builder.yml](surface-signatures/prd-builder.yml)                                   | 2                 | authoritative |
 | product-manager-advisor      | project-planning | [surface-signatures/product-manager-advisor.yml](surface-signatures/product-manager-advisor.yml)           | 2                 | authoritative |
 | prompt-builder               | hve-core         | [surface-signatures/prompt-builder.yml](surface-signatures/prompt-builder.yml)                             | 0                 | authoritative |
@@ -163,7 +160,7 @@ The `dt-coach` and `dt-learning-tutor` rows show stimulus coverage `0` because t
 
 The `eval-dataset-creator`, `gen-data-spec`, `gen-jupyter-notebook`, `gen-streamlit-dashboard`, and `test-streamlit-dashboard` rows show stimulus coverage `0` because their data-science and dashboard-generation domains do not map to any of the v1 stimulus categories. They are covered indirectly through dependency-map dispatch when other agents invoke them as subagents, and through their own surface-signature regex on every baseline-equivalence run.
 
-The `code-review-full` and `code-review-functional` agents are backlinked onto the two existing `code-qa` walkthrough prompts (`code-walkthrough-fizzbuzz` and `code-error-explain-indexerror`) because step-by-step code explanation is a natural fit for review-focused agents. The `code-review-standards` agent is backlinked onto `multi-turn-correct-misunderstanding` because standards-driven correction of a prior mistake is a natural fit for that agent's domain.
+The `code-review` agent is backlinked onto the two existing `code-qa` walkthrough prompts (`code-walkthrough-fizzbuzz` and `code-error-explain-indexerror`) because step-by-step code explanation is a natural fit for a review-focused agent, and onto `multi-turn-correct-misunderstanding` because standards-driven correction of a prior mistake is a natural fit for that agent's domain.
 
 The `brd-builder`, `prd-builder`, and `product-manager-advisor` agents are backlinked onto the two most generic `ambiguous-spec` prompts (`vague-feature` and `update-thing`) because requirements elicitation is a natural response to under-specified asks.
 

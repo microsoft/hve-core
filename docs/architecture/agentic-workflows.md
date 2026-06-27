@@ -2,7 +2,7 @@
 title: Agentic Workflows
 description: End-to-end process flow for AI-driven issue triage, implementation, and review workflows in hve-core
 author: HVE Core Team
-ms.date: 2026-03-27
+ms.date: 2026-06-25
 ms.topic: concept
 sidebar_position: 4
 keywords:
@@ -96,7 +96,7 @@ flowchart TD
 |----------------------|----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Issue Triage         | Issue opened or labeled `needs-triage` | [Issue Triage Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/issue-triage.agent.md)                         | Classify, detect duplicates, assess quality, decompose, label, evaluate readiness                                                                       |
 | Issue Implementation | Issue labeled `agent-ready`            | [Task Implementor Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/task-implementor.agent.md)        | Research codebase, plan changes, implement, open PR                                                                                                     |
-| PR Review            | PR opened or marked ready for review   | [PR Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md)                      | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
+| PR Review            | PR opened or marked ready for review   | [Code Review Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/coding-standards/code-review.agent.md)          | Review correctness, conventions, security; label `review-passed` or `needs-revision` for non-maintainer PRs, advisory `COMMENT` only for maintainer PRs |
 | Dependabot PR Review | Dependabot PR opened or updated        | [Dependency Reviewer Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/dependency-reviewer.agent.md)           | Validate licensing, SHA pinning, environment sync; approve safe bumps                                                                                   |
 | Documentation Drift  | Push to main                           | [Documentation Agent](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/documentation.agent.md) (drift mode) | Map code changes to docs, flag stale documentation for follow-up                                                                                        |
 
@@ -111,7 +111,7 @@ flowchart TD
 <!-- markdownlint-disable-next-line MD028 -->
 
 > [!NOTE]
-> **Maintainer advisory mode.** When the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, the PR Review Agent switches to advisory mode: it posts a `COMMENT` review prefixed with "Advisory review …", never uses `REQUEST_CHANGES`, does not add the `needs-revision` label, and does not convert the PR to draft.
+> **Maintainer advisory mode.** When the PR author is a `MEMBER`, `OWNER`, or `COLLABORATOR`, the Code Review Agent switches to advisory mode: it posts a `COMMENT` review prefixed with "Advisory review …", never uses `REQUEST_CHANGES`, does not add the `needs-revision` label, and does not convert the PR to draft.
 >
 > **`skip-review` label guard.** The `skip-review` label only skips the PR Review workflow when the PR author's association is `MEMBER`, `OWNER`, or `COLLABORATOR`; PRs from other authors are reviewed normally even when the label is present.
 
@@ -123,7 +123,7 @@ All five workflows are defined as GitHub Agentic Workflow markdown files under `
 |---------------------------|---------------------------------|----------------------------------------|------------------------|
 | `issue-triage.md`         | `issue-triage.lock.yml`         | Issue opened or labeled `needs-triage` | Issue Triage Agent     |
 | `issue-implement.md`      | `issue-implement.lock.yml`      | Issue labeled `agent-ready`            | Task Implementor Agent |
-| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | PR Review Agent        |
+| `pr-review.md`            | `pr-review.lock.yml`            | PR opened or marked ready for review   | Code Review Agent      |
 | `dependency-pr-review.md` | `dependency-pr-review.lock.yml` | Dependabot PR opened or updated        | Dependency Reviewer    |
 | `doc-update-check.md`     | `doc-update-check.lock.yml`     | Push to main                           | Documentation Checker  |
 
@@ -180,7 +180,7 @@ The [Security Reviewer](https://github.com/microsoft/hve-core/blob/main/.github/
 
 ### Code Review
 
-The [Functional Code Review](https://github.com/microsoft/hve-core/blob/main/.github/agents/code-review/functional-code-review.agent.md) agent analyzes branch diffs for logic errors, edge case gaps, and error handling deficiencies before code reaches a pull request. The [PR Review](https://github.com/microsoft/hve-core/blob/main/.github/agents/hve-core/pr-review.agent.md) agent provides comprehensive review after PR creation.
+The [Code Review](https://github.com/microsoft/hve-core/blob/main/.github/agents/coding-standards/code-review.agent.md) agent reviews branch diffs through one or more perspectives (functional, standards, accessibility, security, and PR-level) and merges them into a single human-gated report. It runs before code reaches a pull request and also backs the PR Review workflow after PR creation.
 
 ### Documentation Operations
 
@@ -223,7 +223,7 @@ flowchart LR
         PB["Prompt Builder"]
         SR["Security Reviewer"]
         CR["Code Review"]
-        DOC["Doc Ops"]
+        DOC["Documentation"]
         BM["Backlog Manager"]
         PP["Project Planning"]
     end

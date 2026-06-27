@@ -169,7 +169,7 @@ Characteristics:
 * Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/{collection}/subagents/`) to separate them from user-facing agents.
 * Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
-* Cannot run their own subagents; only the parent agent orchestrates subagent calls.
+* May orchestrate their own subagents when the harness supports nested subagent calls; otherwise the parent agent orchestrates subagent calls.
 
 Create subagents when a parent agent needs to parallelize work or delegate a specialized, repeatable task. When the workflow is linear and does not benefit from isolated execution, keep the logic within the parent agent or use a prompt file.
 
@@ -177,7 +177,7 @@ Subagents follow the same authoring standards as other agent files. Include a Re
 
 #### Subagent Structural Template
 
-All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents. Include a Required Protocol section when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit it for simpler subagents where the Required Steps section is self-contained. For instance, a research-only subagent that reads files and writes findings needs no Required Protocol because its steps are self-contained.
+All subagents in the codebase follow a canonical section pattern. Use this template when creating new subagents. Include a Required Protocol section when the subagent has execution constraints, repetition rules, or side-effect boundaries; omit it for simpler subagents where the Required Steps section is self-contained. For instance, a research-only subagent that reads files and writes findings needs no Required Protocol because its steps are self-contained. Subagents that write references into .copilot-tracking artifacts should include a File Reference Formatting section; simpler subagents that return a structured template to the parent rather than writing artifacts may omit it, just as you can omit Required Protocol when the Required Steps section is self-contained.
 
 ```markdown
 # Agent Name                    <!-- H1 matching the agent name -->
@@ -220,6 +220,10 @@ Create and update the artifact progressively documenting:
 2. Repeat as needed to ensure completeness.
 3. Finalize the output artifact.
 
+## File Reference Formatting   <!-- Plain-text paths for .copilot-tracking artifact content -->
+
+State the plain-text path rule for workspace-relative references written into .copilot-tracking artifacts.
+
 ## Response Format              <!-- Structured return to parent agent -->
 
 Return structured findings including:
@@ -229,6 +233,15 @@ Return structured findings including:
 * Key details and recommendations.
 * Clarifying questions.
 ```
+
+
+
+Use one of two canonical categories for subagent responses, based on the primary deliverable.
+
+* Compact Pointer Format: Use for read-only or analysis subagents that write findings to a .copilot-tracking artifact and return an executive summary. Open with the framing that complete findings are written to disk before returning, the chat response is an executive summary only, and full fidelity lives on disk. Include the primary artifact or log path line, plus any additional path lines the parent contract requires, such as a sandbox or working-folder path, keeping path lines minimal, one status line, up to about seven findings each no longer than 240 characters, an optional recommended-next-items checklist, up to three clarifying questions only when blocking, one short "Full Detail" pointer line in the form "Re-read <path> for ...", and a closing sentence stating that the artifact is the source of truth. Use researcher-subagent and the validators as the canonical examples.
+* Structured Template Format: Use for write or modification subagents that change workspace files and return a fenced markdown template. Mirror the phase-implementor section set: Status, Executive Details, Steps Completed, Steps Not Completed, Files Changed (Added/Modified/Removed with plain-text paths), Issues, Suggested Additional Steps, Validation Results, and Clarifying Questions. Preserve the section set, but adapt the Files Changed breakdown to the subagent's domain when that better fits its outputs (for example, a prompt-modification subagent may group changes by prompt, related, and tracking file). Use phase-implementor as the canonical example.
+* Status line rule: Both formats use a Status line, and the status vocabulary may follow the canonical set or the parent contract's vocabulary, but it must be consistent within a given subagent.
+* Selection rule: Classify by primary deliverable. Analysis or findings return a compact pointer; file modifications return a structured template. For any workspace paths used in either format, follow the Surface A rule under Prompt Writing Style and use plain-text workspace-relative paths.
 
 ### Instructions Files
 
@@ -726,7 +739,14 @@ Prompt instructions have the following characteristics:
 
 Guidance voice is the default for prompt instructions and general guidance. Imperative voice applies to subagent action steps and direct autonomous execution. Both styles are appropriate in their respective contexts.
 
-### User-Facing Responses
+### Surface A: Artifact Content References
+
+References written into .copilot-tracking artifact content use plain-text workspace-relative paths. Do not use markdown links, #file: directives, or backticks for those paths because VS Code resolves them and reports missing-target errors that flood the Problems tab. External URLs may still use markdown link syntax.
+
+* .copilot-tracking/plans/2026-01-24-task-plan.instructions.md
+* .copilot-tracking/research/2026-01-24-research.md
+
+### Surface B: Chat Response References
 
 When instructions describe how to respond to users in conversation:
 
@@ -735,6 +755,8 @@ When instructions describe how to respond to users in conversation:
 * Use workspace-relative paths for file links.
 * Do not wrap file paths or links in backticks. Backticks prevent the conversation viewer from rendering clickable links.
 * Use placeholders like `{{YYYY-MM-DD}}` or `{{task}}` for dynamic path segments.
+
+This markdown-link guidance applies to in-conversation responses to the user (chat); references written into .copilot-tracking artifact content use plain-text paths instead, as described in the Surface A rule above.
 
 ```markdown
 <!-- Avoid backticks around file paths -->
@@ -794,7 +816,7 @@ Task specification:
 * Prompt instruction files can be selected dynamically when appropriate (for example, "Find related instructions files and have the subagent read and follow them").
 * Indicate the types of tasks the subagent completes.
 * Provide the subagent a step-based protocol when multiple steps are needed.
-* Subagents complete their work directly without orchestrating other subagents.
+* Subagents complete their work directly, orchestrating other subagents only when the task benefits from delegation and the harness supports it.
 
 Response format:
 

@@ -2,7 +2,7 @@
 title: "Transparency Note: HVE Core (May 2026)"
 description: "Public Transparency Note for HVE Core, a prompt-engineering and agentic-customization framework distributed by microsoft/hve-core."
 author: HVE Core Maintainers
-ms.date: 2026-06-17
+ms.date: 2026-06-26
 ms.topic: overview
 keywords:
   - responsible-ai
@@ -235,18 +235,22 @@ The five appendices below cover the agents whose output most influences downstre
 * **Specific limitations:** The agent does not run Scorecard live, does not produce signed attestations, and does not generate SBOMs. Capability reads come from operator-supplied evidence; the agent cannot independently verify a claim that, for example, a workflow uses pinned action SHAs. Standards versions are pinned to the embedded mapping; recheck against current OpenSSF and SLSA documentation before publication.
 * **Specific considerations:** Treat the projected Scorecard score as an estimate based on the operator-reported state. Actual scores depend on the live tooling configuration, recent commit history, and Scorecard heuristics that may evolve.
 
-### Appendix 4: Code-review agents (full, functional, standards)
+### Appendix 4: Code Review agent
 
 * **Agent files:**
-  * `.github/agents/coding-standards/code-review-full.agent.md`
-  * `.github/agents/coding-standards/code-review-functional.agent.md`
-  * `.github/agents/coding-standards/code-review-standards.agent.md`
-* **Purpose:** Three sibling agents that read a diff or pull request scope and produce structured review feedback against repository conventions, language-specific instructions, and a configurable verdict rubric. The "full" agent runs both functional and standards passes; "functional" focuses on behavior, correctness, and design; "standards" focuses on style, idiom, and convention.
+  * `.github/agents/coding-standards/code-review.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-functional.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-standards.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-accessibility.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-security.agent.md`
+  * `.github/agents/coding-standards/subagents/code-review-pr.agent.md`
+* **Purpose:** A single human-gated orchestrator that reads a diff or pull request scope, confirms scope with the operator, lets the operator choose which perspectives run and how deeply, and merges the results into one structured review document.
+  It dispatches up to five thin perspective subagents: functional (behavior, correctness, design), standards (style, idiom, convention), accessibility (UI, markup, and document surfaces), security (auth, crypto, parsing, deserialization, secrets, networking), and pr (pull request readiness). Selecting `full` runs every perspective; the depth tier (`basic`, `standard`, or `comprehensive`) applies the same verification rigor to whichever perspectives were selected.
 * **Inputs:** Diff scope (branch, commit range, or attached file set), language-specific instruction files under `.github/instructions/coding-standards/`, and repository copilot instructions.
-* **Outputs:** A markdown review document under `.copilot-tracking/reviews/code-reviews/{date}/` containing per-finding categorization, severity, verdict normalization, and a summary. Outputs carry the AI-assistance disclosure footer.
-* **Intended uses:** Pre-pull-request self-review, draft review feedback for a human reviewer to vet, and standards-coverage spot checks.
-* **Specific limitations:** The agents do not execute code, do not run tests, do not connect to a debugger, and do not reason about runtime behavior beyond what the diff and the embedded instructions allow. They cannot verify security claims, cannot confirm test coverage figures, and cannot validate that an external dependency behaves as documented. They are pattern-matching reviewers, not human reviewers.
-* **Specific considerations:** Treat verdicts as suggestions. The agents may produce false positives (flagging conformant code as non-conformant) and false negatives (missing real issues). A human code-reviewer remains responsible for the merge decision. Do not configure the agent as a required-status check that blocks merge without a human in the loop.
+* **Outputs:** A markdown review document under `.copilot-tracking/reviews/code-reviews/{branch-slug}/` containing per-finding categorization, severity, verdict normalization, and a summary, alongside a `metadata.json` record. Outputs carry the AI-assistance disclosure footer.
+* **Intended uses:** Pre-pull-request self-review, draft review feedback for a human reviewer to vet, and perspective-specific coverage spot checks.
+* **Specific limitations:** The agent does not execute code, does not run tests, does not connect to a debugger, and does not reason about runtime behavior beyond what the diff and the embedded instructions allow. It cannot verify security claims, cannot confirm test coverage figures, and cannot validate that an external dependency behaves as documented. The perspective subagents are pattern-matching reviewers, not human reviewers.
+* **Specific considerations:** Treat verdicts as suggestions. The agent may produce false positives (flagging conformant code as non-conformant) and false negatives (missing real issues). A human code-reviewer remains responsible for the merge decision. Do not configure the agent as a required-status check that blocks merge without a human in the loop.
 
 ### Appendix 5: Customer Card Render skill
 

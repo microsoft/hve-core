@@ -1,9 +1,10 @@
 ---
 description: "Code review diff computation: branch detection, scope locking, large-diff handling, and non-source filtering"
-applyTo: "**/.github/agents/coding-standards/**, **/.github/prompts/coding-standards/**"
 ---
 
 # Diff Computation Protocol
+
+> Delivery: this file is delivered via the explicit `#file:` import in code-review.agent.md, not via `applyTo`. Plugin and extension distributions strip the `.github/` prefix, so an `applyTo` glob targeting `.github/...` would match nothing once distributed. Future coding-standards agents or prompts that need this guidance must import it with `#file:` rather than relying on `applyTo`.
 
 Obtain the diff before reading any source files. Use the decision tree below to determine the appropriate method, then apply scope rules and large diff handling.
 
@@ -21,16 +22,24 @@ Run `git branch --show-current` and `git status --short` to determine context. M
 
 Invoke the **pr-reference** skill to compute the diff. The skill handles branch detection, merge-base resolution, file listing, non-source exclusions, and large diff chunking.
 
-1. Generate the structured diff:
+1. Generate the structured diff to an explicit output path so that path is a single source of truth the review agent reuses for `diffPatchPath` (overridable, not implicitly coupled to the skill default):
 
    ```bash
-   generate.sh --base-branch auto --merge-base --exclude-ext min.js,min.css,map
+   generate.sh --base-branch auto --merge-base --exclude-ext min.js,min.css,map --output .copilot-tracking/pr/pr-reference.xml
+   ```
+
+   ```powershell
+   generate.ps1 -BaseBranch auto -MergeBase -ExcludeExt min.js,min.css,map -OutputPath .copilot-tracking/pr/pr-reference.xml
    ```
 
 2. Get the changed file list:
 
    ```bash
    list-changed-files.sh --exclude-type deleted --format plain
+   ```
+
+   ```powershell
+   list-changed-files.ps1 -ExcludeType Deleted -Format Plain
    ```
 
 3. For large diffs, use chunk planning and batched analysis:
@@ -40,7 +49,12 @@ Invoke the **pr-reference** skill to compute the diff. The skill handles branch 
    read-diff.sh --chunk N    # read chunk N
    ```
 
-If `list-changed-files.sh` returns an empty list, stop and report "no reviewable content" per Decision Tree case 5.
+   ```powershell
+   read-diff.ps1 -Info        # chunk count and size summary
+   read-diff.ps1 -Chunk N     # read chunk N
+   ```
+
+If the changed-file list (`list-changed-files.sh` or `list-changed-files.ps1`) returns an empty list, stop and report "no reviewable content" per Decision Tree case 5.
 
 Pass the diff output and file list as pre-computed input to the review agent so it skips its own scope detection.
 

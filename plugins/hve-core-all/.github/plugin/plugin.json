@@ -7,6 +7,7 @@
     "agents/accessibility/subagents/",
     "agents/ado/",
     "agents/coding-standards/",
+    "agents/coding-standards/subagents/",
     "agents/data-science/",
     "agents/design-thinking/",
     "agents/experimental/",
@@ -24,7 +25,6 @@
   ],
   "commands": [
     "commands/ado/",
-    "commands/coding-standards/",
     "commands/data-science/",
     "commands/design-thinking/",
     "commands/experimental/",

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React, { useEffect, useRef } from 'react';
 import SearchBar from '@theme-original/SearchBar';
 

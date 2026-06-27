@@ -3,7 +3,7 @@ title: Using RPI Agents Together
 description: Complete walkthrough of the RPI workflow from research through review
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-05-13
+ms.date: 2026-06-25
 ms.topic: tutorial
 keywords:
   - rpi workflow
@@ -310,15 +310,15 @@ When Task Reviewer identifies research or planning gaps:
 
 ## Quick Reference
 
-| Phase     | Invoke With                  | Agent            | Output              |
-|-----------|------------------------------|------------------|---------------------|
-| Research  | `/task-research <topic>`     | Task Researcher  | research.md         |
-| Plan      | `/task-plan [research-path]` | Task Planner     | plan.md, details.md |
-| Implement | `/task-implement`            | Task Implementor | code + changes.md   |
-| Review    | `/task-review [scope]`       | Task Reviewer    | review.md           |
+| Phase     | Prompt Command               | Skill Command    | Agent            | Output              |
+|-----------|------------------------------|------------------|------------------|---------------------|
+| Research  | `/task-research <topic>`     | `/rpi-research`  | Task Researcher  | research.md         |
+| Plan      | `/task-plan [research-path]` | `/rpi-plan`      | Task Planner     | plan.md, details.md |
+| Implement | `/task-implement`            | `/rpi-implement` | Task Implementor | code + changes.md   |
+| Review    | `/task-review [scope]`       | `/rpi-review`    | Task Reviewer    | review.md           |
 
 > [!TIP]
-> `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` all automatically switch to the appropriate custom agent.
+> `/task-research`, `/task-plan`, `/task-implement`, and `/task-review` all automatically switch to the appropriate custom agent. The `/rpi-*` skill commands invoke the same phases as Copilot skills rather than prompt shortcuts, and `/rpi-quick` runs the full research-through-review flow in a single command.
 
 Remember: **Always `/clear` between phases!**
 

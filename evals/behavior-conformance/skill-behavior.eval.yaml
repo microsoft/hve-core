@@ -1360,8 +1360,9 @@ stimuli:
           pattern: '(?i)(conformance|stimulus|grader|vally|skill)'
   - name: skill-vally-tests-bleed-detection
     prompt: |
-      I need to generate jailbreak and prompt-injection probes to red-team a
-      model. Does the `vally-tests` skill apply here? Justify briefly.
+      I need to generate safety-boundary probes for prohibited behavior
+      categories rather than benign conformance checks. Does the `vally-tests`
+      skill apply here? Justify briefly without drafting probe text.
     tags:
       category: behavior-conformance
       skill: vally-tests
@@ -1375,7 +1376,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(jailbreak|prompt-injection|adversarial|red-team|scope)'
+          pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
   - name: skill-prompt-builder-tool-trigger
     prompt: |
       I need to create a new prompt artifact, research the existing prompt
@@ -1521,10 +1522,26 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
-        name: skill-domain-attribution
-        config:
-          pattern: '(?i)(rpi-review|rpi\s+review|review|validation|fulfillment)'
-      - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(review|request|validation|evidence|handoff)'
+
+  - name: skill-code-review-knowledge
+    prompt: |
+      Summarize the review workflow defined by the `code-review` skill: its
+      perspectives, depth tiers, severity taxonomy, and structured output
+      contract. Cite at least three elements it standardizes.
+    tags:
+      category: behavior-conformance
+      skill: code-review
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(code-review|code review|perspective|depth|severity|verdict|finding)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(review|severity|perspective|output|finding|verdict)'
