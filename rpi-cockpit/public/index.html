@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>RPI Cockpit</title>
+<title>HVE Cockpit</title>
 <style>
   /* ---- VS Code dark (editor-native, default) ---- */
   :root{
@@ -155,7 +155,7 @@
     .opts{grid-template-columns:1fr}
   }
 
-  #home { display: block; }
+  [hidden] { display: none !important; }
   .home-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .brand-mark { font-weight: 500; }
   .welcome-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 100; }
@@ -199,8 +199,8 @@
 <div class="app">
 
   <div class="topbar">
-    <div class="mark"><span class="glyph"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v3.5H7.5"/></svg></span>RPI Cockpit</div>
-    <div class="crumb"><button id="to-home" class="crumb-back" aria-label="Back to the Navigator home">Home</button><span id="crumb-task">—</span> · <b>RPI session</b></div>
+    <div class="mark"><span class="glyph"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v3.5H7.5"/></svg></span>HVE Cockpit</div>
+    <div class="crumb"><button id="to-home" class="crumb-back" aria-label="Back to the Navigator home">Home</button><span id="crumb-task">—</span> · <b>session</b></div>
     <div class="spacer"></div>
     <span class="pill" id="conn-pill" data-status="connecting"><span class="dot"></span><span id="conn-label">connecting…</span></span>
     <span class="host" id="host-pill" hidden>via MCP</span>
@@ -232,7 +232,7 @@
     </aside>
 
     <section class="center">
-      <div class="h-row"><h1 id="phase-title">RPI session</h1><span class="state" id="phase-state"></span></div>
+      <div class="h-row"><h1 id="phase-title">HVE Cockpit</h1><span class="state" id="phase-state"></span></div>
       <div class="lead" id="lead"></div>
 
       <div class="sec">Live subagents</div>
