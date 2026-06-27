@@ -94,4 +94,10 @@ HVE Core provides the flagship RPI (Research, Plan, Implement, Review) workflow 
 | **prompt-builder**        | Create or update prompt artifacts through the full prompt-builder phase loop, routing refactor and analyze requests to the specialized skills.                                                                                                                                                   |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |
 
+### Hooks
+
+| Name          | Description                                                                |
+|---------------|----------------------------------------------------------------------------|
+| **telemetry** | Records Copilot session lifecycle events to local telemetry for reporting. |
+
 <!-- END AUTO-GENERATED ARTIFACTS -->

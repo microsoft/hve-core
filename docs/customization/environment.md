@@ -30,6 +30,7 @@ The DevContainer ships with these tools:
 * Azure CLI
 * shellcheck for bash validation
 * actionlint for GitHub Actions workflow validation
+* cosign for artifact signing and verification
 * gitleaks for secret scanning
 
 ### Customizing for Your Team
@@ -254,6 +255,7 @@ The coding agent environment includes:
 * PowerShell 7 with PSScriptAnalyzer 1.25.0, PowerShell-Yaml 0.4.7, and Pester 5.7.1
 * shellcheck (pre-installed on ubuntu-latest)
 * actionlint for GitHub Actions workflow validation
+* cosign for artifact signing and verification
 
 ### Adding Tools for the Coding Agent
 
@@ -293,6 +295,7 @@ share most tools but differ intentionally in a few areas.
 | Pester 5.7.1            | Yes          | Yes          |
 | shellcheck              | Yes          | Yes          |
 | actionlint              | Yes          | Yes          |
+| cosign                  | Yes          | Yes          |
 
 ### Intentional Differences
 

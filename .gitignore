@@ -480,6 +480,9 @@ dependency-pinning-artifacts/
 # Copilot tracking
 .copilot-tracking/
 
+# Local telemetry opt-in marker
+.hve-telemetry
+
 # MCP server configuration - exclude local token files
 .mcp/*-local.json
 .mcp/*.local.json
