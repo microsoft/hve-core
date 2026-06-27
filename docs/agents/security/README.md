@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-26
 ms.topic: concept
 estimated_reading_time: 8
 ---
@@ -135,6 +135,10 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 * [Entry Modes](entry-modes.md) for a deep dive into From-PRD vs. capture workflows.
 * [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
 * [Handoff Pipeline](handoff-pipeline.md) for backlog generation and RAI dispatch.
+
+## Related Agents
+
+* [Supply Chain Reviewer](supply-chain-reviewer.md) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
