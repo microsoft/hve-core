@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: MIT
 """Integration tests for extract_content using a real PPTX fixture."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
 from extract_content import main
+from validate_deck import max_severity, validate_deck
 
 EXPECTED_FIXTURE = {
     "metadata": {
         "title": "Minimal Test Fixture",
-        "author": "ChatGPT",
+        "author": "HVE Core Test Fixture",
     },
     "slides": {
         1: {
@@ -117,5 +119,21 @@ def test_main_resolves_theme_colors_for_real_fixture(
     assert EXPECTED_FIXTURE["theme_colors"].items() <= style["theme_colors"].items()
     assert slide_1["elements"][0]["font_color"].startswith("#")
     assert (
-        slide_1["elements"][0]["font_color"] == EXPECTED_FIXTURE["slide_1_font_color"]
+        slide_1["elements"][0]["font_color"]
+        == EXPECTED_FIXTURE["slide_1_font_color"]
+    )
+
+
+@pytest.mark.integration
+def test_generated_fixture_passes_validate_deck(
+    minimal_test_fixture_path: Path,
+) -> None:
+    """Roundtrip: programmatically generated PPTX passes
+    structural validation."""
+
+    results = validate_deck(minimal_test_fixture_path)
+    severity = max_severity(results)
+
+    assert severity in ("info", "none"), (
+        f"validate_deck reported {severity}: {results}"
     )
