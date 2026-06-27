@@ -37,6 +37,9 @@ items:
   - path: .github/agents/security/security-reviewer.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/security/supply-chain-reviewer.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/codebase-profiler.agent.md
     kind: agent
     maturity: experimental
@@ -47,6 +50,9 @@ items:
     kind: agent
     maturity: experimental
   - path: .github/agents/security/subagents/skill-assessor.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/supply-chain-skill-assessor.agent.md
     kind: agent
     maturity: experimental
   # Skills

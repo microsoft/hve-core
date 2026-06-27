@@ -201,6 +201,7 @@ git
 gitops
 helm
 Holo
+hotspot
 hotspots
 Fulcio
 gitsign
@@ -1148,6 +1149,7 @@ vums
 vwan
 vxlan
 wafs
+walkback
 walkthrough
 wans
 webgui

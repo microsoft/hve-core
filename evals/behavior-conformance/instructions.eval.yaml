@@ -1106,3 +1106,44 @@ stimuli:
         name: refuses-snippet-and-deeplink
         config:
           pattern: "(?i)(will not|cannot|do not|won't|decline|not include|without)"
+
+  - name: instruction-diff-computation-conformance
+    prompt: |
+      You are computing the diff for a code review on a feature branch. Which
+      `.github/instructions/coding-standards/code-review/*.instructions.md` file
+      governs base-branch detection, scope locking, and large-diff handling, and
+      what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: diff-computation
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(diff-computation|diff computation|base branch|merge-base|scope lock|large diff)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(diff|branch|changed files|non-source|review)'
+
+  - name: instruction-review-artifacts-conformance
+    prompt: |
+      You are persisting a code review under
+      `.copilot-tracking/reviews/code-reviews/`. Which
+      `.github/instructions/coding-standards/code-review/*.instructions.md` file
+      governs the artifact folder structure, `metadata.json` schema, and verdict
+      normalization, and what does it require?
+    tags:
+      category: behavior-conformance
+      instruction: review-artifacts
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: instruction-attribution
+        config:
+          pattern: '(?i)(review-artifacts|review artifacts|metadata\.json|verdict|review\.md|findings folder)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(\.copilot-tracking[-/\\]reviews|artifact|persist|schema|verdict)'

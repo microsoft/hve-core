@@ -3,7 +3,7 @@ title: SRE / Operations Guide
 description: HVE Core support for SRE and operations engineers managing infrastructure, incidents, and deployment workflows
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-19
 ms.topic: how-to
 keywords:
   - SRE
@@ -113,7 +113,7 @@ encryption at rest. Output the connection string to the Vault KV store.
 | **task-reviewer**    | Infrastructure code review                          | [Task Reviewer](../../rpi/task-reviewer.md)       |
 | **security-planner** | Infrastructure security planning                    | Agent file                                        |
 | **sssc-planner**     | Supply chain security assessment for infrastructure | Agent file                                        |
-| **pr-review**        | Pull request review for infrastructure changes      | Agent file                                        |
+| **code-review**      | Pull request review for infrastructure changes      | Agent file                                        |
 | **memory**           | Session context and preference persistence          | Agent file                                        |
 
 Prompts complement the agents for operational workflows:
@@ -134,7 +134,7 @@ Auto-activated instructions apply IaC standards based on file type: Terraform (`
 | Let IaC-specific instructions auto-activate by file type             | Manually enforce Terraform or Bicep standards            |
 | Create incident response runbooks before incidents occur             | Write runbooks reactively during active incidents        |
 | Use the **task-researcher** agent for structured root cause analysis | Debug production issues without systematic investigation |
-| Review infrastructure PRs with the **pr-review** agent               | Merge infrastructure changes without code review         |
+| Review infrastructure PRs with the **code-review** agent             | Merge infrastructure changes without code review         |
 | Use `/git-commit` for consistent, conventional commit history        | Write ad-hoc commit messages for infrastructure changes  |
 
 ## Related Roles

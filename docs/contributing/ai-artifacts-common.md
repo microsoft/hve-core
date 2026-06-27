@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-15
+ms.date: 2026-06-26
 ms.topic: reference
 ---
 
@@ -649,7 +649,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Includes attribution in frontmatter `description` field
+* Omits attribution suffix from the `description` field (added automatically at distribution)
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -843,13 +843,11 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
+Source artifact `description:` fields MUST NOT include an attribution suffix. Distribution tooling appends an attribution suffix (`- Brought to you by organization/repository-name`) automatically during plugin generation and extension packaging, so author the source description without it:
 
 ```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
+description: 'Tests prompt files in a sandbox environment'
 ```
-
-Format: `- Brought to you by organization/repository-name` appended to the description value.
 
 Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
 
