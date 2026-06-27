@@ -16,14 +16,14 @@ Use this matrix after applying refactor edits and before the final response. Sel
 
 ## Matrix
 
-| Changed artifact                          | Recommended validation                                                                                       | Example checks                                                                                  |
-|-------------------------------------------|---------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| Prompt, agent, instruction, or skill text | Markdown structure, link syntax, whitespace, and changed-file scope                                           | Markdown linting, whitespace checks, `git diff --check`, changed-file review                    |
-| Prompt or agent frontmatter               | Frontmatter schema, required fields, model/tool/handoff fields, and protocol shape                            | Frontmatter/schema validation, editor diagnostics, artifact-specific validation                  |
-| Instruction frontmatter                   | `applyTo` glob validity, schema fields, and artifact-specific constraints                                     | Frontmatter/schema validation, editor diagnostics, instruction artifact validation               |
-| Skill package                             | Skill directory structure, skill frontmatter, bundled reference links, optional scripts, and package metadata | Package-specific skill validation, Markdown link checks, artifact-specific validators            |
-| Cross-artifact references                 | Semantic references to skills, prompts, agents, instructions, and bundled skill resources                     | Reference review against local artifact metadata, link checks, portability review                |
-| Final response contract                   | Required summary fields, validation status, skipped validations, and remaining issue reporting                | Checklist review against the skill or prompt's response contract                                |
+| Changed artifact                          | Recommended validation                                                                                        | Example checks                                                                        |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| Prompt, agent, instruction, or skill text | Markdown structure, link syntax, whitespace, and changed-file scope                                           | Markdown linting, whitespace checks, `git diff --check`, changed-file review          |
+| Prompt or agent frontmatter               | Frontmatter schema, required fields, model/tool/handoff fields, and protocol shape                            | Frontmatter/schema validation, editor diagnostics, artifact-specific validation       |
+| Instruction frontmatter                   | `applyTo` glob validity, schema fields, and artifact-specific constraints                                     | Frontmatter/schema validation, editor diagnostics, instruction artifact validation    |
+| Skill package                             | Skill directory structure, skill frontmatter, bundled reference links, optional scripts, and package metadata | Package-specific skill validation, Markdown link checks, artifact-specific validators |
+| Cross-artifact references                 | Semantic references to skills, prompts, agents, instructions, and bundled skill resources                     | Reference review against local artifact metadata, link checks, portability review     |
+| Final response contract                   | Required summary fields, validation status, skipped validations, and remaining issue reporting                | Checklist review against the skill or prompt's response contract                      |
 
 ## Reporting
 

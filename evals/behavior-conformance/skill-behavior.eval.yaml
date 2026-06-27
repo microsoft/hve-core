@@ -1432,7 +1432,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(no\s+source\s+edit|without\s+modifying|analy[sz]e|quality|report)'
+          pattern: '(?i)(no\s+source\s+edit|without\s+modifying|analyze|analyse|quality|report)'
   - name: skill-prompt-refactor-knowledge
     prompt: |
       Summarize the `prompt-refactor` skill. Include how it handles baseline
@@ -1451,7 +1451,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: '(?i)(preserv(e|ing)\s+functional\s+intent|refactor|requirements|sandbox|checklist|matrix)'
+          pattern: '(?i)((preserve|preserving)\s+functional\s+intent|refactor|requirements|sandbox|checklist|matrix)'
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for
@@ -1504,7 +1504,7 @@ stimuli:
       - type: output-matches
         name: skill-attribution
         config:
-          pattern: '(?i)(prompt-analyze|prompt\s+analy[sz]e|read-only|analysis\s+report|prompt\s+tester|prompt\s+evaluator)'
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|read-only|analysis\s+report|prompt\s+tester|prompt\s+evaluator)'
       - type: output-matches
         name: scope-language
         config:

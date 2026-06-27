@@ -28,14 +28,14 @@ Use one deterministic slug rule for every path in this skill:
 * Use `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` as the canonical review-log path.
 * Use `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` as the preferred standalone implementation-quality artifact path.
 
-| Artifact                  | Required path                                                                  | Notes                                   |
-|---------------------------|--------------------------------------------------------------------------------|-----------------------------------------|
-| Implementation plan       | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md`      | Required                                |
-| Changes log               | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md`              | Required                                |
-| Research                  | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md`            | Optional when available                 |
-| Review log                | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md`          | Canonical review-log path               |
-| Phase validation          | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md` | One file per phase                      |
-| Implementation quality    | `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` | Preferred standalone artifact path |
+| Artifact               | Required path                                                                              | Notes                              |
+|------------------------|--------------------------------------------------------------------------------------------|------------------------------------|
+| Implementation plan    | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md`                  | Required                           |
+| Changes log            | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md`                          | Required                           |
+| Research               | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md`                        | Optional when available            |
+| Review log             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md`                      | Canonical review-log path          |
+| Phase validation       | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md`             | One file per phase                 |
+| Implementation quality | `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` | Preferred standalone artifact path |
 
 1. Resolve the review scope from explicit paths, attached or open files, task slug, time-based scope, then recent matching `.copilot-tracking` artifacts.
 2. Derive the slug and current date from the discovered plan path or the user-provided task name, then record the related paths in the review log.

@@ -32,16 +32,16 @@ Include:
 
 For mixed artifact sets, include one row per analyzed artifact.
 
-| Artifact | Artifact type | Purpose | Capabilities |
-|----------|---------------|---------|--------------|
+| Artifact         | Artifact type                                                    | Purpose                       | Capabilities                              |
+|------------------|------------------------------------------------------------------|-------------------------------|-------------------------------------------|
 | Link to artifact | Prompt, instruction, agent, skill, reference, template, or other | Intended role in one sentence | Main user-facing or workflow capabilities |
 
 ### Per-Artifact Outcomes
 
 Use the outcome fields from [evidence-and-outcome-contract.md](evidence-and-outcome-contract.md). Include every target artifact, even when no issues are found.
 
-| Artifact | Artifact type | Evaluation outcome | Key evidence | Next action |
-|----------|---------------|--------------------|--------------|-------------|
+| Artifact         | Artifact type                                                    | Evaluation outcome                                              | Key evidence                                                | Next action                |
+|------------------|------------------------------------------------------------------|-----------------------------------------------------------------|-------------------------------------------------------------|----------------------------|
 | Link to artifact | Prompt, instruction, agent, skill, reference, template, or other | Pass, Pass with notes, Needs changes, Blocked, or Not evaluated | Most important passing evidence, issue evidence, or blocker | Follow-up action or `None` |
 
 ### Strengths
@@ -54,14 +54,14 @@ Group findings by Critical, High, Medium, then Low. Normalize incoming critical,
 
 Each finding includes:
 
-| Field | Content |
-|-------|---------|
-| Artifact | Workspace-relative markdown link to the affected artifact |
+| Field                      | Content                                                                                                                         |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Artifact                   | Workspace-relative markdown link to the affected artifact                                                                       |
 | Criterion or contract area | Failed Prompt Quality Criteria item, Prompt Design Principles item, analyze-only contract area, or local evidence contract area |
-| Severity | Critical, High, Medium, or Low |
-| Evidence | Specific artifact text, execution-log finding, evaluation-log finding, or observed behavior |
-| Impact | Why the issue matters |
-| Recommendation | Smallest practical next action |
+| Severity                   | Critical, High, Medium, or Low                                                                                                  |
+| Evidence                   | Specific artifact text, execution-log finding, evaluation-log finding, or observed behavior                                     |
+| Impact                     | Why the issue matters                                                                                                           |
+| Recommendation             | Smallest practical next action                                                                                                  |
 
 Use `None` when no findings exist for a severity.
 
