@@ -49,9 +49,10 @@ When sub-skill dispatch is unavailable, run the phase inline by dispatching that
 * Dated artifacts share one `task_slug` and `YYYY-MM-DD` date across every phase of a task.
 * Research, planning, implementation, review, and Discover run in order and stop on blocking findings.
 * The umbrella skill delegates detailed phase work to `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
+* Review selects validation from the changed artifacts and affected behaviors, records considered checks, and distinguishes run, skipped, unavailable, and out-of-scope checks.
 * When no explicit `task`, `continue`, or `suggest` input is present, infer the next intent from the conversation, attached files, or the current file.
 * When `continue={1|1,2|all}` selects saved suggestions, each selection starts a new RPI cycle at Research (Phase 1); `all` processes every saved suggestion in the saved priority order.
-* The final response includes phase status, iteration count, artifact paths, validation status, review outcome, and Suggested Next Work.
+* The final response includes phase status, iteration count, artifact paths, validation coverage, review outcome, and Suggested Next Work.
 * When review outcome is Complete, include a commit message in a markdown code block following `.github/instructions/hve-core/commit-message.instructions.md`, excluding `.copilot-tracking` files.
 * Still run Discover before any user-facing finish, pause, escalation, or handoff.
 
@@ -102,7 +103,7 @@ Return a brief summary that includes:
 
 * phase status and iteration count,
 * the dated artifact paths used or updated,
-* validation status and any blocking findings,
+* validation coverage, including checks considered, run, passed, failed, skipped, unavailable, and out of scope,
 * the current review outcome, and
 * Suggested Next Work from Discover.
 

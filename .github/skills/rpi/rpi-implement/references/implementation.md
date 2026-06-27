@@ -21,14 +21,14 @@ Use this reference for the detailed implementation protocol, templates, and suba
    * planning log: `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-log.md`
    * changes log: `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task>-changes.md`
 4. Verify the plan and details exist before phase execution. Read research and the planning log when available.
-5. Create or update the changes log immediately when the implementation begins; begin the file with `<!-- markdownlint-disable-file -->`.
+5. Create or update the changes log immediately when the implementation begins, using the project or plan's required tracking-file header and metadata conventions.
 
 ## Phase 1 / 2 / 3 Execution Contract
 
 1. Phase 1: Read the implementation plan, details, research, and current tracking files. Derive artifact paths from the plan filename and date, verify required files exist, and create the changes log when needed.
 2. Phase 2: Prefer `Phase Implementor` for each phase in the plan order, using `runSubagent` or `task`. Use `Implementation Validator` when the phase plan includes `Validation:` or `required`, when blockers or deviations appear, or when the user asks for review evidence. Use `Researcher Subagent` as the fallback when context is missing. If dispatch tooling is unavailable, perform the equivalent work inline and record it.
 3. Phase 3: Review the full plan, confirm every required phase is complete or explicitly blocked, verify validation evidence, and prepare the review handoff summary.
-4. Bounded run rule: if the user asks for one phase only, stop after that phase, update the changes log, and hand off the current status with blockers or follow-on work. Do not require all phases to be complete before a bounded handoff.
+4. Bounded run rule: if the user asks for one phase only or one bounded step, stop after that phase or step, update the implementation plan checklist, the changes log, and the planning log, capture validation evidence when available, and hand off the current status with blockers or follow-on work and the next review command only. Do not require all phases to be complete before a bounded handoff.
 
 ## Pause and resumption contract
 
@@ -55,7 +55,7 @@ When dispatching `Phase Implementor` with `runSubagent` or `task`, provide:
 * research path when available;
 * relevant instruction files and convention references;
 * related context files or docs pointers;
-* validation commands extracted from the plan or relevant `npm run` scripts.
+* validation, linting, and testing checks extracted from the plan or target project's local tooling.
 
 Expect a completion report with:
 
@@ -125,14 +125,14 @@ Update the planning log at `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/<task>-l
 
 ## Progressive Tracking Rules
 
-* Mark completed implementation plan steps as `[x]` as they finish.
+* Update the implementation plan checklist after each completed phase or bounded step, marking completed steps as `[x]` as they finish.
 * Append changes-log entries after each completed phase or significant step.
 * Update the planning log with discrepancies, follow-on work, and user decisions as they appear.
 * Evaluate suggested additional steps before adding them to the plan or details files.
 
 ## Resumption and Review Handoff
 
-When resuming work, read the current changes log and plan, continue from the next unchecked phase, and hand off review work with `/rpi-review`.
+When resuming work, read the current changes log and plan, continue from the next unchecked phase, and name `/rpi-review` as the next review command in the handoff.
 
 ## Final Response and Review Handoff Contract
 
@@ -142,7 +142,7 @@ Present the completion summary in this order:
 * additional work items added to the planning files;
 * suggested follow-on work from the planning log;
 * blockers or clarifying questions that require user input;
-* the review command and the links to the changes log and planning log.
+* the next review command and the links to the changes log and planning log.
 
 Use the changes log and planning log as the evidence base for the review handoff.
 
@@ -155,6 +155,6 @@ Use the changes log and planning log as the evidence base for the review handoff
 
 ## Telemetry, Commit Messages, and Review Compatibility
 
-* If implementation touches observable production behavior, apply the telemetry overlay in `.github/instructions/shared/telemetry-overlay.instructions.md` and consult the `telemetry-foundations` skill.
-* When you output a commit message, follow `.github/instructions/hve-core/commit-message.instructions.md` and exclude `.copilot-tracking/` files from the commit scope.
+* If implementation touches observable production behavior, follow the target project's telemetry guidance and consult the `telemetry-foundations` skill when available.
+* When you output a commit message, follow the target project's commit-message conventions and exclude internal tracking files from the commit scope.
 * Keep the final handoff evidence-first and brief for `/rpi-review`.

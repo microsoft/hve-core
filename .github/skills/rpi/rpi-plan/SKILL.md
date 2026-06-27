@@ -6,7 +6,7 @@ license: MIT
 user-invocable: true
 ---
 
-# Task Planner
+# RPI Plan
 
 Use [references/planning.md](references/planning.md) for the planning template and protocol detail.
 
@@ -41,7 +41,8 @@ Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, an
 * The Plan Validator result is captured and any Critical and High findings are resolved before handoff.
 * The plan includes a final validation phase for full project validation and fix iteration.
 * The completion summary names the implementation plan files created and any scope items deferred for future planning.
-* The implementation handoff names `/rpi-implement` and the dated artifact set for the next phase.
+* For normal progression, the completion summary may include an implementation handoff to `/rpi-implement` and the dated artifact set for the next phase.
+* For planning-only, comparison, audit, analysis, or explicitly no-handoff invocations, return validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
 
 ## Constraints
 
@@ -57,9 +58,10 @@ Derive `{{task_slug}}` from the primary task or target with lower-kebab-case, an
 
 ## Handoff
 
-After the plan is validated, continue with `/rpi-implement` and hand off the dated artifact set.
+After the plan is validated, continue with `/rpi-implement` only when the caller expects normal progression.
 
 * Return the plan file path, details file path, planning log path, validation status, and next implementation steps.
+* When the request is planning-only, comparison, audit, analysis, or explicitly no-handoff, return the validated planning artifacts and next-step guidance without presenting `/rpi-implement` as an immediate handoff.
 * `.copilot-tracking/plans/{{YYYY-MM-DD}}/{{task_slug}}-plan.instructions.md`
 * `.copilot-tracking/details/{{YYYY-MM-DD}}/{{task_slug}}-details.md`
 * `.copilot-tracking/plans/logs/{{YYYY-MM-DD}}/{{task_slug}}-log.md`

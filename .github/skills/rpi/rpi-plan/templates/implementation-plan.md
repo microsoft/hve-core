@@ -12,11 +12,11 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'
 
 ### User Requirements
 
-* {{user_stated_goal}} - Source: {{conversation_or_research_reference}}
+* {{user_stated_goal}} - Source: {{caller_stated_requirement_source_or_evidence}}
 
 ### Derived Objectives
 
-* {{planner_identified_goal}} - Derived from: {{reasoning}}
+* {{planner_identified_goal}} - Derived from: {{research_findings_or_reasoning}}
 
 ## Context Summary
 
@@ -31,6 +31,10 @@ applyTo: '.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md'
 ### Standards References
 
 * {{instruction_full_file_path}} - {{instruction_description}}
+
+## Risks and Mitigations
+
+* {{material_risk}} - Likelihood: {{low_medium_high_or_unknown}} - Impact: {{low_medium_high_or_scope}} - Priority: {{likelihood_impact_basis_or_model_reference}} - Status: {{resolved_mitigated_deferred_blocker}} - Rationale: {{rationale}}
 
 ## Implementation Checklist
 

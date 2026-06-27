@@ -33,6 +33,14 @@
   * Location: {{artifact_path}} (Lines {{line_start}}-{{line_end}})
   * Action: {{required_fix_or_follow_up}}
 
+## Validation Coverage
+
+* Coverage: {{coverage_summary}}
+* Requirement Alignment: {{requirements_traced_to_plan_or_details}}
+* Detail-Line Verification: {{detail_line_references_verified}}
+* Final Validation Phase: {{final_validation_status_and_follow_up}}
+* Scratch Evidence: {{scratch_path_or_none}} - {{summary_or_link}}
+
 ## Implementation Paths Considered
 
 ### Selected: {{selected_path_title}}
@@ -52,3 +60,4 @@
 * WI-01: {{title}} - {{description}} ({{priority}})
   * Source: {{where_identified}}
   * Dependency: {{dependency_or_none}}
+  * Deferred Work Evidence: {{source_evidence_or_none}}

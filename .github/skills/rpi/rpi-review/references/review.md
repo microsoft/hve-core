@@ -26,18 +26,18 @@ Use one deterministic slug rule for every path in this skill:
 * Derive the task slug as lower-kebab-case from the primary task or target name in the plan path or user request.
 * Use the current date in `YYYY-MM-DD` as the dated segment.
 * Use `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` as the canonical review-log path.
-* Use `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-impl-validation.md` as the canonical implementation-validation log path.
+* Use `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` as the preferred standalone implementation-quality artifact path.
 
-| Artifact                  | Required path                                                                  | Notes                                   |
-|---------------------------|--------------------------------------------------------------------------------|-----------------------------------------|
-| Implementation plan       | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md`      | Required                                |
-| Changes log               | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md`              | Required                                |
-| Research                  | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md`            | Optional when available                 |
-| Review log                | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md`          | Canonical review-log path               |
-| Phase validation          | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md` | One file per phase                      |
-| Implementation validation | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-impl-validation.md` | Canonical implementation-validation log |
+| Artifact               | Required path                                                                              | Notes                              |
+|------------------------|--------------------------------------------------------------------------------------------|------------------------------------|
+| Implementation plan    | `.copilot-tracking/plans/{{YYYY-MM-DD}}/<task-slug>-plan.instructions.md`                  | Required                           |
+| Changes log            | `.copilot-tracking/changes/{{YYYY-MM-DD}}/<task-slug>-changes.md`                          | Required                           |
+| Research               | `.copilot-tracking/research/{{YYYY-MM-DD}}/<task-slug>-research.md`                        | Optional when available            |
+| Review log             | `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md`                      | Canonical review-log path          |
+| Phase validation       | `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/<task-slug>-<NNN>-validation.md`             | One file per phase                 |
+| Implementation quality | `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` | Preferred standalone artifact path |
 
-1. Discover only the current task-named plan, changes log, and research artifacts for the user’s task slug or the explicit paths supplied with the request.
+1. Resolve the review scope from explicit paths, attached or open files, task slug, time-based scope, then recent matching `.copilot-tracking` artifacts.
 2. Derive the slug and current date from the discovered plan path or the user-provided task name, then record the related paths in the review log.
 3. When a required artifact is missing, search only within the current task slug or the provided paths, and note the gap in the review log. If nothing relevant is found, stop and report a blocked review.
 4. When multiple unrelated artifact sets match, present the candidate sets with plan path, changes log path, date, and task name, then stop until the user chooses one.
@@ -76,11 +76,12 @@ Use [../templates/review-log.md](../templates/review-log.md) for `.copilot-track
 The review log must capture:
 
 * review metadata: date, related plan path, changes log path, research path;
+* plan-to-research alignment with status, rationale, evidence paths, and a clear note that planning alignment is distinct from implementation acceptance;
 * severity summary: Critical, High, Medium, Low;
 * per-phase RPI findings and status;
-* implementation quality findings by category;
+* implementation quality findings by category and the standalone evidence path when one is written;
 * missing work and deviations;
-* follow-up recommendations separated into deferred and discovered items;
+* follow-up recommendations separated into `Discovered during review` and `Deferred from planning log` items;
 * validation commands with scope, status, and summary;
 * overall status: `Complete`, `Needs Rework`, or `Blocked`.
 
@@ -90,11 +91,11 @@ When dispatching `Implementation Validator`, provide:
 
 * changed file paths from the changes log;
 * validation scope (`full-quality` by default, or a narrower scope when the user requests it);
-* the implementation validation log path under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-impl-validation.md`;
+* the standalone implementation-quality artifact path under `.copilot-tracking/reviews/quality/{{YYYY-MM-DD}}/<review-stem>-implementation-quality.md` when a separate artifact is written;
 * relevant instruction and architecture references from `.github/instructions/` and related docs;
 * the research path when available.
 
-Expect the subagent to return severity-graded findings and an implementation validation log path. Add those findings to the parent review log under `Implementation Quality Findings`.
+Expect the subagent to return severity-graded findings and an implementation-quality artifact path. Add those findings to the parent review log under `Implementation Quality Findings`.
 
 ## Required validation command execution
 
@@ -106,9 +107,11 @@ Discover and run validation commands when available and relevant to changed file
 * Run commands scoped to changed files or affected components when available.
 * Use diagnostics for changed files when command execution is unavailable or too broad for the current review.
 * Record each command, scope, exit status, and important output summary in the parent review log.
+* Record changed-file discovery and any implementation inventory that was or was not found.
+* When no implementation inventory exists, record `Skipped` with an explicit reason and note any evidence-integrity checks that actually ran.
 * Flag any produced code, code comments, documentation strings, or commit messages that reference `.copilot-tracking/` paths or other internal planning, research, or implementation artifacts; treat such leaks as findings.
 * Treat failed validation commands as findings and include their severity in the final status.
-* When no relevant validation command exists, record `Skipped` with the reason in the review log.
+* Do not imply broad validation passed against nonexistent implementation changes.
 * Do not mark the review `Complete` unless relevant commands have passed or the skip reason is explicit.
 
 ## RPI Validator input / output contract
@@ -133,6 +136,8 @@ Prefer `RPI Validator` and `Implementation Validator` with `runSubagent` or `tas
 
 Aggregate findings across `Implementation Validator` and all RPI phase validations.
 
+* Count one missing changes log or changed-file inventory as a single controlling review-level Critical finding when it blocks acceptance.
+* Preserve detailed per-phase findings, but keep phase-specific missing proof at High or lower unless there is a distinct critical failure.
 * `Complete`: all plan items are verified and no Critical or High findings remain.
 * `Needs Rework`: Critical or High findings remain and require fixes before handoff.
 * `Blocked`: the review cannot proceed because artifacts are missing, an external dependency blocks validation, or unresolved clarification prevents completion.
@@ -154,12 +159,13 @@ Use brief, skill-forward wording and keep the review outcome fields in the final
 | Low Findings      | {{count}}                             |
 | Follow-Up Items   | {{count}}                             |
 
+Validation activities completed: {{commands, subagents, evidence checks}}
 Next step: {{/rpi-implement, /rpi-research, /rpi-plan, or return to user}}
 ```
 
 When findings require rework, prefer `/rpi-implement`.
 
-Start responses with a status header and include the validation activities completed, the findings summary, the review log path, and the next step. When the review is complete, clear the context, attach or open the review log, and start the next workflow.
+Start responses with a status header and include the validation activities completed, the findings summary, the review log path, severity counts, follow-up count, and the next step. Keep handoff commands as recommendations only unless the user explicitly requested a handoff. When the review is complete, clear the context, attach or open the review log, and start the next workflow.
 
 ## Resumption behavior
 

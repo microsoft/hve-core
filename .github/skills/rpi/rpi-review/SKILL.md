@@ -18,7 +18,7 @@ Produce an evidence-backed review result with validator dispatch, review-log syn
 
 ## What to do
 
-1. Discover only the current task-named plan, changes log, and research artifacts for the user’s task slug or the explicit paths supplied with the request. If no task slug or paths are supplied, stop and ask for the task name before searching.
+1. Resolve the review scope from explicit paths, attached or open files, task slug, time-based scope, then recent matching `.copilot-tracking` artifacts. If no reviewable artifact set can be formed, stop and ask for the task context. If multiple unrelated artifact sets match, stop and ask the user to choose one.
 2. Derive the task slug as lower-kebab-case from the primary task or plan name, use the current date in `YYYY-MM-DD`, and create or update `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/<task-slug>-review.md` with `<!-- markdownlint-disable-file -->`.
 3. Prefer `RPI Validator` and `Implementation Validator` with `runSubagent` or `task`; use `Researcher Subagent` only when context is missing or findings remain unclear. If dispatch tooling is unavailable, perform the equivalent review or validation inline, record it, and continue without dead-stopping on the dispatcher alone.
 4. Run one `RPI Validator` pass per plan phase and one implementation-quality pass, then run validation commands for changed files when available, record command, scope, status, and summary, and mark the review `Complete` only when commands pass or the skip reason is explicit.
@@ -27,8 +27,8 @@ Produce an evidence-backed review result with validator dispatch, review-log syn
 ## Success criteria
 
 * The review log exists under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/` and starts with `<!-- markdownlint-disable-file -->`.
-* The review covers artifact discovery, task-slug derivation, validator dispatch, one `RPI Validator` pass per phase, validation commands, severity aggregation, and explicit follow-up counts.
-* The final response includes the review log path, overall status, severity counts, follow-up count, and next-step command.
+* The review covers artifact discovery, task-slug derivation, validator dispatch, one `RPI Validator` pass per phase, validation commands, severity aggregation, plan-to-research alignment, and explicit follow-up counts.
+* The final response starts with a Task Reviewer style status header, includes the validation activities completed, the review log path, overall status, severity counts, follow-up count, and next-step command, and keeps handoff commands as recommendations unless the user asked for them.
 * Name `/rpi-review` in the handoff when another review pass is required.
 
 ## Constraints
@@ -40,13 +40,13 @@ Produce an evidence-backed review result with validator dispatch, review-log syn
 
 ## Stop rules
 
-* Stop if the plan or changes log cannot be discovered and no review artifact can be formed.
+* Stop if no reviewable artifact set can be formed.
 * Stop when multiple unrelated artifact sets match and the user has not selected one.
 * Stop if validator dispatch is unavailable and the review would be based on guesswork.
 * Stop when unresolved Critical or High findings block completion and the user needs to fix the implementation before handoff.
 
 ## Handoff
 
-After the review completes, continue with the next phase command or the current plan.
+After the review completes, offer the next phase command as a recommendation unless the user explicitly requested a handoff.
 
 > Brought to you by microsoft/hve-core
