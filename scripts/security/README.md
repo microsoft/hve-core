@@ -2,7 +2,7 @@
 title: Security Scripts
 description: PowerShell scripts for dependency pinning validation, SHA staleness monitoring, supply chain security, and centralized PS module installation
 author: HVE Core Team
-ms.date: 2026-06-22
+ms.date: 2026-06-26
 ms.topic: reference
 keywords:
   - powershell
@@ -28,6 +28,7 @@ The security scripts share common modules and follow a consistent pattern:
 * `CIHelpers.psm1` (from `scripts/lib/`) provides CI platform detection and
   GitHub Actions output formatting
 * `tool-checksums.json` stores SHA256 checksums for verified tool downloads
+  (see [tool-checksums.json schema](#tool-checksumsjson-schema))
 
 ## Scripts
 
@@ -349,6 +350,22 @@ Shared utility functions used across security scripts:
 | Function            | Purpose                                                                   |
 |---------------------|---------------------------------------------------------------------------|
 | `Write-SecurityLog` | Outputs timestamped, color-coded log entries with optional CI annotations |
+
+## tool-checksums.json schema
+
+`tool-checksums.json` supports a dual schema for tool download metadata. Legacy
+scalar fields remain available for compatibility, while per-arch maps are
+preferred for new entries.
+
+* Legacy scalar fields: `sha256` and `downloadUrlTemplate`. These fields are
+  deprecated for new entries, but they remain the values the current tooling
+  consumes; for example, `Test-SHAStaleness.ps1` reads `sha256`.
+* Preferred per-arch maps: `sha256ByArch` and `assetTemplateByArch`. New entries
+  should populate these maps to carry architecture-specific download metadata.
+  The current scripts do not yet read these fields, so populate the legacy
+  scalar fields alongside them until a consumer adopts the maps.
+* This documentation describes the manifest schema only and does not change
+  runtime behavior.
 
 ## GitHub Actions Integration
 
