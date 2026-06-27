@@ -5,6 +5,7 @@ updates:
   directories:
   - /
   - /docs/docusaurus
+  - /evals/beval
   groups:
     npm-dependencies:
       patterns:
