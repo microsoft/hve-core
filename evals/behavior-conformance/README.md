@@ -2,7 +2,7 @@
 title: Behavior Conformance Suite
 description: 'Tier 3 conformance evaluations for prompts, instructions, and skill behavior'
 author: HVE Core Team
-ms.date: 2026-05-26
+ms.date: 2026-06-25
 ---
 
 This directory hosts the behavior conformance suite. It is the only suite under `evals/` that ships in advisory mode by default: failures are reported in the pull request summary but do not block the build until each spec graduates per the graduation policy below.
@@ -22,8 +22,8 @@ Each tier shares the same advisory contract, the same `output-matches` grader fa
 | Spec                       | Tier | Mode     | Stimuli | Category               | Status            |
 |----------------------------|------|----------|---------|------------------------|-------------------|
 | `prompts.eval.yaml`        | 3p   | Advisory | 10      | `behavior-conformance` | Active (Phase 9)  |
-| `instructions.eval.yaml`   | 3i   | Advisory | 44      | `behavior-conformance` | Active (Phase 11) |
-| `skill-behavior.eval.yaml` | 3s   | Advisory | 72      | `behavior-conformance` | Active (Phase 13) |
+| `instructions.eval.yaml`   | 3i   | Advisory | 48      | `behavior-conformance` | Active (Phase 11) |
+| `skill-behavior.eval.yaml` | 3s   | Advisory | 78      | `behavior-conformance` | Active (Phase 13) |
 
 The Phase 9 cut of `prompts.eval.yaml` covers ten high-traffic prompts: the five RPI prompts (`task-research`, `task-plan`, `task-implement`, `task-review`, `task-challenge`), `security-review`, `ado/ado-create-pull-request`, `github/github-execute-backlog`, `jira/jira-execute-backlog`, and `design-thinking/dt-start-project`. Phase 10 expands the inventory to the full prompt catalog.
 

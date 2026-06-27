@@ -94,7 +94,7 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result.assertionsFailed | Should -Be 0
         }
 
-        It 'Treats a record without gradeResult as a failed trial' {
+        It 'Treats a record without gradeResult as an errored trial (not failed)' {
             $runDir = Join-Path $script:WorkRoot 'run-missing-grade'
             New-Item -ItemType Directory -Path $runDir -Force | Out-Null
             $record = @{
@@ -105,10 +105,11 @@ Describe 'VallyRunner module' -Tag 'Unit' {
             $result = Read-VallyResultsJsonl -RunDir $runDir
             $result.trials | Should -Be 1
             $result.assertionsPassed | Should -Be 0
-            $result.assertionsFailed | Should -Be 1
+            $result.assertionsFailed | Should -Be 0
+            $result.errored | Should -Be 1
             $result.durationMs | Should -Be 12
             $result.perStimulus['missing-grade'].trials | Should -Be 1
-            $result.perStimulus['missing-grade'].assertionsFailed | Should -Be 1
+            $result.perStimulus['missing-grade'].errored | Should -Be 1
         }
 
         It 'Skips malformed lines without throwing' {
@@ -162,6 +163,26 @@ Describe 'VallyRunner module' -Tag 'Unit' {
 
             $result.exitCode | Should -Be 1
             $result.assertionsFailed | Should -Be 2
+            $result.assertionsPassed | Should -Be 0
+        }
+
+        It 'Classifies no-verdict trials as errored and reports erroredTrials' {
+            $outDir = Join-Path $script:WorkRoot 'spec-errored'
+            $env:STUB_VALLY_MODE = 'errored'
+            try {
+                $result = Invoke-VallySpec `
+                    -SpecPath (Join-Path $script:WorkRoot 'fake.yaml') `
+                    -OutputDir $outDir `
+                    -Model 'claude-opus-4.7' `
+                    -VallyCommand $script:StubPath `
+                    -MaxErroredRetries 0
+            }
+            finally {
+                Remove-Item Env:\STUB_VALLY_MODE -ErrorAction SilentlyContinue
+            }
+
+            $result.erroredTrials | Should -Be 2
+            $result.assertionsFailed | Should -Be 0
             $result.assertionsPassed | Should -Be 0
         }
 

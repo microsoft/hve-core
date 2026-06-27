@@ -23,6 +23,9 @@ items:
   - path: .github/agents/security/sssc-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/security/sssc-reviewer.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental

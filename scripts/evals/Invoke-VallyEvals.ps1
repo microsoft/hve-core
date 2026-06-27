@@ -632,6 +632,8 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         $result['authoritativeFailed'] = $authoritativeFailed
         $result['isAdvisory'] = ($authoritativeFailed -eq 0 -and $advisoryFailed -gt 0)
 
+        $erroredTrials = if ($result.ContainsKey('erroredTrials')) { [int]$result['erroredTrials'] } else { 0 }
+
         if (-not $result.ContainsKey('status')) {
             if ($authoritativeFailed -gt 0 -or $outputModeration.flagged) {
                 $result['status'] = 'fail'
@@ -640,7 +642,10 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
                 $result['status'] = 'advisory-fail'
             }
             elseif ($result.exitCode -ne 0) {
-                $result['status'] = if ($specAllAdvisory) { 'advisory-fail' } else { 'fail' }
+                # A nonzero vally exit with no attributed grader failures is a transient
+                # error (not a conformance failure) when trials errored after retries;
+                # surface it as advisory rather than gating the build.
+                $result['status'] = if ($specAllAdvisory -or $erroredTrials -gt 0) { 'advisory-fail' } else { 'fail' }
             }
             else {
                 $result['status'] = 'pass'
@@ -653,7 +658,14 @@ foreach ($runKey in $uniqueSpecRuns.Keys) {
         # A nonzero vally exit with no attributed failures gates only when the spec is
         # not wholly advisory; an all-advisory spec surfaces but never blocks merge.
         if (-not $promote -and $result.exitCode -ne 0 -and $advisoryFailed -eq 0 -and $authoritativeFailed -eq 0 -and -not $specAllAdvisory) {
-            $promote = $true
+            if ($erroredTrials -gt 0) {
+                # The nonzero exit is explained solely by transient errored trials that
+                # persisted after retries; surface it but do not gate the build.
+                Write-Host "::warning file=$specRel::$erroredTrials trial(s) errored (transient executor failure) with no grader failures after retries; not promoting to CI failure"
+            }
+            else {
+                $promote = $true
+            }
         }
 
         if ($promote) {

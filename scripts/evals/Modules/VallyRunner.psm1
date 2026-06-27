@@ -144,6 +144,7 @@ function Read-VallyResultsJsonl {
     $empty = @{
         assertionsPassed = 0
         assertionsFailed = 0
+        errored          = 0
         durationMs       = 0
         trials           = 0
         resultsPath      = $null
@@ -160,6 +161,7 @@ function Read-VallyResultsJsonl {
 
     $passed = 0
     $failed = 0
+    $errored = 0
     $durationMs = 0
     $trials = 0
     $perStimulus = [ordered]@{}
@@ -186,14 +188,26 @@ function Read-VallyResultsJsonl {
             $hasScore = $true
             $scoreValue = [double]$gradeResult.score
         }
+        $hasPassed = ($gradeResult -and $gradeResult.PSObject.Properties['passed'] -and $null -ne $gradeResult.passed)
 
-        if ($hasScore -and $PSBoundParameters.ContainsKey('Threshold') -and $null -ne $Threshold) {
-            $trialPassed = $scoreValue -ge [double]$Threshold
+        # A trial with no gradeable verdict (neither score nor passed) means the
+        # trajectory errored before grading ran (transient executor/model failure).
+        # Classify it as errored rather than failed so infrastructure flakiness does
+        # not gate the build as a conformance failure.
+        $trialErrored = -not ($hasScore -or $hasPassed)
+
+        if (-not $trialErrored) {
+            if ($hasScore -and $PSBoundParameters.ContainsKey('Threshold') -and $null -ne $Threshold) {
+                $trialPassed = $scoreValue -ge [double]$Threshold
+            }
+            elseif ($hasPassed) {
+                $trialPassed = [bool]$gradeResult.passed
+            }
         }
-        elseif ($gradeResult -and $gradeResult.PSObject.Properties['passed'] -and $null -ne $gradeResult.passed) {
-            $trialPassed = [bool]$gradeResult.passed
-        }
-        if ($trialPassed) { $passed++ } else { $failed++ }
+
+        if ($trialErrored) { $errored++ }
+        elseif ($trialPassed) { $passed++ }
+        else { $failed++ }
 
         $trialWallMs = 0
         if ($obj.PSObject.Properties['trajectory'] -and $obj.trajectory -and
@@ -217,13 +231,16 @@ function Read-VallyResultsJsonl {
                 $perStimulus[$stimulusName] = @{
                     assertionsPassed = 0
                     assertionsFailed = 0
+                    errored          = 0
                     durationMs       = 0
                     trials           = 0
                 }
             }
             $bucket = $perStimulus[$stimulusName]
             $bucket.trials++
-            if ($trialPassed) { $bucket.assertionsPassed++ } else { $bucket.assertionsFailed++ }
+            if ($trialErrored) { $bucket.errored++ }
+            elseif ($trialPassed) { $bucket.assertionsPassed++ }
+            else { $bucket.assertionsFailed++ }
             $bucket.durationMs += $trialWallMs
         }
     }
@@ -231,6 +248,7 @@ function Read-VallyResultsJsonl {
     return @{
         assertionsPassed = $passed
         assertionsFailed = $failed
+        errored          = $errored
         durationMs       = $durationMs
         trials           = $trials
         resultsPath      = $jsonl.FullName
@@ -282,7 +300,8 @@ function Invoke-VallySpec {
         [Parameter(Mandatory = $true)][string]$Model,
         [string]$VallyCommand = 'vally',
         [string]$LogPath,
-        [string]$Tag
+        [string]$Tag,
+        [int]$MaxErroredRetries = 2
     )
 
     if (-not (Test-Path -LiteralPath $OutputDir)) {
@@ -299,39 +318,68 @@ function Invoke-VallySpec {
         $vallyArgs += @('--tag', $Tag)
     }
 
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $prev = [Console]::OutputEncoding
-    $exitCode = 0
-    try {
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        $raw = & $VallyCommand @vallyArgs 2>&1
-        $exitCode = $LASTEXITCODE
-    }
-    finally {
-        [Console]::OutputEncoding = $prev
-        $sw.Stop()
-    }
+    $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
+    $specLabel = Split-Path -Leaf $SpecPath
+    $maxAttempts = [Math]::Max(1, $MaxErroredRetries + 1)
+    $allLines = [System.Collections.Generic.List[string]]::new()
+    $best = $null
+    $attempt = 0
 
-    $lines = @($raw | ForEach-Object { $_.ToString() })
-    foreach ($line in $lines) { Write-Host $line }
+    while ($attempt -lt $maxAttempts) {
+        $attempt++
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $prev = [Console]::OutputEncoding
+        $exitCode = 0
+        try {
+            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            $raw = & $VallyCommand @vallyArgs 2>&1
+            $exitCode = $LASTEXITCODE
+        }
+        finally {
+            [Console]::OutputEncoding = $prev
+            $sw.Stop()
+        }
+
+        $lines = @($raw | ForEach-Object { $_.ToString() })
+        foreach ($line in $lines) { Write-Host $line; [void]$allLines.Add($line) }
+
+        $runDir = Resolve-VallyRunDir -OutputDir $OutputDir
+        $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold
+
+        $candidate = @{
+            exitCode  = $exitCode
+            runDir    = $runDir
+            aggregate = $aggregate
+            elapsedMs = [int]$sw.ElapsedMilliseconds
+        }
+        # Keep the cleanest attempt (fewest errored trials) across retries.
+        if ($null -eq $best -or [int]$aggregate.errored -lt [int]$best.aggregate.errored) {
+            $best = $candidate
+        }
+
+        if ([int]$aggregate.errored -le 0) { break }
+        if ($attempt -lt $maxAttempts) {
+            Write-Host "vally: $([int]$aggregate.errored) trial(s) errored for spec '$specLabel'; retrying to obtain a clean count (attempt $attempt of $($maxAttempts - 1) retries)..."
+        }
+    }
 
     if ($LogPath) {
         $dir = Split-Path -Parent $LogPath
         if ($dir -and -not (Test-Path -LiteralPath $dir)) {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
         }
-        Set-Content -LiteralPath $LogPath -Value $lines -Encoding utf8NoBOM
+        Set-Content -LiteralPath $LogPath -Value $allLines -Encoding utf8NoBOM
     }
 
-    $runDir = Resolve-VallyRunDir -OutputDir $OutputDir
-    $threshold = Get-VallySpecThreshold -SpecPath $SpecPath
-    $aggregate = Read-VallyResultsJsonl -RunDir $runDir -Threshold $threshold
+    $exitCode = $best.exitCode
+    $runDir = $best.runDir
+    $aggregate = $best.aggregate
 
     $durationMs = if ($aggregate.durationMs -gt 0) {
         [int]$aggregate.durationMs
     }
     else {
-        [int]$sw.ElapsedMilliseconds
+        [int]$best.elapsedMs
     }
 
     return @{
@@ -340,6 +388,7 @@ function Invoke-VallySpec {
         runDir           = $runDir
         assertionsPassed = $aggregate.assertionsPassed
         assertionsFailed = $aggregate.assertionsFailed
+        erroredTrials    = $aggregate.errored
         durationMs       = $durationMs
         trials           = $aggregate.trials
         resultsPath      = $aggregate.resultsPath

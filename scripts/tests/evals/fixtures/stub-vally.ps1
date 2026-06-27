@@ -20,6 +20,7 @@
 #                 (reproduces an empty perStimulus map)
 #   mixed  - one pass, one fail, exit 0 (failed trial drives outer status)
 #   empty  - no trials emitted, exit 0
+#   errored - two trials with no gradeResult (executor errored before grading), exit 1
 #   crash  - prints an error and exits 99 (does not write results.jsonl)
 #   per-stim - emits one trial per entry of STUB_VALLY_STIM_RESULTS_JSON
 #              (JSON object {stimulusName: passedBool}); exit 1 only when
@@ -129,6 +130,21 @@ $records = switch ($mode) {
     }
     'mixed' { @((New-StubRecord -Name 'stim-1' -Passed $true),  (New-StubRecord -Name 'stim-2' -Passed $false)) }
     'empty' { @() }
+    'errored' {
+        # Trials whose trajectory errored before grading; no gradeResult is emitted,
+        # so the runner classifies them as errored (transient) rather than failed.
+        $mk = {
+            param($n)
+            [ordered]@{
+                trajectory = [ordered]@{
+                    stimulus = [ordered]@{ name = $n }
+                    output   = ''
+                    metrics  = [ordered]@{ wallTimeMs = 5 }
+                }
+            }
+        }
+        @((& $mk 'stim-1'), (& $mk 'stim-2'))
+    }
     'per-stim' {
         if (-not $env:STUB_VALLY_STIM_RESULTS_JSON) {
             Write-Error "stub-vally: per-stim mode requires STUB_VALLY_STIM_RESULTS_JSON."
@@ -160,6 +176,7 @@ Set-Content -LiteralPath (Join-Path $runDir 'eval-results.md') -Value "# stub ev
 
 if ($mode -eq 'fail') { exit 1 }
 if ($mode -eq 'fail-noname') { exit 1 }
+if ($mode -eq 'errored') { exit 1 }
 if ($mode -eq 'per-stim' -and $env:STUB_VALLY_FAIL_ON_ANY -eq '1') {
     foreach ($r in $records) {
         if (-not $r.gradeResult.passed) { exit 1 }

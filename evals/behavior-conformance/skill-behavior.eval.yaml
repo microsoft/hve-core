@@ -1,10 +1,10 @@
 name: behavior-conformance-skills
 description: >
-  Advisory-tier behavior conformance evals for 25 skills exercised across three
+  Advisory-tier behavior conformance evals for 27 skills exercised across three
   stimulus shapes: knowledge (canonical concept attribution), tool-trigger
   (domain-intent skill attribution from a working context), and bleed-detection
   (correct refusal when an off-topic context superficially resembles the
-  skill's domain). Total: 75 stimuli. Each tool-trigger stimulus uses two
+  skill's domain). Total: 81 stimuli. Each tool-trigger stimulus uses two
   graders with AND logic, and the suite-level scoring threshold gates the
   aggregate pass rate across stimuli.
 type: capability
@@ -1522,10 +1522,13 @@ stimuli:
       advisory: "true"
     graders:
       - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(rpi-review|rpi\s+review|review|validation|fulfillment)'
+      - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(review|request|validation|evidence|handoff)'
-
   - name: skill-code-review-knowledge
     prompt: |
       Summarize the review workflow defined by the `code-review` skill: its
@@ -1545,3 +1548,119 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(review|severity|perspective|output|finding|verdict)'
+  - name: skill-privacy-standards-knowledge
+    prompt: |
+      Summarize the privacy frameworks the `privacy-standards` skill provides
+      for reasoning about data flows and DPIA thresholds. Cite at least three
+      of the standards it indexes.
+    tags:
+      category: behavior-conformance
+      skill: privacy-standards
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(nist\s+privacy\s+framework|nistir\s*8062|gdpr|ccpa|cpra|owasp)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(privacy|dpia|data\s+flow|standard|framework)'
+  - name: skill-privacy-standards-tool-trigger
+    prompt: |
+      I am assessing the privacy posture of a service that ingests account
+      profiles and want standards-grounded reasoning and DPIA threshold
+      guidance. Which skill under `.github/skills/**/SKILL.md` applies and what
+      does it provide?
+    tags:
+      category: behavior-conformance
+      skill: privacy-standards
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(privacy-standards|privacy|dpia|standard|framework)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(privacy|dpia|data|standard|framework)'
+  - name: skill-privacy-standards-bleed-detection
+    prompt: |
+      I am hardening a CI/CD pipeline against software supply-chain attacks and
+      need OpenSSF Scorecard and SLSA guidance. Should the `privacy-standards`
+      skill be applied here? Name the skill domain that actually fits.
+    tags:
+      category: behavior-conformance
+      skill: privacy-standards
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: refusal-or-redirect
+        config:
+          pattern: '(?i)(supply\s+chain|openssf|slsa|scorecard|not\s+privacy|security)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(supply\s+chain|security|scorecard|slsa|sssc)'
+  - name: skill-backlog-templates-knowledge
+    prompt: |
+      Summarize the shared work-item conventions the `backlog-templates` skill
+      provides for planners that emit a backlog handoff. Mention the formats it
+      targets and at least two conventions it standardizes.
+    tags:
+      category: behavior-conformance
+      skill: backlog-templates
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(work[-\s]?item|template|ado|github|sanitization|autonomy|disclaimer)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(backlog|handoff|work[-\s]?item|template|planner)'
+  - name: skill-backlog-templates-tool-trigger
+    prompt: |
+      I am at the Phase-final handoff of a planning session and need to emit
+      dual-format ADO and GitHub backlog work items with consistent IDs and
+      sanitized content. Which skill under `.github/skills/**/SKILL.md` applies
+      and what does it provide?
+    tags:
+      category: behavior-conformance
+      skill: backlog-templates
+      shape: tool-trigger
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-domain-attribution
+        config:
+          pattern: '(?i)(backlog-templates|backlog|work[-\s]?item|template|handoff)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(backlog|handoff|work[-\s]?item|ado|github)'
+  - name: skill-backlog-templates-bleed-detection
+    prompt: |
+      I am writing a narrative blog post for the documentation site and want
+      help with prose style and tone. Should the `backlog-templates` skill be
+      applied here? Name the kind of skill that actually fits.
+    tags:
+      category: behavior-conformance
+      skill: backlog-templates
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: refusal-or-redirect
+        config:
+          pattern: '(?i)(not\s+backlog|prose|writing\s+style|documentation|narrative|tone)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(writing|style|prose|documentation|tone)'

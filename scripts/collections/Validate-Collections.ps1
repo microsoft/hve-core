@@ -207,6 +207,7 @@ function Invoke-CollectionValidation {
         'rai-planning'  = $true
         'rai'           = $true
         'accessibility' = $true
+        'privacy'       = $true
     }
 
     foreach ($file in $collectionFiles) {

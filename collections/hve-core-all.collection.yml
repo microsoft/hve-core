@@ -112,6 +112,12 @@ items:
   kind: agent
 - path: .github/agents/jira/jira-prd-to-wit.agent.md
   kind: agent
+- path: .github/agents/privacy/privacy-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/privacy/privacy-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -151,6 +157,9 @@ items:
   kind: agent
   maturity: experimental
 - path: .github/agents/security/sssc-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/sssc-reviewer.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
@@ -466,6 +475,9 @@ items:
   kind: instruction
 - path: .github/instructions/jira/jira-wit-planning.instructions.md
   kind: instruction
+- path: .github/instructions/privacy/privacy-identity.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/project-planning/adr-byo-template.instructions.md
   kind: instruction
   maturity: experimental
@@ -574,6 +586,9 @@ items:
 - path: .github/skills/jira/jira
   kind: skill
 - path: .github/skills/project-planning/adr-author
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/privacy-standards
   kind: skill
   maturity: experimental
 - path: .github/skills/project-planning/rai-planner

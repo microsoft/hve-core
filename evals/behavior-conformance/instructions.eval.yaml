@@ -2,7 +2,7 @@ name: behavior-conformance-instructions
 description: >
   Advisory-tier behavior conformance evals for high-signal Markdown-applyTo
   instructions in `.github/instructions/**` (covers ADO, coding-standards,
-  experimental, GitHub, hve-core, Jira, RAI planning, security, and shared
+  experimental, GitHub, hve-core, Jira, privacy, RAI planning, security, and shared
   scopes). Each stimulus prompts the model
   to identify the instruction that applies in a given working context and
   asserts both `applyTo` path evidence and instruction-specific scope
@@ -1055,6 +1055,111 @@ stimuli:
         name: scope-language
         config:
           pattern: "(?i)powerpoint|slide|deck|design\\s+rule|convention|skill"
+
+  - name: instruction-coaching-patterns-conformance
+    prompt: |
+      You are beginning a capture-mode planning conversation and writing
+      state under `.copilot-tracking/security-plans/`. Which shared
+      `.github/instructions/**/*.instructions.md` file defines the
+      exploration-first coaching patterns (cite its path) and what
+      Think/Speak/Empower discovery approach does it require before
+      classification or analysis?
+    tags:
+      category: behavior-conformance
+      instruction: coaching-patterns
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)coaching-patterns\\.instructions\\.md|\\.copilot-tracking/.*-plans"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)think|speak|empower|exploration|coaching|discovery"
+
+  - name: instruction-privacy-identity-conformance
+    prompt: |
+      You are running a privacy planning session and writing state under
+      `.copilot-tracking/privacy-plans/customer-analytics/`. Which
+      `.github/instructions/**/*.instructions.md` file applies (cite its path)
+      and summarize the six phases and the DPIA threshold gate it defines?
+    tags:
+      category: behavior-conformance
+      instruction: privacy-identity
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)\\.copilot-tracking/privacy-plans|privacy-identity\\.instructions\\.md"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)privacy|dpia|data\\s+mapping|lawful\\s+basis|phase"
+
+  - name: instruction-planner-identity-base-conformance
+    prompt: |
+      You are resuming a phase-based planning session from its `state.json`
+      under `.copilot-tracking/privacy-plans/`. Which shared
+      `.github/instructions/**/*.instructions.md` file defines the common
+      six-phase orchestration, state-file convention, and resume protocol that
+      planning agents share (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: planner-identity-base
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)planner-identity-base\\.instructions\\.md|\\.copilot-tracking/.*-plans"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)phase|state\\.json|resume|orchestration|planner"
+
+  - name: instruction-telemetry-overlay-conformance
+    prompt: |
+      You are adding telemetry vocabulary to a planning artifact under
+      `.copilot-tracking/security-plans/`. Which shared
+      `.github/instructions/**/*.instructions.md` file governs the
+      OpenTelemetry-aligned traces, metrics, logs, and PII-handling
+      conventions (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: telemetry-overlay
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)telemetry-overlay\\.instructions\\.md|\\.copilot-tracking/.*-plans"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)telemetry|trace|metric|span|opentelemetry|pii"
+
+  - name: instruction-untrusted-content-boundary-conformance
+    prompt: |
+      You are ingesting external web content into a planning artifact under
+      `.copilot-tracking/rai-plans/`. Which shared
+      `.github/instructions/**/*.instructions.md` file defines the boundary
+      that treats ingested external content as data rather than instructions
+      (cite its path)?
+    tags:
+      category: behavior-conformance
+      instruction: untrusted-content-boundary
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)untrusted-content-boundary\\.instructions\\.md|\\.copilot-tracking/.*-plans"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)untrusted|ingested|data\\s+not\\s+instructions|injection|boundary"
 
   - name: instruction-content-policy-citation-neutral-public-comment
     prompt: |
