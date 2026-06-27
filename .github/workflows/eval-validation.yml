@@ -35,6 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      eval-relevant: ${{ steps.detect.outputs.eval-relevant }}
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -65,6 +67,7 @@ jobs:
         run: |
           if ('${{ inputs.changed-files-only }}' -ne 'true') {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             Write-Output 'changed-files-only is false; running full eval suite.'
             exit 0
           }
@@ -78,6 +81,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $null -eq $changed) {
             Write-Output "Could not compute diff against '$baseBranch'; running full eval suite."
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             exit 0
           }
 
@@ -87,8 +91,7 @@ jobs:
             '^\.github/agents/',
             '^\.github/prompts/',
             '^\.github/instructions/',
-            '^\.github/skills/',
-            '^\.github/workflows/eval-validation\.yml$'
+            '^\.github/skills/'
           )
 
           # package.json and package-lock.json change often for reasons unrelated to
@@ -122,9 +125,11 @@ jobs:
 
           if ($relevant) {
             'EVAL_RELEVANT=true' >> $env:GITHUB_ENV
+            'eval-relevant=true' >> $env:GITHUB_OUTPUT
             Write-Output 'Eval-relevant paths changed; running full eval suite.'
           } else {
             'EVAL_RELEVANT=false' >> $env:GITHUB_ENV
+            'eval-relevant=false' >> $env:GITHUB_OUTPUT
             Write-Output 'No eval-relevant paths changed; skipping eval suite.'
           }
 
@@ -308,7 +313,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [eval-validation, content-moderation]
     # Repository secrets are not exposed to fork PRs; clean-skip execution there.
-    if: github.event.pull_request.head.repo.fork == false
+    # Only run when eval-relevant paths changed (see eval-validation detect step).
+    if: needs.eval-validation.outputs.eval-relevant == 'true' && github.event.pull_request.head.repo.fork == false
     permissions:
       contents: read
     strategy:
