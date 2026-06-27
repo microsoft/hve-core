@@ -51,6 +51,7 @@ The project is organized into these main areas:
 * Documentation (`docs/`) - Getting started guides, templates, RPI workflow documentation, and contribution guidelines.
 * Scripts (`scripts/`) - Automation for linting, security validation, extension packaging, and development tools.
 * Skills (`.github/skills/{collection-id}/`) - Self-contained skill packages, by convention organized by collection.
+* Hooks (`.github/hooks/{collection-id}/`) - Collection-scoped Copilot hook manifests (JSON) that wire lifecycle event commands.
 * Extension (`extension/`) - VS Code extension source and packaging.
 * GitHub Configuration (`.github/`) - Workflows, instructions, prompts, agents, composite actions, and issue templates, typically organized into `{collection-id}` subdirectories.
 * Collections (`collections/`) - YAML and markdown manifests defining bundled sets of agents, prompts, instructions, and skills.
@@ -152,6 +153,7 @@ Commit message scopes map to repository directories:
 * `(prompts)` = `.github/prompts/`
 * `(instructions)` = `.github/instructions/`
 * `(skills)` = `.github/skills/`
+* `(hooks)` = `.github/hooks/`
 * `(templates)` = `.github/ISSUE_TEMPLATE/`
 * `(workflows)` = `.github/workflows/`
 * `(extension)` = `extension/`

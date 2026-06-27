@@ -32,6 +32,7 @@ Select all that apply:
 * [ ] Copilot prompt (`.github/prompts/*.prompt.md`)
 * [ ] Copilot agent (`.github/agents/*.agent.md`)
 * [ ] Copilot skill (`.github/skills/*/SKILL.md`)
+* [ ] Copilot hook (`.github/hooks/*/*.json`)
 * [ ] Eval spec added/updated for changed AI artifacts (`evals/`)
 
 > Note for AI Artifact Contributors:
