@@ -2,7 +2,7 @@
 title: "Task Planning Workflow"
 description: "How to use AI-assisted task planning for Azure DevOps work items"
 author: Microsoft
-ms.date: 2026-03-07
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - ado
@@ -59,13 +59,13 @@ Field conventions follow Azure DevOps work item types. User Stories carry title,
 
 The agent supports creation, updates, batch operations, and linking through MCP ADO tools.
 
-For retrieval, `mcp_ado_wit_get_work_item` and `mcp_ado_wit_get_work_items` (batch) hydrate work items with full field values. Batch retrieval reduces API calls when processing multiple items.
+For retrieval, `mcp_ado_wit_get_work_item` and `mcp_ado_wit_get_work_items_batch_by_ids` (batch) hydrate work items with full field values. Batch retrieval reduces API calls when processing multiple items.
 
 The search workflow uses `mcp_ado_search_workitem` with keyword groups composed from your codebase, commit messages, and existing work item fields. The search protocol supports OR/AND syntax and paging for large result sets.
 
 New work items are created through `mcp_ado_wit_create_work_item`, and `mcp_ado_wit_add_child_work_items` decomposes a parent into child tasks. Created items inherit the parent's area path and iteration path unless you override them.
 
-Field changes go through `mcp_ado_wit_update_work_item`, and `mcp_ado_wit_add_work_item_relation` handles linking related items. Comments posted through `mcp_ado_wit_create_work_item_comment` record implementation context directly on the work item.
+Field changes go through `mcp_ado_wit_update_work_item`, and `mcp_ado_wit_work_items_link` handles linking related items. Comments posted through `mcp_ado_wit_add_work_item_comment` record implementation context directly on the work item.
 
 ## Output Artifacts
 

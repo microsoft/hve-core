@@ -2,7 +2,7 @@
 title: Using Workflows Together
 description: Connect discovery, triage, sprint planning, and execution into a complete Azure DevOps backlog management pipeline
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager
@@ -75,7 +75,7 @@ Triage the work items from my latest discovery session. Assign Area Paths,
 reclassify priorities, and flag duplicates with confidence scores.
 ```
 
-Review the triage results at `.copilot-tracking/workitems/triage/<YYYY-MM-DD>/work-items.md`. Adjust any classification suggestions before continuing.
+Review the triage results at `.copilot-tracking/workitems/triage/<YYYY-MM-DD>/triage-plan.md`. Adjust any classification suggestions before continuing.
 
 ### Step 3: Clear and Plan Sprint
 
@@ -154,13 +154,13 @@ Run discovery periodically to monitor for new items without immediate action.
 
 Planning files move through states during the pipeline:
 
-| State          | Location                                 | Created By      | Consumed By    |
-|----------------|------------------------------------------|-----------------|----------------|
-| Analysis       | `discovery/<scope>/planning-log.md`      | Discovery       | Triage         |
-| Classification | `triage/<YYYY-MM-DD>/work-items.md`      | Triage          | Sprint/Execute |
-| Sprint Plan    | `sprint/<iteration-kebab>/handoff.md`    | Sprint Planning | Execution      |
-| PRD Hierarchy  | `prds/<name>/handoff.md`                 | PRD Planning    | Execution      |
-| Execution Log  | `execution/<YYYY-MM-DD>/handoff-logs.md` | Execution       | User review    |
+| State          | Location                                  | Created By      | Consumed By    |
+|----------------|-------------------------------------------|-----------------|----------------|
+| Analysis       | `discovery/<scope>/planning-log.md`       | Discovery       | Triage         |
+| Classification | `triage/<YYYY-MM-DD>/triage-plan.md`      | Triage          | Sprint/Execute |
+| Sprint Plan    | `sprint/<iteration-kebab>/sprint-plan.md` | Sprint Planning | Execution      |
+| PRD Hierarchy  | `prds/<name>/handoff.md`                  | PRD Planning    | Execution      |
+| Execution Log  | `execution/<YYYY-MM-DD>/handoff-logs.md`  | Execution       | User review    |
 
 Files are created once and updated in place. The execution workflow marks checkboxes in handoff files as it processes each operation, providing a built-in audit trail.
 
@@ -183,16 +183,16 @@ The ADO Backlog Manager provides handoff buttons for quick workflow transitions:
 
 ## Artifact Summary
 
-| Workflow         | Input            | Output                                      | Key File          |
-|------------------|------------------|---------------------------------------------|-------------------|
-| Discovery        | Project scope    | Work item inventory and recommendations     | `planning-log.md` |
-| Triage           | Discovery output | Field suggestions and duplicate flags       | `work-items.md`   |
-| PRD Planning     | Requirements doc | Work item hierarchy with parent-child links | `handoff.md`      |
-| Sprint Planning  | Triage output    | Iteration assignments and capacity analysis | `handoff.md`      |
-| Execution        | Handoff files    | Applied changes and operation log           | `handoff-logs.md` |
-| Task Planning    | Assigned items   | Prioritized task list with reasoning        | `task-list.md`    |
-| Build Monitoring | PR or branch     | Pipeline status, logs, and failure details  | `build-status.md` |
-| PR Creation      | Local changes    | Pull request with work item links           | `pr-details.md`   |
+| Workflow         | Input            | Output                                      | Key File                |
+|------------------|------------------|---------------------------------------------|-------------------------|
+| Discovery        | Project scope    | Work item inventory and recommendations     | `planning-log.md`       |
+| Triage           | Discovery output | Field suggestions and duplicate flags       | `triage-plan.md`        |
+| PRD Planning     | Requirements doc | Work item hierarchy with parent-child links | `handoff.md`            |
+| Sprint Planning  | Triage output    | Iteration assignments and capacity analysis | `sprint-plan.md`        |
+| Execution        | Handoff files    | Applied changes and operation log           | `handoff-logs.md`       |
+| Task Planning    | Assigned items   | Prioritized task list with reasoning        | `task-planning-logs.md` |
+| Build Monitoring | PR or branch     | Pipeline status, logs, and failure details  | `<date>-build-<id>.md`  |
+| PR Creation      | Local changes    | Pull request with work item links           | `pr.md`                 |
 
 ## Quick Reference
 

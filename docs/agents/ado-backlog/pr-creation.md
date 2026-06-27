@@ -2,7 +2,7 @@
 title: "PR Creation Workflow"
 description: "How to create Azure DevOps pull requests with automated work item discovery and reviewer identification"
 author: Microsoft
-ms.date: 2026-03-07
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - ado
@@ -76,7 +76,7 @@ When no existing work items match, the agent enters an automatic creation phase,
 ## Output Artifacts
 
 ```text
-.copilot-tracking/pr/new/<branch-name>/
+.copilot-tracking/pr/new/<normalized-branch-name>/
 ├── pr-reference.xml       # Full diff between source and base branches
 ├── pr.md                  # Generated PR title and description
 ├── pr-analysis.md         # Work item discovery results with relevance scores
@@ -114,7 +114,7 @@ Full PR with automated work item discovery:
 ```text
 Create a pull request for my feature branch against develop. Search
 for related work items in the Active and New states with a similarity
-threshold of 0.7. Include:
+threshold of 70. Include:
 - Conventional commit title based on the diff summary
 - Work item links for all matched items
 - Reviewer suggestions based on git blame history
