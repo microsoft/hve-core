@@ -27,11 +27,11 @@ The Supply Chain Reviewer is a user-invocable agent that assesses your repositor
 
 The security collection ships three complementary agents. Pick the one matched to your goal.
 
-| Use this                  | When you want to…                                                                                                            |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| 🔎 Supply Chain Reviewer  | Run an automated, evidence-verified posture scan of the current codebase (or a PR diff, or a plan) and get a written report |
-| 🛡️ Security Planner       | Walk a structured six-phase threat-modeling interview that produces backlog items across seven operational buckets          |
-| 🔗 SSSC Planner           | Hold a conversational supply-chain planning session that maps OpenSSF Scorecard, SLSA, Sigstore, and SBOM gaps to a backlog |
+| Use this                 | When you want to…                                                                                                           |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 🔎 Supply Chain Reviewer | Run an automated, evidence-verified posture scan of the current codebase (or a PR diff, or a plan) and get a written report |
+| 🛡️ Security Planner     | Walk a structured six-phase threat-modeling interview that produces backlog items across seven operational buckets          |
+| 🔗 SSSC Planner          | Hold a conversational supply-chain planning session that maps OpenSSF Scorecard, SLSA, Sigstore, and SBOM gaps to a backlog |
 
 In short: reach for the **Supply Chain Reviewer** when you need an assessment report now, the **Security Planner** for broad threat modeling and backlog generation, and the **SSSC Planner** when you want a guided, conversational supply-chain plan with handoff-ready work items.
 
@@ -39,11 +39,11 @@ In short: reach for the **Supply Chain Reviewer** when you need an assessment re
 
 The reviewer runs in one of three modes. When no mode is supplied, it defaults to `audit`.
 
-| Mode    | Scope                                       | Report artifact                                                       |
-|---------|---------------------------------------------|----------------------------------------------------------------------|
-| `audit` | Full repository                             | `security-report-{{NNN}}.md`                                          |
-| `diff`  | Changed files in a PR (full-repo verifies)  | `security-report-diff-{{NNN}}.md`                                     |
-| `plan`  | An implementation plan document             | `plan-risk-assessment-{{NNN}}.md`                                     |
+| Mode    | Scope                                      | Report artifact                   |
+|---------|--------------------------------------------|-----------------------------------|
+| `audit` | Full repository                            | `security-report-{{NNN}}.md`      |
+| `diff`  | Changed files in a PR (full-repo verifies) | `security-report-diff-{{NNN}}.md` |
+| `plan`  | An implementation plan document            | `plan-risk-assessment-{{NNN}}.md` |
 
 * **audit** profiles and assesses the entire codebase.
 * **diff** uses the `pr-reference` skill to resolve the changed files, scopes the assessment to those files, and keeps supply-chain-relevant configuration (CI/CD workflows, dependency manifests, lockfiles, SBOM documents, signing or provenance configuration) in scope. Verification still searches the full repository so mitigations in unchanged code do not produce false positives.
@@ -59,10 +59,10 @@ flowchart LR
 ```
 
 | Stage   | Subagent                    | Responsibility                                                                                       |
-|---------|-----------------------------|-----------------------------------------------------------------------------------------------------|
+|---------|-----------------------------|------------------------------------------------------------------------------------------------------|
 | Profile | Codebase Profiler           | Detects the technology stack and lists applicable supply-chain skills from the codebase signals      |
 | Assess  | Supply Chain Skill Assessor | Assesses the codebase (or plan) against each applicable skill and returns a findings table           |
-| Verify  | Finding Deep Verifier       | Runs adversarial review on every FAIL and PARTIAL finding, confirming, disproving, or downgrading it  |
+| Verify  | Finding Deep Verifier       | Runs adversarial review on every FAIL and PARTIAL finding, confirming, disproving, or downgrading it |
 | Report  | Report Generator            | Collates the verified findings and writes the consolidated report under `Domain: security`           |
 
 The orchestrator delegates all reference reading to the subagents; it never reads the supply-chain reference files directly. PASS and `NOT_ASSESSED` findings pass through unchanged. In `plan` mode the verify stage is skipped.
@@ -103,14 +103,14 @@ Each subagent is internal (not user-invocable) and is dispatched by the reviewer
 
 The reviewer runs with no required arguments; an unqualified invocation performs a full `audit`. The following optional inputs refine the run:
 
-| Input                 | Effect                                                                                                                     |
-|-----------------------|---------------------------------------------------------------------------------------------------------------------------|
-| Mode                  | `audit`, `diff`, or `plan`. Defaults to `audit`.                                                                          |
-| Subdirectory / path   | Focus profiling and scanning on a specific area of the codebase (audit and diff).                                         |
-| Specific skills list  | Comma-separated skills that override the profiler's automatic skill detection. The profiler still runs for context.        |
-| Target skill          | A single supply-chain skill (for example, `supply-chain-security`). Fast-paths past profiling and assesses only that skill. |
-| Prior scan report     | A previous report path for incremental comparison.                                                                       |
-| Plan document         | The plan path or content used in `plan` mode. The agent asks for this if it cannot resolve one.                          |
+| Input                | Effect                                                                                                                      |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Mode                 | `audit`, `diff`, or `plan`. Defaults to `audit`.                                                                            |
+| Subdirectory / path  | Focus profiling and scanning on a specific area of the codebase (audit and diff).                                           |
+| Specific skills list | Comma-separated skills that override the profiler's automatic skill detection. The profiler still runs for context.         |
+| Target skill         | A single supply-chain skill (for example, `supply-chain-security`). Fast-paths past profiling and assesses only that skill. |
+| Prior scan report    | A previous report path for incremental comparison.                                                                          |
+| Plan document        | The plan path or content used in `plan` mode. The agent asks for this if it cannot resolve one.                             |
 
 ## Output Artifacts
 

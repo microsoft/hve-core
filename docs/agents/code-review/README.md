@@ -28,13 +28,13 @@ The code review system is a single human-gated agent that reviews your changes b
 
 ## Why Pre-PR Code Review?
 
-| Benefit                       | Description                                                                                |
-|-------------------------------|--------------------------------------------------------------------------------------------|
-| Earlier defect detection      | Catches functional bugs on the branch, before reviewers spend time on a PR                 |
-| Consistent standards coverage | Every diff gets the same skill-based analysis regardless of which reviewer picks up the PR |
+| Benefit                       | Description                                                                                        |
+|-------------------------------|----------------------------------------------------------------------------------------------------|
+| Earlier defect detection      | Catches functional bugs on the branch, before reviewers spend time on a PR                         |
+| Consistent standards coverage | Every diff gets the same skill-based analysis regardless of which reviewer picks up the PR         |
 | Multiple perspectives         | One run can cover functional, standards, accessibility, security, PR-level, and readiness concerns |
-| Extensible language support   | Teams add their own skills without modifying the review agent                              |
-| Actionable output             | Every finding includes file paths, line numbers, current code, and a suggested fix         |
+| Extensible language support   | Teams add their own skills without modifying the review agent                                      |
+| Actionable output             | Every finding includes file paths, line numbers, current code, and a suggested fix                 |
 
 > [!TIP]
 > New to hve-core code review? Run the **Code Review** agent on your current branch with the `standard` depth tier and one or two perspectives to see the output format, then add perspectives or raise the depth as you get comfortable with the workflow.
@@ -100,15 +100,15 @@ Each subagent writes structured JSON findings to disk. The orchestrator reads ev
 
 A single user-invocable **Code Review** agent orchestrates the review. It owns the human-gated flow and dispatches one thin subagent per selected perspective. Perspective selection (which lanes run) and depth level (how deeply each lane verifies) are independent choices.
 
-| Perspective     | Subagent                  | Lane focus                                                               |
-|-----------------|---------------------------|--------------------------------------------------------------------------|
-| `functional`    | Code Review Functional    | Logic, edge cases, error handling, concurrency, contract correctness     |
-| `standards`     | Code Review Standards     | Project coding standards traceable to loaded `coding-standards` skills   |
-| `accessibility` | Code Review Accessibility | Accessibility conformance traceable to loaded `accessibility` skills     |
-| `security`      | Code Review Security      | Authn/authz, input validation, secrets, injection, deserialization paths |
-| `pr`            | Code Review PR            | PR-level summary, scope hygiene, validation evidence, follow-up items    |
+| Perspective     | Subagent                  | Lane focus                                                                                                                 |
+|-----------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `functional`    | Code Review Functional    | Logic, edge cases, error handling, concurrency, contract correctness                                                       |
+| `standards`     | Code Review Standards     | Project coding standards traceable to loaded `coding-standards` skills                                                     |
+| `accessibility` | Code Review Accessibility | Accessibility conformance traceable to loaded `accessibility` skills                                                       |
+| `security`      | Code Review Security      | Authn/authz, input validation, secrets, injection, deserialization paths                                                   |
+| `pr`            | Code Review PR            | PR-level summary, scope hygiene, validation evidence, follow-up items                                                      |
 | `readiness`     | Code Review Readiness     | Non-code: PR description accuracy, linked-issue alignment, checkbox and mergeable readiness, changed-documentation content |
-| `full`          | all of the above          | Runs every perspective and synthesizes one merged assessment             |
+| `full`          | all of the above          | Runs every perspective and synthesizes one merged assessment                                                               |
 
 The `security` and `accessibility` perspectives are self-contained and skill-backed. They source their review logic from the `code-review` and domain skills and do not call into the standalone Security Reviewer or Accessibility Reviewer agents. When a high-risk surface is in scope, the perspective surfaces a one-line note that a deeper standalone audit exists.
 
@@ -143,15 +143,15 @@ flowchart TD
   S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7
 ```
 
-| Step | Stage                              | What happens                                                                                                                    |
-|------|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| 1    | Context Bootstrap                  | The `pr-reference` skill generates a structured XML diff; the agent drafts a change brief, auto-detects hotspot candidates, and resolves PR context when a pull request is targeted |
+| Step | Stage                              | What happens                                                                                                                                                                                                                      |
+|------|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1    | Context Bootstrap                  | The `pr-reference` skill generates a structured XML diff; the agent drafts a change brief, auto-detects hotspot candidates, and resolves PR context when a pull request is targeted                                               |
 | 2    | Orientation Floor + Dispatch Board | The agent builds a factual Register 1 walkthrough (changed areas, control flow, data flow, blast radius) and presents an enumerated dispatch board; you confirm or edit the walkthrough and bookmark or reject board items (gate) |
-| 3    | Perspective + Depth Selection      | You pick which perspectives run and the depth tier; the agent pre-populates a recommended default derived from the scope (gate) |
-| 4    | Prepare Dispatch State             | The agent writes `diff-state.json` and a `dispatch-manifest.json` so every subagent operates on the same input                  |
-| 5    | Human-Steered Walk-Back Loop       | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate) |
-| 6    | Dispatch Perspectives              | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                  |
-| 7    | Merge, Walk Back + Persist         | Findings are deduplicated, severity-sorted, source-tagged, walked back onto the board, and written as `review.md` plus `metadata.json` |
+| 3    | Perspective + Depth Selection      | You pick which perspectives run and the depth tier; the agent pre-populates a recommended default derived from the scope (gate)                                                                                                   |
+| 4    | Prepare Dispatch State             | The agent writes `diff-state.json` and a `dispatch-manifest.json` so every subagent operates on the same input                                                                                                                    |
+| 5    | Human-Steered Walk-Back Loop       | You bookmark a board item and ask a question; the agent routes factual questions to the Explainer (Register 1) and deep questions to the Walkback (Register 2), then walks each answer back onto its board item (gate)            |
+| 6    | Dispatch Perspectives              | Selected perspective subagents run concurrently, each writing structured JSON findings to disk                                                                                                                                    |
+| 7    | Merge, Walk Back + Persist         | Findings are deduplicated, severity-sorted, source-tagged, walked back onto the board, and written as `review.md` plus `metadata.json`                                                                                            |
 
 ### Orientation, Registers, and the Walk-Back Loop
 
