@@ -32,7 +32,9 @@ When a request spans several of these, propose a breakdown, for example an agent
 
 ## File Types
 
-This section defines authoring patterns and validation checks for the artifact types authored here: prompt, agent, instructions, and skill files, with subagents covered under Agent Files as a specialized agent form. Tools are external capabilities provided by VS Code or an MCP server and wired into an agent through its `tools:` frontmatter rather than authored here. Select a type using the Choosing the Right Artifact Type section, then follow the per-type standards below. Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
+This section defines authoring patterns and validation checks for the artifact types authored here: prompt, agent, instructions, and skill files, with subagents covered under Agent Files as a specialized agent form. Tools are external capabilities provided by VS Code or an MCP server and wired into an agent through its `tools:` frontmatter rather than authored here. Select a type using the Choosing the Right Artifact Type section, then follow the per-type standards below.
+
+Keep prompt and agent files focused. When an artifact exceeds approximately 5000 tokens of instruction content, consider extracting reusable guidance into a shared instructions file or delegating to subagents.
 
 ### Prompt Files
 
@@ -167,7 +169,8 @@ Characteristics:
 * Optionally include `user-invocable: false` frontmatter to prevent direct user invocation.
 * Frontmatter includes `tools:` listing the tools available to the subagent.
 * Typically live under a `subagents/` subdirectory within their collection folder (for example, `.github/agents/{collection}/subagents/`) to separate them from user-facing agents.
-* Parent agents declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
+* Parent agents with a fixed subagent set declare subagent dependencies in their `agents:` frontmatter using the human-readable name from each subagent's `name:` frontmatter.
+* Do not use wildcard `agents: "*"` as a shortcut for dynamic routing. When an agent chooses another agent from user input or derived context, omit `agents:` unless the runtime requires an allowlist. Describe the validation and selection rules in the agent body.
 * Referenced using glob paths like `.github/agents/**/name.agent.md` so resolution works regardless of whether the subagent is at the root or in the `subagents/` folder.
 * May orchestrate their own subagents when the harness supports nested subagent calls; otherwise the parent agent orchestrates subagent calls.
 
@@ -464,7 +467,7 @@ These fields are required depending on the file type:
 
 * `name:` - Artifact identifier. Optional but preferred for agent files; required for skill files. For agents, use a human-readable name (for example, `Prompt Builder`). For skills, match the skill directory name using lowercase kebab-case.
 * `applyTo:` - Glob patterns defining which files trigger the instructions. Required for instructions files only.
-* `agents:` - List of subagent dependencies. Required for parent agents that run subagents. Each entry is the human-readable name from the subagent's `name:` frontmatter (for example, `Codebase Researcher`).
+* `agents:` - List of fixed subagent dependencies for parent agents that always call known subagents. Each entry is the human-readable name from the subagent's `name:` frontmatter (for example, `Codebase Researcher`). Do not add `agents: "*"`. For dynamic user-selected agents, omit `agents:` unless the runtime requires an explicit allowlist, and document the validation rules in the body.
 
 ### Optional Fields
 
@@ -476,7 +479,7 @@ Optional fields available by file type:
 * `disable-model-invocation:` - Boolean. Set to `true` to prevent Copilot from automatically invoking the agent. Use for agents that run subagents, agents that cause side effects (git operations, backlog management, deployments), or agents that should only run when explicitly requested. Defaults to `false` when omitted.
 * `agent:` - Agent delegation for prompt files and handoffs. Use the human-readable name from the agent's `name:` frontmatter (for example, `Prompt Builder`).
 * `argument-hint:` - Hint text for prompt picker display.
-* `model:` - Model specification. For **agent files** and **prompt files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. When omitted, the currently selected model in the model picker is used.
+* `model:` - Model specification. For **agent files** and **prompt files**, accepts a single model identifier string (for example, `claude-sonnet-4`) or a prioritized array of model identifiers; when an array is specified, the system tries each model in order until an available one is found. When omitted, the currently selected model in the model picker is used. Do not set `model:` unless the artifact intentionally pins or prioritizes a model; otherwise let the user choose the model.
 * `license:` - SPDX license identifier for skill content (for example, `MIT`, `CC-BY-SA-4.0`). Defaults to the repository license when omitted. Use for skills that incorporate third-party content under a specific license.
 * `metadata:` - Object containing provenance and versioning metadata for skills. Recognized fields include `authors`, `spec_version`, `framework_revision`, `last_updated`, `skill_based_on`, and `content_based_on`.
 
@@ -801,7 +804,7 @@ Tool invocation:
 
 * Run the named agent with `runSubagent` or `task` tools. Provide the inputs needed for the task directly to the named agent; do not add extra instructions telling `runSubagent` to read the corresponding `.github/agents/` file.
 * When describing which agent to invoke in body text, use the human-readable name from the agent's `name:` frontmatter wrapped in backticks (for example, run `Prompt Tester` or `Researcher Subagent`), following Referencing Other Artifacts.
-* Declare subagent dependencies in the `agents:` frontmatter by `name:` value; the name resolves whether the subagent sits at the agents root or in a `subagents/` folder, so a file path is not needed.
+* Declare fixed subagent dependencies in the `agents:` frontmatter by `name:` value; the name resolves whether the subagent sits at the agents root or in a `subagents/` folder, so a file path is not needed. Do not use wildcard `agents: "*"`. For dynamic routing, omit `agents:` unless a runtime allowlist is required, and validate the selected agent in the body.
 * Subagents do not run their own subagents (see the Subagents section).
 
 Task specification:
