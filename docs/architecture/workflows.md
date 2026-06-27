@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-06-25
+ms.date: 2026-06-26
 ms.topic: overview
 ---
 
@@ -67,6 +67,7 @@ flowchart TD
 | `msdate-freshness-check.yml`         | Schedule, manual        | ms.date freshness validation across documentation                 |
 | `label-sync.yml`                     | Push to main, manual    | Repository label synchronization                                  |
 | `workflow-permissions-scan.yml`      | Schedule, manual        | GitHub Actions permissions audit                                  |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual | Weekly GitHub code scanning alert retrieval and issue creation     |
 
 ### Reusable Workflows
 
@@ -88,6 +89,8 @@ Individual validation workflows called by orchestration workflows:
 | `sha-staleness-check.yml`             | SHA reference freshness*         | N/A (PowerShell direct)             |
 | `codeql-analysis.yml`                 | CodeQL security scanning*        | N/A (GitHub native)                 |
 | `dependency-review.yml`               | Dependency vulnerability review* | N/A (GitHub native)                 |
+| `gh-code-scanning.yml`                | GitHub code scanning alert retrieval | N/A (PowerShell direct)        |
+| `create-gh-code-scanning-issues.yml` | Create GitHub code scanning issues from alerts | N/A (bash + gh CLI direct) |
 | `extension-package.yml`               | VS Code extension packaging      | `npm run extension:package`         |
 | `copyright-headers.yml`               | Copyright header validation      | `npm run validate:copyright`        |
 | `gitleaks-scan.yml`                   | Secret detection scanning        | N/A (gitleaks direct)               |
@@ -101,7 +104,7 @@ Individual validation workflows called by orchestration workflows:
 | `docusaurus-tests.yml`                | Docusaurus test suite            | N/A (npm test)                      |
 | `model-validation.yml`                | Model reference validation       | `npm run lint:models`               |
 | `ai-artifact-validation.yml`          | AI artifact structure validation | `npm run lint:ai-artifacts`         |
-| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity  | N/A (bash + jq direct)              |
+| `devcontainer-lockfile-check.yml`     | Devcontainer lockfile integrity  | `npm run validate:devcontainer-lockfile` |
 | `action-version-consistency-scan.yml` | Action version consistency       | `npm run lint:version-consistency`  |
 
 Workflows marked with `*` are dual-purpose: they accept `workflow_call` for reuse by orchestration workflows and also run independently via their own triggers.
@@ -242,7 +245,7 @@ The `weekly-security-maintenance.yml` workflow runs every Sunday at 2AM UTC, pro
 |--------------------|------------------------------|-----------------------------------------------|
 | Dependency Pinning | `Test-DependencyPinning.ps1` | Actions use SHA refs; npm uses exact versions |
 | SHA Staleness      | `Test-SHAStaleness.ps1`      | SHAs reference recent commits                 |
-| npm Audit          | `npm audit`                  | Known vulnerabilities in dependencies         |
+| audit-ci           | `audit-ci --config audit-ci.json` | Known vulnerabilities in dependencies, using the allowlist in `audit-ci.json` |
 | CodeQL             | GitHub native                | Code patterns indicating security issues      |
 | Gitleaks           | `gitleaks`                   | Secret detection in repository history        |
 | Dependency Review  | GitHub native                | Dependency vulnerability analysis             |
@@ -329,8 +332,9 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `test:ps`                      | `Invoke-PesterTests.ps1`                                               | pester-tests.yml              |
 | `validate:skills`              | `Validate-SkillStructure.ps1`                                          | skill-validation.yml          |
 | `validate:copyright`           | `Test-CopyrightHeaders.ps1`                                            | copyright-headers.yml         |
-| `extension:prepare`            | `Prepare-Extension.ps1`                                                | extension-package.yml         |
-| `extension:prepare:prerelease` | `Prepare-Extension.ps1 -Channel PreRelease`                            | extension-package.yml         |
+| `extension:prepare`            | `pwsh ./scripts/extension/Prepare-Extension.ps1 && npm run extension:postprocess` | extension-package.yml         |
+| `extension:prepare:prerelease` | `pwsh ./scripts/extension/Prepare-Extension.ps1 -Channel PreRelease && npm run extension:postprocess` | extension-package.yml         |
+| `extension:postprocess`        | `markdownlint-cli2 + markdown-table-formatter (extension/**/*.md, collections/*.md)` | extension-package.yml         |
 | `extension:package`            | `Package-Extension.ps1`                                                | extension-package.yml         |
 | `package:extension`            | Alias for `extension:package`                                          | extension-package.yml         |
 | `extension:package:prerelease` | `Package-Extension.ps1 -PreRelease`                                    | extension-package.yml         |
@@ -338,10 +342,12 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `plugin:validate`              | Alias for `lint:collections-metadata`                                  | plugin-validation.yml         |
 | `lint:py`                      | `ruff check`                                                           | python-lint.yml               |
 | `lint:models`                  | `Validate-ModelReferences.ps1`                                         | model-validation.yml          |
-| `lint:ai-artifacts`            | `Validate-AIArtifacts.ps1`                                             | ai-artifact-validation.yml    |
+| `lint:ai-artifacts`            | `Validate-PlannerArtifacts.ps1 -FailOnMissing`                        | ai-artifact-validation.yml    |
 | `lint:permissions`             | `Test-WorkflowPermissions.ps1`                                         | workflow-permissions-scan.yml |
+| `lint:ps-module-pins`          | `Test-PSModulePins.ps1`                                                | Local                         |
 | `lint:dependency-pinning`      | `Test-DependencyPinning.ps1`                                           | dependency-pinning-scan.yml   |
-| `test:py`                      | `pytest`                                                               | pytest-tests.yml              |
+| `audit:npm`                    | `audit-ci --config audit-ci.json`                                      | pr-validation.yml             |
+| `test:py`                      | `uv run pytest`                                                        | pytest-tests.yml              |
 | `eval:lint:vally`              | `Build-AgentBehaviorSpec.ps1 -WhatIf && vally lint --eval-spec evals/` | Local                         |
 | `eval:lint:schema`             | `Test-EvalSpec.ps1`                                                    | Local                         |
 | `eval:lint:text`               | `Test-EvalSpecText.ps1`                                                | Local                         |
