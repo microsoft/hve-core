@@ -34,7 +34,7 @@ Ownership is strict and one-way per file: only the producer writes `state.json`,
 In its normal (non-`init`) run, `dist/index.js`:
 
 1. Starts the UI server with snapshot writing on, so every bridge state change atomically rewrites `state.json` in the shared dir.
-2. Tails `inbox.jsonl` from a byte offset (polling on a short interval): for each new complete line, it validates the frame and applies it to its bridge exactly as the in-process WebSocket handler would (steer to enqueueDirective, decide to resolveDecision, answer to resolveQuestion, navigate, navigator open/close, intervene, launch). So a click in the live pane resolves the agent's blocking decision or queues a steer note across the process boundary.
+2. Tails `inbox.jsonl` from a byte offset (polling on a short interval), starting at the end of the file on startup so a producer restart does not replay a prior session's intents: for each new complete line, it validates the frame and applies it to its bridge exactly as the in-process WebSocket handler would (steer to enqueueDirective, decide to resolveDecision, answer to resolveQuestion, navigate, navigator open/close, intervene, launch). So a click in the live pane resolves the agent's blocking decision or queues a steer note across the process boundary.
 
 The producer keeps serving its own keyed UI on its port too (unchanged), so a browser opened directly at its URL still works; the file bridge is additive.
 

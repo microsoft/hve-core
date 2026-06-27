@@ -3,7 +3,7 @@
 // state.json and tails inbox.jsonl; the consumer (`dist/index.js live`) mirrors
 // state.json into a holder bridge and appends user intents to inbox.jsonl.
 import fs from "node:fs";
-import { mkdirSync, appendFileSync, readFileSync, readSync, openSync, closeSync, fstatSync } from "node:fs";
+import { mkdirSync, appendFileSync, readFileSync, readSync, openSync, closeSync, fstatSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { Bridge } from "./bridge.js";
 import { startServer } from "./server.js";
@@ -63,7 +63,11 @@ export async function runLiveConsumer(
 // rest of it is appended.
 export function tailInbox(stateDir: string, bridge: Bridge): { stop: () => void } {
   const inboxFile = join(stateDir, "inbox.jsonl");
-  let offset = 0;
+  // Seek to the end on startup: a producer (re)start must not replay intents the
+  // user steered in an earlier session. Only frames appended after we begin
+  // tailing are applied. inbox.jsonl is strictly append-only, so the current
+  // size is exactly "everything so far".
+  let offset = ((): number => { try { return statSync(inboxFile).size; } catch { return 0; } })();
   let buffer = "";
 
   const check = (): void => {

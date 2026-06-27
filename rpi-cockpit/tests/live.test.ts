@@ -70,19 +70,19 @@ describe("runLiveConsumer", () => {
 });
 
 describe("tailInbox (producer)", () => {
-  it("applies an inbox line to the bridge", async () => {
+  it("does not replay inbox lines that predate the tail (seek-to-end on startup)", async () => {
     const dir = tempDir("tail");
     const bridge = new Bridge();
-    // A line already present before tailing starts is picked up by the initial check.
+    // A line present before tailing starts is from a prior session: a producer
+    // (re)start must NOT re-apply it, or every historical intent would replay.
     writeFileSync(
       path.join(dir, "inbox.jsonl"),
-      JSON.stringify({ type: "steer", directive: { kind: "note", text: "tailed" } }) + "\n",
+      JSON.stringify({ type: "steer", directive: { kind: "note", text: "old" } }) + "\n",
     );
     const t = tailInbox(dir, bridge);
     closers.push(() => t.stop());
     await sleep(60);
-    expect(bridge.state.directives).toHaveLength(1);
-    expect(bridge.state.directives[0]).toMatchObject({ kind: "note", text: "tailed" });
+    expect(bridge.state.directives).toHaveLength(0);
   });
 
   it("applies lines appended after tailing begins", async () => {
