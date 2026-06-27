@@ -3,7 +3,7 @@ title: "Stage 3: Product Definition"
 description: Transform business requirements into product specifications and architecture decisions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle

@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle

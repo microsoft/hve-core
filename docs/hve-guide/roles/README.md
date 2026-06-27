@@ -3,7 +3,7 @@ title: Role Guides
 description: Find your role-specific guide for AI-assisted engineering with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - roles
