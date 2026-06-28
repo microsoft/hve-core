@@ -127,6 +127,7 @@ When conversation context was compacted by the chat system, the agent also reads
 | Agent        | `.github/agents/security/sssc-planner.agent.md`          |
 | Prompts      | `.github/prompts/security/sssc-*.prompt.md`              |
 | Instructions | `.github/instructions/security/`                         |
+| Skill        | `.github/skills/security/supply-chain-security/`         |
 | State        | `.copilot-tracking/sssc-plans/{project-slug}/state.json` |
 
 <!-- markdownlint-disable MD036 -->
