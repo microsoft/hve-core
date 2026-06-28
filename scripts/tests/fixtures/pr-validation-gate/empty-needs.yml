@@ -1,0 +1,38 @@
+name: Empty Needs Fixture
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo build
+
+  pr-validation-success:
+    name: PR Validation Success
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - test
+      - ~
+      - ""
+      - build
+    steps:
+      - run: echo gate

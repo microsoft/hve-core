@@ -9,6 +9,7 @@ BeforeAll {
     $script:CompleteGate = Join-Path $script:FixturesPath 'complete-gate.yml'
     $script:MissingJob = Join-Path $script:FixturesPath 'missing-job.yml'
     $script:StaleNeeds = Join-Path $script:FixturesPath 'stale-needs.yml'
+    $script:EmptyNeeds = Join-Path $script:FixturesPath 'empty-needs.yml'
 
     Mock Write-Host {}
 }
@@ -67,6 +68,26 @@ Describe 'Get-PrValidationGateResult' -Tag 'Unit' {
 
         It 'Reports the gate job as not present' {
             $script:Result.GateJobPresent | Should -BeFalse
+        }
+    }
+
+    Context 'when needs contains null or empty elements' {
+        BeforeAll {
+            $script:Result = Get-PrValidationGateResult -WorkflowPath $script:EmptyNeeds -GateJobId 'pr-validation-success'
+        }
+
+        It 'Filters null/empty entries out of GateNeeds' {
+            $script:Result.GateNeeds | Should -Not -Contain ''
+            $script:Result.GateNeeds | Should -Not -Contain $null
+            $script:Result.GateNeeds.Count | Should -Be 3
+        }
+
+        It 'Reports no stale needs entries' {
+            $script:Result.Stale | Should -BeNullOrEmpty
+        }
+
+        It 'Reports no missing jobs' {
+            $script:Result.Missing | Should -BeNullOrEmpty
         }
     }
 }
