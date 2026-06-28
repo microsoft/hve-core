@@ -49,7 +49,7 @@ export const Beat = z.discriminatedUnion("type", [
   z.object({ type: z.literal("review.start"), target: z.string() }),
   z.object({ type: z.literal("finding.add"), severity: Severity, title: z.string(), file: z.string().optional(), line: z.number().int().optional(), detail: z.string().optional() }),
   z.object({ type: z.literal("interview.start"), docType: z.string() }),
-  z.object({ type: z.literal("steps.set"), steps: z.array(z.string()).min(1), current: z.number().int(), label: z.string().optional() }),
+  z.object({ type: z.literal("steps.set"), steps: z.array(z.string()).min(1), current: z.number().int(), label: z.string().optional(), progress: z.object({ done: z.number().int(), total: z.number().int() }).optional() }),
   z.object({ type: z.literal("backlog.start"), target: z.string(), columns: z.array(z.string()).min(1) }),
   z.object({ type: z.literal("item.add"), id: z.string(), title: z.string(), column: z.string(), kind: z.string().optional(), tier: z.string().optional(), parent: z.string().optional() }),
   z.object({ type: z.literal("item.move"), id: z.string(), column: z.string() }),

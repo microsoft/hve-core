@@ -34,7 +34,7 @@ export interface SessionState {
   validations: Record<string, ValidationStatus>;
   artifacts: { path: string; summary?: string }[];
   docType: string | null;
-  interviewSteps: { label?: string; names: string[]; current: number } | null;
+  interviewSteps: { label?: string; names: string[]; current: number; progress?: { done: number; total: number } } | null;
   decisions: DecisionEntry[];
   hostElicits: boolean;
   directives: Directive[];
@@ -96,7 +96,7 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
       return { ...s, view: "loop", domain: "interview", docType: beat.docType, interviewSteps: null, log };
     case "steps.set": {
       const current = Math.max(0, Math.min(beat.current, beat.steps.length - 1));
-      return { ...s, interviewSteps: { label: beat.label, names: beat.steps, current }, log };
+      return { ...s, interviewSteps: { label: beat.label, names: beat.steps, current, progress: beat.progress }, log };
     }
     case "backlog.start":
       return { ...s, view: "loop", domain: "backlog", boardTarget: beat.target, boardColumns: beat.columns, boardItems: [], boardAction: null, log };

@@ -68,7 +68,7 @@ export function buildMcpServer(bridge: Bridge): McpServer {
 
   server.registerTool(
     "set_steps",
-    { description: "Show a progress stepper above the interview conversation: declare the program's ordered step names and the active step index (0-based). Re-call to advance (a higher current) or to re-declare the steps as an adaptive program clarifies. label is an optional program name.", inputSchema: { steps: z.array(z.string()).min(1), current: z.number().int(), label: z.string().optional() } },
+    { description: "Show a progress stepper above the interview conversation: declare the program's ordered step names and the active step index (0-based). Re-call to advance (a higher current) or to re-declare the steps as an adaptive program clarifies. label is an optional program name. progress is an optional { done, total } shown on the active step.", inputSchema: { steps: z.array(z.string()).min(1), current: z.number().int(), label: z.string().optional(), progress: z.object({ done: z.number().int(), total: z.number().int() }).optional() } },
     async (a) => text(handlers.set_steps(bridge, a)),
   );
 

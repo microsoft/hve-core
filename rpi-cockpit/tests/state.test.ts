@@ -393,6 +393,10 @@ describe("decision flow", () => {
 });
 
 describe("interview steps", () => {
+  it("steps.set stores progress for the active step", () => {
+    const s = applyBeat(initialState(), { type: "steps.set", steps: ["a", "b"], current: 1, progress: { done: 2, total: 3 } }, 1);
+    expect(s.interviewSteps!.progress).toEqual({ done: 2, total: 3 });
+  });
   it("steps.set stores the program and clamps current into range", () => {
     let s = applyBeat(initialState(), { type: "steps.set", steps: ["Frame", "Decide", "Govern"], current: 1, label: "ADR" }, 1);
     expect(s.interviewSteps).toEqual({ label: "ADR", names: ["Frame", "Decide", "Govern"], current: 1 });

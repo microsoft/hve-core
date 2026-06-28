@@ -40,8 +40,8 @@ export const handlers = {
     b.emitBeat({ type: "interview.start", docType: a.docType });
     return `interview started: ${a.docType}`;
   },
-  set_steps: (b: Bridge, a: { steps: string[]; current: number; label?: string }) => {
-    b.emitBeat({ type: "steps.set", steps: a.steps, current: a.current, label: a.label });
+  set_steps: (b: Bridge, a: { steps: string[]; current: number; label?: string; progress?: { done: number; total: number } }) => {
+    b.emitBeat({ type: "steps.set", steps: a.steps, current: a.current, label: a.label, progress: a.progress });
     return `steps set: ${a.steps.length}`;
   },
   backlog_start: (b: Bridge, a: { target: string; columns: string[] }) => {

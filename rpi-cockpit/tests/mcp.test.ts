@@ -311,4 +311,15 @@ describe("mcp face", () => {
     await client.callTool({ name: "set_steps", arguments: { steps: ["Frame", "Decide", "Govern"], current: 1, label: "ADR" } });
     expect(bridge.state.interviewSteps).toEqual({ label: "ADR", names: ["Frame", "Decide", "Govern"], current: 1 });
   });
+
+  it("set_steps forwards progress", async () => {
+    const bridge = new Bridge();
+    const server = buildMcpServer(bridge);
+    const [clientT, serverT] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverT);
+    const client = new Client({ name: "test", version: "0" });
+    await client.connect(clientT);
+    await client.callTool({ name: "set_steps", arguments: { steps: ["a", "b"], current: 0, progress: { done: 1, total: 4 } } });
+    expect(bridge.state.interviewSteps!.progress).toEqual({ done: 1, total: 4 });
+  });
 });

@@ -84,6 +84,16 @@ describe("interview stepper", () => {
   let win: ReturnType<typeof boot>;
   beforeEach(() => { win = boot(); });
 
+  it("renders done/total and a mini-bar on the active step with progress", () => {
+    let s = applyBeat(initialState(), { type: "interview.start", docType: "ADR" }, 1);
+    s = applyBeat(s, { type: "steps.set", steps: ["Frame", "Decide", "Govern"], current: 1, progress: { done: 2, total: 4 } }, 2);
+    (win as any).render(toViewModel(s));
+    const active = win.document.querySelector("#iv-steps .iv-step-active")!;
+    expect(active.querySelector(".iv-step-prog")!.textContent).toBe("2/4");
+    const bar = active.querySelector(".iv-step-bar > i") as any;
+    expect(bar.getAttribute("style")).toContain("width:50%");
+  });
+
   it("renders the interview stepper with done/active/pending pills", () => {
     (win as any).render(steppedVm());
     const steps = win.document.getElementById("iv-steps") as any;

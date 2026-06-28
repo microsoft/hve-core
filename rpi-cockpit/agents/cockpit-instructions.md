@@ -36,7 +36,10 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 
 * `interview_start(docType)` when you begin the guided interview.
 * Ask each question with `ask_question(prompt)` (it blocks for the answer); render the growing draft with `show_screen(html, "…")`.
-* If your interview runs a multi-step program (a phase-gated planner like ADR Frame/Decide/Govern or a six-phase assessment, or a coach running a curriculum or method sequence), call `set_steps(steps, current, label?)` when you begin and again as you advance (a higher `current`): the interview view shows a progress stepper above the conversation so the user sees the whole roadmap and the current step. Re-declare `steps` if an adaptive program's path changes.
+* If your interview runs a multi-step program (a phase-gated planner like ADR Frame/Decide/Govern or a six-phase assessment, or a coach running a curriculum or
+  method sequence), call `set_steps(steps, current, label?, progress?)` when you begin and again as you advance (a higher `current`): the interview view shows a
+  progress stepper above the conversation so the user sees the whole roadmap and the current step. Re-declare `steps` if an adaptive program's path changes.
+  Pass progress as { done, total } to show sub-progress on the active step (for example a comprehension check 2 of 3).
 
 ## Backlog orchestration (GitHub, ADO, Jira: discover, triage, sprint, execute)
 

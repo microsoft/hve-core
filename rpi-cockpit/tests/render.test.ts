@@ -261,6 +261,14 @@ describe("toViewModel", () => {
     expect(toViewModel(initialState()).dataProfile.dataset).toBeNull();
   });
 
+  it("attaches progress to the active step only", () => {
+    const s = applyBeat(initialState(), { type: "steps.set", steps: ["Frame", "Decide", "Govern"], current: 1, progress: { done: 2, total: 3 } }, 1);
+    const steps = toViewModel(s).interviewSteps!.steps;
+    expect(steps[1]).toEqual({ name: "Decide", status: "active", progress: { done: 2, total: 3 } });
+    expect((steps[0] as any).progress).toBeUndefined();
+    expect((steps[2] as any).progress).toBeUndefined();
+  });
+
   it("projects interview steps with done/active/pending derived from current", () => {
     const s = applyBeat(initialState(), { type: "steps.set", steps: ["Frame", "Decide", "Govern"], current: 1, label: "ADR" }, 1);
     const vm = toViewModel(s);

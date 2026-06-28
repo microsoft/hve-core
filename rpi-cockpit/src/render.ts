@@ -82,7 +82,7 @@ export interface ViewModel {
   subagents: { name: string; status: string; role?: string }[];
   validations: { check: string; status: string }[];
   docType: string | null;
-  interviewSteps: { label?: string; steps: { name: string; status: "done" | "active" | "pending" }[] } | null;
+  interviewSteps: { label?: string; steps: { name: string; status: "done" | "active" | "pending"; progress?: { done: number; total: number } }[] } | null;
   decisions: { id: string; prompt: string; kind: string; options?: { id: string; title: string; detail?: string; recommended?: boolean }[]; answer?: string; status: string }[];
   hostElicits: boolean;
   steerMenu: SteerMenuVM;
@@ -146,7 +146,10 @@ export function toViewModel(s: SessionState): ViewModel {
   };
   const ist = s.interviewSteps;
   const interviewSteps = ist
-    ? { label: ist.label, steps: ist.names.map((name, i) => ({ name, status: (i < ist.current ? "done" : i === ist.current ? "active" : "pending") as "done" | "active" | "pending" })) }
+    ? { label: ist.label, steps: ist.names.map((name, i) => {
+        const status = (i < ist.current ? "done" : i === ist.current ? "active" : "pending") as "done" | "active" | "pending";
+        return status === "active" && ist.progress ? { name, status, progress: ist.progress } : { name, status };
+      }) }
     : null;
   return {
     // A directly-launched review/interview/backlog sets domain without session.begin
