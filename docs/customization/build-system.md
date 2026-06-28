@@ -2,7 +2,7 @@
 title: Build System and Validation
 description: Understand the plugin generation pipeline, schema validation system, npm scripts, and CI checks for customizing and extending HVE Core
 author: Microsoft
-ms.date: 2026-06-06
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - build system
@@ -16,15 +16,15 @@ estimated_reading_time: 8
 ## Plugin Generation Pipeline
 
 The plugin generation pipeline transforms collection manifests into distributable plugin
-output. It runs in three stages:
+output. The `plugin:generate` script runs two stages:
 
 1. `Generate-Plugins.ps1` reads each `collections/*.collection.yml` manifest and produces
    output files under `plugins/`. Each collection gets its own subdirectory
    (e.g., `plugins/hve-core/`, `plugins/ado/`).
 
-2. `lint:md:fix` applies markdownlint auto-fixes to generated markdown files.
-
-3. `format:tables` aligns markdown table columns in generated output.
+2. `plugin:postprocess` applies markdownlint auto-fixes (`markdownlint-cli2 --fix`) and
+   aligns markdown table columns (`markdown-table-formatter`) across the generated
+   `plugins/**` and `collections/*.md` output.
 
 Run the full pipeline with a single command:
 
@@ -74,24 +74,30 @@ To add validation for a new file type:
 ## npm Scripts Reference
 
 All validation, formatting, and testing operations run through npm scripts defined in
-`package.json`. The table below groups scripts by purpose.
+`package.json`. The table below groups scripts by purpose. These tables are representative
+of the most commonly used scripts rather than an exhaustive list; consult `package.json`
+for the complete set.
 
 ### Linting
 
-| Script                      | Command                             | Description                              |
-|-----------------------------|-------------------------------------|------------------------------------------|
-| `lint:all`                  | `npm run lint:all`                  | Runs all linters in sequence             |
-| `lint:md`                   | `npm run lint:md`                   | Markdown linting via markdownlint-cli2   |
-| `lint:md:fix`               | `npm run lint:md:fix`               | Markdown linting with auto-fix           |
-| `lint:ps`                   | `npm run lint:ps`                   | PowerShell analysis via PSScriptAnalyzer |
-| `lint:yaml`                 | `npm run lint:yaml`                 | YAML syntax and structure validation     |
-| `lint:links`                | `npm run lint:links`                | Link language checking                   |
-| `lint:md-links`             | `npm run lint:md-links`             | Markdown link target validation          |
-| `lint:frontmatter`          | `npm run lint:frontmatter`          | Frontmatter schema validation            |
-| `lint:collections-metadata` | `npm run lint:collections-metadata` | Collection manifest validation           |
-| `lint:marketplace`          | `npm run lint:marketplace`          | Marketplace manifest validation          |
-| `lint:version-consistency`  | `npm run lint:version-consistency`  | GitHub Action version consistency        |
-| `lint:permissions`          | `npm run lint:permissions`          | Workflow permissions validation          |
+| Script                      | Command                             | Description                                |
+|-----------------------------|-------------------------------------|--------------------------------------------|
+| `lint:all`                  | `npm run lint:all`                  | Runs all linters in sequence               |
+| `lint:md`                   | `npm run lint:md`                   | Markdown linting via markdownlint-cli2     |
+| `lint:md:fix`               | `npm run lint:md:fix`               | Markdown linting with auto-fix             |
+| `lint:ps`                   | `npm run lint:ps`                   | PowerShell analysis via PSScriptAnalyzer   |
+| `lint:yaml`                 | `npm run lint:yaml`                 | YAML syntax and structure validation       |
+| `lint:links`                | `npm run lint:links`                | Link language checking                     |
+| `lint:md-links`             | `npm run lint:md-links`             | Markdown link target validation            |
+| `lint:frontmatter`          | `npm run lint:frontmatter`          | Frontmatter schema validation              |
+| `lint:json`                 | `npm run lint:json`                 | JSON syntax validation                     |
+| `lint:adr-consistency`      | `npm run lint:adr-consistency`      | ADR structure and consistency checks       |
+| `lint:collections-metadata` | `npm run lint:collections-metadata` | Collection manifest validation             |
+| `lint:marketplace`          | `npm run lint:marketplace`          | Marketplace manifest validation            |
+| `lint:hooks`                | `npm run lint:hooks`                | Hook manifest validation                   |
+| `lint:version-consistency`  | `npm run lint:version-consistency`  | GitHub Action version consistency          |
+| `lint:permissions`          | `npm run lint:permissions`          | Workflow permissions validation            |
+| `lint:models`               | `npm run lint:models`               | Model reference validation against catalog |
 
 ### Validation
 
@@ -131,19 +137,26 @@ The `lint:all` script chains every linter in a fixed sequence:
 2. `lint:md` checks markdown style rules (`.markdownlint.json`)
 3. `lint:ps` analyzes PowerShell scripts (`PSScriptAnalyzer.psd1`)
 4. `lint:yaml` validates YAML file syntax
-5. `lint:links` checks link text language patterns
-6. `lint:frontmatter` validates YAML frontmatter against schemas
-7. `lint:collections-metadata` confirms collection manifest integrity
-8. `lint:marketplace` validates marketplace manifest
-9. `lint:version-consistency` checks GitHub Action version alignment
-10. `lint:permissions` validates workflow permissions
-11. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
-12. `lint:ps-module-pins` checks PowerShell module versions are pinned
-13. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
-14. `validate:skills` verifies skill directory structure
-15. `lint:ai-artifacts` validates planner AI artifacts
-16. `lint:models` validates model references against the catalog
-17. `eval:lint` lints eval suites under `evals/`
+5. `lint:json` validates JSON syntax
+6. `lint:links` checks link text language patterns
+7. `lint:frontmatter` validates YAML frontmatter against schemas
+8. `lint:adr-consistency` checks ADR structure and consistency rules
+9. `lint:collections-metadata` confirms collection manifest integrity
+10. `lint:marketplace` validates marketplace manifest
+11. `lint:hooks` validates hook manifests
+12. `lint:version-consistency` checks GitHub Action version alignment
+13. `lint:permissions` validates workflow permissions
+14. `lint:dependency-pinning` checks dependencies are pinned to fixed versions
+15. `lint:ps-module-pins` checks PowerShell module versions are pinned
+16. `lint:py` lints Python scripts via `Invoke-PythonLint.ps1`
+17. `validate:skills` verifies skill directory structure
+18. `lint:ai-artifacts` validates planner AI artifacts
+19. `lint:models` validates model references against the catalog
+20. `validate:devcontainer-lockfile` checks devcontainer lockfile integrity
+21. `eval:lint:vally` lints Vally eval specs
+22. `eval:lint:schema` validates eval schema conformance
+23. `eval:lint:text` checks eval text content
+24. `eval:lint:safety` validates eval safety stimuli
 
 Each linter outputs results to `logs/` for inspection. Run individual linters for faster
 feedback during development:
