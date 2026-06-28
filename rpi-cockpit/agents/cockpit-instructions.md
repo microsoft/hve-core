@@ -40,7 +40,8 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 ## Backlog orchestration (GitHub, ADO, Jira: discover, triage, sprint, execute)
 
 * `backlog_start(target, columns[])` to open the board (target is the sprint, repo, or project; columns are the ordered state names).
-* `add_item(id, title, column, kind?, tier?)` to add or update a work item, `move_item(id, column)` as it progresses, and `set_backlog_action(text)` to show the action you are taking (null clears it).
+* `add_item(id, title, column, kind?, tier?, parent?)` to add or update a work item, `move_item(id, column)` as it progresses, and `set_backlog_action(text)` to show the action you are taking (null clears it).
+* Pass `parent` (a parent item's id) to nest the item: the board indents a child under its parent when both are in the same column and shows "↳ under {parent}" when they are not. A PRD-to-WIT planner proposing an Epic→Feature→Story→Task tree should pass `parent` and add the items to one planning column so the whole tree nests.
 
 ## Team orchestration (an orchestrator running subagents)
 
