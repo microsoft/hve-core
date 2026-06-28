@@ -366,3 +366,72 @@ jobs:
       security-events: write  # Required for SARIF upload to Security tab
       actions: read
 
+  gate-completeness-check:
+    name: PR Gate Completeness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup PowerShell modules
+        uses: ./.github/actions/setup-ps-modules
+
+      - name: Validate PR gate completeness
+        shell: pwsh
+        run: ./scripts/security/Test-PrValidationGate.ps1 -FailOnViolation
+
+  pr-validation-success:
+    name: PR Validation Success
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: always()
+    needs:
+      - spell-check
+      - markdown-lint
+      - table-format
+      - psscriptanalyzer
+      - discover-python-projects
+      - python-lint
+      - copyright-headers
+      - yaml-lint
+      - pester-tests
+      - pytest
+      - fuzz-tests
+      - pip-audit
+      - docusaurus-tests
+      - frontmatter-validation
+      - adr-consistency-validation
+      - ai-artifact-validation
+      - msdate-freshness
+      - plugin-validation
+      - skill-validation
+      - eval-validation
+      - link-lang-check
+      - markdown-link-check
+      - dependency-pinning-check
+      - devcontainer-lockfile-check
+      - workflow-permissions-check
+      - action-version-consistency-scan
+      - gitleaks-scan
+      - npm-audit
+      - codeql
+      - gate-completeness-check
+    steps:
+      - name: Verify all jobs succeeded
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        shell: bash
+        run: |
+          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key')
+          if [ -n "$failed" ]; then
+            echo "The following jobs did not pass:"
+            echo "$failed"
+            exit 1
+          fi
+          echo "All PR validation jobs passed."
+
