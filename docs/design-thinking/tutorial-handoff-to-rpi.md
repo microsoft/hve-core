@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-27
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -29,7 +29,9 @@ Before starting a handoff, ensure you have:
 
 ## Implementation Spec Ready Handoff
 
-The current DT-to-RPI handoff enters the RPI pipeline at Task Researcher. For a complete handoff, use the Implementation Spec Ready exit after Methods 7-9 are complete.
+The DT-to-RPI handoff can occur at three exit points: Problem Statement Complete (Methods 1-3), Concept Validated (Methods 4-6), and Implementation Spec Ready (Methods 7-9).
+Every exit enters the RPI pipeline at the single Task Researcher entry point, and later exits seed the Researcher with progressively richer context.
+This tutorial walks through the Implementation Spec Ready exit, which hands off the richest artifact set after Methods 7-9 are complete. The same steps apply to the earlier exits with leaner artifacts.
 
 ### What the Handoff Includes
 
