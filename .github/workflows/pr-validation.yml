@@ -427,7 +427,8 @@ jobs:
           NEEDS_JSON: ${{ toJSON(needs) }}
         shell: bash
         run: |
-          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result == "failure" or .value.result == "cancelled") | .key')
+          set -euo pipefail
+          failed=$(echo "$NEEDS_JSON" | jq -r 'to_entries[] | select(.value.result != "success" and .value.result != "skipped") | .key')
           if [ -n "$failed" ]; then
             echo "The following jobs did not pass:"
             echo "$failed"
