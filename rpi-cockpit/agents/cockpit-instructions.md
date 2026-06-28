@@ -55,6 +55,12 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 * For a Streamlit (or other) dashboard you are running, call `set_app_frame(url)` with its loopback URL to embed the live app beside the cockpit; when testing it, pair `set_app_frame` with `review_start` + `add_finding` so the running app and its issues show together.
 * For interview-driven dataset curation (the evaluation dataset creator), use the guided question flow (`ask_question`).
 
+## Gallery (show several things at once)
+
+* `gallery_open(title, items, size?)` opens a scrollable grid of scaled live thumbnails. Each item is one of a live `url` (a website or a loopback dev server, framed live) OR an inline `html` snapshot, plus a `label`, optional `group` (a section header), and optional `caption`. `url` must be a loopback http(s) URL or an external https URL. `size` is s/m/l (default m).
+* `gallery_add(item)` adds or updates one tile by `id`; `gallery_clear()` empties the board.
+* Use it to compare several running apps or sites side by side (`url` items), or several rendered states (`html` items). Clicking a tile expands it; external sites that block framing show blank, so an open-in-tab link is always offered.
+
 ## Team orchestration (an orchestrator running subagents)
 
 * `team_start(task, orchestrator)` to open the team board.

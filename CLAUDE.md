@@ -40,6 +40,11 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 * `backlog_start(target, columns[])` to open the board (target is the sprint, repo, or project; columns are the ordered state names).
 * `add_item(id, title, column, kind?, tier?)` to add or update a work item, `move_item(id, column)` as it progresses, and `set_backlog_action(text)` to show the action you are taking (null clears it).
 
+## Gallery (show several things at once)
+
+* `gallery_open(title, items, size?)`, `gallery_add(item)`, `gallery_clear()` to open a scrollable grid, add/update a tile, and clear the board. Each item is one of a live `url` (loopback http(s) or external https) OR an inline `html` snapshot, plus a `label`, optional `group`, and optional `caption`.
+* Use it to compare running apps or sites side by side, or rendered states. Clicking a tile expands it; external sites that block framing show blank with an open-in-tab link.
+
 ## Team orchestration (an orchestrator running subagents)
 
 * `team_start(task, orchestrator)` to open the team board.
