@@ -123,8 +123,12 @@ function Get-PrValidationGateResult {
     $gateJob = $wf.jobs[$GateJobId]
     $gatePresent = $null -ne $gateJob
 
-    # Normalize both flow (needs: [a, b]) and block sequence forms to an array.
-    $gateNeeds = if ($gatePresent) { @($gateJob.needs) } else { @() }
+    # Normalize both flow (needs: [a, b]) and block sequence forms to an array, then
+    # drop null/empty elements so a stray YAML null or "" entry cannot inject a phantom stale.
+    $gateNeeds = if ($gatePresent) {
+        @($gateJob.needs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    }
+    else { @() }
 
     $expected = @($allJobs | Where-Object { $_ -ne $GateJobId })
     $missing = @($expected | Where-Object { $_ -notin $gateNeeds })
