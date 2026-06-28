@@ -516,6 +516,16 @@ function renderCodemap(v) {
 
 function renderInterview(v) {
   setText("iv-doctype", v.docType ? `Interview: ${v.docType}` : "Interview");
+  const steps = document.getElementById("iv-steps");
+  if (steps) {
+    const ist = v.interviewSteps;
+    if (ist && ist.steps && ist.steps.length) {
+      steps.hidden = false;
+      const lead = ist.label ? `<span class="iv-steps-label">${esc(ist.label)}</span>` : "";
+      steps.innerHTML = lead + ist.steps.map((st) =>
+        `<span class="iv-step iv-step-${esc(st.status)}"><span class="iv-step-dot">${st.status === "done" ? "✓" : ""}</span>${esc(st.name)}</span>`).join("");
+    } else { steps.hidden = true; steps.innerHTML = ""; }
+  }
   const doc = document.getElementById("iv-doc");
   if (doc) doc.srcdoc = v.screen?.html ?? "";
 }

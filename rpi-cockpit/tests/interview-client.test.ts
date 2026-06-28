@@ -54,3 +54,31 @@ describe("interview client", () => {
     expect((win.document.getElementById("interview-view") as any).hidden).toBe(true);
   });
 });
+
+function steppedVm() {
+  let s = applyBeat(initialState(), { type: "interview.start", docType: "ADR" }, 1);
+  s = applyBeat(s, { type: "steps.set", steps: ["Frame", "Decide", "Govern"], current: 1, label: "ADR" }, 2);
+  return toViewModel(s);
+}
+
+describe("interview stepper", () => {
+  let win: ReturnType<typeof boot>;
+  beforeEach(() => { win = boot(); });
+
+  it("renders the interview stepper with done/active/pending pills", () => {
+    (win as any).render(steppedVm());
+    const steps = win.document.getElementById("iv-steps") as any;
+    expect(steps.hidden).toBe(false);
+    const pills = win.document.querySelectorAll("#iv-steps .iv-step");
+    expect(pills.length).toBe(3);
+    expect(win.document.querySelector("#iv-steps .iv-step-done")).not.toBeNull();
+    expect(win.document.querySelector("#iv-steps .iv-step-active")!.textContent).toContain("Decide");
+    expect(win.document.querySelector("#iv-steps .iv-step-pending")!.textContent).toContain("Govern");
+  });
+
+  it("hides the stepper when no program is declared", () => {
+    let s = applyBeat(initialState(), { type: "interview.start", docType: "PRD" }, 1);
+    (win as any).render(toViewModel(s));
+    expect((win.document.getElementById("iv-steps") as any).hidden).toBe(true);
+  });
+});

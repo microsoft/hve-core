@@ -219,6 +219,14 @@
   .rev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .rev-target { font-weight: 500; }
   .rev-counts { font-size: 12px; opacity: .7; }
+  #iv-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 14px; }
+  .iv-steps-label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3, #6E6E6E); font-weight: 600; }
+  .iv-step { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--stroke, #3C3C3C); color: var(--text-2, #9D9D9D); }
+  .iv-step-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stroke-2, #4A4A4A); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; line-height: 1; color: var(--ok, #73C991); }
+  .iv-step-done { color: var(--text-2, #9D9D9D); }
+  .iv-step-done .iv-step-dot { background: transparent; }
+  .iv-step-active { color: var(--accent-cyan, #9CDCFE); border-color: var(--accent-blue, #4FC1FF); background: var(--brand-2, #094771); }
+  .iv-step-active .iv-step-dot { background: var(--accent-blue, #4FC1FF); }
   .sev-group { margin-bottom: 16px; }
   .sev-label { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; opacity: .7; margin-bottom: 6px; }
   .finding { border: 1px solid var(--stroke, #3a3a3a); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
@@ -467,6 +475,7 @@
       <div class="rev-head">
         <span id="iv-doctype" class="rev-target"></span>
       </div>
+      <div id="iv-steps" hidden></div>
       <div class="flow-slot"></div>
       <iframe id="iv-doc" sandbox="" title="Document preview" style="width:100%;min-height:280px;border:1px solid var(--stroke,#3a3a3a);border-radius:8px;margin-top:14px"></iframe>
     </div>
