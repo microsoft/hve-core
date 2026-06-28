@@ -14,6 +14,7 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 
 * `present_options(prompt, options[])` for a bounded choice: it blocks until the user picks (in the cockpit or the native card) and returns the chosen `id`. Act on the returned id.
 * `ask_question(prompt)` for a free-text answer: it blocks until the user answers and returns the text.
+* The cockpit shows your questions and decisions as a navigable flow. If `check_directives()` returns a note like `revise decision "…" (id X)`, the user wants to change an earlier answer: re-ask that decision by calling the same tool with `id: "X"`, then reconsider the questions that follow, since the new answer may change them.
 
 ## RPI build loop (research, plan, implement, review, discover)
 
