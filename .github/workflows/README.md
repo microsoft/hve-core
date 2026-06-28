@@ -2,7 +2,7 @@
 title: GitHub Actions Workflows
 description: Modular CI/CD workflow architecture for validation, security scanning, and automated maintenance
 author: HVE Core Team
-ms.date: 2026-05-01
+ms.date: 2026-06-27
 ms.topic: reference
 keywords:
   - github actions
@@ -49,12 +49,12 @@ Compose multiple reusable workflows for comprehensive validation and security sc
 
 | Workflow                          | Triggers                                | Jobs                                                            | Mode                       | Purpose                              |
 |-----------------------------------|-----------------------------------------|-----------------------------------------------------------------|----------------------------|--------------------------------------|
-| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 9 jobs (8 reusable workflows + 1 inline)                        | Strict validation          | Pre-merge quality gate with security |
+| `pr-validation.yml`               | PR to main/develop (open, push, reopen) | 31 jobs (29 validation jobs + `pr-validation-success` gate + `gate-completeness-check`); `pr-validation-success` is the merge signal | Strict validation          | Pre-merge quality gate with security |
 | `release-stable.yml`              | Push to main                            | 5 jobs (5 reusable workflows)                                   | Strict mode, SARIF uploads | Post-merge validation                |
 | `weekly-security-maintenance.yml` | Schedule (Sun 2AM UTC)                  | 4 (validate-pinning, check-staleness, codeql-analysis, summary) | Soft-fail warnings         | Weekly security posture              |
 | `scorecard.yml`                   | Push to main, Schedule (Sun 3AM UTC)    | 1 (scorecard)                                                   | SARIF upload               | OpenSSF Scorecard security posture   |
 
-pr-validation.yml jobs: codeql-analysis, spell-check, markdown-lint, table-format, psscriptanalyzer, frontmatter-validation, link-lang-check, markdown-link-check, dependency-pinning-check
+pr-validation.yml jobs: 29 validation jobs feed a single `pr-validation-success` aggregator gate, which is the only required status check that gates merge; a `gate-completeness-check` job verifies every validation job is wired into that gate's `needs:` list.
 
 release-stable.yml jobs: spell-check, markdown-lint, table-format, codeql-analysis, dependency-pinning-scan
 
@@ -250,8 +250,8 @@ Workflow Execution Matrix:
 
 | Event                                | Workflows That Run                                       | CodeQL Included     |
 |--------------------------------------|----------------------------------------------------------|---------------------|
-| Open PR to main/develop              | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
-| Push to PR branch                    | `pr-validation.yml` (9 jobs)                             | ✅  Yes              |
+| Open PR to main/develop              | `pr-validation.yml` (31 jobs)                            | ✅  Yes              |
+| Push to PR branch                    | `pr-validation.yml` (31 jobs)                            | ✅  Yes              |
 | Merge to main                        | `release-stable.yml` (5 jobs)                            | ✅  Yes              |
 | Sunday 4AM UTC                       | `codeql-analysis.yml`, `weekly-security-maintenance.yml` | ✅  Yes (standalone) |
 | Feature branch push (no open PR)[^1] | None                                                     | ❌  No               |
