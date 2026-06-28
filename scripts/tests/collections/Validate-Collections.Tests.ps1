@@ -887,6 +887,188 @@ items:
     }
 }
 
+Describe 'Invoke-CollectionValidation - cross-collection maturity conflicts' {
+    BeforeAll {
+        Import-Module PowerShell-Yaml -ErrorAction Stop
+
+        $script:repoRoot = Join-Path $TestDrive 'maturity-conflict-repo'
+        $script:collectionsDir = Join-Path $script:repoRoot 'collections'
+
+        $agentsDir = Join-Path $script:repoRoot '.github/agents/test'
+        New-Item -ItemType Directory -Path $agentsDir -Force | Out-Null
+        Set-Content -Path (Join-Path $agentsDir 'a.agent.md') -Value '---\ndescription: shared agent\n---'
+    }
+
+    BeforeEach {
+        if (Test-Path $script:collectionsDir) {
+            Remove-Item -Path $script:collectionsDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $script:collectionsDir -Force | Out-Null
+    }
+
+    It 'Detects maturity conflict across three or more themed collections' {
+        $colStable = [ordered]@{
+            id          = 'themed-cloud-aws'
+            name        = 'AWS'
+            description = 'AWS collection'
+            maturity    = 'stable'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $colRemoved = [ordered]@{
+            id          = 'themed-cloud-azure'
+            name        = 'Azure'
+            description = 'Azure collection'
+            maturity    = 'removed'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $colDeprecated = [ordered]@{
+            id          = 'themed-cloud-gcp'
+            name        = 'GCP'
+            description = 'GCP collection'
+            maturity    = 'deprecated'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-cloud-aws.collection.yml') -Value (ConvertTo-Yaml -Data $colStable)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-cloud-azure.collection.yml') -Value (ConvertTo-Yaml -Data $colRemoved)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-cloud-gcp.collection.yml') -Value (ConvertTo-Yaml -Data $colDeprecated)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        
+        $result.Success | Should -BeFalse
+        $result.ErrorCount | Should -BeGreaterOrEqual 1
+        
+        # Clear error message assertions for N>2 scenario
+        $errorString = $result.Results | Out-String
+        $errorString | Should -Match 'themed-cloud-aws'
+        $errorString | Should -Match 'themed-cloud-azure'
+        $errorString | Should -Match 'themed-cloud-gcp'
+        $errorString | Should -Match 'a\.agent\.md'
+    }
+
+    It 'Detects maturity conflict between removed and stable with clear error' {
+        $colStable = [ordered]@{
+            id = 'themed-stable'; name = 'Stable'; description = 'Stable'
+            maturity = 'stable'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $colRemoved = [ordered]@{
+            id = 'themed-removed'; name = 'Removed'; description = 'Removed'
+            maturity = 'removed'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-stable.collection.yml') -Value (ConvertTo-Yaml -Data $colStable)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-removed.collection.yml') -Value (ConvertTo-Yaml -Data $colRemoved)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        
+        $errorString = $result.Results | Out-String
+        $errorString | Should -Match 'stable'
+        $errorString | Should -Match 'removed'
+    }
+
+    It 'Detects maturity conflict between removed and deprecated' {
+        $colDeprecated = [ordered]@{
+            id = 'themed-deprecated'; name = 'Deprecated'; description = 'Deprecated'
+            maturity = 'deprecated'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $colRemoved = [ordered]@{
+            id = 'themed-removed-2'; name = 'Removed 2'; description = 'Removed 2'
+            maturity = 'removed'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-deprecated.collection.yml') -Value (ConvertTo-Yaml -Data $colDeprecated)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-removed-2.collection.yml') -Value (ConvertTo-Yaml -Data $colRemoved)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        
+        $errorString = $result.Results | Out-String
+        $errorString | Should -Match 'deprecated'
+        $errorString | Should -Match 'removed'
+    }
+
+    It 'Detects maturity conflict between deprecated and experimental' {
+        $colExperimental = [ordered]@{
+            id = 'themed-experimental'; name = 'Experimental'; description = 'Experimental'
+            maturity = 'experimental'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $colDeprecated = [ordered]@{
+            id = 'themed-deprecated-2'; name = 'Deprecated 2'; description = 'Deprecated 2'
+            maturity = 'deprecated'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $canonical = [ordered]@{
+            id = 'hve-core-all'; name = 'All'; description = 'Canonical'
+            items = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-experimental.collection.yml') -Value (ConvertTo-Yaml -Data $colExperimental)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-deprecated-2.collection.yml') -Value (ConvertTo-Yaml -Data $colDeprecated)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        $result.Success | Should -BeFalse
+        
+        $errorString = $result.Results | Out-String
+        $errorString | Should -Match 'experimental'
+        $errorString | Should -Match 'deprecated'
+    }
+
+    It 'Excludes hve-core-all canonical collection from conflict detection (Regression Guard)' {
+        $canonical = [ordered]@{
+            id          = 'hve-core-all'
+            name        = 'All'
+            description = 'Canonical'
+            maturity    = 'stable'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+        $themed = [ordered]@{
+            id          = 'themed-removed-guard'
+            name        = 'Removed Guard'
+            description = 'Themed with removed maturity'
+            maturity    = 'removed'
+            items       = @([ordered]@{ path = '.github/agents/test/a.agent.md'; kind = 'agent' })
+        }
+
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.yml') -Value (ConvertTo-Yaml -Data $canonical)
+        Set-Content -Path (Join-Path $script:collectionsDir 'hve-core-all.collection.md') -Value '# All'
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-removed-guard.collection.yml') -Value (ConvertTo-Yaml -Data $themed)
+        Set-Content -Path (Join-Path $script:collectionsDir 'themed-removed-guard.collection.md') -Value '# Guard'
+
+        $result = Invoke-CollectionValidation -RepoRoot $script:repoRoot
+        
+        $result.Success | Should -BeTrue
+        $result.ErrorCount | Should -Be 0
+    }
+}
+
 Describe 'Invoke-CollectionValidation - new checks' {
     BeforeAll {
         Import-Module PowerShell-Yaml -ErrorAction Stop

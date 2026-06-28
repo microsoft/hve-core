@@ -291,10 +291,18 @@ function Invoke-CollectionValidation {
             $itemPath = $item.path
             $kind = $item.kind
             $absolutePath = Join-Path -Path $RepoRoot -ChildPath $itemPath
-            $itemMaturity = $null
+                        $itemMaturity = $null
+            $isExplicitItemMaturity = $false
             if ($item.ContainsKey('maturity')) {
                 $itemMaturity = [string]$item.maturity
+                $isExplicitItemMaturity = -not [string]::IsNullOrWhiteSpace($itemMaturity)
             }
+            
+            $crossCheckMaturity = $itemMaturity
+            if (-not $isExplicitItemMaturity -and $manifest.ContainsKey('maturity')) {
+                $crossCheckMaturity = [string]$manifest.maturity
+            }
+
             $effectiveMaturity = Resolve-CollectionItemMaturity -Maturity $itemMaturity
 
             # Repo-specific path exclusion
@@ -356,7 +364,8 @@ function Invoke-CollectionValidation {
                     CollectionFile = $file.Name
                     Kind = $kind
                     Path = $itemPath
-                    Maturity = $effectiveMaturity
+                    Maturity = $crossCheckMaturity
+                    IsExplicitItemMaturity = $isExplicitItemMaturity
                 }
             }
 
@@ -437,12 +446,39 @@ function Invoke-CollectionValidation {
         # Maturity conflict: only when item appears in canonical AND at least one themed
         if ($canonicalMatches.Count -gt 0 -and $themedMatches.Count -gt 0) {
             $canonical = $canonicalMatches[0]
-            foreach ($occurrence in $themedMatches) {
-                if ($occurrence.Maturity -ne $canonical.Maturity) {
-                    Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
-                    Add-ValidationResult -Collection $occurrence.CollectionId -ErrorType 'MaturityConflict' -Message "maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'"
-                    $errorCount++
+            if ($canonical.IsExplicitItemMaturity) {
+                foreach ($occurrence in $themedMatches) {
+                    if ($occurrence.Maturity -ne $canonical.Maturity) {
+                        Write-Host "  FAIL maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'" -ForegroundColor Red
+                        Add-ValidationResult -Collection $occurrence.CollectionId -ErrorType 'MaturityConflict' -Message "maturity conflict for '$itemKey': canonical '$canonicalCollectionId'='$($canonical.Maturity)', '$($occurrence.CollectionId)'='$($occurrence.Maturity)'"
+                        $errorCount++
+                    }
                 }
+            }
+        }
+
+        if ($themedMatches.Count -gt 1) {
+            $themedMaturities = @{}
+            foreach ($occurrence in $themedMatches) {
+                $mat = $occurrence.Maturity
+                if (-not [string]::IsNullOrWhiteSpace($mat)) {
+                    if (-not $themedMaturities.ContainsKey($mat)) {
+                        $themedMaturities[$mat] = [System.Collections.Generic.List[string]]::new()
+                    }
+                    $themedMaturities[$mat].Add($occurrence.CollectionId)
+                }
+            }
+            
+            $uniqueMaturities = @($themedMaturities.Keys)
+            if ($uniqueMaturities.Count -gt 1) {
+                $collectionsInvolved = foreach ($mat in $uniqueMaturities) {
+                    $cols = $themedMaturities[$mat] -join ', '
+                    "'$cols' [$mat]"
+                }
+                $conflictMsg = "Cross-collection maturity conflict for '$itemKey': $($collectionsInvolved -join ', ')"
+                Write-Host "  FAIL $conflictMsg" -ForegroundColor Red
+                Add-ValidationResult -Collection 'all-collections' -ErrorType 'CrossCollectionMaturityConflict' -Message $conflictMsg
+                $errorCount++
             }
         }
     }
