@@ -3,7 +3,7 @@ title: AI-Assisted Project Lifecycle Overview
 description: Navigate the full AI-assisted engineering lifecycle from setup through operations with HVE Core tooling
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-21
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - ai-assisted project lifecycle
