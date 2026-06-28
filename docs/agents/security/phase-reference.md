@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -22,14 +22,16 @@ Each of the Security Planner's six phases has defined inputs, outputs, state tra
 
 ## Phase Summary
 
-| Phase | Name               | Key output               | State fields updated                      |
-|-------|--------------------|--------------------------|-------------------------------------------|
-| 1     | Project Scoping    | Scope definition         | `entryMode`, `raiEnabled`, `aiComponents` |
-| 2     | Bucket Analysis    | Bucket classification    | `bucketsCompleted`                        |
-| 3     | Standards Mapping  | Controls per bucket      | `standardsMapped`                         |
-| 4     | Security Model     | Threat catalog           | `riskSurfaceStarted`                      |
-| 5     | Backlog Generation | Work items               | `handoffGenerated`                        |
-| 6     | Review & Handoff   | Summary and RAI dispatch | `raiPlannerDispatched`                    |
+| Phase | Name               | Key output                     | State fields updated                                 | Gate type           |
+|-------|--------------------|--------------------------------|------------------------------------------------------|---------------------|
+| 1     | Project Scoping    | Scope definition               | `entryMode`, `context`, `raiEnabled`, `aiComponents` | Hard gate           |
+| 2     | Bucket Analysis    | Bucket classification          | `bucketsCompleted`                                   | Summary-and-advance |
+| 3     | Standards Mapping  | Controls per bucket            | `standardsMapped`                                    | Summary-and-advance |
+| 4     | Security Model     | Threat catalog                 | `riskSurfaceStarted`                                 | Hard gate           |
+| 5     | Backlog Generation | Work items                     | `handoffGenerated`                                   | Summary-and-advance |
+| 6     | Review & Handoff   | Summary and RAI recommendation | `raiRecommendationShown`, `raiPlannerDispatched`     | Hard gate           |
+
+Gate status for every phase is tracked under the `phaseGates` state object. Phases 1, 4, and 6 are hard gates that require explicit user confirmation before advancing; phases 2, 3, and 5 are summary-and-advance gates. Cross-cutting state fields such as `noticeLog`, `disclaimerShownAt`, and `referencesProcessed` accumulate across phases independent of the gate model.
 
 ## Phase 1: Project Scoping
 
@@ -40,7 +42,7 @@ Capture the project's purpose, technology stack, deployment model, data classifi
 ### Inputs
 
 * User responses to scoping questions (capture mode).
-* PRD/BRD artifacts from `.copilot-tracking/` (From-PRD mode).
+* PRD/BRD artifacts from `.copilot-tracking/prd-sessions/` and `.copilot-tracking/brd-sessions/` (From-PRD mode).
 
 ### Process
 
@@ -56,17 +58,19 @@ The agent asks 3-5 questions per turn covering:
 ### Outputs
 
 * Completed scope definition in the plan file.
+* Project context stored in the `context` state object (`techStack`, `deploymentModel`, `dataClassification`, `complianceTargets`).
 * AI/ML detection results stored in state (`raiEnabled`, `raiScope`, `raiTier`, `aiComponents`).
 
 ### State Transitions
 
-| Field          | Before | After                            |
-|----------------|--------|----------------------------------|
-| `currentPhase` | 1      | 2 (on user confirmation)         |
-| `entryMode`    | unset  | `from-prd` or `capture`          |
-| `raiEnabled`   | unset  | `true` or `false`                |
-| `raiScope`     | unset  | `none`, `lightweight`, or `full` |
-| `raiTier`      | unset  | `none` through `comprehensive`   |
+| Field          | Before | After                                                   |
+|----------------|--------|---------------------------------------------------------|
+| `currentPhase` | 1      | 2 (on user confirmation)                                |
+| `entryMode`    | unset  | `from-prd` or `capture`                                 |
+| `context`      | empty  | Tech stack, deployment, data classification, compliance |
+| `raiEnabled`   | unset  | `true` or `false`                                       |
+| `raiScope`     | unset  | `none`, `embedded`, or `delegated`                      |
+| `raiTier`      | unset  | `none` through `comprehensive`                          |
 
 ## Phase 2: Bucket Analysis
 
@@ -196,7 +200,7 @@ Convert identified threats into actionable backlog items with acceptance criteri
 
 ### Purpose
 
-Validate the complete analysis, present a summary, and trigger RAI Planner dispatch when AI/ML components are in scope.
+Validate the complete analysis, present a summary, and recommend RAI Planner follow-up when AI/ML components are in scope.
 
 ### Review Checklist
 
@@ -213,16 +217,17 @@ The agent validates:
 When `raiEnabled` is `true`, the agent:
 
 1. Presents the RAI Planner agent path (`.github/agents/rai-planning/rai-planner.agent.md`).
-2. Suggests the `from-security-plan` entry mode.
-3. Identifies the state file and project slug for the RAI Planner to consume.
-4. Sets `raiPlannerDispatched` to `true` in state.
+2. Suggests the `from-security-plan` entry mode and sets `securityPlanRef` to the Security Planner `state.json`.
+3. Sets `raiRecommendationShown` to `true` after presenting the recommendation.
+4. Sets `raiPlannerDispatched` to `true` only once the user actually starts the RAI Planner handoff.
 
 ### State Transitions
 
-| Field                  | Before  | After  |
-|------------------------|---------|--------|
-| `currentPhase`         | 6       | 6      |
-| `raiPlannerDispatched` | `false` | `true` |
+| Field                    | Before  | After                                           |
+|--------------------------|---------|-------------------------------------------------|
+| `currentPhase`           | 6       | 6                                               |
+| `raiRecommendationShown` | `false` | `true`                                          |
+| `raiPlannerDispatched`   | `false` | `true` (only after the user starts the handoff) |
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
