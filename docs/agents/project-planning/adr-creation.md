@@ -1,9 +1,9 @@
 ---
-title: ADR Creation Coach
+title: ADR Creator
 description: Redirect to the canonical ADR Creator agent and identity instructions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-05-06
+ms.date: 2026-06-27
 ms.topic: tutorial
 ---
 
