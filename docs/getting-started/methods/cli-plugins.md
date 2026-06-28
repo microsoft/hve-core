@@ -3,12 +3,13 @@ title: Copilot CLI Plugins
 description: Install HVE Core agents, prompts, and skills as Copilot CLI plugins
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-06-27
 ms.topic: how-to
 ---
 
 Install HVE Core collections as Copilot CLI plugins for terminal-based
-AI-assisted development workflows.
+AI-assisted development workflows. The plugin names below mirror the current
+collection IDs published by the repository's plugin output.
 
 ## Prerequisites
 

@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -27,11 +27,11 @@ flowchart LR
     end
 
     subgraph solution["Solution Space"]
-        M4["Method 4<br/>Brainstorm"] --> M5["Method 5<br/>Concepts"] --> M6["Method 6<br/>Lo-Fi Proto"]
+        M4["Method 4<br/>Brainstorm"] --> M5["Method 5<br/>Concepts"] --> M6["Method 6<br/>Low-Fidelity Prototypes"]
     end
 
-    subgraph validation["Validation Space"]
-        M7["Method 7<br/>Hi-Fi Proto"] --> M8["Method 8<br/>Testing"] --> M9["Method 9<br/>Scale"]
+    subgraph implementation["Implementation Space"]
+        M7["Method 7<br/>High-Fidelity Prototypes"] --> M8["Method 8<br/>Testing"] --> M9["Method 9<br/>Scale"]
     end
 
     M3 -->|"space transition"| M4
@@ -55,7 +55,7 @@ We received a request from a plant manager: "Build us a real-time
 quality dashboard for the production floor." Help us scope this properly.
 ```
 
-The coach guides you through frozen-vs-fluid classification, stakeholder mapping, and constraint discovery. By the end of Method 1, you have a validated problem statement that differs from the original request and a stakeholder map that includes hidden stakeholders like union representatives and temporary workers.
+The coach guides you through frozen-versus-fluid classification, stakeholder mapping, and constraint discovery. By the end of Method 1, you have a validated problem statement that differs from the original request and a stakeholder map that includes hidden stakeholders like union representatives and temporary workers.
 
 ### Method 2: Design Research
 
@@ -121,42 +121,42 @@ Test concepts with real users in real environments using scrappy prototypes:
 
 ```text
 The voice-guided repair concept scored highest. Ready to
-build lo-fi prototypes and test on the factory floor.
+build low-fidelity prototypes and test on the factory floor.
 ```
 
-Lo-fi prototyping reveals constraints invisible from a desk: touchscreen contamination, QR code lighting failures, and production-timing conflicts. These discoveries refine the concept before any significant engineering investment.
+Low-fidelity prototyping reveals constraints invisible from a desk: touchscreen contamination, QR code lighting failures, and production-timing conflicts. These discoveries refine the concept before any significant engineering investment.
 
-### Transition: Solution Space → Validation Space
+### Transition: Solution Space → Implementation Space
 
-When lo-fi prototypes have been tested with real users and core assumptions are validated, the coach surfaces the next transition:
+When low-fidelity prototypes have been tested with real users and core assumptions are validated, the coach surfaces the next transition:
 
 ```text
 /dt-method-next
 ```
 
-The coach reviews prototype findings, confirms that concepts have been narrowed to one or two directions, and presents options: proceed to hi-fi prototyping, return to brainstorming with new constraints, or hand off to RPI. Choose to continue into the Validation Space.
+The coach reviews prototype findings, confirms that concepts have been narrowed to one or two directions, and presents options: proceed to high-fidelity prototyping, return to brainstorming with new constraints, or hand off to RPI. Choose to continue into the Implementation Space.
 
-## Validation Space: Methods 7-9
+## Implementation Space: Methods 7-9
 
-The Validation Space builds functional prototypes, tests them systematically, and scales validated solutions.
+The Implementation Space builds functional prototypes, tests them systematically, and scales validated solutions.
 
 ### Method 7: High-Fidelity Prototypes
 
 Build functional systems with real data for systematic comparison:
 
 ```text
-Ready to build hi-fi prototypes. We're comparing three
+Ready to build high-fidelity prototypes. We're comparing three
 microphone options for voice interaction in 85-90 dB environments.
 ```
 
-The coach guides technical translation from lo-fi findings into functional specifications. Hi-fi prototypes compare industrial-grade array, bone-conduction headset, and directional lapel mic options with glove-friendly interface variants.
+The coach guides technical translation from low-fidelity findings into functional specifications. High-fidelity prototypes compare industrial-grade array, bone-conduction headset, and directional lapel mic options with glove-friendly interface variants.
 
 ### Method 8: User Testing
 
 Validate prototypes with real users in real environments:
 
 ```text
-Hi-fi prototypes are built. Ready to plan structured user
+High-fidelity prototypes are built. Ready to plan structured user
 testing across four operator types and both shifts.
 ```
 
@@ -177,11 +177,11 @@ The coach guides scaling patterns, change management planning, and telemetry-dri
 
 Design Thinking produces validated understanding; RPI delivers implementation. The handoff can occur at three exit points, each seeding Task Researcher with progressively richer context. Every exit enters the full RPI pipeline at Task Researcher.
 
-| Exit Point                 | Methods | Artifacts Seeded to Researcher                                                                       | Researcher Scope                                                   |
-|----------------------------|---------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| Problem Statement Complete | 1-3     | Problem statement, stakeholder map, research themes, affinity clusters, constraints, assumptions log | Broad: solution approaches, technology options, feasibility        |
-| Concept Validated          | 4-6     | Exit 1 plus tested concepts with D/F/V scores, lo-fi prototype feedback, constraint discoveries      | Moderate: concept feasibility, integration paths, risk areas       |
-| Implementation Spec Ready  | 7-9     | Exits 1-2 plus hi-fi specs, architecture decisions, benchmarks, test protocols, scaling plan         | Narrow: implementation refinement, deployment strategy, edge cases |
+| Exit Point                 | Methods | Artifacts Seeded to Researcher                                                                         | Researcher Scope                                                   |
+|----------------------------|---------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| Problem Statement Complete | 1-3     | Problem statement, stakeholder map, research themes, affinity clusters, constraints, assumptions log   | Broad: solution approaches, technology options, feasibility        |
+| Concept Validated          | 4-6     | Exit 1 plus tested concepts with D/F/V scores, low-fidelity prototype feedback, constraint discoveries | Moderate: concept feasibility, integration paths, risk areas       |
+| Implementation Spec Ready  | 7-9     | Exits 1-2 plus high-fidelity specs, architecture decisions, benchmarks, test protocols, scaling plan   | Narrow: implementation refinement, deployment strategy, edge cases |
 
 ### Exit 1 Assets: Problem Space (Methods 1-3)
 
@@ -200,13 +200,13 @@ Cumulative with Exit 1.
 
 * Brainstorming theme clusters with selected directions
 * `concepts.yml` with desirability/feasibility/viability evaluations per concept
-* Lo-fi prototype test observations with behavioral evidence
+* Low-fidelity prototype test observations with behavioral evidence
 * Constraint discoveries categorized by type (physical, environmental, workflow) and severity (blocker, friction, minor)
 * Validated and invalidated assumptions from user testing
 * User behavior patterns observed during prototype interactions
 * 1-2 narrowed concept directions advanced from initial ideation
 
-### Exit 3 Assets: Validation Space (Methods 7-9)
+### Exit 3 Assets: Implementation Space (Methods 7-9)
 
 Cumulative with Exits 1-2.
 
@@ -214,12 +214,12 @@ Cumulative with Exits 1-2.
 * Implementation comparison results across 2-3 approaches
 * Fidelity mapping matrix and performance benchmarks
 * Integration validation results and specification drafts
-* Test protocols with participant profiles and behavioral data (tier 2+)
-* Severity-frequency matrix and assumption validation results (tier 2+)
-* Refinement log, scaling assessment, and deployment plan (tier 3)
-* Adoption metrics with leading and lagging indicators (tier 3)
+* Test protocols with participant profiles and behavioral data
+* Severity-frequency matrix and assumption validation results
+* Refinement log, scaling assessment, and deployment plan
+* Adoption metrics with leading and lagging indicators
 
-Each exit point generates two files in `.copilot-tracking/dt/{project-slug}/`: a handoff summary with structured metadata and confidence markers for every artifact, and a self-contained RPI document that Task Researcher consumes directly with all evidence inlined. Earlier exit points transfer leaner artifacts, requiring the Researcher to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Researcher's scope to specific verification and refinement targets.
+Each exit point produces a handoff summary and a self-contained RPI document in the project artifact folder at `docs/design-thinking/{project-slug}/`. The coaching state remains in `.copilot-tracking/design-thinking-sessions/{project-slug}/coaching-state.md`. Earlier exit points transfer leaner artifacts, requiring the Researcher to cast a wider investigation net. Later exit points carry cumulative evidence, narrowing the Researcher's scope to specific verification and refinement targets.
 
 For a step-by-step walkthrough of each handoff, see [Tutorial: Handing Off from DT to RPI](tutorial-handoff-to-rpi.md). For the handoff contract and per-agent mappings, see [DT-RPI Integration](dt-rpi-integration.md).
 
