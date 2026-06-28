@@ -20,7 +20,7 @@ describe("mcp face", () => {
     expect(bridge.state.phase).toBe("review");
   });
 
-  it("registers the steering and screen tools and lists thirty-two total", async () => {
+  it("registers the steering and screen tools and lists thirty-three total", async () => {
     const bridge = new Bridge();
     const server = buildMcpServer(bridge);
     const [clientT, serverT] = InMemoryTransport.createLinkedPair();
@@ -47,7 +47,8 @@ describe("mcp face", () => {
     expect(names).toContain("codemap_touch");
     expect(names).toContain("dataset_profile");
     expect(names).toContain("add_column");
-    expect(tools).toHaveLength(32);
+    expect(names).toContain("set_steps");
+    expect(tools).toHaveLength(33);
 
     await client.callTool({ name: "offer_approaches", arguments: { label: "Pick", options: [{ id: "a", title: "A" }] } });
     expect(bridge.state.steerMenu).toMatchObject({ label: "Pick" });
@@ -298,5 +299,16 @@ describe("mcp face", () => {
 
     await client.close();
     await server.close();
+  });
+
+  it("set_steps drives the interview program state", async () => {
+    const bridge = new Bridge();
+    const server = buildMcpServer(bridge);
+    const [clientT, serverT] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverT);
+    const client = new Client({ name: "test", version: "0" });
+    await client.connect(clientT);
+    await client.callTool({ name: "set_steps", arguments: { steps: ["Frame", "Decide", "Govern"], current: 1, label: "ADR" } });
+    expect(bridge.state.interviewSteps).toEqual({ label: "ADR", names: ["Frame", "Decide", "Govern"], current: 1 });
   });
 });
