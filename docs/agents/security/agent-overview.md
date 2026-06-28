@@ -11,7 +11,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: reference
 estimated_reading_time: 7
 ---
@@ -34,19 +34,17 @@ flowchart TD
 
   subgraph Instructions
     I1["identity"]
-    I2["operational-buckets"]
-    I3["standards-mapping"]
-    I4["security-model"]
-    I5["backlog-handoff"]
+    I2["standards-mapping"]
+    I3["planner base (shared)"]
   end
 
   SP -->|"delegates"| RS
   SP -->|"reads/writes"| SJ
   SP -->|"generates"| PF
-  SP -->|"follows"| I1 & I2 & I3 & I4 & I5
+  SP -->|"follows"| I1 & I2 & I3
 ```
 
-The agent follows five instruction files, each scoped to a specific concern. The identity instructions govern overall behavior and state management. The remaining four files provide phase-specific guidance for bucket classification, standards mapping, security model analysis, and backlog generation.
+The agent is driven by the Security Planner agent definition plus a small set of instruction files: the security identity instructions govern overall behavior and state management, the standards-mapping instructions scope the delegated standards lookups, and the shared planner base supplies the common phase-orchestration scaffold. Phase-specific guidance for bucket classification, security model analysis, and backlog generation lives in the agent definition itself.
 
 ## State Management
 
@@ -63,26 +61,31 @@ All state lives in `.copilot-tracking/security-plans/{project-slug}/state.json`.
 
 ### State Fields
 
-The state file tracks over 16 fields across scoping, analysis, and handoff concerns.
+The state file tracks 21 fields across scoping, analysis, and handoff concerns.
 
-| Field                  | Type     | Description                                         |
-|------------------------|----------|-----------------------------------------------------|
-| `projectSlug`          | string   | Kebab-case project identifier                       |
-| `securityPlanFile`     | string   | Path to the main plan markdown file                 |
-| `currentPhase`         | number   | Current phase (1-6)                                 |
-| `entryMode`            | string   | `from-prd` or `capture`                             |
-| `bucketsCompleted`     | string[] | Operational buckets that have been classified       |
-| `standardsMapped`      | string[] | Buckets with completed standards mapping            |
-| `riskSurfaceStarted`   | boolean  | Whether Phase 4 threat modeling has begun           |
-| `handoffGenerated`     | object   | `{ado: boolean, github: boolean}`                   |
-| `referencesProcessed`  | string[] | Paths to PRD/BRD artifacts that were consumed       |
-| `nextActions`          | string[] | Pending actions for the current or next phase       |
-| `userPreferences`      | object   | Autonomy preference: `full`, `partial`, or `manual` |
-| `raiEnabled`           | boolean  | Whether AI/ML components were detected              |
-| `raiScope`             | string   | `none`, `lightweight`, or `full`                    |
-| `raiTier`              | string   | `none`, `basic`, `standard`, or `comprehensive`     |
-| `raiPlannerDispatched` | boolean  | Whether the RAI Planner handoff has been triggered  |
-| `aiComponents`         | string[] | List of detected AI/ML components                   |
+| Field                    | Type     | Description                                                   |
+|--------------------------|----------|---------------------------------------------------------------|
+| `projectSlug`            | string   | Kebab-case project identifier                                 |
+| `securityPlanFile`       | string   | Path to the main plan markdown file                           |
+| `currentPhase`           | number   | Current phase (1-6)                                           |
+| `entryMode`              | string   | `from-prd` or `capture`                                       |
+| `phaseGates`             | object   | Per-phase gate status; phases 1, 4, 6 are hard gates          |
+| `bucketsCompleted`       | string[] | Operational buckets that have been classified                 |
+| `standardsMapped`        | string[] | Buckets with completed standards mapping                      |
+| `riskSurfaceStarted`     | boolean  | Whether Phase 4 threat modeling has begun                     |
+| `handoffGenerated`       | object   | `{ado: boolean, github: boolean}`                             |
+| `context`                | object   | Tech stack, deployment model, data classification, compliance |
+| `referencesProcessed`    | string[] | Paths to PRD/BRD artifacts that were consumed                 |
+| `nextActions`            | string[] | Pending actions for the current or next phase                 |
+| `disclaimerShownAt`      | string   | ISO 8601 timestamp when the disclaimer was shown, or null     |
+| `noticeLog`              | object[] | Audit log of disclaimers, attributions, and review reminders  |
+| `userPreferences`        | object   | Autonomy preference: `guided`, `partial`, or `full`           |
+| `raiEnabled`             | boolean  | Whether AI/ML components were detected                        |
+| `raiScope`               | string   | `none`, `embedded`, or `delegated`                            |
+| `raiTier`                | string   | `none`, `basic`, `standard`, or `comprehensive`               |
+| `raiRecommendationShown` | boolean  | Whether the RAI recommendation has been presented             |
+| `raiPlannerDispatched`   | boolean  | Whether the user actually started the RAI Planner handoff     |
+| `aiComponents`           | string[] | List of detected AI/ML components                             |
 
 ## Interaction Model
 
@@ -109,8 +112,8 @@ A five-step post-summarization recovery handles cases where conversation context
 
 * All generated files are placed under `.copilot-tracking/security-plans/{project-slug}/`.
 * The agent never modifies source code or files outside its tracking directory.
-* The Researcher Subagent is dispatched only for WAF/CAF runtime lookups during Phase 3.
-* RAI Planner handoff in Phase 6 provides the agent path and suggests the `from-security-plan` entry mode but does not force the user to continue.
+* The Researcher Subagent is dispatched for runtime standards and framework lookups during Phase 3, covering WAF and CAF as well as MCSB, PCI-DSS, S2C2F, SLSA, SOC 2, HIPAA, and FedRAMP when those are in scope.
+* When AI/ML components were detected, Phase 6 recommends the RAI Planner and suggests the `from-security-plan` entry mode pointed at the Security Planner `state.json`, but the handoff is marked dispatched only once the user starts it.
 
 ## Related Files
 

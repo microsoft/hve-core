@@ -1,6 +1,6 @@
 ---
 title: Language Skills
-description: Built-in language skills for the Code Review Standards agent and how to author enterprise-specific standards overlays
+description: Built-in language skills for the Code Review Standards perspective and how to author enterprise-specific standards overlays
 sidebar_position: 2
 sidebar_label: Language Skills
 keywords:
@@ -16,54 +16,38 @@ tags:
   - skills
   - coding-standards
 author: Microsoft
-ms.date: 2026-06-10
+ms.date: 2026-06-19
 ms.topic: how-to
 estimated_reading_time: 8
 ---
 
-The Code Review Standards agent enforces coding conventions through skills, not hardcoded rules. Each skill is a self-contained `SKILL.md` file with a checklist that the agent loads at review time based on the languages present in the diff. This design means you can add, replace, or overlay standards for any language without modifying the agent.
+The Code Review Standards perspective enforces coding conventions through skills, not hardcoded rules. Each skill is a self-contained `SKILL.md` file with a checklist that the perspective loads at review time based on the languages present in the diff. This design means you can add, replace, or overlay standards for any language without modifying the agent.
 
 ## How Skill Loading Works
 
-The skill loading path depends on whether the Standards agent is running standalone or under the Code Review Full orchestrator.
-
-### Orchestrated Mode (via Code Review Full)
-
-When the orchestrator dispatches the Standards agent, it provides a `diff-state.json` containing the file extensions from the diff. The Standards agent uses those extensions to select and load skills itself.
+The orchestrator dispatches the Standards perspective with a `diff-state.json` containing the file extensions from the diff. The Standards perspective uses those extensions to select and load skills itself.
 
 ```mermaid
 flowchart LR
-  A["Orchestrator:<br/>write diff-state.json"] --> B["Standards agent:<br/>read extensions"]
+  A["Orchestrator:<br/>write diff-state.json"] --> B["Standards perspective:<br/>read extensions"]
   B --> C["Match skills via catalog<br/>and semantic filtering"]
   C --> D["Load matched skills"]
   D --> E["Apply checklists"]
   E --> F["Write JSON findings"]
 ```
 
-1. The orchestrator extracts file extensions from the diff during Step 1 and writes them to the `extensions` array in `diff-state.json`.
-2. The Standards agent reads `diff-state.json`, extracts the extensions, and evaluates available skills by matching their name and description against the detected languages or file types.
+1. The orchestrator extracts file extensions from the diff during the context bootstrap step and writes them to the `extensions` array in `diff-state.json`.
+2. The Standards perspective reads `diff-state.json`, extracts the extensions, and evaluates available skills by matching their name and description against the detected languages or file types.
 3. It selects up to 8 relevant skills and applies each skill's checklist to the diff.
 4. It writes structured JSON findings for the orchestrator to merge.
 
-Skill discovery is owned entirely by the Standards agent. The orchestrator supplies the extensions; the Standards agent decides which skills to load.
+Skill discovery is owned entirely by the Standards perspective. The orchestrator supplies the extensions; the Standards perspective decides which skills to load.
 
-### Standalone Mode
+### Skill Selection Steps
 
-When invoked directly (without an orchestrator), the agent extracts extensions from the diff and evaluates available skills whose name or description relates to the detected file types.
+The Standards perspective selects skills as follows:
 
-```mermaid
-flowchart LR
-  A["Compute diff"] --> B["Extract file\nextensions"]
-  B --> C["Look up built-in\nskills from catalog"]
-  C --> D["Match additional skills<br/>via semantic filtering"]
-  D --> E["Load up to 8\nmatched skills"]
-  E --> F["Apply checklist\nto diff"]
-  F --> G["Produce findings\nciting skill by name"]
-```
-
-In standalone mode:
-
-1. The agent extracts unique file extensions from the diff's changed-file list.
+1. It reads the unique file extensions from `diff-state.json` (or extracts them from the diff's changed-file list when not provided).
 
 2. It normalizes each extension to language tokens (for example, `.py` to `python`, `.cs` to `csharp`, `.sh` to `bash`).
 
@@ -78,8 +62,6 @@ In standalone mode:
 7. Every finding traces back to the skill that surfaced it, cited by the skill's exact `name` from frontmatter.
 
 > [!NOTE]
->
-> Both orchestrated and standalone modes use the same skill selection logic inside the Standards agent. The only difference is the input source: in orchestrated mode, extensions come from `diff-state.json`; in standalone mode, the agent extracts them from the diff itself.
 >
 > Skills are selected through semantic matching of their name and description against detected languages, frameworks, or file types. Built-in skills are evaluated first via a catalog, and additional skills are considered only if no catalog match is found. No path-based resolution or directory scanning is required.
 
@@ -126,18 +108,18 @@ The coding-standards collection also includes language-specific instruction file
 | Rust       | `rust.instructions.md`, `rust-tests.instructions.md`            | `**/*.rs`              |
 | Terraform  | `terraform.instructions.md`                                     | `**/*.tf, **/*.tfvars` |
 
-Instructions and skills serve different activation contexts. Instructions guide code generation passively (always on for matching files). Skills guide code review actively (loaded on demand by the standards agent). Keeping both aligned ensures that code Copilot generates passes the review skill's checks.
+Instructions and skills serve different activation contexts. Instructions guide code generation passively (always on for matching files). Skills guide code review actively (loaded on demand by the Standards perspective). Keeping both aligned ensures that code Copilot generates passes the review skill's checks.
 
 > [!TIP]
-> When you author a new language skill, review the corresponding instruction files to ensure they do not contradict each other. A mismatch creates a generate-then-flag loop where Copilot writes code that the review agent immediately flags.
+> When you author a new language skill, review the corresponding instruction files to ensure they do not contradict each other. A mismatch creates a generate-then-flag loop where Copilot writes code that the review perspective immediately flags.
 
 ## Authoring a Custom Skill
 
-You extend the standards agent by creating a SKILL.md file under .github/skills/coding-standards/ in your repository. The agent activates it by matching the skill's name or description against the languages, frameworks, or file types present in the diff.
+You extend the Standards perspective by creating a SKILL.md file under .github/skills/coding-standards/ in your repository. The perspective activates it by matching the skill's name or description against the languages, frameworks, or file types present in the diff.
 
 ### Skill Stacking
 
-Skills stack additively. When a Python diff is reviewed, the agent might load both `python-foundational` (from hve-core) and `python-enterprise` (from your repository). Findings from all loaded skills appear in the same report, each tagged with the skill that surfaced them.
+Skills stack additively. When a Python diff is reviewed, the perspective might load both `python-foundational` (from hve-core) and `python-enterprise` (from your repository). Findings from all loaded skills appear in the same report, each tagged with the skill that surfaced them.
 
 ```mermaid
 flowchart TD
@@ -150,7 +132,7 @@ flowchart TD
     C["react-standards<br/>SKILL.md"]
   end
 
-  D["Standards Agent"]
+  D["Standards Perspective"]
   D -->|".py files"| A & B
   D -->|".tsx files"| C
   D -->|"merged findings"| E["Review Report"]
@@ -216,7 +198,7 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 
 1. Place the `SKILL.md` file in your repository.
 2. Make a change to a file that matches the skill's target language.
-3. Run `/code-review-full` or invoke the Code Review Standards agent directly.
+3. Invoke the **code-review** agent and select the `standards` perspective (or `full`).
 4. Verify that findings cite your skill's `name` in their Skill field.
 5. If the skill does not activate, verify that the `description` clearly mentions the language, framework, or file extension present in the diff. Placement under `.github/skills/coding-standards/` is recommended for organization but does not control activation.
 
@@ -224,11 +206,11 @@ Organize checks into numbered sections with bullet points. Each bullet should be
 
 ### Overlay Company Standards on Built-in Skills
 
-A financial services team installs the `coding-standards` collection and adds `.github/skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The standards agent loads both `python-foundational` and `python-finserv` for every Python diff, producing a unified report.
+A financial services team installs the `coding-standards` collection and adds `.github/skills/coding-standards/woodgrove/python-finserv/SKILL.md` with checks for audit logging, PII handling, and approved cryptographic libraries. The Standards perspective loads both `python-foundational` and `python-finserv` for every Python diff, producing a unified report.
 
 ### Add Coverage for an Unsupported Language
 
-A team working in Go creates `.github/skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The standards agent selects and loads it for any `.go` files in the diff based on semantic matching.
+A team working in Go creates `.github/skills/coding-standards/tailspin/go-standards/SKILL.md` with checks for error wrapping conventions, context propagation, and struct tag formatting. The Standards perspective selects and loads it for any `.go` files in the diff based on semantic matching.
 
 ### Scope a Skill to a Specific Framework
 

@@ -3,7 +3,7 @@ title: "Method 1: Scope Conversations"
 description: "Define project boundaries and stakeholder alignment through structured conversations that surface constraints, expectations, and success criteria."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords: [design thinking, method-01, scope-conversations]
 estimated_reading_time: 5
@@ -31,7 +31,7 @@ Method 1 is the **entry point to the Problem Space**. The Problem Space spans Me
 
 ## Key Activities
 
-* Stakeholder discovery: Identify sponsors, end users, operators, and influencers across three tiers: decision makers, direct users, and affected parties.
+* Stakeholder discovery: Identify sponsors, end users, operators, and influencers across primary, secondary, and hidden stakeholder groups.
 * Frozen versus fluid assessment: Classify each constraint as frozen (non-negotiable: budgets, regulations, timelines) or fluid (open for redesign: workflows, interfaces, processes).
 * Constraint mapping: Document physical constraints (environment, equipment), operational constraints (schedules, staffing), and technical constraints (systems, data, integrations).
 * Scope alignment: Facilitate conversations that surface conflicting assumptions and establish shared success criteria among stakeholders.
@@ -45,8 +45,8 @@ Use this prompt to start a scope conversation session:
 
 ```text
 I'm beginning a Design Thinking project focused on [topic]. Help me identify
-stakeholders across three tiers (decision makers, direct users, affected parties)
-and classify the known constraints as frozen or fluid.
+stakeholders across primary, secondary, and hidden groups and classify the known
+constraints as frozen or fluid.
 ```
 
 During each conversation:
@@ -58,7 +58,7 @@ During each conversation:
 
 ## Expected Outputs
 
-* Stakeholder map organized by tier (decision makers, direct users, affected parties)
+* Stakeholder map organized by primary, secondary, and hidden stakeholders
 * Constraint inventory with frozen and fluid classifications
 * Scope statement defining what is included and excluded
 * Success criteria agreed upon by key stakeholders
@@ -66,7 +66,7 @@ During each conversation:
 
 ## Quality Checks
 
-* All three stakeholder tiers are represented (decision makers, direct users, affected parties)
+* All three stakeholder tiers are represented (primary, secondary, and hidden stakeholders)
 * Every identified constraint has a frozen or fluid classification
 * Scope boundaries are explicit about what is excluded, not just what is included
 * Success criteria are measurable and agreed upon by sponsors

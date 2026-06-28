@@ -1,11 +1,11 @@
 ---
-title: "Method 6: Lo-Fi Prototypes"
+title: "Method 6: Low-Fidelity Prototypes"
 description: "Build fast, scrappy prototypes that test concept assumptions through real-environment feedback and constraint discovery."
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
-keywords: [design thinking, method-06, lofi-prototypes]
+keywords: [design thinking, method-06, low-fidelity-prototypes]
 estimated_reading_time: 5
 ---
 
@@ -13,21 +13,21 @@ estimated_reading_time: 5
 
 Method 6 builds fast, low-fidelity prototypes that test your concept assumptions in real environments. You create 3 to 5 variations per concept using the cheapest materials and fastest methods available. The goal is constraint discovery and assumption testing, not finished products.
 
-Lo-fi prototypes reveal problems that concept descriptions cannot. Putting something tangible in front of users in their actual environment exposes interaction failures, environmental constraints, and workflow conflicts that no amount of planning anticipates.
+Low-Fidelity Prototypes reveal problems that concept descriptions cannot. Putting something tangible in front of users in their actual environment exposes interaction failures, environmental constraints, and workflow conflicts that no amount of planning anticipates. Method 6 follows three phases: prototype planning, prototype building, and feedback planning.
 
 ## When to Use
 
 * After completing User Concepts (Method 5) with evaluated concepts ready for physical testing
 * When assumptions about user interaction, environment, or workflow need validation through tangible artifacts
-* When the team needs to fail fast and learn cheaply before investing in hi-fi construction
+* When the team needs to fail fast and learn cheaply before investing in High-Fidelity Prototypes
 * Before committing to technical implementation in Method 7
 
 ## Space Context
 
-Method 6 is the **exit point of the Solution Space**. It concludes the solution development phase (Methods 4 through 6) and prepares the team for the Validation Space (Methods 7 through 9). The constraint discoveries and user feedback you gather here directly inform the technical prototyping in Method 7.
+Method 6 is the **exit point of the Solution Space**. It concludes the solution development phase (Methods 4 through 6) and prepares the team for the Implementation Space (Methods 7 through 9). The constraint discoveries and user feedback you gather here directly inform the technical prototyping in Method 7.
 
 > [!IMPORTANT]
-> The Solution-to-Validation transition requires demonstrated constraint discovery from real-environment testing. Moving to hi-fi prototyping without lo-fi learning wastes resources on solutions that may not survive contact with reality.
+> The Solution-to-Implementation transition requires demonstrated constraint discovery from real-environment testing. Moving to high-fidelity prototyping without low-fidelity learning wastes resources on solutions that may not survive contact with reality.
 
 ## Key Activities
 
@@ -44,11 +44,11 @@ Method 6 is the **exit point of the Solution Space**. It concludes the solution 
 
 Select the concepts advancing from Method 5 and identify the key assumptions each concept depends on. Design prototypes that test those assumptions directly.
 
-Use this prompt to plan a lo-fi prototype session:
+Use this prompt to plan a low-fidelity prototype session:
 
 ```text
 Our concept [concept name] assumes that users will [key assumption] in [environment].
-Help me design a lo-fi prototype that tests this assumption using materials I can
+Help me design a low-fidelity prototype that tests this assumption using materials I can
 assemble in under an hour. Include 3 variations that test different approaches.
 ```
 
@@ -77,12 +77,12 @@ When building prototypes:
 
 ## Next Method
 
-When you have constraint discoveries from real-environment testing and clear evidence about which concept assumptions held up, proceed to [Method 7: Hi-Fi Prototypes](method-07-hifi-prototypes.md) to translate those findings into technically feasible implementations.
+When you have constraint discoveries from real-environment testing and clear evidence about which concept assumptions held up, proceed to [Method 7: High-Fidelity Prototypes](method-07-hifi-prototypes.md) to translate those findings into technically feasible implementations.
 
 ## Related Resources
 
 * [Method 5: User Concepts](method-05-user-concepts.md)
-* [Method 7: Hi-Fi Prototypes](method-07-hifi-prototypes.md)
+* [Method 7: High-Fidelity Prototypes](method-07-hifi-prototypes.md)
 * [Design Thinking Overview](README.md)
 
 > Brought to you by microsoft/hve-core

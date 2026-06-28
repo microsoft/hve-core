@@ -76,6 +76,7 @@ backlink
 backlinks
 backticked
 bargauge
+beforeall
 blockchain
 chatbot
 chatbots
@@ -200,6 +201,7 @@ git
 gitops
 helm
 Holo
+hotspot
 hotspots
 Fulcio
 gitsign
@@ -695,6 +697,7 @@ objc
 odata
 odbc
 offboarding
+offence
 okera
 okrs
 olas
@@ -720,6 +723,7 @@ organisations
 organised
 otel
 otlp
+overclaiming
 overfitting
 overoptimization
 overprivileged
@@ -1147,6 +1151,7 @@ vums
 vwan
 vxlan
 wafs
+walkback
 walkthrough
 wans
 webgui
@@ -1507,6 +1512,7 @@ triaging
 untriaged
 unvalidated
 vscodeignore
+Pipfile
 
 # Video & Image Processing
 drawtext
@@ -1621,3 +1627,4 @@ transitioner
 urlsafe
 wberry
 writeback
+Brussee

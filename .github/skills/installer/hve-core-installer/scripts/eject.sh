@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Ejects a tracked file from HVE-Core upgrade management.
 # Marks the file as 'ejected' in .hve-tracking.json so future upgrades skip it.

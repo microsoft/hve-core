@@ -1,6 +1,6 @@
 #Requires -Modules Pester
 #Requires -Modules powershell-yaml
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {

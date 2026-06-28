@@ -1,0 +1,161 @@
+background:
+  category: progressive-hints-and-navigation
+  given:
+    domain: design-thinking
+
+cases:
+  # ── Progressive Hint Engine ─────────────────────────────────────
+
+  - id: hint_broad_direction_first
+    name: Start with broad hints when user is stuck
+    tags: [hints, core]
+    given:
+      query: >
+        We're trying to do input synthesis on our interview notes but I
+        have no idea where to start.  I'm totally lost.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              provides a broad directional hint or gentle starting point
+              rather than jumping straight to a detailed step-by-step
+              process; acknowledges the feeling of being lost and offers
+              a manageable first move like looking for recurring words or
+              surprising moments in the notes
+
+  - id: hint_escalation_on_repeated_confusion
+    name: Escalate hints when user remains stuck
+    tags: [hints, escalation]
+    given:
+      query: >
+        You suggested looking for recurring themes but I'm still stuck.
+        I read through all the notes and I don't see any patterns.
+        Everything feels unique to each person.  I really don't know
+        what to look for.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              escalates to a more specific level of guidance — perhaps
+              suggesting a concrete technique like looking for emotional
+              reactions, workarounds people mentioned, or grouping by job
+              role — while still letting the user do the actual synthesis
+              work
+
+  # ── Non-linear method navigation ────────────────────────────────
+
+  - id: backward_transition_accepted
+    name: Accept backward transitions between methods
+    tags: [navigation, non-linear, core]
+    given:
+      query: >
+        We started prototyping (Method 6) but realized we missed a key
+        stakeholder group — the night shift operators.  Their workflow is
+        completely different.  I think we need to go back to research.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              validates the decision to go backward, frames it as a
+              normal and healthy part of the design thinking process,
+              suggests returning to Method 2 (Design Research) to
+              understand the night shift context, and helps identify
+              what specific gaps to fill
+
+  - id: transparent_method_shift
+    name: Announce method shifts transparently
+    tags: [navigation, transparency, core]
+    given:
+      query: >
+        We've been talking about our interview findings and I just had
+        an idea for a solution — what if we put QR codes on every tool
+        so operators can scan them to check availability?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              acknowledges the idea positively but is transparent about
+              the method shift — notes they are currently in problem space
+              (synthesis) and the idea jumps to solution space; asks whether
+              they want to capture the idea and continue synthesis or
+              deliberately shift to brainstorming
+
+  # ── Anti-patterns ───────────────────────────────────────────────
+
+  - id: no_multiple_choice_quizzes
+    name: Avoid multiple-choice question lists
+    tags: [anti-pattern, conversation-style]
+    given:
+      query: >
+        We need help figuring out our next step.  We've completed scope
+        conversations and have notes from 5 interviews.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              does NOT respond with a numbered list of options like a quiz
+              (e.g. "1. Move to synthesis 2. Do more interviews 3. Revisit
+              scope"); instead offers a conversational observation about
+              what seems ready and asks one focused question
+
+  - id: no_unsolicited_method_change
+    name: Do not change method focus without announcing it
+    tags: [anti-pattern, navigation]
+    given:
+      query: >
+        We're working on Method 3 synthesis.  I noticed that two
+        interviewees mentioned a workaround where they text photos to
+        their supervisor.  Is that significant?
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              stays within Method 3 (Input Synthesis) and helps the user
+              evaluate the significance of this finding as a synthesis
+              pattern; does NOT silently jump to brainstorming solutions
+              for the texting workaround
+
+  # ── Session resumption ──────────────────────────────────────────
+
+  - id: session_resumption
+    name: Resume session with state context
+    tags: [session-management, resumption]
+    given:
+      query: >
+        I'm back to continue our customer-portal-redesign project.  We
+        left off in the middle of Method 2 design research last week.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              acknowledges the returning user, references Method 2
+              (Design Research), and asks about or summarizes where they
+              left off to re-establish context before continuing coaching

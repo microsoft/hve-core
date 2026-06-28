@@ -3,7 +3,7 @@ title: "Method 5: User Concepts"
 description: "Shape brainstorming themes into structured concept descriptions evaluated through desirability, feasibility, and viability lenses."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords: [design thinking, method-05, user-concepts]
 estimated_reading_time: 5
@@ -20,11 +20,11 @@ Concepts bridge the gap between abstract ideas and tangible prototypes. A well-a
 * After completing Brainstorming (Method 4) with 3 to 5 converged solution themes
 * When ideas need structure, specificity, and stakeholder-ready articulation
 * When the team needs to evaluate trade-offs across desirability, feasibility, and viability before prototyping
-* Before committing resources to lo-fi prototype construction (Method 6)
+* Before committing resources to Low-Fidelity Prototypes (Method 6)
 
 ## Space Context
 
-Method 5 sits in the **middle of the Solution Space**, between idea generation (Method 4) and prototype construction (Method 6). Where brainstorming produces raw directions, concepts give those directions enough definition to evaluate and compare. The concepts you develop here determine which prototypes get built.
+Method 5 sits in the **middle of the Solution Space**, between idea generation (Method 4) and Low-Fidelity Prototypes (Method 6). Where brainstorming produces raw directions, concepts give those directions enough definition to evaluate and compare. The concepts you develop here determine which prototypes get built.
 
 > [!NOTE]
 > Concepts should be clear enough for someone outside the project team to understand in 30 seconds. If a concept requires lengthy explanation, it needs further refinement before moving to prototyping.
@@ -75,12 +75,12 @@ When articulating concepts:
 
 ## Next Method
 
-When you have evaluated concepts with three-lens ratings and clear advancement decisions, proceed to [Method 6: Lo-Fi Prototypes](method-06-lofi-prototypes.md) to build scrappy, fast prototypes that test your concept assumptions in real environments.
+When you have evaluated concepts with three-lens ratings and clear advancement decisions, proceed to [Method 6: Low-Fidelity Prototypes](method-06-lofi-prototypes.md) to build scrappy, fast prototypes that test your concept assumptions in real environments.
 
 ## Related Resources
 
 * [Method 4: Brainstorming](method-04-brainstorming.md)
-* [Method 6: Lo-Fi Prototypes](method-06-lofi-prototypes.md)
+* [Method 6: Low-Fidelity Prototypes](method-06-lofi-prototypes.md)
 * [Design Thinking Overview](README.md)
 
 > Brought to you by microsoft/hve-core

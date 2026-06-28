@@ -3,7 +3,7 @@ title: Why the RPI Workflow Works
 description: The psychology, research, and principles behind the Research-Plan-Implement-Review framework, plus guidance on when to use RPI vs rpi-agent
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-05-13
+ms.date: 2026-06-24
 ms.topic: concept
 keywords:
   - rpi workflow
@@ -48,6 +48,8 @@ RPI (Research → Plan → Implement → Review) works by separating AI work int
 * [Task Reviewer](task-reviewer.md): validates implementation against specifications, checks compliance, and identifies follow-up work
 
 The magic happens because each phase starts fresh. When you clear context between phases, the implementation session doesn't carry forward the assumptions from research. It only has the documented artifacts: verified findings, explicit decisions, and cited evidence.
+
+If you want to invoke the workflow as Copilot skills rather than as prompt shortcuts, use `/rpi-quick` for the full flow or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` for the phase-specific entry points.
 
 ### The Difference in Practice
 
@@ -146,10 +148,10 @@ Use the four-phase workflow ([Task Researcher](task-researcher.md) → [Task Pla
 
 #### The workflow
 
-1. Invoke Task Researcher → produces research document with citations
-2. Clear context, invoke Task Planner → produces implementation plan
-3. Clear context, invoke Task Implementor → implements following the plan
-4. Clear context, invoke Task Reviewer → validates against specifications
+1. Invoke `/rpi-research` (Task Researcher) → produces research document with citations
+2. Clear context, invoke `/rpi-plan` (Task Planner) → produces implementation plan
+3. Clear context, invoke `/rpi-implement` (Task Implementor) → implements following the plan
+4. Clear context, invoke `/rpi-review` (Task Reviewer) → validates against specifications
 
 ### rpi-agent: When Simplicity Fits
 

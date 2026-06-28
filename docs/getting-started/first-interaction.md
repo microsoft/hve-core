@@ -3,7 +3,7 @@ title: Your First Interaction
 description: Talk to an HVE Core agent and see it respond in under 60 seconds
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-02-19
+ms.date: 2026-06-27
 ms.topic: tutorial
 keywords:
   - getting started
@@ -22,7 +22,7 @@ You need one agent interaction that produces a visible result.
 ## Talk to the Memory Agent
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Select the **memory** agent from the agent picker.
+2. Select the **Memory** agent from the agent picker.
 3. Type this prompt:
 
    > Remember that I am a [your role] and I'm learning HVE Core for the first
