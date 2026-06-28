@@ -3,7 +3,7 @@ title: Using the DT Learning Tutor
 description: Guide to using the dt-learning-tutor agent for self-paced Design Thinking education
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - dt-learning-tutor
@@ -20,7 +20,7 @@ The DT Learning Tutor is an adaptive instructor that teaches Design Thinking thr
 Start with the learning tutor when you want to:
 
 * Learn Design Thinking methodology before applying it to a live project
-* Build foundational vocabulary (frozen vs fluid requests, affinity clustering, lo-fi prototyping)
+* Build foundational vocabulary (frozen versus fluid requests, affinity clustering, low-fidelity prototyping)
 * Practice techniques in a low-stakes reference scenario
 * Assess your readiness to coach or participate in a real DT session
 
@@ -37,13 +37,13 @@ Start with the learning tutor when you want to:
 
 ## Output
 
-The tutor tracks curriculum progress at:
+The tutor tracks curriculum progress in the DT session state at:
 
 ```text
-.copilot-tracking/dt/{project-slug}/
+.copilot-tracking/design-thinking-sessions/{project-slug}/
 ```
 
-Progress artifacts include comprehension assessment results and exercise outputs for each completed module.
+Progress artifacts include comprehension assessment results and exercise outputs for each completed module. The tutor loads the `dt-curriculum` skill entrypoint from `.github/skills/design-thinking/dt-curriculum/SKILL.md` at the start of the session, and it hands off to the `dt-coach` agent through the `/dt-start-project` workflow when the learner is ready to apply the curriculum to a real project.
 
 ## How to Use DT Learning Tutor
 
@@ -92,23 +92,23 @@ The tutor responds by classifying you as beginner-to-intermediate, then launches
 
 ## Curriculum Overview
 
-| Module | Method                   | Space      | Topics                                                                   |
-|--------|--------------------------|------------|--------------------------------------------------------------------------|
-| 1      | Scope Conversations      | Problem    | Frozen vs fluid requests, stakeholder mapping, constraint discovery      |
-| 2      | Design Research          | Problem    | Contextual inquiry, environmental observation, discovery questions       |
-| 3      | Input Synthesis          | Problem    | Affinity clustering, theme development, HMW questions                    |
-| 4      | Brainstorming            | Solution   | Divergent ideation, convergent clustering, constraint-bounded creativity |
-| 5      | User Concepts            | Solution   | Concept articulation, D/F/V analysis, stakeholder alignment              |
-| 6      | Low-Fidelity Prototypes  | Solution   | Paper prototyping, scrappy enforcement, feedback planning                |
-| 7      | High-Fidelity Prototypes | Validation | Technical translation, functional prototypes, specifications             |
-| 8      | User Testing             | Validation | Test protocols, evidence-based evaluation, severity classification       |
-| 9      | Iteration at Scale       | Validation | Change management, scaling patterns, telemetry-driven optimization       |
+| Module | Method                   | Space          | Topics                                                                   |
+|--------|--------------------------|----------------|--------------------------------------------------------------------------|
+| 1      | Scope Conversations      | Problem        | Frozen vs fluid requests, stakeholder mapping, constraint discovery      |
+| 2      | Design Research          | Problem        | Contextual inquiry, environmental observation, discovery questions       |
+| 3      | Input Synthesis          | Problem        | Affinity clustering, theme development, HMW questions                    |
+| 4      | Brainstorming            | Solution       | Divergent ideation, convergent clustering, constraint-bounded creativity |
+| 5      | User Concepts            | Solution       | Concept articulation, D/F/V analysis, stakeholder alignment              |
+| 6      | Low-Fidelity Prototypes  | Solution       | Paper prototyping, scrappy enforcement, feedback planning                |
+| 7      | High-Fidelity Prototypes | Implementation | Technical translation, functional prototypes, specifications             |
+| 8      | User Testing             | Implementation | Test protocols, evidence-based evaluation, severity classification       |
+| 9      | Iteration at Scale       | Implementation | Change management, scaling patterns, telemetry-driven optimization       |
 
 The three spaces represent the natural progression of Design Thinking:
 
 * Problem Space (Methods 1-3): Understand the problem deeply before generating solutions
 * Solution Space (Methods 4-6): Generate and shape ideas into testable concepts
-* Validation Space (Methods 7-9): Build, test, and refine solutions with real users
+* Implementation Space (Methods 7-9): Build, test, and refine solutions with real users
 
 ## Tips for Effective Learning
 
@@ -144,7 +144,7 @@ After completing the curriculum (or the modules relevant to your goals):
 3. Explore the end-to-end walkthrough in [Using DT Methods Together](using-together.md)
 
 > [!TIP]
-> Use the **🎯 Start a DT project** handoff button when available to transition directly from learning to coaching with DT Coach.
+> Use the **🎯 Start a DT project** handoff button or the `/dt-start-project` prompt when available to transition directly from learning to coaching with DT Coach.
 
 Brought to you by microsoft/hve-core
 

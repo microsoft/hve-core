@@ -3,7 +3,7 @@ title: "Method 2: Design Research"
 description: "Investigate user needs, behaviors, and environmental conditions through curiosity-driven research that builds an evidence base for synthesis."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords: [design thinking, method-02, design-research]
 estimated_reading_time: 5
@@ -31,7 +31,7 @@ Method 2 sits in the **middle of the Problem Space**, between scope definition (
 
 ## Key Activities
 
-* Research planning: Define research targets across three tiers. Tier 1 covers primary users who interact with the system daily. Tier 2 addresses secondary users affected by the system's outputs. Tier 3 captures edge-case or infrequent users whose needs often reveal design blind spots.
+* Research planning: Define research targets across three tiers. Tier 1 covers direct end users who interact with the system daily. Tier 2 addresses adjacent stakeholders who influence or are affected by the system's outputs. Tier 3 captures organizational or technical contacts who provide system context.
 * Interview execution: Conduct curiosity-driven interviews that follow the user's narrative rather than a rigid script. Let their experience guide the conversation.
 * Environmental observation: Document the physical and operational context where users work. Noise levels, lighting, equipment layout, interruption patterns, and workarounds all shape what solutions are viable.
 * Evidence documentation: Record findings as observations with confidence levels (high, medium, low) based on corroboration across sources. Separate what you saw from what you interpreted.
@@ -44,7 +44,7 @@ Review the scope statement and constraint inventory from Method 1. Identify your
 Use this prompt to prepare a research session:
 
 ```text
-I've completed scope conversations for [project]. The primary users are [user group]
+I've completed scope conversations for [project]. The direct end users are [user group]
 working in [environment]. Help me design a research plan that covers interview
 questions, environmental observation points, and assumption validation checks.
 ```
@@ -66,7 +66,7 @@ During research sessions:
 
 ## Quality Checks
 
-* Research covers all three target tiers (primary, secondary, edge-case users)
+* Research covers all three target tiers (direct end users, adjacent stakeholders, and organizational or technical contacts)
 * Environmental observations are documented alongside interview findings
 * Confidence levels distinguish corroborated evidence from single-source observations
 * Assumptions from Method 1 are explicitly validated or contradicted with evidence

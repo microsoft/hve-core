@@ -3,7 +3,7 @@ title: "Method 9: Iteration at Scale"
 description: "Transform user-validated solutions into production systems through telemetry-driven refinement, organizational deployment, and continuous improvement."
 sidebar_position: 13
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords: [design thinking, method-09, iteration-at-scale]
 estimated_reading_time: 5
@@ -13,18 +13,18 @@ estimated_reading_time: 5
 
 Method 9 transforms user-validated solutions from Method 8 into continuously optimized production systems. You establish telemetry to measure real usage, execute iterative refinement cycles based on production data, and plan organizational deployment that addresses change management, training, and adoption alongside technical rollout.
 
-Method 9 focuses on iterative enhancement of what works, not fundamental redesign. Teams optimize validated solutions through systematic, data-driven improvement cycles while ensuring the organization can adopt and sustain the changes.
+Method 9 focuses on iterative enhancement of what works, not fundamental redesign. Teams optimize validated solutions through systematic, data-driven improvement cycles while ensuring the organization can adopt and sustain the changes. Method 9 follows three phases: iteration planning, systematic refinement, and deployment planning.
 
 ## When to Use
 
-* After completing Test and Validate (Method 8) with evidence-based go decisions
+* After completing User Testing (Method 8) with evidence-based go decisions
 * When validated prototypes need production optimization and organizational deployment planning
 * When the team needs to transition from prototype validation to real-world operation
 * As the final method in the Design Thinking sequence, preparing solutions for sustained operation
 
 ## Space Context
 
-Method 9 is the **exit point of the Validation Space** and the final method in the nine-method Design Thinking sequence. It concludes the validation phase (Methods 7 through 9) and transitions solutions from active Design Thinking coaching into production operations. The coach's role diminishes as the team takes ownership of iteration cadence, telemetry interpretation, and deployment decisions.
+Method 9 is the **exit point of the Implementation Space** and the final method in the nine-method Design Thinking sequence. It concludes the Implementation Space for Methods 7 through 9 and transitions solutions from active Design Thinking coaching into production operations. The coach's role diminishes as the team takes ownership of iteration cadence, telemetry interpretation, and deployment decisions.
 
 > [!NOTE]
 > Method 9 is an exit point, not an endpoint. Solutions continue to evolve through production telemetry and user feedback. The Design Thinking process formally concludes when the team can sustain improvement without coaching intervention.
@@ -82,7 +82,7 @@ The coach remains available for periodic reassessment or when new constraints em
 
 ## Related Resources
 
-* [Method 8: Test and Validate](method-08-test-validate.md)
+* [Method 8: User Testing](method-08-test-validate.md)
 * [Method 1: Scope Conversations](method-01-scope-conversations.md)
 * [Design Thinking Overview](README.md)
 

@@ -14,7 +14,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-18
+ms.date: 2026-06-27
 ms.topic: how-to
 estimated_reading_time: 5
 ---
@@ -47,11 +47,11 @@ Activate capture mode with the **SSSC Capture** prompt (`sssc-capture.prompt.md`
 
 ## From-PRD Mode
 
-From-PRD mode seeds Phase 1 from PRD artifacts already present in the workspace. Use this mode when product requirements documents exist under `.copilot-tracking/`.
+From-PRD mode seeds Phase 1 from PRD artifacts already present in the workspace. Use this mode when product requirements documents exist under `.copilot-tracking/prd-sessions/`.
 
 ### How It Works
 
-1. The agent scans `.copilot-tracking/` for PRD files.
+1. The agent scans `.copilot-tracking/prd-sessions/` for PRD session artifacts.
 2. Discovered artifacts are presented with ✅/❌ markers showing which were found.
 3. The agent extracts scope information: technology stack, package managers, CI platform, release strategy, and compliance targets.
 4. State is initialized with `entryMode: "from-prd"` and the extracted references stored in `referencesProcessed`.
@@ -63,20 +63,20 @@ Activate From-PRD mode with the **SSSC From PRD** prompt (`sssc-from-prd.prompt.
 
 ### When to Choose From-PRD Mode
 
-| Situation                                   | Fit |
-|---------------------------------------------|-----|
-| PRD artifacts exist in `.copilot-tracking/` | ✅   |
-| Product requirements are well-documented    | ✅   |
-| Early-stage project without formal docs     | ❌   |
-| Completed security plan available           | ❌   |
+| Situation                                 | Fit |
+|-------------------------------------------|-----|
+| PRD artifacts exist under `prd-sessions/` | ✅   |
+| Product requirements are well-documented  | ✅   |
+| Early-stage project without formal docs   | ❌   |
+| Completed security plan available         | ❌   |
 
 ## From-BRD Mode
 
-From-BRD mode seeds Phase 1 from BRD artifacts already present in the workspace. Use this mode when business requirements documents exist under `.copilot-tracking/`.
+From-BRD mode seeds Phase 1 from BRD artifacts already present in the workspace. Use this mode when business requirements documents exist under `.copilot-tracking/brd-sessions/`.
 
 ### How It Works
 
-1. The agent scans `.copilot-tracking/` for BRD files.
+1. The agent scans `.copilot-tracking/brd-sessions/` for BRD session artifacts.
 2. Discovered artifacts are presented with ✅/❌ markers showing which were found.
 3. The agent extracts scope information from business requirements, mapping business capabilities to technology stack and compliance targets.
 4. State is initialized with `entryMode: "from-brd"` and the extracted references stored in `referencesProcessed`.

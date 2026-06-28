@@ -3,7 +3,7 @@ title: "Method 4: Brainstorming"
 description: "Generate diverse solution ideas through structured divergent thinking and converge on promising directions through evidence-informed clustering."
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords: [design thinking, method-04, brainstorming]
 estimated_reading_time: 5
@@ -24,7 +24,7 @@ Effective brainstorming produces quantity and variety first, then applies judgme
 
 ## Space Context
 
-Method 4 is the **entry point to the Solution Space**. The Solution Space spans Methods 4 through 6 and focuses on generating, articulating, and prototyping solutions. Method 4 produces raw ideas, Method 5 shapes them into coherent concepts, and Method 6 builds lo-fi prototypes to test them.
+Method 4 is the **entry point to the Solution Space**. The Solution Space spans Methods 4 through 6 and focuses on generating, articulating, and prototyping solutions. Method 4 produces raw ideas, Method 5 shapes them into coherent concepts, and Method 6 uses Low-Fidelity Prototypes to test them.
 
 > [!NOTE]
 > Entering the Solution Space requires validated synthesis from the Problem Space. If problem statements are vague or unsupported by evidence, brainstorming produces scattered ideas that don't address real user needs.

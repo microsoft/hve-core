@@ -13,7 +13,7 @@ tags:
   - reference
   - phases
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -25,7 +25,7 @@ estimated_reading_time: 8
 | 1     | AI System Scoping           | Govern + Map     | `system-definition-pack.md`, `stakeholder-impact-map.md`                        | `currentPhase`, `entryMode`, `securityPlanRef`          |
 | 2     | Risk Classification         | Govern           | Risk classification screening summary (appended to `system-definition-pack.md`) | `riskClassification`                                    |
 | 3     | RAI Standards Mapping       | Govern + Measure | `rai-standards-mapping.md`                                                      | `standardsMapped`                                       |
-| 4     | RAI Security Model Analysis | Measure          | `rai-security-model-addendum.md`                                                | `securityModelAnalysisStarted`, `raiThreatCount`        |
+| 4     | RAI Security Model Analysis | Measure          | `rai-threat-addendum.md`                                                        | `securityModelAnalysisStarted`, `raiThreatCount`        |
 | 5     | RAI Impact Assessment       | Manage           | `control-surface-catalog.md`, `evidence-register.md`, `rai-tradeoffs.md`        | `impactAssessmentGenerated`, `evidenceRegisterComplete` |
 | 6     | Review and Handoff          | Manage           | `rai-review-summary.md`, backlog items                                          | `handoffGenerated`                                      |
 
@@ -199,7 +199,7 @@ Each threat is assigned a concern level based on contextual analysis rather than
 
 ### Outputs
 
-* `rai-security-model-addendum.md`: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
+* `rai-threat-addendum.md`: Threat catalog with IDs, categories, descriptions, risk ratings, and recommended mitigations
 
 ### State Transitions
 

@@ -1,11 +1,11 @@
 ---
-title: "Method 8: Test and Validate"
-description: "Conduct structured user testing of hi-fi prototypes to gather evidence for go, iterate, or revisit decisions across the nine-method sequence."
+title: "Method 8: User Testing"
+description: "Conduct structured user testing of High-Fidelity Prototypes to gather evidence for go, iterate, or revisit decisions across the nine-method sequence."
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
-keywords: [design thinking, method-08, test-validate]
+keywords: [design thinking, method-08, user-testing]
 estimated_reading_time: 5
 ---
 
@@ -13,18 +13,18 @@ estimated_reading_time: 5
 
 Method 8 puts functional prototypes in front of real or representative users and gathers evidence for go, iterate, or revisit decisions. You conduct structured testing sessions that capture user behavior under realistic conditions, then analyze the results to determine whether to proceed, refine, or return to an earlier method.
 
-Unlike earlier feedback sessions, Method 8 produces actionable evidence rather than opinions. Test results drive decisions about whether the solution works, what needs to change, and how deep those changes run.
+Unlike earlier feedback sessions, Method 8 produces actionable evidence rather than opinions. Test results drive decisions about whether the solution works, what needs to change, and how deep those changes run. Method 8 follows three phases: test planning, test execution, and results analysis.
 
 ## When to Use
 
-* After completing Hi-Fi Prototypes (Method 7) with functional implementations validated for technical feasibility
+* After completing High-Fidelity Prototypes (Method 7) with functional implementations validated for technical feasibility
 * When you need evidence-based evaluation of whether solutions work for real users
 * When the team needs data to decide between competing technical approaches
 * When you suspect core assumptions may need revisiting through earlier methods
 
 ## Space Context
 
-Method 8 sits in the **middle of the Validation Space**, between technical proof (Method 7) and scaled deployment (Method 9). Method 8 is the primary trigger for non-linear iteration across the nine-method sequence. Test results may reveal gaps requiring return to Method 2 (research), Method 4 (brainstorming), or Method 6/7 (prototyping).
+Method 8 sits in the **middle of the Implementation Space**, between technical proof (Method 7) and scaled deployment (Method 9). Method 8 is the primary trigger for non-linear iteration across the nine-method sequence. Test results may reveal gaps requiring return to Method 2 (research), Method 4 (brainstorming), or Method 6/7 (prototyping).
 
 > [!IMPORTANT]
 > Honest evidence interpretation is the defining challenge of Method 8. Confirmation bias tempts teams to focus on positive results and dismiss negative findings. The data determines the next step, not the team's preference.
@@ -82,7 +82,7 @@ When testing produces sufficient evidence for a clear decision:
 
 ## Related Resources
 
-* [Method 7: Hi-Fi Prototypes](method-07-hifi-prototypes.md)
+* [Method 7: High-Fidelity Prototypes](method-07-hifi-prototypes.md)
 * [Method 9: Iteration at Scale](method-09-iteration-at-scale.md)
 * [Design Thinking Overview](README.md)
 
