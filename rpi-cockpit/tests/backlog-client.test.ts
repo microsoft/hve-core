@@ -27,6 +27,14 @@ function boardVm(action: string | null = null) {
   return toViewModel(s);
 }
 
+function hierarchyVm() {
+  let s = applyBeat(initialState(), { type: "backlog.start", target: "S", columns: ["Plan", "Done"] }, 1);
+  s = applyBeat(s, { type: "item.add", id: "E", title: "Epic", column: "Plan" }, 2);
+  s = applyBeat(s, { type: "item.add", id: "F", title: "Feature", column: "Plan", parent: "E" }, 3);
+  s = applyBeat(s, { type: "item.add", id: "S", title: "Story", column: "Done", parent: "E" }, 4);
+  return toViewModel(s);
+}
+
 describe("backlog client", () => {
   let win: ReturnType<typeof boot>;
   beforeEach(() => { win = boot(); });
@@ -66,5 +74,17 @@ describe("backlog client", () => {
     (win as any).render(toViewModel(s));
     expect((win.document.getElementById("backlog-view") as any).hidden).toBe(true);
     expect((win.document.getElementById("rpi-view") as any).hidden).toBe(false);
+  });
+
+  it("indents a same-column child and shows a reference for a cross-column child", () => {
+    (win as any).render(hierarchyVm());
+    const planCards = win.document.querySelectorAll('#board .board-col[aria-label="Plan"] .bcard');
+    const feature = Array.from(planCards).find((c: any) => c.querySelector(".bcard-id")!.textContent === "F") as any;
+    expect(feature.getAttribute("style")).toContain("margin-left:16px");
+    expect(feature.querySelector(".bcard-parent")).toBeNull(); // same-column: nesting, no ref
+    const doneCard = win.document.querySelector('#board .board-col[aria-label="Done"] .bcard') as any;
+    expect(doneCard.querySelector(".bcard-parent")!.textContent).toContain("Epic");
+    const epic = Array.from(planCards).find((c: any) => c.querySelector(".bcard-id")!.textContent === "E") as any;
+    expect(epic.getAttribute("style")).toBeNull(); // root: no indent
   });
 });

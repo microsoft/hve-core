@@ -398,8 +398,9 @@ function renderBoard(v) {
     `<div class="board-col" role="group" aria-label="${esc(c.name)}">
        <div class="col-head"><span>${esc(c.name)}</span><span class="col-count">${c.items.length}</span></div>
        ${c.items.map((it) =>
-         `<div class="bcard">
+         `<div class="bcard"${it.depth ? ` style="margin-left:${it.depth * 16}px"` : ""}>
             <div class="bcard-id">${esc(it.id)}</div>
+            ${it.parentRef ? `<div class="bcard-parent">↳ under ${esc(it.parentRef)}</div>` : ""}
             <div class="bcard-title">${esc(it.title)}</div>
             ${(it.kind || it.tier) ? `<div class="bcard-chips">${it.kind ? `<span class="chip-kind">${esc(it.kind)}</span>` : ""}${it.tier ? `<span class="chip-tier">${esc(it.tier)}</span>` : ""}</div>` : ""}
           </div>`).join("") || `<div class="col-empty"></div>`}
