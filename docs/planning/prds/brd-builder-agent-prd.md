@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-BRD-BUILDER"
 title: "BRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the BRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Business Requirements Document authoring workflow in the project-planning collection."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-06-28"
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -126,7 +126,7 @@ Product Goals: GOAL-002.
 
 FR-004: The BRD Builder produces BRD documents that conform to repository markdown conventions (markdownlint-clean, no document-wide disable markers).
 Actor: BRD Builder agent.
-Trigger: BRD file creation or update at `docs/brds/<kebab-case-name>-brd.md`.
+Trigger: BRD file creation or update at `docs/project-planning/<kebab-case-name>-brd.md`.
 Expected Outcome: Output passes markdownlint and frontmatter validation.
 Acceptance Criteria: AC-004.
 Product Goals: GOAL-001.
@@ -219,7 +219,7 @@ flowchart LR
 
 ## Acceptance Criteria
 
-* `AC-001`: Given a business need, When the user completes the workflow, Then a BRD with all required sections is produced and saved under `docs/brds/`. Covers: FR-001. Status: Not Started.
+* `AC-001`: Given a business need, When the user completes the workflow, Then a BRD with all required sections is produced and saved under `docs/project-planning/`. Covers: FR-001. Status: Not Started.
 * `AC-002`: Given an interrupted session, When the user resumes, Then the agent restores context from the state file and continues from the last completed phase without re-asking answered questions. Covers: FR-002. Status: Not Started.
 * `AC-003`: Given an ongoing session, When the agent asks refinement questions, Then question IDs remain stable and answered items are marked ✅ and not re-asked. Covers: FR-003. Status: Not Started.
 * `AC-004`: Given a generated BRD, When validation runs, Then markdownlint and frontmatter checks pass with no document-wide disable markers. Covers: FR-004. Status: Not Started.
