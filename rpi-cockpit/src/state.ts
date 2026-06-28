@@ -6,6 +6,9 @@ export interface TeamAgent { id: string; name: string; role?: string; status: Ag
 export interface BacklogItem { id: string; title: string; column: string; kind?: string; tier?: string; }
 export interface CodeNode { id: string; path: string; kind: CodeKind; group?: string; }
 export interface Decision { id: string; prompt: string; options: OptionItem[]; }
+export type DecisionKind = "choice" | "text";
+export type DecisionStatus = "pending" | "answered" | "superseded";
+export interface DecisionEntry { id: string; prompt: string; kind: DecisionKind; options?: OptionItem[]; answer?: string; status: DecisionStatus; }
 export interface LogEntry { t: number; kind: string; detail: string; }
 export interface SteerMenu { label: string; options: OptionItem[]; }
 
@@ -30,8 +33,8 @@ export interface SessionState {
   validations: Record<string, ValidationStatus>;
   artifacts: { path: string; summary?: string }[];
   docType: string | null;
-  pendingQuestion: { id: string; prompt: string } | null;
-  pendingDecision: Decision | null;
+  decisions: DecisionEntry[];
+  hostElicits: boolean;
   directives: Directive[];
   steerMenu: SteerMenu | null;
   // Single shared screen slot: the RPI screen pane (#screen) and the interview
@@ -50,7 +53,7 @@ export interface SessionState {
 }
 
 export function initialState(): SessionState {
-  return { task: "", host: "", domain: null, reviewTarget: null, orchestrator: null, teamAgents: [], findings: [], boardTarget: null, boardColumns: [], boardItems: [], boardAction: null, view: "home", navigatorOpen: false, activeWorkflow: null, phase: null, phasesDone: [], subagents: [], validations: {}, artifacts: [], docType: null, pendingQuestion: null, pendingDecision: null, directives: [], steerMenu: null, screen: null, contextInstructions: [], contextSkills: [], contextCollection: null, appFrameUrl: null, codemapNodes: [], codemapFocus: null, codemapTouches: {}, log: [] };
+  return { task: "", host: "", domain: null, reviewTarget: null, orchestrator: null, teamAgents: [], findings: [], boardTarget: null, boardColumns: [], boardItems: [], boardAction: null, view: "home", navigatorOpen: false, activeWorkflow: null, phase: null, phasesDone: [], subagents: [], validations: {}, artifacts: [], docType: null, decisions: [], hostElicits: false, directives: [], steerMenu: null, screen: null, contextInstructions: [], contextSkills: [], contextCollection: null, appFrameUrl: null, codemapNodes: [], codemapFocus: null, codemapTouches: {}, log: [] };
 }
 
 export function applyBeat(s: SessionState, beat: Beat, now: number): SessionState {
@@ -86,7 +89,7 @@ export function applyBeat(s: SessionState, beat: Beat, now: number): SessionStat
     case "finding.add":
       return { ...s, findings: [...s.findings, { severity: beat.severity, title: beat.title, file: beat.file, line: beat.line, detail: beat.detail }], log };
     case "interview.start":
-      return { ...s, view: "loop", domain: "interview", docType: beat.docType, pendingQuestion: null, log };
+      return { ...s, view: "loop", domain: "interview", docType: beat.docType, log };
     case "backlog.start":
       return { ...s, view: "loop", domain: "backlog", boardTarget: beat.target, boardColumns: beat.columns, boardItems: [], boardAction: null, log };
     case "item.add": {
@@ -153,6 +156,34 @@ function summarize(beat: Beat): string {
     case "codemap.focus": return beat.id;
     case "codemap.touch": return `${beat.kind} ${beat.id}`;
   }
+}
+
+export function addDecision(s: SessionState, e: { id: string; prompt: string; kind: DecisionKind; options?: OptionItem[] }): SessionState {
+  const i = s.decisions.findIndex((d) => d.id === e.id);
+  const entry: DecisionEntry = { id: e.id, prompt: e.prompt, kind: e.kind, options: e.options, status: "pending" };
+  if (i !== -1) return { ...s, decisions: s.decisions.map((d, j) => (j === i ? entry : d)) };
+  return { ...s, decisions: [...s.decisions, entry] };
+}
+
+export function answerDecision(s: SessionState, id: string, answer: string): SessionState {
+  return { ...s, decisions: s.decisions.map((d) => (d.id === id ? { ...d, answer, status: "answered" } : d)) };
+}
+
+export function reviseDecision(s: SessionState, id: string): SessionState {
+  const idx = s.decisions.findIndex((d) => d.id === id);
+  if (idx === -1) return s;
+  return {
+    ...s,
+    decisions: s.decisions.map((d, j) => {
+      if (j === idx) return { ...d, answer: undefined, status: "pending" };
+      if (j > idx && d.status === "answered") return { ...d, status: "superseded" };
+      return d;
+    }),
+  };
+}
+
+export function setHostElicits(s: SessionState, v: boolean): SessionState {
+  return { ...s, hostElicits: v };
 }
 
 export function enqueueDirective(s: SessionState, directive: Directive, now: number): SessionState {

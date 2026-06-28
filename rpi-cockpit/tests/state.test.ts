@@ -1,6 +1,6 @@
 // rpi-cockpit/tests/state.test.ts
 import { describe, it, expect } from "vitest";
-import { initialState, applyBeat, enqueueDirective, drainDirectives, setView, startLaunch, setNavigatorOpen } from "../src/state.js";
+import { initialState, applyBeat, enqueueDirective, drainDirectives, setView, startLaunch, setNavigatorOpen, addDecision, answerDecision, reviseDecision, setHostElicits } from "../src/state.js";
 
 describe("applyBeat", () => {
   it("sets task and host on session.begin", () => {
@@ -114,14 +114,8 @@ describe("interview domain", () => {
     expect(s.view).toBe("loop");
     expect(s.docType).toBe("PRD");
   });
-  it("interview.start clears a stale pendingQuestion", () => {
-    const stale = { ...initialState(), pendingQuestion: { id: "q1", prompt: "old" } };
-    const s = applyBeat(stale, { type: "interview.start", docType: "PRD" }, 1);
-    expect(s.pendingQuestion).toBeNull();
-  });
-  it("defaults docType null and pendingQuestion null", () => {
+  it("defaults docType null", () => {
     expect(initialState().docType).toBeNull();
-    expect(initialState().pendingQuestion).toBeNull();
   });
 });
 
@@ -343,5 +337,49 @@ describe("codemap domain", () => {
     let s = applyBeat(initialState(), { type: "codemap.set", nodes: [{ id: "n1", path: "a.ts", kind: "file" }] }, 1);
     s = applyBeat(s, { type: "codemap.touch", id: "nope", kind: "read" }, 2);
     expect(s.codemapTouches).toEqual({});
+  });
+});
+
+describe("decision flow", () => {
+  const opts = [{ id: "a", title: "A" }, { id: "b", title: "B", recommended: true }];
+
+  it("addDecision appends a pending choice entry", () => {
+    const s = addDecision(initialState(), { id: "d1", prompt: "Pick?", kind: "choice", options: opts });
+    expect(s.decisions).toHaveLength(1);
+    expect(s.decisions[0]).toMatchObject({ id: "d1", prompt: "Pick?", kind: "choice", status: "pending" });
+    expect(s.decisions[0].options).toEqual(opts);
+  });
+
+  it("addDecision with an existing id re-opens it in place (clears the answer)", () => {
+    let s = addDecision(initialState(), { id: "d1", prompt: "Pick?", kind: "choice", options: opts });
+    s = answerDecision(s, "d1", "a");
+    s = addDecision(s, { id: "d1", prompt: "Pick again?", kind: "choice", options: opts });
+    expect(s.decisions).toHaveLength(1);
+    expect(s.decisions[0]).toMatchObject({ id: "d1", prompt: "Pick again?", status: "pending" });
+    expect(s.decisions[0].answer).toBeUndefined();
+  });
+
+  it("answerDecision marks the entry answered with the answer", () => {
+    let s = addDecision(initialState(), { id: "q1", prompt: "Name?", kind: "text" });
+    s = answerDecision(s, "q1", "Ada");
+    expect(s.decisions[0]).toMatchObject({ status: "answered", answer: "Ada" });
+  });
+
+  it("reviseDecision re-opens the target and supersedes later answered entries", () => {
+    let s = initialState();
+    for (const id of ["d1", "d2", "d3"]) s = answerDecision(addDecision(s, { id, prompt: id, kind: "text" }), id, id + "ans");
+    s = reviseDecision(s, "d1");
+    expect(s.decisions.map((d) => d.status)).toEqual(["pending", "superseded", "superseded"]);
+    expect(s.decisions[0].answer).toBeUndefined();
+    expect(s.decisions[1].answer).toBe("d2ans"); // kept visible
+  });
+
+  it("reviseDecision on an unknown id is a no-op", () => {
+    const s = answerDecision(addDecision(initialState(), { id: "d1", prompt: "x", kind: "text" }), "d1", "y");
+    expect(reviseDecision(s, "nope")).toEqual(s);
+  });
+
+  it("setHostElicits toggles the flag", () => {
+    expect(setHostElicits(initialState(), true).hostElicits).toBe(true);
   });
 });
