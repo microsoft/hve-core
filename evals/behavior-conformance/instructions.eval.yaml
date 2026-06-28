@@ -507,7 +507,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)licens|attribution|reproduc|standard|posture"
+          pattern: "(?i)license|attribution|reproduce|standard|posture"
 
   - name: instruction-backlog-handoff-conformance
     prompt: |
