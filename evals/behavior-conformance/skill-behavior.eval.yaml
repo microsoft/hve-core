@@ -1,12 +1,11 @@
 name: behavior-conformance-skills
 description: >
-  Advisory-tier behavior conformance evals for 27 skills exercised across three
-  stimulus shapes: knowledge (canonical concept attribution), tool-trigger
-  (domain-intent skill attribution from a working context), and bleed-detection
-  (correct refusal when an off-topic context superficially resembles the
-  skill's domain). Total: 81 stimuli. Each tool-trigger stimulus uses two
-  graders with AND logic, and the suite-level scoring threshold gates the
-  aggregate pass rate across stimuli.
+  Advisory-tier behavior conformance evals for skills exercised through
+  knowledge, tool-trigger, and bleed-detection stimulus shapes. Total: 100
+  stimuli, including complete branch coverage for the RPI and prompt-builder
+  skill updates. Each tool-trigger stimulus uses two graders with AND logic,
+  and the suite-level scoring threshold gates the aggregate pass rate across
+  stimuli.
 type: capability
 defaults:
   runs: 3
@@ -1377,6 +1376,25 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(safety-boundary|prohibited|conformance|scope|probe)'
+  - name: skill-prompt-builder-knowledge
+    prompt: |
+      Summarize the `prompt-builder` skill's full workflow. Include its phase
+      loop, routing to specialized skills, tracking evidence, and optional
+      Vally conformance authoring.
+    tags:
+      category: behavior-conformance
+      skill: prompt-builder
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-builder|prompt\s+builder|execution|evaluation|research|modification|vally)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(route|prompt-refactor|prompt-analyze|copilot-tracking|sandbox|artifact)'
   - name: skill-prompt-builder-tool-trigger
     prompt: |
       I need to create a new prompt artifact, research the existing prompt
@@ -1396,6 +1414,44 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(prompt|skill|artifact|validation|collection)'
+  - name: skill-prompt-builder-bleed-detection
+    prompt: |
+      I need a read-only quality report for an existing prompt artifact and no
+      source edits. Does the `prompt-builder` skill apply, or should another
+      skill handle this? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: prompt-builder
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-analyze|read-only|analysis|report|route|specialized)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(no\s+source\s+edit|without\s+modifying|analyze|analyse|quality|report)'
+  - name: skill-prompt-refactor-knowledge
+    prompt: |
+      Summarize the `prompt-refactor` skill. Include how it handles baseline
+      evaluation, cleanup objectives, validation selection, and preserving
+      functional intent.
+    tags:
+      category: behavior-conformance
+      skill: prompt-refactor
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-refactor|prompt\s+refactor|baseline|evaluation|cleanup|validation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)((preserve|preserving)\s+functional\s+intent|refactor|requirements|sandbox|checklist|matrix)'
   - name: skill-prompt-refactor-tool-trigger
     prompt: |
       I have an existing `.prompt.md` file and explicit requirements for
@@ -1415,6 +1471,44 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(refactor|prompt|skill|artifact|requirements)'
+  - name: skill-prompt-refactor-bleed-detection
+    prompt: |
+      I need to create a brand-new prompt workflow from requirements, not clean
+      up an existing artifact. Does the `prompt-refactor` skill apply? Justify
+      briefly.
+    tags:
+      category: behavior-conformance
+      skill: prompt-refactor
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-builder|not\s+apply|does\s+not|new\s+prompt|create)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(existing\s+artifact|refactor|create|new|requirements)'
+  - name: skill-prompt-analyze-knowledge
+    prompt: |
+      Summarize the `prompt-analyze` skill. Include the read-only boundary,
+      subagents it dispatches, durable Analysis Report, severity normalization,
+      and cleanup behavior.
+    tags:
+      category: behavior-conformance
+      skill: prompt-analyze
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-analyze|prompt\s+(analyze|analyse)|read-only|analysis\s+report|prompt\s+tester|prompt\s+evaluator)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(severity|critical|high|medium|low|durable|cleanup|sandbox)'
   - name: skill-prompt-analyze-tool-trigger
     prompt: |
       I need to evaluate an existing prompt artifact and produce an analysis
@@ -1434,6 +1528,44 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(analyze|analyse|analysis|prompt|report|skill)'
+  - name: skill-prompt-analyze-bleed-detection
+    prompt: |
+      I already have an Analysis Report and now need to modify the source
+      prompt to fix the findings. Does the `prompt-analyze` skill apply?
+      Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: prompt-analyze
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-builder|prompt-refactor|not\s+apply|does\s+not|modify|fix)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(read-only|analysis\s+report|source\s+edit|modify|follow-up)'
+  - name: skill-rpi-quick-knowledge
+    prompt: |
+      Summarize the `rpi-quick` umbrella skill. Include the ordered phases,
+      artifact strategy by task difficulty, validation/restart behavior, and
+      final response contract.
+    tags:
+      category: behavior-conformance
+      skill: rpi-quick
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-quick|research|plan|implement|review|discover|umbrella)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(copilot-tracking|artifact|validation|restart|iteration|suggested\s+next\s+work)'
   - name: skill-rpi-quick-tool-trigger
     prompt: |
       I need an autonomous Research, Plan, Implement, Review, Discover loop
@@ -1453,6 +1585,42 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(phase|workflow|artifact|research|plan|implement|review|discover)'
+  - name: skill-rpi-quick-bleed-detection
+    prompt: |
+      I only need to clean up an existing `.prompt.md` file against explicit
+      requirements. Does the `rpi-quick` skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: rpi-quick
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(prompt-refactor|not\s+apply|does\s+not|different\s+skill|prompt)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(refactor|prompt|rpi|research\s+plan\s+implement|scope)'
+  - name: skill-rpi-research-knowledge
+    prompt: |
+      Summarize the `rpi-research` skill. Include what evidence it records,
+      what it must not do, and how it hands off to planning.
+    tags:
+      category: behavior-conformance
+      skill: rpi-research
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-research|research\s+brief|evidence|selected\s+approach|handoff)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(planning-ready|open\s+questions|risks|not\s+plan|not\s+implement)'
   - name: skill-rpi-research-tool-trigger
     prompt: |
       I need a focused research phase for an implementation task, including
@@ -1472,6 +1640,43 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(research|evidence|artifact|scope|assumption|phase)'
+  - name: skill-rpi-research-bleed-detection
+    prompt: |
+      Research is complete and I need to apply the scoped code changes from an
+      approved implementation plan. Does the `rpi-research` skill apply?
+      Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: rpi-research
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-implement|not\s+apply|does\s+not|implementation|approved\s+plan)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(research\s+complete|code\s+changes|implement|plan|phase)'
+  - name: skill-rpi-plan-knowledge
+    prompt: |
+      Summarize the `rpi-plan` skill. Include the artifacts it creates, how it
+      uses research, the Plan Validator role, and the implementation handoff.
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-plan|implementation\s+plan|planning\s+log|details|plan\s+validator)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(research|artifact|validation|handoff|do\s+not\s+implement)'
   - name: skill-rpi-plan-tool-trigger
     prompt: |
       I have completed task research and need an implementation plan with
@@ -1491,6 +1696,43 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(plan|phase|dependency|details|validation)'
+  - name: skill-rpi-plan-bleed-detection
+    prompt: |
+      Implementation is already complete and I only need a review of the
+      changes, validation evidence, and handoff status. Does the `rpi-plan`
+      skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: rpi-plan
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-review|not\s+apply|does\s+not|review|complete)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(implementation\s+complete|validation\s+evidence|handoff|review)'
+  - name: skill-rpi-implement-knowledge
+    prompt: |
+      Summarize the `rpi-implement` skill. Include how it discovers the plan,
+      dispatches implementation work, updates tracking, and handles validation.
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-implement|phase\s+implementor|changes\s+log|implementation\s+plan|validation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(phaseStop|stepStop|tracked\s+files|checklist|handoff|review)'
   - name: skill-rpi-implement-tool-trigger
     prompt: |
       I need to execute a task plan phase, apply the scoped code changes,
@@ -1510,6 +1752,44 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(implement|phase|change|validation|plan)'
+  - name: skill-rpi-implement-bleed-detection
+    prompt: |
+      I have no research or implementation plan yet and need initial evidence
+      gathering before deciding what to build. Does the `rpi-implement` skill
+      apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: rpi-implement
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-research|not\s+apply|does\s+not|research|no\s+plan)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(initial\s+evidence|before\s+deciding|implementation\s+plan|implement)'
+  - name: skill-rpi-review-knowledge
+    prompt: |
+      Summarize the `rpi-review` skill. Include scope resolution, validator
+      dispatch, review log creation, validation command evidence, and the
+      possible review outcomes.
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-review|review\s+log|rpi\s+validator|implementation\s+validator|validation)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(complete|needs\s+rework|blocked|severity|follow-up|handoff)'
   - name: skill-rpi-review-tool-trigger
     prompt: |
       I need to review completed implementation work against the user
@@ -1524,11 +1804,29 @@ stimuli:
       - type: output-matches
         name: skill-domain-attribution
         config:
-          pattern: '(?i)(rpi-review|rpi\s+review|review|validation|fulfillment)'
+          pattern: '(?i)(rpi-review|rpi\s+review|review|validation|evidence|handoff)'
       - type: output-matches
         name: scope-language
         config:
           pattern: '(?i)(review|request|validation|evidence|handoff)'
+  - name: skill-rpi-review-bleed-detection
+    prompt: |
+      I need to make the planned code edits now, not evaluate completed work.
+      Does the `rpi-review` skill apply? Justify briefly.
+    tags:
+      category: behavior-conformance
+      skill: rpi-review
+      shape: bleed-detection
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(rpi-implement|not\s+apply|does\s+not|make\s+the\s+edits|planned\s+code)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(evaluate\s+completed|review|implement|code\s+edit|phase)'
   - name: skill-code-review-knowledge
     prompt: |
       Summarize the review workflow defined by the `code-review` skill: its

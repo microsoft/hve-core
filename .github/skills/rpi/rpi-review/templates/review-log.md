@@ -12,6 +12,13 @@
 * Validation Status: {{In Progress / Complete / Needs Rework / Blocked}}
 * Severity Summary: Critical {{N}}, High {{N}}, Medium {{N}}, Low {{N}}
 
+## Plan-to-Research Alignment
+
+* Status: {{Aligned / Partial / Misaligned / Not assessed}}
+* Rationale: {{why planning evidence aligns or does not align with the review target}}
+* Evidence: {{evidence_path_or_paths}}
+* Distinction: {{planning alignment is separate from implementation acceptance}}
+
 ## RPI Validator Findings
 
 ### Phase 001
@@ -24,6 +31,7 @@
 
 * IV-001 [High] {{category}}: {{issue}}
   * Evidence: {{file_path}} (Lines {{start}}-{{end}})
+  * Evidence Artifact: {{quality_artifact_path_or_not_applicable}}
   * Impact: {{impact}}
   * Recommendation: {{fix}}
 
@@ -34,12 +42,16 @@
 
 ## Follow-Up Recommendations
 
-* Deferred from scope: {{item}}
+* Deferred from planning log: {{item}}
 * Discovered during review: {{item}}
 
 ## Reviewer Notes
 
 * {{final_rationale_and_next_command}}
+
+## Validation Activities Completed
+
+* {{subagents, commands, or evidence checks that actually ran}}
 
 ## Validation Commands
 

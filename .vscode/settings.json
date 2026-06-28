@@ -90,6 +90,7 @@
     ".github/skills/project-planning": true,
     ".github/skills/rai": true,
     ".github/skills/rpi": true,
+    ".github/skills/hve-core": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
