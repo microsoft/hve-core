@@ -19,6 +19,21 @@ function isLoopbackHttpUrl(u) {
   }
 }
 
+// Client mirror of src/url.ts isGalleryUrl. Gallery tiles may frame loopback dev
+// servers (http or https) and external https sites; external http is rejected.
+// Re-checked here before assigning an iframe src (defense in depth). Keep this in
+// lockstep with the TS predicate.
+function isGalleryUrl(u) {
+  try {
+    const url = new URL(u);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    if (isLoopbackHttpUrl(u)) return true;
+    return url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function renderNavTiles(v) {
   setHtml("nav-workflows", (v.workflows || []).map((w) =>
     `<div class="wf-tile" data-launch="${esc(w.id)}" role="button" tabindex="0" aria-label="Start ${esc(w.name)}">
@@ -80,6 +95,11 @@ let backoff = 500;
 // node elements only when the node set changes (build-once); focus/touch updates
 // then mutate classes + the camera transform in place so the camera glides. (codemap)
 let cmSig = null;
+// Gallery view state: the current items (for lightbox lookup by index) and the
+// user's S/M/L size override (sticky across re-renders until the server sends a
+// new gallery.open size). (gallery)
+let glItems = [];
+let glSizeOverride = null;
 
 function connect() {
   setConn("connecting");
@@ -142,6 +162,7 @@ function render(v) {
   const teamView = document.getElementById("team-view");
   const codemapView = document.getElementById("codemap-view");
   const dataprofileView = document.getElementById("dataprofile-view");
+  const galleryView = document.getElementById("gallery-view");
   if (rpiView && findingsView) {
     if (v.domain === "codemap") {
       rpiView.hidden = true; findingsView.hidden = true;
@@ -150,6 +171,7 @@ function render(v) {
       if (teamView) teamView.hidden = true;
       if (codemapView) codemapView.hidden = false;
       if (dataprofileView) dataprofileView.hidden = true;
+      if (galleryView) galleryView.hidden = true;
       renderCodemap(v);
       return;
     }
@@ -160,6 +182,7 @@ function render(v) {
       if (teamView) teamView.hidden = false;
       if (codemapView) codemapView.hidden = true;
       if (dataprofileView) dataprofileView.hidden = true;
+      if (galleryView) galleryView.hidden = true;
       renderTeam(v);
       return;
     }
@@ -170,6 +193,7 @@ function render(v) {
       if (teamView) teamView.hidden = true;
       if (codemapView) codemapView.hidden = true;
       if (dataprofileView) dataprofileView.hidden = true;
+      if (galleryView) galleryView.hidden = true;
       renderBoard(v);
       return;
     }
@@ -180,7 +204,19 @@ function render(v) {
       if (teamView) teamView.hidden = true;
       if (codemapView) codemapView.hidden = true;
       if (dataprofileView) dataprofileView.hidden = false;
+      if (galleryView) galleryView.hidden = true;
       renderDataProfile(v);
+      return;
+    }
+    if (v.domain === "gallery") {
+      rpiView.hidden = true; findingsView.hidden = true;
+      if (interviewView) interviewView.hidden = true;
+      if (backlogView) backlogView.hidden = true;
+      if (teamView) teamView.hidden = true;
+      if (codemapView) codemapView.hidden = true;
+      if (dataprofileView) dataprofileView.hidden = true;
+      if (galleryView) galleryView.hidden = false;
+      renderGallery(v);
       return;
     }
     if (v.domain === "interview") {
@@ -190,6 +226,7 @@ function render(v) {
       if (teamView) teamView.hidden = true;
       if (codemapView) codemapView.hidden = true;
       if (dataprofileView) dataprofileView.hidden = true;
+      if (galleryView) galleryView.hidden = true;
       renderInterview(v);
       return;
     }
@@ -201,6 +238,7 @@ function render(v) {
     if (teamView) teamView.hidden = true;
     if (codemapView) codemapView.hidden = true;
     if (dataprofileView) dataprofileView.hidden = true;
+    if (galleryView) galleryView.hidden = true;
     if (review) { renderFindings(v); return; }
   }
 
@@ -301,6 +339,19 @@ function renderDecisionFlow(v) {
 document.addEventListener("click", (e) => {
   const iv = e.target.closest("[data-intervene]");
   if (iv) { sendMsg({ type: "intervene", action: iv.dataset.intervene, agentId: iv.dataset.agent }); return; }
+  const gsize = e.target.closest(".gl-size[data-gsize]");
+  if (gsize) {
+    glSizeOverride = gsize.dataset.gsize;
+    const grid = document.getElementById("gl-grid");
+    if (grid) grid.className = `gsize-${glSizeOverride}`;
+    document.querySelectorAll(".gl-size").forEach((b) => b.classList.toggle("active", b.dataset.gsize === glSizeOverride));
+    return;
+  }
+  if (e.target.closest("#gl-lb-close")) { closeLightbox(); return; }
+  if (e.target.id === "gl-lightbox") { closeLightbox(); return; } // backdrop
+  if (e.target.closest("[data-noexpand]")) return; // let open-in-tab work
+  const glCardEl = e.target.closest(".gl-card[data-gl]");
+  if (glCardEl) { openLightbox(+glCardEl.dataset.gl); return; }
   if (e.target.closest("#to-home")) { sendMsg({ type: "navigate", screen: "home" }); return; }
   if (e.target.closest("#to-loop")) { sendMsg({ type: "navigate", screen: "loop" }); return; }
   if (e.target.closest("#help-btn")) { const w = document.getElementById("welcome"); if (w) w.hidden = false; return; }
@@ -346,6 +397,10 @@ document.addEventListener("click", (e) => {
 // activate the focused tile the same as a click. Space is prevented so it does
 // not scroll the overlay. (C1)
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const lb = document.getElementById("gl-lightbox");
+    if (lb && !lb.hidden) { closeLightbox(); return; }
+  }
   if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
   const tile = e.target.closest && e.target.closest("[data-launch]");
   if (!tile) return;
@@ -408,6 +463,80 @@ function renderFindings(v) {
        }).join("")}
      </div>`).join("")
     || `<div class="meta">No findings.</div>`);
+}
+
+// Gallery card. SECURITY: the thumbnail iframe's sandbox is fixed here per kind —
+// url tiles get "allow-scripts allow-same-origin allow-forms" (the framed app runs
+// on its own origin, so same-origin grants it ITS origin, never the cockpit's),
+// html snapshots get "" (the empty, maximally restrictive value: inert, opaque
+// origin). The src/srcdoc is NOT embedded as an HTML-attribute string here; it is
+// assigned as a DOM property after innerHTML in renderGallery (no attribute
+// escaping). Every interpolated field passes through esc(). (gallery)
+function glCard(it, i) {
+  const sandbox = it.kind === "url" ? `sandbox="allow-scripts allow-same-origin allow-forms"` : `sandbox=""`;
+  const open = it.kind === "url" && it.src ? `<a class="gl-open" href="${esc(it.src)}" target="_blank" rel="noopener" data-noexpand>open ↗</a>` : "";
+  const cap = it.caption ? `<span class="gl-caption">${esc(it.caption)}</span>` : "";
+  const thumb = it.kind === "empty"
+    ? `<div class="meta">${esc(it.label)}</div>`
+    : `<iframe id="gl-thumb-${i}" ${sandbox} title="${esc(it.label)}" tabindex="-1"></iframe>`;
+  return `<figure class="gl-card" data-gl="${i}"><figcaption class="gl-cap"><span class="gl-label">${esc(it.label)}</span>${cap}${open}</figcaption><div class="gl-thumb">${thumb}</div></figure>`;
+}
+
+function renderGallery(v) {
+  const g = v.gallery || { title: null, size: "m", items: [] };
+  glItems = g.items;
+  setText("gl-title", g.title || "Gallery");
+  setText("gl-count", g.items.length ? `${g.items.length} items` : "");
+  const grid = document.getElementById("gl-grid");
+  if (!grid) return;
+  const size = glSizeOverride || g.size || "m";
+  grid.className = `gsize-${size}`;
+  document.querySelectorAll(".gl-size").forEach((b) => b.classList.toggle("active", b.dataset.gsize === size));
+  const order = [];
+  const byGroup = new Map();
+  g.items.forEach((it, i) => {
+    const key = it.group || "";
+    if (!byGroup.has(key)) { byGroup.set(key, []); order.push(key); }
+    byGroup.get(key).push({ it, i });
+  });
+  grid.innerHTML = order.map((key) => {
+    const head = key ? `<div class="gl-group">${esc(key)}</div>` : "";
+    return head + byGroup.get(key).map(({ it, i }) => glCard(it, i)).join("");
+  }).join("") || `<div class="meta" style="padding:14px">No items yet.</div>`;
+  // Assign each thumbnail source as a DOM property (no HTML-attribute escaping).
+  g.items.forEach((it, i) => {
+    const f = document.getElementById(`gl-thumb-${i}`);
+    if (!f) return;
+    if (it.kind === "url" && it.src && isGalleryUrl(it.src)) f.setAttribute("src", it.src);
+    else if (it.kind === "html") f.srcdoc = it.src || "";
+  });
+}
+
+function openLightbox(i) {
+  const it = glItems[i];
+  if (!it) return;
+  const lb = document.getElementById("gl-lightbox");
+  const frame = document.getElementById("gl-lb-frame");
+  const openLink = document.getElementById("gl-lb-open");
+  setText("gl-lb-label", it.label);
+  if (it.kind === "url" && it.src && isGalleryUrl(it.src)) {
+    frame.removeAttribute("srcdoc"); frame.setAttribute("src", it.src);
+    if (openLink) { openLink.href = it.src; openLink.hidden = false; }
+  } else if (it.kind === "html") {
+    frame.removeAttribute("src"); frame.srcdoc = it.src || "";
+    if (openLink) openLink.hidden = true;
+  } else {
+    frame.removeAttribute("src"); frame.srcdoc = `<body style="margin:0;background:#1e1e1e"></body>`;
+    if (openLink) openLink.hidden = true;
+  }
+  if (lb) lb.hidden = false;
+}
+
+function closeLightbox() {
+  const lb = document.getElementById("gl-lightbox");
+  const frame = document.getElementById("gl-lb-frame");
+  if (frame) { frame.removeAttribute("src"); frame.removeAttribute("srcdoc"); }
+  if (lb) lb.hidden = true;
 }
 
 function renderBoard(v) {

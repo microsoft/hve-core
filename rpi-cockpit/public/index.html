@@ -189,11 +189,15 @@
   .af-frame { flex: 1; min-height: 0; }
   #af-iframe { width: 100%; height: 100%; border: 0; background: #fff; }
 
+  /* The interview view fills #loop like #rpi-view does, so the document pane
+     matches the window height instead of collapsing to the question's height.
+     The iframe then scrolls its own (arbitrarily tall) content internally. */
+  #interview-view { flex: 1 1 0; min-height: 0; overflow: auto; }
   #iv-doc { width: 100%; min-height: 280px; border: 1px solid var(--stroke, #3a3a3a); border-radius: 8px; margin-top: 14px; background: #fff; }
   @media (min-width: 980px) {
-    #interview-view { display: flex; gap: 22px; align-items: stretch; min-height: 0; }
+    #interview-view { display: flex; gap: 22px; align-items: stretch; overflow: hidden; }
     #interview-view .iv-convo { flex: 1 1 0; min-width: 0; overflow: auto; }
-    #interview-view #iv-doc { flex: 1 1 0; min-width: 0; min-height: 0; margin-top: 0; }
+    #interview-view #iv-doc { flex: 1 1 0; min-width: 0; min-height: 0; height: auto; margin-top: 0; }
   }
   [hidden] { display: none !important; }
   /* C2: a visible keyboard focus indicator for every interactive control, in both
@@ -289,6 +293,37 @@
   .dp-q-ok { background: var(--ok, #73C991); }
   .dp-q-warn { background: #E0954B; }
   .dp-q-risk { background: var(--fail, #f2b8b5); }
+
+  #gallery-view { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .gl-sizes { margin-left: auto; display: inline-flex; gap: 2px; }
+  .gl-size { font: inherit; font-size: 11px; padding: 2px 9px; background: var(--bar, #323233); color: var(--text-2, #9D9D9D); border: 1px solid var(--stroke, #3C3C3C); cursor: pointer; }
+  .gl-size.active { background: var(--brand, #0E639C); color: #fff; border-color: transparent; }
+  #gl-grid { flex: 1; overflow: auto; padding: 14px 18px; display: grid; gap: 16px; align-content: start; justify-content: start; }
+  #gl-grid.gsize-s { grid-template-columns: repeat(auto-fill, 300px); }
+  #gl-grid.gsize-m { grid-template-columns: repeat(auto-fill, 460px); }
+  #gl-grid.gsize-l { grid-template-columns: repeat(auto-fill, 640px); }
+  .gl-group { grid-column: 1 / -1; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3, #6E6E6E); font-weight: 600; margin-top: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--stroke, #3C3C3C); }
+  .gl-card { margin: 0; border: 1px solid var(--stroke, #3C3C3C); border-radius: 8px; overflow: hidden; background: #111; cursor: pointer; }
+  .gl-cap { display: flex; align-items: baseline; gap: 8px; padding: 7px 10px; background: var(--bar, #323233); font-size: 12.5px; }
+  .gl-cap .gl-label { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gl-cap .gl-caption { color: var(--text-3, #6E6E6E); font-size: 11px; white-space: nowrap; }
+  .gl-cap .gl-open { margin-left: auto; color: var(--accent-blue, #4FC1FF); text-decoration: none; font-size: 11px; }
+  .gl-thumb { overflow: hidden; background: #1E1E1E; }
+  .gl-thumb iframe { border: 0; transform-origin: top left; pointer-events: none; }
+  .gl-thumb .meta { padding: 18px; }
+  #gl-grid.gsize-s .gl-thumb { height: 195px; }
+  #gl-grid.gsize-s .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.25); }
+  #gl-grid.gsize-m .gl-thumb { height: 299px; }
+  #gl-grid.gsize-m .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.383); }
+  #gl-grid.gsize-l .gl-thumb { height: 416px; }
+  #gl-grid.gsize-l .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.533); }
+  #gl-lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.72); display: flex; flex-direction: column; padding: 24px; }
+  .gl-lb-head { display: flex; align-items: center; gap: 14px; color: #eee; padding: 6px 4px; font-size: 13px; }
+  #gl-lb-label { font-weight: 600; }
+  #gl-lb-open { margin-left: auto; color: var(--accent-blue, #4FC1FF); }
+  #gl-lb-close { background: transparent; border: 0; color: #ccc; font-size: 18px; cursor: pointer; }
+  .gl-lb-body { flex: 1; min-height: 0; background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+  #gl-lb-frame { width: 100%; height: 100%; border: 0; }
 
   .team-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .team-orch { font-weight: 500; }
@@ -508,6 +543,18 @@
       </div>
       <table id="dp-table" class="dp-table"></table>
     </section>
+    <section id="gallery-view" hidden>
+      <div class="rev-head">
+        <span class="board-target" id="gl-title">Gallery</span>
+        <span class="board-count" id="gl-count"></span>
+        <span class="gl-sizes" role="group" aria-label="Thumbnail size">
+          <button type="button" class="gl-size" data-gsize="s">S</button>
+          <button type="button" class="gl-size" data-gsize="m">M</button>
+          <button type="button" class="gl-size" data-gsize="l">L</button>
+        </span>
+      </div>
+      <div id="gl-grid"></div>
+    </section>
     <section id="team-view" hidden>
       <div class="team-head">
         <span class="team-orch" id="team-orch">Orchestrator</span>
@@ -530,6 +577,14 @@
     </aside>
   </div>
 </div>
+  <div id="gl-lightbox" hidden>
+    <div class="gl-lb-head">
+      <span id="gl-lb-label"></span>
+      <a id="gl-lb-open" href="#" target="_blank" rel="noopener" hidden>open in tab ↗</a>
+      <button type="button" id="gl-lb-close" aria-label="Close">✕</button>
+    </div>
+    <div class="gl-lb-body"><iframe id="gl-lb-frame" title="Gallery item"></iframe></div>
+  </div>
 <script>
   /* Light/dark theme toggle, persisted to localStorage. */
   (function(){
