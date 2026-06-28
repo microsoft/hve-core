@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-06-27
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -24,12 +24,12 @@ everything.
 
 This guide walks you through four steps, each building on the last:
 
-| Step                                                      | What You Do                                             | Time    |
-|-----------------------------------------------------------|---------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
-| [First Research](first-research.md)                       | Use /rpi-research on your own codebase                  | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
+| Step                                                      | What You Do                                              | Time    |
+|-----------------------------------------------------------|----------------------------------------------------------|---------|
+| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                         | 1 min   |
+| [First Research](first-research.md)                       | Use /task-research or /rpi-research on your own codebase | 5 min   |
+| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle           | 15 min  |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use  | Ongoing |
 
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to

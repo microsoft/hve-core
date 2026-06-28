@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - design thinking
@@ -26,11 +26,11 @@ flowchart TD
     end
 
     subgraph solution["Solution Space"]
-        M46["Methods 4-6<br/>Brainstorm · Concepts · Lo-Fi Prototypes"]
+        M46["Methods 4-6<br/>Brainstorm · Concepts · Low-Fidelity Prototypes"]
     end
 
-    subgraph validate["Validation Space"]
-        M79["Methods 7-9<br/>Hi-Fi Prototypes · Testing · Iteration"]
+    subgraph implementation["Implementation Space"]
+        M79["Methods 7-9<br/>High-Fidelity Prototypes · Testing · Iteration"]
     end
 
     DT --> M13 --> M46 --> M79
@@ -43,7 +43,34 @@ flowchart TD
     TR -.->|"return when DT assumptions need revision"| DT
 ```
 
-Each exit point produces a handoff artifact with the same schema: artifact paths, confidence markers (`validated`, `assumed`, `unknown`, `conflicting`), and a stakeholder map.
+Each exit point produces a handoff artifact with the current contract fields: `exit_point`, `dt_method`, `dt_space`, `handoff_target`, `date`, `artifacts`, `constraints`, and `assumptions`. The coach keeps the session state in `.copilot-tracking/design-thinking-sessions/{project-slug}/`, while the handoff artifacts live alongside project artifacts in `docs/design-thinking/{project-slug}/`.
+
+```yaml
+exit_point: "implementation-spec-ready"
+dt_method: 9
+dt_space: "implementation"
+handoff_target: "researcher"
+date: "2026-06-26"
+
+artifacts:
+  - path: "docs/design-thinking/{project-slug}/method-09-iteration-at-scale.md"
+    type: "iteration-summary"
+    confidence: validated
+
+constraints:
+  - description: "The rollout must fit existing deployment windows"
+    source: "stakeholder-review"
+    confidence: assumed
+
+assumptions:
+  - description: "Support staff can monitor the pilot environment"
+    confidence: unknown
+    impact: "high"
+```
+
+## Subagent Handoff Workflow
+
+When the DT coach detects handoff readiness, it can dispatch assessment, compilation, and validation subagents to make the transition more reliable. The workflow checks artifact readiness, compiles the handoff payload into the current schema, and validates the generated RPI entry artifact before it reaches Task Researcher. At Method 5b, the workflow can also generate image prompts that help turn concept artifacts into visual directions for downstream review.
 
 ## Exit Points
 
@@ -61,7 +88,7 @@ After completing Scope Conversations, Design Research, and Input Synthesis, the 
 After Brainstorming, User Concepts, and Low-Fidelity Prototypes, the team has a stakeholder-validated concept with known constraints. Task Researcher receives these richer artifacts to:
 
 * Validate the narrowed solution directions through technical investigation
-* Resolve constraints marked `assumed` or `unknown` from lo-fi prototype testing
+* Resolve constraints marked `assumed` or `unknown` from low-fidelity prototype testing
 * Assess feasibility of tested concepts across stakeholder perspectives
 * Investigate integration and scaling concerns before planning begins
 
@@ -156,7 +183,7 @@ Three prompts compile DT artifacts for the single RPI entry point at Task Resear
 
 * `dt-handoff-problem-space.prompt.md`: Packages Problem Space artifacts (Methods 1-3) for Task Researcher
 * `dt-handoff-solution-space.prompt.md`: Packages Solution Space artifacts (Methods 4-6) for Task Researcher
-* `dt-handoff-implementation-space.prompt.md`: Packages Validation Space artifacts (Methods 7-9) for Task Researcher
+* `dt-handoff-implementation-space.prompt.md`: Packages Implementation Space artifacts (Methods 7-9) for Task Researcher
 
 Each prompt collects the relevant method outputs, confidence markers, and open questions into a structured handoff that Task Researcher consumes directly. Later exit prompts produce richer artifacts that narrow the Researcher's investigation scope.
 

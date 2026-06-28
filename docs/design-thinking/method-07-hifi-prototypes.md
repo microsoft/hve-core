@@ -1,11 +1,11 @@
 ---
-title: "Method 7: Hi-Fi Prototypes"
-description: "Translate lo-fi constraint discoveries into technically feasible implementations that validate whether user-validated solutions can be built and deployed."
+title: "Method 7: High-Fidelity Prototypes"
+description: "Translate low-fidelity constraint discoveries into technically feasible implementations that validate whether user-validated solutions can be built and deployed."
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: tutorial
-keywords: [design thinking, method-07, hifi-prototypes]
+keywords: [design thinking, method-07, high-fidelity-prototypes]
 estimated_reading_time: 5
 ---
 
@@ -13,18 +13,18 @@ estimated_reading_time: 5
 
 Method 7 translates the constraint discoveries from Method 6 into technically feasible prototypes that prove solutions can work under real-world conditions. You build functional implementations with real data, test multiple technical approaches for systematic comparison, and document the trade-offs that inform user testing in Method 8.
 
-Hi-fi prototypes answer the question: can this actually be built and deployed? The focus is on technical proof and functional validation, not visual polish or production-ready interfaces.
+High-Fidelity Prototypes answer the question: can this actually be built and deployed? The focus is on technical proof and functional validation, not visual polish or production-ready interfaces. Method 7 follows three phases: translation planning, prototype construction, and specification drafting.
 
 ## When to Use
 
-* After completing Lo-Fi Prototypes (Method 6) with documented constraint discoveries from real-environment testing
-* When concept assumptions have been validated at the lo-fi level and need technical feasibility confirmation
+* After completing Low-Fidelity Prototypes (Method 6) with documented constraint discoveries from real-environment testing
+* When concept assumptions have been validated at the low-fidelity level and need technical feasibility confirmation
 * When you need to compare multiple implementation approaches under realistic conditions
 * Before committing to formal user testing in Method 8
 
 ## Space Context
 
-Method 7 is the **entry point to the Validation Space**. The Validation Space spans Methods 7 through 9 and focuses on proving that solutions work technically, validating them with users, and scaling them for deployment. Method 7 establishes technical feasibility, Method 8 gathers user evidence, and Method 9 handles iteration and rollout.
+Method 7 is the **entry point to the Implementation Space**. The Implementation Space spans Methods 7 through 9 and focuses on proving that solutions work technically, validating them with users, and scaling them for deployment. Method 7 establishes technical feasibility, Method 8 gathers user evidence, and Method 9 handles iteration and rollout.
 
 > [!WARNING]
 > Focus on functional proof, not visual design. Over-engineering at this stage wastes resources on polish that user testing in Method 8 may invalidate. Build working systems, not finished products.
@@ -44,13 +44,13 @@ Review the constraint discovery log from Method 6. Identify the technical requir
 Use this prompt to begin technical prototyping:
 
 ```text
-Our lo-fi testing revealed these constraints: [key constraints from Method 6].
+Our low-fidelity testing revealed these constraints: [key constraints from Method 6].
 The concept requires [core functionality]. Help me identify 2-3 technical approaches
 that address these constraints, including trade-offs between performance, cost,
 and integration complexity.
 ```
 
-When building hi-fi prototypes:
+When building High-Fidelity Prototypes:
 
 * Use real data, not simulated inputs
 * Test under actual environmental conditions (noise, lighting, workflow interruption)
@@ -75,12 +75,12 @@ When building hi-fi prototypes:
 
 ## Next Method
 
-When you have functional prototypes validated under real conditions with documented trade-offs across multiple approaches, proceed to [Method 8: Test and Validate](method-08-test-validate.md) to conduct structured user testing with evidence-based evaluation.
+When you have functional prototypes validated under real conditions with documented trade-offs across multiple approaches, proceed to [Method 8: User Testing](method-08-test-validate.md) to conduct structured user testing with evidence-based evaluation.
 
 ## Related Resources
 
-* [Method 6: Lo-Fi Prototypes](method-06-lofi-prototypes.md)
-* [Method 8: Test and Validate](method-08-test-validate.md)
+* [Method 6: Low-Fidelity Prototypes](method-06-lofi-prototypes.md)
+* [Method 8: User Testing](method-08-test-validate.md)
 * [Design Thinking Overview](README.md)
 
 > Brought to you by microsoft/hve-core
