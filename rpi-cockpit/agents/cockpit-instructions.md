@@ -29,6 +29,8 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 
 * `review_start(target)` when you begin a review (target is the branch, PR, or scope).
 * `add_finding(severity, title, file?, line?, detail?)` per finding (severity critical|high|medium|low|info). The cockpit groups findings by severity with file links.
+* If your review runs a pipeline of subagents (profile, assess, verify, report), call `subagent_start(name, role)` / `subagent_stop(name, result)` for each: the findings panel shows them as a live "reviewers" strip above the findings, so the user sees progress during a long scan instead of an empty panel.
+* If your review is narrative rather than a list of graded findings (for example a PR walkthrough of design forks and architectural shape), render it with `show_screen(html, title)` as rendered markdown; reserve `review_start` + `add_finding` and the findings panel for severity-graded findings.
 
 ## Guided document builders (PRD, BRD, ADR, security, RAI, accessibility plans)
 
