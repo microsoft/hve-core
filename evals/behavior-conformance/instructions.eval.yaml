@@ -488,6 +488,27 @@ stimuli:
         config:
           pattern: "(?i)prohibited\\s+use|risk\\s+(indicator|classification)|depth\\s+tier|basic|standard|comprehensive"
 
+  - name: instruction-rai-license-posture-conformance
+    prompt: |
+      You are authoring RAI standards content under a `skills/rai` scope with a
+      plan at `.copilot-tracking/rai-plans/customer-onboarding/`. Which
+      `.github/instructions/**/*.instructions.md` file defines the RAI overlay
+      onto the repository licensing posture (cite its path) and what does it
+      require for reproduction and attribution of third-party standards?
+    tags:
+      category: behavior-conformance
+      instruction: rai-license-posture
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: applyTo-evidence
+        config:
+          pattern: "(?i)skills/rai|\\.copilot-tracking/rai-plans|rai-plans/"
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: "(?i)licens|attribution|reproduc|standard|posture"
+
   - name: instruction-backlog-handoff-conformance
     prompt: |
       You are completing Phase 5 of a Security Planning session and
