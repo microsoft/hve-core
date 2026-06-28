@@ -159,9 +159,9 @@ function summarize(beat: Beat): string {
 }
 
 export function addDecision(s: SessionState, e: { id: string; prompt: string; kind: DecisionKind; options?: OptionItem[] }): SessionState {
-  const i = s.decisions.findIndex((d) => d.id === e.id);
+  const idx = s.decisions.findIndex((d) => d.id === e.id);
   const entry: DecisionEntry = { id: e.id, prompt: e.prompt, kind: e.kind, options: e.options, status: "pending" };
-  if (i !== -1) return { ...s, decisions: s.decisions.map((d, j) => (j === i ? entry : d)) };
+  if (idx !== -1) return { ...s, decisions: s.decisions.map((d, j) => (j === idx ? entry : d)) };
   return { ...s, decisions: [...s.decisions, entry] };
 }
 
