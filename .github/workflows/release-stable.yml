@@ -631,6 +631,38 @@ jobs:
             "dist/plugins/${{ matrix.id }}.zip.intoto.jsonl" \
             --clobber -R "${{ github.repository }}"
 
+  verify-provenance:
+    name: Verify Provenance
+    needs: [release-please, attest-and-upload, upload-plugin-packages]
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download release artifacts
+        run: |
+          mkdir -p ./artifacts
+          gh release download "${{ needs.release-please.outputs.tag_name }}" \
+            -R "${{ github.repository }}" \
+            -p '*.vsix' \
+            -p '*.zip' \
+            -D ./artifacts
+
+      - name: Verify build provenance
+        run: |
+          shopt -s nullglob
+          files=(./artifacts/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No release artifacts downloaded for provenance verification"
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            gh attestation verify "$f" --repo "${{ github.repository }}"
+          done
+
   sbom-diff:
     name: SBOM Dependency Diff
     needs: [release-please, generate-dependency-sbom]
@@ -746,7 +778,7 @@ jobs:
 
   append-verification-notes:
     name: Append Verification Instructions
-    needs: [release-please, attest-and-upload, upload-plugin-packages]
+    needs: [release-please, attest-and-upload, upload-plugin-packages, verify-provenance]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:
@@ -782,7 +814,7 @@ jobs:
 
   publish-release:
     name: Publish GitHub Release
-    needs: [release-please, attest-and-upload, upload-plugin-packages, sbom-diff, append-verification-notes]
+    needs: [release-please, attest-and-upload, upload-plugin-packages, verify-provenance, sbom-diff, append-verification-notes]
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
     runs-on: ubuntu-latest
     permissions:

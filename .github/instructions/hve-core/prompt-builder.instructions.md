@@ -315,6 +315,8 @@ Contains executable code that agents run to perform tasks:
 * Include helpful error messages and handle edge cases gracefully.
 * Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
 
+Python skills under `.github/skills/**` are covered automatically by the uv ecosystem glob in `.github/dependabot.yml`. Do not add per-skill Dependabot configuration. Skills with Python dependencies must commit both `pyproject.toml` and `uv.lock` at the skill root so Dependabot can resolve and patch vulnerable dependencies.
+
 ##### references/
 
 Contains additional documentation that agents read when needed:
