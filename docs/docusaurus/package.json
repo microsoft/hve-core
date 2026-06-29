@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
+    "generate:catalog": "node scripts/generate-catalog.mjs",
+    "prestart": "npm run generate:catalog",
+    "prebuild": "npm run generate:catalog",
     "start": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
@@ -29,10 +32,13 @@
     "@easyops-cn/docusaurus-search-local": "0.55.2",
     "@mdx-js/react": "3.1.1",
     "clsx": "2.1.1",
+    "fuse.js": "7.1.0",
+    "gray-matter": "4.0.3",
     "prism-react-renderer": "2.4.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "remark-github-blockquote-alert": "2.1.0"
+    "remark-github-blockquote-alert": "2.1.0",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",

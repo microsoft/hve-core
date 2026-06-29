@@ -12,7 +12,15 @@ on:
       - main
     paths:
       - 'docs/**'
+      - '.github/agents/**'
+      - '.github/prompts/**'
+      - '.github/skills/**'
+      - '.github/instructions/**'
+      - 'collections/**'
       - '.github/workflows/deploy-docs.yml'
+  schedule:
+    # Daily rebuild so the artifact catalog reflects added/removed skills, prompts, and agents
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 concurrency:

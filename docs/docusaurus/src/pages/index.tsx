@@ -24,6 +24,7 @@ export default function Home(): React.ReactElement {
         cta={[
           { label: 'Install the Extension', href: 'https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core', primary: true },
           { label: 'Browse Collections', href: '/docs/getting-started/collections' },
+          { label: 'Browse the Catalog', href: '/catalog' },
         ]}
       />
 

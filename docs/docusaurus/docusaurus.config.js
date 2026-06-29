@@ -151,6 +151,11 @@ const config = {
             ],
           },
           {
+            to: '/catalog',
+            label: 'Catalog',
+            position: 'left',
+          },
+          {
             href: 'https://github.com/microsoft/hve-core',
             label: 'GitHub',
             position: 'right',
