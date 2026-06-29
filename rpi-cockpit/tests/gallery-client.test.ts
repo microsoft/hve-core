@@ -48,19 +48,15 @@ describe("gallery client", () => {
     expect(htmlFrame.srcdoc).toBe("<b>hi</b>");
   });
 
-  it("small size renders compact boxes with no iframes (just label + explanation)", () => {
+  it("every size renders thumbnails (small is no longer a compact box)", () => {
     const s = applyBeat(initialState(), { type: "gallery.open", title: "My apps", size: "s", items: [
       { id: "u", label: "Local", group: "live", url: "http://localhost:3000/" },
       { id: "h", label: "Snap", group: "live", html: "<b>hi</b>" },
     ] }, 1);
     (win as any).render(toViewModel(s));
-    expect(win.document.querySelectorAll("#gl-grid .gl-card.gl-s").length).toBe(2);
-    expect(win.document.querySelectorAll("#gl-grid iframe").length).toBe(0);
-    expect(win.document.querySelector("#gl-grid .gl-desc")).not.toBeNull();
-    // a small box is still clickable -> opens the lightbox
-    (win.document.querySelector("#gl-grid .gl-card") as any).dispatchEvent(new win.Event("click", { bubbles: true }));
-    expect((win.document.getElementById("gl-lightbox") as any).hidden).toBe(false);
-    win.eval("closeLightbox()");
+    expect(win.document.querySelectorAll("#gl-grid .gl-card.gl-s").length).toBe(0);
+    expect(win.document.querySelectorAll("#gl-grid iframe").length).toBe(2);
+    expect((win.document.getElementById("gl-grid") as any).className).toBe("gsize-s");
   });
 
   it("opens the lightbox on a card click and closeLightbox() hides it", () => {

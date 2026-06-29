@@ -100,7 +100,6 @@ let cmSig = null;
 // new gallery.open size). (gallery)
 let glItems = [];
 let glSizeOverride = null;
-let glLastVm = null;
 let glResizeRaf = 0;
 
 function connect() {
@@ -343,19 +342,13 @@ document.addEventListener("click", (e) => {
   if (iv) { sendMsg({ type: "intervene", action: iv.dataset.intervene, agentId: iv.dataset.agent }); return; }
   const gsize = e.target.closest(".gl-size[data-gsize]");
   if (gsize) {
-    const next = gsize.dataset.gsize;
-    const prev = glSizeOverride || (glLastVm && glLastVm.gallery && glLastVm.gallery.size) || "m";
-    glSizeOverride = next;
-    // Small has a different structure (no iframes), so crossing the S boundary needs a full
-    // rebuild; M<->L is just a class swap plus a re-scale to the new tile width.
-    if ((next === "s") !== (prev === "s") && glLastVm) {
-      renderGallery(glLastVm);
-    } else {
-      const grid = document.getElementById("gl-grid");
-      if (grid) grid.className = `gsize-${next}`;
-      document.querySelectorAll(".gl-size").forEach((b) => b.classList.toggle("active", b.dataset.gsize === next));
-      sizeGalleryThumbs();
-    }
+    // Every size renders thumbnails, so a toggle is just a class swap plus a re-scale to the
+    // new tile width (no rebuild). S/M are multi-column; L is one full-width column.
+    glSizeOverride = gsize.dataset.gsize;
+    const grid = document.getElementById("gl-grid");
+    if (grid) grid.className = `gsize-${glSizeOverride}`;
+    document.querySelectorAll(".gl-size").forEach((b) => b.classList.toggle("active", b.dataset.gsize === glSizeOverride));
+    sizeGalleryThumbs();
     return;
   }
   if (e.target.closest("#gl-lb-close")) { closeLightbox(); return; }
@@ -489,16 +482,8 @@ function renderFindings(v) {
 // origin). The src/srcdoc is NOT embedded as an HTML-attribute string here; it is
 // assigned as a DOM property after innerHTML in renderGallery (no attribute
 // escaping). Every interpolated field passes through esc(). (gallery)
-const glKindTag = (it) => it.kind === "url" ? "live site" : it.kind === "html" ? "snapshot" : "";
-
-function glCard(it, i, size) {
+function glCard(it, i) {
   const open = it.kind === "url" && it.src ? `<a class="gl-open" href="${esc(it.src)}" target="_blank" rel="noopener" data-noexpand>open ↗</a>` : "";
-  // Small: a compact clickable box with a brief explanation, no rendered site (no iframe).
-  if (size === "s") {
-    const desc = it.caption ? esc(it.caption) : (it.kind === "url" && it.src ? esc(it.src) : "Click to view");
-    const tag = glKindTag(it) ? `<span class="gl-tag">${glKindTag(it)}</span>` : "";
-    return `<figure class="gl-card gl-s" data-gl="${i}"><figcaption class="gl-cap"><span class="gl-label">${esc(it.label)}</span>${open}</figcaption><div class="gl-desc">${desc}${tag}</div></figure>`;
-  }
   const sandbox = it.kind === "url" ? `sandbox="allow-scripts allow-same-origin allow-forms"` : `sandbox=""`;
   const cap = it.caption ? `<span class="gl-caption">${esc(it.caption)}</span>` : "";
   const thumb = it.kind === "empty"
@@ -527,7 +512,6 @@ function sizeGalleryThumbs() {
 function renderGallery(v) {
   const g = v.gallery || { title: null, size: "m", items: [] };
   glItems = g.items;
-  glLastVm = v;
   setText("gl-title", g.title || "Gallery");
   setText("gl-count", g.items.length ? `${g.items.length} items` : "");
   const grid = document.getElementById("gl-grid");
@@ -544,19 +528,17 @@ function renderGallery(v) {
   });
   grid.innerHTML = order.map((key) => {
     const head = key ? `<div class="gl-group">${esc(key)}</div>` : "";
-    return head + byGroup.get(key).map(({ it, i }) => glCard(it, i, size)).join("");
+    return head + byGroup.get(key).map(({ it, i }) => glCard(it, i)).join("");
   }).join("") || `<div class="meta" style="padding:14px">No items yet.</div>`;
-  // Small renders label-only boxes (no iframes); M/L assign each thumbnail source as a DOM
-  // property (no HTML-attribute escaping), then scale it to the fluid tile width.
-  if (size !== "s") {
-    g.items.forEach((it, i) => {
-      const f = document.getElementById(`gl-thumb-${i}`);
-      if (!f) return;
-      if (it.kind === "url" && it.src && isGalleryUrl(it.src)) f.setAttribute("src", it.src);
-      else if (it.kind === "html") f.srcdoc = it.src || "";
-    });
-    sizeGalleryThumbs();
-  }
+  // Assign each thumbnail source as a DOM property (no HTML-attribute escaping), then scale
+  // each iframe to the fluid tile width.
+  g.items.forEach((it, i) => {
+    const f = document.getElementById(`gl-thumb-${i}`);
+    if (!f) return;
+    if (it.kind === "url" && it.src && isGalleryUrl(it.src)) f.setAttribute("src", it.src);
+    else if (it.kind === "html") f.srcdoc = it.src || "";
+  });
+  sizeGalleryThumbs();
 }
 
 function openLightbox(i) {
