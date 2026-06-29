@@ -30,6 +30,17 @@ $script:ArtifactPatterns = @(
     }
 )
 
+# Repo-root-only artifact patterns: files placed directly under `.github/<kind>/`
+# (skills: `.github/skills/<name>/SKILL.md`) without a collection subdirectory.
+# Per `.github/copilot-instructions.md`, these are repo-specific and excluded from
+# collection manifests, packaging, and eval coverage enforcement.
+$script:RepoRootArtifactPatterns = @{
+    agent       = '^\.github/agents/[^/]+\.agent\.md$'
+    prompt      = '^\.github/prompts/[^/]+\.prompt\.md$'
+    instruction = '^\.github/instructions/[^/]+\.instructions\.md$'
+    skill       = '^\.github/skills/[^/]+/SKILL\.md$'
+}
+
 function ConvertTo-NormalizedArtifactPath {
     <#
     .SYNOPSIS
@@ -198,9 +209,53 @@ function Get-ChangedArtifactRecord {
     }
 }
 
+function Test-RepoRootArtifact {
+    <#
+    .SYNOPSIS
+    Determines whether an artifact path is a repo-root (repo-specific) artifact.
+
+    .DESCRIPTION
+    Repo-root artifacts live directly under `.github/<kind>/` without a collection
+    subdirectory (skills: `.github/skills/<name>/SKILL.md`). Per
+    `.github/copilot-instructions.md`, these are repo-specific and excluded from
+    collection manifests, packaging, and eval coverage enforcement.
+
+    .PARAMETER Kind
+    Artifact kind: agent, prompt, instruction, or skill.
+
+    .PARAMETER Path
+    Workspace-relative path (forward or backslash separators accepted).
+
+    .OUTPUTS
+    [bool] True when the path is a repo-root artifact of the given kind.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Kind,
+
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Path
+    )
+
+    if (-not $script:RepoRootArtifactPatterns.ContainsKey($Kind)) {
+        return $false
+    }
+
+    $normalized = ConvertTo-NormalizedArtifactPath -Path $Path
+    if ([string]::IsNullOrEmpty($normalized)) {
+        return $false
+    }
+
+    return [regex]::IsMatch($normalized, $script:RepoRootArtifactPatterns[$Kind])
+}
+
 Export-ModuleMember -Function @(
     'Get-ArtifactDescriptor',
     'ConvertFrom-GitDiffNameStatus',
     'Get-ChangedArtifactRecord',
-    'ConvertTo-NormalizedArtifactPath'
+    'ConvertTo-NormalizedArtifactPath',
+    'Test-RepoRootArtifact'
 )
