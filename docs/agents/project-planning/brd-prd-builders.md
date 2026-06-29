@@ -229,7 +229,7 @@ Output the PRD with measurable requirements in every section.
 ## Next Steps
 
 1. Feed your completed BRD or PRD into the [ADR Creator](adr-creation) for architectural decisions
-2. See [Project Planning Agents](README) for the full agent catalog
+2. See [Project Planning Agents](README.md) for the full agent catalog
 
 > [!TIP]
 > Both agents work best when you provide a clear project name at invocation. The agents can derive a working title from context, but explicit scope accelerates the Assess phase.
