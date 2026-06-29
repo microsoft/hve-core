@@ -3,7 +3,7 @@ title: "Method 5: User Concepts"
 description: "Shape brainstorming themes into structured concept descriptions evaluated through desirability, feasibility, and viability lenses."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-05, user-concepts]
 estimated_reading_time: 5
@@ -82,8 +82,6 @@ When you have evaluated concepts with three-lens ratings and clear advancement d
 * [Method 4: Brainstorming](method-04-brainstorming.md)
 * [Method 6: Low-Fidelity Prototypes](method-06-lofi-prototypes.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

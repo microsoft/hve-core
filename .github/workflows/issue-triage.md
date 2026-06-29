@@ -30,7 +30,6 @@ safe-outputs:
       - bug
       - documentation
       - maintenance
-      - infrastructure
       - enhancement
       - security
       - breaking-change
@@ -38,6 +37,30 @@ safe-outputs:
       - prompts
       - instructions
       - skills
+      - scripts
+      - workflows
+      - extension
+      - packaging
+      - automation
+      - ci
+      - build
+      - dependencies
+      - devcontainer
+      - testing
+      - evals
+      - linting
+      - tooling
+      - infrastructure
+      - configuration
+      - design-thinking
+      - accessibility
+      - ado
+      - copilot
+      - foundation
+      - priority-1
+      - priority-2
+      - priority-3
+      - priority-4
       - good-first-issue
       - agent-ready
     blocked: [admin-only, do-not-triage]
@@ -45,9 +68,6 @@ safe-outputs:
   remove-labels:
     allowed: [needs-triage]
     max: 1
-  create-issue:
-    max: 5
-    labels: [needs-triage]
   noop:
     max: 1
 ---
@@ -81,17 +101,17 @@ Follow the triage workflow defined in your imported agent instructions:
 
 1. Read the issue title, body, labels, and template metadata.
 2. Classify the issue type using conventional commit patterns from the triage instructions.
-3. Classify the component from bug report dropdowns or body content analysis.
+3. Classify the area(s) from bug report dropdowns or body content analysis.
 4. Search for duplicate or related issues among open issues.
 5. Assess issue quality: check for missing required fields, vague descriptions, semantic coherence, and scope relevance.
-6. Remove `needs-triage` and apply determined type and component labels.
+6. Remove `needs-triage` and apply determined type, area, and priority labels.
 7. Evaluate whether the issue qualifies for `agent-ready` using conservative criteria.
 
 For each step, follow the detailed guidance in the Issue Triage Agent instructions.
 
 ## Output Behavior
 
-* **Well-formed issue:** Remove `needs-triage`, add type label(s) and component label(s). If all `agent-ready` criteria are met, also add `agent-ready`.
+* **Well-formed issue:** Remove `needs-triage`, add the type, area, and priority labels. If all `agent-ready` criteria are met, also add `agent-ready`.
 * **Issue needing more info:** Remove `needs-triage`, add type label if determinable, add a comment requesting specific missing information.
 * **Potential duplicate found:** Proceed with normal triage AND add a comment noting the related issue(s). Do not add a `duplicate` label.
 * **Unclassifiable issue:** Remove `needs-triage`, add a comment asking the author to clarify the issue type and scope.

@@ -3,7 +3,7 @@ brd_id: "BRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Requirements"
 description: "Business Requirements Document for the PRD Builder agent, capturing business goals, requirements, and traceability for migrating PRD authoring onto the shared requirements-author skill."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-06-28"
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -231,7 +231,7 @@ flowchart LR
 
 ## Acceptance Criteria
 
-* `AC-001`: Given a product idea, When the user completes the workflow, Then a PRD with all required sections is produced and saved under `docs/prds/`. Covers: FR-001. Status: Not Started.
+* `AC-001`: Given a product idea, When the user completes the workflow, Then a PRD with all required sections is produced and saved under `docs/project-planning/`. Covers: FR-001. Status: Not Started.
 * `AC-002`: Given an interrupted session, When the user resumes, Then the agent restores context from the state file and continues from the last completed phase without re-asking answered questions. Covers: FR-002. Status: Not Started.
 * `AC-003`: Given an ongoing session, When the agent asks refinement questions, Then question IDs remain stable and answered items are marked ✅ and not re-asked. Covers: FR-003. Status: Not Started.
 * `AC-004`: Given a generated PRD, When validation runs, Then markdownlint and frontmatter checks pass and required format markers are present. Covers: FR-004. Status: Not Started.

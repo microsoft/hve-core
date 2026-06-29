@@ -1,5 +1,5 @@
 ---
-description: 'BRD scoring anchors and Define/Govern gate overlay for ISO/IEC/IEEE 29148 individual-requirement quality - Brought to you by microsoft/hve-core'
+description: 'BRD scoring anchors and Define/Govern gate overlay for ISO/IEC/IEEE 29148 individual-requirement quality'
 ---
 
 # BRD ISO 29148 Quality Gate Overlay
@@ -121,4 +121,4 @@ Full citations for ISO/IEC/IEEE 29148:2018 and related commentary live in [../_s
 
 This overlay is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). ISO/IEC/IEEE 29148:2018 is cited by name and clause only and remains the property of ISO, IEC, and IEEE.
 
-> Brought to you by microsoft/hve-core
+

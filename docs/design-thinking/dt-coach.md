@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - dt-coach
@@ -138,8 +138,6 @@ Session state persists in `.copilot-tracking/design-thinking-sessions/{project-s
 * [DT to RPI Integration](dt-rpi-integration.md): How DT outputs feed into the RPI workflow
 * [Export DT Artifacts to Figma](figma-export.md): Optional board export workflow for workshop collaboration
 * [DT Learning Tutor](dt-learning-tutor.md): Curriculum-based training across all methods
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

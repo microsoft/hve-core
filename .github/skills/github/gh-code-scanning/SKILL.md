@@ -233,4 +233,3 @@ The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded 
 | Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                            |
 | `bash: jq: command not found`                              | `jq` not installed                             | Install via `brew install jq` (macOS), `apt-get install jq` (Debian/Ubuntu), or from <https://jqlang.github.io/jq/> |
 
-> Brought to you by microsoft/hve-core

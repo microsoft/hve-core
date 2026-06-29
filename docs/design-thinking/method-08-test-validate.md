@@ -3,7 +3,7 @@ title: "Method 8: User Testing"
 description: "Conduct structured user testing of High-Fidelity Prototypes to gather evidence for go, iterate, or revisit decisions across the nine-method sequence."
 sidebar_position: 12
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-08, user-testing]
 estimated_reading_time: 5
@@ -85,8 +85,6 @@ When testing produces sufficient evidence for a clear decision:
 * [Method 7: High-Fidelity Prototypes](method-07-hifi-prototypes.md)
 * [Method 9: Iteration at Scale](method-09-iteration-at-scale.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

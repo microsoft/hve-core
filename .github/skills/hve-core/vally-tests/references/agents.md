@@ -108,14 +108,6 @@ Grader identifiers below use the Vally CLI 0.4.0 catalog (`semantic_similarity`,
 * Grader recommendation: `regex` with pattern `(?m)^###\s+(?:Phase|Step)\s+\d+:\s+\S.+`.
 * Evidence: `.github/agents/hve-core/task-researcher.agent.md` L74-L130 demonstrates the heading shape across phases.
 
-### Check 10: Attribution Suffix in Description
-
-* Contract source: `prompt-builder.instructions.md` L552-L562 (attribution pattern), applied to hve-core agents.
-* Testable behavior: agents that ship as part of the hve-core collection SHOULD include the attribution suffix `- Brought to you by microsoft/hve-core` at the end of the `description:` field.
-* Suggested stimulus: ask the assistant to introduce a named hve-core agent and confirm whether the introduction carries the attribution.
-* Grader recommendation: `contains` with substring `- Brought to you by microsoft/hve-core` within the description field.
-* Evidence: `.github/agents/hve-core/task-researcher.agent.md` L2 shows the attributed description string.
-
 ## Cross-References
 
 * Skill index: [SKILL.md](../SKILL.md).

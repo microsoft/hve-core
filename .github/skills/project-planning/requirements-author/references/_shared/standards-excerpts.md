@@ -1,5 +1,5 @@
 ---
-description: 'Cite-only registry of third-party standards and community frameworks referenced from the brd-author skill bundle - publisher, edition, year, URL, and a one-sentence original summary per entry; no verbatim text is redistributed - Brought to you by microsoft/hve-core'
+description: 'Cite-only registry of third-party standards and community frameworks referenced from the brd-author skill bundle - publisher, edition, year, URL, and a one-sentence original summary per entry; no verbatim text is redistributed'
 ---
 
 # BRD Author — Cite-Only Standards Excerpts
@@ -159,4 +159,4 @@ The following two community resources are widely referenced when discussing BRD 
 
 This file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Every entry above cites a third-party source by name, edition, year, publisher, and URL. The cited works remain the property of their respective rights holders and are not redistributed through this registry.
 
-> Brought to you by microsoft/hve-core
+

@@ -1,6 +1,6 @@
 ---
 name: vally-tests
-description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli - Brought to you by microsoft/hve-core'
+description: 'Authors Vally conformance tests for prompts, instructions, agents, and skills, including refusals for jailbreak, prompt-injection, harmful-elicitation, TOS, CoC, and PII-extraction stimuli'
 license: MIT
 user-invocable: true
 compatibility: 'Requires Vally CLI 0.4.0+, PowerShell 7+, bash, and Python 3.11+ with uv for corpus-import workflows'

@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -128,8 +128,6 @@ The handoff is not one-way. Task Researcher can recommend returning to DT coachi
 * [Using DT Methods Together](using-together.md): End-to-end walkthrough of all nine DT methods
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

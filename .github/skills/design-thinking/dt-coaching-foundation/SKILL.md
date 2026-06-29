@@ -1,6 +1,6 @@
 ---
 name: dt-coaching-foundation
-description: "Design Thinking coaching foundation knowledge: coach identity and philosophy, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow - Brought to you by microsoft/hve-core"
+description: "Design Thinking coaching foundation knowledge: coach identity and philosophy, quality and fidelity constraints, method sequencing, coaching state schema, and the canonical deck workflow"
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -38,6 +38,3 @@ Load the reference that matches the current coaching moment.
   * `method-sequencing.md` — method transitions, space boundaries, and iteration patterns.
   * `coaching-state.md` — coaching state schema, file conventions, and recovery protocol.
   * `canonical-deck.md` — opt-in canonical deck and customer-card workflow.
-
----
-

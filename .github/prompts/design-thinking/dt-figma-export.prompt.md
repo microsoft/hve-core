@@ -512,7 +512,3 @@ The Figma MCP server applies rate limits based on your Figma plan:
 * **Dev or Full seats on Professional/Organization/Enterprise**: Per-minute rate limits matching Figma REST API Tier 1.
 
 For best results, ensure team members have Dev or Full seats on a paid Figma plan.
-
----
-
-Brought to you by microsoft/hve-core

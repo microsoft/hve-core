@@ -3,7 +3,7 @@ title: "Method 1: Scope Conversations"
 description: "Define project boundaries and stakeholder alignment through structured conversations that surface constraints, expectations, and success criteria."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-01, scope-conversations]
 estimated_reading_time: 5
@@ -81,8 +81,6 @@ When you have a clear scope statement, stakeholder map, and constraint inventory
 * [Design Thinking Overview](README.md)
 * [Method 2: Design Research](method-02-design-research.md)
 * [Method 3: Input Synthesis](method-03-input-synthesis.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

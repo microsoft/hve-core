@@ -1,5 +1,5 @@
 ---
-description: 'Payload schemas and data contracts for the PRD Builder orchestrator and PRD Quality Reviewer - Brought to you by microsoft/hve-core'
+description: 'Payload schemas and data contracts for the PRD Builder orchestrator and PRD Quality Reviewer'
 ---
 
 # PRD Quality Formats — Skill Entry
@@ -51,4 +51,4 @@ The findings and report payloads split responsibilities so that gate decisions l
 
 This skill and all files under `references/prd/` are original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The schemas themselves are HVE-Core IP and may be reused under the same license. No third-party standards or templates are redistributed by this skill.
 
-> Brought to you by microsoft/hve-core
+
