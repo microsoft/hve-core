@@ -14,7 +14,7 @@ This page has moved. The former Security Plan Creator agent is now the **Securit
 
 ## Where to Go
 
-* [Security Planning](../security/README): Overview, six-phase workflow, operational buckets, and invocation details.
+* [Security Planning](../security/README.md): Overview, six-phase workflow, operational buckets, and invocation details.
 * [Entry Modes](../security/entry-modes): From-PRD and capture entry modes.
 * [Phase Reference](../security/phase-reference): Phase-by-phase inputs, outputs, and state transitions.
 * [Handoff Pipeline](../security/handoff-pipeline): Backlog generation and RAI Planner recommendation.
@@ -22,7 +22,7 @@ This page has moved. The former Security Plan Creator agent is now the **Securit
 ## Next Steps
 
 1. Feed security findings into an [ADR](adr-creation) to document security architecture decisions
-2. See [Project Planning Agents](README) for the full agent catalog
+2. See [Project Planning Agents](README.md) for the full agent catalog
 
 > [!TIP]
 > Run the Security Planner after completing your [BRD or PRD](brd-prd-builders) to align threat analysis with documented requirements and system boundaries.
