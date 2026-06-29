@@ -24,6 +24,7 @@ BeforeAll {
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
             [switch]$WithPyprojectToml,
+            [switch]$WithoutUvLock,
             [switch]$WithPythonScripts,
             [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
@@ -73,6 +74,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 "@
+            if (-not $WithoutUvLock) {
+                Set-Content -Path (Join-Path $skillDir 'uv.lock') -Value 'version = 1'
+            }
         }
 
         if ($WithPythonScripts) {
