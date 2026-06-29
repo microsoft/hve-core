@@ -14,6 +14,7 @@ Items in the Highest Priority Rules section from attached instructions files ove
 * Breaking changes are acceptable.
 * Backward-compatibility layers or legacy support are added only when explicitly requested.
 * Tests, scripts, and one-off markdown docs are created or modified only when explicitly requested.
+* Ensure `npm ci` has ran recently before running any npm scripts in `package.json`.
 
 Rules for comments:
 
