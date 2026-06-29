@@ -24,12 +24,12 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                  | Sub-Category | Workflow                    | Persistence | Key Output                     |
-|----------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
-| [BRD Builder](brd-prd-builders)        | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
-| [PRD Builder](brd-prd-builders)        | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
-| [ADR Creator](adr-creation)            | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
-| [Security Planner](../security/README) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
+| Agent                                     | Sub-Category | Workflow                    | Persistence | Key Output                     |
+|-------------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
+| [BRD Builder](brd-prd-builders)           | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
+| [PRD Builder](brd-prd-builders)           | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
+| [ADR Creator](adr-creation)               | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
+| [Security Planner](../security/README.md) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
 
 ## Requirements
 
@@ -57,7 +57,7 @@ The Security Planner applies STRIDE-based security model analysis across seven o
 > [!IMPORTANT]
 > Run security planning after architecture decisions stabilize. Changes to infrastructure or service boundaries may invalidate earlier security models.
 
-See the [Security Planning](../security/README) guide for the workflow, operational buckets, and invocation details.
+See the [Security Planning](../security/README.md) guide for the workflow, operational buckets, and invocation details.
 
 ## Prerequisites
 
@@ -88,9 +88,9 @@ For greenfield projects, follow this order to build artifacts that feed into eac
 
 ## Related Documentation
 
-* [RPI Documentation](../../rpi/README): Task research, planning, and implementation workflows
-* [GitHub Backlog Manager](../github-backlog/README): Issue lifecycle management for GitHub repositories
-* [ADO Backlog Manager](../ado-backlog/README): Work item management for Azure DevOps projects
+* [RPI Documentation](../../rpi/README.md): Task research, planning, and implementation workflows
+* [GitHub Backlog Manager](../github-backlog/README.md): Issue lifecycle management for GitHub repositories
+* [ADO Backlog Manager](../ado-backlog/README.md): Work item management for Azure DevOps projects
 
 ---
 

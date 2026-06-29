@@ -8,10 +8,10 @@ helper functions used by both collection validation and plugin generation.
 
 ## Scripts
 
-| Script                         | npm Command                         | Description                                       |
-|--------------------------------|-------------------------------------|---------------------------------------------------|
-| Validate-Collections.ps1       | `npm run lint:collections-metadata` | Validate collection manifests                     |
-| Modules/CollectionHelpers.psm1 | (library)                           | YAML parsing, frontmatter, and collection helpers |
+| Script                         | npm Command                         | Description                                                                                                                                                                                                                                                   |
+|--------------------------------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Validate-Collections.ps1       | `npm run lint:collections-metadata` | Validate collection manifests                                                                                                                                                                                                                                 |
+| Modules/CollectionHelpers.psm1 | (library)                           | YAML parsing, frontmatter, and collection helpers, including strict-safe maturity propagation via `Get-CollectionMaturityVocabulary`, `Get-CollectionMaturityRank`, and `Resolve-StrictSafeMaturity` (unrecognized maturity values default to `experimental`) |
 
 ## Prerequisites
 

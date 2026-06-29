@@ -38,7 +38,7 @@ Analyze the Terraform and Bicep files in this repository and create an ASCII arc
 
 ## Related Documentation
 
-* [Project Planning Agents](README)
+* [Project Planning Agents](README.md)
 * [ADR Creator](adr-creation)
 
 ---
