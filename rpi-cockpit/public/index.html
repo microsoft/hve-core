@@ -298,25 +298,29 @@
   .gl-sizes { margin-left: auto; display: inline-flex; gap: 2px; }
   .gl-size { font: inherit; font-size: 11px; padding: 2px 9px; background: var(--bar, #323233); color: var(--text-2, #9D9D9D); border: 1px solid var(--stroke, #3C3C3C); cursor: pointer; }
   .gl-size.active { background: var(--brand, #0E639C); color: #fff; border-color: transparent; }
-  #gl-grid { flex: 1; overflow: auto; padding: 14px 18px; display: grid; gap: 16px; align-content: start; justify-content: start; }
-  #gl-grid.gsize-s { grid-template-columns: repeat(auto-fill, 300px); }
-  #gl-grid.gsize-m { grid-template-columns: repeat(auto-fill, 460px); }
-  #gl-grid.gsize-l { grid-template-columns: repeat(auto-fill, 640px); }
+  /* Responsive density: tiles fill the width (1fr, no side gutter); the minmax floor sets the
+     column count: ~1 on a phone, 6-7 on a desktop, up to ~10 on a wide desktop. */
+  /* grid-auto-rows: max-content - default auto rows collapse around the scaled-iframe thumbnail
+     in a 1fr column; max-content sizes each row to the card's full height. */
+  #gl-grid { flex: 1; overflow: auto; padding: 14px 18px; display: grid; gap: 14px; align-content: start; grid-auto-rows: max-content; }
+  #gl-grid.gsize-s { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  #gl-grid.gsize-m { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  #gl-grid.gsize-l { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
   .gl-group { grid-column: 1 / -1; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3, #6E6E6E); font-weight: 600; margin-top: 6px; padding-bottom: 4px; border-bottom: 1px solid var(--stroke, #3C3C3C); }
   .gl-card { margin: 0; border: 1px solid var(--stroke, #3C3C3C); border-radius: 8px; overflow: hidden; background: #111; cursor: pointer; }
-  .gl-cap { display: flex; align-items: baseline; gap: 8px; padding: 7px 10px; background: var(--bar, #323233); font-size: 12.5px; }
+  .gl-cap { display: flex; align-items: baseline; gap: 8px; padding: 7px 10px; background: var(--bar, #323233); font-size: 12px; }
   .gl-cap .gl-label { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gl-cap .gl-caption { color: var(--text-3, #6E6E6E); font-size: 11px; white-space: nowrap; }
   .gl-cap .gl-open { margin-left: auto; color: var(--accent-blue, #4FC1FF); text-decoration: none; font-size: 11px; }
-  .gl-thumb { overflow: hidden; background: #1E1E1E; }
-  .gl-thumb iframe { border: 0; transform-origin: top left; pointer-events: none; }
-  .gl-thumb .meta { padding: 18px; }
-  #gl-grid.gsize-s .gl-thumb { height: 195px; }
-  #gl-grid.gsize-s .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.25); }
-  #gl-grid.gsize-m .gl-thumb { height: 299px; }
-  #gl-grid.gsize-m .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.383); }
-  #gl-grid.gsize-l .gl-thumb { height: 416px; }
-  #gl-grid.gsize-l .gl-thumb iframe { width: 1200px; height: 780px; transform: scale(.533); }
+  /* M/L thumbnail: the wrapper height is the 1200x780 aspect ratio of the fluid tile width;
+     renderGallery sets each iframe's transform: scale(thumbWidth/1200) in JS (and on resize),
+     since CSS cannot derive a scale ratio from a fluid container width. */
+  .gl-thumb { width: 100%; aspect-ratio: 1200 / 780; overflow: hidden; background: #1E1E1E; }
+  .gl-thumb iframe { border: 0; width: 1200px; height: 780px; transform-origin: top left; pointer-events: none; }
+  .gl-thumb .meta { padding: 18px; font-size: 11px; }
+  /* S: a compact clickable box with a brief explanation, no rendered site. */
+  .gl-card.gl-s .gl-desc { padding: 8px 10px 10px; font-size: 11.5px; line-height: 1.4; color: var(--text-2, #9D9D9D); word-break: break-word; }
+  .gl-card.gl-s .gl-tag { display: block; margin-top: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3, #6E6E6E); }
   #gl-lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.72); display: flex; flex-direction: column; padding: 24px; }
   .gl-lb-head { display: flex; align-items: center; gap: 14px; color: #eee; padding: 6px 4px; font-size: 13px; }
   #gl-lb-label { font-weight: 600; }
