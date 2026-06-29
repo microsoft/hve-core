@@ -28,6 +28,13 @@ from typing import Any, Callable, NoReturn, cast
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
+REQUEST_TIMEOUT = 30
+MAX_BODY_BYTES = 1_048_576
+MAX_LOG_BYTES = 65_536
+MAX_NUMERIC_ID = 2_147_483_647
+MAX_POSITIVE_INT = 100
+VALID_MR_STATES = {"all", "opened", "closed", "locked", "merged"}
+REF_PATTERN = re.compile(r"^[\w./-]+$")
 
 selected_fields: list[str] | None = None
 gitlab_url = ""
@@ -35,6 +42,31 @@ gitlab_token = ""
 api_url = ""
 
 sys.dont_write_bytecode = True
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects so tokens are not replayed to a new host."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: object,
+        code: int,
+        msg: str,
+        headers: object,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        location = newurl or "<unknown>"
+        raise urllib.error.HTTPError(
+            req.full_url,
+            code,
+            f"refusing redirect to {location}",
+            headers,
+            fp,
+        )
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect())
 
 
 def die(message: str, exit_code: int = EXIT_FAILURE) -> NoReturn:
@@ -49,6 +81,32 @@ def die(message: str, exit_code: int = EXIT_FAILURE) -> NoReturn:
     """
     print(f"error: {message}", file=sys.stderr)
     raise SystemExit(exit_code)
+
+
+def _redact(text: str) -> str:
+    """Remove common secret-looking values from error text."""
+    if not text:
+        return text
+    redacted = re.sub(
+        r"(?i)\b(token|password|secret|authorization)\b\s*[:=]?\s*([A-Za-z0-9._-]{2,})",
+        r"\1=[REDACTED]",
+        text,
+    )
+    return redacted
+
+
+def _is_loopback(host: str | None) -> bool:
+    """Return True when a URL host is loopback-only."""
+    if not host:
+        return False
+    host = host.lower()
+    return host in {"localhost", "127.0.0.1", "::1"} or host.startswith("127.")
+
+
+def _sanitize_remote_url(remote_url: str) -> str:
+    """Strip any embedded credentials from a git remote URL for logging."""
+    pattern = re.compile(r"^(?P<scheme>https?://)(?P<user>[^/@]+)(?::(?P<password>[^@/]+))?@")
+    return pattern.sub(r"\g<scheme>", remote_url)
 
 
 def require_environment() -> None:
@@ -67,6 +125,15 @@ def require_environment() -> None:
             "GITLAB_URL must start with https:// (or http:// for local dev)",
             EXIT_USAGE,
         )
+    parsed_url = urllib.parse.urlsplit(gitlab_url)
+    if parsed_url.scheme == "http" and not _is_loopback(parsed_url.hostname):
+        allow_insecure = os.environ.get("GITLAB_ALLOW_INSECURE", "").strip() == "1"
+        if not allow_insecure:
+            die(
+                "GITLAB_URL must use https:// for non-local hosts "
+                "unless GITLAB_ALLOW_INSECURE=1",
+                EXIT_USAGE,
+            )
     if not gitlab_token:
         die("GITLAB_TOKEN is not set", EXIT_USAGE)
 
@@ -95,29 +162,127 @@ def project() -> str:
     except (subprocess.CalledProcessError, FileNotFoundError):
         die("GITLAB_PROJECT not set and no git remote found", EXIT_USAGE)
 
+    sanitized_remote_url = _sanitize_remote_url(remote_url)
     if remote_url.startswith("git@"):
         path = remote_url.split(":", 1)[1]
     elif re.match(r"^https?://", remote_url):
-        path = re.sub(r"^https?://[^/]*/", "", remote_url)
+        parsed_remote = urllib.parse.urlsplit(remote_url)
+        path = parsed_remote.path.lstrip("/")
     else:
-        die(f"cannot parse git remote URL: {remote_url}", EXIT_USAGE)
+        die(f"cannot parse git remote URL: {sanitized_remote_url}", EXIT_USAGE)
 
     path = strip_git_suffix(path)
     if not path:
-        die(f"cannot extract project path from remote: {remote_url}", EXIT_USAGE)
+        die(
+            f"cannot extract project path from remote: {sanitized_remote_url}",
+            EXIT_USAGE,
+        )
     return urllib.parse.quote(path, safe="")
 
 
 def validate_numeric_id(value: str) -> None:
     """Validate that a CLI argument is a numeric identifier."""
-    if not re.match(r"^\d+$", value):
+    if not re.fullmatch(r"\d+", value):
         die(f"expected numeric ID, got: {value}", EXIT_USAGE)
+    numeric_value = int(value)
+    if numeric_value <= 0 or numeric_value > MAX_NUMERIC_ID:
+        die(
+            f"expected numeric ID between 1 and {MAX_NUMERIC_ID}, got: {value}",
+            EXIT_USAGE,
+        )
 
 
-def validate_positive_int(value: str, label: str = "value") -> None:
+def validate_positive_int(
+    value: str,
+    label: str = "value",
+    upper_bound: int = MAX_POSITIVE_INT,
+) -> None:
     """Validate that a CLI argument is a positive integer string."""
-    if not re.match(r"^\d+$", value):
+    if not re.fullmatch(r"\d+", value):
         die(f"{label} must be a positive integer, got: {value}", EXIT_USAGE)
+    numeric_value = int(value)
+    if numeric_value <= 0 or numeric_value > upper_bound:
+        die(
+            f"{label} must be a positive integer between 1 and "
+            f"{upper_bound}, got: {value}",
+            EXIT_USAGE,
+        )
+
+
+def validate_state(value: str) -> None:
+    """Validate that a merge request state is allowed."""
+    if value not in VALID_MR_STATES:
+        die(f"invalid merge request state: {value}", EXIT_USAGE)
+
+
+def validate_ref(value: str) -> None:
+    """Validate that a pipeline ref matches the supported pattern."""
+    if not REF_PATTERN.fullmatch(value):
+        die(f"invalid ref: {value}", EXIT_USAGE)
+
+
+def _read_capped(response: Any, limit: int) -> bytes:
+    """Read up to the limit and reject oversized bodies."""
+    chunk = response.read(limit + 1)
+    if chunk is None:
+        return b""
+    if len(chunk) > limit:
+        die("response body exceeds size limit", EXIT_FAILURE)
+    return chunk
+
+
+def _request_bytes(
+    method: str,
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    data: object | None = None,
+    require_json: bool = True,
+    error_context: str | None = None,
+) -> bytes:
+    """Issue an HTTP request through the hardened transport."""
+    request_headers = {"Accept": "application/json"}
+    if headers:
+        request_headers.update(headers)
+    if data is not None:
+        body = json.dumps(data).encode("utf-8")
+    else:
+        body = None
+    request_obj = urllib.request.Request(
+        url, data=body, headers=request_headers, method=method
+    )
+    try:
+        with _OPENER.open(request_obj, timeout=REQUEST_TIMEOUT) as response:
+            content_type = ""
+            if hasattr(response, "headers"):
+                content_type = str(response.headers.get("Content-Type", "") or "")
+            if (
+                require_json
+                and content_type
+                and not content_type.lower().startswith("application/json")
+            ):
+                die(f"unexpected Content-Type: {content_type}", EXIT_FAILURE)
+            return _read_capped(response, MAX_BODY_BYTES)
+    except urllib.error.HTTPError as error:
+        body_bytes = _read_capped(error, MAX_BODY_BYTES)
+        raw_error = body_bytes.decode("utf-8", errors="replace")
+        if error_context:
+            failure_message = f"HTTP {error.code} {error_context}"
+        else:
+            failure_message = f"HTTP {error.code} from {method} {url}"
+        try:
+            parsed_error = json.loads(raw_error)
+            if isinstance(parsed_error, dict):
+                message = parsed_error.get("message") or parsed_error.get("error")
+                if isinstance(message, str) and message.strip():
+                    print(_redact(message), file=sys.stderr)
+                    die(failure_message)
+        except (json.JSONDecodeError, ValueError):
+            pass
+        redacted_body = _redact(raw_error)
+        if redacted_body.strip():
+            print(redacted_body, file=sys.stderr)
+        die(failure_message)
 
 
 def request(
@@ -142,22 +307,8 @@ def request(
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
-    body = json.dumps(data).encode() if data is not None else None
-    request_obj = urllib.request.Request(url, data=body, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(request_obj) as response:
-            raw = response.read().decode()
-    except urllib.error.HTTPError as error:
-        raw = error.read().decode()
-        try:
-            parsed_error = json.loads(raw)
-            print(
-                parsed_error.get("message", parsed_error.get("error", parsed_error)),
-                file=sys.stderr,
-            )
-        except (json.JSONDecodeError, ValueError):
-            print(raw, file=sys.stderr)
-        die(f"HTTP {error.code} from {method} {url}")
+    raw_bytes = _request_bytes(method, url, headers=headers, data=data)
+    raw = raw_bytes.decode("utf-8", errors="replace")
 
     if not raw.strip():
         return None
@@ -240,8 +391,9 @@ def load_json_payload(raw_payload: str, usage: str) -> object:
 def cmd_mr_list(args: list[str]) -> None:
     """List merge requests."""
     state = args[0] if args else "all"
+    validate_state(state)
     max_results = args[1] if len(args) > 1 else "20"
-    validate_positive_int(max_results, "max_results")
+    validate_positive_int(max_results, "max_results", MAX_POSITIVE_INT)
     data = request(
         "GET",
         f"{api_url}/projects/{project()}/merge_requests?state={state}&per_page={max_results}&order_by=created_at&sort=desc",
@@ -322,7 +474,7 @@ def cmd_mr_notes(args: list[str]) -> None:
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
     max_results = args[1] if len(args) > 1 else "100"
-    validate_positive_int(max_results, "max_results")
+    validate_positive_int(max_results, "max_results", MAX_POSITIVE_INT)
     data = request(
         "GET",
         f"{api_url}/projects/{project()}/merge_requests/{merge_request_iid}/notes?per_page={max_results}&sort=asc",
@@ -357,6 +509,7 @@ def cmd_pipeline_run(args: list[str]) -> None:
     """Trigger a pipeline for a branch or tag."""
     if not args:
         die("usage: gitlab pipeline-run <branch-or-tag>", EXIT_USAGE)
+    validate_ref(args[0])
     request("POST", f"{api_url}/projects/{project()}/pipelines", {"ref": args[0]})
 
 
@@ -382,17 +535,17 @@ def cmd_job_log(args: list[str]) -> None:
     job_id = args[0]
     validate_numeric_id(job_id)
     url = f"{api_url}/projects/{project()}/jobs/{job_id}/trace"
-    request_obj = urllib.request.Request(
+    raw_bytes = _request_bytes(
+        "GET",
         url,
         headers={"PRIVATE-TOKEN": gitlab_token},
-        method="GET",
+        require_json=False,
+        error_context="fetching job log",
     )
-    try:
-        with urllib.request.urlopen(request_obj) as response:
-            print(response.read().decode())
-    except urllib.error.HTTPError as error:
-        print(error.read().decode(), file=sys.stderr)
-        die(f"HTTP {error.code} fetching job log")
+    log_text = raw_bytes.decode("utf-8", errors="replace")
+    if len(log_text) > MAX_LOG_BYTES:
+        log_text = log_text[:MAX_LOG_BYTES] + "\n... [truncated]"
+    print(log_text, end="")
 
 
 COMMANDS: dict[str, Callable[[list[str]], None]] = {

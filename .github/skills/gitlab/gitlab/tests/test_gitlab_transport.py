@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import urllib.request
 from typing import cast
@@ -143,11 +144,13 @@ class TestRequest:
     ) -> None:
         captured_request: dict[str, urllib.request.Request] = {}
 
-        def fake_urlopen(request: urllib.request.Request) -> object:
+        def fake_urlopen(
+            request: urllib.request.Request, timeout: int | None = None
+        ) -> object:
             captured_request["request"] = request
             return response_factory(REQUEST_BODY)
 
-        mocker.patch("urllib.request.urlopen", side_effect=fake_urlopen)
+        mocker.patch("gitlab._OPENER.open", side_effect=fake_urlopen)
         parsed = gitlab.request("POST", REQUEST_ENDPOINT, {"title": "MR"})
 
         assert parsed == REQUEST_JSON
@@ -167,7 +170,7 @@ class TestRequest:
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
-            "urllib.request.urlopen",
+            "gitlab._OPENER.open",
             return_value=response_factory('{"iid": 7}'),
         )
         parsed = gitlab.request("GET", REQUEST_ENDPOINT, quiet=True)
@@ -181,7 +184,7 @@ class TestRequest:
         response_factory: ResponseFactory,
         mocker: MockerFixture,
     ) -> None:
-        mocker.patch("urllib.request.urlopen", return_value=response_factory("   "))
+        mocker.patch("gitlab._OPENER.open", return_value=response_factory("   "))
         assert gitlab.request("GET", REQUEST_ENDPOINT) is None
 
     def test_prints_raw_text_for_non_json_response(
@@ -192,7 +195,7 @@ class TestRequest:
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
-            "urllib.request.urlopen",
+            "gitlab._OPENER.open",
             return_value=response_factory(NON_JSON_BODY),
         )
         parsed = gitlab.request("GET", REQUEST_ENDPOINT)
@@ -209,7 +212,7 @@ class TestRequest:
     ) -> None:
         error = http_error_factory('{"message": "forbidden"}', code=403)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
         with pytest.raises(SystemExit) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
@@ -227,13 +230,82 @@ class TestRequest:
     ) -> None:
         error = http_error_factory("Service unavailable", code=503)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
         with pytest.raises(SystemExit):
             gitlab.request("DELETE", REQUEST_ENDPOINT)
 
         error_lines = capsys.readouterr().err.splitlines()
         assert error_lines[0] == "Service unavailable"
         assert error_lines[1] == f"error: HTTP 503 from DELETE {REQUEST_ENDPOINT}"
+
+
+class TestGitLabTransportHardening:
+    """Regression tests for hardened transport behavior."""
+
+    def test_redirect_blocked(self) -> None:
+        handler = gitlab._NoRedirect()
+        request = urllib.request.Request("https://gitlab.example.com/redirect")
+
+        with pytest.raises(urllib.error.HTTPError) as exc_info:
+            handler.redirect_request(
+                request,
+                None,
+                302,
+                "Found",
+                None,
+                "https://evil.example.com/next",
+            )
+
+        assert exc_info.value.code == 302
+        assert "refusing redirect" in str(exc_info.value)
+
+    def test_requires_https_for_non_localhost(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://example.com")
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_invalid_mr_state(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_mr_list(["invalid-state"])
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_invalid_ref(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_pipeline_run(["invalid ref"])
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_zero_for_positive_integer(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.validate_positive_int("0", "max_results")
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_redacts_sensitive_error_bodies(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
+    ) -> None:
+        error = urllib.error.HTTPError(
+            url=REQUEST_ENDPOINT,
+            code=403,
+            msg="forbidden",
+            hdrs={},
+            fp=io.BytesIO(b'{"message": "token abc123"}'),
+        )
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
+
+        with pytest.raises(SystemExit):
+            gitlab.request("GET", REQUEST_ENDPOINT)
+
+        assert "abc123" not in capsys.readouterr().err
 
 
 class TestCmdJobLog:
@@ -247,7 +319,7 @@ class TestCmdJobLog:
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
-            "urllib.request.urlopen",
+            "gitlab._OPENER.open",
             return_value=response_factory("line one\nline two"),
         )
         gitlab.cmd_job_log(["99"])
@@ -278,7 +350,7 @@ class TestCmdJobLog:
     ) -> None:
         error = http_error_factory(TRACE_UNAVAILABLE, code=404)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
         with pytest.raises(SystemExit) as exc_info:
             gitlab.cmd_job_log(["99"])
 

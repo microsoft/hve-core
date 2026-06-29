@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import io
 import json
 import os
 import re
@@ -28,8 +29,35 @@ from typing import Any
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USAGE = 2
+REQUEST_TIMEOUT_SECONDS = 20
+MAX_BODY_BYTES = 256 * 1024
 ISSUE_KEY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]+-\d+$")
 INTEGER_PATTERN = re.compile(r"^\d+$")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects so credentials are never replayed cross-host."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> Any:
+        location = headers.get("Location", "<unknown>") if headers else "<unknown>"
+        raise urllib.error.HTTPError(
+            req.full_url,
+            code,
+            f"redirect blocked to {location}",
+            hdrs={},
+            fp=io.BytesIO(b""),
+        )
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect())
 
 
 class ScriptError(Exception):
@@ -38,6 +66,117 @@ class ScriptError(Exception):
     def __init__(self, message: str, exit_code: int = EXIT_FAILURE) -> None:
         super().__init__(message)
         self.exit_code = exit_code
+
+
+def _is_loopback_host(hostname: str | None) -> bool:
+    """Return True for loopback hosts that may allow local development."""
+    return hostname in {"localhost", "127.0.0.1", "::1"}
+
+
+def _validate_base_url(base_url: str) -> None:
+    """Validate the base URL and enforce TLS for non-loopback hosts."""
+    parsed = urllib.parse.urlsplit(base_url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ScriptError(
+            "JIRA_BASE_URL must start with https:// "
+            "(or http:// for local development)",
+            EXIT_USAGE,
+        )
+
+    if parsed.scheme == "http":
+        allow_insecure = os.environ.get("JIRA_ALLOW_INSECURE", "").strip() == "1"
+        if not allow_insecure and not _is_loopback_host(parsed.hostname):
+            raise ScriptError(
+                "JIRA_BASE_URL must use https:// for non-loopback hosts",
+                EXIT_USAGE,
+            )
+
+
+def _open_url(request: urllib.request.Request, *, timeout: int) -> Any:
+    """Open a URL using the hardened opener, falling back to patched urlopen."""
+    if urllib.request.urlopen is not urllib.request.__dict__.get("urlopen"):
+        return urllib.request.urlopen(request, timeout=timeout)
+    return _OPENER.open(request, timeout=timeout)
+
+
+def _read_response_body(response: Any) -> bytes:
+    """Read a response body up to the configured limit."""
+    read = getattr(response, "read", None)
+    if read is None:
+        return b""
+
+    try:
+        body = read(MAX_BODY_BYTES + 1)
+    except TypeError:
+        body = read()
+
+    if isinstance(body, str):
+        body = body.encode("utf-8")
+    if body is None:
+        return b""
+    if len(body) > MAX_BODY_BYTES:
+        raise ScriptError(
+            f"Response body exceeds {MAX_BODY_BYTES} bytes (too large)",
+            EXIT_FAILURE,
+        )
+    return body
+
+
+def _get_response_content_type(response: Any) -> str:
+    """Extract the response content type from headers when available."""
+    headers = getattr(response, "headers", None)
+    if headers is None:
+        return ""
+    if hasattr(headers, "get"):
+        content_type = headers.get("Content-Type") or headers.get("content-type") or ""
+        return str(content_type)
+    return ""
+
+
+def _redact_sensitive_text(text: str) -> str:
+    """Redact bearer tokens and similar secrets from diagnostic text."""
+    redacted = text.strip()
+    redacted = re.sub(
+        r"(?i)\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+",
+        r"\1 [REDACTED]",
+        redacted,
+    )
+    redacted = re.sub(
+        r"(?i)\b(authorization|token)\s*[:=]\s*[^\s,;]+",
+        r"\1=[REDACTED]",
+        redacted,
+    )
+    return redacted
+
+
+def _create_response_with_body(
+    body: str | bytes,
+    *,
+    content_type: str = "",
+) -> Any:
+    """Create a minimal response-like object with a body and optional headers."""
+    if isinstance(body, str):
+        payload = body.encode("utf-8")
+    else:
+        payload = body
+
+    class _Response:
+        def __init__(self, payload: bytes, content_type: str) -> None:
+            self._payload = payload
+            self.headers = {"Content-Type": content_type} if content_type else {}
+
+        def __enter__(self) -> "_Response":
+            return self
+
+        def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
+            return False
+
+        def read(self, size: int | None = None) -> bytes:
+            if size is None:
+                return self._payload
+            return self._payload[:size]
+
+    return _Response(payload, content_type)
 
 
 @dataclass(frozen=True)
@@ -67,6 +206,7 @@ class JiraClient:
                 "(or http:// for local development)",
                 EXIT_USAGE,
             )
+        _validate_base_url(base_url)
 
         jira_pat = os.environ.get("JIRA_PAT", "").strip()
         jira_user_email = os.environ.get("JIRA_USER_EMAIL", "").strip()
@@ -108,6 +248,7 @@ class JiraClient:
         Raises:
             ScriptError: Request fails or Jira returns an error response.
         """
+        _validate_base_url(self.api_url)
         url = f"{self.api_url}{path}"
         headers = {
             "Authorization": self.auth_header,
@@ -118,11 +259,26 @@ class JiraClient:
         request = urllib.request.Request(url, data=body, headers=headers, method=method)
 
         try:
-            with urllib.request.urlopen(request) as response:
-                raw = response.read().decode("utf-8")
+            with _open_url(request, timeout=REQUEST_TIMEOUT_SECONDS) as response:
+                body_bytes = _read_response_body(response)
+                content_type = _get_response_content_type(response)
+                if content_type and not content_type.lower().startswith(
+                    "application/json"
+                ):
+                    raise ScriptError(
+                        f"Unexpected content type from Jira API: {content_type}",
+                        EXIT_FAILURE,
+                    )
+                raw = body_bytes.decode("utf-8", errors="replace")
         except urllib.error.HTTPError as exc:
-            raw = exc.read().decode("utf-8")
+            body_bytes = _read_response_body(exc)
+            raw = body_bytes.decode("utf-8", errors="replace")
             details = _extract_error_message(raw)
+            if exc.code in {301, 302, 303, 307, 308}:
+                raise ScriptError(
+                    "Refusing redirect from "
+                    f"{method} {url}: {details or 'redirect blocked'}"
+                ) from exc
             raise ScriptError(
                 f"HTTP {exc.code} from {method} {url}: {details}"
             ) from exc
@@ -142,10 +298,11 @@ class JiraClient:
 
 def _extract_error_message(raw: str) -> str:
     """Extract the clearest available message from an error payload."""
+    sanitized = _redact_sensitive_text(raw)
     try:
-        payload = json.loads(raw)
+        payload = json.loads(sanitized)
     except json.JSONDecodeError:
-        return raw.strip() or "No error details returned"
+        return sanitized.strip() or "No error details returned"
 
     if isinstance(payload, dict):
         error_messages = payload.get("errorMessages")
@@ -155,7 +312,7 @@ def _extract_error_message(raw: str) -> str:
         if isinstance(errors, dict) and errors:
             return "; ".join(f"{key}: {value}" for key, value in errors.items())
 
-    return raw.strip() or "No error details returned"
+    return sanitized.strip() or "No error details returned"
 
 
 def _validate_issue_key(issue_key: str) -> None:
@@ -166,7 +323,12 @@ def _validate_issue_key(issue_key: str) -> None:
 
 def _read_json_argument(payload: str | None, usage_message: str) -> Any:
     """Read JSON from an argument or stdin and parse it."""
-    raw_payload = payload if payload is not None else sys.stdin.read().strip()
+    raw_payload = payload if payload is not None else sys.stdin.read()
+    if raw_payload is None:
+        raw_payload = ""
+    if len(raw_payload.encode("utf-8")) > MAX_BODY_BYTES:
+        raise ScriptError("Input payload exceeds size limit", EXIT_USAGE)
+    raw_payload = raw_payload.strip()
     if not raw_payload:
         raise ScriptError(usage_message, EXIT_USAGE)
 
@@ -234,17 +396,28 @@ def _split_fields(raw_fields: str | None) -> list[str] | None:
     return fields
 
 
+def _clamp_max_results(value: int) -> int:
+    """Clamp max results to the configured upper bound."""
+    if value <= 0:
+        raise ScriptError("max_results must be a positive integer", EXIT_USAGE)
+    return min(value, 100)
+
+
+def _quote_path_segment(value: str) -> str:
+    """Quote a path segment for safe interpolation into Jira routes."""
+    return urllib.parse.quote(value, safe="")
+
+
 def handle_search(client: JiraClient, args: argparse.Namespace) -> Any:
     """Search for Jira issues using JQL."""
-    if args.max_results <= 0:
-        raise ScriptError("max_results must be a positive integer", EXIT_USAGE)
+    max_results = _clamp_max_results(args.max_results)
 
     encoded_jql = urllib.parse.quote(args.jql, safe="")
     if client.use_legacy_search:
-        path = f"/search?jql={encoded_jql}&maxResults={args.max_results}"
+        path = f"/search?jql={encoded_jql}&maxResults={max_results}"
     else:
         path = (
-            f"/search/jql?jql={encoded_jql}&maxResults={args.max_results}"
+            f"/search/jql?jql={encoded_jql}&maxResults={max_results}"
             "&fields=*navigable"
         )
     response = client.request("GET", path)
@@ -316,7 +489,12 @@ def handle_transition(client: JiraClient, args: argparse.Namespace) -> Any:
 def handle_comment(client: JiraClient, args: argparse.Namespace) -> Any:
     """Add a comment to a Jira issue."""
     _validate_issue_key(args.issue_key)
-    body = args.body if args.body is not None else sys.stdin.read().strip()
+    body = args.body if args.body is not None else sys.stdin.read()
+    if body is None:
+        body = ""
+    if len(body.encode("utf-8")) > MAX_BODY_BYTES:
+        raise ScriptError("Comment body exceeds size limit", EXIT_USAGE)
+    body = body.strip()
     if not body:
         raise ScriptError(
             "Provide a comment body as an argument or pipe it through "
@@ -343,11 +521,13 @@ def handle_fields(client: JiraClient, args: argparse.Namespace) -> Any:
     if args.issue_type_id:
         if not INTEGER_PATTERN.match(args.issue_type_id):
             raise ScriptError("issue_type_id must be a positive integer", EXIT_USAGE)
+        quoted_project_key = _quote_path_segment(args.project_key)
         return client.request(
             "GET",
-            f"/issue/createmeta/{args.project_key}/issuetypes/{args.issue_type_id}",
+            f"/issue/createmeta/{quoted_project_key}/issuetypes/{args.issue_type_id}",
         )
-    return client.request("GET", f"/issue/createmeta/{args.project_key}/issuetypes")
+    quoted_project_key = _quote_path_segment(args.project_key)
+    return client.request("GET", f"/issue/createmeta/{quoted_project_key}/issuetypes")
 
 
 def create_parser() -> argparse.ArgumentParser:

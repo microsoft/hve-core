@@ -38,7 +38,7 @@ class TestStripGitSuffix:
 class TestValidateNumericId:
     """Tests for validate_numeric_id."""
 
-    @pytest.mark.parametrize("value", ["0", "7", "123456"])
+    @pytest.mark.parametrize("value", ["7", "123456"])
     def test_accepts_numeric_strings(self, value: str) -> None:
         gitlab.validate_numeric_id(value)
 
@@ -58,7 +58,7 @@ class TestValidateNumericId:
 class TestValidatePositiveInt:
     """Tests for validate_positive_int."""
 
-    @pytest.mark.parametrize("value", ["0", "1", "250"])
+    @pytest.mark.parametrize("value", ["1", "50", "100"])
     def test_accepts_digit_strings(self, value: str) -> None:
         gitlab.validate_positive_int(value, "max_results")
 

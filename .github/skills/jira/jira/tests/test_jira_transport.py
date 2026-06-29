@@ -5,14 +5,16 @@
 from __future__ import annotations
 
 import base64
+import io
 import json
 import urllib.error
 import urllib.request
+from types import SimpleNamespace
 from typing import cast
 
 import jira
 import pytest
-from conftest import HttpErrorFactory, ResponseFactory
+from conftest import ClientRecorder, HttpErrorFactory, ResponseFactory
 from pytest_mock import MockerFixture
 from test_constants import (
     ERROR_AUTH_MISSING,
@@ -90,11 +92,11 @@ def test_request_returns_parsed_json(
 ) -> None:
     captured_request: dict[str, urllib.request.Request] = {}
 
-    def fake_urlopen(request: urllib.request.Request) -> object:
+    def fake_urlopen(request: urllib.request.Request, timeout: int) -> object:
         captured_request["request"] = request
         return response_factory('{"key": "PROJ-123"}')
 
-    mocker.patch("urllib.request.urlopen", side_effect=fake_urlopen)
+    mocker.patch("jira._OPENER.open", side_effect=fake_urlopen)
     result = configured_client.request(
         "POST",
         REQUEST_PATH,
@@ -116,7 +118,7 @@ def test_request_returns_none_for_empty_body(
     response_factory: ResponseFactory,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("urllib.request.urlopen", return_value=response_factory("   "))
+    mocker.patch("jira._OPENER.open", return_value=response_factory("   "))
     assert configured_client.request("GET", REQUEST_PATH) is None
 
 
@@ -125,7 +127,7 @@ def test_request_returns_plain_text_for_non_json_response(
     response_factory: ResponseFactory,
     mocker: MockerFixture,
 ) -> None:
-    mocker.patch("urllib.request.urlopen", return_value=response_factory("plain text"))
+    mocker.patch("jira._OPENER.open", return_value=response_factory("plain text"))
     assert configured_client.request("GET", REQUEST_PATH) == "plain text"
 
 
@@ -146,7 +148,7 @@ def test_request_translates_http_error_details(
 ) -> None:
     error = http_error_factory(body, code=403, url=REQUEST_URL)
 
-    mocker.patch("urllib.request.urlopen", side_effect=error)
+    mocker.patch("jira._OPENER.open", side_effect=error)
     with pytest.raises(jira.ScriptError) as exc_info:
         configured_client.request("GET", REQUEST_PATH)
 
@@ -158,7 +160,7 @@ def test_request_translates_url_error(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "urllib.request.urlopen",
+        "jira._OPENER.open",
         side_effect=urllib.error.URLError("network down"),
     )
     with pytest.raises(jira.ScriptError) as exc_info:
@@ -167,3 +169,115 @@ def test_request_translates_url_error(
     assert str(exc_info.value) == (
         f"Could not reach Jira API at {REQUEST_URL}: network down"
     )
+
+
+def test_request_blocks_redirects(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    def fake_open(request: urllib.request.Request, timeout: int) -> object:
+        raise urllib.error.HTTPError(
+            url=request.full_url,
+            code=302,
+            msg="Found",
+            hdrs={"Location": "https://evil.example"},
+            fp=io.BytesIO(b""),
+        )
+
+    mocker.patch("jira._OPENER.open", side_effect=fake_open)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    assert "redirect" in str(exc_info.value).lower()
+
+
+def test_from_environment_rejects_insecure_http_urls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_BASE_URL", "http://jira.example.com")
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira.JiraClient.from_environment()
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+    assert "https" in str(exc_info.value)
+
+
+def test_request_passes_timeout_to_opener(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_open(request: urllib.request.Request, timeout: int) -> object:
+        captured["timeout"] = timeout
+        return jira._create_response_with_body(
+            '{"ok": true}',
+            content_type="application/json",
+        )
+
+    mocker.patch("jira._OPENER.open", side_effect=fake_open)
+
+    configured_client.request("GET", REQUEST_PATH)
+
+    assert captured["timeout"] == jira.REQUEST_TIMEOUT_SECONDS
+
+
+def test_request_rejects_oversize_responses(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    body = b"x" * (jira.MAX_BODY_BYTES + 1)
+    response = jira._create_response_with_body(body, content_type="application/json")
+    mocker.patch("jira._OPENER.open", return_value=response)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    assert "too large" in str(exc_info.value).lower()
+
+
+def test_handle_fields_quotes_project_key() -> None:
+    client = ClientRecorder()
+    args = SimpleNamespace(project_key="PROJ/ABC", issue_type_id=None)
+
+    jira.handle_fields(client, args)
+
+    assert client.calls[0].path == "/issue/createmeta/PROJ%2FABC/issuetypes"
+
+
+def test_handle_search_clamps_max_results() -> None:
+    client = ClientRecorder()
+    args = SimpleNamespace(max_results=250, jql="project = PROJ", fields=None)
+
+    jira.handle_search(client, args)
+
+    assert client.calls[0].path.startswith(
+        "/search?jql=project%20%3D%20PROJ&maxResults=100"
+    )
+
+
+def test_request_redacts_error_details(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    def fake_open(request: urllib.request.Request, timeout: int) -> object:
+        raise urllib.error.HTTPError(
+            url=request.full_url,
+            code=400,
+            msg="Bad Request",
+            hdrs={"Content-Type": "application/json"},
+            fp=io.BytesIO(
+                b'{"errorMessages": ["Authorization: Bearer super-secret-token"]}'
+            ),
+        )
+
+    mocker.patch("jira._OPENER.open", side_effect=fake_open)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    message = str(exc_info.value)
+    assert "super-secret-token" not in message
+    assert "[REDACTED]" in message
