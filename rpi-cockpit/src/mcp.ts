@@ -259,6 +259,18 @@ export function buildMcpServer(bridge: Bridge): McpServer {
   );
 
   server.registerTool(
+    "promptlab_start",
+    { description: "Begin a prompt workbench (the behavior test bench); switches the cockpit to the promptlab view. Name the prompt being hardened; optionally give its current text and the iteration round (default 1). Re-call with round+1 for a fresh pass.", inputSchema: { name: z.string(), prompt: z.string().optional(), round: z.number().int().optional() } },
+    async (a) => text(handlers.promptlab_start(bridge, a)),
+  );
+
+  server.registerTool(
+    "add_case",
+    { description: "Add or update one prompt TEST CASE in the workbench (a scenario the prompt is run on, not a kanban item). Give an id and the scenario; once the Tester runs it and the Evaluator judges, update the same id with the literal output, a verdict (pending/running/pass/warn/fail), and an optional note.", inputSchema: { id: z.string(), scenario: z.string(), output: z.string().optional(), verdict: z.enum(["pending", "running", "pass", "warn", "fail"]).optional(), note: z.string().optional() } },
+    async (a) => text(handlers.add_case(bridge, a)),
+  );
+
+  server.registerTool(
     "present_workflows",
     { description: "Offer the user the HVE Core workflows as a native choice card and return the chosen workflow's launch instruction. Use to let the user pick what to do.", inputSchema: {} },
     async () =>

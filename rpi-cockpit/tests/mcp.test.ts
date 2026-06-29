@@ -51,7 +51,9 @@ describe("mcp face", () => {
     expect(names).toContain("gallery_open");
     expect(names).toContain("gallery_add");
     expect(names).toContain("gallery_clear");
-    expect(tools).toHaveLength(36);
+    expect(tools).toHaveLength(38);
+    expect(names).toContain("promptlab_start");
+    expect(names).toContain("add_case");
 
     await client.callTool({ name: "offer_approaches", arguments: { label: "Pick", options: [{ id: "a", title: "A" }] } });
     expect(bridge.state.steerMenu).toMatchObject({ label: "Pick" });
@@ -350,6 +352,25 @@ describe("mcp face", () => {
     expect(bridge.state.galleryItems).toEqual([]);
 
     const bad = await client.callTool({ name: "gallery_open", arguments: { title: "T", items: [{ label: "Bad", url: "http://evil.example.com" }] } });
+    expect(bad.isError).toBe(true);
+  });
+
+  it("promptlab_start + add_case drive the workbench and reject a bad verdict", async () => {
+    const bridge = new Bridge();
+    const server = buildMcpServer(bridge);
+    const [clientT, serverT] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverT);
+    const client = new Client({ name: "test", version: "0" });
+    await client.connect(clientT);
+
+    await client.callTool({ name: "promptlab_start", arguments: { name: "summarizer.prompt", prompt: "You are…", round: 2 } });
+    await client.callTool({ name: "add_case", arguments: { id: "c1", scenario: "empty input", output: "(nothing)", verdict: "fail", note: "no guard" } });
+    expect(bridge.state.domain).toBe("promptlab");
+    expect(bridge.state.promptName).toBe("summarizer.prompt");
+    expect(bridge.state.promptRound).toBe(2);
+    expect(bridge.state.promptCases[0]).toMatchObject({ id: "c1", scenario: "empty input", verdict: "fail" });
+
+    const bad = await client.callTool({ name: "add_case", arguments: { id: "c2", scenario: "x", verdict: "bogus" } });
     expect(bad.isError).toBe(true);
   });
 });

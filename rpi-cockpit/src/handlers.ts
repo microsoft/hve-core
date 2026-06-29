@@ -1,6 +1,7 @@
 // rpi-cockpit/src/handlers.ts
 import type { Bridge } from "./bridge.js";
 import type { AgentStatus, CodeKind, OptionItem, Phase, Severity, TouchKind, ValidationStatus } from "./events.js";
+import type { PromptVerdict } from "./state.js";
 import { isLoopbackHttpUrl, isGalleryUrl } from "./url.js";
 
 export const handlers = {
@@ -141,5 +142,13 @@ export const handlers = {
   gallery_clear: (b: Bridge) => {
     b.emitBeat({ type: "gallery.clear" });
     return "gallery cleared";
+  },
+  promptlab_start: (b: Bridge, a: { name: string; prompt?: string; round?: number }) => {
+    b.emitBeat({ type: "promptlab.start", name: a.name, prompt: a.prompt, round: a.round });
+    return `promptlab started: ${a.name}`;
+  },
+  add_case: (b: Bridge, a: { id: string; scenario: string; output?: string; verdict?: PromptVerdict; note?: string }) => {
+    b.emitBeat({ type: "case.add", id: a.id, scenario: a.scenario, output: a.output, verdict: a.verdict, note: a.note });
+    return `case ${a.id}: ${a.verdict ?? "pending"}`;
   },
 };
