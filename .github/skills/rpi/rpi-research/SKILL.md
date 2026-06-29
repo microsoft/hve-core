@@ -33,7 +33,7 @@ Use [references/research.md](references/research.md) for the research template a
 * The document covers scope, task requests, evidence, key discoveries, technical scenarios or alternatives, potential next research, open questions, and handoff guidance.
 * When no direct topic is supplied, the initial topic is inferred from the conversation context, and enabled chat context is incorporated to refine scope before the research artifact is drafted.
 * The final response follows the Final Response contract.
-* Handoff behavior follows the Handoff Policy section.
+* Next-step behavior follows the Next Step Policy section.
 
 ## Constraints
 
@@ -41,7 +41,7 @@ Use [references/research.md](references/research.md) for the research template a
 * Do not write files outside the resolved research root for this phase, except subagent outputs or workflow tracking files explicitly required by the current execution.
 * Accept alternate research roots only when the caller or test harness explicitly provides a trusted sandbox or evidence root. Reject traversal paths, source artifact directories, and unrelated output locations.
 * Research artifacts may cite .copilot-tracking/ evidence, but never instruct embedding those paths or other internal planning, research, or implementation artifact references into production code, code comments, documentation strings, or commit messages.
-* Honor explicit caller constraints that suppress planning handoff, including research-only, no handoff, analysis, audit, and comparison requests.
+* Do not invoke `/rpi-plan` or any other follow-on skill. Follow-on skill invocation belongs to the user or rpi-quick.
 * Keep responses concise and evidence-first, and do not repeat large subagent output in the closing turn.
 
 ## Stop rules
@@ -51,11 +51,11 @@ Use [references/research.md](references/research.md) for the research template a
 * Hard stop if the task is unresolvable from the provided inputs.
 * Re-enter deeper research when significant gaps remain.
 
-## Handoff Policy
+## Next Step Policy
 
-After normal RPI research is complete, continue with `/rpi-plan` and attach the dated primary research artifact at .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md. If material gaps remain, re-invoke this skill for deeper research before planning.
+After normal RPI research is complete, report an advisory recommendation for `/rpi-plan` with the dated primary research artifact at .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md. The user or rpi-quick owns acting on that recommendation. If material gaps remain, recommend deeper rpi-research before planning.
 
-When the caller explicitly requests research-only, no handoff, analysis, audit, or comparison output, stop after the research summary and state that `/rpi-plan` was intentionally skipped.
+When the caller requests research-only, no handoff, analysis, audit, or comparison output, state why no planning recommendation is made.
 
 ## Final Response
 
@@ -68,6 +68,6 @@ Return a concise, evidence-first summary with:
 * Open questions and risks.
 * Constraint status, including whether planning and implementation were avoided.
 * Artifact self-check status, listing required sections checked when no executable validation ran.
-* Handoff status, either `/rpi-plan` with the dated artifact path or an explicit no-handoff reason.
+* Advisory next-step recommendation, either `/rpi-plan` with the dated artifact path or an explicit no-planning reason.
 
 

@@ -65,10 +65,11 @@ The template includes these planning-ready sections.
 * List optional follow-up research that would improve confidence but is not required for the current handoff.
 * Include the reason each item matters and the evidence or source that triggered it.
 
-### Planning Handoff
+### Recommended Next Step
 
-* Name the selected approach, the primary evidence file, and the next step for `/rpi-plan` when normal RPI progression is requested.
-* If the caller requested research-only, no handoff, analysis, audit, or comparison output, state that `/rpi-plan` was intentionally skipped and why.
+* Name the selected approach, the primary evidence file, and the advisory next-step recommendation for `/rpi-plan` when normal RPI progression is requested.
+* State that the user or rpi-quick owns acting on the recommendation.
+* If the caller requested research-only, no handoff, analysis, audit, or comparison output, state why no planning recommendation is made.
 * If material gaps remain, repeat the research cycle and update the dated artifact before planning.
 
 ### Artifact Self-Check
@@ -105,8 +106,8 @@ Return a concise, evidence-first response with:
 * Open questions and risks.
 * Constraint status, including whether planning and implementation were avoided.
 * Artifact self-check status, listing required sections checked when no executable validation ran.
-* Handoff status, either `/rpi-plan` with the dated artifact path or an explicit no-handoff reason.
+* Advisory next-step recommendation, either `/rpi-plan` with the dated artifact path or an explicit no-planning reason.
 
 ## Deeper Research Re-entry
 
-Re-invoke the rpi-research skill when the current evidence is incomplete, when an alternative needs validation, or when the planning handoff would otherwise proceed on weak assumptions. Update the same dated primary research artifact rather than starting a parallel document.
+Re-invoke the rpi-research skill when the current evidence is incomplete, when an alternative needs validation, or when the planning recommendation would otherwise rely on weak assumptions. Update the same dated primary research artifact rather than starting a parallel document.
