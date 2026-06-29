@@ -78,6 +78,12 @@ items:
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/codebase-analyzer.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/codebase-locator.agent.md
+  kind: agent
+- path: .github/agents/hve-core/subagents/codebase-pattern-finder.agent.md
+  kind: agent
 - path: .github/agents/hve-core/subagents/implementation-validator.agent.md
   kind: agent
 - path: .github/agents/hve-core/subagents/phase-implementor.agent.md
@@ -97,6 +103,8 @@ items:
 - path: .github/agents/hve-core/subagents/vally-test-author.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/hve-core/subagents/web-search-researcher.agent.md
+  kind: agent
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental

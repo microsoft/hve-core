@@ -25,7 +25,7 @@ Create and update the subagent research document progressively documenting:
 * Research topics and/or questions being investigated.
 * Relevant discoveries, documentation, examples, APIs, SDKs, libraries, modules, frameworks.
 * References and evidence.
-* Follow-on questions discovered during research (only when directly relevant to the original scope).
+* Follow-on questions discovered during research, only when directly relevant to the original scope.
 * Key discoveries with supporting evidence.
 * Clarifying questions that cannot be answered through research alone.
 
@@ -69,7 +69,7 @@ The subagent always writes complete findings to its subagent file before returni
 
 Initial chat response, emit at most:
 * 1 line: subagent file path (the parent re-reads this file when it needs detail).
-* 1 line: status (Complete / Blocked / Needs Clarification).
+* 1 line: status, using `Status: Complete / Blocked / Needs Clarification`.
 * Up to 7 bullet-point key findings (each ≤ 240 chars). Prioritize findings that directly answer the stated research questions and include source references in the subagent document.
 * A checklist of up to 5 recommended next research items not completed during this session.
 * Up to 3 clarifying questions, only when blocking.

@@ -80,6 +80,15 @@ items:
   - path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
     kind: agent
     maturity: experimental
+  # Lane research subagents
+  - path: .github/agents/hve-core/subagents/codebase-analyzer.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/codebase-locator.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/codebase-pattern-finder.agent.md
+    kind: agent
+  - path: .github/agents/hve-core/subagents/web-search-researcher.agent.md
+    kind: agent
   # Prompts
   - path: .github/prompts/hve-core/rpi.prompt.md
     kind: prompt
