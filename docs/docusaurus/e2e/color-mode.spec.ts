@@ -1,13 +1,14 @@
 // Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 // SPDX-License-Identifier: MIT
 import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
-// Color-mode toggle: keyboard activation must switch the document theme. An
-// axe scan of the dark theme is intentionally omitted here: it surfaces a real
-// dark-mode link-contrast finding in the docs theme (e.g. in-paragraph links
-// rendered at ~2.18:1, link color #75b6e7) that is tracked as a finding rather
-// than asserted green, since remediating the theme is out of scope for this
-// behavioral test.
+const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
+
+// Color-mode toggle: keyboard activation must switch the document theme, and
+// the dark theme itself must hold AA contrast (including in-paragraph links,
+// which earlier rendered below 3:1 before --ifm-link-color was raised to a
+// lighter tone).
 test.describe('Color mode toggle', () => {
   test('switches the document theme via keyboard activation', async ({ page }) => {
     // Exercise the toggle on a doc page: keyboard activation reliably flips the
@@ -31,4 +32,16 @@ test.describe('Color mode toggle', () => {
       .poll(async () => page.locator('html').getAttribute('data-theme'))
       .not.toBe(initialTheme);
   });
+
+  test('dark theme doc page passes an axe scan', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/hve-core/docs/getting-started/', {
+      waitUntil: 'domcontentloaded',
+    });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
+    expect(results.violations).toEqual([]);
+  });
 });
+
