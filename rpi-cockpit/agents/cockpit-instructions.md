@@ -67,6 +67,13 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 * `add_case(id, scenario, output?, verdict?, note?)` adds or updates one test case. The Prompt Tester calls `add_case(id, scenario)` as it picks each scenario, then updates the same id with the literal output it produced, a verdict (pending/running/pass/warn/fail), and an optional note once it runs and the Prompt Evaluator judges.
 * When the Prompt Evaluator's output is prompt-wide rather than per-case, it may still narrate severity findings via `review_start` + `add_finding`.
 
+## Memory (the memory store)
+
+* `memory_open(title?)` opens the Memory view and switches the cockpit to it; optionally name the collection. The Memory agent calls this when it activates.
+* `add_memory(id, content, category, tag?, title?)` adds or updates one memory entry: a recalled or written fact, grouped by `category` (a memory type like user/feedback/project/reference, or a source). Tag it `recalled` (loaded into context), `added` (written this session), or `updated`; give an optional short `title`.
+* `add_handoff(id, from, summary, action?)` records another agent handing state to Memory: `from` is the agent's name, `summary` is what was handed, `action` is stored/merged/recalled.
+* The context badges (`set_context`) remain the active-standards strip and are orthogonal to this store.
+
 ## Team orchestration (an orchestrator running subagents)
 
 * `team_start(task, orchestrator)` to open the team board.
