@@ -116,6 +116,7 @@ $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
 Import-Module (Join-Path $PSScriptRoot 'Modules/VallyRunner.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
 
 if (-not (Get-Module -Name powershell-yaml)) {
     Import-Module powershell-yaml -ErrorAction Stop
@@ -368,6 +369,15 @@ $artifacts = @()
 if ($null -ne $manifest -and $null -ne $manifest.artifacts) {
     $artifacts = @($manifest.artifacts | Where-Object { [string]$_.status -ne 'D' })
 }
+
+# Repo-root (repo-specific) artifacts live directly under `.github/<kind>/`
+# without a collection subdirectory. Per `.github/copilot-instructions.md` they
+# are excluded from collection manifests, packaging, and eval coverage, so they
+# carry no eval spec. Drop them here so they do not surface as missing-coverage
+# failures, mirroring the skip in `Test-StimulusPresence.ps1`.
+$artifacts = @($artifacts | Where-Object {
+    -not (Test-RepoRootArtifact -Kind ([string]$_.kind) -Path ([string]$_.path))
+})
 
 # Per-kind shard filter. When -Kind is supplied, the stimulus artifacts[] loop
 # is narrowed to the matching kind(s) only. Baseline equivalence is cross-kind
