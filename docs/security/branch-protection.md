@@ -28,7 +28,7 @@ The repository enforces the following main-branch protections:
 
 ## CODEOWNERS Coverage
 
-The repository's [CODEOWNERS](../../.github/CODEOWNERS) file assigns ownership for repository configuration and workflow definitions under the [/.github/](../../.github/) path to the core team. That ownership is the review path that supports the branch protection requirement for Code Owner approval.
+The repository's `CODEOWNERS` file assigns ownership for repository configuration and workflow definitions under the `.github/` path to the core team. That ownership is the review path that supports the branch protection requirement for Code Owner approval.
 
 ## Rationale
 
