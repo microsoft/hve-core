@@ -74,6 +74,14 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 * `add_handoff(id, from, summary, action?)` records another agent handing state to Memory: `from` is the agent's name, `summary` is what was handed, `action` is stored/merged/recalled.
 * The context badges (`set_context`) remain the active-standards strip and are orthogonal to this store.
 
+## Agentic workflows (the flow canvas)
+
+* `flow_open(title?)` opens the flow canvas (the gh-aw agentic-workflow pipeline as a node graph) and switches the cockpit to it. The GitHub Agentic Workflows agent calls this when it begins working a pipeline.
+* `add_flow_node(id, kind, label, scope?, sub?, status?)` adds or updates one node. Use `kind: workflow` (scope orchestration, the default) for each workflow in the pipeline, and `kind` trigger/guard/agent/output/mcp with `scope` set to a workflow's node id for that workflow's anatomy. `status` (idle/running/passed/failed/skipped/stale) drives the live-run look; `sub` is a short subtitle.
+* `add_flow_edge(id, from, to, scope?, label?, kind?, status?)` wires two nodes. Orchestration handoffs use `kind` label/event/output with the handoff `label` (for example a label name like `agent-ready`); anatomy steps use `kind: step`. Set `status: active` on the edge currently firing.
+* Narrate a live run by re-calling `add_flow_node` / `add_flow_edge` with a new `status` as the pipeline fires, and `flow_focus(workflow)` to drill the pane into a workflow (or `flow_focus()` to return to the pipeline), for example to show where a run failed.
+* This surface narrates and the user steers (via `check_directives`); it does not author or run workflows. The agent edits the `.md` and runs `gh aw compile` / `logs` / `audit` itself.
+
 ## Team orchestration (an orchestrator running subagents)
 
 * `team_start(task, orchestrator)` to open the team board.
