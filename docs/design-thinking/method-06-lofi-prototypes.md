@@ -3,7 +3,7 @@ title: "Method 6: Low-Fidelity Prototypes"
 description: "Build fast, scrappy prototypes that test concept assumptions through real-environment feedback and constraint discovery."
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-06, low-fidelity-prototypes]
 estimated_reading_time: 5

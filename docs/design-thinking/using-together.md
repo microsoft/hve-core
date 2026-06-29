@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - design thinking

@@ -3,7 +3,7 @@ title: Using the DT Coach
 description: Guide to using the dt-coach agent for AI-assisted Design Thinking sessions
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - dt-coach

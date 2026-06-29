@@ -3,7 +3,7 @@ title: "Method 1: Scope Conversations"
 description: "Define project boundaries and stakeholder alignment through structured conversations that surface constraints, expectations, and success criteria."
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-01, scope-conversations]
 estimated_reading_time: 5

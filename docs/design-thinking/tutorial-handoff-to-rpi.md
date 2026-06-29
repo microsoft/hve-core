@@ -3,7 +3,7 @@ title: "Tutorial: Handing Off from DT to RPI"
 description: Step-by-step tutorial for performing Design Thinking to RPI handoffs at each exit point
 sidebar_position: 15
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - design thinking

@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning collection."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: 2026-06-28
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"

@@ -3,7 +3,7 @@ title: "Method 7: High-Fidelity Prototypes"
 description: "Translate low-fidelity constraint discoveries into technically feasible implementations that validate whether user-validated solutions can be built and deployed."
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-07, high-fidelity-prototypes]
 estimated_reading_time: 5

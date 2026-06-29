@@ -3,7 +3,7 @@ title: DT to RPI Integration
 description: How Design Thinking outputs feed into the RPI workflow
 sidebar_position: 14
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - design thinking

@@ -3,7 +3,7 @@ title: "Method 5: User Concepts"
 description: "Shape brainstorming themes into structured concept descriptions evaluated through desirability, feasibility, and viability lenses."
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-05, user-concepts]
 estimated_reading_time: 5
