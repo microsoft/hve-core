@@ -71,13 +71,15 @@
   * Reason: {{why_it_matters}}
   * Triggering evidence: {{source_or_gap}}
 
-## Planning Handoff
+## Advisory Next Step
 
-* Handoff status: {{rpi_plan_handoff_or_intentionally_skipped_with_reason}}
+* Advisory only: rpi-research does not invoke `/rpi-plan` or any follow-on skill.
+* Acting owner: user or rpi-quick.
+* Advisory recommendation: {{rpi_plan_recommendation_or_no_planning_reason}}
 * Primary evidence file: `.copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md`
 * Notes for planning: {{planning_notes}}
 
 ## Artifact Self-Check
 
-* Checked sections: scope, task requests, research executed, evidence log, key discoveries, alternatives, open questions, potential next research, and handoff status.
+* Checked sections: scope, task requests, research executed, evidence log, key discoveries, alternatives, open questions, potential next research, and advisory next step.
 * Missing or limited sections: {{missing_or_limited_sections_or_none}}
