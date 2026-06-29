@@ -822,7 +822,27 @@ function renderFlow(v) {
   const pos = computeFlowLayout(nodes, edges);
   const world = document.getElementById("gw-world");
   if (!world) return;
-  world.innerHTML = nodes.map((n) => {
+  // SVG edge layer (built first so edges sit under the node cards)
+  const NODE_W = 180, NODE_H = 64;
+  const anchor = (id, side) => {
+    const p = pos[id] || { x: 0, y: 0 };
+    return { x: p.x + (side === "out" ? NODE_W : 0), y: p.y + NODE_H / 2 };
+  };
+  // bounding box for the svg canvas size
+  let maxX = 0, maxY = 0;
+  for (const id in pos) { maxX = Math.max(maxX, pos[id].x + NODE_W); maxY = Math.max(maxY, pos[id].y + NODE_H); }
+  const edgesSvg = edges.map((e) => {
+    const a = anchor(e.from, "out"), b = anchor(e.to, "in");
+    const k = Math.max(40, Math.abs(b.x - a.x) * 0.4);
+    const d = `M ${a.x} ${a.y} C ${a.x + k} ${a.y}, ${b.x - k} ${b.y}, ${b.x} ${b.y}`;
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - 6 };
+    return `<path class="gw-edge gw-e-${esc(e.kind)}${e.status === "active" ? " gw-active" : ""}" d="${d}" marker-end="url(#gw-arrow)"></path>`
+      + (e.label ? `<text class="gw-elabel" x="${mid.x}" y="${mid.y}" text-anchor="middle">${esc(e.label)}</text>` : "");
+  }).join("");
+  const svg = `<svg id="gw-edges" width="${maxX + 40}" height="${maxY + 40}">
+    <defs><marker id="gw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--stroke-2, #4A4A4A)"></path></marker></defs>${edgesSvg}</svg>`;
+  const nodesHtml = nodes.map((n) => {
     const p = pos[n.id] || { x: 0, y: 0 };
     return `<figure class="gw-node gw-k-${esc(n.kind)} gw-s-${esc(n.status)}${n.id === gwSel ? " gw-sel" : ""}" data-gw="${esc(n.id)}" data-kind="${esc(n.kind)}" style="left:${p.x}px;top:${p.y}px">
       <span class="gw-port gw-in"></span>
@@ -831,6 +851,7 @@ function renderFlow(v) {
       <span class="gw-port gw-out"></span>
     </figure>`;
   }).join("");
+  world.innerHTML = svg + nodesHtml;
   gwApplyCam();
   // (edges + minimap + inspector are rendered in Tasks 5-6)
 }

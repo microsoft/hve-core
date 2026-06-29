@@ -47,4 +47,13 @@ describe("flow client", () => {
     expect(win.document.querySelector("#gw-world .gw-k-workflow.gw-s-running")).not.toBeNull();
     expect((win.document.getElementById("gw-title") as any).textContent).toContain("hve-core pipeline");
   });
+
+  it("renders an SVG bezier path per edge, with the active class on a firing edge", () => {
+    (win as any).render(flowVm());
+    const paths = win.document.querySelectorAll("#gw-edges path.gw-edge");
+    expect(paths.length).toBe(1); // one orchestration edge (triage -> impl)
+    expect(win.document.querySelector("#gw-edges path.gw-edge.gw-active")).not.toBeNull();
+    // edge label rendered
+    expect((win.document.getElementById("gw-edges") as any).textContent).toContain("agent-ready");
+  });
 });

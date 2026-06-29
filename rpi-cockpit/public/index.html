@@ -403,6 +403,14 @@
   .gw-s-skipped { opacity: .55; }
   .gw-s-stale { border-color: #E0954B; }
   @keyframes gwpulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-blue,#4FC1FF) 50%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+  /* edges */
+  #gw-edges { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+  .gw-edge { fill: none; stroke: var(--stroke-2, #4A4A4A); stroke-width: 1.5; }
+  .gw-edge.gw-e-label { stroke: var(--accent-blue, #4FC1FF); }
+  .gw-edge.gw-e-output { stroke: var(--ok, #73C991); }
+  .gw-edge.gw-active { stroke: var(--accent-blue, #4FC1FF); stroke-width: 2.5; stroke-dasharray: 6 5; animation: gwdash 0.6s linear infinite; }
+  @keyframes gwdash { to { stroke-dashoffset: -22; } }
+  .gw-elabel { font-size: 10.5px; fill: var(--text-2, #9D9D9D); }
   @media (max-width: 860px) { .me-body { flex-direction: column; } .me-handoff-panel { flex: none; border-left: none; border-top: 1px solid var(--stroke, #3C3C3C); padding-left: 0; padding-top: 12px; } }
 
   .team-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
