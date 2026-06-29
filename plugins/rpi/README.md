@@ -5,11 +5,11 @@ Skill-forward Research, Plan, Implement, and Review entry points with an umbrell
 
 ## Overview
 
-This collection packages the skill-forward RPI entry points for research, planning, implementation, and review. It keeps the current RPI agent-first workflow intact while making the slash-command family /rpi-quick, /rpi-research, /rpi-plan, /rpi-implement, and /rpi-review available as standalone packaged entry points.
+This collection packages the RPI Researcher agent and skill-forward RPI entry points for research, planning, implementation, and review.
 
 ## Local enablement
 
-For local testing in VS Code, enable the new skill folder and the existing subagent folder in your workspace settings:
+For local testing in VS Code, enable the RPI skill folder, RPI agent folder, and existing subagent folder in your workspace settings:
 
 ```json
 {
@@ -17,6 +17,7 @@ For local testing in VS Code, enable the new skill folder and the existing subag
     ".github/skills/rpi": true
   },
   "chat.agentFilesLocations": {
+    ".github/agents/rpi": true,
     ".github/agents/hve-core/subagents": true
   }
 }
@@ -25,7 +26,7 @@ For local testing in VS Code, enable the new skill folder and the existing subag
 Prompt overlap is handled at directory scope. `chat.promptFilesLocations` only supports whole-directory toggles, so disabling only the conflicting RPI prompt files is not supported in the current host. Use one of these options for local testing:
 
 * disable the whole `.github/prompts/hve-core` directory, or
-* rely on host prompt precedence until Phase 6 runtime validation confirms the final slash-command behavior.
+* rely on host prompt precedence while testing skill commands.
 
 The collection intentionally delegates phase work to the existing RPI subagents so the skills stay compact and the packaging model remains additive.
 
@@ -39,6 +40,7 @@ copilot plugin install rpi@hve-core
 
 | Agent                    | Description                                                                                                                              |
 |--------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| rpi-researcher           | Research-only RPI specialist for evidence-backed task analysis and planning-ready research briefs                                        |
 | researcher-subagent      | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                              |
 | plan-validator           | Validates implementation plans against research documents with severity-graded findings                                                  |
 | phase-implementor        | Executes a single implementation phase from a plan with full codebase access and change tracking                                         |

@@ -1,17 +1,18 @@
 ---
-description: "Research template and protocol for the task-researcher RPI skill"
+description: "Research template and protocol for the RPI Researcher skill"
 ---
 
-# Task Researcher Reference
+# RPI Researcher Reference
 
-Use this reference for the research phase when the skill needs a planning-ready document.
+Use this reference when the research phase needs a planning-ready document.
 
 ## Template
 
-Use [../templates/research.md](../templates/research.md) for `.copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md`.
+Use [../templates/research.md](../templates/research.md) for .copilot-tracking/research/YYYY-MM-DD/{{task_slug}}-research.md.
 
 * Derive `{{task_slug}}` from the primary research target with lower-kebab-case.
 * Replace `YYYY-MM-DD` with the current date at execution time.
+* When a trusted sandbox or caller-owned evidence root is provided, mirror the same research/YYYY-MM-DD/{{task_slug}}-research.md shape under that root and record the resolved root.
 
 The template includes these planning-ready sections.
 
@@ -78,36 +79,20 @@ The template includes these planning-ready sections.
 
 ### Subagent Return Contract
 
-* Return the subagent research artifact path at `.copilot-tracking/research/subagents/YYYY-MM-DD/<topic>-research.md`.
+* Return the subagent research artifact path at .copilot-tracking/research/subagents/YYYY-MM-DD/<topic>-research.md.
 * Report the current status and the most important findings.
 * Record recommended next research items and clarifying questions.
 * Keep the output evidence-linked and use it to update the primary research artifact rather than to replace it.
 
-### Operational Contract
+## Protocol
 
-1. Research and analysis are the two linked phases; move from evidence gathering to synthesis, then re-enter research while material gaps remain.
-2. When chat is enabled, incorporate conversation context to refine scope and surface implicit constraints before drafting the research artifact.
-3. Write the primary research artifact under `.copilot-tracking/research/YYYY-MM-DD/` and keep it current as new evidence arrives.
-4. Use `Researcher Subagent` via `runSubagent` or `task` when either dispatch tool is available; if dispatch tooling is unavailable, perform the equivalent research inline and record the fallback reason in the same primary artifact.
-5. After subagent work, summarize the artifact path, status, key findings, recommended next research, and any clarifying questions in the primary research document.
-6. Hard stop only on missing required input, an unresolvable task, or an unwritable research path.
-
-### Document Management
-
-* Keep the primary evidence document in `.copilot-tracking/research/YYYY-MM-DD/`.
-* Keep delegated evidence in `.copilot-tracking/research/subagents/YYYY-MM-DD/` when subagent dispatch is used.
-* Research references guide implementation logic during downstream RPI phases; do not direct that `.copilot-tracking/` paths or internal workflow artifact references be reproduced in production code, code comments, documentation strings, commit messages, or artifacts outside `.copilot-tracking/`.
-* Use plain workspace-relative file paths in research artifacts, and do not invent parallel evidence stores.
-
-## Protocol Detail
-
-1. Create or update the primary dated research artifact first.
-2. Dispatch the Researcher Subagent with `runSubagent` or `task` when available, providing the topic, questions, and a dated subagent artifact path.
-3. If dispatch tooling is unavailable, perform the equivalent research inline and record the fallback reason in the same primary artifact.
-4. Capture the subagent return contract in the primary document: artifact path, status, key findings, recommended next research, and clarifying questions.
-5. Consolidate findings into the primary research document and keep the document current as new evidence arrives.
-6. Run a gap check after each iteration: if the research still misses critical evidence, repeat research rather than guessing.
-7. When alternatives are clear, capture them in the document, evaluate each option, and recommend one approach for planning.
+1. Resolve the primary research artifact path before dispatching subagents.
+2. Incorporate enabled chat context before drafting the artifact.
+3. Use `Researcher Subagent` via `runSubagent` or `task` when available; otherwise perform equivalent inline research and record the fallback reason.
+4. Consolidate delegated findings into the primary artifact and repeat while material gaps remain.
+5. Keep delegated evidence under .copilot-tracking/research/subagents/YYYY-MM-DD/ or the mirrored subagent path under a trusted root.
+6. Reject alternate roots with traversal, source artifact directories, or unrelated destinations.
+7. Keep .copilot-tracking/ references out of production code, code comments, documentation strings, commit messages, and artifacts outside .copilot-tracking/.
 
 ## Final Response Contract
 
