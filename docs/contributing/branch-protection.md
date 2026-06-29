@@ -17,6 +17,8 @@ estimated_reading_time: 3
 
 Guidelines and configuration for GitHub branch protection rules in hve-core.
 
+> This page covers contributor-facing configuration and required status checks. For the security policy and rationale behind these controls, see [Branch Protection](../security/branch-protection.md).
+
 Branch protection rules ensure code quality and security by requiring:
 
 * Status checks to pass before merging

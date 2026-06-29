@@ -1263,7 +1263,7 @@ Follow-up items identified during the Phase 5 review of the Mural skill OAuth su
 
 * [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
 * [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
-* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [Branch Protection](branch-protection.md): Repository protection configuration
 * [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 
 ### External Standards

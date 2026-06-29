@@ -17,6 +17,8 @@ estimated_reading_time: 3
 
 The main branch for hve-core is protected to reduce the risk of unreviewed or unauthorized changes to workflow and release automation.
 
+> This page describes the security policy and rationale for branch protection. For contributor-facing configuration steps, required status checks, and OpenSSF Scorecard guidance, see [Branch Protection Configuration](../contributing/branch-protection.md).
+
 ## Required Controls
 
 The repository enforces the following main-branch protections:
