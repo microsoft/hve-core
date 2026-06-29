@@ -61,6 +61,12 @@ When the `rpi-cockpit` MCP tools are available, narrate your work to the cockpit
 * `gallery_add(item)` adds or updates one tile by `id`; `gallery_clear()` empties the board.
 * Use it to compare several running apps or sites side by side (`url` items), or several rendered states (`html` items). Clicking a tile expands it; external sites that block framing show blank, so an open-in-tab link is always offered.
 
+## Prompt engineering (the prompt workbench)
+
+* `promptlab_start(name, prompt?, round?)` opens the prompt workbench (a behavior test bench) and switches the cockpit to it. The Prompt Builder calls this when it begins hardening a prompt; pass the prompt's current text as `prompt` and the iteration round (default 1). Re-call with `round + 1` for a fresh pass.
+* `add_case(id, scenario, output?, verdict?, note?)` adds or updates one test case. The Prompt Tester calls `add_case(id, scenario)` as it picks each scenario, then updates the same id with the literal output it produced, a verdict (pending/running/pass/warn/fail), and an optional note once it runs and the Prompt Evaluator judges.
+* When the Prompt Evaluator's output is prompt-wide rather than per-case, it may still narrate severity findings via `review_start` + `add_finding`.
+
 ## Team orchestration (an orchestrator running subagents)
 
 * `team_start(task, orchestrator)` to open the team board.
