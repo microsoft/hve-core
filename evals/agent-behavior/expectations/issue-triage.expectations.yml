@@ -27,19 +27,19 @@ expectations:
     priority: high
     contract_ref: "agent §Triage Workflow › Step 2 (Classify by Type)"
 
-  - expectation_id: component-label-applied
-    summary: Triage assigns a component scope label from the documented mapping.
-    signal: Output names one of `agents`, `prompts`, `instructions`, `skills`, or explicitly flags scope as unknown.
+  - expectation_id: area-label-applied
+    summary: Triage assigns one or more area labels from the documented taxonomy.
+    signal: Output names one or more area labels from the Repository Labels area taxonomy (for example `agents`, `prompts`, `instructions`, `skills`, `scripts`, `workflows`, `extension`), or explicitly flags scope as unknown.
     pass_criteria: |
-      Output either proposes/applies one of the documented component labels
-      (`agents`, `prompts`, `instructions`, `skills`) inferred from the issue
-      body, OR explicitly states that the scope cannot be determined from the
-      issue text and asks the reporter for clarification.
+      Output either proposes/applies one or more area labels drawn from the
+      documented area taxonomy (inferred from the issue body), OR explicitly
+      states that the scope cannot be determined from the issue text and asks
+      the reporter for clarification.
     failure_modes:
-      - Invents component labels outside the documented set without flagging them as project-specific guesses.
-      - Skips component classification entirely.
+      - Invents area labels outside the documented taxonomy.
+      - Skips area classification entirely.
     priority: high
-    contract_ref: "agent §Triage Workflow › Step 3 (Classify by Component)"
+    contract_ref: "agent §Triage Workflow › Step 3 (Classify by Area)"
 
   - expectation_id: needs-triage-removal-noted
     summary: Triage removes the `needs-triage` label as part of label application.
@@ -125,17 +125,29 @@ expectations:
     applies_when: "agent identifies potential duplicates"
     contract_ref: "agent §Triage Workflow › Step 4 (Detect Duplicates)"
 
-  - expectation_id: decomposition-only-on-oversized-issues
-    summary: New sub-issues are only created when the parent meets the oversize signals.
-    signal: Output creates sub-issues only when it can name at least two of the documented oversize signals.
+  - expectation_id: priority-label-applied
+    summary: Triage assigns exactly one priority label, defaulting to `priority-3` when impact is unclear.
+    signal: Output names exactly one of `priority-1`, `priority-2`, `priority-3`, or `priority-4`.
     pass_criteria: |
-      When the agent decomposes an issue, output names at least two of:
-      multiple components/directories touched, AC spanning unrelated concerns,
-      sequential phases, effort beyond a single work session. When the agent
-      does not decompose, no sub-issues are created.
+      Output proposes exactly one priority label from `priority-1` through
+      `priority-4`. Security exposures, a broken main branch, or data loss map
+      to `priority-1`. When impact cannot be judged from the issue text, output
+      defaults to `priority-3` and notes the uncertainty rather than guessing
+      high or low.
     failure_modes:
-      - Creates sub-issues for a small, single-component bug.
-      - Promotes the parent to `agent-ready` after sub-issuing it (explicitly disallowed).
-    priority: low
-    applies_when: "stimulus describes a multi-area or multi-phase issue"
-    contract_ref: "agent §Triage Workflow › Step 8 (Decompose Oversized Issues)"
+      - Names a priority value outside `priority-1`..`priority-4` (e.g. `P1`, `critical`).
+      - Assigns `priority-1` to a vague report with no impact evidence.
+    priority: medium
+    contract_ref: "agent §Triage Workflow › Step 6 (Apply Labels)"
+
+  - expectation_id: no-new-issue-creation
+    summary: Triage never creates new issues.
+    signal: Output does not claim to create, open, or file any new issue or sub-issue.
+    pass_criteria: |
+      Output does not state that it created a new issue or sub-issue. Triage
+      only updates labels and comments on the triggering issue.
+    failure_modes:
+      - Claims to create sub-issues or split the issue into new issues.
+      - Files a tracking/epic issue.
+    priority: medium
+    contract_ref: "agent §Constraints (Do not create new issues)"

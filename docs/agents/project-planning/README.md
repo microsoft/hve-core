@@ -24,11 +24,11 @@ These agents bring structure and consistency to activities that teams often hand
 
 ## Agent Overview
 
-| Agent                                  | Sub-Category | Workflow                    | Persistence | Key Output                     |
-|----------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
-| [BRD Builder](brd-prd-builders)        | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
-| [PRD Builder](brd-prd-builders)        | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
-| [ADR Creator](adr-creation)            | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
+| Agent                                     | Sub-Category | Workflow                    | Persistence | Key Output                     |
+|-------------------------------------------|--------------|-----------------------------|-------------|--------------------------------|
+| [BRD Builder](brd-prd-builders)           | Requirements | 3-phase Q&A                 | JSON state  | Business requirements document |
+| [PRD Builder](brd-prd-builders)           | Requirements | 7-phase Q&A                 | JSON state  | Product requirements document  |
+| [ADR Creator](adr-creation)               | Architecture | 3-phase Frame/Decide/Govern | JSON state  | Architecture decision record   |
 | [Security Planner](../security/README.md) | Security     | 6-phase STRIDE              | JSON state  | Security model and backlog     |
 
 ## Requirements
