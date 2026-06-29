@@ -3,30 +3,40 @@ title: BRD & PRD Builders
 description: Twin agents for creating business and product requirements documents through guided Q&A
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-15
+ms.date: 2026-06-27
 ms.topic: tutorial
 ---
 
-The BRD Builder and PRD Builder share a common architecture for producing requirements documents through structured question-and-answer sessions. Both agents guide users through seven phases to create comprehensive, template-driven documents. The BRD focuses on business justification and the PRD on product specifications with measurable requirements.
+The BRD Builder and PRD Builder share a common architecture for producing requirements documents through structured question-and-answer sessions. Both are driven by the `requirements-author` skill, which loads each phase's guidance on demand. The BRD Builder runs a three-phase lifecycle focused on business justification, and the PRD Builder runs a seven-phase lifecycle focused on product specifications with measurable requirements.
 
 > [!TIP]
 > Use the BRD Builder when capturing business objectives, stakeholder needs, and project justification. Use the PRD Builder when defining product features, acceptance criteria, and measurable requirements.
 
-## Shared Workflow
+## Workflows
 
-Both agents follow the same 7-phase workflow, with one naming difference at Phase 4:
+The two agents follow distinct lifecycles defined by the `requirements-author` skill. Each phase loads its section of that skill before phase work begins.
 
-| Phase | Step           | Description                                                                                                 |
-|-------|----------------|-------------------------------------------------------------------------------------------------------------|
-| 1     | Assess         | Evaluate existing context, detect prior sessions, determine if enough information exists to proceed         |
-| 2     | Discover       | Gather project scope, stakeholder information, and domain context through targeted questions                |
-| 3     | Create         | Analyze codebase artifacts and establish the document structure from the template                           |
-| 4     | Elicit / Build | Extract detailed requirements through iterative Q&A (BRD: "Elicit Requirements"; PRD: "Build Requirements") |
-| 5     | Integrate      | Cross-reference requirements against codebase findings and resolve conflicts                                |
-| 6     | Validate       | Review the complete document for consistency, completeness, and alignment                                   |
-| 7     | Finalize       | Produce the final document with all sections populated and reviewed                                         |
+### BRD Builder: Three-Phase Lifecycle
 
-Each phase builds on the previous one. The agents detect existing session files and resume from the last completed phase, supporting pause-and-resume workflows across conversations.
+| Phase    | Description                                                                                     |
+|----------|-------------------------------------------------------------------------------------------------|
+| Discover | Establish business context, stakeholder scope, and problem framing, then hold the Discover gate |
+| Define   | Author testable, traceable requirements and gather quality evidence for the Define gate         |
+| Govern   | Finalize, approve, and produce the BRD-to-PRD handoff under supersession lineage                |
+
+### PRD Builder: Seven-Phase Lifecycle
+
+| Phase     | Description                                                              |
+|-----------|--------------------------------------------------------------------------|
+| Assess    | Decide whether enough context exists to name and create PRD files        |
+| Discover  | Establish title, problem, and basic scope through focused questions      |
+| Create    | Generate the PRD file and state file once title/context is clear         |
+| Build     | Gather detailed functional and non-functional requirements iteratively   |
+| Integrate | Incorporate references, documents, and external materials with citations |
+| Validate  | Confirm completeness and quality before approval                         |
+| Finalize  | Deliver the complete, actionable PRD and emit the completion summary     |
+
+The agents detect existing session files and resume from the last completed phase, supporting pause-and-resume workflows across conversations.
 
 ## Shared Features
 
@@ -41,18 +51,18 @@ Session files track phase progress, gathered requirements, and document state. W
 
 ### Output Modes
 
-Both agents support four output modes for reviewing document content:
+Both agents support output modes for reviewing document content:
 
-| Mode    | Description                 |
-|---------|-----------------------------|
-| Full    | Complete document rendering |
-| Delta   | Changes since last output   |
-| Section | Single section view         |
-| Status  | Phase progress summary      |
+| Mode             | Description                         |
+|------------------|-------------------------------------|
+| `summary`        | Progress update with next questions |
+| `section [name]` | Single named section view           |
+| `full`           | Complete document rendering         |
+| `diff`           | Changes since the last major update |
 
 ### Template-Driven Generation
 
-Both agents use templates to structure their output, ensuring consistent section coverage across documents. The BRD Builder uses the canonical `requirements-author` skill template at `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`, while the PRD Builder embeds its template inline within the agent definition.
+Both agents use templates to structure their output, ensuring consistent section coverage across documents. Both load their canonical templates from the `requirements-author` skill: the BRD Builder uses `.github/skills/project-planning/requirements-author/templates/brd/brd-full.md`, and the PRD Builder uses `.github/skills/project-planning/requirements-author/templates/prd/prd-full.md`.
 
 ### Quality Controls
 
@@ -62,17 +72,15 @@ Both agents use templates to structure their output, ensuring consistent section
 
 ## Key Differences
 
-| Aspect             | BRD Builder                                                               | PRD Builder                                            |
-|--------------------|---------------------------------------------------------------------------|--------------------------------------------------------|
-| Agent file         | `.github/agents/project-planning/brd-builder.agent.md`                    | `.github/agents/project-planning/prd-builder.agent.md` |
-| File size          | 195 lines                                                                 | 766 lines                                              |
-| Template strategy  | External skill template (`requirements-author/templates/brd/brd-full.md`) | Inline (embedded in agent)                             |
-| Template sections  | 14                                                                        | 17                                                     |
-| Phase 4 name       | Elicit Requirements                                                       | Build Requirements                                     |
-| Recovery protocols | Minimal                                                                   | Extensive                                              |
-| Session directory  | `.copilot-tracking/brd-sessions/`                                         | `.copilot-tracking/prd-sessions/`                      |
+| Aspect            | BRD Builder                                               | PRD Builder                                               |
+|-------------------|-----------------------------------------------------------|-----------------------------------------------------------|
+| Agent file        | `.github/agents/project-planning/brd-builder.agent.md`    | `.github/agents/project-planning/prd-builder.agent.md`    |
+| Lifecycle         | Three-phase (Discover, Define, Govern)                    | Seven-phase (Assess through Finalize)                     |
+| Template strategy | `requirements-author` skill (`templates/brd/brd-full.md`) | `requirements-author` skill (`templates/prd/prd-full.md`) |
+| Focus             | Business justification and stakeholder scope              | Product specifications with measurable requirements       |
+| Session directory | `.copilot-tracking/brd-sessions/`                         | `.copilot-tracking/prd-sessions/`                         |
 
-The PRD Builder's larger file size reflects its extensive inline template and detailed recovery protocols for handling interrupted sessions.
+The PRD Builder's longer lifecycle reflects its deeper requirement-building, integration, and validation phases for handling detailed product specifications.
 
 ## How to Use
 
@@ -103,7 +111,7 @@ completed stakeholder interviews and have new data:
 - Warehouse ops team processes 3,000 SKUs daily with 15% error rate
 - Current system downtime costs $12K/hour during peak season
 - Three vendor proposals are in evaluation
-Continue from the Elicit Requirements phase with this evidence.
+Continue from the Define phase with this evidence.
 ```
 
 **PRD Builder:**
@@ -201,7 +209,7 @@ Output the PRD with measurable requirements in every section.
 
 * ✅ Provide a clear project name or scope at invocation to accelerate the Assess phase
 * ✅ Answer iterative questions thoroughly; the agent builds sections as information accumulates
-* ✅ Use output modes (Full, Delta, Section, Status) to review progress during long sessions
+* ✅ Use output modes (`summary`, `section [name]`, `full`, `diff`) to review progress during long sessions
 * ✅ Let the agent cross-reference requirements against codebase artifacts for consistency
 * ❌ Do not skip the Discover phase by providing all requirements up front (the agent needs context)
 * ❌ Do not edit session files in `.copilot-tracking/` manually during an active session
@@ -215,13 +223,13 @@ Output the PRD with measurable requirements in every section.
 | Agent asks too many questions    | Provide a detailed scope at invocation to skip obvious scoping questions                  |
 | Session not detected on resume   | Verify session files exist at `.copilot-tracking/brd-sessions/` or `prd-sessions/`        |
 | Incomplete sections in output    | Use the Section output mode to identify gaps, then answer follow-up questions             |
-| Template sections feel generic   | Provide domain-specific details during the Elicit/Build phase for richer content          |
+| Template sections feel generic   | Provide domain-specific details during the requirement-building phase for richer content  |
 | Document conflicts with codebase | Let the Integrate phase run to cross-reference; resolve flagged conflicts before Validate |
 
 ## Next Steps
 
-1. Feed your completed BRD or PRD into the [ADR Creation Coach](adr-creation.md) for architectural decisions
-2. See [Project Planning Agents](README.md) for the full agent catalog
+1. Feed your completed BRD or PRD into the [ADR Creator](adr-creation) for architectural decisions
+2. See [Project Planning Agents](README) for the full agent catalog
 
 > [!TIP]
 > Both agents work best when you provide a clear project name at invocation. The agents can derive a working title from context, but explicit scope accelerates the Assess phase.

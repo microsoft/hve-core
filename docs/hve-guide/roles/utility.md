@@ -3,7 +3,7 @@ title: Utility Reference
 description: Cross-cutting HVE Core utilities for memory, documentation, media, Git workflows, and diagnostic operations
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-21
+ms.date: 2026-06-26
 ms.topic: reference
 keywords:
   - utility

@@ -3,7 +3,7 @@ title: "Stage 4: Decomposition"
 description: Break product requirements into actionable work items and task hierarchies
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-02-19
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -27,13 +27,13 @@ You enter Decomposition after completing [Stage 3: Product Definition](product-d
 
 ## Available Tools
 
-| Tool                      | Type        | How to Invoke                           | Purpose                                                |
-|---------------------------|-------------|-----------------------------------------|--------------------------------------------------------|
-| ado-prd-to-wit            | Agent       | Select **ado-prd-to-wit** agent         | Convert PRDs into ADO work items automatically         |
-| github-backlog-manager    | Agent       | Select **github-backlog-manager** agent | GitHub issue discovery, triage, and backlog management |
-| ado-get-my-work-items     | Prompt      | `/ado-get-my-work-items`                | Retrieve your assigned work items                      |
-| ado-process-my-work-items | Prompt      | `/ado-process-my-work-items`            | Process and prioritize existing work items             |
-| ado-wit-planning          | Instruction | Auto-activated on workitems             | Enforces work item planning conventions                |
+| Tool                                        | Type        | How to Invoke                                  | Purpose                                                |
+|---------------------------------------------|-------------|------------------------------------------------|--------------------------------------------------------|
+| ado-prd-to-wit                              | Agent       | Select **ado-prd-to-wit** agent                | Convert PRDs into ADO work items automatically         |
+| github-backlog-manager                      | Agent       | Select **github-backlog-manager** agent        | GitHub issue discovery, triage, and backlog management |
+| ado-get-my-work-items                       | Prompt      | `/ado-get-my-work-items`                       | Retrieve your assigned work items                      |
+| ado-process-my-work-items-for-task-planning | Prompt      | `/ado-process-my-work-items-for-task-planning` | Process and prioritize existing work items             |
+| ado-wit-planning                            | Instruction | Auto-activated on workitems                    | Enforces work item planning conventions                |
 
 ## Role-Specific Guidance
 
@@ -59,7 +59,7 @@ items with "onboarding-v2".
 ```
 
 ```text
-/ado-process-my-work-items Process and prioritize my work items
+/ado-process-my-work-items-for-task-planning Process and prioritize my work items
 ```
 
 ### GitHub Issues via RPI Workflow

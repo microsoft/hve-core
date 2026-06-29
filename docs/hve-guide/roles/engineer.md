@@ -3,7 +3,7 @@ title: Engineer Guide
 description: HVE Core support for engineers building features, fixing bugs, and shipping code with AI-assisted workflows
 sidebar_position: 3
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - engineer

@@ -3,7 +3,7 @@ title: Design Thinking Guide
 description: AI-assisted Design Thinking using the dt-coach agent
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - design thinking
@@ -38,11 +38,11 @@ flowchart LR
     end
 
     subgraph solution["Solution Space (scrappy / concept-grade)"]
-        M4["4 · Brain-<br/>storming"] --> M5["5 · User<br/>Concepts"] --> M6["6 · Lo-Fi<br/>Prototypes"]
+        M4["4 · Brain-<br/>storming"] --> M5["5 · User<br/>Concepts"] --> M6["6 · Low-<br/>Fidelity<br/>Prototypes"]
     end
 
-    subgraph validation["Validation Space (functionally rigorous)"]
-        M7["7 · Hi-Fi<br/>Prototypes"] --> M8["8 · User<br/>Testing"] --> M9["9 · Iteration<br/>at Scale"]
+    subgraph implementation["Implementation Space (functionally rigorous)"]
+        M7["7 · High-<br/>Fidelity<br/>Prototypes"] --> M8["8 · User<br/>Testing"] --> M9["9 · Iteration<br/>at Scale"]
     end
 
     M3 --> M4
@@ -77,7 +77,7 @@ Generate and validate ideas at low fidelity. Outputs are scrappy and concept-gra
 * Method 5: User Concepts enables visual concept validation
 * Method 6: Low-Fidelity Prototypes drive scrappy constraint discovery
 
-### 🔧 Validation Space (Methods 7-9)
+### 🔧 Implementation Space (Methods 7-9)
 
 Build functional prototypes, test with users, and scale. Outputs are functionally rigorous without visual polish.
 
@@ -87,17 +87,17 @@ Build functional prototypes, test with users, and scale. Outputs are functionall
 
 ## Method Overview
 
-| Method | Name                     | Space      | Key Output                  |
-|--------|--------------------------|------------|-----------------------------|
-| 1      | Scope Conversations      | Problem    | Validated problem scope     |
-| 2      | Design Research          | Problem    | Stakeholder insights        |
-| 3      | Input Synthesis          | Problem    | Problem statement           |
-| 4      | Brainstorming            | Solution   | Idea clusters               |
-| 5      | User Concepts            | Solution   | Visual concept boards       |
-| 6      | Low-Fidelity Prototypes  | Solution   | Scrappy prototypes          |
-| 7      | High-Fidelity Prototypes | Validation | Functional prototypes       |
-| 8      | User Testing             | Validation | Validated designs           |
-| 9      | Iteration at Scale       | Validation | Deployment-ready refinement |
+| Method | Name                     | Space          | Key Output                  |
+|--------|--------------------------|----------------|-----------------------------|
+| 1      | Scope Conversations      | Problem        | Validated problem scope     |
+| 2      | Design Research          | Problem        | Stakeholder insights        |
+| 3      | Input Synthesis          | Problem        | Problem statement           |
+| 4      | Brainstorming            | Solution       | Idea clusters               |
+| 5      | User Concepts            | Solution       | Visual concept boards       |
+| 6      | Low-Fidelity Prototypes  | Solution       | Scrappy prototypes          |
+| 7      | High-Fidelity Prototypes | Implementation | Functional prototypes       |
+| 8      | User Testing             | Implementation | Validated designs           |
+| 9      | Iteration at Scale       | Implementation | Deployment-ready refinement |
 
 ## Getting Started
 

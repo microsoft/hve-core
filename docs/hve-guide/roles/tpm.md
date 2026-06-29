@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-03-10
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - TPM

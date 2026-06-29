@@ -3,7 +3,7 @@ title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-19
+ms.date: 2026-06-26
 ms.topic: overview
 keywords:
   - hve guide

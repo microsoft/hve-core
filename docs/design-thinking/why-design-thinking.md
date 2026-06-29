@@ -3,7 +3,7 @@ title: Why Design Thinking?
 description: Understanding when and why to use Design Thinking in your projects
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-02-25
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - design thinking
@@ -35,7 +35,7 @@ Problem Space (Methods 1-3) focuses on understanding who you are solving for and
 
 Solution Space (Methods 4-6) generates and tests ideas at low fidelity. The goal is learning, not building. Scrappy prototypes beat polished mockups because they invite honest feedback.
 
-Validation Space (Methods 7-9) builds functional prototypes, tests with real users, and refines based on evidence. Quality becomes functionally rigorous, though visual polish remains secondary to correctness.
+Implementation Space (Methods 7-9) builds functional prototypes, tests with real users, and refines based on evidence. Quality becomes functionally rigorous, though visual polish remains secondary to correctness.
 
 > [!IMPORTANT]
 > Each space has a deliberate quality standard. Producing polished output in the Problem Space or Solution Space wastes effort and discourages honest criticism. Rough artifacts invite better feedback.
@@ -58,11 +58,11 @@ Design Thinking and RPI are complementary, not competing.
 
 Design Thinking answers **what to build and why**. RPI answers **how to build it correctly**.
 
-When a Design Thinking session reaches a natural exit point, the DT Coach prepares a structured handoff artifact containing validated findings, confidence markers, and stakeholder maps. This artifact feeds directly into the RPI pipeline:
+When a Design Thinking session reaches a natural exit point, the DT Coach prepares a structured handoff artifact containing validated findings, confidence markers, and stakeholder maps. That artifact enters the RPI pipeline at Task Researcher before the downstream Plan and Implement phases begin:
 
-* Problem Statement Complete (after Methods 1-3): Task Researcher uses validated problem framing to scope technical research.
-* Concept Validated (after Methods 4-6): Task Planner uses stakeholder-validated concepts to create implementation plans.
-* Implementation Spec Ready (after Methods 7-9): Task Researcher uses functionally rigorous specifications for focused technical investigation.
+* Problem Statement Complete (after Methods 1-3): Task Researcher receives the handoff first and uses validated problem framing to scope technical research.
+* Concept Validated (after Methods 4-6): Task Researcher receives the handoff first and uses stakeholder-validated concepts to scope implementation research.
+* Implementation Spec Ready (after Methods 7-9): Task Researcher receives the handoff first and uses functionally rigorous specifications for focused technical investigation.
 
 See [DT to RPI Integration](dt-rpi-integration.md) for the full handoff protocol.
 
@@ -70,9 +70,15 @@ See [DT to RPI Integration](dt-rpi-integration.md) for the full handoff protocol
 
 Design Thinking applies across domains. The DT Coach supports industry-specific context templates that adjust vocabulary, constraints, and stakeholder archetypes:
 
-* Manufacturing covers factory floor improvement, production optimization, and safety workflows.
-* Healthcare covers clinical workflows, patient experience, and regulatory compliance.
-* Energy covers grid operations, safety protocols, and field worker tools.
+* energy
+* financial services
+* healthcare
+* manufacturing
+* nonprofit and social impact
+* pharmaceuticals and life sciences
+* professional services
+* public sector
+* retail and CPG
 
 Industry context shapes the coaching conversation without changing the underlying method structure.
 

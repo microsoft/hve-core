@@ -3,7 +3,7 @@ title: "Stage 7: Review"
 description: Validate implementations through code review, PR management, and quality assessment
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-06-25
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -128,13 +128,13 @@ Run full-quality validation on the files changed in src/services/auth/ against t
 Select **prompt-tester** agent:
 
 ```text
-Execute .github/prompts/rpi/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
+Execute .github/prompts/hve-core/task-review.prompt.md literally in a sandbox to verify the review workflow produces expected validation outputs
 ```
 
 Select **prompt-evaluator** agent:
 
 ```text
-Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/rpi/prompt-builder.instructions.md
+Evaluate the execution log from .copilot-tracking/sandbox/2025-01-15-task-review-001/execution-log.md against the prompt quality criteria in .github/instructions/hve-core/prompt-builder.instructions.md
 ```
 
 ### Documentation Review
