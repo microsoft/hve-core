@@ -287,6 +287,24 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: brd-quality-reviewer-mentions-quality-guidance
+  prompt: |
+    You are reviewing a planning handoff for a business-requirements draft.
+    Briefly describe what the brd-quality-reviewer agent is meant to help with
+    and name one quality concern it should surface for the draft.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: brd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: agent-domain-attribution
+    config:
+      pattern: (?i)(brd|business|requirements|review|quality)
+  - type: output-matches
+    name: scope-language
+    config:
+      pattern: (?i)(draft|review|quality|requirements)
 - name: code-review-accessibility-lens
   prompt: |
     As the accessibility code-review perspective, review this markup for
@@ -1183,6 +1201,24 @@ stimuli:
     config:
       pattern: (?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)
       negate: true
+- name: prd-quality-reviewer-mentions-quality-guidance
+  prompt: |
+    You are reviewing a product-requirements draft for a planning workflow.
+    Briefly describe what the prd-quality-reviewer agent is meant to help with
+    and name one quality concern it should surface for the draft.
+  tags:
+    category: agent-behavior
+    advisory: "true"
+    agent: prd-quality-reviewer
+  graders:
+  - type: output-matches
+    name: agent-domain-attribution
+    config:
+      pattern: (?i)(prd|product|requirements|review|quality)
+  - type: output-matches
+    name: scope-language
+    config:
+      pattern: (?i)(draft|review|quality|requirements)
 - name: privacy-planner-class-recipe
   prompt: |
     Start a privacy planning session for a customer analytics service that ingests account profiles and usage events. Outline the six phases of the privacy assessment, including where the DPIA threshold gate applies. Write the planning state under `.copilot-tracking/privacy-plans/` and report the path.
