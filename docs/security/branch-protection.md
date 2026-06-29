@@ -33,3 +33,7 @@ The repository's [CODEOWNERS](../../.github/CODEOWNERS) file assigns ownership f
 ## Rationale
 
 These controls strengthen the repository's supply-chain posture by ensuring that changes to workflows, automation, and release logic are reviewed by the appropriate maintainers before they can merge.
+
+---
+
+🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
