@@ -1,5 +1,5 @@
 ---
-description: 'PRD EARS acceptance-criteria reference - the five Easy Approach to Requirements Syntax sentence patterns (ubiquitous, event-driven, state-driven, unwanted-behavior, optional-feature) described in original Microsoft prose with generic non-product-specific examples and cite-only attribution to Mavin et al. - Brought to you by microsoft/hve-core'
+description: 'PRD EARS acceptance-criteria reference - the five Easy Approach to Requirements Syntax sentence patterns (ubiquitous, event-driven, state-driven, unwanted-behavior, optional-feature) described in original Microsoft prose with generic non-product-specific examples and cite-only attribution to Mavin et al.'
 ---
 
 # EARS Acceptance Criteria
@@ -92,4 +92,4 @@ Optional:        Where single sign-on is enabled, the system shall redirect unau
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). EARS originates with Mavin et al.; the keyword names and clause order are used by name only, and the upstream paper is accessed by the reader through the cited URL.
 
-> Brought to you by microsoft/hve-core
+

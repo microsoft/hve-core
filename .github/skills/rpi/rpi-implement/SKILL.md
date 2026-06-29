@@ -63,4 +63,4 @@ Execute an approved implementation plan with phase-by-phase tracking, validation
 * End with a brief bullet list of phase status, files changed, validation status, and the next review command.
 * Name `/rpi-review` as the next review command when review evidence is requested.
 
-> Brought to you by microsoft/hve-core
+

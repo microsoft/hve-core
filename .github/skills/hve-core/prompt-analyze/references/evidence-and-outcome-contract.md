@@ -73,4 +73,4 @@ Use these fallbacks when Prompt Tester or Prompt Evaluator output is missing, co
 
 Execution and evaluation logs live inside the selected sandbox folder during the run. The durable Analysis Report lives under `.copilot-tracking/reviews/logs/{{YYYY-MM-DD}}/` and survives sandbox cleanup. Sandbox cleanup must remove only sandbox files and folders created for the run, never the durable Analysis Report.
 
-> Brought to you by microsoft/hve-core
+

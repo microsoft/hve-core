@@ -44,7 +44,3 @@ Do not invent severity levels, categories, or output fields the skill does not d
 4. **Write structured findings.** Write `<findingsFolder>/security-findings.json` using the Output contract schema from output-formats.md. Set each finding's `skill` to the referenced risk pattern or `null`. Do not write a markdown report. Return a one-line summary of severity counts and the findings file path.
 
 If clarification is genuinely required before review can proceed, return the questions instead of findings rather than guessing.
-
----
-
-Brought to you by microsoft/hve-core

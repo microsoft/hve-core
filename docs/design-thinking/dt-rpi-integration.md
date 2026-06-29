@@ -194,8 +194,6 @@ Each prompt collects the relevant method outputs, confidence markers, and open q
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

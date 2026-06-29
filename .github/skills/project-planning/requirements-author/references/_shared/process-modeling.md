@@ -1,5 +1,5 @@
 ---
-description: 'Decision aid for adding process, decision, and structural diagrams to a BRD with notation guidance (BPMN / DMN / UML) and a Mermaid-first format selector - Brought to you by microsoft/hve-core'
+description: 'Decision aid for adding process, decision, and structural diagrams to a BRD with notation guidance (BPMN / DMN / UML) and a Mermaid-first format selector'
 ---
 
 # Process Modeling — Skill Entry
@@ -78,4 +78,4 @@ External (cite-only, no embedded text):
 
 Original content in this skill is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation. The OMG specifications listed in the [cite-only registry](#cite-only-registry) are referenced by name and version only and remain the property of Object Management Group, Inc.
 
-> Brought to you by microsoft/hve-core
+

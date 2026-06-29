@@ -1,5 +1,5 @@
 ---
-description: 'PRD_QUALITY_REPORT_V1 schema - PRD-level quality report emitted by PRD Quality Reviewer with gate decisions, thresholds, summaries, and recommendations - Brought to you by microsoft/hve-core'
+description: 'PRD_QUALITY_REPORT_V1 schema - PRD-level quality report emitted by PRD Quality Reviewer with gate decisions, thresholds, summaries, and recommendations'
 ---
 
 # PRD Quality Report — `PRD_QUALITY_REPORT_V1`
@@ -361,4 +361,4 @@ notes: Scalability, maintainability, observability, and interoperability NFR cat
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The schema definition and validation rules are HVE-Core IP and may be reused under the same license.
 
-> Brought to you by microsoft/hve-core
+

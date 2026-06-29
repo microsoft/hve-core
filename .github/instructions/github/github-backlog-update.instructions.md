@@ -215,7 +215,3 @@ Execution is complete when:
 * handoff-logs.md contains an entry for every operation in the plan.
 * The Execution Summary in handoff-logs.md reflects accurate counts for succeeded, failed, and skipped operations.
 * A completion report has been presented to the user with issue numbers.
-
----
-
-Brought to you by microsoft/hve-core

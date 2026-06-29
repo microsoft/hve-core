@@ -1,6 +1,6 @@
 ---
 name: dt-rpi-integration
-description: Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation - Brought to you by microsoft/hve-core
+description: Design Thinking to RPI handoff knowledge covering the DT-to-RPI handoff contract, DT-aware research/planning/implement/review contexts, subagent handoff workflow, and Method 5 image prompt generation
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -36,6 +36,3 @@ The dt-coach loads these references at handoff points where Design Thinking coac
   * `rpi-review-context.md` — DT-aware Task Reviewer context.
   * `subagent-handoff.md` — subagent dispatch workflow for handoff readiness, compilation, and validation.
   * `image-prompt-generation.md` — Method 5 lo-fi image prompt generation guidance.
-
----
-

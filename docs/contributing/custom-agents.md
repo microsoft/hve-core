@@ -415,13 +415,7 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-Include at end of file (MANDATORY):
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

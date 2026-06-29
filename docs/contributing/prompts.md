@@ -319,13 +319,7 @@ work item discovery, reviewer identification, and compliance validation.
 
 #### 8. Attribution Footer
 
-Always include an attribution footer at the end of the file.
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

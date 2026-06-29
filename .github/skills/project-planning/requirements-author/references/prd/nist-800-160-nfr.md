@@ -1,5 +1,5 @@
 ---
-description: 'PRD NFR taxonomy reference - non-functional-requirement category-presence checklist derived from NIST SP 800-160 Vol. 1 Appendix E with repository-original category buckets and presence indicators; deliberately substitutes for ISO 25010 on the PRD side per DD-02 - Brought to you by microsoft/hve-core'
+description: 'PRD NFR taxonomy reference - non-functional-requirement category-presence checklist derived from NIST SP 800-160 Vol. 1 Appendix E with repository-original category buckets and presence indicators; deliberately substitutes for ISO 25010 on the PRD side per DD-02'
 ---
 
 # NIST SP 800-160 NFR Taxonomy (PRD Side)
@@ -113,4 +113,4 @@ This checklist is informational; it does not by itself decide PRD finalization.
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). NIST SP 800-160 Vol. 1 is a U.S. Government publication in the public domain; it is cited by designator, and the category buckets are HVE-Core original groupings.
 
-> Brought to you by microsoft/hve-core
+

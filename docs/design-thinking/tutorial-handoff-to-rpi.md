@@ -129,8 +129,6 @@ The handoff is not one-way. Task Researcher can recommend returning to DT coachi
 * [RPI Workflow](../rpi/README.md): Research, Plan, Implement, Review framework
 * [DT Coach Guide](dt-coach.md): How to use the DT Coach agent
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

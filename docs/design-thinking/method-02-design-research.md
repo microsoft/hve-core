@@ -82,8 +82,6 @@ When you have sufficient research across user tiers and confidence in your evide
 * [Method 3: Input Synthesis](method-03-input-synthesis.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

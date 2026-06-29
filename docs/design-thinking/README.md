@@ -114,8 +114,6 @@ Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, R
 
 The [DT Learning Tutor](dt-learning-tutor.md) provides curriculum-based training across all nine methods with exercises, checks, and reference scenarios.
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

@@ -139,8 +139,6 @@ Session state persists in `.copilot-tracking/design-thinking-sessions/{project-s
 * [Export DT Artifacts to Figma](figma-export.md): Optional board export workflow for workshop collaboration
 * [DT Learning Tutor](dt-learning-tutor.md): Curriculum-based training across all methods
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

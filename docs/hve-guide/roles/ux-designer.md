@@ -118,8 +118,6 @@ them against desirability, feasibility, and viability criteria.
 > Try the DT learning tutor: [DT Learning Tutor](../../design-thinking/dt-learning-tutor.md)
 > See how your stages connect: [AI-Assisted Project Lifecycle](../lifecycle/)
 
-Brought to you by microsoft/hve-core
-
 ---
 
 <!-- markdownlint-disable MD036 -->

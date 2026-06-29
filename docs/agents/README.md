@@ -99,8 +99,6 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 | `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
 | `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
 
-> Brought to you by microsoft/hve-core
-
 ---
 
 <!-- markdownlint-disable MD036 -->

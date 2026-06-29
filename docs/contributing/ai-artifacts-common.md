@@ -843,17 +843,7 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-Source artifact `description:` fields MUST NOT include an attribution suffix. Distribution tooling appends an attribution suffix (`- Brought to you by organization/repository-name`) automatically during plugin generation and extension packaging, so author the source description without it:
-
-```yaml
-description: 'Tests prompt files in a sandbox environment'
-```
-
-Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
-
-```markdown
-> Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution suffix or footer. Author `description:` fields without a trailing attribution string, and do not add a blockquote attribution footer to `SKILL.md` bodies.
 
 ## GitHub Issue Title Conventions
 

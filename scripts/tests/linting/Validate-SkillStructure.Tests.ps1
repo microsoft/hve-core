@@ -131,7 +131,7 @@ description: A test skill for validation
             $content = @"
 ---
 name: 'my-skill'
-description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
+description: 'A skill with single quotes'
 ---
 
 # Skill
@@ -142,7 +142,7 @@ description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'my-skill'
-            $result['description'] | Should -BeExactly 'A skill with single quotes - Brought to you by microsoft/hve-core'
+            $result['description'] | Should -BeExactly 'A skill with single quotes'
         }
 
         It 'Strips double-quoted values correctly' {
@@ -290,7 +290,7 @@ Describe 'Test-SkillDirectory' -Tag 'Unit' {
             $frontmatter = @"
 ---
 name: test-skill
-description: 'A test skill for validation - Brought to you by microsoft/hve-core'
+description: 'A test skill for validation'
 ---
 
 # Test Skill

@@ -1,5 +1,5 @@
 ---
-description: 'Configurable requirement, outcome, and decision identifier schema for requirements-author consumers - Brought to you by microsoft/hve-core'
+description: 'Configurable requirement, outcome, and decision identifier schema for requirements-author consumers'
 ---
 
 # Identifier Schema
@@ -170,4 +170,4 @@ Invalid examples for every consumer:
 * Sibling reference: [design-decisions.md](design-decisions.md)
 * Standards registry: [standards-excerpts.md](standards-excerpts.md#isoiecieee-291482018)
 
-> Brought to you by microsoft/hve-core
+

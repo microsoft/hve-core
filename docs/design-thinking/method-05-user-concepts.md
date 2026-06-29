@@ -83,8 +83,6 @@ When you have evaluated concepts with three-lens ratings and clear advancement d
 * [Method 6: Low-Fidelity Prototypes](method-06-lofi-prototypes.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

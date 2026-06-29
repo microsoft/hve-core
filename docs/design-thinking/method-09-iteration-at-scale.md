@@ -86,8 +86,6 @@ The coach remains available for periodic reassessment or when new constraints em
 * [Method 1: Scope Conversations](method-01-scope-conversations.md)
 * [Design Thinking Overview](README.md)
 
-> Brought to you by microsoft/hve-core
-
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,
 then carefully refined by our team of discerning human reviewers.*

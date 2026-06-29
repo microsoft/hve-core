@@ -821,7 +821,6 @@ function Get-ArtifactDescription {
         Parses the YAML frontmatter block at the top of a markdown file and
         returns the description field value. Returns an empty string when the
         file is missing, has no frontmatter, or lacks a description field.
-        Strips the common " - Brought to you by microsoft/hve-core" suffix.
     .PARAMETER FilePath
         Absolute path to the artifact markdown file.
     .OUTPUTS
@@ -861,8 +860,6 @@ function Get-ArtifactDescription {
             $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
             if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
                 $desc = [string]$frontmatter.description
-                # Strip the common branding suffix
-                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
                 return $desc.Trim()
             }
         }
