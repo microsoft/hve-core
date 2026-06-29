@@ -3,7 +3,7 @@ title: Using DT Methods Together
 description: End-to-end walkthrough of a Design Thinking session across all nine methods
 sidebar_position: 16
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords:
   - design thinking
@@ -244,8 +244,6 @@ The coach re-enters Method 3 with the new evidence, updates synthesis themes, an
 
 > [!TIP]
 > Iteration is progress, not failure. Discovering that your assumptions were wrong in Method 8 is far cheaper than discovering it after full deployment.
-
-Brought to you by microsoft/hve-core
 
 ---
 

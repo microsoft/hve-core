@@ -3,7 +3,7 @@ title: "Method 9: Iteration at Scale"
 description: "Transform user-validated solutions into production systems through telemetry-driven refinement, organizational deployment, and continuous improvement."
 sidebar_position: 13
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-09, iteration-at-scale]
 estimated_reading_time: 5
@@ -85,8 +85,6 @@ The coach remains available for periodic reassessment or when new constraints em
 * [Method 8: User Testing](method-08-test-validate.md)
 * [Method 1: Scope Conversations](method-01-scope-conversations.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

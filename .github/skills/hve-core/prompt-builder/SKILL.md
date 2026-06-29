@@ -80,4 +80,4 @@ After the build loop completes, hand off to `/prompt-analyze` for a deeper read-
 
 Return a concise summary that includes the artifacts changed, the evaluation status and iteration count, the key decisions or issues surfaced, and the next recommended step.
 
-> Brought to you by microsoft/hve-core
+

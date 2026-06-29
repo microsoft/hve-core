@@ -1,5 +1,5 @@
 ---
-description: 'BRD_QUALITY_REPORT_V1 schema - BRD-level quality report emitted by BRD Quality Reviewer with gate decisions, thresholds, summaries, and recommendations - Brought to you by microsoft/hve-core'
+description: 'BRD_QUALITY_REPORT_V1 schema - BRD-level quality report emitted by BRD Quality Reviewer with gate decisions, thresholds, summaries, and recommendations'
 ---
 
 # BRD Quality Report — `BRD_QUALITY_REPORT_V1`
@@ -356,4 +356,4 @@ warnings:
 notes: Compatibility, maintainability, and portability NFR categories are absent; flagged for stakeholder discussion before Govern (no automatic block per DD-012).
 ```
 
-> Brought to you by microsoft/hve-core
+

@@ -3,7 +3,7 @@ title: BRD & PRD Builders
 description: Twin agents for creating business and product requirements documents through guided Q&A
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-27
+ms.date: 2026-06-29
 ms.topic: tutorial
 ---
 

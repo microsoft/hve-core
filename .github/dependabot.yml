@@ -42,8 +42,14 @@ updates:
     prefix: chore
   directories:
   - /.github/skills/**
+  - /scripts/evals/moderation
   groups:
-    uv-dependencies:
+    security-updates:
+      applies-to: security-updates
+      patterns:
+      - "*"
+    version-updates:
+      applies-to: version-updates
       patterns:
       - "*"
   labels:

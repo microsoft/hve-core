@@ -229,4 +229,4 @@ See the arrow types above; `subgraph` blocks denote network or resource boundari
 * Treat the diagram as a static representation of infrastructure sources, not a runtime execution view.
 * Keep the output focused on a single architecture scope so it remains readable.
 
-> Brought to you by microsoft/hve-core
+

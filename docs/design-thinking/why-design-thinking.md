@@ -3,7 +3,7 @@ title: Why Design Thinking?
 description: Understanding when and why to use Design Thinking in your projects
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: concept
 keywords:
   - design thinking
@@ -85,8 +85,6 @@ Industry context shapes the coaching conversation without changing the underlyin
 ## Getting Started
 
 Start with the [DT Coach](dt-coach.md) to run your first guided session. The coach adapts to your experience level and guides you through each method at a pace that works for your team.
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

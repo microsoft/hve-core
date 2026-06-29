@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: overview
 ---
 
@@ -358,6 +358,26 @@ Workflows invoke validation through npm scripts defined in `package.json`:
 | `eval:run:agents`              | `vally eval --suite agent-behavior`                                                                   | Local                         |
 | `eval:run:scripts`             | `vally eval --suite script-validation`                                                                | Local                         |
 | `eval:compare`                 | `vally compare`                                                                                       | Local                         |
+| `eval:presence`                | `Test-StimulusPresence.ps1` (changed-artifact eval-spec coverage gate)                                | Local                         |
+| `eval:execute`                 | `Invoke-VallyEvals.ps1` (run evals for changed artifacts)                                             | Local                         |
+| `eval:moderate`                | `Invoke-ContentModeration.ps1`                                                                        | Local                         |
+| `eval:moderate:corpus`         | `Invoke-CorpusModeration.ps1`                                                                         | Local                         |
+| `eval:moderate:artifacts`      | `Invoke-ArtifactModeration.ps1`                                                                       | Local                         |
+| `eval:moderate:test`           | Runs `Invoke-ContentModeration.Tests.ps1`                                                             | Local                         |
+| `eval:equivalence`             | `Invoke-BaselineEquivalence.ps1`                                                                      | Local                         |
+| `eval:dashboard`               | `New-EquivalenceDashboard.ps1`                                                                        | Local                         |
+| `eval:run:equivalence`         | Runs baseline and customized equivalence specs                                                        | Local                         |
+| `eval:behavior-prompts`        | `vally eval --eval-spec evals/behavior-conformance/prompts.eval.yaml`                                 | Local                         |
+| `eval:behavior-instructions`   | `vally eval --eval-spec evals/behavior-conformance/instructions.eval.yaml`                            | Local                         |
+| `eval:behavior-skills`         | `vally eval --eval-spec evals/behavior-conformance/skill-behavior.eval.yaml`                          | Local                         |
+| `eval:agent`                   | `Invoke-AgentMatrix.ps1` (agent behavior matrix)                                                      | Local                         |
+| `eval:agent:matrix`            | `Invoke-AgentMatrix.ps1 -All -Tier nightly`                                                           | Local                         |
+| `eval:agent:matrix:dryrun`     | `Invoke-AgentMatrix.ps1 -All -Tier nightly -WhatIf`                                                   | Local                         |
+| `eval:agent:changed`           | `Invoke-AgentMatrix.ps1` for changed agents (PR tier)                                                 | Local                         |
+| `eval:agent:dashboard`         | `New-AgentMatrixDashboard.ps1`                                                                        | Local                         |
+| `eval:agent:dashboard:open`    | `New-AgentMatrixDashboard.ps1 -Open`                                                                  | Local                         |
+| `eval:agent:report`            | Runs `eval:agent:matrix` then `eval:agent:dashboard:open`                                             | Local                         |
+| `eval:agent:report:dryrun`     | Runs `eval:agent:matrix:dryrun` then `eval:agent:dashboard:open`                                      | Local                         |
 
 ## Related Documentation
 

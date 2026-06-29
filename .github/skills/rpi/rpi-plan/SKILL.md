@@ -68,4 +68,4 @@ After the plan is validated, continue with `/rpi-implement` only when the caller
 * `.copilot-tracking/research/{{YYYY-MM-DD}}/{{task_slug}}-research.md`
 * `.copilot-tracking/changes/{{YYYY-MM-DD}}/{{task_slug}}-changes.md`
 
-> Brought to you by microsoft/hve-core
+

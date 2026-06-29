@@ -97,4 +97,4 @@ Example layout:
   * Instruction: [.github/instructions/hve-core/commit-message.instructions.md](.github/instructions/hve-core/commit-message.instructions.md)
 ```
 
-> Brought to you by microsoft/hve-core
+

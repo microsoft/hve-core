@@ -3,7 +3,7 @@ title: "Method 3: Input Synthesis"
 description: "Transform raw research data into structured insights, themes, and problem statements that frame the transition from understanding to ideation."
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-03, input-synthesis]
 estimated_reading_time: 5
@@ -81,8 +81,6 @@ When your synthesis produces validated themes, a clear problem statement, and te
 * [Method 2: Design Research](method-02-design-research.md)
 * [Method 4: Brainstorming](method-04-brainstorming.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

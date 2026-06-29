@@ -1,5 +1,5 @@
 ---
-description: 'MoSCoW prioritization guidance for BRD requirements and business goals - Brought to you by microsoft/hve-core'
+description: 'MoSCoW prioritization guidance for BRD requirements and business goals'
 ---
 
 # Prioritization Schemes — Skill Entry
@@ -66,4 +66,4 @@ External (cite-only, no embedded text):
 
 Original content in this skill is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation. MoSCoW and its upstream sources remain the property of their respective rights holders.
 
-> Brought to you by microsoft/hve-core
+

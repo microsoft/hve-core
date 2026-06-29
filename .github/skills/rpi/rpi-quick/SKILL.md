@@ -107,4 +107,4 @@ Return a brief summary that includes:
 * the current review outcome, and
 * Suggested Next Work from Discover.
 
-> Brought to you by microsoft/hve-core
+

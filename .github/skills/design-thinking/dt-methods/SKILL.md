@@ -1,6 +1,6 @@
 ---
 name: dt-methods
-description: Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG) - Brought to you by microsoft/hve-core
+description: Design Thinking method coaching knowledge across all nine methods including per-method techniques, deep expertise, and industry context (energy, financial services, healthcare, manufacturing, nonprofit and social impact, pharmaceuticals and life sciences, professional services, public sector, retail and CPG)
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
