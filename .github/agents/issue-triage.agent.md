@@ -25,39 +25,39 @@ Apply labels only from the canonical taxonomy below: exactly one type label, one
 
 ### Area labels (one or more)
 
-| Label             | Applies when the issue concerns                          |
-|-------------------|----------------------------------------------------------|
-| `agents`          | Custom chat agents (`.agent.md`)                         |
-| `prompts`         | Prompt files (`.prompt.md`)                              |
-| `instructions`    | Instruction files (`.instructions.md`)                   |
-| `skills`          | Skill packages (`SKILL.md`)                              |
-| `scripts`         | PowerShell, Bash, or Python scripts                      |
-| `workflows`       | GitHub Actions workflows                                 |
-| `extension`       | VS Code extension packaging and publishing               |
-| `packaging`       | Extension and plugin packaging or collection manifests   |
-| `automation`      | CI/CD and automation improvements                        |
-| `ci`              | Continuous integration configuration                     |
-| `build`           | Build system and compilation                             |
-| `dependencies`    | Dependency updates                                       |
-| `devcontainer`    | Development container configuration                      |
-| `testing`         | Test infrastructure and test files                       |
-| `evals`           | Evaluation harnesses and stimuli                         |
-| `linting`         | Linting rules and validation                             |
-| `tooling`         | Developer tooling and utilities                          |
-| `infrastructure`  | Repository infrastructure and tooling                    |
-| `configuration`   | Configuration files and settings                         |
-| `design-thinking` | Design thinking methodology and coaching                 |
-| `accessibility`   | Accessibility improvements and compliance                |
-| `ado`             | Azure DevOps integration                                 |
-| `copilot`         | GitHub Copilot integration and features                  |
-| `foundation`      | Core infrastructure and foundational components          |
+| Label             | Applies when the issue concerns                        |
+|-------------------|--------------------------------------------------------|
+| `agents`          | Custom chat agents (`.agent.md`)                       |
+| `prompts`         | Prompt files (`.prompt.md`)                            |
+| `instructions`    | Instruction files (`.instructions.md`)                 |
+| `skills`          | Skill packages (`SKILL.md`)                            |
+| `scripts`         | PowerShell, Bash, or Python scripts                    |
+| `workflows`       | GitHub Actions workflows                               |
+| `extension`       | VS Code extension packaging and publishing             |
+| `packaging`       | Extension and plugin packaging or collection manifests |
+| `automation`      | CI/CD and automation improvements                      |
+| `ci`              | Continuous integration configuration                   |
+| `build`           | Build system and compilation                           |
+| `dependencies`    | Dependency updates                                     |
+| `devcontainer`    | Development container configuration                    |
+| `testing`         | Test infrastructure and test files                     |
+| `evals`           | Evaluation harnesses and stimuli                       |
+| `linting`         | Linting rules and validation                           |
+| `tooling`         | Developer tooling and utilities                        |
+| `infrastructure`  | Repository infrastructure and tooling                  |
+| `configuration`   | Configuration files and settings                       |
+| `design-thinking` | Design thinking methodology and coaching               |
+| `accessibility`   | Accessibility improvements and compliance              |
+| `ado`             | Azure DevOps integration                               |
+| `copilot`         | GitHub Copilot integration and features                |
+| `foundation`      | Core infrastructure and foundational components        |
 
 Apply multiple area labels only when the issue genuinely spans areas. Prefer the most specific areas and avoid blanket labeling.
 
 ### Priority labels (exactly one)
 
-| Label        | Use for                                                              |
-|--------------|----------------------------------------------------------------------|
+| Label        | Use for                                                               |
+|--------------|-----------------------------------------------------------------------|
 | `priority-1` | Critical: security exposure, broken main, data loss, or wide blocking |
 | `priority-2` | High: significant defect or high-value feature, address soon          |
 | `priority-3` | Medium: standard queue, default for well-formed issues                |
