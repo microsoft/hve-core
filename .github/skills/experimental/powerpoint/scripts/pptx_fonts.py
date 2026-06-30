@@ -74,6 +74,7 @@ def extract_font_info(font) -> dict:
         if font.color and font.color.rgb:
             info["color"] = rgb_to_hex(font.color.rgb)
     except (AttributeError, TypeError):
+        # Run font color is unavailable; leave it unset.
         pass
     if font.bold:
         info["bold"] = True
@@ -99,6 +100,7 @@ def _extract_char_spacing(font) -> float | None:
         if spc_val is not None:
             return int(spc_val) / 100.0
     except (AttributeError, TypeError):
+        # Underlying rPr element is unavailable; no spacing to report.
         pass
     return None
 
@@ -119,6 +121,7 @@ def extract_paragraph_font(paragraph) -> dict:
         if font.color and font.color.rgb:
             info["color"] = rgb_to_hex(font.color.rgb)
     except (AttributeError, TypeError):
+        # Paragraph font color is unavailable; leave it unset.
         pass
     if font.bold is True:
         info["bold"] = True

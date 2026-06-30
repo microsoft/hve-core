@@ -207,6 +207,7 @@ def safety_check(
         try:
             Path(tmp.name).unlink(missing_ok=True)
         except OSError:
+            # Temp file already removed or inaccessible; nothing to clean up.
             pass
     output = ((result.stdout or "") + (result.stderr or "")).strip()
     match = SAFETY_CATEGORY_RE.search(output)
