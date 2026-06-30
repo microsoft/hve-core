@@ -2,7 +2,7 @@
 title: SSSC Planner - Product Requirements Document
 description: Product requirements for an SSSC Planner that helps HVE-Core and downstream projects keep supply chain security planning consistent, auditable, and actionable.
 author: GitHub Copilot
-ms.date: 2026-06-14
+ms.date: 2026-06-30
 ms.topic: concept
 sidebar_position: 1
 keywords: [prd, sssc, supply chain security, planner, governance]
@@ -368,7 +368,7 @@ SSSC Planner Product
 |-------|--------|---------|
 | User scoping answers | Conversation | Identify repository, release, package, CI/CD, deployment, and governance context |
 | BRD seed | `docs/planning/brds/sssc-planner-security-brd.md` | Business goals, stakeholder needs, risks, and approval criteria |
-| PRD seed | `docs/prds/sssc-planner.md` | Product requirements and acceptance criteria |
+| PRD seed | `docs/planning/prds/sssc-planner.md` | Product requirements and acceptance criteria |
 | Security plan seed | `.copilot-tracking/security-plans/` when present | Existing security findings and controls |
 | Supply chain skill references | `.github/skills/security/supply-chain-security/` | Standards and taxonomy source of truth |
 | Repository files | Package manifests, workflows, release configs, security configs | Current-state evidence |

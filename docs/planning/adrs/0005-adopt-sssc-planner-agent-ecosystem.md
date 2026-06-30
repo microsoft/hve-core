@@ -3,7 +3,7 @@ id: "0005"
 title: "Adopt the SSSC Planner agent ecosystem"
 description: "Adopt the SSSC Planner as a phase-gated, standards-aware planning ecosystem for HVE-Core and downstream repositories, with thin entry prompts, an orchestration agent, protocol instructions, durable supply chain security knowledge, schema validation, and shared backlog handoff."
 author: "HVE Core Team"
-ms.date: "2026-06-14"
+ms.date: "2026-06-30"
 ms.topic: "reference"
 status: "proposed"
 proposed_date: "2026-06-14"
@@ -34,7 +34,7 @@ affected_components:
   - ".github/skills/security/supply-chain-security/SKILL.md"
   - "scripts/linting/schemas/sssc-state.schema.json"
   - "docs/planning/brds/sssc-planner-security-brd.md"
-  - "docs/prds/sssc-planner.md"
+  - "docs/planning/prds/sssc-planner.md"
   - "collections/security.collection.yml"
   - "collections/security.collection.md"
 supersedes: null
@@ -43,7 +43,7 @@ related:
   - path: "docs/planning/brds/sssc-planner-security-brd.md"
     relation: "influenced-by"
     note: "Defines the business need for downstream repository supply chain security planning and non-certification boundaries."
-  - path: "docs/prds/sssc-planner.md"
+  - path: "docs/planning/prds/sssc-planner.md"
     relation: "influenced-by"
     note: "Defines the product scope, entry modes, phase model, downstream context fields, and v4.1 prerelease decisions."
   - path: ".github/skills/security/supply-chain-security/SKILL.md"
@@ -64,7 +64,7 @@ success_criteria:
   - metric: "SSSC planning outputs retain qualified-review boundaries"
     target: "Planner instructions and generated documentation continue to state that outputs are advisory and not compliance certification."
     measurement_window: "each material planner or documentation update"
-    source: ".github/instructions/security/sssc-planner.instructions.md and docs/prds/sssc-planner.md"
+    source: ".github/instructions/security/sssc-planner.instructions.md and docs/planning/prds/sssc-planner.md"
   - metric: "Ecosystem distribution remains coherent"
     target: "Agent, prompts, instructions, skill, and collection manifests remain aligned when the SSSC Planner is packaged or updated."
     measurement_window: "each release candidate"
@@ -354,14 +354,14 @@ files as historical records, and it must avoid reusing allocated ADR IDs.
 * .github/skills/security/supply-chain-security/SKILL.md
 * scripts/linting/schemas/sssc-state.schema.json
 * docs/planning/brds/sssc-planner-security-brd.md
-* docs/prds/sssc-planner.md
+* docs/planning/prds/sssc-planner.md
 * collections/security.collection.yml
 * collections/security.collection.md
 
 ## More Information
 
 * `docs/planning/brds/sssc-planner-security-brd.md`
-* `docs/prds/sssc-planner.md`
+* `docs/planning/prds/sssc-planner.md`
 * `.github/agents/security/sssc-planner.agent.md`
 * `.github/instructions/security/sssc-planner.instructions.md`
 * `.github/prompts/security/sssc-capture.prompt.md`
