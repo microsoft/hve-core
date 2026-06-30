@@ -7,7 +7,7 @@
 # Purpose: Pester test runner that writes summary and failure details to logs/
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS

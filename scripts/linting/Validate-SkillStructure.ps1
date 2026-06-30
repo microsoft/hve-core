@@ -12,7 +12,7 @@
 # .EXAMPLE
 # pwsh -File scripts/linting/Validate-SkillStructure.ps1 -OutputPath "custom-dir/custom-results.json"
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(

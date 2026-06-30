@@ -3,7 +3,7 @@ title: Copyright Header Guidelines
 description: Standards for copyright and license headers in source files to meet OpenSSF Best Practices badge criteria
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-06-29
 ms.topic: reference
 keywords:
   - copyright
@@ -49,7 +49,7 @@ The header placement depends on any required directives in the file:
 Place the header **after** any `#Requires` statements:
 
 ```powershell
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName="Pester"; ModuleVersion="5.0" }
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT

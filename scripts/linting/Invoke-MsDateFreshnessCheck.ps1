@@ -23,7 +23,7 @@
     Base branch for changed-file detection. Defaults to 'origin/main'.
 #>
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters consumed via script scope')]
 [CmdletBinding()]
