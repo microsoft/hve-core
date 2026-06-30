@@ -219,7 +219,9 @@ context.
 
 The orchestrator must be explicit when a stage produces insufficient signal to
 continue, and must offer the user the option to defer, gather more evidence, or
-hand off to a more appropriate HVE Core agent rather than force an artifact.
+hand off to a more appropriate HVE Core agent rather than force an artifact. This
+input-sufficiency gate runs before any expensive generation, so weak framing
+stops early rather than burning tokens on a low-value artifact.
 
 #### Example interaction (illustrative)
 
@@ -329,6 +331,10 @@ Foglight does not generate composite risk or confidence scores for the project
 as a whole. Where thresholds appear, they support discussion for a named
 decision and must always carry the evidence behind them, the uncertainty that
 remains, the consequence of meeting or missing them, and a refresh condition.
+
+To avoid over-functioning (per NIST AI RMF), Foglight surfaces evidence for a
+human decision and must not auto-resolve the decision itself. The orchestrator
+coaches toward the right artifact; the crew retains the call.
 
 Detailed RAI specifics (taxonomies, controls, evaluation coverage rubrics) are
 out of scope for this BRD and defer to RAI Planner.
@@ -610,6 +616,22 @@ Foglight is successful if it enables crews to:
 * improve planning, readiness, or stakeholder communication without creating a
   separate status bureaucracy
 * compose with existing HVE Core agents cleanly through standard handoffs
+
+### Phase 1 Success Metrics and Milestones
+
+Pilot metrics are intentionally lightweight (no status bureaucracy):
+
+* **Adoption** - crews and sessions invoking the orchestrator on a real pending
+  decision
+* **Decision speed** - time to a usable artifact within a single working session
+* **Crew confidence change** - short pre/post self-rating tied to a named decision
+* **Artifact usefulness** - whether the artifact informed the decision or handed
+  off cleanly to an adjacent HVE Core agent
+* **Cost guardrail** - token/cost per session, to validate that bounded context
+  and the input-sufficiency gate keep generation efficient
+
+Milestone gate: an artifact graduates from Phase 1 to Phase 2 only if it helped a
+crew make a safer decision faster without adding process weight.
 
 ## Out of Scope
 
