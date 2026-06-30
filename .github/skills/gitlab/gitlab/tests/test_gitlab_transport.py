@@ -447,12 +447,15 @@ class TestGitLabTransportHardening:
         response = _json_response(response_factory, REQUEST_BODY)
         mocker.patch("gitlab._OPENER.open", return_value=response)
 
-        assert gitlab._request_bytes(
-            "GET",
-            REQUEST_ENDPOINT,
-            headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
-            require_json=True,
-        ) == REQUEST_BODY.encode()
+        assert (
+            gitlab._request_bytes(
+                "GET",
+                REQUEST_ENDPOINT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
+            == REQUEST_BODY.encode()
+        )
 
     def test_allows_empty_body_without_content_type(
         self,

@@ -14,21 +14,21 @@ The skill is a single-file, standard-library-only CLI. It performs no OAuth brow
 
 ## Assets
 
-| Id | Asset                                  | Lifetime         | Notes                                                                                                                                            |
-|----|----------------------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Id | Asset                                   | Lifetime         | Notes                                                                                                                                          |
+|----|-----------------------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | A1 | Jira API token / PAT                    | Operator-managed | Read from `JIRA_API_TOKEN` / PAT env at invocation. Sent as Bearer (Server/DC) or HTTP Basic (`email:token` base64, Cloud) in `Authorization`. |
 | A2 | `JIRA_BASE_URL`                         | Operator-managed | Origin of the Jira instance. Used to construct every request URL.                                                                              |
 | A3 | Request/response bodies, issue payloads | Command lifetime | Server responses may include issue text, comments, and field data authored by other users; downstream automation must treat as untrusted.      |
-| A4 | Diagnostic / audit output              | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                                          |
+| A4 | Diagnostic / audit output               | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                                          |
 
 ## Adversaries
 
-| Id    | Adversary                                              | In-scope mitigations                                                                                                                                                    |
-|-------|--------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Same-uid malware on the operator workstation           | **Not defended.** A process running as the operator can read the environment directly. Workstation hygiene is the controlling defense.                                 |
-| ADV-b | Network attacker on the CLI ↔ Jira channel             | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser.   |
-| ADV-c | Hostile or malformed Jira server / response            | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error bodies parsed-then-redacted before display.                             |
-| ADV-d | Hostile caller process controlling argv / stdin / env  | Inputs validated and URL-encoded; `JIRA_BASE_URL` canonicalized to origin-only; Basic-auth components ASCII-validated; stdin/JSON size-capped before parse.            |
+| Id    | Adversary                                             | In-scope mitigations                                                                                                                                                 |
+|-------|-------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Same-uid malware on the operator workstation          | **Not defended.** A process running as the operator can read the environment directly. Workstation hygiene is the controlling defense.                               |
+| ADV-b | Network attacker on the CLI ↔ Jira channel            | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser. |
+| ADV-c | Hostile or malformed Jira server / response           | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error bodies parsed-then-redacted before display.                           |
+| ADV-d | Hostile caller process controlling argv / stdin / env | Inputs validated and URL-encoded; `JIRA_BASE_URL` canonicalized to origin-only; Basic-auth components ASCII-validated; stdin/JSON size-capped before parse.          |
 
 ## Bucket B1: CLI → Jira API
 
@@ -134,13 +134,13 @@ The caller controls argv, environment, stdin, stdout, and stderr; the CLI treats
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                                | Severity        | Status                                                                                              |
-|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------|
-| G-REP-1 | The optional audit record is best-effort and is written after the request; it writes to an operator-supplied path and is not a signed or append-only sink.                       | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                |
-| G-INF-1 | Redaction is regex-based and intentionally broad; it may over-redact benign diagnostic text. It is a defense-in-depth backstop, not a license to log secrets.                   | InfoDisc-Low    | Accepted; operators should still avoid logging credential-bearing values.                           |
-| G-EOP-1 | The skill cannot revoke a leaked Jira token; revocation is performed at the Jira instance. A leaked PAT remains valid until revoked there.                                       | EoP-Med         | Upstream control; rotate/revoke at the Jira instance on suspicion of compromise.                    |
-| G-SUP-1 | The skill's Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published for the skill; transport/URL/auth fuzz coverage is partial. | SupplyChain-Med | Tracked at the repository level.                                                                     |
-| G-TLS-1 | No certificate pinning for the Jira origin; TLS validation depends entirely on the system trust store.                                                                          | InfoDisc-Low    | Operator-acceptable for a managed Jira endpoint; documented for customers whose policy mandates pinning. |
+| Id      | Gap                                                                                                                                                                                        | Severity        | Status                                                                                                   |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------------------------------------------------------------------------------------------------|
+| G-REP-1 | The optional audit record is best-effort and is written after the request; it writes to an operator-supplied path and is not a signed or append-only sink.                                 | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                     |
+| G-INF-1 | Redaction is regex-based and intentionally broad; it may over-redact benign diagnostic text. It is a defense-in-depth backstop, not a license to log secrets.                              | InfoDisc-Low    | Accepted; operators should still avoid logging credential-bearing values.                                |
+| G-EOP-1 | The skill cannot revoke a leaked Jira token; revocation is performed at the Jira instance. A leaked PAT remains valid until revoked there.                                                 | EoP-Med         | Upstream control; rotate/revoke at the Jira instance on suspicion of compromise.                         |
+| G-SUP-1 | The skill's Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published for the skill; transport/URL/auth fuzz coverage is partial. | SupplyChain-Med | Tracked at the repository level.                                                                         |
+| G-TLS-1 | No certificate pinning for the Jira origin; TLS validation depends entirely on the system trust store.                                                                                     | InfoDisc-Low    | Operator-acceptable for a managed Jira endpoint; documented for customers whose policy mandates pinning. |
 
 For an active issue tracker entry covering these gaps, see [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225).
 

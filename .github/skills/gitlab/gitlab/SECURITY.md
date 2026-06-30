@@ -14,23 +14,23 @@ The skill is a single-file, standard-library-only CLI. It persists no tokens to 
 
 ## Assets
 
-| Id | Asset                                       | Lifetime         | Notes                                                                                                                                       |
-|----|---------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| A1 | GitLab personal access token                 | Operator-managed | Read from `GITLAB_TOKEN` env at invocation. Sent as `PRIVATE-TOKEN` header over TLS.                                                       |
-| A2 | `GITLAB_URL`                                 | Operator-managed | Origin of the GitLab instance. Used to construct every API URL.                                                                            |
-| A3 | Git remote URL (local)                       | Command lifetime | Read from `git remote get-url origin`; may embed credentials. Sanitized before appearing in any diagnostic output.                         |
-| A4 | Job traces, MR/pipeline payloads, responses  | Command lifetime | Server responses and CI traces may contain secrets or content authored by others; downstream automation must treat as untrusted.          |
-| A5 | Diagnostic / audit output                    | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                                      |
+| Id | Asset                                       | Lifetime         | Notes                                                                                                                            |
+|----|---------------------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| A1 | GitLab personal access token                | Operator-managed | Read from `GITLAB_TOKEN` env at invocation. Sent as `PRIVATE-TOKEN` header over TLS.                                             |
+| A2 | `GITLAB_URL`                                | Operator-managed | Origin of the GitLab instance. Used to construct every API URL.                                                                  |
+| A3 | Git remote URL (local)                      | Command lifetime | Read from `git remote get-url origin`; may embed credentials. Sanitized before appearing in any diagnostic output.               |
+| A4 | Job traces, MR/pipeline payloads, responses | Command lifetime | Server responses and CI traces may contain secrets or content authored by others; downstream automation must treat as untrusted. |
+| A5 | Diagnostic / audit output                   | Command lifetime | stderr diagnostics and the optional audit log; must never contain unredacted secrets.                                            |
 
 ## Adversaries
 
-| Id    | Adversary                                              | In-scope mitigations                                                                                                                                                              |
-|-------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Same-uid malware on the operator workstation           | **Not defended.** A process running as the operator can read the environment and git config directly. Workstation hygiene is the controlling defense.                            |
-| ADV-b | Network attacker on the CLI ↔ GitLab channel           | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser.             |
-| ADV-c | Hostile or malformed GitLab server / response          | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error and non-JSON bodies redacted and size-previewed before display.                  |
-| ADV-d | Hostile local git remote                               | Subprocess uses an arg list (no shell) with an explicit timeout; embedded credentials stripped for logging (`_sanitize_remote_url`); resolved path validated (`_validate_project_path`). |
-| ADV-e | Hostile caller process controlling argv / stdin / env  | Inputs validated/encoded; `GITLAB_URL` canonicalized to origin-only; `state`/`ref`/numeric IDs validated; stdin/JSON size-capped before parse.                                  |
+| Id    | Adversary                                             | In-scope mitigations                                                                                                                                                                     |
+|-------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Same-uid malware on the operator workstation          | **Not defended.** A process running as the operator can read the environment and git config directly. Workstation hygiene is the controlling defense.                                    |
+| ADV-b | Network attacker on the CLI ↔ GitLab channel          | TLS with stdlib certificate validation; HTTP redirects refused (`_NoRedirect`); HTTPS required for non-loopback hosts; capped, content-type-checked response parser.                     |
+| ADV-c | Hostile or malformed GitLab server / response         | No-redirect opener; response size cap (`MAX_BODY_BYTES`); JSON content-type fail-closed; error and non-JSON bodies redacted and size-previewed before display.                           |
+| ADV-d | Hostile local git remote                              | Subprocess uses an arg list (no shell) with an explicit timeout; embedded credentials stripped for logging (`_sanitize_remote_url`); resolved path validated (`_validate_project_path`). |
+| ADV-e | Hostile caller process controlling argv / stdin / env | Inputs validated/encoded; `GITLAB_URL` canonicalized to origin-only; `state`/`ref`/numeric IDs validated; stdin/JSON size-capped before parse.                                           |
 
 ## Bucket B1: CLI → GitLab API
 
@@ -164,13 +164,13 @@ The caller controls argv, environment, stdin, stdout, and stderr; the CLI treats
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                              | Severity        | Status                                                                                              |
-|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------|
-| G-REP-1 | The optional audit record is best-effort and written after the request to an operator-supplied path; it is not a signed or append-only sink.                                   | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                |
-| G-INF-1 | The CLI prints redacted non-JSON response bodies to stdout/stderr for usability; redaction is a broad regex backstop that may over- or under-cover novel secret formats.        | InfoDisc-Low    | Accepted; monitor and extend `_redact` as new secret formats appear.                                |
-| G-EOP-1 | The skill cannot revoke a leaked GitLab token; revocation is performed at the GitLab instance. A leaked PAT remains valid until revoked there.                                  | EoP-Med         | Upstream control; rotate/revoke at the GitLab instance on suspicion of compromise.                  |
-| G-SUP-1 | Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published; transport/subprocess/redaction fuzz coverage is partial.   | SupplyChain-Med | Tracked at the repository level.                                                                     |
-| G-TLS-1 | No certificate pinning for the GitLab origin; TLS validation depends entirely on the system trust store.                                                                       | InfoDisc-Low    | Operator-acceptable for a managed GitLab endpoint; documented for customers whose policy mandates pinning. |
+| Id      | Gap                                                                                                                                                                          | Severity        | Status                                                                                                     |
+|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|------------------------------------------------------------------------------------------------------------|
+| G-REP-1 | The optional audit record is best-effort and written after the request to an operator-supplied path; it is not a signed or append-only sink.                                 | Repudiation-Med | By design; integrate with host telemetry for tamper-evident logging.                                       |
+| G-INF-1 | The CLI prints redacted non-JSON response bodies to stdout/stderr for usability; redaction is a broad regex backstop that may over- or under-cover novel secret formats.     | InfoDisc-Low    | Accepted; monitor and extend `_redact` as new secret formats appear.                                       |
+| G-EOP-1 | The skill cannot revoke a leaked GitLab token; revocation is performed at the GitLab instance. A leaked PAT remains valid until revoked there.                               | EoP-Med         | Upstream control; rotate/revoke at the GitLab instance on suspicion of compromise.                         |
+| G-SUP-1 | Python dependencies are declared in `pyproject.toml` but transitive hashes are not pinned and no SBOM is published; transport/subprocess/redaction fuzz coverage is partial. | SupplyChain-Med | Tracked at the repository level.                                                                           |
+| G-TLS-1 | No certificate pinning for the GitLab origin; TLS validation depends entirely on the system trust store.                                                                     | InfoDisc-Low    | Operator-acceptable for a managed GitLab endpoint; documented for customers whose policy mandates pinning. |
 
 For an active issue tracker entry covering these gaps, see [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225).
 

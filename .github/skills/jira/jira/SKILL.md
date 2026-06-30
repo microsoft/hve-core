@@ -50,10 +50,10 @@ Authentication is selected automatically:
 
 ### Operational Variables
 
-| Variable           | When required | Purpose                                                                                  |
-|--------------------|---------------|------------------------------------------------------------------------------------------|
-| `JIRA_AUDIT_LOG`   | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging).  |
-| `JIRA_AUDIT_ACTOR` | Optional      | Overrides the recorded actor identity (for example, a CI service principal).             |
+| Variable           | When required | Purpose                                                                                 |
+|--------------------|---------------|-----------------------------------------------------------------------------------------|
+| `JIRA_AUDIT_LOG`   | Optional      | Path to a JSON Lines audit log. When set, every request is audited (see Audit Logging). |
+| `JIRA_AUDIT_ACTOR` | Optional      | Overrides the recorded actor identity (for example, a CI service principal).            |
 
 ### Audit Logging
 
