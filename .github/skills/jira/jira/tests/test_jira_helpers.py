@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 
 import jira
@@ -30,6 +31,26 @@ from test_constants import (
 )
 def test_extract_error_message(raw: str, expected: str) -> None:
     assert jira._extract_error_message(raw) == expected
+
+
+def test_redact_sensitive_text_masks_header_and_query_secrets() -> None:
+    payload = (
+        "Authorization: Bearer abc123 "
+        "PRIVATE-TOKEN: pvt123 "
+        "X-API-Key: key123 "
+        "Cookie: sessionid=abc "
+        "Set-Cookie: sid=abc "
+        "https://x/?private_token=abc&access_token=def&token=ghi"
+    )
+
+    result = jira._redact_sensitive_text(payload)
+
+    assert "abc123" not in result
+    assert "pvt123" not in result
+    assert "key123" not in result
+    assert "sessionid=abc" not in result
+    assert "sid=abc" not in result
+    assert "[REDACTED]" in result
 
 
 @pytest.mark.parametrize("issue_key", [TEST_ISSUE_KEY, "ABC1-9", "Proj9-123"])
@@ -66,6 +87,40 @@ def test_read_json_argument_reads_stdin(stdin_factory: StdinFactory) -> None:
     assert jira._read_json_argument(None, USAGE_CREATE) == {
         "fields": {"summary": "stdin"}
     }
+
+
+def test_read_json_argument_reads_bounded_stdin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class LimitedStream(io.StringIO):
+        def read(self, size: int | None = -1) -> str:
+            if size is None or size < 0:
+                raise AssertionError("unbounded stdin read")
+            return super().read(size)
+
+    monkeypatch.setattr("sys.stdin", LimitedStream('{"fields": {"summary": "stdin"}}'))
+
+    assert jira._read_json_argument(None, USAGE_CREATE) == {
+        "fields": {"summary": "stdin"}
+    }
+
+
+def test_read_json_argument_rejects_oversized_stdin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class LimitedStream(io.StringIO):
+        def read(self, size: int | None = -1) -> str:
+            if size is None or size < 0:
+                raise AssertionError("unbounded stdin read")
+            return super().read(size)
+
+    monkeypatch.setattr("sys.stdin", LimitedStream("x" * (jira.MAX_BODY_BYTES + 1)))
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._read_json_argument(None, USAGE_CREATE)
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+    assert "size limit" in str(exc_info.value).lower()
 
 
 def test_read_json_argument_requires_content(stdin_factory: StdinFactory) -> None:

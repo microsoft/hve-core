@@ -165,6 +165,9 @@ items:
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/security/subagents/cve-analyzer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
   kind: agent
   maturity: experimental
@@ -178,6 +181,9 @@ items:
   kind: agent
   maturity: experimental
 - path: .github/agents/security/supply-chain-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/vex-generator.agent.md
   kind: agent
   maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
@@ -359,6 +365,12 @@ items:
 - path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/security/vex-scan.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/vex-triage.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/instructions/accessibility/accessibility-identity.instructions.md
   kind: instruction
   maturity: experimental
@@ -505,6 +517,12 @@ items:
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/vex-generation.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/vex-standards.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/shared/coaching-patterns.instructions.md
   kind: instruction
 - path: .github/instructions/shared/content-policy-citation.instructions.md
@@ -612,6 +630,9 @@ items:
   kind: skill
 - path: .github/skills/rpi/rpi-review
   kind: skill
+- path: .github/skills/security/openvex-spec
+  kind: skill
+  maturity: experimental
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental

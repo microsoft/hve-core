@@ -3,7 +3,7 @@ title: Build Workflows
 description: GitHub Actions CI/CD pipeline architecture for validation, security, and release automation
 sidebar_position: 3
 author: WilliamBerryiii
-ms.date: 2026-06-28
+ms.date: 2026-06-30
 ms.topic: overview
 ---
 
@@ -44,30 +44,33 @@ flowchart TD
 
 ## Workflow Inventory
 
-| Workflow                             | Trigger                 | Purpose                                                           |
-|--------------------------------------|-------------------------|-------------------------------------------------------------------|
-| `pr-validation.yml`                  | Pull request, manual    | Pre-merge quality gate with parallel validation                   |
-| `release-stable.yml`                 | Push to main, manual    | Post-merge validation and release automation                      |
-| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual | Scheduled security posture review                                 |
-| `weekly-validation.yml`              | Schedule, manual        | Weekly full validation sweep                                      |
-| `security-scan.yml`                  | Push to main/develop    | CodeQL security validation                                        |
-| `release-marketplace-stable.yml`     | Manual                  | VS Code extension marketplace publishing                          |
-| `release-marketplace-prerelease.yml` | Manual                  | VS Code extension pre-release publishing                          |
-| `copilot-setup-steps.yml`            | Manual                  | Coding agent environment setup                                    |
-| `devcontainer-change-log.yml`        | Push to main/develop    | Logs devcontainer infrastructure file changes to the step summary |
-| `devcontainer-lockfile-check.yml`    | Reusable                | Validates devcontainer lockfile integrity and SHA-256 pinning     |
-| `release-prerelease.yml`             | PR closed               | Pre-release tag and publish on merge to main                      |
-| `release-prerelease-pr.yml`          | Push to main            | Pre-release companion PR management                               |
-| `scorecard.yml`                      | Schedule, push          | OpenSSF Scorecard security analysis                               |
-| `codeql-analysis.yml`                | Schedule                | Weekly CodeQL security scan (also reusable)                       |
-| `dependency-review.yml`              | Pull request            | Dependency vulnerability review (also reusable)                   |
-| `sha-staleness-check.yml`            | Manual                  | SHA reference freshness check (also reusable)                     |
-| `deploy-docs.yml`                    | Push to main, manual    | Docusaurus documentation site deployment                          |
-| `create-stale-docs-issues.yml`       | Schedule                | Automated stale docs issue creation from ms.date freshness        |
-| `msdate-freshness-check.yml`         | Schedule, manual        | ms.date freshness validation across documentation                 |
-| `label-sync.yml`                     | Push to main, manual    | Repository label synchronization                                  |
-| `workflow-permissions-scan.yml`      | Schedule, manual        | GitHub Actions permissions audit                                  |
-| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual | Weekly GitHub code scanning alert retrieval and issue creation    |
+| Workflow                             | Trigger                   | Purpose                                                           |
+|--------------------------------------|---------------------------|-------------------------------------------------------------------|
+| `pr-validation.yml`                  | Pull request, manual      | Pre-merge quality gate with parallel validation                   |
+| `release-stable.yml`                 | Push to main, manual      | Post-merge validation and release automation                      |
+| `weekly-security-maintenance.yml`    | Sunday 2 AM UTC, manual   | Scheduled security posture review                                 |
+| `weekly-validation.yml`              | Schedule, manual          | Weekly full validation sweep                                      |
+| `security-scan.yml`                  | Push to main/develop      | CodeQL security validation                                        |
+| `release-marketplace-stable.yml`     | Manual                    | VS Code extension marketplace publishing                          |
+| `release-marketplace-prerelease.yml` | Manual                    | VS Code extension pre-release publishing                          |
+| `copilot-setup-steps.yml`            | Manual                    | Coding agent environment setup                                    |
+| `devcontainer-change-log.yml`        | Push to main/develop      | Logs devcontainer infrastructure file changes to the step summary |
+| `devcontainer-lockfile-check.yml`    | Reusable                  | Validates devcontainer lockfile integrity and SHA-256 pinning     |
+| `release-prerelease.yml`             | PR closed                 | Pre-release tag and publish on merge to main                      |
+| `release-prerelease-pr.yml`          | Push to main              | Pre-release companion PR management                               |
+| `scorecard.yml`                      | Schedule, push            | OpenSSF Scorecard security analysis                               |
+| `codeql-analysis.yml`                | Schedule                  | Weekly CodeQL security scan (also reusable)                       |
+| `dependency-review.yml`              | Pull request              | Dependency vulnerability review (also reusable)                   |
+| `sha-staleness-check.yml`            | Manual                    | SHA reference freshness check (also reusable)                     |
+| `deploy-docs.yml`                    | Push to main, manual      | Docusaurus documentation site deployment                          |
+| `create-stale-docs-issues.yml`       | Schedule                  | Automated stale docs issue creation from ms.date freshness        |
+| `msdate-freshness-check.yml`         | Schedule, manual          | ms.date freshness validation across documentation                 |
+| `label-sync.yml`                     | Push to main, manual      | Repository label synchronization                                  |
+| `workflow-permissions-scan.yml`      | Schedule, manual          | GitHub Actions permissions audit                                  |
+| `weekly-gh-code-scanning.yml`        | Monday 3 AM UTC, manual   | Weekly GitHub code scanning alert retrieval and issue creation    |
+| `vex-detect.yml`                     | Schedule, release, manual | Dependency vulnerability scan and VEX triage issue creation       |
+
+GitHub Agentic Workflow markdown files (`issue-triage.md`, `issue-implement.md`, `pr-review.md`, `dependency-pr-review.md`, `doc-update-check.md`, and `vex-draft.md`) compile to `*.lock.yml` workflows and are documented in [Agentic Workflows](agentic-workflows).
 
 ### Reusable Workflows
 
@@ -195,10 +198,16 @@ flowchart LR
     EPR --> ATT[attest-and-upload]
     SBOM --> ATT
     PPR --> UPP[upload-plugin-packages]
+    SBOM --> UPP
+    SBOM --> AUV[attest-and-upload-vex]
     SBOM --> SD[sbom-diff]
+    ATT --> AVN[append-verification-notes]
+    UPP --> AVN
     ATT --> PUB[publish-release]
     UPP --> PUB
+    AUV --> PUB
     SD --> PUB
+    AVN --> PUB
     style RP fill:#f9f,stroke:#333
 ```
 
@@ -206,25 +215,29 @@ Release-please v4 handles `chore`-type commits natively. They are not releasable
 
 ### Main Branch Jobs
 
-| Job                       | Purpose                        | Dependencies                                                         |
-|---------------------------|--------------------------------|----------------------------------------------------------------------|
-| spell-check               | Post-merge spelling validation | None                                                                 |
-| markdown-lint             | Post-merge markdown validation | None                                                                 |
-| table-format              | Post-merge table validation    | None                                                                 |
-| dependency-pinning-scan   | Security pinning check         | None                                                                 |
-| gitleaks-scan             | Secret detection scanning      | None                                                                 |
-| pester-tests              | PowerShell unit tests          | None                                                                 |
-| release-please            | Automated release management   | All validation jobs                                                  |
-| reset-prerelease          | Reset pre-release tracking     | release-please                                                       |
-| extension-package-release | Build release VSIX             | release-please (conditional)                                         |
-| plugin-package-release    | Build release plugin packages  | release-please (conditional)                                         |
-| generate-dependency-sbom  | Generate dependency SBOM       | release-please (conditional)                                         |
-| attest-and-upload         | Sign and upload VSIX           | release-please, extension-package-release, generate-dependency-sbom  |
-| upload-plugin-packages    | Upload plugin packages         | release-please, plugin-package-release                               |
-| sbom-diff                 | Compare SBOM changes           | release-please, generate-dependency-sbom                             |
-| publish-release           | Finalize GitHub Release        | release-please, attest-and-upload, upload-plugin-packages, sbom-diff |
+| Job                       | Purpose                                   | Dependencies                                                                                                           |
+|---------------------------|-------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| spell-check               | Post-merge spelling validation            | None                                                                                                                   |
+| markdown-lint             | Post-merge markdown validation            | None                                                                                                                   |
+| table-format              | Post-merge table validation               | None                                                                                                                   |
+| dependency-pinning-scan   | Security pinning check                    | None                                                                                                                   |
+| gitleaks-scan             | Secret detection scanning                 | None                                                                                                                   |
+| pester-tests              | PowerShell unit tests                     | None                                                                                                                   |
+| release-please            | Automated release management              | All validation jobs                                                                                                    |
+| reset-prerelease          | Reset pre-release tracking                | release-please                                                                                                         |
+| extension-package-release | Build release VSIX                        | release-please (conditional)                                                                                           |
+| plugin-package-release    | Build release plugin packages             | release-please (conditional)                                                                                           |
+| generate-dependency-sbom  | Generate dependency SBOM                  | release-please (conditional)                                                                                           |
+| attest-and-upload         | Sign and upload VSIX                      | release-please, extension-package-release, generate-dependency-sbom                                                    |
+| upload-plugin-packages    | Upload plugin packages                    | release-please, plugin-package-release, generate-dependency-sbom                                                       |
+| attest-and-upload-vex     | Attest and upload VEX document            | release-please, generate-dependency-sbom                                                                               |
+| sbom-diff                 | Compare SBOM changes                      | release-please, generate-dependency-sbom                                                                               |
+| append-verification-notes | Append artifact verification instructions | release-please, attest-and-upload, upload-plugin-packages                                                              |
+| publish-release           | Finalize GitHub Release                   | release-please, attest-and-upload, upload-plugin-packages, attest-and-upload-vex, sbom-diff, append-verification-notes |
 
 When release-please creates a release, parallel jobs build the extension VSIX (`extension-package-release`), package plugin collections (`plugin-package-release`), and generate an SBOM (`generate-dependency-sbom`). The `attest-and-upload` job signs the VSIX with Sigstore attestation, `upload-plugin-packages` uploads collection artifacts, and `sbom-diff` compares dependency changes. The `publish-release` job finalizes the GitHub Release after all artifacts are ready.
+
+The `attest-and-upload-vex` job attests the VEX document (`security/vex/hve-core.openvex.json`) twice: a build-provenance attestation of the document, plus an in-toto attestation that binds the VEX statements as a predicate over the dependency SBOM. The `append-verification-notes` job adds artifact verification instructions to the release notes before `publish-release` finalizes the release.
 
 ## Security Workflows
 
