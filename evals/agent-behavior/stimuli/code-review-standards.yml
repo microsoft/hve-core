@@ -1,0 +1,26 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-standards-lens
+    prompt: |
+      As the standards code-review perspective, review this snippet for coding
+      standard and convention violations, and tie each finding to the rule it
+      breaks.
+      ```python
+      def ProcessData( x ):
+       result=x*2
+       return result
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: standards-finding-vocabulary
+        config:
+          pattern: '(?i)(standard|convention|naming|style|PEP\s?8|formatting|violation|finding|issue)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

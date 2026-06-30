@@ -75,7 +75,7 @@
       },
       "description": "Optional list of Model Context Protocol (MCP) server config json to use with custom agents in GitHub Copilot"
     },
-    "user-invokable": {
+    "user-invocable": {
       "type": "boolean",
       "default": true,
       "description": "Controls whether the agent appears in the UI for manual invocation."

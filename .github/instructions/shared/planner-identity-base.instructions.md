@@ -1,6 +1,6 @@
 ---
-description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
-applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/accessibility/**'
+description: "Shared identity scaffold for phase-based planning agents (SSSC, RAI, Security, Accessibility, Privacy) covering state-file convention, six-phase orchestration template, state protocol, resume protocol, question cadence mechanics, optional disclaimer cadence, and error handling"
+applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**'
 ---
 
 # Planner Identity Base
@@ -37,7 +37,7 @@ When a per-planner identity file intentionally diverges from a base pattern, it 
 
 ## State File Convention
 
-State persists across sessions in a JSON file at `.copilot-tracking/<planner-slug>/{project-slug}/state.json`. The `<planner-slug>` segment is fixed per planner (`sssc-plans`, `rai-plans`, `security-plans`, `accessibility`) and `{project-slug}` is the kebab-case project identifier captured at first invocation.
+State persists across sessions in a JSON file at `.copilot-tracking/<planner-slug>/{project-slug}/state.json`. The `<planner-slug>` segment is fixed per planner (`sssc-plans`, `rai-plans`, `security-plans`, `accessibility`, `privacy-plans`) and `{project-slug}` is the kebab-case project identifier captured at first invocation.
 
 When a planner state includes `noticeLog`, append a timestamped entry every time the planner displays a disclaimer, framework attribution notice, handoff disclaimer, or professional-review reminder. Each entry records `noticeType`, `shownAt`, `source`, and optional `details`; `disclaimerShownAt` remains the first-display gate for planners that use the disclaimer cadence.
 
@@ -122,7 +122,7 @@ Per-planner identity files define phase-specific question templates that name th
 
 ## Disclaimer Cadence
 
-When the planner emits a user-facing disclaimer (RAI, SSSC, and Accessibility planners do; Security Planner does not), the cadence is:
+When the planner emits a user-facing disclaimer (RAI, SSSC, Accessibility, and Privacy planners do; Security Planner does not), the cadence is:
 
 ### Session Start Display
 

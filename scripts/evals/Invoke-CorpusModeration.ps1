@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
@@ -111,7 +111,7 @@ $records = foreach ($relPath in $corpusPaths) {
     @{ id = $relPath; text = $body }
 }
 
-$recordsArray = @($records)
+$recordsArray = @($records | Where-Object { $null -ne $_ })
 if ($recordsArray.Count -eq 0) {
     Write-Host "All listed corpus files missing or empty; skipping moderation."
     exit 0

@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -29,20 +29,19 @@ You enter Operations after completing the final sprint delivery in [Stage 8: Del
 
 ### Primary Agents
 
-| Tool           | Type  | How to Invoke                   | Purpose                                 |
-|----------------|-------|---------------------------------|-----------------------------------------|
-| doc-ops        | Agent | Select **doc-ops** agent        | Update and maintain documentation       |
-| prompt-builder | Agent | Select **prompt-builder** agent | Refine and optimize operational prompts |
+| Tool           | Type  | How to Invoke                   | Purpose                                          |
+|----------------|-------|---------------------------------|--------------------------------------------------|
+| documentation  | Agent | Select **documentation** agent  | Audit, drift, author, and validate documentation |
+| prompt-builder | Agent | Select **prompt-builder** agent | Refine and optimize operational prompts          |
 
 ### Prompts
 
-| Tool              | Type   | How to Invoke        | Purpose                                     |
-|-------------------|--------|----------------------|---------------------------------------------|
-| doc-ops-update    | Prompt | `/doc-ops-update`    | Update documentation for the latest release |
-| incident-response | Prompt | `/incident-response` | Document and triage incidents               |
-| prompt-analyze    | Prompt | `/prompt-analyze`    | Evaluate prompt effectiveness               |
-| prompt-refactor   | Prompt | `/prompt-refactor`   | Refactor and improve existing prompts       |
-| checkpoint        | Prompt | `/checkpoint`        | Save operational state for continuity       |
+| Tool              | Type   | How to Invoke        | Purpose                               |
+|-------------------|--------|----------------------|---------------------------------------|
+| incident-response | Prompt | `/incident-response` | Document and triage incidents         |
+| prompt-analyze    | Prompt | `/prompt-analyze`    | Evaluate prompt effectiveness         |
+| prompt-refactor   | Prompt | `/prompt-refactor`   | Refactor and improve existing prompts |
+| checkpoint        | Prompt | `/checkpoint`        | Save operational state for continuity |
 
 ### Auto-Activated Instructions
 
@@ -79,15 +78,15 @@ Severity 2. Phase is triage.
 
 ### Documentation Maintenance
 
-Use the `/doc-ops-update` prompt to target a specific scope and focus area:
+Select the **documentation** agent and choose the validate or author mode to target a specific scope and focus area:
 
 ```text
-/doc-ops-update scope=docs focus=accuracy
+Select documentation agent in validate mode. Scope docs, focus accuracy.
 ```
 
-For ad-hoc documentation work outside the predefined scopes, select the agent directly.
+For ad-hoc documentation work, select the agent and describe the task directly.
 
-Select **doc-ops** agent:
+Select **documentation** agent:
 
 ```text
 Scan docs/getting-started/ for accuracy against current scripts/ and
@@ -98,13 +97,13 @@ and the setup guides may reference outdated flags or file paths.
 ### Prompt Refinement
 
 ```text
-/prompt-analyze .github/prompts/rpi/task-research.prompt.md
+/prompt-analyze .github/prompts/hve-core/task-research.prompt.md
 ```
 
 After analysis, apply the suggested improvements:
 
 ```text
-/prompt-refactor .github/prompts/rpi/task-research.prompt.md Remove
+/prompt-refactor .github/prompts/hve-core/task-research.prompt.md Remove
 duplicate input declarations and consolidate the research scope section
 into a single structured list.
 ```

@@ -160,4 +160,3 @@ For complete mapping details, see [references/mapping-spec.md](references/mappin
 | Empty output directory          | No canonical markdown files found          | Confirm `--canonical-dir` path and that files have `---` frontmatter                     |
 | PPTX build fails after generate | PowerPoint skill missing or path incorrect | Confirm `powerpoint/` skill exists at `.github/skills/experimental/powerpoint/`          |
 
-> Brought to you by microsoft/hve-core

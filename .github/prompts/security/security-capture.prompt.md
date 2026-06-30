@@ -1,6 +1,6 @@
 ---
 description: "Start security planning from existing notes using the Security Planner agent (capture mode)"
-agent: security-planner
+agent: Security Planner
 ---
 
 # Security Capture

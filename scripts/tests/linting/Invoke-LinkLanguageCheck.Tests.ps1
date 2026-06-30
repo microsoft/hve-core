@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -454,6 +454,7 @@ Write-Output "[]"
             function Set-CIEnv { param($Name, $Value) }
             function Write-CIAnnotation { param($Message, $Level, $File, $Line) }
             function Write-CIStepSummary { param($Content) }
+            function Get-StandardTimestamp { 'MOCK-TIMESTAMP' }
         }
 
         It 'writes to default path when OutputPath not specified' {
@@ -494,6 +495,7 @@ Write-Output "[]"
             function Set-CIEnv { param($Name, $Value) }
             function Write-CIAnnotation { param($Message, $Level, $File, $Line) }
             function Write-CIStepSummary { param($Content) }
+            function Get-StandardTimestamp { 'MOCK-TIMESTAMP' }
         }
 
         It 'writes to custom path when OutputPath is specified' {
@@ -550,6 +552,7 @@ Write-Output $json
             function Set-CIEnv { param($Name, $Value) }
             function Write-CIAnnotation { param($Message, $Level, $File, $Line) }
             function Write-CIStepSummary { param($Content) }
+            function Get-StandardTimestamp { 'MOCK-TIMESTAMP' }
             function Get-CIPlatform { return 'github' }
             function ConvertTo-AzureDevOpsEscaped { param($Value) return $Value }
         }

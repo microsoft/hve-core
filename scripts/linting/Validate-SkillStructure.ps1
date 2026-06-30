@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Validate-SkillStructure.ps1
@@ -42,6 +42,9 @@ $script:RecognizedSubdirectories = @('scripts', 'references', 'assets', 'example
 
 # Python environment directories excluded from unrecognized-subdirectory warnings in Python skills
 $script:PythonEnvironmentDirs = @('.hypothesis', '.pytest_cache', '.ruff_cache', '.venv')
+
+# Build artifact directories excluded from unrecognized-subdirectory warnings in any skill (always gitignored)
+$script:BuildArtifactDirs = @('node_modules')
 
 function Get-SkillFrontmatter {
     <#
@@ -187,6 +190,12 @@ function Test-PythonSkillConfig {
     # Require ruff in dev dependencies (inline or multi-line TOML arrays)
     if ($content -notmatch '"ruff') {
         $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
+    }
+
+    # Warn when uv.lock is absent so Dependabot can resolve and patch dependencies
+    $uvLockPath = Join-Path (Split-Path $PyprojectPath -Parent) 'uv.lock'
+    if (-not (Test-Path $uvLockPath -PathType Leaf)) {
+        $warnings.Add("pyproject.toml present without committed uv.lock in '$RelativePath' (required for Dependabot uv coverage)")
     }
 
     # Fuzz harness convention check
@@ -342,6 +351,10 @@ function Test-SkillDirectory {
             }
             # Standard Python environment directories are expected in Python skills
             if ($isPythonSkill -and $subdir.Name -in $script:PythonEnvironmentDirs) {
+                continue
+            }
+            # Build artifact directories (e.g. node_modules) are always gitignored and not skill content
+            if ($subdir.Name -in $script:BuildArtifactDirs) {
                 continue
             }
             $warnings.Add("Unrecognized subdirectory '$($subdir.Name)' in '$relativePath' (recognized: $($script:RecognizedSubdirectories -join ', '))")

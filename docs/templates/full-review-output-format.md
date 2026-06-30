@@ -1,15 +1,15 @@
 ---
-title: Code Review Full Output Format
-description: Shared data contracts, report structure, and persistence rules for the Code Review Full orchestrator and its subagents
+title: Code Review Output Format
+description: Shared data contracts, report structure, and persistence rules for the Code Review orchestrator and its perspective subagents
 sidebar_position: 10
 author: microsoft/hve-core
-ms.date: 2026-04-06
+ms.date: 2026-06-19
 ms.topic: reference
 ---
 
-## Subagent Findings JSON Schema
+## Perspective Findings JSON Schema
 
-Both subagents write findings in this format. The structured format enables deterministic merging without LLM re-parsing.
+Each perspective subagent writes findings in this format. The structured format enables deterministic merging without LLM re-parsing.
 
 ```json
 {
@@ -46,30 +46,30 @@ Both subagents write findings in this format. The structured format enables dete
 }
 ```
 
-Fields that do not apply may be omitted or set to `null` / empty array. The `acceptance_criteria_coverage` field is present only when the standards subagent received a story definition.
+Fields that do not apply may be omitted or set to `null` / empty array. The `acceptance_criteria_coverage` field is present only when the standards perspective received a story definition.
 
 ## Report Skeleton
 
 Structure the merged report in this section order:
 
-1. Metadata header: reviewer name, branch, date, aggregate severity counts, and the standards subagent's Code/PR Summary as the report description. If the standards subagent was skipped, use the functional subagent's executive summary as the description.
+1. Metadata header: reviewer name, branch, date, aggregate severity counts, and the standards perspective's Code/PR Summary as the report description. If the standards perspective did not run, use another perspective's executive summary as the description.
 2. Changed Files Overview: unified table of all reviewed files with risk levels and issue counts.
-3. Merged Findings: all issues renumbered and tagged by source subagent, grouped by severity.
-4. Acceptance Criteria Coverage: the standards subagent's coverage table, included only when a story input was provided.
-5. Positive Changes: combined positive observations from both subagents.
-6. Testing Recommendations: combined testing guidance from both subagents.
-7. Recommended Actions: actions from the standards subagent's review. If the standards subagent was skipped, include any recommendations from the functional subagent; omit the section if both are absent.
-8. Out-of-scope Observations: combined observations from both subagents.
-9. Risk Assessment: the standards subagent's risk assessment for the overall change. If the standards subagent was skipped, derive risk level from the functional subagent's highest-severity finding.
-10. Verdict: the stricter of the two subagent verdicts with brief justification.
+3. Merged Findings: all issues renumbered and tagged by source perspective, grouped by severity.
+4. Acceptance Criteria Coverage: the standards perspective's coverage table, included only when a story input was provided.
+5. Positive Changes: combined positive observations from every perspective that ran.
+6. Testing Recommendations: combined testing guidance from every perspective that ran.
+7. Recommended Actions: actions aggregated across the perspectives that ran; omit the section if none are present.
+8. Out-of-scope Observations: combined observations from every perspective that ran.
+9. Risk Assessment: the standards perspective's risk assessment for the overall change. If the standards perspective did not run, derive risk level from the highest-severity finding across the perspectives that ran.
+10. Verdict: the strictest verdict across the perspectives that ran, with brief justification.
 
-Omit sections sourced exclusively from a subagent that was skipped.
+Omit sections sourced exclusively from a perspective that did not run.
 
 ## Persist and Present
 
 **Do not present the report until both `review.md` and `metadata.json` have been successfully written to disk.**
 
-1. Write the merged report and metadata to disk using the review-artifacts protocol with `reviewer` set to `code-review-full`.
+1. Write the merged report and metadata to disk using the review-artifacts protocol with `reviewer` set to `code-review`.
 2. Confirm both files exist before proceeding.
 3. Present a **compact summary** in the conversation, not the full report. The summary contains:
    * Metadata table (reviewer, branch, date, severity counts)

@@ -1,5 +1,5 @@
 ---
-description: 'RACI accountability matrix and its widely used variants (RASCI, RACI-VS, DACI) tabulated with letter definitions, selection guidance, and authoring rules used by the BRD Builder - Brought to you by microsoft/hve-core'
+description: 'RACI accountability matrix and its widely used variants (RASCI, RACI-VS, DACI) tabulated with letter definitions, selection guidance, and authoring rules used by the BRD Builder'
 ---
 
 # RACI and Variants
@@ -102,4 +102,4 @@ The default is RACI. A non-default variant is recorded in the matrix header so r
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). RACI and its named variants are generic project-management techniques in widespread industry use and are not the property of any single publisher.
 
-> Brought to you by microsoft/hve-core
+

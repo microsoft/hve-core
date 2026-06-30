@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -173,6 +173,9 @@ function Get-CorpusManifest {
             if (-not $seen.Add($file.FullName)) { continue }
 
             $rel = ($file.FullName.Substring($RepoRoot.Length)).TrimStart('\', '/').Replace('\', '/')
+
+            # Vendored dependencies are never part of the authored corpus.
+            if ($rel -match '(^|/)node_modules/') { continue }
 
             $skip = $false
             foreach ($excluded in $normalizedExcludes) {

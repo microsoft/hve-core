@@ -1,5 +1,5 @@
 ---
-description: "BRD frontmatter overlay schema definition - Brought to you by microsoft/hve-core"
+description: "BRD frontmatter overlay schema definition"
 ---
 
 # BRD Frontmatter Overlay Schema
@@ -199,7 +199,3 @@ license: "CC-BY 4.0 (Microsoft HVE-Core)"
 ```
 
 At Govern approval, update `status` to `approved`, update `version` to `1.0.0` or higher, and capture signoff evidence in the BRD and handoff payload.
-
----
-
-> Brought to you by microsoft/hve-core

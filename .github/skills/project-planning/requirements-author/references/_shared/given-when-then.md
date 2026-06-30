@@ -1,5 +1,5 @@
 ---
-description: 'Canonical Given/When/Then (Gherkin) acceptance-criteria pattern used by the BRD Builder workflow, with generic non-product-specific examples and BSD-3 attribution to the Cucumber project - Brought to you by microsoft/hve-core'
+description: 'Canonical Given/When/Then (Gherkin) acceptance-criteria pattern used by the BRD Builder workflow, with generic non-product-specific examples and BSD-3 attribution to the Cucumber project'
 ---
 
 # Given/When/Then - Gherkin Pattern
@@ -92,4 +92,4 @@ This pointer file is original Microsoft content licensed under [CC BY 4.0](https
 
 * Cucumber project - Gherkin language and parser. [https://github.com/cucumber/gherkin](https://github.com/cucumber/gherkin) (accessed 2026-05-25).
 
-> Brought to you by microsoft/hve-core
+

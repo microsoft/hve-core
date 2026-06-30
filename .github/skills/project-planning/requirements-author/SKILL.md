@@ -1,6 +1,6 @@
 ---
 name: requirements-author
-description: 'Requirements authoring guide for BRD and PRD across Discover, Define, and Govern with canonical templates and handoff contracts - Brought to you by microsoft/hve-core'
+description: 'Requirements authoring guide for BRD and PRD across Discover, Define, and Govern with canonical templates and handoff contracts'
 license: CC-BY-4.0
 user-invocable: false
 metadata:
@@ -417,4 +417,4 @@ The bundled reference bodies cite third-party standards and frameworks by name a
 
 This skill is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-> Brought to you by microsoft/hve-core
+

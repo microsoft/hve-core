@@ -385,7 +385,3 @@ MUST escalate to human decision-makers when:
 * Regulatory or compliance obligations are unclear
 * Network ownership boundaries are contested across teams
 * Major redesign decisions affect budget, schedule, or operating model
-
----
-
-Brought to you by microsoft/hve-core

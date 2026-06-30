@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # CorpusReader.psm1
 # Purpose: Read AI corpus markdown files with YAML frontmatter stripping for moderation input.
@@ -69,19 +69,20 @@ function Get-CorpusArtifactPaths {
     }
 
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding utf8 | ConvertFrom-Json
+    $paths = [System.Collections.Generic.List[string]]::new()
     if (-not $manifest.artifacts) {
-        return @()
+        return , $paths.ToArray()
     }
 
     $pattern = '^\.github/(agents|prompts|instructions|skills)/.+\.md$'
-    $paths = foreach ($artifact in $manifest.artifacts) {
+    foreach ($artifact in $manifest.artifacts) {
         $path = ($artifact.path -replace '\\', '/')
         if ($artifact.status -ne 'removed' -and $path -match $pattern) {
-            $path
+            $paths.Add($path)
         }
     }
 
-    return @($paths)
+    return , $paths.ToArray()
 }
 
 Export-ModuleMember -Function @(

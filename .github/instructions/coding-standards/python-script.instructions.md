@@ -229,7 +229,7 @@ Include module docstrings with description, usage, and examples.
 Organize scripts in this order:
 
 1. Shebang: `#!/usr/bin/env python3`
-2. Copyright header: `# Copyright (c) Microsoft Corporation.`
+2. Copyright header: `# Copyright (c) 2026 Microsoft Corporation. All rights reserved.`
 3. SPDX license identifier: `# SPDX-License-Identifier: MIT`
 4. PEP 723 inline script metadata (if applicable)
 5. Future imports: `from __future__ import annotations`
@@ -249,7 +249,7 @@ PEP 723 inline metadata enables automatic dependency installation with *uv*.
 
 ```python
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 # /// script
 # requires-python = ">=3.11"

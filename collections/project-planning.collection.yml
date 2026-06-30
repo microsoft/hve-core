@@ -12,6 +12,7 @@ tags:
   - rai
   - responsible-ai
   - security
+  - privacy
 items:
   # Agents
   - path: .github/agents/project-planning/agile-coach.agent.md
@@ -47,10 +48,19 @@ items:
   - path: .github/agents/accessibility/accessibility-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/privacy/privacy-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/privacy/privacy-reviewer.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/security-planner.agent.md
     kind: agent
     maturity: experimental
   - path: .github/agents/security/sssc-planner.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/sssc-reviewer.agent.md
     kind: agent
     maturity: experimental
   # Subagents
@@ -170,6 +180,9 @@ items:
   - path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/privacy/privacy-identity.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/hve-core/licensing-posture.instructions.md
     kind: instruction
   - path: .github/instructions/shared/planner-identity-base.instructions.md
@@ -186,6 +199,9 @@ items:
   - path: .github/instructions/shared/story-quality.instructions.md
     kind: instruction
   # BRD Skills
+  - path: .github/skills/project-planning/privacy-standards
+    kind: skill
+    maturity: experimental
   - path: .github/skills/project-planning/requirements-author
     kind: skill
   # Telemetry

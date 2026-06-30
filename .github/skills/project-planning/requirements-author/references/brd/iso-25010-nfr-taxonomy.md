@@ -1,5 +1,5 @@
 ---
-description: 'Cite-only reference naming the eight ISO/IEC 25010:2023 product-quality category names the BRD Builder uses as a Define-exit category-presence checklist per DD-012, with original Microsoft presence indicators - Brought to you by microsoft/hve-core'
+description: 'Cite-only reference naming the eight ISO/IEC 25010:2023 product-quality category names the BRD Builder uses as a Define-exit category-presence checklist per DD-012, with original Microsoft presence indicators'
 ---
 
 # ISO/IEC 25010 - NFR Category-Presence Checklist (Cite-Only)
@@ -83,4 +83,4 @@ ISO/IEC 25010 is a paywalled international standard. Its definitions, sub-charac
 
 This pointer file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). ISO/IEC 25010 is the property of ISO and IEC and is subject to the publisher's terms at the upstream source.
 
-> Brought to you by microsoft/hve-core
+

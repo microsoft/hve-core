@@ -1,6 +1,6 @@
 ---
 description: Shared telemetry overlay applying telemetry-foundations vocabulary across planner, ADR, PRD, accessibility, code-review, and implementation artifacts
-applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/changes/**'
+applyTo: '**/.copilot-tracking/sssc-plans/**, **/.copilot-tracking/sssc-reviews/**, **/.copilot-tracking/rai-plans/**, **/.copilot-tracking/security-plans/**, **/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**, **/.copilot-tracking/prd-sessions/**, **/.copilot-tracking/accessibility/**, **/.copilot-tracking/privacy-plans/**, **/.copilot-tracking/privacy-reviews/**, **/.copilot-tracking/reviews/code-reviews/**, **/.copilot-tracking/changes/**'
 ---
 
 # Shared Telemetry Overlay
@@ -24,16 +24,19 @@ Always consult the `telemetry-foundations` skill for trace, metric, log, PII, an
 
 ## Artifact-Specific Mandatory Telemetry
 
-| Artifact context                                    | Additional mandatory telemetry                                                                                                     |
-|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| SSSC plans (`sssc-plans/`)                          | Require build/release telemetry attributes (`vcs.*`, `ci.*`) on supply-chain controls per the skill's Resource Attributes section. |
-| RAI plans (`rai-plans/`)                            | Capture model-output telemetry (latency, refusal rate, content-filter triggers) as metrics in the impact-assessment record.        |
-| Security plans (`security-plans/`)                  | Treat security-event emission as mandatory; cross-reference STRIDE entries with the skill's Log Vocabulary severity levels.        |
-| ADR artifacts (`adr-plans/`, `docs/planning/adrs/`) | Record the chosen telemetry strategy under "Consequences"; cite the skill section that justifies each instrument choice.           |
-| PRD sessions (`prd-sessions/`)                      | Capture telemetry acceptance criteria in the PRD's "Success Metrics" and "Operational Readiness" sections.                         |
-| Accessibility plans (`accessibility/`)              | No additional mandate beyond steps 1-5; apply the decision tree to any observable accessibility behavior.                          |
-| Code-review reports (`reviews/code-reviews/`)       | Flag any production code path that emits telemetry without a corresponding semantic-convention reference.                          |
-| Implementation changes (`changes/`)                 | Verify each new emitter's attributes against the skill before marking the implementation step complete.                            |
+| Artifact context                                    | Additional mandatory telemetry                                                                                                                                                  |
+|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SSSC plans (`sssc-plans/`)                          | Require build/release telemetry attributes (`vcs.*`, `ci.*`) on supply-chain controls per the skill's Resource Attributes section.                                              |
+| SSSC review reports (`sssc-reviews/`)               | Flag supply-chain findings that rely on build/release telemetry without corresponding `vcs.*` or `ci.*` evidence.                                                               |
+| RAI plans (`rai-plans/`)                            | Capture model-output telemetry (latency, refusal rate, content-filter triggers) as metrics in the impact-assessment record.                                                     |
+| Security plans (`security-plans/`)                  | Treat security-event emission as mandatory; cross-reference STRIDE entries with the skill's Log Vocabulary severity levels.                                                     |
+| ADR artifacts (`adr-plans/`, `docs/planning/adrs/`) | Record the chosen telemetry strategy under "Consequences"; cite the skill section that justifies each instrument choice.                                                        |
+| PRD sessions (`prd-sessions/`)                      | Capture telemetry acceptance criteria in the PRD's "Success Metrics" and "Operational Readiness" sections.                                                                      |
+| Accessibility plans (`accessibility/`)              | No additional mandate beyond steps 1-5; apply the decision tree to any observable accessibility behavior.                                                                       |
+| Privacy plans (`privacy-plans/`)                    | Capture data-processing telemetry decisions, consent-state transitions, and retention/erasure events as auditable log or metric signals when they are observable in production. |
+| Privacy review reports (`privacy-reviews/`)         | Flag privacy findings that involve data-processing or consent-state signals without corresponding auditable log or metric evidence.                                             |
+| Code-review reports (`reviews/code-reviews/`)       | Flag any production code path that emits telemetry without a corresponding semantic-convention reference.                                                                       |
+| Implementation changes (`changes/`)                 | Verify each new emitter's attributes against the skill before marking the implementation step complete.                                                                         |
 
 ## Fallback
 

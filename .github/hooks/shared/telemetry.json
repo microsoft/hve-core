@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "description": "Records Copilot session lifecycle events to local telemetry for reporting.",
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "userPromptSubmit": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "stop": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ],
+    "preCompact": [
+      {
+        "type": "command",
+        "bash": ".github/hooks/shared/telemetry/telemetry-collector.sh",
+        "powershell": ".github/hooks/shared/telemetry/Invoke-TelemetryCollector.ps1",
+        "timeoutSec": 10
+      }
+    ]
+  }
+}

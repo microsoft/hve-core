@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 #Requires -Version 7.0
@@ -54,7 +54,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-Import-Module PowerShell-Yaml -ErrorAction Stop
+Import-Module powershell-yaml -ErrorAction Stop
 
 #region Functions
 
@@ -128,7 +128,7 @@ function Merge-ModelData {
     Array of model release status objects from model-release-status.yml.
 
     .PARAMETER Multipliers
-    Array of model multiplier objects from model-multipliers.yml.
+    Array of model multiplier objects from annual-subscriber-model-multipliers.yml.
 
     .OUTPUTS
     [hashtable[]] Array of merged model catalog entries.
@@ -144,7 +144,7 @@ function Merge-ModelData {
 
     $multiplierLookup = @{}
     foreach ($m in $Multipliers) {
-        $multiplierLookup[$m.name] = $m
+        $multiplierLookup[$m.model] = $m
     }
 
     $models = @()
@@ -152,16 +152,12 @@ function Merge-ModelData {
         $name = $model.name
         $status = if ($model.release_status -eq 'GA') { 'ga' } else { 'preview' }
 
-        # Look up multiplier (use paid multiplier as canonical)
+        # Look up premium-request multiplier from annual-subscriber multiplier data
         $multiplier = 1.0
         if ($multiplierLookup.ContainsKey($name)) {
-            $mData = $multiplierLookup[$name]
-            $paidVal = $mData.multiplier_paid
-            if ($paidVal -is [string] -and $paidVal -eq 'Not applicable') {
-                $multiplier = 0
-            }
-            elseif ($null -ne $paidVal) {
-                $multiplier = [double]$paidVal
+            $multVal = $multiplierLookup[$name].new_multiplier
+            if ($null -ne $multVal -and "$multVal" -ne '') {
+                $multiplier = [double]$multVal
             }
         }
 
@@ -383,7 +379,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
     try {
         $releaseStatusUrl = "$BaseUrl/model-release-status.yml"
-        $multipliersUrl = "$BaseUrl/model-multipliers.yml"
+        $multipliersUrl = "$BaseUrl/annual-subscriber-model-multipliers.yml"
 
         Write-Host "  Fetching: $releaseStatusUrl"
         $releaseStatus = Get-RemoteYaml -Url $releaseStatusUrl

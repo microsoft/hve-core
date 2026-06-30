@@ -3,7 +3,7 @@ title: HVE Guide
 description: Role-specific guides and the AI-assisted project lifecycle for engineering teams using HVE Core
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-26
 ms.topic: overview
 keywords:
   - hve guide
@@ -50,9 +50,9 @@ flowchart LR
 | Stage 4 | Decomposition      | ado-prd-to-wit, github-backlog-manager                                                                                       |
 | Stage 5 | Sprint Planning    | github-backlog-manager, agile-coach                                                                                          |
 | Stage 6 | Implementation     | task-researcher, task-planner, task-implementor, task-reviewer, rpi-agent, prompt-builder, coding-standards                  |
-| Stage 7 | Review             | task-reviewer, pr-review                                                                                                     |
+| Stage 7 | Review             | task-reviewer, code-review                                                                                                   |
 | Stage 8 | Delivery           | pull-request, git-commit, git-merge, ado-get-build-info                                                                      |
-| Stage 9 | Operations         | doc-ops, doc-ops-update, incident-response                                                                                   |
+| Stage 9 | Operations         | documentation, incident-response                                                                                             |
 
 > Cross-cutting: memory is available at every stage and is not tied to any single phase.
 

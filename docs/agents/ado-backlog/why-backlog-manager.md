@@ -2,7 +2,7 @@
 title: Why the ADO Backlog Manager Works
 description: Design principles and cognitive foundations behind the Azure DevOps Backlog Manager workflow separation
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - azure devops backlog manager
@@ -31,7 +31,7 @@ Triage applies consistent classification. Working from discovery output rather t
 
 Sprint planning builds on classified data. With fields and duplicates resolved, iteration assignment becomes a mapping exercise rather than a judgment call. The workflow can reason about capacity, hierarchy coverage, and area path gaps because triage has already done the classification work.
 
-PRD planning bridges requirements and backlogs. Converting a product requirements document into a work item hierarchy is a distinct skill from managing existing items. A separate workflow ensures the decomposition (Epic > Feature > Story > Task) follows Azure DevOps conventions without interference from ongoing triage.
+PRD planning bridges requirements and backlogs. Converting a product requirements document into a work item hierarchy is a distinct skill from managing existing items. A separate workflow ensures the decomposition (Epic > Feature > User Story) follows Azure DevOps conventions without interference from ongoing triage.
 
 Execution applies changes mechanically. By the time you reach execution, every change has been reviewed and approved in a handoff file. The workflow processes checkboxes, not decisions. Content sanitization strips internal tracking references before API calls, preventing accidental leakage of planning metadata. This separation means bulk changes are safe because the decision-making happened in earlier phases with full context.
 

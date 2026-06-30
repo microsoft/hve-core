@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = 'http://127.0.0.1:3001/hve-core/';

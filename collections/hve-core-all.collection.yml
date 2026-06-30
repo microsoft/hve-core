@@ -19,15 +19,31 @@ items:
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-accessibility.agent.md
+- path: .github/agents/coding-standards/code-review.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/coding-standards/code-review-full.agent.md
+- path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/coding-standards/code-review-functional.agent.md
+- path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-standards.agent.md
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/data-science/eval-dataset-creator.agent.md
@@ -54,15 +70,10 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/hve-core/documentation.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
   kind: agent
-- path: .github/agents/hve-core/pr-review.agent.md
-  kind: agent
-- path: .github/agents/hve-core/pr-walkthrough.agent.md
-  kind: agent
-  maturity: experimental
 - path: .github/agents/hve-core/prompt-builder.agent.md
   kind: agent
 - path: .github/agents/hve-core/rpi-agent.agent.md
@@ -83,6 +94,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental
@@ -98,6 +112,12 @@ items:
   kind: agent
 - path: .github/agents/jira/jira-prd-to-wit.agent.md
   kind: agent
+- path: .github/agents/privacy/privacy-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/privacy/privacy-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
@@ -139,6 +159,9 @@ items:
 - path: .github/agents/security/sssc-planner.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/security/sssc-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
   kind: agent
   maturity: experimental
@@ -152,6 +175,12 @@ items:
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/supply-chain-skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/supply-chain-reviewer.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/vex-generator.agent.md
@@ -174,11 +203,6 @@ items:
 - path: .github/prompts/ado/ado-triage-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
-  kind: prompt
-- path: .github/prompts/coding-standards/code-review-full.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
 - path: .github/prompts/data-science/synth-data-generate.prompt.md
   kind: prompt
@@ -248,8 +272,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
-- path: .github/prompts/hve-core/doc-ops-update.prompt.md
+- path: .github/prompts/hve-core/evals-import.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit.prompt.md
@@ -258,6 +283,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/git-setup.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/pr-review.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/prompt-analyze.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/prompt-build.prompt.md
@@ -279,6 +307,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/vally-test-write.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/jira/jira-discover-issues.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
@@ -432,6 +463,8 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/copilot-tracking.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/licensing-posture.instructions.md
@@ -454,6 +487,9 @@ items:
   kind: instruction
 - path: .github/instructions/jira/jira-wit-planning.instructions.md
   kind: instruction
+- path: .github/instructions/privacy/privacy-identity.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/project-planning/adr-byo-template.instructions.md
   kind: instruction
   maturity: experimental
@@ -489,6 +525,8 @@ items:
   maturity: experimental
 - path: .github/instructions/shared/coaching-patterns.instructions.md
   kind: instruction
+- path: .github/instructions/shared/content-policy-citation.instructions.md
+  kind: instruction
 - path: .github/instructions/shared/disclaimer-language.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
@@ -507,6 +545,9 @@ items:
 - path: .github/skills/accessibility/accessibility
   kind: skill
   maturity: experimental
+- path: .github/skills/coding-standards/code-review
+  kind: skill
+  maturity: experimental
 - path: .github/skills/coding-standards/python-foundational
   kind: skill
   maturity: experimental
@@ -522,6 +563,9 @@ items:
 - path: .github/skills/design-thinking/dt-rpi-integration
   kind: skill
   maturity: preview
+- path: .github/skills/experimental/caveman
+  kind: skill
+  maturity: experimental
 - path: .github/skills/experimental/customer-card-render
   kind: skill
 - path: .github/skills/experimental/mural
@@ -544,6 +588,14 @@ items:
 - path: .github/skills/hve-core/architecture-diagrams
   kind: skill
   maturity: experimental
+- path: .github/skills/hve-core/documentation
+  kind: skill
+- path: .github/skills/hve-core/prompt-analyze
+  kind: skill
+- path: .github/skills/hve-core/prompt-builder
+  kind: skill
+- path: .github/skills/hve-core/prompt-refactor
+  kind: skill
 - path: .github/skills/hve-core/vally-tests
   kind: skill
   maturity: experimental
@@ -552,6 +604,9 @@ items:
 - path: .github/skills/jira/jira
   kind: skill
 - path: .github/skills/project-planning/adr-author
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/privacy-standards
   kind: skill
   maturity: experimental
 - path: .github/skills/project-planning/rai-planner
@@ -565,6 +620,16 @@ items:
 - path: .github/skills/rai/rai-standards
   kind: skill
   maturity: experimental
+- path: .github/skills/rpi/rpi-implement
+  kind: skill
+- path: .github/skills/rpi/rpi-plan
+  kind: skill
+- path: .github/skills/rpi/rpi-quick
+  kind: skill
+- path: .github/skills/rpi/rpi-research
+  kind: skill
+- path: .github/skills/rpi/rpi-review
+  kind: skill
 - path: .github/skills/security/openvex-spec
   kind: skill
   maturity: experimental
@@ -602,6 +667,9 @@ items:
   kind: skill
 - path: .github/skills/shared/telemetry-foundations
   kind: skill
+- path: .github/hooks/shared/telemetry.json
+  kind: hook
+  maturity: experimental
 display:
   featured: true
   ordering: alpha

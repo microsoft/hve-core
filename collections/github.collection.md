@@ -32,6 +32,7 @@ Manage GitHub issue backlogs with agents for discovery, triage, sprint planning,
 | **github/github-backlog-planning**  | GitHub backlog management: planning files, search protocols, similarity assessment, and state persistence                                                                                                                                                   |
 | **github/github-backlog-triage**    | GitHub issue backlog triage: label suggestion, milestone assignment, and duplicate detection                                                                                                                                                                |
 | **github/github-backlog-update**    | GitHub issue backlog execution: consumes planning handoffs and runs issue operations                                                                                                                                                                        |
+| **shared/content-policy-citation**  | Content-policy and terms-of-service guardrails for public output and eval stimuli                                                                                                                                                                           |
 | **shared/hve-core-location**        | Important: hve-core is the repository containing this instruction file; Guidance: if a referenced prompt, instructions, agent, or script is missing in the current directory, fall back to this hve-core location by walking up this file's directory tree. |
 
 ### Skills

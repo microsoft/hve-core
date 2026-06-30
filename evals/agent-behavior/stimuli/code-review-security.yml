@@ -1,0 +1,25 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: code-review-security-lens
+    prompt: |
+      As the security code-review perspective, review this change for
+      injection, authentication, and secret-handling concerns. Report findings
+      with severity and a concrete exploitation path.
+      ```python
+      query = "SELECT * FROM users WHERE name = '" + name + "'"
+      db.execute(query)
+      ```
+    tags:
+      category: agent-behavior
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: security-finding-vocabulary
+        config:
+          pattern: '(?i)(sql injection|injection|sanitize|parameterized|authentication|secret|vulnerability|exploit|severity|finding)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true
