@@ -19,6 +19,33 @@ class TestDie:
         assert capsys.readouterr().err.strip() == "error: boom"
 
 
+class TestRedact:
+    """Tests for _redact."""
+
+    def test_masks_header_and_query_string_secrets(self) -> None:
+        payload = (
+            "PRIVATE-TOKEN: secret123\n"
+            "X-API-Key: api-key-456\n"
+            "Cookie: session=xyz\n"
+            "https://example.com/?private_token=abc&access_token=def&token=ghi"
+            "&api_key=789&password=secret&secret=hidden"
+        )
+
+        redacted = gitlab._redact(payload)
+
+        assert "PRIVATE-TOKEN=[REDACTED]" in redacted
+        assert "X-API-Key=[REDACTED]" in redacted
+        assert "Cookie=[REDACTED]" in redacted
+        assert "private_token=[REDACTED]" in redacted
+        assert "access_token=[REDACTED]" in redacted
+        assert "token=[REDACTED]" in redacted
+        assert "api_key=[REDACTED]" in redacted
+        assert "password=[REDACTED]" in redacted
+        assert "secret=[REDACTED]" in redacted
+        assert "secret123" not in redacted
+        assert "abc" not in redacted
+
+
 class TestStripGitSuffix:
     """Tests for strip_git_suffix."""
 

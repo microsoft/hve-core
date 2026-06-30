@@ -23,6 +23,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 from typing import Any, Callable, NoReturn, cast
 
 EXIT_SUCCESS = 0
@@ -40,6 +41,8 @@ selected_fields: list[str] | None = None
 gitlab_url = ""
 gitlab_token = ""
 api_url = ""
+audit_actor = ""
+_AUDIT_OP = ""
 
 sys.dont_write_bytecode = True
 
@@ -88,11 +91,53 @@ def _redact(text: str) -> str:
     if not text:
         return text
     redacted = re.sub(
-        r"(?i)\b(token|password|secret|authorization)\b\s*[:=]?\s*([A-Za-z0-9._-]{2,})",
-        r"\1=[REDACTED]",
+        r"(?i)(^|[\s,;])((?:private-token|x-api-key|authorization|proxy-authorization|cookie|set-cookie|token|password|secret))\b\s*[:=]?\s*([^\s,;]+)",
+        r"\1\2=[REDACTED]",
         text,
     )
+    redacted = re.sub(
+        r"(?i)([?&](?:private_token|access_token|token|api_key|password|secret)=)([^&#\s]+)",
+        r"\1[REDACTED]",
+        redacted,
+    )
     return redacted
+
+
+def _preview_text(text: str, limit: int | None = None) -> str:
+    """Cap preview output while preserving the full preview marker."""
+    if limit is None:
+        limit = MAX_BODY_BYTES
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "\n... [truncated]"
+
+
+def _normalize_base_url(value: str) -> str:
+    """Return an origin-only GitLab base URL."""
+    if not value:
+        raise ValueError("GITLAB_URL is not set")
+    if any(ord(char) < 32 or ord(char) == 127 for char in value):
+        raise ValueError(
+            "GITLAB_URL must be an origin-only URL without control characters"
+        )
+
+    parsed_url = urllib.parse.urlsplit(value)
+    if parsed_url.scheme not in {"http", "https"}:
+        raise ValueError(
+            "GITLAB_URL must start with https:// (or http:// for local dev)"
+        )
+    if parsed_url.username or parsed_url.password:
+        raise ValueError("GITLAB_URL must be an origin-only URL without userinfo")
+    if parsed_url.query or parsed_url.fragment:
+        raise ValueError(
+            "GITLAB_URL must be an origin-only URL without query or fragment"
+        )
+    if parsed_url.path not in {"", "/"}:
+        raise ValueError("GITLAB_URL must be an origin-only URL without a path")
+    if not parsed_url.hostname:
+        raise ValueError("GITLAB_URL must include a hostname")
+
+    return urllib.parse.urlunsplit((parsed_url.scheme, parsed_url.netloc, "", "", ""))
 
 
 def _is_loopback(host: str | None) -> bool:
@@ -105,13 +150,103 @@ def _is_loopback(host: str | None) -> bool:
 
 def _sanitize_remote_url(remote_url: str) -> str:
     """Strip any embedded credentials from a git remote URL for logging."""
-    pattern = re.compile(r"^(?P<scheme>https?://)(?P<user>[^/@]+)(?::(?P<password>[^@/]+))?@")
+    pattern = re.compile(
+        r"^(?P<scheme>https?://)(?P<user>[^/@]+)(?::(?P<password>[^@/]+))?@"
+    )
     return pattern.sub(r"\g<scheme>", remote_url)
+
+
+def _validate_project_path(path: str) -> None:
+    """Reject project paths that contain traversal or separator escapes."""
+    if not path:
+        die("invalid project path", EXIT_USAGE)
+    if any(char in path for char in {"%", "\\"}):
+        die("invalid project path", EXIT_USAGE)
+
+    for segment in path.split("/"):
+        if segment in {"", ".", ".."}:
+            die("invalid project path", EXIT_USAGE)
+
+
+def _summarize_error_body(raw_error: str) -> str:
+    """Prefer a structured message and otherwise return a redacted preview."""
+    try:
+        parsed_error = json.loads(raw_error)
+    except (json.JSONDecodeError, ValueError):
+        return _preview_text(_redact(raw_error))
+
+    if isinstance(parsed_error, dict):
+        message = parsed_error.get("message") or parsed_error.get("error")
+        if isinstance(message, str) and message.strip():
+            return _preview_text(_redact(message))
+
+    return _preview_text(_redact(raw_error))
+
+
+def _audit_write(event: dict[str, Any]) -> bool:
+    """Append one audit event as a JSON line when auditing is enabled.
+
+    Returns:
+        True when an event was written, False when auditing is disabled.
+
+    Raises:
+        OSError: The audit log path is set but cannot be written.
+    """
+    path = os.environ.get("GITLAB_AUDIT_LOG", "").strip()
+    if not path:
+        return False
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(event) + "\n")
+    return True
+
+
+def _audit_event(actor: str, method: str, resource: str, event: str) -> dict[str, Any]:
+    """Build a base audit event record with the query string stripped."""
+    return {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "skill": "gitlab",
+        "actor": actor,
+        "op": _AUDIT_OP,
+        "method": method,
+        "resource": urllib.parse.urlsplit(resource).path,
+        "event": event,
+    }
+
+
+def _audit_attempt(actor: str, method: str, resource: str) -> None:
+    """Write the write-ahead attempt record, failing closed when unwritable."""
+    try:
+        _audit_write(_audit_event(actor, method, resource, "attempt"))
+    except OSError as exc:
+        die(f"audit log write failed; refusing to proceed: {exc}", EXIT_FAILURE)
+
+
+def _audit_outcome(
+    actor: str,
+    method: str,
+    resource: str,
+    outcome: str,
+    *,
+    status: int | None = None,
+    error: str | None = None,
+) -> None:
+    """Write the post-operation outcome record (best-effort)."""
+    record = _audit_event(actor, method, resource, "outcome")
+    record["outcome"] = outcome
+    if status is not None:
+        record["status"] = status
+    if error:
+        record["error"] = _redact(error)
+    try:
+        _audit_write(record)
+    except OSError as exc:
+        print(f"warning: audit outcome write failed: {exc}", file=sys.stderr)
 
 
 def require_environment() -> None:
     """Load and validate required environment variables."""
     global api_url
+    global audit_actor
     global gitlab_token
     global gitlab_url
 
@@ -120,11 +255,11 @@ def require_environment() -> None:
 
     if not gitlab_url:
         die("GITLAB_URL is not set", EXIT_USAGE)
-    if not re.match(r"^https?://", gitlab_url):
-        die(
-            "GITLAB_URL must start with https:// (or http:// for local dev)",
-            EXIT_USAGE,
-        )
+    try:
+        gitlab_url = _normalize_base_url(gitlab_url)
+    except ValueError as error:
+        die(str(error), EXIT_USAGE)
+
     parsed_url = urllib.parse.urlsplit(gitlab_url)
     if parsed_url.scheme == "http" and not _is_loopback(parsed_url.hostname):
         allow_insecure = os.environ.get("GITLAB_ALLOW_INSECURE", "").strip() == "1"
@@ -137,7 +272,8 @@ def require_environment() -> None:
     if not gitlab_token:
         die("GITLAB_TOKEN is not set", EXIT_USAGE)
 
-    api_url = gitlab_url.rstrip("/") + "/api/v4"
+    api_url = gitlab_url + "/api/v4"
+    audit_actor = os.environ.get("GITLAB_AUDIT_ACTOR", "").strip() or "gitlab-token"
 
 
 def strip_git_suffix(path: str) -> str:
@@ -151,6 +287,7 @@ def project() -> str:
     """Resolve the target GitLab project from environment or git remote."""
     configured_project = os.environ.get("GITLAB_PROJECT", "")
     if configured_project:
+        _validate_project_path(configured_project)
         return urllib.parse.quote(configured_project, safe="")
 
     try:
@@ -158,7 +295,10 @@ def project() -> str:
             ["git", "remote", "get-url", "origin"],
             stderr=subprocess.DEVNULL,
             text=True,
+            timeout=REQUEST_TIMEOUT,
         ).strip()
+    except subprocess.TimeoutExpired:
+        die("timed out resolving git remote for project", EXIT_FAILURE)
     except (subprocess.CalledProcessError, FileNotFoundError):
         die("GITLAB_PROJECT not set and no git remote found", EXIT_USAGE)
 
@@ -177,6 +317,7 @@ def project() -> str:
             f"cannot extract project path from remote: {sanitized_remote_url}",
             EXIT_USAGE,
         )
+    _validate_project_path(path)
     return urllib.parse.quote(path, safe="")
 
 
@@ -221,14 +362,14 @@ def validate_ref(value: str) -> None:
         die(f"invalid ref: {value}", EXIT_USAGE)
 
 
-def _read_capped(response: Any, limit: int) -> bytes:
-    """Read up to the limit and reject oversized bodies."""
+def _read_capped(response: Any, limit: int, *, fail_on_limit: bool = True) -> bytes:
+    """Read up to the limit and optionally reject oversized bodies."""
     chunk = response.read(limit + 1)
     if chunk is None:
         return b""
-    if len(chunk) > limit:
+    if len(chunk) > limit and fail_on_limit:
         die("response body exceeds size limit", EXIT_FAILURE)
-    return chunk
+    return chunk[:limit]
 
 
 def _request_bytes(
@@ -251,37 +392,40 @@ def _request_bytes(
     request_obj = urllib.request.Request(
         url, data=body, headers=request_headers, method=method
     )
+    _audit_attempt(audit_actor, method, url)
     try:
         with _OPENER.open(request_obj, timeout=REQUEST_TIMEOUT) as response:
             content_type = ""
             if hasattr(response, "headers"):
                 content_type = str(response.headers.get("Content-Type", "") or "")
-            if (
-                require_json
-                and content_type
-                and not content_type.lower().startswith("application/json")
-            ):
-                die(f"unexpected Content-Type: {content_type}", EXIT_FAILURE)
-            return _read_capped(response, MAX_BODY_BYTES)
+            result = _read_capped(response, MAX_BODY_BYTES, fail_on_limit=require_json)
+            # Enforce JSON content type only when a body is present; empty 2xx
+            # responses (for example 204 No Content) carry no body and often
+            # omit Content-Type.
+            if require_json and result.strip():
+                if not content_type:
+                    die("unexpected Content-Type: <missing>", EXIT_FAILURE)
+                if not content_type.lower().startswith("application/json"):
+                    die(f"unexpected Content-Type: {content_type}", EXIT_FAILURE)
+            _audit_outcome(audit_actor, method, url, "success")
+            return result
     except urllib.error.HTTPError as error:
-        body_bytes = _read_capped(error, MAX_BODY_BYTES)
+        body_bytes = _read_capped(error, MAX_BODY_BYTES, fail_on_limit=False)
         raw_error = body_bytes.decode("utf-8", errors="replace")
         if error_context:
             failure_message = f"HTTP {error.code} {error_context}"
         else:
             failure_message = f"HTTP {error.code} from {method} {url}"
-        try:
-            parsed_error = json.loads(raw_error)
-            if isinstance(parsed_error, dict):
-                message = parsed_error.get("message") or parsed_error.get("error")
-                if isinstance(message, str) and message.strip():
-                    print(_redact(message), file=sys.stderr)
-                    die(failure_message)
-        except (json.JSONDecodeError, ValueError):
-            pass
-        redacted_body = _redact(raw_error)
-        if redacted_body.strip():
-            print(redacted_body, file=sys.stderr)
+        if error.code in {401, 403}:
+            failure_message += (
+                "; the token may be expired or revoked — rotate GITLAB_TOKEN"
+            )
+        _audit_outcome(
+            audit_actor, method, url, "error", status=error.code, error=raw_error
+        )
+        summary = _summarize_error_body(raw_error)
+        if summary.strip():
+            print(summary, file=sys.stderr)
         die(failure_message)
 
 
@@ -307,7 +451,13 @@ def request(
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
-    raw_bytes = _request_bytes(method, url, headers=headers, data=data)
+    raw_bytes = _request_bytes(
+        method,
+        url,
+        headers=headers,
+        data=data,
+        require_json=False,
+    )
     raw = raw_bytes.decode("utf-8", errors="replace")
 
     if not raw.strip():
@@ -316,7 +466,7 @@ def request(
     try:
         parsed = json.loads(raw)
     except (json.JSONDecodeError, ValueError):
-        print(raw)
+        print(_preview_text(_redact(raw)))
         return None
 
     if not quiet:
@@ -420,7 +570,10 @@ def cmd_mr_get(args: list[str]) -> None:
 
 def cmd_mr_create(args: list[str]) -> None:
     """Create a merge request from JSON input."""
-    raw_payload = args[0] if args else sys.stdin.read().strip()
+    raw_payload = args[0] if args else sys.stdin.read(MAX_BODY_BYTES + 1)
+    if not args and len(raw_payload) > MAX_BODY_BYTES:
+        die("request body exceeds size limit", EXIT_FAILURE)
+    raw_payload = raw_payload.strip()
     usage = "usage: gitlab mr-create <json> or pipe JSON to stdin"
     if not raw_payload:
         die(usage, EXIT_USAGE)
@@ -437,7 +590,10 @@ def cmd_mr_update(args: list[str]) -> None:
         die("usage: gitlab mr-update <mr-iid> <json>", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
-    raw_payload = args[1] if len(args) > 1 else sys.stdin.read().strip()
+    raw_payload = args[1] if len(args) > 1 else sys.stdin.read(MAX_BODY_BYTES + 1)
+    if len(args) <= 1 and len(raw_payload) > MAX_BODY_BYTES:
+        die("request body exceeds size limit", EXIT_FAILURE)
+    raw_payload = raw_payload.strip()
     usage = "usage: gitlab mr-update <mr-iid> <json> or pipe JSON to stdin"
     if not raw_payload:
         die(usage, EXIT_USAGE)
@@ -454,7 +610,10 @@ def cmd_mr_comment(args: list[str]) -> None:
         die("usage: gitlab mr-comment <mr-iid> <body>", EXIT_USAGE)
     merge_request_iid = args[0]
     validate_numeric_id(merge_request_iid)
-    body = args[1] if len(args) > 1 else sys.stdin.read().strip()
+    body = args[1] if len(args) > 1 else sys.stdin.read(MAX_BODY_BYTES + 1)
+    if len(args) <= 1 and len(body) > MAX_BODY_BYTES:
+        die("request body exceeds size limit", EXIT_FAILURE)
+    body = body.strip()
     if not body:
         die(
             "usage: gitlab mr-comment <mr-iid> <body> or pipe body to stdin",
@@ -542,7 +701,7 @@ def cmd_job_log(args: list[str]) -> None:
         require_json=False,
         error_context="fetching job log",
     )
-    log_text = raw_bytes.decode("utf-8", errors="replace")
+    log_text = _redact(raw_bytes.decode("utf-8", errors="replace"))
     if len(log_text) > MAX_LOG_BYTES:
         log_text = log_text[:MAX_LOG_BYTES] + "\n... [truncated]"
     print(log_text, end="")
@@ -576,6 +735,8 @@ def main() -> int:
                 EXIT_USAGE,
             )
 
+        global _AUDIT_OP
+        _AUDIT_OP = arguments[0]
         COMMANDS[arguments[0]](arguments[1:])
         return EXIT_SUCCESS
     except KeyboardInterrupt:
@@ -588,5 +749,5 @@ def main() -> int:
         return 141
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     sys.exit(main())

@@ -85,6 +85,80 @@ def test_from_environment_requires_auth_credentials() -> None:
     assert str(exc_info.value) == ERROR_AUTH_MISSING
 
 
+@pytest.mark.parametrize(
+    ("base_url", "expected"),
+    [
+        ("https://jira.example.com", "https://jira.example.com"),
+        ("https://jira.example.com/", "https://jira.example.com"),
+        ("https://jira.example.com:8443", "https://jira.example.com:8443"),
+    ],
+)
+def test_canonicalize_base_url_accepts_origin_only_values(
+    base_url: str,
+    expected: str,
+) -> None:
+    assert jira._canonicalize_base_url(base_url) == expected
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://jira.example.com/path",
+        "https://jira.example.com?x=1",
+        "https://jira.example.com#frag",
+        "https://user:pass@jira.example.com",
+        "https://jira.example.com\n",
+    ],
+)
+def test_canonicalize_base_url_rejects_unsafe_values(base_url: str) -> None:
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira._canonicalize_base_url(base_url)
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+
+
+def test_from_environment_rejects_invalid_base_url_at_construction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("JIRA_BASE_URL", "https://jira.example.com/path")
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira.JiraClient.from_environment()
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+
+
+@pytest.mark.parametrize(
+    ("email", "token"),
+    [
+        ("user@example.com\n", "cloud-token"),
+        ("user@example.com", "cloud-token\n"),
+        ("user@example.comé", "cloud-token"),
+    ],
+)
+def test_from_environment_rejects_invalid_basic_auth_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+    email: str,
+    token: str,
+) -> None:
+    monkeypatch.setenv("JIRA_BASE_URL", TEST_API_URL)
+    monkeypatch.setenv("JIRA_USER_EMAIL", email)
+    monkeypatch.setenv("JIRA_API_TOKEN", token)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        jira.JiraClient.from_environment()
+
+    assert exc_info.value.exit_code == jira.EXIT_USAGE
+
+
+def test_open_url_uses_opener_directly(mocker: MockerFixture) -> None:
+    request = urllib.request.Request("https://jira.example.com")
+    opener = mocker.patch("jira._OPENER.open", return_value=object())
+
+    assert jira._open_url(request, timeout=7) is opener.return_value
+    opener.assert_called_once_with(request, timeout=7)
+
+
 def test_request_returns_parsed_json(
     configured_client: jira.JiraClient,
     response_factory: ResponseFactory,
@@ -146,13 +220,94 @@ def test_request_translates_http_error_details(
     body: str,
     expected_detail: str,
 ) -> None:
-    error = http_error_factory(body, code=403, url=REQUEST_URL)
+    error = http_error_factory(body, code=400, url=REQUEST_URL)
 
     mocker.patch("jira._OPENER.open", side_effect=error)
     with pytest.raises(jira.ScriptError) as exc_info:
         configured_client.request("GET", REQUEST_PATH)
 
-    assert str(exc_info.value) == f"HTTP 403 from GET {REQUEST_URL}: {expected_detail}"
+    assert str(exc_info.value) == f"HTTP 400 from GET {REQUEST_URL}: {expected_detail}"
+
+
+@pytest.mark.parametrize("code", [401, 403])
+def test_request_adds_rotation_hint_on_auth_error(
+    configured_client: jira.JiraClient,
+    http_error_factory: HttpErrorFactory,
+    mocker: MockerFixture,
+    code: int,
+) -> None:
+    error = http_error_factory("denied", code=code, url=REQUEST_URL)
+
+    mocker.patch("jira._OPENER.open", side_effect=error)
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    message = str(exc_info.value)
+    assert f"HTTP {code}" in message
+    assert "expired or revoked" in message
+    assert "JIRA_API_TOKEN" in message
+
+
+def test_request_rejects_missing_content_type(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "jira._OPENER.open",
+        return_value=jira._create_response_with_body('{"ok": true}', content_type=""),
+    )
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    assert exc_info.value.exit_code == jira.EXIT_FAILURE
+    assert "Missing Content-Type" in str(exc_info.value)
+
+
+def test_request_allows_empty_body_without_content_type(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "jira._OPENER.open",
+        return_value=jira._create_response_with_body("", content_type=""),
+    )
+
+    assert configured_client.request("POST", REQUEST_PATH) is None
+
+
+def test_request_rejects_non_json_content_type(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "jira._OPENER.open",
+        return_value=jira._create_response_with_body(
+            '{"ok": true}',
+            content_type="text/plain",
+        ),
+    )
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    assert exc_info.value.exit_code == jira.EXIT_FAILURE
+    assert "Unexpected content type" in str(exc_info.value)
+
+
+def test_request_allows_json_content_type(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch(
+        "jira._OPENER.open",
+        return_value=jira._create_response_with_body(
+            '{"ok": true}',
+            content_type="application/json",
+        ),
+    )
+
+    assert configured_client.request("GET", REQUEST_PATH) == {"ok": True}
 
 
 def test_request_translates_url_error(
@@ -281,3 +436,29 @@ def test_request_redacts_error_details(
     message = str(exc_info.value)
     assert "super-secret-token" not in message
     assert "[REDACTED]" in message
+
+
+def test_request_truncates_and_redacts_long_error_preview(
+    configured_client: jira.JiraClient,
+    mocker: MockerFixture,
+) -> None:
+    body = "Authorization: Bearer super-secret-token " + ("x" * 3000)
+
+    def fake_open(request: urllib.request.Request, timeout: int) -> object:
+        raise urllib.error.HTTPError(
+            url=request.full_url,
+            code=400,
+            msg="Bad Request",
+            hdrs={"Content-Type": "application/json"},
+            fp=io.BytesIO(body.encode("utf-8")),
+        )
+
+    mocker.patch("jira._OPENER.open", side_effect=fake_open)
+
+    with pytest.raises(jira.ScriptError) as exc_info:
+        configured_client.request("GET", REQUEST_PATH)
+
+    message = str(exc_info.value)
+    assert "super-secret-token" not in message
+    assert "[REDACTED]" in message
+    assert "..." in message
