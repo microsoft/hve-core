@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # TtsVoiceoverHelpers.psm1
 # Purpose: Shared helper functions for tts-voiceover skill PowerShell wrappers.
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 function Test-UvAvailability {
     <#

@@ -12,7 +12,7 @@
 # - Standard Copilot attribution footer (excludes Microsoft template files)
 # - Content structure by file type (GitHub configs, DevContainer docs, etc.)
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 using namespace System.Collections.Generic
 # Import FrontmatterValidation module with 'using' to make PowerShell class types

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # ModerationRunner.psm1
 # Purpose: Helpers for content moderation batch processing and orchestration
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS

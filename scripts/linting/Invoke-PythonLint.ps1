@@ -10,7 +10,7 @@
 #          `ruff format` (mutates source; intended for local developer use).
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(

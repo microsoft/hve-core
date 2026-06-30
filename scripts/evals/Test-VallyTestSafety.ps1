@@ -43,7 +43,7 @@
     pwsh -File scripts/evals/Test-VallyTestSafety.ps1 -Root evals -OutputPath logs/vally-test-safety.json
 #>
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 [OutputType([void])]

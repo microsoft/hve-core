@@ -8,7 +8,7 @@
 # (ADR-CONSISTENCY-001 .. 009) against rendered ADR markdown files.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName = 'PowerShell-Yaml'; RequiredVersion = '0.4.7' }
 
 #region Module setup
