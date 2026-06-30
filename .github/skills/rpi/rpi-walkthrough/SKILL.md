@@ -1,0 +1,73 @@
+---
+name: rpi-walkthrough
+description: Guided, conversational walkthrough that explains code, UI, UX, features, or .copilot-tracking artifacts one line or block at a time with navigable evidence links, deep subagent review, and captured change requests for RPI handoff. Use when the user wants to understand how something works or why it was changed.
+argument-hint: "[target=...] [detail={brief|normal|deep}] [chat]"
+license: MIT
+user-invocable: true
+---
+
+# RPI Walkthrough
+
+Use [references/walkthrough.md](references/walkthrough.md) for the full walkthrough protocol, segment loop, reference-table format, change-capture format, and subagent dispatch.
+
+Follow the shared conventions in `copilot-tracking.instructions.md`.
+
+## Goal
+
+Walk the user through a target one segment at a time, explaining what each line or block does and why, with navigable evidence links, then capture any requested changes for an RPI handoff without editing the codebase.
+
+A target is source code, UI or UX wiring, a library or feature, a prompt-engineering artifact such as a prompt, instructions, agent, or skill, or a `.copilot-tracking` artifact such as a research, plan, changes, review, or log document.
+
+Derive `{{task_slug}}` in lower-kebab-case from the primary target's main subject, such as the primary file's base name without its extension or the feature or area name, use the current date in `YYYY-MM-DD`, and record session notes in `.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md` with `<!-- markdownlint-disable-file -->`.
+
+## Execution
+
+1. Resolve the walkthrough target and detail level from explicit input, attached or open files, then conversation context. Default `detail` to `normal`. When chat context is enabled, incorporate it to refine scope. If no target can be formed, stop and ask; if multiple unrelated targets match, ask the user to choose one.
+2. Deep review before explaining. First create the walkthrough file from [templates/walkthrough.md](templates/walkthrough.md) at the dated path. Dispatch a generic exploration subagent (`Explore`, or `runSubagent` with no named agent) to trace the codebase, UI, UX, feature flow, prompt-engineering artifact, or `.copilot-tracking` artifact, and dispatch `Researcher Subagent` for external library, framework, or web evidence; scale the review depth to `detail`. Record the evidence map, the segment plan, and the what, why, and evidence paths and lines for each segment, in the walkthrough file as the durable system of record, and keep only transient scratch notes in session memory with the `memory` tool, resolving a memory file's URI with `resolve_memory_file_uri` when you need to reference it.
+3. Plan the segments into a meaningful order, entry point through flow and key blocks for code, or section order for artifacts, and record the segment list in the walkthrough file.
+4. Explain one segment at a time in the conversation: write a clear, scannable explanation of what it does, how it connects, and why it is this way, then render a reference table of file and line links for that segment, then call `vscode_askQuestions` with one or two questions that offer more detail on this segment or continue to the next. Always render the reference table before every `vscode_askQuestions` call and before yielding control.
+5. Refine or capture on feedback. When the user asks for more depth or why, repeat the deep review with subagents and tools, deepen the evidence map, and re-explain. When the user requests changes, append them to the Requested Changes section of the walkthrough file and do not edit the codebase, unless the user asks for the change immediately.
+6. Close the loop once all segments are covered, or when the user declines another segment or ends the walkthrough early: mark the walkthrough file complete or partial, record any uncovered segments, review the captured Requested Changes with the user, recommend the RPI follow-on, and return the Final response.
+
+## Inputs
+
+* `target=...`: the files, feature, UI or UX area, library, or `.copilot-tracking` artifact to walk through; infer from attached or open files when not provided.
+* `detail={brief|normal|deep}`: technical depth of the explanation; default `normal`; the user can change it mid-session.
+* `chat`: incorporate conversation context to refine scope before the walkthrough begins.
+* `task_slug`: lower-kebab-case from the primary target; use the current date in `YYYY-MM-DD` for the dated artifact.
+
+## Success criteria
+
+* The target, detail level, and segment plan are resolved before any explanation begins.
+* A deep review through subagents precedes explanation, and the evidence map is captured in the walkthrough file as the durable record, with session memory holding only transient working notes.
+* Each segment is explained in the conversation with a reference table of workspace-relative file and line markdown links rendered before every `vscode_askQuestions` call and before yielding control.
+* Each `vscode_askQuestions` turn carries at most one or two clear questions that offer more detail on the current segment or continue to the next.
+* Requested changes are recorded under `.copilot-tracking/walkthroughs/` and are not applied to the codebase unless the user asks for an immediate change.
+* The final response recommends `/rpi-quick` or the full RPI sequence and links the walkthrough file in a markdown table.
+
+## Constraints
+
+* Read-only by default: explain and capture, and never modify source files unless the user explicitly asks for an immediate change.
+* Deep-review the target with subagents before explaining, and re-review when the user asks for more depth or why before re-explaining.
+* Put the explanation in the conversation window, keep it scannable and easy to follow, and do not present more than one segment at a time.
+* Render file references in the conversation as workspace-relative markdown links with line numbers, not as inline code, and keep `.copilot-tracking/` references out of production code, code comments, documentation strings, and commit messages.
+* Keep at most one or two questions per `vscode_askQuestions` turn.
+* Reuse existing subagents for review and research rather than duplicating their full work inline; when dispatch tooling is unavailable, perform the equivalent review inline and record the fallback reason.
+
+## Stop rules
+
+* Stop and ask when no walkthrough target can be resolved from the inputs.
+* Stop and ask the user to choose when multiple unrelated targets match.
+* Pause for the user's direction at each segment boundary through `vscode_askQuestions` before continuing.
+* Conclude the walkthrough when the user declines another segment, asks for a summary, or ends the session: mark the walkthrough file partial, record any uncovered segments, then run the closing review and Final response.
+* Hard stop and ask for clarification when the user requests an immediate code change that is unsafe or ambiguous.
+
+## Handoff
+
+After the walkthrough completes, review the captured Requested Changes with the user and recommend `/rpi-quick` for a one-shot pass or the full `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` sequence. Keep these as recommendations unless the user asks to proceed.
+
+## Final response
+
+Return a concise summary with the walkthrough file path, the segments covered and the detail level, the count of captured change requests, and a markdown table that links the walkthrough file and its Requested Changes section alongside the recommended next command.
+
+> Brought to you by microsoft/hve-core
