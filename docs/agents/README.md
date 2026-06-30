@@ -3,7 +3,7 @@ title: Agent Systems Catalog
 description: Overview of all hve-core agent systems with workflow documentation and quick links
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: overview
 keywords:
   - github copilot
@@ -98,8 +98,6 @@ The Design Thinking agents provide AI-assisted coaching through a nine-method, t
 |---------------------|--------------------------------------------------------------|
 | `dt-coach`          | Coaches teams through all 9 DT methods with session tracking |
 | `dt-learning-tutor` | Teaches DT curriculum with exercises and assessments         |
-
-> Brought to you by microsoft/hve-core
 
 ---
 

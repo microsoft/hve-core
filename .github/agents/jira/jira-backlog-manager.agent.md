@@ -161,7 +161,3 @@ Approval requests appear as concise summaries showing the proposed action, affec
 * The Jira skill command surface is used consistently with the documented capability limits.
 * The autonomy mode is respected at every gate point.
 * Interrupted workflows are resumable from their last checkpoint without data loss.
-
----
-
-🤖 Brought to you by microsoft/hve-core

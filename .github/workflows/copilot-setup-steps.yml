@@ -87,7 +87,9 @@ jobs:
           if ($env:HVE_PSGALLERY_SOURCE_URL) {
             Register-PSRepository -Name $repo -SourceLocation $env:HVE_PSGALLERY_SOURCE_URL -InstallationPolicy Trusted -ErrorAction SilentlyContinue
           }
-          & "$env:GITHUB_WORKSPACE/scripts/security/Install-PSModules.ps1" -Scope AllUsers -Repository $repo
+          # CurrentUser scope: the coding-agent runner is not elevated, so
+          # AllUsers (/usr/local/share/powershell/Modules) fails with admin-rights errors.
+          & "$env:GITHUB_WORKSPACE/scripts/security/Install-PSModules.ps1" -Scope CurrentUser -Repository $repo
 
       - name: Install uv package manager
         env:

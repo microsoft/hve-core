@@ -69,4 +69,4 @@ Present the Analysis Report inline as the final response using the template stru
 * An Evaluated Artifacts and Report section near the end that lists, as proper workspace-relative markdown links, every durable Analysis Report and each evaluated artifact, labeled by artifact type.
 * The recommended next action.
 
-> Brought to you by microsoft/hve-core
+

@@ -1,5 +1,5 @@
 ---
-description: 'Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions - Brought to you by microsoft/hve-core'
+description: 'Embedded ADR standards: MADR v4.0.0 template (CC0), Y-Statement formula, status taxonomy, naming rules, ASR trigger schema, and Microsoft-attributed paraphrases for ADR Creator sessions'
 applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**'
 ---
 

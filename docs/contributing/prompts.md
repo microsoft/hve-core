@@ -3,7 +3,7 @@ title: 'Contributing Prompts to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot prompt files to hve-core'
 sidebar_position: 4
 author: Microsoft
-ms.date: 2026-03-17
+ms.date: 2026-06-28
 ms.topic: how-to
 ---
 
@@ -319,13 +319,7 @@ work item discovery, reviewer identification, and compliance validation.
 
 #### 8. Attribution Footer
 
-Always include an attribution footer at the end of the file.
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

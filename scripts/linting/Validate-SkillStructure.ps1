@@ -192,6 +192,12 @@ function Test-PythonSkillConfig {
         $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
     }
 
+    # Warn when uv.lock is absent so Dependabot can resolve and patch dependencies
+    $uvLockPath = Join-Path (Split-Path $PyprojectPath -Parent) 'uv.lock'
+    if (-not (Test-Path $uvLockPath -PathType Leaf)) {
+        $warnings.Add("pyproject.toml present without committed uv.lock in '$RelativePath' (required for Dependabot uv coverage)")
+    }
+
     # Fuzz harness convention check
     if ($HasTestsDir) {
         $fuzzHarnessPath = Join-Path (Split-Path $PyprojectPath -Parent) 'tests' 'fuzz_harness.py'

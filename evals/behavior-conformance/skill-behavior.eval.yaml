@@ -1962,3 +1962,155 @@ stimuli:
         name: scope-language
         config:
           pattern: '(?i)(writing|style|prose|documentation|tone)'
+
+  - name: skill-accessibility-knowledge
+    prompt: |
+      Summarize what the `accessibility` skill helps with and name one area of
+      guidance it covers for inclusive experiences.
+    tags:
+      category: behavior-conformance
+      skill: accessibility
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(accessibility|inclusive|wcag|aria|keyboard)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(accessibility|inclusive|guidance|experience)'
+
+  - name: skill-adr-author-knowledge
+    prompt: |
+      Summarize what the `adr-author` skill helps with for architecture decision
+      records and name one artifact area it supports.
+    tags:
+      category: behavior-conformance
+      skill: adr-author
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(adr|architecture|decision|record|template)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(adr|architecture|decision|record|template)'
+
+  - name: skill-architecture-diagrams-knowledge
+    prompt: |
+      Summarize what the `architecture-diagrams` skill helps with and name one
+      diagram or architecture artifact it supports.
+    tags:
+      category: behavior-conformance
+      skill: architecture-diagrams
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(diagram|architecture|flowchart|mermaid|infra)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(diagram|architecture|flowchart|mermaid|visual)'
+
+  - name: skill-caveman-knowledge
+    prompt: |
+      Summarize what the `caveman` skill is meant to help with and name one
+      scenario where it would be a poor fit.
+    tags:
+      category: behavior-conformance
+      skill: caveman
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(caveman|skill|scenario|fit|guidance)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(skill|guidance|scenario|fit)'
+
+  - name: skill-documentation-knowledge
+    prompt: |
+      Summarize what the `documentation` skill helps with and name one content
+      area it is meant to support.
+    tags:
+      category: behavior-conformance
+      skill: documentation
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(documentation|guide|content|docs|author)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(documentation|guide|content|docs|author)'
+
+  - name: skill-mural-knowledge
+    prompt: |
+      Summarize what the `mural` skill helps with and name one collaboration or
+      artifact format it is associated with.
+    tags:
+      category: behavior-conformance
+      skill: mural
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(mural|collaboration|whiteboard|artifact|workspace)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(mural|collaboration|workspace|artifact|whiteboard)'
+
+  - name: skill-requirements-author-knowledge
+    prompt: |
+      Summarize what the `requirements-author` skill helps with and name one
+      artifact it supports for requirements work.
+    tags:
+      category: behavior-conformance
+      skill: requirements-author
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(requirements|brd|prd|artifact|author)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(requirements|brd|prd|artifact|author)'
+
+  - name: skill-supply-chain-security-knowledge
+    prompt: |
+      Summarize what the `supply-chain-security` skill helps with and name one
+      security posture area it addresses.
+    tags:
+      category: behavior-conformance
+      skill: supply-chain-security
+      shape: knowledge
+      advisory: "true"
+    graders:
+      - type: output-matches
+        name: skill-attribution
+        config:
+          pattern: '(?i)(supply|chain|security|scorecard|slsa|sbom)'
+      - type: output-matches
+        name: scope-language
+        config:
+          pattern: '(?i)(supply|chain|security|scorecard|slsa|sbom)'

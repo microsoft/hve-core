@@ -43,17 +43,18 @@ jobs:
             Write-Output 'Docusaurus tests requested for all files.'
           } else {
             $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-            # Trigger on Docusaurus application changes only: the site app, plugins,
-            # configs, and accessibility tests all live under docs/docusaurus/.
-            # Pure markdown content edits elsewhere under docs/ are intentionally
-            # excluded so content-only PRs skip the expensive a11y/build job.
+            # Trigger on any change under docs/: the whole-site build compiles all of
+            # docs/** (docusaurus.config.js sets the docs plugin path to '../', excluding
+            # only docusaurus/** and announcements/**), so watching docs/ matches the
+            # build's real input set. This catches broken links in markdown content
+            # pages on the PR instead of only on the post-merge deploy build.
             # The collections/ tree is included because docusaurus.config.js reads
             # collections/*.collection.yml at build time (collectionCounts) and the
             # tests consume it via COLLECTIONS_DIR, so changes there alter site and
             # test output. The workflow files themselves are included so test/config
             # changes still trigger a run.
             $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- `
-              docs/docusaurus `
+              docs `
               collections `
               .github/workflows/docusaurus-tests.yml `
               .github/workflows/deploy-docs.yml)

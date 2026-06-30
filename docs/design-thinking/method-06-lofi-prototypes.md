@@ -3,7 +3,7 @@ title: "Method 6: Low-Fidelity Prototypes"
 description: "Build fast, scrappy prototypes that test concept assumptions through real-environment feedback and constraint discovery."
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-06, low-fidelity-prototypes]
 estimated_reading_time: 5
@@ -84,8 +84,6 @@ When you have constraint discoveries from real-environment testing and clear evi
 * [Method 5: User Concepts](method-05-user-concepts.md)
 * [Method 7: High-Fidelity Prototypes](method-07-hifi-prototypes.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

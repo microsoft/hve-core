@@ -3,7 +3,7 @@ title: Design Thinking Guide
 description: AI-assisted Design Thinking using the dt-coach agent
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: concept
 keywords:
   - design thinking
@@ -113,8 +113,6 @@ Design Thinking outputs feed directly into the RPI (Research, Plan, Implement, R
 ## Learn at Your Own Pace
 
 The [DT Learning Tutor](dt-learning-tutor.md) provides curriculum-based training across all nine methods with exercises, checks, and reference scenarios.
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

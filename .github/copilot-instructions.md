@@ -284,9 +284,11 @@ with exponential backoff on PSGallery failures. The action always installs to
 `CurrentUser` scope because the cache path is hardcoded to the CurrentUser
 module location. Do not use inline `Install-Module` steps in workflows; use
 the composite action instead. The `copilot-setup-steps.yml` workflow calls
-`scripts/security/Install-PSModules.ps1` directly with `-Scope AllUsers`
-because AllUsers requires a different module path that the action does not
-cache.
+`scripts/security/Install-PSModules.ps1` directly with `-Scope CurrentUser`
+because the Copilot coding-agent runner is not elevated; `AllUsers` targets
+`/usr/local/share/powershell/Modules` and fails with admin-rights errors that
+retries cannot recover. `CurrentUser` installs to the same runner user's module
+path the agent reads, so no caching or elevation is required.
 
 ### Environment Synchronization
 

@@ -934,7 +934,3 @@ Next steps:
 
 Proceed with this approach?
 ```
-
----
-
-Brought to you by microsoft/hve-core

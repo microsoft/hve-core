@@ -315,6 +315,8 @@ Contains executable code that agents run to perform tasks:
 * Include helpful error messages and handle edge cases gracefully.
 * Provide parallel implementations for bash and PowerShell when targeting cross-platform use.
 
+Python skills under `.github/skills/**` are covered automatically by the uv ecosystem glob in `.github/dependabot.yml`. Do not add per-skill Dependabot configuration. Skills with Python dependencies must commit both `pyproject.toml` and `uv.lock` at the skill root so Dependabot can resolve and patch vulnerable dependencies.
+
 ##### references/
 
 Contains additional documentation that agents read when needed:
@@ -351,7 +353,6 @@ Script-oriented skill files include these sections in order:
 5. Parameters Reference: Table documenting all options with defaults.
 6. Script Reference: Usage examples for bash and PowerShell.
 7. Troubleshooting: Common issues and solutions.
-8. Attribution: Standard footer.
 
 Playbook-style skills are valid for documentation-driven workflows that delegate detailed execution to agents or subagents instead of bundled scripts. Use this structure in order:
 
@@ -364,7 +365,6 @@ Playbook-style skills are valid for documentation-driven workflows that delegate
 7. Stop rules: Conditions that block further progress.
 8. Handoff: Next skill, agent, or artifact path.
 9. Final response contract or output format, when the caller requires a specific summary shape.
-10. Attribution: Standard footer.
 
 For playbook-style skills, omit Prerequisites, Quick Start, Parameters Reference, Script Reference, and Troubleshooting when there are no local scripts or operational setup steps.
 
@@ -444,13 +444,7 @@ Validation guidelines:
 
 #### Attribution
 
-The `description:` frontmatter field is a single concise sentence with no attribution suffix. Distribution attribution is added automatically where needed, so source artifacts omit it.
-
-Skill files include a standard attribution footer as the last line of body content:
-
-```markdown
-> Brought to you by organization/repository-name
-```
+The `description:` frontmatter field is a single concise sentence. Source artifacts carry no attribution suffix or footer.
 
 ## Frontmatter Requirements
 

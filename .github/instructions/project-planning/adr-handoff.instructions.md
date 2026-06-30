@@ -1,5 +1,5 @@
 ---
-description: 'ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates - Brought to you by microsoft/hve-core'
+description: 'ADR Creator Govern-phase handoff protocol: compact summary template, peer-agent routing heuristics, and dual-format (ADO + GitHub) work item templates'
 applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**'
 ---
 

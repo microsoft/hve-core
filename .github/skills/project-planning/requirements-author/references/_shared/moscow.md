@@ -1,5 +1,5 @@
 ---
-description: 'Cite-only pointer to MoSCoW prioritization - names the four-bucket technique (Must / Should / Could / Won''t-this-time) and its DSDM origin, links to the upstream publisher, and does not redistribute upstream prose - Brought to you by microsoft/hve-core'
+description: 'Cite-only pointer to MoSCoW prioritization - names the four-bucket technique (Must / Should / Could / Won''t-this-time) and its DSDM origin, links to the upstream publisher, and does not redistribute upstream prose'
 ---
 
 # MoSCoW Prioritization - Cite-Only Pointer
@@ -41,4 +41,4 @@ The BRD Builder applies MoSCoW under the following operating rules, which are or
 
 This pointer file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The MoSCoW technique and DSDM framework are the property of the Agile Business Consortium and the original authors and are subject to their own terms at the upstream source.
 
-> Brought to you by microsoft/hve-core
+

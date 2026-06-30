@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-REQUIREMENTS-AUTHOR"
 title: "Requirements-Author Shared Skill Product Requirements"
 description: "Product Requirements Document for the requirements-author shared skill, defining product goals, functional requirements, and acceptance criteria for the unified BRD and PRD authoring capability consumed by the project-planning collection agents."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: 2026-06-28
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -348,7 +348,5 @@ This Product Requirements Document was prepared with AI assistance and reflects 
 * Attribution: Microsoft HVE-Core Team.
 
 ---
-
-> Brought to you by microsoft/hve-core
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
