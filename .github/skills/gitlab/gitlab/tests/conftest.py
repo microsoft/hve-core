@@ -29,7 +29,7 @@ class FakeHttpResponse:
     def __exit__(self, exc_type: object, exc: object, tb: object) -> Literal[False]:
         return False
 
-    def read(self) -> bytes:
+    def read(self, amount: int | None = None) -> bytes:
         return self._body
 
 

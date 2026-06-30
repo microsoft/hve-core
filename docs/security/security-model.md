@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-29
+ms.date: 2026-06-30
 ms.topic: reference
 keywords:
   - security
@@ -1035,16 +1035,17 @@ External standards are cited inline.
 
 ### Supply Chain Security Controls
 
-| ID   | Control                         | Implementation                                  | Validates Against |
-|------|---------------------------------|-------------------------------------------------|-------------------|
-| SC-1 | Dependency Pinning Validation   | Test-DependencyPinning.ps1                      | S-1, S-2          |
-| SC-2 | SHA Staleness Monitoring        | Test-SHAStaleness.ps1                           | S-1               |
-| SC-3 | Dependency Review               | dependency-review.yml                           | S-2, AI-5         |
-| SC-4 | npm Security Audit              | npm audit in pr-validation.yml                  | S-2               |
-| SC-5 | Dependabot Updates              | dependabot.yml                                  | S-1, S-2          |
-| SC-6 | Tool Checksum Verification      | scripts/security/tool-checksums.json            | S-1               |
-| SC-7 | SBOM Generation and Attestation | anchore/sbom-action, actions/attest in main.yml | S-1, S-2          |
-| SC-8 | SBOM Dependency Diff            | sbom-diff job in main.yml                       | S-1, S-2          |
+| ID   | Control                                  | Implementation                                                            | Validates Against |
+|------|------------------------------------------|---------------------------------------------------------------------------|-------------------|
+| SC-1 | Dependency Pinning Validation            | Test-DependencyPinning.ps1                                                | S-1, S-2          |
+| SC-2 | SHA Staleness Monitoring                 | Test-SHAStaleness.ps1                                                     | S-1               |
+| SC-3 | Dependency Review                        | dependency-review.yml                                                     | S-2, AI-5         |
+| SC-4 | npm Security Audit                       | npm audit in pr-validation.yml                                            | S-2               |
+| SC-5 | Dependabot Updates                       | dependabot.yml                                                            | S-1, S-2          |
+| SC-6 | Tool Checksum Verification               | scripts/security/tool-checksums.json                                      | S-1               |
+| SC-7 | SBOM Generation and Attestation          | anchore/sbom-action, actions/attest in main.yml                           | S-1, S-2          |
+| SC-8 | SBOM Dependency Diff                     | sbom-diff job in main.yml                                                 | S-1, S-2          |
+| SC-9 | VEX Vulnerability Triage and Attestation | vex-detect.yml, vex-draft.md, attest-and-upload-vex in release-stable.yml | S-1, S-2          |
 
 #### SC-8: SBOM Dependency Diff Implementation
 
