@@ -3,7 +3,7 @@ title: Evals in CI
 description: Auth contract, fork-PR policy, and how to add a new eval spec for the hve-core vally pipeline
 sidebar_position: 11
 author: Microsoft
-ms.date: 2026-06-28
+ms.date: 2026-06-29
 ms.topic: how-to
 keywords:
   - evals
@@ -165,14 +165,14 @@ Content moderation runs in two complementary CI lanes, each scoped to a differen
 
 The two lanes target different surfaces and do not overlap: the markdown-corpus lane keeps the AI artifacts that ship to contributors free of insensitive or foul language; the eval-spec stimuli lane scores adversarial test inputs against a Detoxify cutoff so a spec that probes a model with toxic content cannot itself ship unredacted.
 
-The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies (`scripts/evals/moderation/requirements.txt`) via `uv pip install`, caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
+The `content-moderation` job is the only path that exercises the real Detoxify model in CI. The job installs the Python dependencies via `uv sync --locked` in `scripts/evals/moderation` (declared in its `pyproject.toml` and `uv.lock`), caches the Detoxify weights between runs, then invokes `Invoke-CorpusModeration.ps1` per spec.
 
 `Invoke-CorpusModeration.ps1` shells out to [scripts/evals/Invoke-ContentModeration.ps1](../../scripts/evals/Invoke-ContentModeration.ps1) for each stimulus. The default Detoxify threshold is `0.5`; per-spec overrides come from the `moderation.threshold` field documented above.
 
 Local opt-in for the Detoxify lane:
 
 ```pwsh
-uv pip install -r scripts/evals/moderation/requirements.txt
+uv sync --locked --project scripts/evals/moderation
 pwsh scripts/evals/Invoke-CorpusModeration.ps1 -SpecGlob 'evals/**/*.yaml'
 ```
 
