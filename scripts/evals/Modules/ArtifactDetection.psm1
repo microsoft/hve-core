@@ -7,7 +7,7 @@
 #          (agent / prompt / instruction / skill) for eval coverage tooling.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Set-StrictMode -Version Latest
 

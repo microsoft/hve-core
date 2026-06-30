@@ -8,7 +8,7 @@
 #          match the canonical versions declared in scripts/security/ps-module-versions.json.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS

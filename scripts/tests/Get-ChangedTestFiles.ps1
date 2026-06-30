@@ -7,7 +7,7 @@
 # Purpose: Detect changed PowerShell files and resolve corresponding Pester test paths
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(

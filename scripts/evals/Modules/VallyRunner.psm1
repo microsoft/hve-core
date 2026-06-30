@@ -9,7 +9,7 @@
 #          PR-time eval-summary report.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Set-StrictMode -Version Latest
 

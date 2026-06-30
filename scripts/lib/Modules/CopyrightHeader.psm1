@@ -6,7 +6,7 @@
 # Purpose: Shared copyright header constants and regex helpers for hve-core scripts.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 $script:CopyrightLineLiteral = 'Copyright (c) 2026 Microsoft Corporation. All rights reserved.'
 $script:SpdxLineLiteral = 'SPDX-License-Identifier: MIT'

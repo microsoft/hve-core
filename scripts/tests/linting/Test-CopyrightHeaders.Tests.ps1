@@ -76,7 +76,7 @@ Write-Host "Hello World"
         # Valid file with #Requires statement
         $validWithRequiresContent = @"
 #!/usr/bin/env pwsh
-#Requires -Version 7.0
+#Requires -Version 7.4
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -185,7 +185,7 @@ Write-Host "Canonical"
     It 'Handles files with #Requires statement' {
         $validWithRequiresContent = @"
 #!/usr/bin/env pwsh
-#Requires -Version 7.0
+#Requires -Version 7.4
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 

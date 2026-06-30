@@ -7,7 +7,7 @@
 # Purpose: Discover and filter collection manifests for extension packaging matrix
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 [CmdletBinding()]
