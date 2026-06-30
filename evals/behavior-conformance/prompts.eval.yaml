@@ -1305,7 +1305,7 @@ stimuli:
       - type: output-matches
         name: scope-language
         config:
-          pattern: "(?i)VEX|vulnerabilit|exploitabilit|OpenVEX|scan|vex-scan"
+          pattern: "(?i)VEX|vulnerabilit|exploitability|OpenVEX|scan|vex-scan"
 
   - name: prompt-vex-triage-conformance
     prompt: |
