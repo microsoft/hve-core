@@ -197,6 +197,11 @@ The HVE Core extension has been installed from the VS Code Marketplace.
 • github-backlog-manager, adr-creation, doc-ops, pr-review
 • prompt-builder, memory, and more!
 
+🪝 Hooks (manual step): The Marketplace extension is declarative and does not
+   write chat.hookFilesLocations. To enable bundled hooks (e.g. telemetry), add
+   each collection's hook folder to that setting yourself, or use a clone-based
+   or CLI-plugin install which documents this configuration.
+
 📋 Configuring optional settings...
 ```
 <!-- </extension-success-report> -->
@@ -384,7 +389,7 @@ For Bash: Use `set -euo pipefail`, `test -d` for existence checks, and `echo` fo
 
 After cloning, update `.vscode/settings.json` with entries for each collection subdirectory. Replace `<PREFIX>` with the settings path prefix from the method table. Do not use `**` glob patterns in paths because `chat.*Locations` settings do not support them.
 
-Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, and `.github/instructions/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each collection folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the collection-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). Exclude the `installer` collection from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
+Enumerate each collection subdirectory under `.github/agents/`, `.github/prompts/`, `.github/instructions/`, and `.github/hooks/` from the cloned HVE-Core directory. Create one entry per subdirectory. For `.github/agents/`, also check each collection folder for a `subagents/` subfolder and include it when present (e.g., `hve-core/subagents`). For `.github/skills/`, list only the collection-level folders directly under `.github/skills/` (e.g., `shared`); do not enumerate deeper subfolders (individual skill directories like `shared/pr-reference/` are not listed). For `.github/hooks/`, list only the collection-level folders directly under `.github/hooks/` (e.g., `shared`); the default `chat.hookFilesLocations` value only covers the workspace `.github/hooks`, so clone-based installs must add each collection's hook folder explicitly. Exclude the `installer` collection from `chat.agentSkillsLocations` because it is the installer skill itself and not intended for end-user settings.
 
 Any folder named `experimental` under any artifact type (agents, prompts, instructions, or skills) must not be included without first asking the user whether they want experimental features. If the user opts in, add the `experimental` entries (and `experimental/subagents` for agents when that subfolder exists).
 
@@ -425,6 +430,9 @@ Any folder named `experimental` under any artifact type (agents, prompts, instru
     "<PREFIX>/.github/skills/rai": true,
     "<PREFIX>/.github/skills/security": true,
     "<PREFIX>/.github/skills/shared": true
+  },
+  "chat.hookFilesLocations": {
+    "<PREFIX>/.github/hooks/shared": true
   }
 }
 ```
@@ -517,6 +525,9 @@ Add to devcontainer.json:
           "/workspaces/hve-core/.github/skills/rai": true,
           "/workspaces/hve-core/.github/skills/security": true,
           "/workspaces/hve-core/.github/skills/shared": true
+        },
+        "chat.hookFilesLocations": {
+          "/workspaces/hve-core/.github/hooks/shared": true
         }
       }
     }
@@ -938,7 +949,7 @@ Copying agents enables local customization and offline use.
   • product-manager-advisor, security-planner, ux-ui-designer
 
 ⚙️ Generators
-  • arch-diagram-builder, gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
+  • gen-data-spec, gen-jupyter-notebook, gen-streamlit-dashboard
 
 ✅ Review & Testing
   • pr-review, prompt-builder, test-streamlit-dashboard

@@ -1,11 +1,11 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
-    Asserts disclaimer Note + reviewer checkbox patterns are present in both backlog
-    instruction files, and the `### Exit Point Reminder` heading with all four named
-    exit points exists in both planner identity files.
+    Asserts disclaimer Note + reviewer checkbox patterns are present in the SSSC
+    backlog instruction file, and the `### Exit Point Reminder` heading with all four
+    named exit points exists in both planner identity files.
 #>
 
 BeforeDiscovery {
@@ -15,7 +15,6 @@ BeforeDiscovery {
     $script:checkboxLiteral = '- [ ] Reviewed by a human security professional before execution'
 
     $script:backlogFiles = @(
-        (Join-Path $script:repoRoot '.github/instructions/security/backlog-handoff.instructions.md'),
         (Join-Path $script:repoRoot '.github/instructions/security/sssc-planner.instructions.md')
     )
     $script:identityFiles = @(

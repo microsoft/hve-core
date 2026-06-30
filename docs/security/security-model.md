@@ -3,7 +3,7 @@ title: Security Assurance Case and Security Model
 description: Comprehensive security model and security assurance documentation demonstrating enterprise security practices
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-01
+ms.date: 2026-06-29
 ms.topic: reference
 keywords:
   - security
@@ -1263,7 +1263,7 @@ Follow-up items identified during the Phase 5 review of the Mural skill OAuth su
 
 * [SECURITY.md](https://github.com/microsoft/hve-core/blob/main/SECURITY.md): Vulnerability disclosure process
 * [GOVERNANCE.md](https://github.com/microsoft/hve-core/blob/main/GOVERNANCE.md): Project governance and roles
-* [Branch Protection](../contributing/branch-protection.md): Repository protection configuration
+* [Branch Protection](branch-protection.md): Repository protection configuration
 * [MCP Configuration](../getting-started/mcp-configuration.md): MCP server setup guidance
 
 ### External Standards

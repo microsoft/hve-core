@@ -4,7 +4,7 @@ description: Detailed guides for each HVE Core installation and workspace config
 sidebar_label: Overview
 sidebar_position: 0
 author: Microsoft
-ms.date: 2026-03-12
+ms.date: 2026-06-27
 ms.topic: overview
 keywords:
   - setup
@@ -14,7 +14,7 @@ keywords:
 estimated_reading_time: 3
 ---
 
-HVE Core supports multiple setup methods. Choose the approach that fits your environment and workflow.
+HVE Core supports multiple setup methods. Choose the approach that fits your environment and workflow. If you want the fastest zero-config path, start with the VS Code extension; if you want MCP setup or bundle selection, use the installer skill from the HVE Installer extension.
 
 ## Available Methods
 

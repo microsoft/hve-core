@@ -1,0 +1,160 @@
+background:
+  category: session-phases
+  given:
+    domain: design-thinking
+
+cases:
+  # ── Phase 1: Session Initialization ─────────────────────────────
+
+  - id: init_asks_for_project_slug
+    name: Ask for project slug during initialization
+    tags: [phase-1, initialization, core]
+    given:
+      query: >
+        Hi!  I want to start a new design thinking project for improving
+        our warehouse picking process.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks the user for a project slug (a kebab-case identifier)
+              or proposes one, and begins gathering context about the user's
+              role, team, and which method they want to start with
+
+  - id: init_clarifies_context
+    name: Gather role, team, and method focus during init
+    tags: [phase-1, initialization, core]
+    given:
+      query: >
+        I'd like coaching on our customer portal redesign.  Project slug
+        can be "customer-portal-redesign".
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              acknowledges the user's project context, then asks about
+              the user's role, team composition, which design thinking
+              method to focus on, session goals, or time constraints —
+              covering at least one of these initialization items
+
+  - id: init_defaults_to_method_1
+    name: Default to Method 1 for new projects
+    tags: [phase-1, initialization]
+    given:
+      query: >
+        We have a brand new project to rethink how field technicians report
+        equipment failures.  We haven't done any design thinking on this
+        yet.  Project slug is "field-failure-reporting".  I'm the product
+        manager and my team is 4 engineers plus a UX designer.  We have
+        about an hour today.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              for a brand-new project with no prior design thinking work,
+              suggests starting at the beginning of the process (problem
+              space / early methods); acknowledges the team composition
+              and time constraints and begins transitioning to coaching
+
+  # ── Phase 2: Active Coaching ────────────────────────────────────
+
+  - id: active_coaching_open_ended_questions
+    name: Ask targeted, open-ended questions during coaching
+    tags: [phase-2, active-coaching, core]
+    given:
+      query: >
+        We're in Method 1 for our field-failure-reporting project.  The
+        original request from management was "build a mobile app for
+        failure reports."
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [50, 3000]
+          - the answer should be: >
+              asks open-ended questions to help the user discover the real
+              problem behind the solution request (e.g. "what happens today
+              when a technician finds a failure?"), rather than accepting
+              "build a mobile app" at face value
+
+  - id: active_coaching_periodic_summary
+    name: Summarize progress and check direction
+    tags: [phase-2, active-coaching]
+    given:
+      query: >
+        So far we've identified that technicians currently use paper forms,
+        the forms get lost about 30% of the time, supervisors don't see
+        reports until end of shift, and there's no way to attach photos.
+        We also learned that technicians hate the current form because it
+        asks for irrelevant fields.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              summarizes or reflects back the key findings, then asks whether
+              the user wants to go deeper into any of these areas, broaden
+              scope, or move on to the next step
+
+  # ── Phase 3: Method Transition ──────────────────────────────────
+
+  - id: method_transition_recap_and_confirm
+    name: Recap accomplishments and confirm method change
+    tags: [phase-3, transition, core]
+    given:
+      query: >
+        I think we've done enough scope conversations for the
+        field-failure-reporting project.  We talked to 6 stakeholders and
+        identified that the core problem is delayed visibility into
+        equipment health, not the reporting form itself.  Let's move on.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              explicitly confirms the method transition, briefly recaps
+              key accomplishments from Method 1 (scope conversations),
+              and suggests the next method (Method 2: Design Research)
+              with a clear connection to the previous work
+
+  # ── Phase 4: Session Closure ────────────────────────────────────
+
+  - id: session_closure_summary
+    name: Summarize session and suggest next steps on closure
+    tags: [phase-4, closure, core]
+    given:
+      query: >
+        I think that's enough for today.  Let's wrap up our session on
+        the customer-portal-redesign project.
+    stages:
+      - when: the agent processes the request
+        then:
+          - completion time should be under: 120
+      - when: the agent responds
+        then:
+          - response length should be: [80, 3000]
+          - the answer should be: >
+              summarizes the session journey, highlights key decisions or
+              artifacts, mentions open questions or follow-up work, and
+              suggests how to pick up in a future session including which
+              method to revisit

@@ -3,7 +3,7 @@ title: Comparing Setup Methods
 description: Decision matrix, decision tree, and method comparison to help you choose the right HVE installation approach
 sidebar_position: 9
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-27
 ms.topic: reference
 keywords:
   - installation

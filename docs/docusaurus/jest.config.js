@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: '@happy-dom/jest-environment',

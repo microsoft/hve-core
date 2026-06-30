@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Three ways to install HVE Core with marketplace extension, selective collections, or developer clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-11
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - installation
@@ -27,7 +27,9 @@ Install the **HVE Core** extension for a zero-configuration experience that work
 
 **Or visit:** [HVE Core on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ise-hve-essentials.hve-core)
 
-The extension installs the `hve-core` (Flagship) collection containing 40 artifacts for the RPI workflow. Updates arrive automatically through VS Code.
+The extension installs the `hve-core` (Flagship) collection containing 68 artifacts for the RPI workflow. Updates arrive automatically through VS Code.
+
+After installation, you can start the workflow with the RPI skills in chat: `/rpi-quick` for the full flow, or `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review` for the individual phases.
 
 See [Extension Installation Guide](methods/extension.md) for complete documentation.
 
@@ -66,9 +68,9 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 > [!NOTE]
 > The term "HVE Core" refers to different things depending on context:
 >
-> * **Repository** (`microsoft/hve-core`) - source for all 221 artifacts
-> * **Extension** (`HVE Core`) - installs the flagship collection (41 artifacts)
-> * **Extension** (`HVE Core All`) - installs all collections (221 artifacts)
+> * **Repository** (`microsoft/hve-core`) - source for all 260 artifacts
+> * **Extension** (`HVE Core`) - installs the flagship collection (68 artifacts)
+> * **Extension** (`HVE Core All`) - installs all collections (260 artifacts)
 > * **CLI plugin** (`hve-core`) - installable via `copilot plugin install hve-core@hve-core`
 >
 > Most users who only need Research, Plan, and Implement workflows should start with the **HVE Core** extension. To explore all domains, install **HVE Core All** instead.
@@ -80,15 +82,15 @@ graph LR
     REPO["microsoft/hve-core<br/>(source repository)"]
     REPO --> C1["hve-core<br/>(flagship collection)"]
     REPO --> C2["ado, github, security...<br/>(domain collections)"]
-    C1 --> EXT1["HVE Core Extension<br/>(41 artifacts)"]
-    C1 --> EXT2["HVE Core All Extension<br/>(221 artifacts)"]
+    C1 --> EXT1["HVE Core Extension<br/>(68 artifacts)"]
+    C1 --> EXT2["HVE Core All Extension<br/>(260 artifacts)"]
     C2 --> EXT2
 ```
 
 ### Which Extension Should I Install?
 
 * **I want to try it out quickly** → Install **HVE Core All** (everything included, explore at your pace)
-* **I only need Research, Plan, Implement workflows** → Install **HVE Core** (flagship, 41 artifacts)
+* **I only need Research, Plan, Implement workflows** → Install **HVE Core** (flagship, 68 artifacts)
 * **My team needs specific domains only** → Install **HVE Installer** (pick collections individually)
 * **I want to contribute or modify source** → Clone the repository (see [Developer Setup](#developer-setup))
 
@@ -161,7 +163,7 @@ After installing, verify that HVE Core is active:
 
 1. Open Copilot Chat in VS Code.
 2. Type `@` to see available agents.
-3. Look for HVE Core agents like `task-researcher`, `task-planner`, and `task-implementor`.
+3. Look for HVE Core agents like `task-researcher`, `task-planner`, and `task-implementor`, and try the new RPI skills such as `/rpi-research` and `/rpi-plan`.
 
 If you don't see the agents, check the [Troubleshooting](troubleshooting.md) page for common solutions.
 

@@ -2,7 +2,7 @@
 title: Discovery Workflow
 description: Discover and categorize Azure DevOps work items through user-centric, artifact-driven, and search-based paths
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager

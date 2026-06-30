@@ -23,6 +23,9 @@ items:
   - path: .github/agents/security/sssc-planner.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/security/sssc-reviewer.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/rai-planning/rai-planner.agent.md
     kind: agent
     maturity: experimental
@@ -37,6 +40,9 @@ items:
   - path: .github/agents/security/security-reviewer.agent.md
     kind: agent
     maturity: experimental
+  - path: .github/agents/security/supply-chain-reviewer.agent.md
+    kind: agent
+    maturity: experimental
   - path: .github/agents/security/subagents/codebase-profiler.agent.md
     kind: agent
     maturity: experimental
@@ -47,6 +53,9 @@ items:
     kind: agent
     maturity: experimental
   - path: .github/agents/security/subagents/skill-assessor.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/security/subagents/supply-chain-skill-assessor.agent.md
     kind: agent
     maturity: experimental
   # Skills
@@ -72,6 +81,9 @@ items:
     kind: skill
     maturity: removed
   - path: .github/skills/security/secure-by-design
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/project-planning/security-planning
     kind: skill
     maturity: experimental
   - path: .github/skills/security/security-reviewer-formats
@@ -140,16 +152,7 @@ items:
   - path: .github/instructions/security/identity.instructions.md
     kind: instruction
     maturity: experimental
-  - path: .github/instructions/security/operational-buckets.instructions.md
-    kind: instruction
-    maturity: experimental
   - path: .github/instructions/security/standards-mapping.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/security-model.instructions.md
-    kind: instruction
-    maturity: experimental
-  - path: .github/instructions/security/backlog-handoff.instructions.md
     kind: instruction
     maturity: experimental
   # SSSC Planner Instructions

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 import React from 'react';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';

@@ -13,21 +13,20 @@ Enforce language-specific coding conventions and best practices across your proj
 
 ### Chat Agents
 
-| Name                             | Description                                                                                                                                                       |
-|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **accessibility-reviewer**       | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                           |
-| **accessibility-skill-assessor** | Assesses a single accessibility knowledge skill against the codebase, reading success-criterion references and returning structured findings                      |
-| **code-review-accessibility**    | Pre-PR branch diff reviewer for accessibility conformance across web, mobile, and document UI surfaces using WCAG, ARIA, COGA, Section 508, and EN 301 549 skills |
-| **code-review-full**             | Orchestrator that runs functional, standards, and accessibility code reviews via subagents and produces a merged report                                           |
-| **code-review-functional**       | Pre-PR branch diff reviewer for functional correctness, error handling, edge cases, and testing gaps                                                              |
-| **code-review-standards**        | Skills-based code reviewer applying project-defined coding standards to local changes and PRs                                                                     |
-
-### Prompts
-
-| Name                       | Description                                                                                        |
-|----------------------------|----------------------------------------------------------------------------------------------------|
-| **code-review-full**       | Run both functional and standards code reviews on the current branch in a single pass              |
-| **code-review-functional** | Pre-PR branch diff review for functional correctness, error handling, edge cases, and testing gaps |
+| Name                                 | Description                                                                                                                                                                               |
+|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **accessibility-framework-assessor** | Assesses accessibility framework scopes through the consolidated Accessibility skill and returns structured findings                                                                      |
+| **accessibility-reviewer**           | Accessibility skill assessment orchestrator for codebase profiling and accessibility findings reporting                                                                                   |
+| **code-review**                      | Human-gated code review orchestrator that bootstraps change context, scopes hotspots, picks perspectives and depth, and merges skill-backed perspective findings into one report          |
+| **code-review-accessibility**        | Thin skill-backed perspective subagent that reviews a precomputed diff for accessibility conformance and writes structured findings                                                       |
+| **code-review-explainer**            | Thin skill-backed Register 1 explainer subagent that answers factual symbol or function questions and persists an explanation artifact                                                    |
+| **code-review-functional**           | Thin skill-backed perspective subagent that reviews a precomputed diff for functional correctness and writes structured findings                                                          |
+| **code-review-pr**                   | Thin skill-backed orientation detailer that turns a precomputed diff into a factual Register 1 walkthrough plus dispatch-board appendices within the orientation-first review workflow    |
+| **code-review-readiness**            | Thin skill-backed perspective subagent that reviews PR deliverable readiness and changed non-code documentation against a precomputed diff and PR context, and writes structured findings |
+| **code-review-security**             | Thin skill-backed perspective subagent that reviews a precomputed diff for security issues and writes structured findings                                                                 |
+| **code-review-standards**            | Thin skill-backed perspective subagent that reviews a precomputed diff against project coding standards and writes structured findings                                                    |
+| **code-review-walkback**             | Thin wrapper subagent that dispatches deep Register 2 questions to the generic Researcher Subagent and anchors the output to a board item                                                 |
+| **researcher-subagent**              | Research subagent using search, read, web-fetch, GitHub repo, and MCP tools                                                                                                               |
 
 ### Instructions
 
@@ -54,6 +53,7 @@ Enforce language-specific coding conventions and best practices across your proj
 
 | Name                      | Description                                                                                                                                                                                                                                                                                      |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **code-review**           | Review code changes from multiple perspectives with context bootstrap, depth-tier rigor, and structured findings output.                                                                                                                                                                         |
 | **pr-reference**          | Generates PR reference XML with commit history and unified diffs between branches, with extension and path filtering. Use when creating pull request descriptions, preparing code reviews, analyzing branch changes, discovering work items from diffs, or generating structured diff summaries. |
 | **python-foundational**   | Foundational Python best practices, idioms, and code quality fundamentals                                                                                                                                                                                                                        |
 | **telemetry-foundations** | Declarative OpenTelemetry-aligned telemetry vocabulary and instrumentation conventions for traces, metrics, logs, and PII handling                                                                                                                                                               |

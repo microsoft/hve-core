@@ -1,5 +1,5 @@
 ---
-description: 'BRD_TO_PRD_HANDOFF_V1 schema - Govern-exit handoff payload produced by the BRD Builder orchestrator and consumed by the PRD Builder, carrying BRD identity, signoff status, requirement counts, traceability matrix pointer, business goals, and quality-report linkage - Brought to you by microsoft/hve-core'
+description: 'BRD_TO_PRD_HANDOFF_V1 schema - Govern-exit handoff payload produced by the BRD Builder orchestrator and consumed by the PRD Builder, carrying BRD identity, signoff status, requirement counts, traceability matrix pointer, business goals, and quality-report linkage'
 ---
 
 # BRD-to-PRD Handoff — `BRD_TO_PRD_HANDOFF_V1`
@@ -262,4 +262,4 @@ known_open_items:
 prd_consumer_notes: Treat partition `claims-intake` as the seed scope for the PRD; partition `appeals` is intentionally deferred to v1.1 and should be re-scoped after launch metrics are collected.
 ```
 
-> Brought to you by microsoft/hve-core
+

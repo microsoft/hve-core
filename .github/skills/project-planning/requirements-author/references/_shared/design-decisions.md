@@ -1,5 +1,5 @@
 ---
-description: 'Design decision registry for BRD DD identifiers and downstream traceability - Brought to you by microsoft/hve-core'
+description: 'Design decision registry for BRD DD identifiers and downstream traceability'
 ---
 
 # BRD Design Decisions
@@ -42,4 +42,4 @@ Use this shape in the BRD Design Decisions section:
 * [traceability-naming.md](traceability-naming.md) - Decision tree for choosing requirement, goal, and decision identifiers.
 * [brd-to-prd-handoff-v1.md](../brd/brd-to-prd-handoff-v1.md) - Handoff contract that carries downstream consumer notes and waivers.
 
-> Brought to you by microsoft/hve-core
+

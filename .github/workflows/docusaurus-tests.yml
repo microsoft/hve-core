@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Docusaurus Tests
 
 on:
@@ -27,7 +29,7 @@ jobs:
       has-docs-changes: ${{ steps.detect.outputs.has-docs-changes }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -41,17 +43,18 @@ jobs:
             Write-Output 'Docusaurus tests requested for all files.'
           } else {
             $baseRef = if ($env:GITHUB_BASE_REF) { $env:GITHUB_BASE_REF } else { 'main' }
-            # Trigger on Docusaurus application changes only: the site app, plugins,
-            # configs, and accessibility tests all live under docs/docusaurus/.
-            # Pure markdown content edits elsewhere under docs/ are intentionally
-            # excluded so content-only PRs skip the expensive a11y/build job.
+            # Trigger on any change under docs/: the whole-site build compiles all of
+            # docs/** (docusaurus.config.js sets the docs plugin path to '../', excluding
+            # only docusaurus/** and announcements/**), so watching docs/ matches the
+            # build's real input set. This catches broken links in markdown content
+            # pages on the PR instead of only on the post-merge deploy build.
             # The collections/ tree is included because docusaurus.config.js reads
             # collections/*.collection.yml at build time (collectionCounts) and the
             # tests consume it via COLLECTIONS_DIR, so changes there alter site and
             # test output. The workflow files themselves are included so test/config
             # changes still trigger a run.
             $changed = @(git diff --name-only --diff-filter=ACMR "origin/$baseRef...HEAD" -- `
-              docs/docusaurus `
+              docs `
               collections `
               .github/workflows/docusaurus-tests.yml `
               .github/workflows/deploy-docs.yml)
@@ -76,7 +79,7 @@ jobs:
       id-token: write  # Required for Codecov OIDC
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 

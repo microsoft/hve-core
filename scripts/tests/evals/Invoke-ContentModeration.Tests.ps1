@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -59,7 +59,7 @@ $writeBlock
 }
 "@
 
-        $command = "$fakePython`n& '$script:ScriptPath' $Arguments; exit `$LASTEXITCODE"
+        $command = "$fakePython`n`$env:HVE_MODERATION_PYTHON = 'python'`n& '$script:ScriptPath' $Arguments; exit `$LASTEXITCODE"
         pwsh -NoProfile -NonInteractive -Command $command *> $null
         return $LASTEXITCODE
     }

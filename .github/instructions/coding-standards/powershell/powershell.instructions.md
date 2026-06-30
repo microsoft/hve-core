@@ -12,7 +12,7 @@ These instructions define conventions for authoring PowerShell scripts, modules,
 Every PowerShell file requires a copyright header containing two lines:
 
 ```powershell
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 ```
 
@@ -21,21 +21,21 @@ Placement varies by file type:
 ```powershell
 # Script (.ps1): after shebang, before #Requires
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #Requires -Version 7.0
 
 # Module (.psm1): first lines (no shebang)
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Test file (.Tests.ps1): after #Requires -Modules Pester
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # Data file (.psd1): first lines (no shebang)
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 ```
 
@@ -342,7 +342,7 @@ if ($MyInvocation.InvocationName -ne '.') {
 
 <!-- <template-complete-module> -->
 ```powershell
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # HelperModule.psm1

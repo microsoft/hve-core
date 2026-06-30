@@ -21,7 +21,7 @@ items:
     kind: agent
   - path: .github/agents/hve-core/memory.agent.md
     kind: agent
-  - path: .github/agents/hve-core/doc-ops.agent.md
+  - path: .github/agents/hve-core/documentation.agent.md
     kind: agent
   - path: .github/agents/hve-core/prompt-builder.agent.md
     kind: agent
@@ -34,8 +34,9 @@ items:
   - path: .github/agents/hve-core/task-challenger.agent.md
     kind: agent
     maturity: experimental
-  - path: .github/agents/hve-core/pr-review.agent.md
+  - path: .github/agents/coding-standards/code-review.agent.md
     kind: agent
+    maturity: experimental
 
   # Subagents
   - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
@@ -54,6 +55,31 @@ items:
     kind: agent
   - path: .github/agents/hve-core/subagents/researcher-subagent.agent.md
     kind: agent
+  # Code Review subagents
+  - path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
+    kind: agent
+    maturity: experimental
+  - path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
+    kind: agent
+    maturity: experimental
   # Prompts
   - path: .github/prompts/hve-core/rpi.prompt.md
     kind: prompt
@@ -65,12 +91,13 @@ items:
     kind: prompt
   - path: .github/prompts/hve-core/task-review.prompt.md
     kind: prompt
+  - path: .github/prompts/hve-core/pr-review.prompt.md
+    kind: prompt
+    maturity: experimental
   - path: .github/prompts/hve-core/task-challenge.prompt.md
     kind: prompt
     maturity: experimental
   - path: .github/prompts/hve-core/checkpoint.prompt.md
-    kind: prompt
-  - path: .github/prompts/hve-core/doc-ops-update.prompt.md
     kind: prompt
   # Git prompts
   - path: .github/prompts/hve-core/git-commit-message.prompt.md
@@ -101,10 +128,19 @@ items:
     kind: instruction
   - path: .github/instructions/hve-core/prompt-builder.instructions.md
     kind: instruction
+  - path: .github/instructions/hve-core/copilot-tracking.instructions.md
+    kind: instruction
   - path: .github/instructions/hve-core/git-merge.instructions.md
     kind: instruction
   - path: .github/instructions/hve-core/pull-request.instructions.md
     kind: instruction
+  # Code Review instructions
+  - path: .github/instructions/coding-standards/code-review/diff-computation.instructions.md
+    kind: instruction
+    maturity: experimental
+  - path: .github/instructions/coding-standards/code-review/review-artifacts.instructions.md
+    kind: instruction
+    maturity: experimental
   - path: .github/instructions/experimental/mural/mural-bootstrap.instructions.md
     kind: instruction
     maturity: experimental
@@ -126,21 +162,31 @@ items:
   - path: .github/instructions/experimental/mural/mural-writing-style.instructions.md
     kind: instruction
     maturity: experimental
+  - path: .github/instructions/shared/content-policy-citation.instructions.md
+    kind: instruction
   - path: .github/instructions/shared/hve-core-location.instructions.md
     kind: instruction
   # Skills
   - path: .github/skills/shared/pr-reference
     kind: skill
+  - path: .github/skills/coding-standards/code-review
+    kind: skill
+    maturity: experimental
+  - path: .github/skills/hve-core/documentation
+    kind: skill
   - path: .github/skills/experimental/mural
     kind: skill
     maturity: experimental
-  - path: .github/skills/hve-core/vally-tests
+  - path: .github/skills/hve-core/prompt-builder
     kind: skill
-    maturity: experimental
   - path: .github/skills/shared/telemetry-foundations
     kind: skill
   # Telemetry overlays
   - path: .github/instructions/shared/telemetry-overlay.instructions.md
     kind: instruction
+  # Hooks
+  - path: .github/hooks/shared/telemetry.json
+    kind: hook
+    maturity: experimental
 display:
   ordering: manual

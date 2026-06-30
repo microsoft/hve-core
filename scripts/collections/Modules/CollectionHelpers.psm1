@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # CollectionHelpers.psm1
@@ -8,6 +8,8 @@
 
 #Requires -Version 7.0
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
+
+Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
 
 # ---------------------------------------------------------------------------
 # Marker Constants (shared across collection scripts)
@@ -123,7 +125,7 @@ function Test-HveCoreRepoRelativePath {
 
     .DESCRIPTION
     Returns true when the repo-relative path is directly under a .github type
-    directory (agents, instructions, prompts, skills) with no subdirectory,
+    directory (agents, instructions, prompts, hooks, skills) with no subdirectory,
     indicating it is a root-level repo-specific artifact not intended for distribution.
 
     .PARAMETER Path
@@ -140,7 +142,7 @@ function Test-HveCoreRepoRelativePath {
         [string]$Path
     )
 
-    return ($Path -match '^\.github/(agents|instructions|prompts|skills)/[^/]+$')
+    return ($Path -match '^\.github/(agents|instructions|prompts|hooks|skills)/[^/]+$')
 }
 
 function Get-CollectionManifest {
@@ -223,6 +225,9 @@ function Get-CollectionArtifactKey {
         'skill' {
             return [System.IO.Path]::GetFileName($Path.TrimEnd('/'))
         }
+        'hook' {
+            return [System.IO.Path]::GetFileNameWithoutExtension($Path.TrimEnd('/'))
+        }
         default {
             if ($Path -match "\.$([regex]::Escape($Kind))\.md$") {
                 return ([System.IO.Path]::GetFileName($Path) -replace "\.$([regex]::Escape($Kind))\.md$", '')
@@ -286,6 +291,55 @@ function Get-ArtifactFrontmatter {
     }
 }
 
+function Get-CollectionMaturityVocabulary {
+    <#
+    .SYNOPSIS
+    Returns the ordered collection-item maturity vocabulary.
+
+    .DESCRIPTION
+    Single source of truth for the accepted maturity values. The order encodes
+    strictness from least to most restrictive (stable -> removed) and is reused
+    by Get-CollectionMaturityRank to derive propagation precedence. Validation
+    and aggregation both consume this list so the vocabulary cannot drift.
+
+    .OUTPUTS
+    [string[]] Ordered maturity values, least to most restrictive.
+    #>
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param()
+
+    return , @('stable', 'preview', 'experimental', 'deprecated', 'removed')
+}
+
+function Get-CollectionMaturityRank {
+    <#
+    .SYNOPSIS
+    Returns the maturity precedence map used for aggregation propagation.
+
+    .DESCRIPTION
+    Derives a rank hashtable from Get-CollectionMaturityVocabulary where each
+    maturity maps to its index. Strictest maturity wins during propagation:
+    removed > deprecated > experimental > preview > stable. Because the ranks
+    are derived from the vocabulary, every accepted maturity is guaranteed a
+    non-null rank, preventing the $null -gt 0 comparison pitfall.
+
+    .OUTPUTS
+    [hashtable] Maturity value to integer rank.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param()
+
+    $rank = @{}
+    $vocabulary = Get-CollectionMaturityVocabulary
+    for ($i = 0; $i -lt $vocabulary.Count; $i++) {
+        $rank[$vocabulary[$i]] = $i
+    }
+
+    return $rank
+}
+
 function Resolve-CollectionItemMaturity {
     <#
     .SYNOPSIS
@@ -315,6 +369,60 @@ function Resolve-CollectionItemMaturity {
     }
 
     return $Maturity
+}
+
+function Resolve-StrictSafeMaturity {
+    <#
+    .SYNOPSIS
+    Resolves a maturity to a rankable value, erring toward experimental.
+
+    .DESCRIPTION
+    Returns the maturity unchanged when it exists in Get-CollectionMaturityRank.
+    When the maturity is unrankable, returns 'experimental' as a strict-safe
+    fallback instead of letting the value behave as the least-strict 'stable'
+    through the $null -gt rank comparison. The fallback is surfaced through a
+    Warning-level CI annotation with remediation guidance (a local Write-Warning
+    off CI) so an invalid maturity in a source collection cannot silently ship
+    an item as stable. Erring toward
+    experimental keeps the item visible without excluding it the way the
+    deprecated or removed tombstone maturities would.
+
+    .PARAMETER Maturity
+    The candidate maturity value to resolve.
+
+    .PARAMETER Source
+    Origin descriptor (collection file and item) included in the warning so the
+    operator can locate and remediate the offending entry.
+
+    .OUTPUTS
+    [string] A maturity value guaranteed to exist in the maturity rank map.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Maturity,
+
+        [Parameter(Mandatory = $false)]
+        [string]$Source = 'an unspecified source'
+    )
+
+    $rank = Get-CollectionMaturityRank
+    if ($rank.ContainsKey($Maturity)) {
+        return $Maturity
+    }
+
+    $vocabulary = Get-CollectionMaturityVocabulary
+    $fallback = 'experimental'
+    $warning = @(
+        "Unrankable maturity '$Maturity' from $Source.",
+        "Strict-safe resolution defaults it to '$fallback' so the item surfaces as not-yet-stable instead of being silently treated as 'stable' (the `$null -gt rank comparison pitfall).",
+        "Remediation: set maturity to one of [$($vocabulary -join ', ')] at the source manifest, then re-run collection aggregation."
+    ) -join ' '
+    Write-CIAnnotation -Message $warning -Level Warning
+
+    return $fallback
 }
 
 function Get-AllCollections {
@@ -361,7 +469,7 @@ function Get-ArtifactFiles {
 
     .DESCRIPTION
     Scans .github/agents/, .github/prompts/, .github/instructions/ (recursively),
-    and .github/skills/ to build a complete list of collection items. Returns
+    .github/skills/, and .github/hooks/ to build a complete list of collection items. Returns
     repo-relative paths with forward slashes.
 
     .PARAMETER RepoRoot
@@ -424,6 +532,31 @@ function Get-ArtifactFiles {
             }
 
             $items += @{ path = $relativePath; kind = 'skill' }
+        }
+    }
+
+    # Hooks (JSON manifests under .github/hooks/<collection>/)
+    $hooksDir = Join-Path -Path $RepoRoot -ChildPath '.github/hooks'
+    if (Test-Path -Path $hooksDir) {
+        # Hook manifests are collection-scoped (.github/hooks/<collection>/<name>.json);
+        # implementation files live one level deeper under
+        # .github/hooks/<collection>/<name>/ and must not be treated as
+        # manifests, so enumerate only the collection level.
+        $hookCollectionDirs = Get-ChildItem -Path $hooksDir -Directory
+        foreach ($collectionDir in $hookCollectionDirs) {
+            $hookFiles = Get-ChildItem -Path $collectionDir.FullName -Filter '*.json' -File
+            foreach ($hookFile in $hookFiles) {
+                $relativePath = [System.IO.Path]::GetRelativePath($RepoRoot, $hookFile.FullName) -replace '\\', '/'
+
+                if (Test-HveCoreRepoRelativePath -Path $relativePath) {
+                    continue
+                }
+                if (Test-DeprecatedPath -Path $relativePath) {
+                    continue
+                }
+
+                $items += @{ path = $relativePath; kind = 'hook' }
+            }
         }
     }
 
@@ -507,10 +640,13 @@ function Update-HveCoreAllCollection {
     }
 
     # Propagate authoritative maturities from source collections so tombstones
-    # (maturity: removed) and deprecations declared in any source manifest
-    # carry into the aggregated hve-core-all collection. Strictest maturity
-    # wins: removed > deprecated > preview > stable.
-    $maturityRank = @{ 'stable' = 0; 'preview' = 1; 'deprecated' = 2; 'removed' = 3 }
+    # (maturity: removed), deprecations, and experimental status declared in any
+    # source manifest carry into the aggregated hve-core-all collection. Strictest
+    # maturity wins: removed > deprecated > experimental > preview > stable. The
+    # rank map is derived from the shared maturity vocabulary so it cannot drift.
+    # Unrankable source maturities err toward experimental and are surfaced as
+    # warnings with remediation guidance rather than silently behaving as stable.
+    $maturityRank = Get-CollectionMaturityRank
     $collectionsDir = Join-Path -Path $RepoRoot -ChildPath 'collections'
     $sourceCollections = Get-ChildItem -Path $collectionsDir -Filter '*.collection.yml' -File -ErrorAction SilentlyContinue |
         Where-Object { $_.Name -ne 'hve-core-all.collection.yml' }
@@ -520,8 +656,10 @@ function Update-HveCoreAllCollection {
         foreach ($sourceItem in $sourceManifest.items) {
             $sourceKey = "$($sourceItem.kind)|$($sourceItem.path)"
             $sourceMaturity = Resolve-CollectionItemMaturity -Maturity $sourceItem.maturity
+            $sourceMaturity = Resolve-StrictSafeMaturity -Maturity $sourceMaturity -Source "$($sourceFile.Name) ($($sourceItem.kind) '$($sourceItem.path)')"
             $currentMaturity = if ($existingItemMaturities.ContainsKey($sourceKey)) { $existingItemMaturities[$sourceKey] } else { 'stable' }
             if ($maturityRank[$sourceMaturity] -gt $maturityRank[$currentMaturity]) {
+                Write-Verbose "Maturity propagation: promoting $sourceKey from '$currentMaturity' to '$sourceMaturity' (strictest wins) per $($sourceFile.Name)."
                 $existingItemMaturities[$sourceKey] = $sourceMaturity
             }
         }
@@ -683,7 +821,6 @@ function Get-ArtifactDescription {
         Parses the YAML frontmatter block at the top of a markdown file and
         returns the description field value. Returns an empty string when the
         file is missing, has no frontmatter, or lacks a description field.
-        Strips the common " - Brought to you by microsoft/hve-core" suffix.
     .PARAMETER FilePath
         Absolute path to the artifact markdown file.
     .OUTPUTS
@@ -700,6 +837,22 @@ function Get-ArtifactDescription {
         return ''
     }
 
+    # Hook manifests are JSON with no frontmatter; read their top-level
+    # description field instead of scanning for a YAML block.
+    if ([System.IO.Path]::GetExtension($FilePath) -eq '.json') {
+        try {
+            $json = Get-Content -Path $FilePath -Raw | ConvertFrom-Json
+            $desc = $json.description
+            if ($desc) {
+                return ([string]$desc).Trim()
+            }
+        }
+        catch {
+            Write-Verbose "Failed to parse JSON description from $FilePath`: $_"
+        }
+        return ''
+    }
+
     $content = Get-Content -Path $FilePath -Raw
     if ($content -match '(?s)^---\s*\r?\n(.*?)\r?\n---') {
         $yamlBlock = $Matches[1]
@@ -707,8 +860,6 @@ function Get-ArtifactDescription {
             $frontmatter = ConvertFrom-Yaml -Yaml $yamlBlock
             if ($frontmatter -is [hashtable] -and $frontmatter.ContainsKey('description')) {
                 $desc = [string]$frontmatter.description
-                # Strip the common branding suffix
-                $desc = $desc -replace '\s*-\s*Brought to you by microsoft/hve-core$', ''
                 return $desc.Trim()
             }
         }
@@ -727,7 +878,10 @@ Export-ModuleMember -Function @(
     'Get-ArtifactFrontmatter',
     'Get-CollectionArtifactKey',
     'Get-CollectionManifest',
+    'Get-CollectionMaturityRank',
+    'Get-CollectionMaturityVocabulary',
     'Resolve-CollectionItemMaturity',
+    'Resolve-StrictSafeMaturity',
     'Set-ContentIfChanged',
     'Split-CollectionMdByMarkers',
     'Test-ArtifactDeprecated',

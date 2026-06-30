@@ -9,6 +9,8 @@ Follow all instructions from #file:./github-backlog-planning.instructions.md for
 
 Follow community interaction guidelines from #file:./community-interaction.instructions.md when posting comments visible to external contributors.
 
+Search for and apply `content-policy-citation.instructions.md` before creating or updating GitHub-visible issue titles, issue bodies, comments, or PR text fields.
+
 ## Purpose and Scope
 
 The execution protocol processes a handoff plan file to create, update, link, and close GitHub issues in batch. The workflow consumes handoff.md (or triage-plan.md) produced by the discovery or triage workflows and executes planned operations against the GitHub API via MCP tools.
@@ -213,7 +215,3 @@ Execution is complete when:
 * handoff-logs.md contains an entry for every operation in the plan.
 * The Execution Summary in handoff-logs.md reflects accurate counts for succeeded, failed, and skipped operations.
 * A completion report has been presented to the user with issue numbers.
-
----
-
-Brought to you by microsoft/hve-core

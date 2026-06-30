@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-03-22
+ms.date: 2026-06-28
 ms.topic: guide
 keywords:
   - copilot
@@ -38,11 +38,13 @@ Select from the **agent picker dropdown** in the Chat view:
 
 The Research-Plan-Implement (RPI) workflow provides a structured approach to complex development tasks.
 
+Each phase has two entry points: the `/task-*` prompt commands (`/task-research`, `/task-plan`, `/task-implement`, `/task-review`) and the `/rpi-*` skill commands (`/rpi-research`, `/rpi-plan`, `/rpi-implement`, `/rpi-review`, plus `/rpi-quick` for the full end-to-end flow). See the [RPI Documentation](../docs/rpi/README.md) for both surfaces.
+
 | Agent                | Purpose                                                                                               | Key Constraint                                            |
 |----------------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | **rpi-agent**        | Autonomous agent with subagent delegation for complex tasks                                           | Requires a subagent tool enabled                          |
 | **task-researcher**  | Produces research documents with evidence-based recommendations                                       | Research-only; never plans or implements                  |
-| **task-planner**     | Creates 3-file plan sets (plan, details, prompt)                                                      | Requires research first; never implements code            |
+| **task-planner**     | Creates 2 planning files (plan, details)                                                              | Requires research first; never implements code            |
 | **task-implementor** | Executes implementation plans with subagent delegation                                                | Requires completed plan files                             |
 | **task-reviewer**    | Validates implementation against research and plan specifications                                     | Requires research/plan artifacts                          |
 | **task-challenger**  | Adversarial questioning agent that interrogates completed implementations with What/Why/How questions | Experimental; no suggestions, hints, or leading questions |
@@ -53,7 +55,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 |----------------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | **adr-creation**                 | Interactive ADR coaching with guided discovery                                                                           | Socratic coaching approach                                                                                                         |
 | **brd-builder**                  | Creates Business Requirements Documents with reference integration                                                       | Solution-agnostic requirements focus                                                                                               |
-| **doc-ops**                      | Documentation operations and maintenance                                                                                 | Does not modify source code                                                                                                        |
+| **documentation**                | Documentation audit, drift, authoring, and validation workflow                                                           | Uses the shared documentation skill and escalates formal assessments to planner agents                                             |
 | **meeting-analyst**              | Analyzes meeting transcripts to extract product requirements via work-iq-mcp                                             | Experimental; requires work-iq-mcp EULA; transcripts may contain PII and confidential data, analysis files are unencrypted on disk |
 | **prd-builder**                  | Creates Product Requirements Documents through guided Q&A                                                                | Iterative questioning; state-tracked sessions                                                                                      |
 | **product-manager-advisor**      | Requirements discovery, story quality, and prioritization guidance                                                       | Principles over format; delegates to prd/brd builders                                                                              |
@@ -71,14 +73,11 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 ### Code and Review Agents
 
-| Agent                      | Purpose                                                               | Key Constraint                                            |
-|----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------|
-| **pr-review**              | 4-phase PR review with tracking artifacts                             | Review-only; never modifies code                          |
-| **prompt-builder**         | Engineers and validates instruction/prompt files                      | Dual-persona system with auto-testing                     |
-| **security-reviewer**      | OWASP vulnerability assessment with subagent-driven verification      | Delegates all reference reading to subagents              |
-| **code-review-functional** | Pre-PR branch diff reviewer for functional correctness and logic gaps | Review-only; five focus areas; optional artifact save     |
-| **code-review-full**       | Orchestrator running functional + standards reviews via subagents     | Merges both reports; delegates to subagents; experimental |
-| **code-review-standards**  | Skills-based standards reviewer for local changes and PRs             | Findings must trace to a loaded skill; experimental       |
+| Agent                 | Purpose                                                                | Key Constraint                                                |
+|-----------------------|------------------------------------------------------------------------|---------------------------------------------------------------|
+| **prompt-builder**    | Engineers and validates instruction/prompt files                       | Dual-persona system with auto-testing                         |
+| **security-reviewer** | OWASP vulnerability assessment with subagent-driven verification       | Delegates all reference reading to subagents                  |
+| **code-review**       | Human-gated review orchestrator dispatching five perspective subagents | Operator confirms scope, perspectives, and depth; review-only |
 
 ### Generator Agents
 
@@ -87,7 +86,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 | **gen-jupyter-notebook**    | Creates structured EDA notebooks from data sources | Requires data dictionaries           |
 | **gen-streamlit-dashboard** | Develops multi-page Streamlit dashboards           | Uses Context7 for documentation      |
 | **gen-data-spec**           | Generates data dictionaries and profiles           | Produces JSON and markdown artifacts |
-| **arch-diagram-builder**    | Builds ASCII block diagrams from Azure IaC         | Parses Terraform, Bicep, ARM scripts |
 
 ### Platform Integration Agents
 
@@ -173,18 +171,6 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Dual-persona system with execution and evaluation subagents. Uses sandbox environment for testing. Links to authoritative sources.
 
-### pr-review
-
-**Creates:** Review tracking files in normalized branch folders:
-
-* `.copilot-tracking/pr/review/{normalized-branch}/in-progress-review.md` (living review document with findings)
-* `.copilot-tracking/pr/review/{normalized-branch}/pr-reference.xml` (PR metadata and diff summary, generated via the `pr-reference` skill)
-* `.copilot-tracking/pr/review/{normalized-branch}/handoff.md` (finalized comments for PR submission)
-
-**Workflow:** 4 phases (Initialize → Analyze → Collaborative Review → Finalize)
-
-**Critical:** Review-only. Never modifies code. Evaluates 8 dimensions: functional correctness, design, idioms, reusability, performance, reliability, security, documentation.
-
 ### product-manager-advisor
 
 **Purpose:** Requirements discovery, story quality assurance, and prioritization guidance.
@@ -214,7 +200,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Product requirements documents with session state:
 
-* `docs/prds/<kebab-case-name>.md` (PRD document with requirements)
+* `docs/project-planning/<kebab-case-name>.md` (PRD document with requirements)
 * `.copilot-tracking/prd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Build → Integrate → Validate → Finalize
@@ -225,7 +211,7 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Creates:** Business requirements documents with session state:
 
-* `docs/brds/<kebab-case-name>-brd.md` (BRD document with business objectives)
+* `docs/project-planning/<kebab-case-name>-brd.md` (BRD document with business objectives)
 * `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Elicit → Integrate → Validate → Finalize
@@ -253,19 +239,19 @@ The Research-Plan-Implement (RPI) workflow provides a structured approach to com
 
 **Critical:** Asks questions and reviews existing artifacts (ADRs, PRDs, plans) before making assumptions. Scopes reviews to 2-3 relevant framework areas based on gathered context. Delegates security-specific reviews to `security-planner` and detailed ADR coaching to `adr-creation`. Uses `docs/templates/adr-template-solutions.md` for ADR structure.
 
-### doc-ops
+### documentation
 
-**Creates:** Documentation updates and maintenance artifacts:
+**Creates:** Documentation workflow session tracking and documentation updates:
 
-* `.copilot-tracking/doc-ops/{{YYYY-MM-DD}}-session.md` (session tracking for documentation operations)
+* `.copilot-tracking/documentation/{{YYYY-MM-DD}}-session.md` (session tracking for the Documentation workflow)
 
 **Workflow:**
 
-* Review existing documentation for accuracy and completeness
-* Identify gaps, inconsistencies, or outdated content
-* Apply structured documentation updates aligned with repository standards
+* Review existing documentation for scope, accuracy, and completeness
+* Identify drift, gaps, or outdated content in the requested area
+* Author or validate documentation updates using the shared documentation skill
 
-**Critical:** Operates strictly on documentation files and does not modify application or source code
+**Critical:** Uses the Documentation workflow as the canonical entry point for documentation work. It stays focused on documentation artifacts and routes formal accessibility, RAI, and security assessments to the matching planner agents.
 
 ### meeting-analyst
 
@@ -359,35 +345,17 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 **Critical:** Orchestrator-only pattern. Delegates codebase profiling, skill assessment, adversarial finding verification, and report generation to specialized subagents. Uses OWASP skills (`owasp-agentic`, `owasp-llm`, `owasp-top-10`, `owasp-mcp`, `owasp-infrastructure`, `owasp-cicd`) and the `secure-by-design` skill for vulnerability and design principle references. Supports incremental comparison with prior scan reports.
 
-### code-review-functional
-
-**Creates:** Optional review artifact (user-prompted after report delivery):
-
-* `.copilot-tracking/reviews/<YYYY-MM-DD>-<branch-name>.md` (full report with YAML frontmatter)
-
-**Workflow:** Branch Analysis → Functional Review → Report Generation → Save Review
-
-**Critical:** Review-only. Focuses on five areas: Logic, Edge Cases, Error Handling, Concurrency, and Contract. Accepts a configurable `baseBranch` input (default `origin/main`). Artifact save is optional and user-confirmed after the report is presented. Applies false-positive filters before recording any finding.
-
-### code-review-full
+### code-review
 
 **Creates:** Merged review artifacts in a normalized branch folder:
 
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/review.md` (merged review document, per the shared persistence protocol in `review-artifacts.instructions.md`)
+* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/metadata.json` (review metadata record)
 
-**Workflow:** Compute Diff → Delegate to Functional + Standards subagents → Merge Reports → Persist Artifacts
+**Workflow:** Context Bootstrap → Human Scope Confirmation → Perspective + Depth Selection → Prepare Dispatch State → Dispatch Selected Perspectives → Merge and Persist
 
-**Critical:** Orchestrator-only. Delegates functional review to `code-review-functional` and standards review to `code-review-standards`, then merges both reports into a single output. Shares the computed diff with subagents to avoid duplicate git operations. Maturity: experimental.
-
-### code-review-standards
-
-**Creates:** Review artifacts in a normalized branch folder:
-
-* `.copilot-tracking/reviews/code-reviews/<sanitized-branch>/` (per the shared persistence protocol in `review-artifacts.instructions.md`)
-
-**Workflow:** Understand Intent → Lock Scope → Apply Skills → Persist Artifacts
-
-**Critical:** Every finding must trace to a loaded skill; no invented categories. Loads at most 8 skills per review, preferring those whose domain appears most frequently in the diff. Accepts pre-computed diffs from orchestrators such as the `code-review-full` prompt. Skips artifact persistence for selected code and `#file` reviews that lack branch context. Maturity: experimental.
+**Critical:** Human-gated orchestrator invoked from the agent picker. After computing the diff via the `pr-reference` skill, it confirms scope with the operator, then lets the operator choose any combination of five perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`) or `full` to run all five, plus a depth tier (`basic`, `standard`, or `comprehensive`) applied independently of perspective.
+It dispatches thin perspective subagents under `.github/agents/coding-standards/subagents/`, shares the computed diff to avoid duplicate git operations, and merges every report into a single output. Review-only; never modifies code. Maturity: experimental.
 
 ### gen-jupyter-notebook
 
@@ -424,17 +392,6 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 **Workflow:** Confirm Scope → Discover Data → Sample & Infer Schema → Profile → Clarify → Emit Artifacts
 
 **Critical:** Produces machine-readable profiles for downstream consumption. Follows strict JSON schemas. Minimal clarifying questions.
-
-### arch-diagram-builder
-
-**Creates:** ASCII architecture diagrams in markdown:
-
-* Inline ASCII block diagrams embedded in markdown (pure ASCII for consistent alignment)
-* Component legend and relationship key
-
-**Workflow:** Discovery → Parsing → Relationship Mapping → Generation
-
-**Critical:** Parses Terraform, Bicep, ARM, or shell scripts. Uses pure ASCII for consistent alignment. Groups by network boundary.
 
 ### github-backlog-manager
 
@@ -511,10 +468,10 @@ Users are responsible for verifying their repository's `.gitignore` configuratio
 
 ### Code Review
 
-1. Select **pr-review** from agent picker
-2. Automatically runs 4-phase protocol
-3. Collaborate during Phase 3 (review items)
-4. Receive `handoff.md` with final PR comments
+1. Select **code-review** from agent picker
+2. Confirm the change scope when prompted
+3. Choose perspectives (`functional`, `standards`, `accessibility`, `security`, `pr`, or `full`) and a depth tier
+4. Receive a merged `review.md` under `.copilot-tracking/reviews/code-reviews/<branch>/`
 
 ### Creating Instructions
 

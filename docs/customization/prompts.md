@@ -1,8 +1,8 @@
 ---
 title: Creating Custom Prompts
-description: Author reusable prompt templates with variables, agent delegation, and mode configuration for team workflows
+description: Author reusable prompt templates with variables, agent delegation, and tool restrictions for team workflows
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - prompts
@@ -16,7 +16,9 @@ estimated_reading_time: 6
 
 Prompts are single-session workflow definitions. You invoke a prompt, Copilot executes it, and the task completes in one shot. This distinguishes prompts from agents (multi-turn conversations) and instructions (passive guidance applied to file edits).
 
-Prompt files (`.prompt.md`) live in `.github/prompts/{collection-id}/`:
+Prompt files live under `.github/prompts/`. They are commonly organized into
+collection-scoped subdirectories such as `.github/prompts/hve-core/` or
+`.github/prompts/security/`, though the repository also contains top-level prompt files:
 
 ```text
 .github/prompts/
@@ -57,9 +59,11 @@ release notes.
 Frontmatter fields:
 
 * `description` (required): A one-line summary displayed in the prompt picker
+* `name` (optional): A human-readable identifier for the prompt
+* `argument-hint` (optional): Hint text shown in the prompt picker for expected inputs
 * `agent` (optional): Delegates execution to a specific custom agent
+* `model` (optional): Pins the prompt to a specific model or prioritized model list
 * `tools` (optional): Restricts available tools for the prompt
-* `mode` (optional): Changes Copilot behavior mode
 
 The body contains the actual instructions Copilot follows, including any structured sections, requirements, or constraints.
 
@@ -162,19 +166,6 @@ agent: Task Planner
 ```
 
 This approach separates the reusable agent logic from the specific context of each prompt invocation.
-
-## Mode Configuration
-
-The `mode:` frontmatter field changes Copilot's behavior for the duration of the prompt. Modes control how Copilot interprets the task and which interaction patterns it follows.
-
-```yaml
----
-description: "Performs a security audit of authentication flows"
-mode: agent
----
-```
-
-Mode configuration is useful when a prompt needs Copilot to operate differently than the default chat mode, such as using an agent-style protocol for a single-shot security scan or a focused editing mode for refactoring tasks.
 
 ## Role Scenarios
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Emits the canonical Vally grader block for a (kind, check) pair.

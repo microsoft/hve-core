@@ -1,5 +1,5 @@
 ---
-description: 'BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator - Brought to you by microsoft/hve-core'
+description: 'BYO ADR template contract: 2-layer config resolution, .adr-config.yml schema, template frontmatter contract, and adopt-template lifecycle for the ADR Creator'
 applyTo: '**/.copilot-tracking/adr-plans/**, **/docs/planning/adrs/**/.adr-config.yml, **/docs/planning/adrs/**'
 ---
 

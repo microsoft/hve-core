@@ -1,0 +1,29 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+stimuli:
+  - name: supply-chain-reviewer-class-recipe
+    prompt: |
+      Review this CI workflow change for supply-chain posture concerns with severity levels:
+      ```diff
+      -      - uses: actions/checkout@v4
+      +      - uses: actions/checkout@main
+      -      "lodash": "4.17.21"
+      +      "lodash": "*"
+      ```
+
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

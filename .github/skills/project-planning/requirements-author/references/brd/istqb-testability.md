@@ -1,5 +1,5 @@
 ---
-description: 'Cite-only ISTQB testability heuristics the BRD Builder applies during Define rewriting - five short heuristics that detect requirements which cannot be verified by an obvious method, used before formal ISO 29148 verifiable scoring - Brought to you by microsoft/hve-core'
+description: 'Cite-only ISTQB testability heuristics the BRD Builder applies during Define rewriting - five short heuristics that detect requirements which cannot be verified by an obvious method, used before formal ISO 29148 verifiable scoring'
 ---
 
 # ISTQB Testability Heuristics (Cite-Only)
@@ -76,4 +76,4 @@ The ISTQB Glossary is published by the International Software Testing Qualificat
 
 This pointer file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The ISTQB Glossary is the property of the International Software Testing Qualifications Board and is subject to the publisher's terms at the upstream source.
 
-> Brought to you by microsoft/hve-core
+
