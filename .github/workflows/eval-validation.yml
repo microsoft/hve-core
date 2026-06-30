@@ -382,6 +382,15 @@ jobs:
           pwsh -NoProfile -File scripts/evals/Get-ChangedAIArtifact.ps1 `
             -BaseRef $base -HeadRef HEAD -OutFile logs/changed-ai-artifacts.json
 
+      - name: Generate changed-spec stimulus manifest
+        if: env.EVAL_EXECUTE == 'true'
+        shell: pwsh
+        run: |
+          $base = '${{ inputs.base-branch }}'
+          if ([string]::IsNullOrWhiteSpace($base)) { $base = 'origin/main' }
+          pwsh -NoProfile -File scripts/evals/Get-ChangedSpecStimulus.ps1 `
+            -BaseRef $base -HeadRef HEAD -OutFile logs/changed-spec-stimuli.json
+
       - name: Probe Copilot token
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
@@ -396,7 +405,7 @@ jobs:
         if: env.EVAL_EXECUTE == 'true'
         shell: pwsh
         run: |
-          npm run eval:execute -- -Kind ${{ matrix.kind }} -Model claude-haiku-4.5 -SkipInputModeration
+          npm run eval:execute -- -Kind ${{ matrix.kind }} -ChangedSpecManifestPath logs/changed-spec-stimuli.json -Model claude-haiku-4.5 -SkipInputModeration
           if ($LASTEXITCODE -ne 0) {
             'EVAL_EXECUTE_FAILED=true' >> $env:GITHUB_ENV
           }
@@ -409,6 +418,7 @@ jobs:
           name: eval-execution-results-${{ matrix.kind }}
           path: |
             logs/changed-ai-artifacts.json
+            logs/changed-spec-stimuli.json
             logs/stimulus-presence.json
             logs/eval-summary.json
             logs/eval-results-*.json

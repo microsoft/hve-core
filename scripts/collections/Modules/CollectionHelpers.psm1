@@ -6,7 +6,7 @@
 # Purpose: Collection helpers - YAML parsing, validation, and shared collection utilities.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 #Requires -Modules @{ ModuleName='PowerShell-Yaml'; RequiredVersion='0.4.7' }
 
 Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CIHelpers.psm1') -Force
