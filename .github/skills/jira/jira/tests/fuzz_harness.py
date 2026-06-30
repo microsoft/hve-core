@@ -78,12 +78,30 @@ def fuzz_read_json_argument(data: bytes) -> None:
         jira._read_json_argument(text, "usage: test")
 
 
+def fuzz_validate_project_key(data: bytes) -> None:
+    """Fuzz project key normalization and quoting."""
+    provider = atheris.FuzzedDataProvider(data)
+    project_key = provider.ConsumeUnicodeNoSurrogates(40)
+    with suppress(jira.ScriptError):
+        jira._quote_path_segment(project_key)
+
+
+def fuzz_clamp_max_results(data: bytes) -> None:
+    """Fuzz max-results clamping behavior."""
+    provider = atheris.FuzzedDataProvider(data)
+    value = provider.ConsumeIntInRange(0, 1000)
+    with suppress(jira.ScriptError):
+        jira._clamp_max_results(value)
+
+
 FUZZ_TARGETS = [
     fuzz_extract_error_message,
     fuzz_validate_issue_key,
     fuzz_extract_field,
     fuzz_split_fields,
     fuzz_read_json_argument,
+    fuzz_validate_project_key,
+    fuzz_clamp_max_results,
 ]
 
 
