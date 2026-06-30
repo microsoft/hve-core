@@ -89,6 +89,14 @@ function screen({ task, host, body, title }) {
   return { beats: [{ type: "session.begin", task, host }, { type: "screen.show", html: body, title }] };
 }
 
+function flow({ task, host, title, nodes = [], edges = [], focus }) {
+  const beats = [{ type: "session.begin", task, host }, { type: "flow.open", title }];
+  for (const n of nodes) beats.push({ type: "flownode.add", id: n.id, kind: n.kind, label: n.label, scope: n.scope, sub: n.sub, status: n.status });
+  for (const e of edges) beats.push({ type: "flowedge.add", id: e.id, from: e.from, to: e.to, scope: e.scope, kind: e.kind, label: e.label, status: e.status });
+  if (focus) beats.push({ type: "flow.focus", workflow: focus });
+  return { beats };
+}
+
 function ctx({ task, host, instructions, skills, collection, note }) {
   return { beats: [
     { type: "session.begin", task, host },
@@ -226,7 +234,21 @@ const CATS = [
   ] },
   { cat: "meta-utility (mixed)", agents: [
     [57, "Memory", ctx({ task: "Recall + maintain project memory", host: "Memory", instructions: ["hve-core markdown style", "no em-dashes"], skills: ["memory", "session-search"], collection: "hve-core", note: `<div style="font-family:system-ui;color:#ddd;padding:12px"><h3>Active memory</h3><p>3 facts recalled · 1 updated this session. Context strip above shows the active standards, skills, and collection.</p></div>` })],
-    [58, "GitHub Agentic Workflows Agent", screen({ task: "Create + debug a gh-aw workflow", host: "GitHub Agentic Workflows Agent", title: "gh-aw: nightly-triage", body: `<div style="font-family:ui-monospace,monospace;color:#ddd;padding:12px;font-size:12px"><h3 style="font-family:system-ui">Workflow: nightly-triage</h3><div style="background:#11261a;border-left:3px solid #41d18b;padding:8px;margin-bottom:6px">✓ compiled · 3 jobs</div><div style="background:#0d1b2a;border-left:3px solid #3b82f6;padding:8px;margin-bottom:6px">on: schedule (0 6 * * *)</div><div style="background:#2a1d11;border-left:3px solid #e0a341;padding:8px">⚠ upgrade available: actions/checkout@v5</div></div>` })],
+    [58, "GitHub Agentic Workflows Agent", flow({ task: "Create + debug a gh-aw workflow", host: "GitHub Agentic Workflows Agent", title: "hve-core gh-aw pipeline",
+      nodes: [
+        { id: "triage", kind: "workflow", label: "Issue Triage", sub: "copilot · on issues", status: "passed" },
+        { id: "implement", kind: "workflow", label: "Issue Implement", sub: "copilot · on agent-ready", status: "running" },
+        { id: "review", kind: "workflow", label: "PR Review", sub: "claude · on PR" },
+        { id: "deps", kind: "workflow", label: "Dependency PR Review", sub: "claude · on PR" },
+        { id: "docs", kind: "workflow", label: "Doc Update Check", sub: "copilot · on push main" },
+      ],
+      edges: [
+        { id: "e1", from: "triage", to: "implement", kind: "label", label: "agent-ready", status: "active" },
+        { id: "e2", from: "implement", to: "review", kind: "event", label: "opens PR" },
+        { id: "e3", from: "implement", to: "deps", kind: "event", label: "opens PR" },
+        { id: "e4", from: "review", to: "docs", kind: "event", label: "merged → push" },
+        { id: "e5", from: "review", to: "implement", kind: "label", label: "needs-revision" },
+      ] })],
     [59, "Issue Triage Agent", backlog({ task: "Triage incoming issues", host: "Issue Triage Agent", target: "Inbox", columns: ["New", "Triaged", "Routed"], items: [{ id: "I1", title: "Crash on empty filter", col: "Triaged", kind: "bug", tier: "P1" }, { id: "I2", title: "Feature: dark mode", col: "New", kind: "feature" }], action: "Labeling + routing #482" })],
     [60, "Prompt Tester", ctx({ task: "Stress-test a prompt", host: "Prompt Tester", instructions: ["adversarial cases", "edge inputs"], skills: ["prompt-tester"], collection: "prompts", note: `<div style="font-family:system-ui;color:#ddd;padding:12px"><h3>Prompt test run</h3><p>24 cases · 21 pass · 3 flagged for the Evaluator. Active standards + skill shown in the strip above.</p></div>` })],
     [61, "Prompt Evaluator", review({ task: "Evaluate prompt outputs", host: "Prompt Evaluator", target: "prompt: summarizer v3", findings: [{ sev: "high", title: "Hallucinated a citation", file: "case-12.txt", line: 1 }, { sev: "medium", title: "Ignored length constraint", file: "case-19.txt", line: 1 }] })],
