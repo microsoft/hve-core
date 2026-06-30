@@ -29,7 +29,7 @@ stimuli:
       - type: output-matches
         name: topic-coverage
         config:
-          pattern: '(?i)(not_affected|under_investigation|vulnerable_code_not_in_execute_path|cve-2026-00000|reachab)'
+          pattern: '(?i)(not_affected|under_investigation|vulnerable_code_not_in_execute_path|cve-2026-00000|reachable|reachability)'
       - type: output-matches
         name: vex-document-write
         config:
