@@ -3,14 +3,14 @@ brd_id: "BRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner BRD"
 description: "Business requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "HVE Core Maintainers"
-ms.date: 2026-06-20
+ms.date: 2026-06-30
 ms.topic: reference
 status: "approved"
 version: "1.0.0"
 owners: ["microsoft/hve-core"]
 reviewers: ["project-planning-maintainers", "security-maintainers"]
 created_date: "2026-06-20"
-last_updated: "2026-06-20"
+last_updated: "2026-06-30"
 business_goal_ids: ["BG-001", "BG-002", "BG-003"]
 business_goal_smart_status: "graded"
 fr_to_ac_coverage_threshold_pct: 80.0
