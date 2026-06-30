@@ -40,15 +40,39 @@ Turn the reviewed target into an ordered list of segments that each cover one co
 * UI or UX: order along the user-facing flow, connecting each view or component to the state, events, and styles that drive it.
 * Artifact: follow the document's own section order, pairing each decision with its rationale and evidence.
 
-Record the segment list in the walkthrough artifact before starting segment one so the session can resume if interrupted.
+Record the segment list in the walkthrough artifact before starting segment one so the session can resume if interrupted. Do not over-condense the walkthrough. When the target is large or nuanced, use more segments rather than forcing a compact summary, and 25 or more segments is acceptable when that is the clearest way to explain the material.
+
+## Conversation markdown format
+
+Use well-formatted markdown in every walkthrough turn.
+
+* Start each segment with a segment header such as `### Segment 1: ...` before any narrative explanation.
+* Before the first segment explanation, render an overview mermaid diagram that shows the overall flow or structure of the target and the planned segment sequence.
+* For each segment, render a compact zoomed mermaid diagram that shows only the previous segment, the current segment, and the next segment, and visually highlight the current segment node.
+* Use a mermaid pattern like this for each zoom diagram:
+
+```mermaid
+flowchart LR
+    prev[Previous segment]
+    current[Current segment]
+    next[Next segment]
+    prev --> current --> next
+    classDef current fill:#fef3c7,stroke:#92400e,stroke-width:2px;
+    class current current;
+```
+
+* Keep the prose scannable. Each sentence or paragraph that discusses a file, line range, block, or artifact must include a nearby markdown link to that reference, rather than relying only on the reference table.
+* Keep the reference table requirement. Render it near the bottom of each segment turn, immediately before the questions.
 
 ## Segment explanation loop
 
 Run this loop once per segment, and never advance more than one segment per turn:
 
-1. Explain the segment in the conversation. Move from what it does, to how it connects to the rest of the target, to why it is this way, without labeling those parts. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea, and follow the "Writing the explanation for human eyes" section in this reference. Do not paste large code blocks; describe the code and point to it.
-2. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
-3. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment. Always render the reference table before this call and before yielding control.
+1. Explain the segment in the conversation. Start with the segment header, then move from what it does to how it connects to the rest of the target and why it is this way, without labeling those parts. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea, and follow the "Writing the explanation for human eyes" section in this reference. Do not paste large code blocks; describe the code and point to it.
+2. Render the overview diagram before the first segment explanation, and then render a compact zoomed mermaid diagram for every segment. Each zoomed diagram should show only the previous segment, the current segment, and the next segment, with the current segment visually highlighted.
+3. Add inline markdown links beside the explanatory prose for any file, block, or artifact being discussed. Do not rely only on the reference table for navigation.
+4. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
+5. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment. Always render the segment header, diagrams, inline links, and the reference table before this call and before yielding control.
 
 Render the reference table immediately before every `vscode_askQuestions` call and before any hand back of control, including mid-segment pauses.
 
@@ -148,9 +172,9 @@ Close with a concise summary that contains:
 * The count of captured change requests.
 * A markdown table linking the walkthrough artifact and its Requested Changes section alongside the recommended next command.
 
-| Artifact | Next step |
-|----------|-----------|
-| [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md) | Run `/rpi-quick` with this artifact, or run the full RPI sequence |
+| Artifact | Requested Changes | Next step |
+|----------|-------------------|-----------|
+| [.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md) | [Requested Changes](.copilot-tracking/walkthroughs/{{YYYY-MM-DD}}/{{task_slug}}-walkthrough.md#requested-changes) | Run `/rpi-quick` with this artifact, or run the full RPI sequence |
 
 ## Re-entry
 
