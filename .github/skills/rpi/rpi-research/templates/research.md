@@ -1,6 +1,8 @@
 <!-- markdownlint-disable-file -->
 # Task Research: {{task_slug}}
 
+Sections wrapped in `<!-- <per_alternative> -->` comments repeat, one block per evaluated alternative; aim for at least three when the design space supports it (see [../references/research.md](../references/research.md)). Omit the comments in the actual document.
+
 ## Scope and Success Criteria
 
 * Scope: {{task_boundary_relevant_files_constraints_and_exclusions}}
@@ -45,6 +47,18 @@
 * {{finding_2}}
 * {{finding_3}}
 
+### Complete Examples (when applicable)
+
+```{{language}}
+{{illustrative_code_example_derived_from_discovered_conventions}}
+```
+
+### Configuration Examples (when applicable)
+
+```{{format}}
+{{illustrative_config_example_or_verbatim_excerpt}}
+```
+
 ## Technical Scenarios and Alternatives
 
 ### Selected: {{selected_approach}}
@@ -53,11 +67,25 @@
 * Rationale: {{evidence_based_rationale}}
 * Implementation impact: {{files_components_or_workflow_impact}}
 
+File tree (when new, changed, or removed files are involved):
+
+```text
+{{file_tree_changes}}
+```
+
+Flow diagram (when a multi-component flow is involved):
+
+```mermaid
+{{mermaid_diagram}}
+```
+
+<!-- <per_alternative> -->
 ### Alternative: {{alternative_approach}}
 
 * Approach: {{alternative_description}}
 * Trade-offs: {{benefits_and_costs}}
 * Rejection rationale: {{why_not_selected}}
+<!-- </per_alternative> -->
 
 ## Open Questions and Risks
 

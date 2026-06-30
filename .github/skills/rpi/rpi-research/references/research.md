@@ -35,6 +35,7 @@ The template includes these planning-ready sections.
 
 * Summarize the questions investigated, the sources checked, and the tools or subagents used.
 * Record file paths, search terms, and external references with enough detail for downstream planning.
+* Fetch and cite real external sources for cross-industry or comparative patterns, with markdown links, rather than naming technologies or practices without a source. Treat an unlinked list of industry terms as incomplete evidence.
 * Note when deeper research was delegated to the Researcher Subagent and where its output lives.
 * If research was performed inline because `runSubagent` and `task` were unavailable, record the fallback reason.
 
@@ -51,8 +52,11 @@ The template includes these planning-ready sections.
 
 ### Technical Scenarios and Alternatives
 
-* Evaluate at least the main viable approaches.
+* Evaluate at least three viable approaches when the design space supports it; fewer is acceptable only when genuinely no other viable approach exists, and the document should say so explicitly.
 * For each option, note the benefits, trade-offs, complexity, and likely implementation impact.
+* When the selected approach involves new, changed, or removed files, include a file-tree (` ```text ` block) showing the new/changed/reused paths.
+* When the selected approach involves a multi-component flow (for example a pipeline, a request path, or a deployment topology), include a mermaid diagram of the flow.
+* When discovered conventions imply a concrete shape (a script, a config file, a job/workflow definition), include an illustrative code or configuration snippet derived from those conventions, clearly labeled as illustrative if it is not verbatim repository content.
 * Conclude with the recommended approach and rationale based on the evidence gathered.
 
 ### Open Questions and Risks
@@ -99,6 +103,7 @@ The template includes these planning-ready sections.
 
 Return a concise, evidence-first response with:
 
+* Open with a `## 🔬 RPI Researcher: [Topic]` header.
 * Research artifact path.
 * Selected approach and rationale.
 * Rejected alternatives or lower-ranked options.
@@ -107,6 +112,7 @@ Return a concise, evidence-first response with:
 * Constraint status, including whether planning and implementation were avoided.
 * Artifact self-check status, listing required sections checked when no executable validation ran.
 * Advisory next-step recommendation, either `/rpi-plan` with the dated artifact path or an explicit no-planning reason.
+* Close with a structured summary table (Research Artifact / Selected Approach / Key Discoveries / Alternatives Evaluated / Open Questions / Advisory Next Step).
 
 ## Deeper Research Re-entry
 
