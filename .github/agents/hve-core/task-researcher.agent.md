@@ -1,7 +1,7 @@
 ---
 name: Task Researcher
 description: 'Task research specialist for comprehensive project analysis'
-disable-model-invocation: true
+disable-model-invocation: false
 agents:
   - Researcher Subagent
 handoffs:
