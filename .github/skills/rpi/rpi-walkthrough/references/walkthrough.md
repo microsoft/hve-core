@@ -46,11 +46,61 @@ Record the segment list in the walkthrough artifact before starting segment one 
 
 Run this loop once per segment, and never advance more than one segment per turn:
 
-1. Explain the segment in the conversation. Lead with what it does, then how it connects to the rest of the target, then why it is this way. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea. Do not paste large code blocks; describe the code and point to it.
+1. Explain the segment in the conversation. Move from what it does, to how it connects to the rest of the target, to why it is this way, without labeling those parts. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea, and follow the "Writing the explanation for human eyes" section in this reference. Do not paste large code blocks; describe the code and point to it.
 2. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
-3. Call `vscode_askQuestions` with one or two clear questions. The first offers more detail or a why on the current segment; the second continues to the next segment. Always render the reference table before this call and before yielding control.
+3. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment. Always render the reference table before this call and before yielding control.
 
 Render the reference table immediately before every `vscode_askQuestions` call and before any hand back of control, including mid-segment pauses.
+
+## Writing the explanation for human eyes
+
+Walkthrough prose is for a human reader. It should read like a thoughtful engineer explaining their own work, not like generated filler. Treat the lists below as patterns to recognize, not a literal find-and-replace blocklist; generalize from the examples so the prose stays natural rather than only dodging the exact words. Quoting or naming the target's actual identifiers, strings, or wording is always fine, even when they contain words this section would otherwise avoid.
+
+### Avoid these AI tells
+
+* Formulaic openers and recap wrappers such as "In today's world", "In conclusion", or "In summary", plus forced first-second-third scaffolding and transitions such as "Moreover" or "Additionally".
+* Filler and empty restating such as "It's worth noting", "It's important to note", and "It should be mentioned", along with abstract intensifiers that do not earn their place.
+* Promotional slogans and inflated language such as "game-changer", "paradigm shift", "cutting-edge", "unlock", "elevate", "empower", "supercharge", "leverage", and spike words such as "delve", "tapestry", "testament to", "realm", "landscape", "underscore", "showcase", "robust", "seamless", "intricate", "dive into", and "plays a crucial role".
+* Sentence frames that feel packaged rather than thought-through, such as "It's not just X, it's Y", "not only X but also Y", rule-of-three triads, and "on one hand... on the other hand..." when they add no real analysis.
+* Typography crutches: avoid em dashes, a common tell, and use commas, parentheses, or separate sentences instead; also avoid emoji in headings or bullets, bold-label-colon list items, Title Case headings, and excessive bolding.
+* Conversational filler and sycophancy such as "Certainly!", "Great question!", and "I hope this helps", and over-agreeable phrasing, plus self-referential asides such as "let me be clear" or "to be clear".
+
+### Write it like this instead
+
+* Start with the real point, not a generic frame.
+* Make every sentence do work and cut to the next useful sentence.
+* Prefer concrete nouns and verbs over abstract labels.
+* Use the shortest sentence that still says the thing clearly.
+* Give one specific example tied to the actual code or artifact.
+* Support claims with evidence rather than slogans, and keep the why behind each line or block in view.
+* Let the prose carry the idea without announcing the structure.
+* Make the last line of prose the implication, consequence, or next step, before the reference table and questions.
+* Vary sentence and paragraph length so the rhythm reads human.
+* When something is genuinely uncertain, say so plainly and separate what is known from what is likely, but do not manufacture hedging when the answer is clear.
+* Use bold, lists, tables, and diagrams only when they help the reader.
+
+### Shape of a segment message
+
+Keep each turn easy to scan and small enough not to overwhelm:
+
+* Open with the real point of this segment, and vary how you open across segments so the walkthrough does not fall into a repeated template.
+* Explain how it works and why it is this way at a depth that matches `detail`: about one short paragraph for `brief`, two short paragraphs or a short list plus one concrete example for `normal`, and up to three short paragraphs plus one evidence-backed point for `deep`.
+* Keep any single turn to roughly 200 words of prose or less, and move extra depth into a follow-up turn rather than one long message.
+* Place the reference table near the bottom, just before the questions, so the reader can jump to the exact lines.
+* Close with the one or two `vscode_askQuestions` prompts and nothing after them.
+
+### A model segment message
+
+This shows the intended rhythm: open with the point, explain how and why in a few plain lines, then the reference table, then the questions. The paths and code here are illustrative.
+
+The `withRetry` wrapper exists so one flaky network call does not fail the whole import. It runs the callback, and when the callback throws it waits a short, growing delay and tries again, up to three attempts, before giving up. The delay grows on purpose: instant retries against a rate-limited API tend to make an outage worse, so each attempt backs off a little further.
+
+| Reference | What to look at |
+|-----------|-----------------|
+| [src/net/retry.ts](src/net/retry.ts#L12-L28) | The retry loop and the backoff calculation |
+| [src/net/client.ts](src/net/client.ts#L40) | Where the import call is wrapped |
+
+Then ask, through `vscode_askQuestions`, whether to go deeper on how the backoff delay is calculated or move on to how a final failure is handled.
 
 ## Reference table format
 
