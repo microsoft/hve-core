@@ -32,10 +32,11 @@ Captured from the deep subagent review before explanation. One row per planned s
 
 Append one entry per segment as it is explained.
 
-### Segment {{n}}: {{title}} — {{covered | revisited}}
+### Segment {{n}}: {{title}} ({{covered | revisited}})
 
 - References: {{path/to/file.ext:L10-L24}}
 - Summary: {{the explanation given to the user, condensed}}
+- Reminder: each segment explanation should follow the human-voice writing rules in references/walkthrough.md.
 - User feedback: {{more detail | continue | change request | none}}
 
 ## Requested changes
