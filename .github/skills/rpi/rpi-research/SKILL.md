@@ -22,10 +22,14 @@ Use [references/research.md](references/research.md) for the research template a
 
 1. Confirm the task scope, target files, and expected outcome. Use the supplied topic when available; when it is not, infer an initial topic from the conversation context. When chat context is enabled, incorporate it to refine scope before drafting the research brief.
 2. Create or update the primary research artifact at the resolved research path.
-3. Use `Researcher Subagent` via `runSubagent` or `task` when available; otherwise perform equivalent inline research and record the fallback reason in the artifact.
+3. Use `Researcher Subagent` via `runSubagent` or `task` when available; otherwise perform equivalent inline research and record the fallback reason. Parallelize dispatch across independent topics: when the research question decomposes into separable subtopics (for example repo overview, existing-capability status, external pattern research), dispatch one `Researcher Subagent` call per subtopic in parallel, each writing its own file under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` named for its subtopic, rather than one sequential call accumulating into a single file.
 4. Move through research and analysis, then re-enter research while material gaps remain.
 5. Consolidate findings into the primary research document, capture key discoveries, evidence logs, technical scenarios, alternatives, potential next research, and unresolved gaps, and update the dated artifact before any handoff.
 6. Finish with the Final Response contract.
+
+## Context Discipline
+
+Treat each `Researcher Subagent` chat response as an index, not the full result. Re-read a subagent file only when the next action (consolidating findings, resolving a contradiction, evaluating an alternative) needs evidence the chat summary does not contain. After every subagent return, keep the turn lean: update the primary research artifact, emit a compact one-line-per-subagent status, and stop — do not re-quote subagent payloads or narrate the remaining plan.
 
 ## Success criteria
 
@@ -61,6 +65,7 @@ When the caller requests research-only, no handoff, analysis, audit, or comparis
 
 Return a concise, evidence-first summary with:
 
+* Open with a `## 🔬 RPI Researcher: [Topic]` header.
 * Research artifact path.
 * Selected approach and rationale.
 * Rejected alternatives or lower-ranked options.
@@ -69,5 +74,6 @@ Return a concise, evidence-first summary with:
 * Constraint status, including whether planning and implementation were avoided.
 * Artifact self-check status, listing required sections checked when no executable validation ran.
 * Advisory next-step recommendation, either `/rpi-plan` with the dated artifact path or an explicit no-planning reason.
+* Close with a structured summary table (Research Artifact / Selected Approach / Key Discoveries / Alternatives Evaluated / Open Questions / Advisory Next Step).
 
 > Brought to you by microsoft/hve-core

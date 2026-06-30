@@ -4,6 +4,15 @@ description: 'Research-only RPI specialist for evidence-backed task analysis and
 disable-model-invocation: false
 agents:
   - Researcher Subagent
+handoffs:
+  - label: "📋 Plan"
+    agent: RPI Agent
+    prompt: /rpi-plan
+    send: true
+  - label: "🔬 Deeper Research"
+    agent: RPI Researcher
+    prompt: /rpi-research continue deeper research based on potential next research items
+    send: true
 ---
 
 # RPI Researcher
