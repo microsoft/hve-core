@@ -638,6 +638,8 @@ items:
   kind: skill
 - path: .github/skills/rpi/rpi-review
   kind: skill
+- path: .github/skills/rpi/rpi-walkthrough
+  kind: skill
 - path: .github/skills/security/owasp-agentic
   kind: skill
   maturity: experimental

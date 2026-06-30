@@ -1,6 +1,6 @@
 # RPI Skills
 
-This collection packages the RPI Researcher agent and skill-forward RPI entry points for research, planning, implementation, and review.
+This collection packages the RPI Researcher agent and skill-forward RPI entry points for research, planning, implementation, review, and guided walkthroughs.
 
 ## Local enablement
 
