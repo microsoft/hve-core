@@ -97,12 +97,14 @@ class TestAddNarrationTiming:
         assert "old-content" not in xml_str
         assert 'spid="10"' in xml_str
 
-    def test_add_narration_timing_uses_hardened_xml_parser(self, mocker):
+    def test_given_template_when_add_timing_then_hardened_parser_passed(
+        self, mocker
+    ):
         """_add_narration_timing must pass a hardened XMLParser to etree.fromstring."""
         from lxml import etree
 
+        # Arrange
         original_fromstring = etree.fromstring
-
         captured: list = []
 
         def capturing_fromstring(text, parser=None, *args, **kwargs):
@@ -111,12 +113,13 @@ class TestAddNarrationTiming:
 
         mocker.patch("embed_audio.etree.fromstring", side_effect=capturing_fromstring)
         mock_slide = MagicMock()
-
         ns = "http://schemas.openxmlformats.org/presentationml/2006/main"
         mock_slide._element = etree.Element(f"{{{ns}}}sld")
 
+        # Act
         _add_narration_timing(mock_slide, shape_id=1, duration_ms=1000)
 
+        # Assert
         assert captured, "etree.fromstring was never called"
         parser = captured[0]
         assert parser is not None, (
