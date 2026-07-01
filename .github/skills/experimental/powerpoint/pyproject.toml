@@ -4,6 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.11"
 dependencies = [
     "python-pptx",
+    "lxml",
     "pyyaml",
     "ruamel.yaml",  # required by generate_themes.py for round-trip YAML fidelity
     "cairosvg",

@@ -89,7 +89,7 @@ def _set_theme_colors(prs: Presentation) -> None:
             " in slide master relationships."
         )
 
-    theme_element = theme_part.element
+    theme_element = etree.fromstring(theme_part.blob)
 
     clr_scheme = theme_element.find(".//a:clrScheme", ns)
     if clr_scheme is None:
@@ -226,3 +226,67 @@ def minimal_test_fixture_path(
     pptx_path = fixture_dir / "minimal_test_fixture.pptx"
     generate_minimal_fixture(pptx_path)
     return pptx_path
+
+
+@pytest.fixture(scope="session")
+def malformed_pdf_dir(powerpoint_fixture_dir: Path) -> Path:
+    """Directory holding tiny on-disk malformed-PDF fixtures."""
+    return powerpoint_fixture_dir / "malformed"
+
+
+@pytest.fixture()
+def minimal_valid_pdf(tmp_path):
+    """Factory writing bytes that pass ``validate_pdf_path`` magic+size checks.
+
+    The bytes after the magic prefix are not a parsable PDF; tests using
+    this fixture must mock ``fitz.open`` to bypass real C-level parsing.
+    """
+
+    def _make(name: str = "minimal.pdf") -> Path:
+        pdf = tmp_path / name
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
+        return pdf
+
+    return _make
+
+
+@pytest.fixture()
+def oversized_pdf(tmp_path):
+    """Factory writing a >MAX_PDF_BYTES file via sparse file (no large commit).
+
+    Returns a Path whose ``stat().st_size`` exceeds the configured ceiling
+    while occupying near-zero bytes on disk. The caller may pass a custom
+    ``max_bytes`` to ``validate_pdf_path`` to keep the synthetic size
+    cheap; defaults target the production ceiling.
+    """
+
+    def _make(size_bytes: int = 100 * 1024 * 1024 + 1, name: str = "huge.pdf") -> Path:
+        pdf = tmp_path / name
+        with pdf.open("wb") as fh:
+            fh.write(b"%PDF-1.4\n")
+            # Sparse file: seek beyond and write a single byte. This makes
+            # st_size large without committing megabytes of zeros to disk
+            # on filesystems that support sparse files (APFS, ext4, NTFS).
+            fh.seek(size_bytes - 1)
+            fh.write(b"\x00")
+        return pdf
+
+    return _make
+
+
+@pytest.fixture()
+def many_page_pdf(tmp_path):
+    """Factory writing a magic-valid file paired with a fitz mock for N pages.
+
+    Returns a tuple ``(path, page_count)``. The on-disk bytes are not a real
+    PDF; the caller is expected to mock ``fitz.open`` so that ``len(doc)``
+    returns ``page_count`` to drive the page-count ceiling check in
+    :func:`pdf_safety.safe_open_pdf`.
+    """
+
+    def _make(page_count: int = 1001, name: str = "many.pdf") -> tuple[Path, int]:
+        pdf = tmp_path / name
+        pdf.write_bytes(b"%PDF-1.4\n%fake\n")
+        return pdf, page_count
+
+    return _make
