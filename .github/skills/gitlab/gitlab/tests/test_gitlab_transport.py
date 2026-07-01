@@ -504,6 +504,18 @@ class TestGitLabTransportHardening:
 
         assert exc_info.value.code == gitlab.EXIT_USAGE
 
+    def test_rejects_non_localhost_http_even_when_allow_env_set(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://example.com")
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+        monkeypatch.setenv("GITLAB_ALLOW_INSECURE", "1")
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
     def test_rejects_invalid_mr_state(self) -> None:
         with pytest.raises(SystemExit) as exc_info:
             gitlab.cmd_mr_list(["invalid-state"])

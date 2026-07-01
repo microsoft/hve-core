@@ -2,8 +2,15 @@
 title: Jira Skill Security Model
 description: STRIDE threat model for the Jira skill organized by assets, adversaries, and trust buckets (CLI to Jira API, environment credentials, CLI caller process) with in-code mitigations and acknowledged enterprise readiness gaps
 author: microsoft/hve-core
+ms.date: 2026-06-30
 ms.topic: reference
-ms.date: 2026-06-29
+estimated_reading_time: 10
+keywords:
+  - security
+  - STRIDE
+  - jira
+  - rest cli
+  - threat model
 ---
 <!-- markdownlint-disable-file -->
 # Jira Skill Security Model
@@ -11,6 +18,85 @@ ms.date: 2026-06-29
 This document records the STRIDE threat model for the Jira skill (`scripts/jira.py`). The model is organized by trust bucket: CLI → Jira API (B1), Environment credentials (B2), and CLI caller process (B3). Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them. Assets and adversaries are enumerated first. Acknowledged enterprise readiness gaps are listed at the end.
 
 The skill is a single-file, standard-library-only CLI. It performs no OAuth browser flow, runs no local listener, persists no tokens to disk, and spawns no subprocesses. Credentials are read from the process environment per invocation.
+
+> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
+
+## Executive Summary
+
+The Jira skill is a single-file, standard-library-only REST CLI. It reads a PAT or Basic credential from the environment per invocation and calls the configured Jira instance over TLS through a hardened, no-redirect opener. Its highest-risk asset is the API token; the skill never persists it, never logs it, and refuses plaintext transport to non-loopback hosts. Write operations require explicit confirmation. Residual risk is upstream (a leaked token can only be revoked at the Jira instance) and at-rest in the operator environment.
+
+### Security Posture Overview
+
+| Dimension          | Value                                                                      |
+|--------------------|----------------------------------------------------------------------------|
+| Runtime surface    | REST CLI (stdlib only); env credentials; no listener, no subprocess        |
+| Trust buckets      | B1 CLI→Jira API, B2 environment credentials, B3 CLI caller process         |
+| Credentials        | PAT (Bearer) or Basic (`email:token`) from env; never persisted to disk    |
+| Network egress     | HTTPS to `JIRA_BASE_URL` (no-redirect opener; HTTPS required off-loopback) |
+| Open residual gaps | 5 (EoP-Med: skill cannot revoke a leaked token)                            |
+
+## Contents
+
+* [System Description](#system-description)
+* [Trust Boundaries](#trust-boundaries)
+* [Assets](#assets)
+* [Adversaries](#adversaries)
+* [Bucket B1: CLI → Jira API](#bucket-b1-cli--jira-api)
+* [Bucket B2: Environment credentials](#bucket-b2-environment-credentials)
+* [Bucket B3: CLI caller process](#bucket-b3-cli-caller-process)
+* [Enterprise Readiness Gaps](#enterprise-readiness-gaps)
+* [References](#references)
+
+## System Description
+
+### Components
+
+1. `scripts/jira.py` — a single-file CLI: parses arguments, resolves credentials from the environment, issues REST calls through a hardened opener, and prints JSON.
+2. Hardened opener (`_OPENER` / `_NoRedirect`) — enforces TLS, refuses 30x redirects, and caps response bodies.
+
+### Data Flow
+
+```mermaid
+flowchart TD
+    subgraph HOST["Operator Workstation / Runner (trust zone)"]
+        CLI["jira.py CLI"]
+        ENVCRED["JIRA_API_TOKEN / PAT<br/>JIRA_BASE_URL (env)"]
+        OUT["JSON output / audit log"]
+    end
+    subgraph JIRA["Jira Instance (network boundary)"]
+        API["Jira REST API"]
+    end
+    CLI -->|"reads per invocation"| ENVCRED
+    CLI -->|"Bearer/Basic request (TLS, no-redirect)"| API
+    API -->|"issue payloads (untrusted)"| CLI
+    CLI -->|"writes"| OUT
+```
+
+## Trust Boundaries
+
+### Boundary Diagram
+
+```text
+┌───────────────────────────────────────────────┐
+│ TRUST BOUNDARY: Operator Workstation / Runner             │
+│  ┌─────────┐   ┌─────────────┐   ┌───────────┐  │
+│  │ jira CLI │   │ Env creds   │   │ JSON/audit │  │
+│  │         │   │ (PAT/Basic) │   │ output     │  │
+│  └─────────┘   └─────────────┘   └───────────┘  │
+└────────────────────────┬─────────────────────┘
+                          │ HTTPS (TLS, no-redirect)
+            ┌──────────────▼─────────────────────────┐
+            │ BOUNDARY: Jira Instance                │
+            │  Jira REST API                         │
+            └────────────────────────────────────────┘
+```
+
+### Boundary Descriptions
+
+| Boundary                      | Assets Protected                         | Controls Enforced                                                                 |
+|-------------------------------|------------------------------------------|-----------------------------------------------------------------------------------|
+| Operator Workstation / Runner | API token, output                        | Per-invocation env resolution (no persistence); redaction; write-confirm gate     |
+| Jira Instance                 | Request/response integrity, bearer token | TLS (system trust store); `_NoRedirect`; origin-only base URL; capped JSON parser |
 
 ## Assets
 
@@ -68,7 +154,16 @@ All REST calls target the configured `JIRA_BASE_URL` over `urllib.request` throu
 
 ### TLS posture
 
-The skill performs every Jira call through the stdlib opener with no custom `SSLContext`, CA-bundle flag, or certificate pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; custom internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (recorded as G-TLS-1). HTTPS is required for non-loopback hosts; `http://` is permitted only for loopback or when `JIRA_ALLOW_INSECURE=1` is set for local development.
+The skill performs every Jira call through the stdlib opener with no custom `SSLContext`, CA-bundle flag, or certificate pinning. Operators inherit Python's default HTTPS behavior: validation uses the system trust store; custom internal CAs require `SSL_CERT_FILE`/`SSL_CERT_DIR`; there is no pinning or mTLS (recorded as G-TLS-1). HTTPS is required for non-loopback hosts; plaintext `http://` is refused even when `JIRA_ALLOW_INSECURE=1` is set. The bypass is limited to loopback hosts only. Write operations such as `create`, `update`, `transition`, and `comment` now require explicit confirmation via `--confirm`/`--yes` or `JIRA_CONFIRM_WRITES=1` before dispatch.
+
+### Risk Rating
+
+| Threat                                  | Likelihood | Impact | Residual Risk | Status                          |
+|-----------------------------------------|------------|--------|---------------|---------------------------------|
+| TLS MITM / hostile redirect retargeting | Low        | High   | Low           | Mitigated (TLS + `_NoRedirect`) |
+| Plaintext HTTP to a non-loopback host   | Low        | High   | Low           | Mitigated (refused)             |
+| Unconfirmed write operation             | Low        | Med    | Low           | Mitigated (confirm gate)        |
+| Oversized-response memory exhaustion    | Low        | Low    | Low           | Mitigated (body cap + timeout)  |
 
 ## Bucket B2: Environment credentials
 
@@ -98,6 +193,13 @@ Credentials and the instance origin are read from the process environment per in
 ### Elevation of Privilege
 
 * The token's effective permissions are governed entirely by Jira; the skill adds no privilege and cannot broaden scope.
+
+### Risk Rating
+
+| Threat                                          | Likelihood | Impact | Residual Risk | Status                       |
+|-------------------------------------------------|------------|--------|---------------|------------------------------|
+| Header injection via credential components      | Low        | Med    | Low           | Mitigated (ASCII validation) |
+| Base-URL host impersonation (embedded userinfo) | Low        | Med    | Low           | Mitigated (origin-only)      |
 
 ## Bucket B3: CLI caller process
 
@@ -130,6 +232,14 @@ The caller controls argv, environment, stdin, stdout, and stderr; the CLI treats
 
 * There is no command path that bypasses input validation or constructs an unencoded request URL from caller input.
 
+### Risk Rating
+
+| Threat                                  | Likelihood | Impact | Residual Risk | Status                              |
+|-----------------------------------------|------------|--------|---------------|-------------------------------------|
+| Oversized stdin / JSON payload          | Low        | Low    | Low           | Mitigated (size caps)               |
+| Untrusted Jira text consumed downstream | Med        | Med    | Med           | By design (consumer responsibility) |
+| Leaked token not revocable by the skill | Low        | High   | Med           | Accepted upstream (G-EOP-1)         |
+
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
@@ -143,5 +253,12 @@ The following are known limitations recorded so operators can make informed depl
 | G-TLS-1 | No certificate pinning for the Jira origin; TLS validation depends entirely on the system trust store.                                                                                     | InfoDisc-Low    | Operator-acceptable for a managed Jira endpoint; documented for customers whose policy mandates pinning. |
 
 For an active issue tracker entry covering these gaps, see [microsoft/hve-core#2225](https://github.com/microsoft/hve-core/issues/2225).
+
+## References
+
+* [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
+* [OWASP Top 10 for Web Applications](https://owasp.org/www-project-top-ten/)
+* [Jira REST API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)
+* [Repository security model](../../../../docs/security/security-model.md)
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
