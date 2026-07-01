@@ -1632,3 +1632,7 @@ urlsafe
 wberry
 writeback
 Brussee
+
+# Power Platform / Copilot Studio (pac CLI)
+msapp
+packagetype

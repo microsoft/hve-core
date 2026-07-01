@@ -90,6 +90,7 @@ HVE Core is built for these situations:
 * **Design Thinking facilitation in solution development work.** Coaching agents support a structured Design Thinking workflow. The Customer Card Render skill makes synthetic personas for stakeholder communication, under the limits in Appendix 5.
 * **Project-planning drafts.** Agents help draft architecture decision records, business and product requirements documents, user journeys, and architecture diagrams for a human to refine.
 * **Documentation upkeep.** Agents help keep docs in sync, check links, and apply consistent style across markdown.
+* **Low-code agent building on Microsoft Copilot Studio.** An agent guides authors through designing a Copilot Studio agent — capability profile, grounding, actions and orchestration, testing, and deployment guidance via the Power Platform CLI — with a companion safety-floor instruction set. It produces design drafts for a human to review; the operator builds, tests, and governs the live agent on the platform, under the limits in Appendix 6.
 
 #### When not to use HVE Core without extra care
 
@@ -203,7 +204,7 @@ Give us feedback on HVE Core or on this document by opening a GitHub issue at [m
 
 ## Appendices: per-agent transparency notes
 
-The five appendices below cover the agents whose output most influences downstream decisions, plus the Customer Card Render skill. They are not exhaustive. The full agent inventory lives in the repository's `.github/agents/` tree, and per-agent notes for the remaining agents are not yet written.
+The six appendices below cover the agents whose output most influences downstream decisions, plus the Customer Card Render skill. They are not exhaustive. The full agent inventory lives in the repository's `.github/agents/` tree, and per-agent notes for the remaining agents are not yet written.
 
 ### Appendix 1: RAI Planner
 
@@ -269,6 +270,16 @@ The five appendices below cover the agents whose output most influences downstre
   * **Redact source artifacts before rendering.** Real names, direct quotes attributed to identifiable individuals, photographs, and any other personally identifying detail in the Design Thinking research must be removed or generalized before the skill is invoked.
   * **Preserve disclosure on every output.** Generated cards should carry the AI-assistance disclosure footer and a slide-master watermark indicating that personas are synthetic. Do not strip these markers when copying decks into other contexts.
   * **Limit distribution to the originating engagement.** Synthetic personas should not be republished, repurposed for marketing, or used as evaluation data without explicit review.
+
+### Appendix 6: Copilot Studio Agent Builder
+
+* **Agent file:** `.github/agents/power-platform/copilot-studio-agent-builder.agent.md`, with companion safety-floor instructions at `.github/instructions/power-platform/copilot-studio.instructions.md` that supply an R1–R4 risk taxonomy, DLP guidance, and capability-module guardrails (Section 9), scoped through `applyTo` to `**/power-platform/copilot-studio/**` and `**/.copilot-tracking/copilot-studio/**`.
+* **Purpose:** Walks an author through a phased methodology to design and build a Microsoft Copilot Studio agent: capability profiling; purpose and success definition; system-instructions authoring; grounding through Knowledge sources, Web Search, and Work Context; actions, tools, and orchestration (first-party actions and connectors, plus MCP tools, connected agents, and triggers); testing; and packaging and deployment guidance through the Power Platform CLI (`pac`).
+* **Inputs:** Operator-supplied agent purpose, target audience, data sources, and desired capabilities; the companion instruction file under `.github/instructions/power-platform/`; and repository copilot instructions.
+* **Outputs:** Source-controlled design and ALM deliverables under `power-platform/copilot-studio/{agent}/` — including purpose-and-success, system-instructions, topic and agent design, and ALM artifacts in its `design/` subfolder — plus the agent's phase-tracking state (`state.json`) under `.copilot-tracking/copilot-studio/{agent}/`. Outputs are drafts and carry the AI-assistance disclosure footer.
+* **Intended uses:** Drafting the design of a customer-facing Copilot Studio agent — capability profile, grounding, actions and orchestration, testing, and deployment guidance — for a human to review before the operator builds, tests, and governs the live agent on the platform.
+* **Specific limitations:** The agent does not deploy, configure, or govern a live tenant, does not call Copilot Studio or Power Platform APIs at authoring time, does not evaluate the deployed agent's runtime safety, and does not replace tenant DLP policy, admin governance, or the platform's own testing. Capability and DLP reads come from operator-supplied context; the agent cannot independently verify a tenant's actual DLP configuration.
+* **Specific considerations:** Treat every output as a draft. The operator must validate guardrails, DLP posture, and orchestration trust boundaries before publishing a customer-facing agent. MCP tools, connected agents, and triggers cross a trust boundary and require the companion instructions' Section 9 orchestration guardrail and an orchestration-boundary test before use. Runtime Responsible AI behavior is governed by Copilot Studio and the tenant, not by this agent.
 
 ## AI-Assistance Disclosure
 
