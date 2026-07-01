@@ -3,7 +3,7 @@ title: Installing HVE Core
 description: Three ways to install HVE Core with marketplace extension, selective collections, or developer clone
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - installation
@@ -73,7 +73,7 @@ Teams that only need specific domains can use the **HVE Installer** extension to
 > * **Extension** (`HVE Core All`) - installs all collections (260 artifacts)
 > * **CLI plugin** (`hve-core`) - installable via `copilot plugin install hve-core@hve-core`
 >
-> Most users who only need Research, Plan, and Implement workflows should start with the **HVE Core** extension. To explore all domains, install **HVE Core All** instead.
+> Most users who only need Research, Plan, Implement, and Review workflows should start with the **HVE Core** extension. To explore all domains, install **HVE Core All** instead.
 
 ### How the Pieces Fit Together
 
@@ -90,7 +90,7 @@ graph LR
 ### Which Extension Should I Install?
 
 * **I want to try it out quickly** → Install **HVE Core All** (everything included, explore at your pace)
-* **I only need Research, Plan, Implement workflows** → Install **HVE Core** (flagship, 68 artifacts)
+* **I only need Research, Plan, Implement, Review workflows** → Install **HVE Core** (flagship, 68 artifacts)
 * **My team needs specific domains only** → Install **HVE Installer** (pick collections individually)
 * **I want to contribute or modify source** → Clone the repository (see [Developer Setup](#developer-setup))
 
@@ -190,7 +190,7 @@ See [MCP Server Configuration](mcp-configuration.md) for setup instructions cove
 
 * [Your First Interaction](first-interaction.md) to confirm your setup works
 * [Your First Workflow](first-workflow.md) to try HVE Core with a real task
-* [RPI Workflow](../rpi/) for the Research, Plan, Implement methodology
+* [RPI Workflow](../rpi/) for the Research, Plan, Implement, Review methodology
 
 ---
 

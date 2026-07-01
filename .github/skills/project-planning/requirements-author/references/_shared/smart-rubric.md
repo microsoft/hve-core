@@ -1,5 +1,5 @@
 ---
-description: 'SMART business-goal rubric per DD-008 - per-attribute (S/M/A/R/T) anchor descriptions, binary pass/fail decision, and the Discover-draft to Define-refine cadence the BRD Builder applies at the Define to Govern hard gate - Brought to you by microsoft/hve-core'
+description: 'SMART business-goal rubric per DD-008 - per-attribute (S/M/A/R/T) anchor descriptions, binary pass/fail decision, and the Discover-draft to Define-refine cadence the BRD Builder applies at the Define to Govern hard gate'
 ---
 
 # SMART Business-Goal Rubric
@@ -79,4 +79,4 @@ The BRD Builder follows this cadence for every business goal:
 
 This rubric is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The SMART mnemonic is a public-domain management-by-objectives convention.
 
-> Brought to you by microsoft/hve-core
+

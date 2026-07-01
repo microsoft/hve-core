@@ -2,7 +2,7 @@
 title: Enterprise Artifact Hub
 description: Configure HVE Core to download tools and modules from internal mirrors or artifact proxies
 author: Microsoft
-ms.date: 2026-03-13
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - enterprise
@@ -85,8 +85,9 @@ variable is absent, the workflow falls back to the public default.
 
 ## Security Scripts
 
-`HVE_GITHUB_API_URL` is used by the security analysis scripts under
-`scripts/security/`:
+`HVE_GITHUB_API_URL` is consumed by the shared security helper module
+`scripts/security/Modules/SecurityHelpers.psm1` and the security automation that depends
+on it:
 
 * `Test-SHAStaleness.ps1`
 * `Update-ActionSHAPinning.ps1`

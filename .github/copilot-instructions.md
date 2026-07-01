@@ -274,6 +274,7 @@ Python skills include a `pyproject.toml` validated by `validate:skills` via `Tes
 * `fuzz` dependency group with `atheris>=3.0` - Required alongside `fuzz_harness.py`. Kept separate from `dev` (no macOS wheels).
 * `python_files = ["test_*.py", "fuzz_harness.py"]` in `[tool.pytest.ini_options]` - Required alongside `fuzz_harness.py`. Enables pytest discovery.
 * `ruff` in dev dependencies - Recommended. Ensures the linter is available in the skill's virtual environment.
+* `uv.lock` - Required at the skill root when Python dependencies exist. Skills must commit both `pyproject.toml` and `uv.lock` so Dependabot can resolve and patch vulnerable dependencies via the `.github/skills/**` uv glob.
 
 ### PowerShell Module Installation in Workflows
 
@@ -284,9 +285,11 @@ with exponential backoff on PSGallery failures. The action always installs to
 `CurrentUser` scope because the cache path is hardcoded to the CurrentUser
 module location. Do not use inline `Install-Module` steps in workflows; use
 the composite action instead. The `copilot-setup-steps.yml` workflow calls
-`scripts/security/Install-PSModules.ps1` directly with `-Scope AllUsers`
-because AllUsers requires a different module path that the action does not
-cache.
+`scripts/security/Install-PSModules.ps1` directly with `-Scope CurrentUser`
+because the Copilot coding-agent runner is not elevated; `AllUsers` targets
+`/usr/local/share/powershell/Modules` and fails with admin-rights errors that
+retries cannot recover. `CurrentUser` installs to the same runner user's module
+path the agent reads, so no caching or elevation is required.
 
 ### Environment Synchronization
 

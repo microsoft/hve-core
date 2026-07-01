@@ -3,7 +3,7 @@ title: Your First Full Workflow
 description: Hands-on tutorial using Research, Plan, Implement phases to create a validation script
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-27
 ms.topic: tutorial
 keywords:
   - getting started
@@ -55,7 +55,10 @@ Multiple unknowns make RPI a good fit for this task: existing script patterns, P
 
 The `/clear` command resets Copilot's context between phases. Each RPI phase
 should start fresh. The artifacts (research doc, plan) carry the context
-forward, not the chat history.
+forward, not the chat history. This tutorial uses the task prompts
+(`/task-research`, `/task-plan`, `/task-implement`) to make each phase visible,
+while the `/rpi-*` skill entry points provide the same workflow from a
+separate surface.
 
 > [!NOTE]
 > Understanding why `/clear` matters (not just that you should use it) helps you recognize when context degradation affects your results. See [Context Engineering](../rpi/context-engineering.md) for the full explanation.

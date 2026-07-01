@@ -50,7 +50,3 @@ Do not invent severity levels, categories, or output fields the skill does not d
 5. **Write structured findings.** Write `<findingsFolder>/readiness-findings.json` using the Output contract schema from output-formats.md. Do not write a markdown report. Return a one-line summary of severity counts, whether PR context was evaluated, the changed-documentation count, and the findings file path.
 
 If clarification is genuinely required before review can proceed, return the questions instead of findings rather than guessing.
-
----
-
-Brought to you by microsoft/hve-core

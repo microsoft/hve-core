@@ -421,6 +421,7 @@ exabytes
 exadata
 executables
 execs
+exploitability
 exponential
 failback
 failover
@@ -1257,7 +1258,9 @@ gdpr
 hipaa
 oidc
 oldsha
+openvex
 OSSF
+osv
 passwordless
 siem
 sox
@@ -1422,6 +1425,7 @@ backlog
 pipeline
 blockquotes
 deinit
+deprioritize
 deprioritized
 deprioritizes
 experim

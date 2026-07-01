@@ -1,5 +1,5 @@
 ---
-description: 'Mermaid-first format selector matrix for requirements-author diagrams with ASCII, none, and source-artifact provenance options - Brought to you by microsoft/hve-core'
+description: 'Mermaid-first format selector matrix for requirements-author diagrams with ASCII, none, and source-artifact provenance options'
 ---
 
 # Diagram Format Selector
@@ -59,4 +59,4 @@ Requirements-author consumers reject:
 
 Original content in this file is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation. The notation families named in the matrix (BPMN 2.0, DMN 1.4, UML 2.5.1) remain the property of Object Management Group, Inc. and are referenced by name and version only.
 
-> Brought to you by microsoft/hve-core
+

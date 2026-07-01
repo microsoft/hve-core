@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -78,6 +78,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Import-Module (Join-Path $PSScriptRoot 'Modules/StimulusIndex.psm1') -Force
+Import-Module (Join-Path $PSScriptRoot 'Modules/ArtifactDetection.psm1') -Force
 
 if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
     Write-Error "Test-StimulusPresence.ps1 requires the 'powershell-yaml' module."
@@ -234,6 +235,11 @@ function Invoke-StimulusPresenceCheck {
 
         if ($status -eq 'D') {
             $skipped.Add(@{ kind = $kind; artifactId = $artifactId; path = $path; reason = 'deleted' })
+            continue
+        }
+
+        if (Test-RepoRootArtifact -Kind $kind -Path $path) {
+            $skipped.Add(@{ kind = $kind; artifactId = $artifactId; path = $path; reason = 'repo-specific' })
             continue
         }
 

@@ -235,4 +235,4 @@ Keep the user informed during processing:
 
 When `dryRun` is enabled, present all planned operations without executing ADO MCP tool calls. Format each operation as a table row showing: Work Item ID/Reference, Operation (Create/Update/Link), Field changes, and Rationale.
 
-<!-- Brought to you by microsoft/hve-core -->
+

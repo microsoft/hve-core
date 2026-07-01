@@ -158,7 +158,3 @@ These sections in `jira-backlog-planning.instructions.md` inform discovery opera
 | Three-Tier Autonomy Model       | Phase 3    | Confirmation gates during handoff review             |
 | State Persistence Protocol      | All phases | Workflow resumption                                  |
 | Human Review Triggers           | Phase 3    | Conditions that require user guidance                |
-
----
-
-Brought to you by microsoft/hve-core

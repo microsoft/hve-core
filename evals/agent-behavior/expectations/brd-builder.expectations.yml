@@ -22,19 +22,19 @@ source_review_date: 2026-05-28
 
 expectations:
   - expectation_id: brd-file-location
-    summary: BRD file is written to `docs/brds/<kebab-case-name>-brd.md`.
-    signal: Output names a workspace path matching `docs/brds/<slug>-brd.md`.
+    summary: BRD file is written to `docs/project-planning/<kebab-case-name>-brd.md`.
+    signal: Output names a workspace path matching `docs/project-planning/<slug>-brd.md`.
     pass_criteria: |
-      The reported BRD path is workspace-relative, starts with `docs/brds/`,
+      The reported BRD path is workspace-relative, starts with `docs/project-planning/`,
       uses a kebab-case slug derived from the initiative name, and ends with
       `-brd.md`.
     failure_modes:
       - BRD written to a temp directory or absolute path
         (current 2026-05-28 output reports `C:\Users\…\AppData\Local\Temp\vally-eval-…\…-brd.md`).
-      - BRD written to repo root with no `docs/brds/` prefix.
+      - BRD written to repo root with no `docs/project-planning/` prefix.
       - Filename ends with `.md` only (missing `-brd` suffix).
     priority: high
-    contract_ref: "agent §File Management › File Locations (BRD file: `docs/brds/<kebab-case-name>-brd.md`)"
+    contract_ref: "agent §File Management › File Locations (BRD file: `docs/project-planning/<kebab-case-name>-brd.md`)"
 
   - expectation_id: state-file-location
     summary: State file is written under the BRD-sessions tracking subtree.
@@ -45,7 +45,7 @@ expectations:
       `.state.json` and whose slug matches the BRD slug.
     failure_modes:
       - State file omitted entirely.
-      - State file written next to BRD in `docs/brds/`.
+      - State file written next to BRD in `docs/project-planning/`.
       - State file written outside `.copilot-tracking/brd-sessions/`.
     priority: high
     contract_ref: "agent §File Management › File Locations + §State Tracking"
@@ -151,7 +151,7 @@ expectations:
       - Drafting a password-reset BRD leads to modifying auth service source files.
       - Agent claims to update `package.json` as part of BRD work.
     priority: medium
-    contract_ref: "agent scope (writes are confined to `docs/brds/` and `.copilot-tracking/brd-sessions/`)"
+    contract_ref: "agent scope (writes are confined to `docs/project-planning/` and `.copilot-tracking/brd-sessions/`)"
 
   - expectation_id: stimulus-topic-fidelity
     summary: Response substantively addresses the BRD topic from the stimulus.

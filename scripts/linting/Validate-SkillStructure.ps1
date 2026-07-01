@@ -12,7 +12,7 @@
 # .EXAMPLE
 # pwsh -File scripts/linting/Validate-SkillStructure.ps1 -OutputPath "custom-dir/custom-results.json"
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -190,6 +190,12 @@ function Test-PythonSkillConfig {
     # Require ruff in dev dependencies (inline or multi-line TOML arrays)
     if ($content -notmatch '"ruff') {
         $warnings.Add("pyproject.toml does not list ruff in dev dependencies in '$RelativePath'")
+    }
+
+    # Warn when uv.lock is absent so Dependabot can resolve and patch dependencies
+    $uvLockPath = Join-Path (Split-Path $PyprojectPath -Parent) 'uv.lock'
+    if (-not (Test-Path $uvLockPath -PathType Leaf)) {
+        $warnings.Add("pyproject.toml present without committed uv.lock in '$RelativePath' (required for Dependabot uv coverage)")
     }
 
     # Fuzz harness convention check

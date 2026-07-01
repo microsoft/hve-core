@@ -3,7 +3,7 @@ title: "Stage 9: Operations"
 description: Monitor production systems, respond to incidents, and maintain documentation post-delivery
 sidebar_position: 10
 author: Microsoft
-ms.date: 2026-06-21
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -97,13 +97,13 @@ and the setup guides may reference outdated flags or file paths.
 ### Prompt Refinement
 
 ```text
-/prompt-analyze .github/prompts/rpi/task-research.prompt.md
+/prompt-analyze .github/prompts/hve-core/task-research.prompt.md
 ```
 
 After analysis, apply the suggested improvements:
 
 ```text
-/prompt-refactor .github/prompts/rpi/task-research.prompt.md Remove
+/prompt-refactor .github/prompts/hve-core/task-research.prompt.md Remove
 duplicate input declarations and consolidate the research scope section
 into a single structured list.
 ```

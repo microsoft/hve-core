@@ -48,7 +48,7 @@ Each parent agent belongs to exactly one class. The class selects the stimulus s
 
 | Class           | Members | Prompt Theme                                                    | Grader Regex (case-insensitive)                           |
 |-----------------|---------|-----------------------------------------------------------------|-----------------------------------------------------------|
-| research-writer | 8       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
+| research-writer | 9       | Investigate or document a topic and return a structured writeup | `(summary\|findings\|recommendation\|outline\|sections?)` |
 | code-reviewer   | 7       | Review a diff or artifact and surface concerns                  | `(issue\|risk\|severity\|finding\|recommend\|line \d+)`   |
 | code-implementor  | 6       | Implement or modify code to satisfy a spec                            | `(```\|patch\|diff\|file:\|edit\|add\|modify)`                                             |
 | workitem-manager  | 8       | Convert a raw request into a backlog draft                            | `(title\|summary\|description\|acceptance\|priority\|severity\|repro\|steps)`              |
@@ -103,7 +103,7 @@ When authoring or updating a planner-coach stimulus, copy the canonical pattern 
 
 Agents that investigate topics, analyze data, or produce structured documents as their primary output.
 
-**Members (8):** task-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer
+**Members (9):** task-researcher, adr-creation, brd-builder, meeting-analyst, network-isa95-planner, prd-builder, system-architecture-reviewer, ux-ui-designer, vex-generator
 
 **Required Graders:**
 
@@ -392,6 +392,7 @@ The inventory lists every user-invocable hve-core parent agent and its class ass
 | task-reviewer                | code-reviewer    | light     | [.github/agents/hve-core/task-reviewer.agent.md](../../.github/agents/hve-core/task-reviewer.agent.md)                                               |
 | test-streamlit-dashboard     | code-implementor | light     | [.github/agents/data-science/test-streamlit-dashboard.agent.md](../../.github/agents/data-science/test-streamlit-dashboard.agent.md)                 |
 | ux-ui-designer               | research-writer  | light     | [.github/agents/project-planning/ux-ui-designer.agent.md](../../.github/agents/project-planning/ux-ui-designer.agent.md)                             |
+| vex-generator                | research-writer  | light     | [.github/agents/security/vex-generator.agent.md](../../.github/agents/security/vex-generator.agent.md)                                               |
 
 The inventory totals 48 user-invocable parent agents. Subagent-only agents (`codebase-profiler`, `finding-deep-verifier`, `report-generator`, `skill-assessor`) declare `user-invocable: false` in their frontmatter and are excluded from this suite; they remain covered by their parent agents' stimuli and by the dependency-map dispatch path documented in [evals/baseline-equivalence/README.md](../baseline-equivalence/README.md).
 

@@ -14,12 +14,12 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-27
 ms.topic: concept
 estimated_reading_time: 8
 ---
 
-The Security Planner agent walks your team through a structured six-phase security analysis. It starts with project scoping, classifies components into operational buckets, maps relevant standards, performs STRIDE-based threat modeling, generates prioritized backlog items, and hands off to the RAI Planner when AI/ML components are detected.
+The Security Planner agent walks your team through a structured six-phase security analysis. It starts with project scoping, classifies components into operational buckets, maps relevant standards, performs STRIDE-based threat modeling, generates prioritized backlog items, and recommends a Responsible AI assessment when AI/ML components are detected.
 
 > The goal is not to replace security expertise. It is to make sure the right questions get asked, the right standards get referenced, and the resulting work items land in your backlog with enough context to act on.
 
@@ -32,7 +32,7 @@ The Security Planner agent walks your team through a structured six-phase securi
 | ⚡ Actionable output                 | The final phase produces backlog items with acceptance criteria, autonomy tiers, and direct links to the threats they address |
 
 > [!TIP]
-> New to the agent? Read [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
+> New to the agent? Read [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
 
 ## The Security Planning Flow
 
@@ -54,7 +54,7 @@ flowchart LR
   end
 
   A --> B --> C --> D --> E --> F
-  F -.->|"AI/ML detected"| G["RAI Planner"]
+  F -.->|"AI/ML detected"| G["RAI Planner<br/>(recommended)"]
 ```
 
 ## The Six Phases
@@ -81,7 +81,7 @@ Produces work items for Azure DevOps (`WI-SEC-{NNN}`) or GitHub Issues (`{{SEC-T
 
 ### Phase 6: Review and Handoff
 
-Summarizes the full analysis, validates completeness across all buckets, and presents the final deliverables. When Phase 1 detected AI/ML components, this phase dispatches the RAI Planner with a pre-seeded security context.
+Summarizes the full analysis, validates completeness across all buckets, and presents the final deliverables. When Phase 1 detected AI/ML components, this phase recommends a Responsible AI assessment and points the handoff at the Security Planner `state.json`. The RAI Planner is marked dispatched only once the user actually starts that follow-up.
 
 ## Autonomy Levels
 
@@ -130,15 +130,15 @@ The Security Planner supports two entry modes, each matched to a prompt file.
 
 ## Next Steps
 
-* [Why Security Planning?](why-security-planning.md) for the reasoning behind each phase.
-* [Agent Overview](agent-overview.md) for the architecture and state management details.
-* [Entry Modes](entry-modes.md) for a deep dive into From-PRD vs. capture workflows.
-* [Phase Reference](phase-reference.md) for phase-by-phase field and artifact details.
-* [Handoff Pipeline](handoff-pipeline.md) for backlog generation and RAI dispatch.
+* [Why Security Planning?](why-security-planning) for the reasoning behind each phase.
+* [Agent Overview](agent-overview) for the architecture and state management details.
+* [Entry Modes](entry-modes) for a deep dive into From-PRD vs. capture workflows.
+* [Phase Reference](phase-reference) for phase-by-phase field and artifact details.
+* [Handoff Pipeline](handoff-pipeline) for backlog generation and RAI dispatch.
 
 ## Related Agents
 
-* [Supply Chain Reviewer](supply-chain-reviewer.md) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
+* [Supply Chain Reviewer](supply-chain-reviewer) for an automated, evidence-verified supply-chain posture report in audit, diff, or plan mode.
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

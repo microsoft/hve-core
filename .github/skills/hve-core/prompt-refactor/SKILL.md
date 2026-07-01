@@ -57,4 +57,4 @@ If the request needs a deeper read-only review, recommend `/prompt-analyze`. For
 
 Report the changed files, refactor rationale, evaluation or validation status, skipped validations with reasons, and any remaining issues.
 
-> Brought to you by microsoft/hve-core
+

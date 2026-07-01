@@ -42,7 +42,3 @@ Do not invent severity levels, categories, or output fields the skill does not d
 5. **Write structured findings.** Write `<findingsFolder>/standards-findings.json` using the Output contract schema from output-formats.md, setting each finding's `skill` to the originating skill name. Do not write a markdown report. Return a one-line summary of severity counts, loaded skills, and the findings file path.
 
 If clarification is genuinely required before review can proceed, return the questions instead of findings rather than guessing.
-
----
-
-Brought to you by microsoft/hve-core

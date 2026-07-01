@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRD-BUILDER"
 title: "PRD Builder Agent Product Requirements"
 description: "Product Requirements Document for the PRD Builder agent, defining product goals, functional requirements, and acceptance criteria for the guided Product Requirements Document authoring workflow in the project-planning collection."
 author: "HVE Core Maintainers"
-ms.date: "2026-06-14"
+ms.date: "2026-06-29"
 ms.topic: "reference"
 status: "approved"
 version: "1.0.0"
@@ -106,7 +106,7 @@ Status: graded (all five SMART criteria satisfied at the Validate→Finalize ass
 FR-001: The PRD Builder guides users through the seven-phase lifecycle (Assess → Discover → Create → Build → Integrate → Validate → Finalize) to produce a complete PRD.
 Actor: HVE-Core contributor authoring a PRD.
 Trigger: User selects the PRD Builder agent and describes a product idea.
-Expected Outcome: A structured PRD is produced and saved under `docs/prds/` with all sections populated through iterative Q&A.
+Expected Outcome: A structured PRD is produced and saved under `docs/project-planning/` with all sections populated through iterative Q&A.
 Acceptance Criteria: AC-001.
 Product Goals: GOAL-002.
 
@@ -223,7 +223,7 @@ flowchart LR
 
 ## Acceptance Criteria
 
-* `AC-001`: Given a product idea, When the user completes the workflow, Then a PRD with all required sections is produced and saved under `docs/prds/`. Covers: FR-001. Status: Not Started.
+* `AC-001`: Given a product idea, When the user completes the workflow, Then a PRD with all required sections is produced and saved under `docs/project-planning/`. Covers: FR-001. Status: Not Started.
 * `AC-002`: Given an interrupted session, When the user resumes, Then the agent restores context from the state file and continues from the last completed phase without re-asking answered questions. Covers: FR-002. Status: Not Started.
 * `AC-003`: Given an ongoing session, When the agent asks refinement questions, Then question IDs remain stable and answered items are marked ✅ and not re-asked. Covers: FR-003. Status: Not Started.
 * `AC-004`: Given a generated PRD, When validation runs, Then markdownlint and frontmatter checks pass and required format markers are present. Covers: FR-004. Status: Not Started.
@@ -341,7 +341,5 @@ This Product Requirements Document was prepared with AI assistance and reflects 
 * Attribution: Microsoft HVE-Core Team.
 
 ---
-
-> Brought to you by microsoft/hve-core
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

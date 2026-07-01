@@ -3,7 +3,7 @@ title: "Stage 6: Implementation"
 description: Build features, write code, and create content with the full suite of AI-assisted development tools
 sidebar_position: 7
 author: Microsoft
-ms.date: 2026-06-24
+ms.date: 2026-06-30
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -16,7 +16,7 @@ estimated_reading_time: 8
 
 ## Overview
 
-Implementation is the highest-density stage in the project lifecycle, with 30 assets spanning agents, prompts, instructions, and skills. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI (Research, Plan, Implement) methodology provides structured execution guidance for complex tasks.
+Implementation is the highest-density stage in the project lifecycle, with 30 assets spanning agents, prompts, instructions, and skills. This stage covers coding, content creation, prompt engineering, data analysis, and infrastructure work. The RPI (Research, Plan, Implement, Review) methodology provides structured execution guidance for complex tasks.
 
 ## When You Enter This Stage
 

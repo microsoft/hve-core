@@ -3,7 +3,7 @@ prd_id: "PRD-2026-Q2-PRIVACY-PLANNER"
 title: "Privacy Planner PRD"
 description: "Product requirements for adding a first-class Privacy Planner, privacy-standards skill, and Privacy Reviewer to the hve-core planner family."
 author: "GitHub Copilot"
-ms.date: 2026-06-22
+ms.date: 2026-06-30
 ms.topic: concept
 sidebar_position: 2
 keywords: [prd, privacy, planner, privacy standards, data protection]
@@ -13,7 +13,7 @@ version: "0.1.0"
 owners: ["microsoft/hve-core"]
 reviewers: ["project-planning-maintainers", "security-maintainers", "compliance-legal-reviewers"]
 created_date: "2026-06-21"
-last_updated: "2026-06-22"
+last_updated: "2026-06-30"
 product_goal_ids: ["PG-001", "PG-002", "PG-003"]
 product_goal_smart_status: "seeded-from-approved-brd"
 fr_to_ac_coverage_threshold_pct: 80.0
@@ -423,7 +423,7 @@ Validate and Finalize quality reviews are complete and approved. Source BRD hand
 | Field               | Value                                                       |
 |---------------------|-------------------------------------------------------------|
 | Source BRD          | BRD-2026-Q2-PRIVACY-PLANNER                                 |
-| Source file         | `docs/brds/privacy-planner-brd.md`                          |
+| Source file         | `docs/planning/brds/privacy-planner-brd.md`                 |
 | Session state       | `.copilot-tracking/prd-sessions/privacy-planner.state.json` |
 | Disclaimer shown at | 2026-06-21T18:02:46Z                                        |
 | Lifecycle status    | Approved for downstream handoff                             |

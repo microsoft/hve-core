@@ -2,7 +2,7 @@
 title: HVE Core Documentation Site
 description: Docusaurus 3 documentation site for HVE Core
 author: Microsoft
-ms.date: 2026-06-16
+ms.date: 2026-06-30
 ms.topic: reference
 ---
 
@@ -29,16 +29,18 @@ The site deploys automatically via GitHub Actions on push to `main`. See `.githu
 
 ## Accessibility conformance harness
 
-Accessibility is validated by four layers that run in `.github/workflows/docusaurus-tests.yml`:
+Accessibility is validated by three tools across four layers that run in `.github/workflows/docusaurus-tests.yml`:
 
-1. Static lint: `eslint-plugin-jsx-a11y` flags accessibility issues in source, end-to-end, and configuration files.
-2. Component assertions: Jest and `jest-axe` check rendered components against axe rules.
-3. Behavioral journeys: Playwright exercises keyboard navigation, focus management, reflow, and other interactions in a real browser.
-4. Full-site crawl: `pa11y-ci` scans built pages against WCAG 2.1 AA.
+1. Static lint (`eslint-plugin-jsx-a11y`): flags accessibility issues in source, end-to-end, and configuration files.
+2. Component assertions (`jest-axe`): Jest checks rendered components against axe rules.
+3. Behavioral end-to-end (Playwright): drives a real browser to exercise keyboard navigation, focus management, and reflow.
+4. Full-site crawl (Playwright `@axe-core/playwright`): the `site-crawl` spec scans one representative URL per rendered page template against WCAG 2.x A/AA (plus `wcag22aa` and `best-practice`) at threshold 0.
+
+Layers 3 and 4 both run on Playwright, so the four layers are covered by three tools.
 
 ### Prerequisite
 
-Layers 3 and 4 drive Google Chrome. Playwright uses the `chrome` channel and `pa11y-ci` reaches Chrome over the DevTools Protocol, so a Chrome (or Chromium) install must be present. Provision Playwright's managed Chrome with:
+The Playwright layer drives Google Chrome via the `chrome` channel, so a Chrome (or Chromium) install must be present. Provision Playwright's managed Chrome with:
 
 ```bash
 npm run docusaurus -- --help >/dev/null # ensure dependencies are installed
@@ -53,10 +55,9 @@ Run each layer from `docs/docusaurus`:
 npm run lint:a11y    # static jsx-a11y lint
 npm run typecheck    # TypeScript project typecheck
 npm test             # Jest + jest-axe component assertions
-npm run test:e2e     # Playwright behavioral journeys
-npm run a11y         # build, serve, and crawl with pa11y-ci
+npm run test:e2e     # Playwright journeys + full-site axe crawl
 ```
 
-From the repository root, `npm run lint:docs-site` runs the lint, typecheck, component, end-to-end, and crawl layers in sequence, and `npm run docs:test:e2e:setup` installs the Chrome dependency for Playwright.
+From the repository root, `npm run lint:docs-site` runs the lint, typecheck, component, and end-to-end layers in sequence, and `npm run docs:test:e2e:setup` installs the Chrome dependency for Playwright.
 
 🤖 *Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*
