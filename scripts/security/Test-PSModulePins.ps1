@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Test-PSModulePins.ps1
@@ -8,7 +8,7 @@
 #          match the canonical versions declared in scripts/security/ps-module-versions.json.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS

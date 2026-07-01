@@ -72,8 +72,11 @@ avanade
 avere
 avro
 Babelscape
+backlink
+backlinks
 backticked
 bargauge
+beforeall
 blockchain
 chatbot
 chatbots
@@ -198,6 +201,7 @@ git
 gitops
 helm
 Holo
+hotspot
 hotspots
 Fulcio
 gitsign
@@ -417,6 +421,7 @@ exabytes
 exadata
 executables
 execs
+exploitability
 exponential
 failback
 failover
@@ -693,6 +698,7 @@ objc
 odata
 odbc
 offboarding
+offence
 okera
 okrs
 olas
@@ -718,6 +724,7 @@ organisations
 organised
 otel
 otlp
+overclaiming
 overfitting
 overoptimization
 overprivileged
@@ -902,6 +909,8 @@ rtmp
 rubrik
 runbook
 runbooks
+runspace
+runspaces
 runtime
 runtimes
 rx
@@ -1093,6 +1102,7 @@ unmanaged
 unoptimized
 unpublish
 unranked
+unredacted
 unregister
 unsnooze
 untrusted
@@ -1142,6 +1152,7 @@ vums
 vwan
 vxlan
 wafs
+walkback
 walkthrough
 wans
 webgui
@@ -1247,7 +1258,9 @@ gdpr
 hipaa
 oidc
 oldsha
+openvex
 OSSF
+osv
 passwordless
 siem
 sox
@@ -1412,6 +1425,7 @@ backlog
 pipeline
 blockquotes
 deinit
+deprioritize
 deprioritized
 deprioritizes
 experim
@@ -1502,6 +1516,7 @@ triaging
 untriaged
 unvalidated
 vscodeignore
+Pipfile
 
 # Video & Image Processing
 drawtext
@@ -1607,8 +1622,13 @@ Kerberoasting
 loggable
 NONINTERACTIVE
 reauthentication
+inlines
 referer
+Repoint
 synchronizable
 syncer
+transitioner
 urlsafe
+wberry
 writeback
+Brussee

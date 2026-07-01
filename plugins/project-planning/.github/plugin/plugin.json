@@ -3,10 +3,14 @@
   "description": "PRDs, BRDs, ADRs, and architecture diagrams",
   "version": "3.3.101",
   "agents": [
+    "agents/accessibility/",
     "agents/hve-core/",
     "agents/hve-core/subagents/",
+    "agents/privacy/",
     "agents/project-planning/",
+    "agents/project-planning/subagents/",
     "agents/rai-planning/",
+    "agents/rai-planning/subagents/",
     "agents/security/"
   ],
   "commands": [
@@ -14,7 +18,12 @@
     "commands/security/"
   ],
   "skills": [
+    "skills/accessibility/",
     "skills/experimental/",
-    "skills/project-planning/"
+    "skills/hve-core/",
+    "skills/project-planning/",
+    "skills/rai/",
+    "skills/security/",
+    "skills/shared/"
   ]
 }

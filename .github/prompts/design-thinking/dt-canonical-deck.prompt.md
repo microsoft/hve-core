@@ -1,5 +1,5 @@
 ---
-description: "Unified canonical deck workflow for opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build - Brought to you by microsoft/hve-core"
+description: "Canonical deck workflow: opt-in offer, snapshot generation/refresh, and optional customer-card PowerPoint build"
 agent: "DT Coach"
 argument-hint: "[project-slug=...] [action=offer|build|run] [method-context=...] [trigger-context=...]"
 ---
@@ -22,7 +22,7 @@ Single prompt that handles both canonical deck and customer-card build flows.
 
 1. Canonical workflow is opt-in. If the team has not opted in, ask first.
 2. Decline is valid and non-blocking. Do not gate method transitions.
-3. Apply canonical workflow rules from `.github/instructions/design-thinking/dt-canonical-deck.instructions.md` when active.
+3. Apply canonical workflow rules from `.github/skills/design-thinking/dt-coaching-foundation/references/canonical-deck.md` when active.
 
 ## Step 1: Resolve Project Slug
 

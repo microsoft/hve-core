@@ -2,7 +2,7 @@
 title: Execution Workflow
 description: Apply triage and planning recommendations to Azure DevOps work items through structured handoff consumption
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: tutorial
 keywords:
   - azure devops backlog manager
@@ -111,7 +111,7 @@ Click the "Execute" handoff button in the ADO Backlog Manager agent after comple
 Reference the handoff file when starting an execution conversation:
 
 ```text
-Execute the handoff at .copilot-tracking/workitems/triage/2026-02-26/work-items.md
+Execute the handoff at .copilot-tracking/workitems/triage/2026-02-26/triage-plan.md
 ```
 
 ## Example Prompts

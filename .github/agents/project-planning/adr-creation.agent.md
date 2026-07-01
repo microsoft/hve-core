@@ -1,6 +1,6 @@
 ---
 name: ADR Creator
-description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff - Brought to you by microsoft/hve-core'
+description: 'ADR Creator: phase-gated creator producing standards-aligned Architecture Decision Records (Frame, Decide, Govern), with state recovery, Researcher Subagent delegation, and dual-format backlog handoff'
 agents:
   - Researcher Subagent
 handoffs:
@@ -33,6 +33,14 @@ Entry-mode selection happens on the first turn (after disclaimer) and is persist
 - `capture` (default): Standard interactive authoring. Combine with `outputTemplate: y-statement` for Y-Statement quick capture (compressed Frame, optional ASR triggers) or with `outputTemplate: madr-v4` for full MADR v4.0.0 long-form (ASR trigger evaluation required during Frame).
 - `from-planner-handoff`: Inbound handoff from another planner (Task Planner, RAI Planner, Security Planner, or SSSC Planner). Pre-seeds `state.json.inputs[]` from the handoff payload, skips the slug-discovery prompt, and proceeds directly to Frame using the inbound compact summary as context.
 - `adopt-template`: Bring-your-own template ingestion; produces the first ADR plus `.adr-config.yml` per the BYO contract.
+
+## Telemetry Foundations
+
+This agent emits and reasons about production telemetry. Whenever the Decide or Govern phase produce ADRs whose decision drivers include observability, audit, or SLO, consult the `telemetry-foundations` shared skill for trace, metric, log, PII, and resource-attribute vocabulary. Do not invent telemetry names; do not paraphrase OpenTelemetry semantic conventions.
+
+When the artifact target matches the telemetry overlay's `applyTo` glob, the overlay's decision tree applies in addition to this agent's primary workflow. Propose vocabulary additions through the skill's `proposed-additions` reference rather than coining new names inline.
+
+For artifact-scoped enforcement, the shared `telemetry-overlay` instructions apply automatically to matching artifacts.
 
 ## Lifecycle Dispatch
 
@@ -68,6 +76,8 @@ Every phase entry begins with a mandatory `read_file` of the indicated SKILL.md 
 ## Diagram Format Selection
 
 During Frame, prompt the user to choose `ascii` or `mermaid` and persist the answer to `state.userPreferences.diagramFormat`. The Frame phase cannot exit without this value. Subsequent template renders compose `.github/skills/project-planning/adr-author/templates/madr-v4.md` with the matching diagram fragment from `.github/skills/project-planning/adr-author/templates/diagram-{ascii|mermaid}.md`. Once recorded, the value is read-only for the remainder of the session.
+
+When an ADR needs an architecture or network diagram derived from infrastructure source files, use the `architecture-diagrams` skill: load its `SKILL.md` and follow its authoring contract, requesting the same `ascii` or `mermaid` format recorded in `state.userPreferences.diagramFormat`. That skill is the authoritative source for its own conventions and output format.
 
 ## Autonomy Tiers
 

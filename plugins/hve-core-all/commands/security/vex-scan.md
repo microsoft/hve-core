@@ -1,0 +1,1 @@
+../../../../.github/prompts/security/vex-scan.prompt.md

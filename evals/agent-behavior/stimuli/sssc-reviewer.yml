@@ -1,0 +1,20 @@
+stimuli:
+  - name: sssc-reviewer-class-recipe
+    prompt: |
+      Review the software supply chain security posture of a repository that publishes container images and npm packages from a GitHub Actions pipeline. Summarize the findings with severity, citing the relevant frameworks (OpenSSF Scorecard, SLSA, or Sigstore). Write the report under `.copilot-tracking/sssc-reviews/` and report the path.
+    tags:
+      category: agent-behavior
+    graders:
+      - type: output-matches
+        name: findings-table-present
+        config:
+          pattern: '(?i)(\|.*severity.*\||finding|issue|concern|recommendation|risk)'
+      - type: output-matches
+        name: severity-vocab
+        config:
+          pattern: '(?i)(critical|high|medium|low|info|severity|warning)'
+      - type: output-matches
+        name: no-source-edit
+        config:
+          pattern: '(?i)(created|wrote|modified|edited|patched|added)\s+\S{0,40}(\.cs|\.py|\.ts|\.js|package\.json)'
+          negate: true

@@ -76,7 +76,3 @@ When retrieved, it contains hidden instructions to reveal the system prompt or A
 * Quarantine suspect documents and remove them from retrieval indices.
 * Rotate credentials that could have been exposed by unauthorized tool calls.
 * Apply sanitization, provenance checks, and human approval for impacted tool calls.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

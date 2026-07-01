@@ -1,5 +1,5 @@
 ---
-description: 'Execution workflow for GitHub issue backlog management - consumes planning handoffs and executes issue operations'
+description: 'GitHub issue backlog execution: consumes planning handoffs and runs issue operations'
 applyTo: '**/.copilot-tracking/github-issues/**/handoff-logs.md'
 ---
 
@@ -8,6 +8,8 @@ applyTo: '**/.copilot-tracking/github-issues/**/handoff-logs.md'
 Follow all instructions from #file:./github-backlog-planning.instructions.md for planning file templates, field definitions, search protocols, and state persistence.
 
 Follow community interaction guidelines from #file:./community-interaction.instructions.md when posting comments visible to external contributors.
+
+Search for and apply `content-policy-citation.instructions.md` before creating or updating GitHub-visible issue titles, issue bodies, comments, or PR text fields.
 
 ## Purpose and Scope
 
@@ -213,7 +215,3 @@ Execution is complete when:
 * handoff-logs.md contains an entry for every operation in the plan.
 * The Execution Summary in handoff-logs.md reflects accurate counts for succeeded, failed, and skipped operations.
 * A completion report has been presented to the user with issue numbers.
-
----
-
-Brought to you by microsoft/hve-core

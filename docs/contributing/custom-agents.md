@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-03-14
+ms.date: 2026-06-28
 ms.topic: how-to
 ---
 
@@ -93,11 +93,11 @@ Focus on agents that:
 
 ### Model Version Requirements
 
-All agents **MUST** target the **latest available models** from Anthropic and OpenAI only. The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot, but hve-core restricts usage to Anthropic and OpenAI.
+All agents **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
-Accepted: Latest Claude and GPT models with `(copilot)` suffix (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`)
+Accepted: Any model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview` (e.g., `Claude Sonnet 4.6 (copilot)`, `GPT-5.4 (copilot)`, `Gemini 2.5 Pro (copilot)`)
 
-Not Accepted: Models from other providers, older model versions not in the catalog, custom/fine-tuned models, deprecated versions
+Not Accepted: Models not present in the catalog, models from providers outside the `providerAllowlist`, custom/fine-tuned models, models with `retiring` or `retired` status
 
 ### Model Selection for Subagents
 
@@ -139,7 +139,7 @@ Agent files are typically organized in a collection subdirectory by convention:
 ### Naming Convention
 
 * Use lowercase kebab-case: `security-reviewer.agent.md`
-* Be descriptive and action-oriented: `task-planner.agent.md`, `pr-review.agent.md`, `rpi-agent.agent.md`
+* Be descriptive and action-oriented: `task-planner.agent.md`, `code-review.agent.md`, `rpi-agent.agent.md`
 * Avoid generic names: `helper.agent.md` ❌ → `ado-work-item-processor.agent.md` ✅
 
 ### File Format
@@ -415,13 +415,7 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-Include at end of file (MANDATORY):
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

@@ -1,0 +1,1 @@
+../../../../.github/prompts/hve-core/vally-test-write.prompt.md

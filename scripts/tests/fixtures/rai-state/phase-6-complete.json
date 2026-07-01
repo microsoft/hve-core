@@ -55,7 +55,7 @@
       "status": "processed"
     },
     {
-      "filePath": ".github/instructions/rai-planning/rai-standards.instructions.md",
+      "filePath": ".github/skills/rai/rai-standards/SKILL.md",
       "type": "standard",
       "sourceDescription": "Embedded RAI standards",
       "processedInPhase": 3,
@@ -66,6 +66,14 @@
   "signingRequested": true,
   "signingManifestPath": ".copilot-tracking/rai-plans/example-project/rai-manifest.json",
   "disclaimerShownAt": "2025-01-01T00:00:00Z",
+  "noticeLog": [
+    {
+      "noticeType": "professional-review-reminder",
+      "shownAt": "2025-01-01T00:00:00Z",
+      "source": ".github/instructions/rai-planning/rai-identity.instructions.md",
+      "details": { "phase": "phase6" }
+    }
+  ],
   "userPreferences": {
     "autonomyTier": "full",
     "outputDetailLevel": "detailed",

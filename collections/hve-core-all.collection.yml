@@ -6,16 +6,44 @@ tags:
 - complete
 - bundle
 items:
+- path: .github/agents/accessibility/accessibility-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/accessibility/accessibility-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/accessibility/subagents/accessibility-framework-assessor.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/ado/ado-backlog-manager.agent.md
   kind: agent
 - path: .github/agents/ado/ado-prd-to-wit.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-full.agent.md
+- path: .github/agents/coding-standards/code-review.agent.md
   kind: agent
   maturity: experimental
-- path: .github/agents/coding-standards/code-review-functional.agent.md
+- path: .github/agents/coding-standards/subagents/code-review-accessibility.agent.md
   kind: agent
-- path: .github/agents/coding-standards/code-review-standards.agent.md
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-explainer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-functional.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-pr.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-readiness.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-security.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-standards.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/coding-standards/subagents/code-review-walkback.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/data-science/eval-dataset-creator.agent.md
@@ -42,11 +70,9 @@ items:
   kind: agent
 - path: .github/agents/github/github-backlog-manager.agent.md
   kind: agent
-- path: .github/agents/hve-core/doc-ops.agent.md
+- path: .github/agents/hve-core/documentation.agent.md
   kind: agent
 - path: .github/agents/hve-core/memory.agent.md
-  kind: agent
-- path: .github/agents/hve-core/pr-review.agent.md
   kind: agent
 - path: .github/agents/hve-core/prompt-builder.agent.md
   kind: agent
@@ -68,6 +94,9 @@ items:
   kind: agent
 - path: .github/agents/hve-core/subagents/rpi-validator.agent.md
   kind: agent
+- path: .github/agents/hve-core/subagents/vally-test-author.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/hve-core/task-challenger.agent.md
   kind: agent
   maturity: experimental
@@ -83,11 +112,15 @@ items:
   kind: agent
 - path: .github/agents/jira/jira-prd-to-wit.agent.md
   kind: agent
+- path: .github/agents/privacy/privacy-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/privacy/privacy-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/project-planning/adr-creation.agent.md
   kind: agent
 - path: .github/agents/project-planning/agile-coach.agent.md
-  kind: agent
-- path: .github/agents/project-planning/arch-diagram-builder.agent.md
   kind: agent
 - path: .github/agents/project-planning/brd-builder.agent.md
   kind: agent
@@ -100,11 +133,21 @@ items:
   kind: agent
 - path: .github/agents/project-planning/product-manager-advisor.agent.md
   kind: agent
+- path: .github/agents/project-planning/subagents/brd-quality-reviewer.agent.md
+  kind: agent
+- path: .github/agents/project-planning/subagents/prd-quality-reviewer.agent.md
+  kind: agent
 - path: .github/agents/project-planning/system-architecture-reviewer.agent.md
   kind: agent
 - path: .github/agents/project-planning/ux-ui-designer.agent.md
   kind: agent
 - path: .github/agents/rai-planning/rai-planner.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/rai-planning/rai-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/rai-planning/subagents/rai-skill-assessor.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/security-planner.agent.md
@@ -116,7 +159,13 @@ items:
 - path: .github/agents/security/sssc-planner.agent.md
   kind: agent
   maturity: experimental
+- path: .github/agents/security/sssc-reviewer.agent.md
+  kind: agent
+  maturity: experimental
 - path: .github/agents/security/subagents/codebase-profiler.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/cve-analyzer.agent.md
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/finding-deep-verifier.agent.md
@@ -126,6 +175,15 @@ items:
   kind: agent
   maturity: experimental
 - path: .github/agents/security/subagents/skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/subagents/supply-chain-skill-assessor.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/supply-chain-reviewer.agent.md
+  kind: agent
+  maturity: experimental
+- path: .github/agents/security/vex-generator.agent.md
   kind: agent
   maturity: experimental
 - path: .github/prompts/ado/ado-add-work-item.prompt.md
@@ -145,11 +203,6 @@ items:
 - path: .github/prompts/ado/ado-triage-work-items.prompt.md
   kind: prompt
 - path: .github/prompts/ado/ado-update-wit-items.prompt.md
-  kind: prompt
-- path: .github/prompts/coding-standards/code-review-full.prompt.md
-  kind: prompt
-  maturity: experimental
-- path: .github/prompts/coding-standards/code-review-functional.prompt.md
   kind: prompt
 - path: .github/prompts/data-science/synth-data-generate.prompt.md
   kind: prompt
@@ -219,8 +272,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/checkpoint.prompt.md
   kind: prompt
-- path: .github/prompts/hve-core/doc-ops-update.prompt.md
+- path: .github/prompts/hve-core/evals-import.prompt.md
   kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/git-commit-message.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/git-commit.prompt.md
@@ -229,6 +283,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/git-setup.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/pr-review.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/hve-core/prompt-analyze.prompt.md
   kind: prompt
 - path: .github/prompts/hve-core/prompt-build.prompt.md
@@ -250,6 +307,9 @@ items:
   kind: prompt
 - path: .github/prompts/hve-core/task-review.prompt.md
   kind: prompt
+- path: .github/prompts/hve-core/vally-test-write.prompt.md
+  kind: prompt
+  maturity: experimental
 - path: .github/prompts/jira/jira-discover-issues.prompt.md
   kind: prompt
 - path: .github/prompts/jira/jira-execute-backlog.prompt.md
@@ -305,6 +365,18 @@ items:
 - path: .github/prompts/security/sssc-from-security-plan.prompt.md
   kind: prompt
   maturity: experimental
+- path: .github/prompts/security/vex-scan.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/prompts/security/vex-triage.prompt.md
+  kind: prompt
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-identity.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/accessibility/accessibility-license-posture.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/ado/ado-backlog-sprint.instructions.md
   kind: instruction
 - path: .github/instructions/ado/ado-backlog-triage.instructions.md
@@ -351,135 +423,6 @@ items:
   kind: instruction
 - path: .github/instructions/coding-standards/uv-projects.instructions.md
   kind: instruction
-- path: .github/instructions/design-thinking/dt-canonical-deck.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-coaching-identity.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-coaching-state.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-01-scoping.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-02-research.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-03-synthesis.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-04-brainstorming.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-05-concepts.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-06-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-07-testing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-08-iteration.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-09-handoff.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-curriculum-scenario-manufacturing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-image-prompt-generation.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-energy.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-healthcare.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-industry-manufacturing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-01-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-01-scope.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-02-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-02-research.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-03-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-03-synthesis.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-04-brainstorming.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-04-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-05-concepts.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-05-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-06-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-06-lofi-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-07-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-07-hifi-prototypes.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-08-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-08-testing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-09-deep.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-09-iteration.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-method-sequencing.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-quality-constraints.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-handoff-contract.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-implement-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-planning-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-research-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-rpi-review-context.instructions.md
-  kind: instruction
-  maturity: preview
-- path: .github/instructions/design-thinking/dt-subagent-handoff.instructions.md
-  kind: instruction
-  maturity: preview
 - path: .github/instructions/experimental/experiment-designer.instructions.md
   kind: instruction
 - path: .github/instructions/experimental/graphify.instructions.md
@@ -520,7 +463,11 @@ items:
   kind: instruction
 - path: .github/instructions/hve-core/commit-message.instructions.md
   kind: instruction
+- path: .github/instructions/hve-core/copilot-tracking.instructions.md
+  kind: instruction
 - path: .github/instructions/hve-core/git-merge.instructions.md
+  kind: instruction
+- path: .github/instructions/hve-core/licensing-posture.instructions.md
   kind: instruction
 - path: .github/instructions/hve-core/markdown.instructions.md
   kind: instruction
@@ -540,6 +487,9 @@ items:
   kind: instruction
 - path: .github/instructions/jira/jira-wit-planning.instructions.md
   kind: instruction
+- path: .github/instructions/privacy/privacy-identity.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/project-planning/adr-byo-template.instructions.md
   kind: instruction
   maturity: experimental
@@ -552,69 +502,68 @@ items:
 - path: .github/instructions/project-planning/adr-standards.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-backlog-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-capture-coaching.instructions.md
-  kind: instruction
-  maturity: experimental
 - path: .github/instructions/rai-planning/rai-identity.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/rai-planning/rai-impact-assessment.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-risk-classification.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-security-model.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/rai-planning/rai-standards.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/backlog-handoff.instructions.md
+- path: .github/instructions/rai-planning/rai-license-posture.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security/identity.instructions.md
   kind: instruction
   maturity: experimental
-- path: .github/instructions/security/operational-buckets.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/security-model.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-assessment.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-backlog.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-gap-analysis.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-handoff.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-identity.instructions.md
-  kind: instruction
-  maturity: experimental
-- path: .github/instructions/security/sssc-standards.instructions.md
+- path: .github/instructions/security/sssc-planner.instructions.md
   kind: instruction
   maturity: experimental
 - path: .github/instructions/security/standards-mapping.instructions.md
   kind: instruction
   maturity: experimental
+- path: .github/instructions/security/vex-generation.instructions.md
+  kind: instruction
+  maturity: experimental
+- path: .github/instructions/security/vex-standards.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/shared/coaching-patterns.instructions.md
+  kind: instruction
+- path: .github/instructions/shared/content-policy-citation.instructions.md
   kind: instruction
 - path: .github/instructions/shared/disclaimer-language.instructions.md
   kind: instruction
 - path: .github/instructions/shared/hve-core-location.instructions.md
   kind: instruction
+- path: .github/instructions/shared/planner-identity-base.instructions.md
+  kind: instruction
+  maturity: experimental
 - path: .github/instructions/shared/story-quality.instructions.md
   kind: instruction
+- path: .github/instructions/shared/telemetry-overlay.instructions.md
+  kind: instruction
+- path: .github/instructions/shared/untrusted-content-boundary.instructions.md
+  kind: instruction
+- path: .github/skills/design-thinking/dt-methods/references/dt-coach-telemetry.instructions.md
+  kind: instruction
+- path: .github/skills/accessibility/accessibility
+  kind: skill
+  maturity: experimental
+- path: .github/skills/coding-standards/code-review
+  kind: skill
+  maturity: experimental
 - path: .github/skills/coding-standards/python-foundational
+  kind: skill
+  maturity: experimental
+- path: .github/skills/design-thinking/dt-coaching-foundation
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-curriculum
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-methods
+  kind: skill
+  maturity: preview
+- path: .github/skills/design-thinking/dt-rpi-integration
+  kind: skill
+  maturity: preview
+- path: .github/skills/experimental/caveman
   kind: skill
   maturity: experimental
 - path: .github/skills/experimental/customer-card-render
@@ -636,11 +585,52 @@ items:
   maturity: experimental
 - path: .github/skills/gitlab/gitlab
   kind: skill
+- path: .github/skills/hve-core/architecture-diagrams
+  kind: skill
+  maturity: experimental
+- path: .github/skills/hve-core/documentation
+  kind: skill
+- path: .github/skills/hve-core/prompt-analyze
+  kind: skill
+- path: .github/skills/hve-core/prompt-builder
+  kind: skill
+- path: .github/skills/hve-core/prompt-refactor
+  kind: skill
+- path: .github/skills/hve-core/vally-tests
+  kind: skill
+  maturity: experimental
 - path: .github/skills/installer/hve-core-installer
   kind: skill
 - path: .github/skills/jira/jira
   kind: skill
 - path: .github/skills/project-planning/adr-author
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/privacy-standards
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/rai-planner
+  kind: skill
+  maturity: experimental
+- path: .github/skills/project-planning/requirements-author
+  kind: skill
+- path: .github/skills/project-planning/security-planning
+  kind: skill
+  maturity: experimental
+- path: .github/skills/rai/rai-standards
+  kind: skill
+  maturity: experimental
+- path: .github/skills/rpi/rpi-implement
+  kind: skill
+- path: .github/skills/rpi/rpi-plan
+  kind: skill
+- path: .github/skills/rpi/rpi-quick
+  kind: skill
+- path: .github/skills/rpi/rpi-research
+  kind: skill
+- path: .github/skills/rpi/rpi-review
+  kind: skill
+- path: .github/skills/security/openvex-spec
   kind: skill
   maturity: experimental
 - path: .github/skills/security/owasp-agentic
@@ -667,8 +657,19 @@ items:
 - path: .github/skills/security/security-reviewer-formats
   kind: skill
   maturity: experimental
+- path: .github/skills/security/supply-chain-security
+  kind: skill
+  maturity: experimental
+- path: .github/skills/shared/backlog-templates
+  kind: skill
+  maturity: experimental
 - path: .github/skills/shared/pr-reference
   kind: skill
+- path: .github/skills/shared/telemetry-foundations
+  kind: skill
+- path: .github/hooks/shared/telemetry.json
+  kind: hook
+  maturity: experimental
 display:
   featured: true
   ordering: alpha

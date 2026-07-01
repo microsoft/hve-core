@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Polyglot fuzz harness for Mural skill helper logic.
 
@@ -719,16 +719,20 @@ class TestMuralFuzzHarness:
         )
 
     def test_resolve_credential_file_honors_explicit_env(self) -> None:
+        import pathlib as _pathlib
+
         path = mural._resolve_credential_file(
             "default", {mural.ENV_ENV_FILE: "/tmp/explicit.env"}
         )
-        assert str(path) == "/tmp/explicit.env"
+        assert path == _pathlib.Path("/tmp/explicit.env")
 
     def test_resolve_credential_file_uses_xdg_when_set(self) -> None:
+        import pathlib as _pathlib
+
         path = mural._resolve_credential_file(
             "team_a", {mural.ENV_XDG_CONFIG_HOME: "/tmp/xdg"}
         )
-        assert str(path) == "/tmp/xdg/hve-core/mural.team_a.env"
+        assert path == _pathlib.Path("/tmp/xdg") / "hve-core" / "mural.team_a.env"
 
 
 _CORPUS_ROOT = __import__("pathlib").Path(__file__).parent / "corpus"

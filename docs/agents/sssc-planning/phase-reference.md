@@ -13,7 +13,7 @@ tags:
   - agents
   - security
 author: Microsoft
-ms.date: 2026-03-18
+ms.date: 2026-06-27
 ms.topic: reference
 estimated_reading_time: 8
 ---
@@ -306,7 +306,7 @@ Convert gap analysis results into actionable work items with adoption steps, acc
 |---------|----------------------------|------------------------------------------|
 | Full    | None required              | Low-risk configuration changes           |
 | Partial | Review and approve         | Default for most supply chain work items |
-| Manual  | Human plans and implements | New capability builds, policy decisions  |
+| Guided  | Human plans and implements | New capability builds, policy decisions  |
 
 ### State Transitions
 

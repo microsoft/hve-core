@@ -1,10 +1,10 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Validates the canonical Security Planner state schema against the fixture corpus
-    and asserts cross-schema parity for `disclaimerShownAt` against the sister RAI schema.
+    and asserts cross-schema parity for notice fields against the sister RAI schema.
 #>
 
 # Enumerated at discovery time so -ForEach receives the fixture corpus before BeforeAll runs.
@@ -21,7 +21,7 @@ BeforeAll {
     $script:schemaJson = Get-Content -Path $script:schemaPath -Raw
 }
 
-Describe 'Canonical security-state schema validates fixture corpus' {
+Describe 'Canonical security-state schema validates fixture corpus' -Tag 'Unit' {
     It 'Schema file parses as JSON' {
         { Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json } | Should -Not -Throw
     }
@@ -38,7 +38,7 @@ Describe 'Canonical security-state schema validates fixture corpus' {
     }
 }
 
-Describe 'Cross-schema parity for disclaimerShownAt' {
+Describe 'Cross-schema parity for disclaimerShownAt' -Tag 'Unit' {
     It 'security-state and rai-state declare structurally identical disclaimerShownAt definitions' {
         $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
         $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
@@ -48,7 +48,25 @@ Describe 'Cross-schema parity for disclaimerShownAt' {
     }
 }
 
-Describe 'RAI-disabled invariant' {
+Describe 'Cross-schema parity for noticeLog' -Tag 'Unit' {
+    It 'security-state and rai-state declare byte-identical noticeLog definitions' {
+        $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
+        $secProp = $sec.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $raiProp = $rai.properties.noticeLog | ConvertTo-Json -Depth 10 -Compress
+        $secProp | Should -Be $raiProp -Because 'noticeLog definitions must remain in lockstep across schemas'
+    }
+
+    It 'security-state and rai-state declare byte-identical noticeLogEntry definitions' {
+        $sec = Get-Content -Path $script:schemaPath -Raw | ConvertFrom-Json
+        $rai = Get-Content -Path $script:raiSchemaPath -Raw | ConvertFrom-Json
+        $secDef = $sec.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $raiDef = $rai.'$defs'.noticeLogEntry | ConvertTo-Json -Depth 10 -Compress
+        $secDef | Should -Be $raiDef -Because 'noticeLogEntry definitions must remain in lockstep across schemas'
+    }
+}
+
+Describe 'RAI-disabled invariant' -Tag 'Unit' {
     It 'rejects a disabled state with inconsistent RAI fields' {
         $fixturePath = Join-Path $script:repoRoot 'scripts/tests/fixtures/security-state/phase-1-minimal.json'
         $base = Get-Content -Path $fixturePath -Raw | ConvertFrom-Json

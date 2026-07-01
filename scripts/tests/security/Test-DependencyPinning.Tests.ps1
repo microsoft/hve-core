@@ -1,5 +1,5 @@
 ﻿#Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
@@ -12,8 +12,8 @@ BeforeAll {
     Import-Module $mockPath -Force
 
     # Fixture paths
-    $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Workflows'
-    $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../Fixtures/Security'
+    $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Workflows'
+    $script:SecurityFixturesPath = Join-Path $PSScriptRoot '../fixtures/Security'
 
     # CI helper mocks — suppress console output and enable assertions
     Mock Write-Host {}
@@ -77,6 +77,16 @@ Describe 'Test-NpmExactVersion' -Tag 'Unit' {
 
         It 'Returns true for semver with build metadata' {
             Test-NpmExactVersion -Version '2.0.0+build.42' | Should -BeTrue
+        }
+    }
+
+    Context 'Local-path protocol references' {
+        It 'Returns true for file: local path' {
+            Test-NpmExactVersion -Version 'file:../..' | Should -BeTrue
+        }
+
+        It 'Returns true for link: local path' {
+            Test-NpmExactVersion -Version 'link:../shared' | Should -BeTrue
         }
     }
 
@@ -648,13 +658,13 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
         # Script file that should be scanned
         Set-Content -Path (Join-Path $scriptsDir 'install.sh') -Value 'echo hello'
 
-        # File inside Fixtures directory (should be excluded)
-        $fixturesDir = Join-Path $scriptsDir 'Fixtures'
+        # File inside fixtures directory (should be excluded)
+        $fixturesDir = Join-Path $scriptsDir 'fixtures'
         New-Item -Path $fixturesDir -ItemType Directory -Force | Out-Null
         Set-Content -Path (Join-Path $fixturesDir 'test-download.sh') -Value 'echo fixture'
     }
 
-    It 'Excludes Fixtures directory from shell-downloads scans' {
+    It 'Excludes fixtures directory from shell-downloads scans' {
         $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
         $files | Should -HaveCount 1
         $files[0].RelativePath | Should -Be (Join-Path 'scripts' 'install.sh')
@@ -663,6 +673,82 @@ Describe 'shell-downloads ExcludePatterns' -Tag 'Unit' {
     It 'Returns correct type metadata for shell-downloads files' {
         $files = @(Get-FilesToScan -ScanPath $shellTestRoot -Types 'shell-downloads')
         $files[0].Type | Should -Be 'shell-downloads'
+    }
+}
+
+Describe 'github-actions composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $ghaTestRoot = Join-Path $TestDrive 'gha-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $ghaTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $ghaTestRoot '.github' 'actions' 'setup-ps-modules'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for github-actions files' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files | ForEach-Object { $_.Type | Should -Be 'github-actions' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $ghaTestRoot -Types 'github-actions')
+        $files.Count | Should -Be 2
+    }
+}
+
+Describe 'workflow-npm-commands composite action discovery' -Tag 'Unit' {
+    BeforeAll {
+        $npmTestRoot = Join-Path $TestDrive 'npm-composite-test'
+
+        # Workflow file (should be scanned)
+        $workflowsDir = Join-Path $npmTestRoot '.github' 'workflows'
+        New-Item -Path $workflowsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $workflowsDir 'ci.yml') -Value 'name: CI'
+
+        # Composite action file (should be scanned)
+        $actionsDir = Join-Path $npmTestRoot '.github' 'actions' 'setup-node'
+        New-Item -Path $actionsDir -ItemType Directory -Force | Out-Null
+        Set-Content -Path (Join-Path $actionsDir 'action.yml') -Value 'name: Setup Node'
+    }
+
+    It 'Discovers workflow files under .github/workflows' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $workflowFile = $files | Where-Object { $_.RelativePath -like '*workflows*' }
+        $workflowFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Discovers composite action files under .github/actions' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $actionFile = $files | Where-Object { $_.RelativePath -like '*actions*setup*' }
+        $actionFile | Should -Not -BeNullOrEmpty
+    }
+
+    It 'Returns correct type metadata for workflow-npm-commands files' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files | ForEach-Object { $_.Type | Should -Be 'workflow-npm-commands' }
+    }
+
+    It 'Finds both workflow and composite action files in a single scan' {
+        $files = @(Get-FilesToScan -ScanPath $npmTestRoot -Types 'workflow-npm-commands')
+        $files.Count | Should -Be 2
     }
 }
 
@@ -924,7 +1010,7 @@ jobs:
 Describe 'Get-NpmDependencyViolations' -Tag 'Unit' {
     BeforeAll {
         . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
-        $script:FixturesPath = Join-Path $PSScriptRoot '../Fixtures/Npm'
+        $script:FixturesPath = Join-Path $PSScriptRoot '../fixtures/Npm'
     }
 
     Context 'Metadata-only package.json' {
@@ -1591,7 +1677,7 @@ Describe 'Get-WorkflowNpmCommandViolations' -Tag 'Unit' {
         # Source the script to get functions
         . $PSScriptRoot/../../security/Test-DependencyPinning.ps1
 
-        $script:fixtureDir = Join-Path $PSScriptRoot '../Fixtures/Workflows'
+        $script:fixtureDir = Join-Path $PSScriptRoot '../fixtures/Workflows'
     }
 
     Context 'when workflow contains npm install commands' {

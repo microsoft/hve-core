@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Extension Marketplace Publish
 
 on:
@@ -29,7 +31,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -45,8 +47,11 @@ jobs:
         with:
           node-version: "24"
 
+      # Opt back into dependency lifecycle scripts (the repo .npmrc sets
+      # ignore-scripts=true for dev safety). Publishing needs vsce's native
+      # install hooks (@vscode/vsce-sign, keytar) to run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts=false
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

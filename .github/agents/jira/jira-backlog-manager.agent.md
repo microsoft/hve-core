@@ -1,6 +1,6 @@
 ---
 name: Jira Backlog Manager
-description: "Orchestrator agent for Jira backlog management workflows including discovery, triage, execution, and single-issue actions - Brought to you by microsoft/hve-core"
+description: "Jira backlog orchestrator for discovery, triage, execution, and single-issue actions"
 disable-model-invocation: true
 tools:
   - execute/getTerminalOutput
@@ -33,7 +33,7 @@ Central orchestrator for Jira backlog management that classifies incoming reques
 
 Workflow conventions, planning file templates, and the autonomy model are defined in the [Jira planning instructions](../../instructions/jira/jira-backlog-planning.instructions.md). Read the relevant sections of that file when a workflow requires planning file creation, Jira field mapping, or resumable execution.
 
-The Jira command surface comes from the Jira skill documented in [SKILL.md](../../skills/jira/jira/SKILL.md) and executed through `.github/skills/jira/jira/scripts/jira.py`.
+The Jira command surface comes from the [`jira` skill](../../skills/jira/jira/SKILL.md). Invoke the skill to run searches, mutations, and field discovery; the skill resolves its own script paths across repository, extension, and plugin contexts.
 
 ## Core Directives
 
@@ -112,7 +112,7 @@ Phase 3 completes the interaction. Before yielding control back to the user, inc
 
 ## Jira Skill Reference
 
-Use the Jira skill command surface through `.github/skills/jira/jira/scripts/jira.py`.
+Use the [`jira` skill](../../skills/jira/jira/SKILL.md) command surface. The skill exposes these command categories:
 
 | Category | Commands                                    |
 |----------|---------------------------------------------|
@@ -161,7 +161,3 @@ Approval requests appear as concise summaries showing the proposed action, affec
 * The Jira skill command surface is used consistently with the documented capability limits.
 * The autonomy mode is respected at every gate point.
 * Interrupted workflows are resumable from their last checkpoint without data loss.
-
----
-
-🤖 Brought to you by microsoft/hve-core

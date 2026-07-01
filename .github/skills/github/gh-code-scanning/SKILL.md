@@ -1,6 +1,6 @@
 ---
 name: gh-code-scanning
-description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI - Brought to you by microsoft/hve-core'
+description: 'Retrieves and groups GitHub code scanning alerts by rule and severity using the gh CLI'
 license: MIT
 compatibility: 'Requires pwsh 7+ and gh CLI authenticated with the security_events scope. Bash script requires jq.'
 metadata:
@@ -233,6 +233,3 @@ The automation marker `<!-- automation:security-scan:{rule_id} -->` is embedded 
 | Empty results `[]`                                         | Wrong `ref` format or no alerts on that branch | Omit `-f ref=` to search all branches, or use `refs/heads/main` format (not just `main`)                            |
 | `bash: jq: command not found`                              | `jq` not installed                             | Install via `brew install jq` (macOS), `apt-get install jq` (Debian/Ubuntu), or from <https://jqlang.github.io/jq/> |
 
-> Brought to you by microsoft/hve-core
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

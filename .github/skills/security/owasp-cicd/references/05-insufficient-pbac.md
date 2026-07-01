@@ -103,7 +103,3 @@ to access production databases containing customer data.
 * Move all pipeline jobs off the controller node to dedicated worker nodes.
 * Establish a patch management cadence for all execution nodes.
 * Implement network segmentation and egress filtering on all build node networks.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

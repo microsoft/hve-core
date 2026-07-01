@@ -1,10 +1,12 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Transport and environment tests for gitlab.py."""
 
 from __future__ import annotations
 
+import io
 import json
+import subprocess
 import urllib.request
 from typing import cast
 
@@ -16,7 +18,6 @@ from test_constants import (
     TEST_API_URL,
     TEST_GITLAB_TOKEN,
     TEST_GITLAB_URL,
-    USAGE_JOB_LOG,
 )
 
 REQUEST_ENDPOINT = f"{TEST_API_URL}/test"
@@ -33,6 +34,18 @@ def _request_headers(request: urllib.request.Request) -> dict[str, str]:
     return {key.lower(): value for key, value in request.header_items()}
 
 
+def _json_response(response_factory: ResponseFactory, body: str) -> object:
+    response = response_factory(body)
+    response.headers = {"Content-Type": "application/json"}
+    return response
+
+
+def _text_response(response_factory: ResponseFactory, body: str) -> object:
+    response = response_factory(body)
+    response.headers = {"Content-Type": "text/plain"}
+    return response
+
+
 class TestRequireEnvironment:
     """Tests for require_environment."""
 
@@ -42,6 +55,41 @@ class TestRequireEnvironment:
         assert gitlab.gitlab_url == TEST_GITLAB_URL
         assert gitlab.gitlab_token == TEST_GITLAB_TOKEN
         assert gitlab.api_url == TEST_API_URL
+
+    @pytest.mark.parametrize(
+        "base_url",
+        [
+            "https://gitlab.example.com/evil",
+            "https://user@example.com",
+            "https://gitlab.example.com?query=1",
+            "https://gitlab.example.com/path",
+            "https://gitlab.example.com\n",
+        ],
+    )
+    def test_rejects_non_origin_base_urls(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        base_url: str,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", base_url)
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert "origin-only" in capsys.readouterr().err
+
+    def test_accepts_clean_origin_base_url(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "https://gitlab.example.com/")
+        monkeypatch.setenv("GITLAB_TOKEN", TEST_GITLAB_TOKEN)
+
+        gitlab.require_environment()
+
+        assert gitlab.api_url == "https://gitlab.example.com/api/v4"
 
     @pytest.mark.parametrize(
         ("env_name", "env_value", "expected_message"),
@@ -130,6 +178,38 @@ class TestProject:
         assert exc_info.value.code == gitlab.EXIT_USAGE
         assert EMPTY_REMOTE_PATH_ERROR in capsys.readouterr().err
 
+    @pytest.mark.parametrize(
+        "remote_url",
+        [
+            "https://gitlab.example.com/../group/project.git",
+            "https://gitlab.example.com/group/%2Fproject.git",
+            "https://gitlab.example.com/group\\project.git",
+        ],
+    )
+    def test_rejects_invalid_project_paths(
+        self,
+        mocker: MockerFixture,
+        remote_url: str,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        mocker.patch("subprocess.check_output", return_value=remote_url)
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.project()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+        assert "invalid project path" in capsys.readouterr().err
+
+    def test_accepts_owner_project_path_from_remote(
+        self, mocker: MockerFixture
+    ) -> None:
+        mocker.patch(
+            "subprocess.check_output",
+            return_value="https://gitlab.example.com/owner/project.git\n",
+        )
+
+        assert gitlab.project() == "owner%2Fproject"
+
 
 class TestRequest:
     """Tests for request."""
@@ -143,11 +223,13 @@ class TestRequest:
     ) -> None:
         captured_request: dict[str, urllib.request.Request] = {}
 
-        def fake_urlopen(request: urllib.request.Request) -> object:
+        def fake_urlopen(
+            request: urllib.request.Request, timeout: int | None = None
+        ) -> object:
             captured_request["request"] = request
-            return response_factory(REQUEST_BODY)
+            return _json_response(response_factory, REQUEST_BODY)
 
-        mocker.patch("urllib.request.urlopen", side_effect=fake_urlopen)
+        mocker.patch("gitlab._OPENER.open", side_effect=fake_urlopen)
         parsed = gitlab.request("POST", REQUEST_ENDPOINT, {"title": "MR"})
 
         assert parsed == REQUEST_JSON
@@ -167,8 +249,8 @@ class TestRequest:
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
-            "urllib.request.urlopen",
-            return_value=response_factory('{"iid": 7}'),
+            "gitlab._OPENER.open",
+            return_value=_json_response(response_factory, '{"iid": 7}'),
         )
         parsed = gitlab.request("GET", REQUEST_ENDPOINT, quiet=True)
 
@@ -181,7 +263,10 @@ class TestRequest:
         response_factory: ResponseFactory,
         mocker: MockerFixture,
     ) -> None:
-        mocker.patch("urllib.request.urlopen", return_value=response_factory("   "))
+        mocker.patch(
+            "gitlab._OPENER.open",
+            return_value=_json_response(response_factory, "   "),
+        )
         assert gitlab.request("GET", REQUEST_ENDPOINT) is None
 
     def test_prints_raw_text_for_non_json_response(
@@ -192,8 +277,8 @@ class TestRequest:
         mocker: MockerFixture,
     ) -> None:
         mocker.patch(
-            "urllib.request.urlopen",
-            return_value=response_factory(NON_JSON_BODY),
+            "gitlab._OPENER.open",
+            return_value=_text_response(response_factory, NON_JSON_BODY),
         )
         parsed = gitlab.request("GET", REQUEST_ENDPOINT)
 
@@ -209,7 +294,7 @@ class TestRequest:
     ) -> None:
         error = http_error_factory('{"message": "forbidden"}', code=403)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
         with pytest.raises(SystemExit) as exc_info:
             gitlab.request("GET", REQUEST_ENDPOINT)
 
@@ -227,7 +312,7 @@ class TestRequest:
     ) -> None:
         error = http_error_factory("Service unavailable", code=503)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
         with pytest.raises(SystemExit):
             gitlab.request("DELETE", REQUEST_ENDPOINT)
 
@@ -235,54 +320,243 @@ class TestRequest:
         assert error_lines[0] == "Service unavailable"
         assert error_lines[1] == f"error: HTTP 503 from DELETE {REQUEST_ENDPOINT}"
 
+    def test_prefers_parsed_http_error_message_and_redacts_it(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
+    ) -> None:
+        error = urllib.error.HTTPError(
+            url=REQUEST_ENDPOINT,
+            code=403,
+            msg="forbidden",
+            hdrs={},
+            fp=io.BytesIO(b'{"message": "token abc123"}'),
+        )
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
 
-class TestCmdJobLog:
-    """Tests for cmd_job_log."""
+        with pytest.raises(SystemExit):
+            gitlab.request("GET", REQUEST_ENDPOINT)
 
-    def test_prints_job_log(
+        output = capsys.readouterr().err
+        assert "token=[REDACTED]" in output
+        assert "abc123" not in output
+
+    def test_falls_back_to_redacted_raw_error_body(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
+    ) -> None:
+        error = urllib.error.HTTPError(
+            url=REQUEST_ENDPOINT,
+            code=502,
+            msg="bad gateway",
+            hdrs={},
+            fp=io.BytesIO(b"token abc123"),
+        )
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
+
+        with pytest.raises(SystemExit):
+            gitlab.request("GET", REQUEST_ENDPOINT)
+
+        output = capsys.readouterr().err
+        assert "token=[REDACTED]" in output
+        assert "abc123" not in output
+
+
+class TestGitLabTransportHardening:
+    """Regression tests for hardened transport behavior."""
+
+    def test_uses_timeout_for_git_remote_lookup(
+        self, mocker: MockerFixture, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_check_output(*args: object, **kwargs: object) -> str:
+            captured["kwargs"] = kwargs
+            raise subprocess.TimeoutExpired(
+                cmd=["git", "remote", "get-url", "origin"],
+                timeout=kwargs["timeout"],
+            )
+
+        mocker.patch("subprocess.check_output", side_effect=fake_check_output)
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.project()
+
+        assert exc_info.value.code == gitlab.EXIT_FAILURE
+        assert captured["kwargs"]["timeout"] == gitlab.REQUEST_TIMEOUT
+        assert "timed out resolving git remote for project" in capsys.readouterr().err
+
+    def test_prints_redacted_and_capped_non_json_output(
         self,
         configured_gitlab: ConfiguredGitLab,
         response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
         mocker: MockerFixture,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        mocker.patch(
-            "urllib.request.urlopen",
-            return_value=response_factory("line one\nline two"),
-        )
-        gitlab.cmd_job_log(["99"])
+        body = "token abc123\n" + ("x" * (gitlab.MAX_BODY_BYTES + 32))
+        response = _text_response(response_factory, body)
+        mocker.patch("gitlab._OPENER.open", return_value=response)
+        monkeypatch.setattr(gitlab, "MAX_BODY_BYTES", 32)
 
-        assert capsys.readouterr().out.strip().splitlines() == ["line one", "line two"]
+        parsed = gitlab.request("GET", REQUEST_ENDPOINT)
 
-    def test_requires_job_id(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with pytest.raises(SystemExit) as exc_info:
-            gitlab.cmd_job_log([])
+        assert parsed is None
+        output = capsys.readouterr().out
+        assert "token=[REDACTED]" in output
+        assert "abc123" not in output
+        assert "... [truncated]" in output
 
-        assert exc_info.value.code == gitlab.EXIT_USAGE
-        assert USAGE_JOB_LOG in capsys.readouterr().err
-
-    def test_rejects_non_numeric_job_id(
-        self, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        with pytest.raises(SystemExit):
-            gitlab.cmd_job_log(["abc"])
-
-        assert "expected numeric ID, got: abc" in capsys.readouterr().err
-
-    def test_reports_http_error_for_log_fetch(
+    @pytest.mark.parametrize(
+        ("content_type", "expected_fragment"),
+        [("", "unexpected Content-Type"), ("text/plain", "unexpected Content-Type")],
+    )
+    def test_rejects_missing_or_non_json_content_types(
         self,
+        content_type: str,
+        expected_fragment: str,
         configured_gitlab: ConfiguredGitLab,
-        http_error_factory: HttpErrorFactory,
+        response_factory: ResponseFactory,
         capsys: pytest.CaptureFixture[str],
         mocker: MockerFixture,
     ) -> None:
-        error = http_error_factory(TRACE_UNAVAILABLE, code=404)
+        response = response_factory(REQUEST_BODY)
+        response.headers = {"Content-Type": content_type} if content_type else {}
+        mocker.patch("gitlab._OPENER.open", return_value=response)
 
-        mocker.patch("urllib.request.urlopen", side_effect=error)
         with pytest.raises(SystemExit) as exc_info:
-            gitlab.cmd_job_log(["99"])
+            gitlab._request_bytes(
+                "GET",
+                REQUEST_ENDPOINT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
 
         assert exc_info.value.code == gitlab.EXIT_FAILURE
-        error_lines = capsys.readouterr().err.splitlines()
-        assert error_lines[0] == TRACE_UNAVAILABLE
-        assert error_lines[1] == "error: HTTP 404 fetching job log"
+        assert expected_fragment in capsys.readouterr().err
+
+    def test_allows_application_json_content_type(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        response_factory: ResponseFactory,
+        mocker: MockerFixture,
+    ) -> None:
+        response = _json_response(response_factory, REQUEST_BODY)
+        mocker.patch("gitlab._OPENER.open", return_value=response)
+
+        assert (
+            gitlab._request_bytes(
+                "GET",
+                REQUEST_ENDPOINT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
+            == REQUEST_BODY.encode()
+        )
+
+    def test_allows_empty_body_without_content_type(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        response_factory: ResponseFactory,
+        mocker: MockerFixture,
+    ) -> None:
+        response = response_factory("")
+        response.headers = {}
+        mocker.patch("gitlab._OPENER.open", return_value=response)
+
+        assert (
+            gitlab._request_bytes(
+                "DELETE",
+                REQUEST_ENDPOINT,
+                headers={"PRIVATE-TOKEN": TEST_GITLAB_TOKEN},
+                require_json=True,
+            )
+            == b""
+        )
+
+    def test_redirect_blocked(self) -> None:
+        handler = gitlab._NoRedirect()
+        request = urllib.request.Request("https://gitlab.example.com/redirect")
+
+        with pytest.raises(urllib.error.HTTPError) as exc_info:
+            handler.redirect_request(
+                request,
+                None,
+                302,
+                "Found",
+                None,
+                "https://evil.example.com/next",
+            )
+
+        assert exc_info.value.code == 302
+        assert "refusing redirect" in str(exc_info.value)
+
+    def test_requires_https_for_non_localhost(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITLAB_URL", "http://example.com")
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.require_environment()
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_invalid_mr_state(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_mr_list(["invalid-state"])
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_invalid_ref(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_pipeline_run(["invalid ref"])
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_zero_for_positive_integer(self) -> None:
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.validate_positive_int("0", "max_results")
+
+        assert exc_info.value.code == gitlab.EXIT_USAGE
+
+    def test_rejects_oversized_stdin_payload_before_parsing(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
+    ) -> None:
+        monkeypatch.setattr(
+            gitlab.sys,
+            "stdin",
+            io.StringIO("{" + ("x" * (gitlab.MAX_BODY_BYTES + 1)) + "}"),
+        )
+        mocker.patch("gitlab.load_json_payload", side_effect=AssertionError)
+
+        with pytest.raises(SystemExit) as exc_info:
+            gitlab.cmd_mr_create([])
+
+        assert exc_info.value.code == gitlab.EXIT_FAILURE
+        assert "request body exceeds size limit" in capsys.readouterr().err
+
+    def test_redacts_sensitive_error_bodies(
+        self,
+        configured_gitlab: ConfiguredGitLab,
+        capsys: pytest.CaptureFixture[str],
+        mocker: MockerFixture,
+    ) -> None:
+        error = urllib.error.HTTPError(
+            url=REQUEST_ENDPOINT,
+            code=403,
+            msg="forbidden",
+            hdrs={},
+            fp=io.BytesIO(b'{"message": "token abc123"}'),
+        )
+        mocker.patch("gitlab._OPENER.open", side_effect=error)
+
+        with pytest.raises(SystemExit):
+            gitlab.request("GET", REQUEST_ENDPOINT)
+
+        assert "abc123" not in capsys.readouterr().err

@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Credential-file auto-load helpers (Phase 1-3)."""
 
@@ -109,7 +109,9 @@ def test_resolve_credential_file_uses_xdg_config_home(
 def test_resolve_credential_file_falls_back_to_home_config(
     mural_module: Any, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(
+        mural_module.pathlib.Path, "home", classmethod(lambda cls: tmp_path)
+    )
     path = mural_module._resolve_credential_file("default", {})
     assert path == tmp_path / ".config" / "hve-core" / "mural.default.env"
 

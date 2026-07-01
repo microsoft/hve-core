@@ -2,7 +2,7 @@
 title: Customizing with Instructions
 description: Configure Copilot behavior using copilot-instructions.md and instruction files with applyTo targeting and stacking patterns
 author: Microsoft
-ms.date: 2026-02-24
+ms.date: 2026-06-27
 ms.topic: how-to
 keywords:
   - instructions
@@ -80,7 +80,9 @@ Organization follows a collection subdirectory convention:
     └── cross-collection.instructions.md
 ```
 
-Every instruction file requires YAML frontmatter with `description` and `applyTo` fields:
+Every instruction file requires YAML frontmatter with at least a `description` field. The
+`applyTo` field is optional but strongly recommended when you want the instructions to
+activate automatically for matching files:
 
 ```yaml
 ---

@@ -79,6 +79,21 @@ Describe 'New-PluginReadmeContent - CollectionContent H1 stripping' {
         $result | Should -Match '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->'
         $result | Should -Match '<!-- END AUTO-GENERATED ARTIFACTS -->'
         $result | Should -Match '## Included Artifacts'
+        $includedArtifactMatches = [regex]::Matches($result, '(?m)^## Included Artifacts$')
+        $includedArtifactMatches.Count | Should -Be 1
+        $result | Should -Not -Match '(?m)^## Agents$'
+    }
+
+    It 'Does not duplicate sections when CollectionContent already holds rendered artifacts' {
+        $content = "# Test Collection`n`nBody text.`n`n## Included Artifacts`n`n<!-- BEGIN AUTO-GENERATED ARTIFACTS -->`n`n### Chat Agents`n`n| Agent | Description |`n|-------|-------------|`n| test-agent | desc |`n`n<!-- END AUTO-GENERATED ARTIFACTS -->`n"
+        $result = New-PluginReadmeContent -Collection $baseCollection -Items $items -CollectionContent $content
+        [regex]::Matches($result, '(?m)^## Included Artifacts\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^## Overview\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^## Install\r?$').Count | Should -Be 1
+        [regex]::Matches($result, '(?m)^# ').Count | Should -Be 1
+        [regex]::Matches($result, '<!-- BEGIN AUTO-GENERATED ARTIFACTS -->').Count | Should -Be 1
+        $result | Should -Not -Match '(?m)^## Agents\r?$'
+        $result | Should -Not -Match '(?m)^## Commands\r?$'
     }
 
     It 'Emits Overview section when CollectionContent has body text' {
@@ -505,5 +520,56 @@ Describe 'Repair-PluginSymlinkIndex' {
                 Pop-Location
             }
         }
+    }
+}
+
+Describe 'Get-PluginItemName - hook kind' {
+    It 'Returns the filename unchanged for a hook' {
+        Get-PluginItemName -FileName 'telemetry.json' -Kind 'hook' | Should -Be 'telemetry.json'
+    }
+}
+
+Describe 'Get-PluginItemSubpath - hook kind' {
+    It 'Strips the .github/hooks prefix and returns the collection subpath' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/shared/telemetry.json' -Kind 'hook'
+        $result | Should -Be 'shared'
+    }
+
+    It 'Returns the nested subpath for deeper hook layouts' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/shared/telemetry/config.json' -Kind 'hook'
+        $result | Should -Be 'shared/telemetry'
+    }
+
+    It 'Returns empty string for a hook directly under the kind root' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/telemetry.json' -Kind 'hook'
+        $result | Should -Be ''
+    }
+}
+
+Describe 'Get-PluginSubdirectory - hook kind' {
+    It 'Returns hooks for the hook kind' {
+        Get-PluginSubdirectory -Kind 'hook' | Should -Be 'hooks'
+    }
+}
+
+Describe 'New-PluginManifestContent - hook paths' {
+    It 'Emits a single hooks string for one hook path' {
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0' -HookPaths @('hooks/shared/telemetry.json')
+        $manifest['hooks'] | Should -BeOfType [string]
+        $manifest['hooks'] | Should -Be 'hooks/shared/telemetry.json'
+    }
+
+    It 'Uses the first sorted hook path and warns when multiple are declared' {
+        $warnings = $null
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0' `
+            -HookPaths @('hooks/shared/zeta.json', 'hooks/shared/alpha.json') -WarningVariable warnings -WarningAction SilentlyContinue
+        $manifest['hooks'] | Should -Be 'hooks/shared/alpha.json'
+        $warnings | Should -Not -BeNullOrEmpty
+        ($warnings -join "`n") | Should -Match 'references only one'
+    }
+
+    It 'Omits the hooks key when no hook paths are provided' {
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0'
+        $manifest.Contains('hooks') | Should -BeFalse
     }
 }

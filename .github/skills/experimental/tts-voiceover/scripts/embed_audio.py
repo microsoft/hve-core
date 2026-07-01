@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Embed per-slide WAV voice-over files into a PowerPoint deck.
 

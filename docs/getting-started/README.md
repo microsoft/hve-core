@@ -3,7 +3,7 @@ title: Getting Started with HVE Core
 description: Quick setup guide for using HVE Core Copilot customizations in your projects
 sidebar_position: 1
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-30
 ms.topic: tutorial
 keywords:
   - github copilot
@@ -17,25 +17,25 @@ You've installed HVE Core. What now?
 
 The honest answer: you can start using agents immediately, and some of them
 will produce good results right away. But the real power of HVE Core is a
-methodology called RPI (Research, Plan, Implement) that changes how you
+methodology called RPI (Research, Plan, Implement, Review) that changes how you
 collaborate with AI. Instead of asking AI to "write the code," you ask it to
-research first, plan second, and implement third. The constraint changes
-everything.
+research first, plan second, implement third, and review last. The constraint
+changes everything.
 
 This guide walks you through four steps, each building on the last:
 
-| Step                                                      | What You Do                                             | Time    |
-|-----------------------------------------------------------|---------------------------------------------------------|---------|
-| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                        | 1 min   |
-| [First Research](first-research.md)                       | Use task-researcher on your own codebase                | 5 min   |
-| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle          | 15 min  |
-| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use | Ongoing |
+| Step                                                      | What You Do                                              | Time    |
+|-----------------------------------------------------------|----------------------------------------------------------|---------|
+| [First Interaction](first-interaction.md)                 | Talk to an agent, see it respond                         | 1 min   |
+| [First Research](first-research.md)                       | Use /task-research or /rpi-research on your own codebase | 5 min   |
+| [First Full Workflow](first-workflow.md)                  | Run a complete Research, Plan, Implement cycle           | 15 min  |
+| [Growing with HVE](../hve-guide/roles/new-contributor.md) | Progress through four milestones toward independent use  | Ongoing |
 
 > [!TIP]
 > Already comfortable with AI-assisted development? Skip to
 > [First Full Workflow](first-workflow.md) or try the
 > [rpi-agent](https://github.com/microsoft/hve-core/blob/main/.github/CUSTOM-AGENTS.md#rpi-agent) for autonomous
-> single-session workflows.
+> single-session workflows. If you want explicit skill entry points, use `/rpi-quick`, `/rpi-research`, `/rpi-plan`, `/rpi-implement`, and `/rpi-review`.
 
 Need installation help? See the [Installation Guide](install.md) for all
 methods, or install the

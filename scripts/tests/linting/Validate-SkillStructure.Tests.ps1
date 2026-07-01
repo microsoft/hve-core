@@ -1,4 +1,4 @@
-﻿# Copyright (c) Microsoft Corporation.
+﻿# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
@@ -24,6 +24,7 @@ BeforeAll {
             [switch]$WithEmptyScriptsDir,
             [switch]$WithUnrecognizedDir,
             [switch]$WithPyprojectToml,
+            [switch]$WithoutUvLock,
             [switch]$WithPythonScripts,
             [string]$WithPythonPackageDir,
             [string[]]$OptionalDirs = @()
@@ -73,6 +74,9 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 "@
+            if (-not $WithoutUvLock) {
+                Set-Content -Path (Join-Path $skillDir 'uv.lock') -Value 'version = 1'
+            }
         }
 
         if ($WithPythonScripts) {
@@ -131,7 +135,7 @@ description: A test skill for validation
             $content = @"
 ---
 name: 'my-skill'
-description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
+description: 'A skill with single quotes'
 ---
 
 # Skill
@@ -142,7 +146,7 @@ description: 'A skill with single quotes - Brought to you by microsoft/hve-core'
             $result = Get-SkillFrontmatter -Path $filePath
             $result | Should -Not -BeNullOrEmpty
             $result['name'] | Should -BeExactly 'my-skill'
-            $result['description'] | Should -BeExactly 'A skill with single quotes - Brought to you by microsoft/hve-core'
+            $result['description'] | Should -BeExactly 'A skill with single quotes'
         }
 
         It 'Strips double-quoted values correctly' {
@@ -290,7 +294,7 @@ Describe 'Test-SkillDirectory' -Tag 'Unit' {
             $frontmatter = @"
 ---
 name: test-skill
-description: 'A test skill for validation - Brought to you by microsoft/hve-core'
+description: 'A test skill for validation'
 ---
 
 # Test Skill
@@ -313,7 +317,7 @@ description: 'Skill with optional dirs'
 
 # Dirs Skill
 "@
-            $dir = New-TestSkillDirectory -SkillName 'dirs-skill' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples')
+            $dir = New-TestSkillDirectory -SkillName 'dirs-skill' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples','tests', 'templates')
             # Add both script types so scripts/ passes validation
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.sh') -Value '#!/bin/bash'
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.ps1') -Value 'Write-Host "hello"'
@@ -545,7 +549,7 @@ description: 'Skill with recognized dirs'
 
 # Recognized Dirs
 "@
-            $dir = New-TestSkillDirectory -SkillName 'recognized-dirs' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples')
+            $dir = New-TestSkillDirectory -SkillName 'recognized-dirs' -FrontmatterContent $frontmatter -OptionalDirs @('scripts', 'references', 'assets', 'examples','tests', 'templates')
             # Add both script types so scripts/ passes validation
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.sh') -Value '#!/bin/bash'
             Set-Content -Path (Join-Path $dir.FullName 'scripts/run.ps1') -Value 'Write-Host "hello"'
@@ -565,6 +569,22 @@ description: 'Skill with co-located tests directory'
 # Tests Dir Skill
 "@
             $dir = New-TestSkillDirectory -SkillName 'tests-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('tests')
+
+            $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
+            $result.IsValid | Should -BeTrue
+            $result.Warnings | Should -HaveCount 0
+        }
+
+        It 'Does not warn about templates/ subdirectory' {
+            $frontmatter = @"
+---
+name: templates-dir-skill
+description: 'Skill with co-located templates directory'
+---
+
+# Templates Dir Skill
+"@
+            $dir = New-TestSkillDirectory -SkillName 'templates-dir-skill' -FrontmatterContent $frontmatter -OptionalDirs @('templates')
 
             $result = Test-SkillDirectory -Directory $dir -RepoRoot $script:SkillTestDir
             $result.IsValid | Should -BeTrue

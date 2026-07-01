@@ -3,7 +3,7 @@ title: 'AI Artifacts Common Standards'
 description: 'Common standards and quality gates for all AI artifact contributions to hve-core'
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-03-12
+ms.date: 2026-06-28
 ms.topic: reference
 ---
 
@@ -77,23 +77,18 @@ Focus on agents that:
 
 ## Model Version Requirements
 
-All AI artifacts (agents, instructions, prompts) **MUST** target the **latest available models** from Anthropic and OpenAI only.
-
-The model catalog (`scripts/linting/model-catalog.json`) contains the full list of models available in GitHub Copilot for validation purposes, but not all cataloged models are accepted for use in hve-core artifacts, per above.
+All AI artifacts (agents, instructions, prompts) **MUST** target models listed in the model catalog (`scripts/linting/model-catalog.json`). The catalog defines which models are available in GitHub Copilot and which providers are accepted via the `providerAllowlist` field.
 
 ### Accepted Models
 
-| Provider  | Models                                                          |
-|-----------|-----------------------------------------------------------------|
-| Anthropic | Latest Claude models (e.g., Claude Sonnet 4.6, Claude Opus 4.6) |
-| OpenAI    | Latest GPT models (e.g., GPT-5.4, GPT-5.3-Codex)                |
+Any model in the catalog whose provider appears in `providerAllowlist` and whose status is `ga` or `preview`. Run `npm run lint:models` to validate references against the catalog.
 
 ### Not Accepted
 
-* ❌ Models from other providers
-* ❌ Older model versions not in the catalog (e.g., GPT-4o, Claude 3.5)
+* ❌ Models not present in the catalog
+* ❌ Models from providers outside the catalog's `providerAllowlist`
 * ❌ Custom or fine-tuned models
-* ❌ Deprecated or retired model versions
+* ❌ Models with `retiring` or `retired` status
 
 ### Model Name Format
 
@@ -654,7 +649,7 @@ See [official documentation](https://example.com) for details.
 
 * Starts with frontmatter (YAML between `---` delimiters)
 * Followed by markdown content
-* Includes attribution in frontmatter `description` field
+* Omits attribution suffix from the `description` field (added automatically at distribution)
 * Single newline at EOF
 
 ## RFC 2119 Directive Language
@@ -848,19 +843,7 @@ Jumping from H1 to H3 without an H2, breaking document hierarchy. Follow proper 
 
 ## Attribution Requirements
 
-All AI artifacts MUST include attribution as a suffix in the frontmatter `description` field:
-
-```yaml
-description: 'Tests prompt files in a sandbox environment - Brought to you by microsoft/hve-core'
-```
-
-Format: `- Brought to you by organization/repository-name` appended to the description value.
-
-Skill files (`SKILL.md`) additionally include a blockquote attribution footer as the last line of body content:
-
-```markdown
-> Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution suffix or footer. Author `description:` fields without a trailing attribution string, and do not add a blockquote attribution footer to `SKILL.md` bodies.
 
 ## GitHub Issue Title Conventions
 

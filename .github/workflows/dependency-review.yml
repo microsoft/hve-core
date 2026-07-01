@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 name: Dependency Review
 
 on:
@@ -27,7 +29,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -44,6 +46,14 @@ jobs:
           retry-on-snapshot-warnings: true
           retry-on-snapshot-warnings-timeout: 120
           fail-on-severity: moderate
+          # GHSA-69w3-r845-3855 (CVE-2026-1839): transformers Trainer
+          # arbitrary code execution via torch.load() without weights_only.
+          # The advisory states the issue only affects torch>=2.2 used with
+          # PyTorch < 2.6; the moderation eval pins torch==2.9.1 (>=2.6), so
+          # safe_globals() protection applies and the path is not exploitable.
+          # The only patched release (5.0.0rc3) is a pre-release that breaks
+          # detoxify==0.5.2, which requires transformers<5.
+          allow-ghsas: GHSA-69w3-r845-3855
           comment-summary-in-pr: always
           license-check: true
           allow-licenses: >-
@@ -55,6 +65,11 @@ jobs:
             WTFPL, LicenseRef-scancode-unicode
           # Packages with compound SPDX expressions containing GPL or MPL
           # from bundled code; distributed licenses are permissive.
+          # @github/copilot and its platform-specific binaries (including
+          # @github/copilot-linuxmusl-arm64 and @github/copilot-linuxmusl-x64
+          # added in v1.0.63) use a non-SPDX proprietary license
+          # (LicenseRef-bad-see-license-in-license.md); it is GitHub's own
+          # CLI toolchain, deliberately used in beval.yml.
           # pkg:npm/hve-core is the private root package (never published to npm).
           # pkg:pypi/certifi uses MPL-2.0 (Mozilla CA bundle).
           # pkg:pypi/charset-normalizer is MIT licensed but some older wheel
@@ -67,6 +82,28 @@ jobs:
           # licenses (Apache-2.0, MIT, BSD-3-Clause, PSF-2.0) per each
           # project's source repository, but PyPI metadata reports "unknown"
           # so the action requires explicit allowlisting.
+          # pkg:npm/lightningcss (and its optional platform-specific binaries)
+          # is MPL-2.0 licensed; it is pulled in transitively by
+          # @docusaurus/faster's Rspack toolchain. MPL-2.0 is file-level
+          # copyleft and safe to consume as a dependency.
+          # pkg:npm/uri-js declares a compound SPDX expression
+          # (BSD-2-Clause AND BSD-2-Clause-Views); both components are
+          # permissive BSD variants, but the action treats the compound
+          # expression as a mismatch against allow-licenses.
+          # The pkg:pypi/torch ML stack below is the transitive dependency
+          # graph of the moderation eval (scripts/evals/moderation). torch
+          # resolves from the CPU-only wheel index
+          # (download.pytorch.org/whl/cpu), so the nvidia-*-cu12 CUDA runtime
+          # libraries are no longer pulled in. PyPI metadata reports
+          # "unknown" for the remaining packages so the action cannot match
+          # them against allow-licenses: torch is BSD-3-Clause; filelock is
+          # Unlicense (public domain); hf-xet, idna, and safetensors ship
+          # permissive licenses (Apache-2.0 / BSD-style) per their source
+          # repositories. pkg:pypi/regex declares a compound SPDX expression
+          # (CNRI-Python AND Apache-2.0) and is pulled transitively by
+          # transformers; CNRI-Python is a permissive PSF-style license. The
+          # moderation eval is an internal test harness, not a distributed
+          # product.
           allow-dependencies-licenses: >-
             pkg:pypi/lxml,
             pkg:pypi/typing-extensions,
@@ -79,8 +116,36 @@ jobs:
             pkg:pypi/jaraco-context,
             pkg:pypi/jaraco-functools,
             pkg:pypi/keyrings-alt,
+            pkg:pypi/torch,
+            pkg:pypi/filelock,
+            pkg:pypi/hf-xet,
+            pkg:pypi/idna,
+            pkg:pypi/safetensors,
+            pkg:pypi/regex,
             pkg:npm/dompurify,
             pkg:npm/lunr-languages,
+            pkg:npm/%40github/copilot,
+            pkg:npm/%40github/copilot-darwin-arm64,
+            pkg:npm/%40github/copilot-darwin-x64,
+            pkg:npm/%40github/copilot-linux-arm64,
+            pkg:npm/%40github/copilot-linux-x64,
+            pkg:npm/%40github/copilot-win32-arm64,
+            pkg:npm/%40github/copilot-win32-x64,
+            pkg:npm/%40github/copilot-linuxmusl-arm64,
+            pkg:npm/%40github/copilot-linuxmusl-x64,
+            pkg:npm/lightningcss,
+            pkg:npm/lightningcss-android-arm64,
+            pkg:npm/lightningcss-darwin-arm64,
+            pkg:npm/lightningcss-darwin-x64,
+            pkg:npm/lightningcss-freebsd-x64,
+            pkg:npm/lightningcss-linux-arm-gnueabihf,
+            pkg:npm/lightningcss-linux-arm64-gnu,
+            pkg:npm/lightningcss-linux-arm64-musl,
+            pkg:npm/lightningcss-linux-x64-gnu,
+            pkg:npm/lightningcss-linux-x64-musl,
+            pkg:npm/lightningcss-win32-arm64-msvc,
+            pkg:npm/lightningcss-win32-x64-msvc,
+            pkg:npm/uri-js,
             pkg:npm/hve-core
           show-openssf-scorecard: true
           warn-on-openssf-scorecard-level: 3

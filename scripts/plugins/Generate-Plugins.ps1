@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 <#
 .SYNOPSIS
@@ -244,6 +244,7 @@ function Invoke-PluginGeneration {
     $totalCommands = 0
     $totalInstructions = 0
     $totalSkills = 0
+    $totalHooks = 0
 
     foreach ($collection in $allCollections) {
         $id = $collection.id
@@ -280,6 +281,7 @@ function Invoke-PluginGeneration {
                     $prompts = @()
                     $instructions = @()
                     $skills = @()
+                    $hooks = @()
 
                     foreach ($item in $filteredCollection.items) {
                         if (-not $item.ContainsKey('kind') -or -not $item.ContainsKey('path')) {
@@ -301,6 +303,7 @@ function Invoke-PluginGeneration {
                             'prompt' { $prompts += $entry }
                             'instruction' { $instructions += $entry }
                             'skill' { $skills += $entry }
+                            'hook' { $hooks += $entry }
                         }
                     }
 
@@ -310,7 +313,8 @@ function Invoke-PluginGeneration {
                         @{ Title = 'Chat Agents'; Items = $agents },
                         @{ Title = 'Prompts'; Items = $prompts },
                         @{ Title = 'Instructions'; Items = $instructions },
-                        @{ Title = 'Skills'; Items = $skills }
+                        @{ Title = 'Skills'; Items = $skills },
+                        @{ Title = 'Hooks'; Items = $hooks }
                     )) {
                         if ($section.Items.Count -eq 0) { continue }
 
@@ -325,7 +329,11 @@ function Invoke-PluginGeneration {
                     }
 
                     $generatedBlock = $artifactSections.ToString().TrimEnd()
-                    $updatedCollectionMd = "$($parsed.Intro)`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
+                    $intro = $parsed.Intro.TrimEnd()
+                    if ($intro -notmatch '(?m)^## Included Artifacts\s*$') {
+                        $intro = "$intro`n`n## Included Artifacts"
+                    }
+                    $updatedCollectionMd = "$intro`n`n$($CollectionMdBeginMarker)`n`n$generatedBlock`n`n$($CollectionMdEndMarker)"
                     if (-not [string]::IsNullOrWhiteSpace($parsed.Footer)) {
                         $updatedCollectionMd += "`n`n$($parsed.Footer.TrimEnd())"
                     }
@@ -389,6 +397,7 @@ function Invoke-PluginGeneration {
         $totalCommands += $result.CommandCount
         $totalInstructions += $result.InstructionCount
         $totalSkills += $result.SkillCount
+        $totalHooks += $result.HookCount
         $generated++
 
         Write-Host "  $id ($itemCount items)" -ForegroundColor Green
@@ -415,6 +424,7 @@ function Invoke-PluginGeneration {
     Write-Host "  Commands: $totalCommands"
     Write-Host "  Instructions: $totalInstructions"
     Write-Host "  Skills: $totalSkills"
+    Write-Host "  Hooks: $totalHooks"
 
     return New-GenerateResult -Success $true -PluginCount $generated
 }
@@ -504,8 +514,13 @@ function Start-PluginGeneration {
         return 0
     }
     catch {
-        Write-Error "Plugin generation failed: $($_.Exception.Message)"
-        Write-CIAnnotation -Message $_.Exception.Message -Level Error
+        $message = $_.Exception.Message
+        Write-Error "Plugin generation failed: $message"
+
+        if (Get-Command -Name Write-CIAnnotation -ErrorAction SilentlyContinue) {
+            Write-CIAnnotation -Message $message -Level Error
+        }
+
         return 1
     }
 }

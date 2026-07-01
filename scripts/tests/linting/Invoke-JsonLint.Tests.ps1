@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -173,12 +173,14 @@ Describe 'Repository JSON validity' -Tag 'Integration' {
         $failures = @()
         foreach ($target in $targets) {
             if (-not (Test-Path $target)) { continue }
-            Get-ChildItem -Path $target -File -Recurse -Filter '*.json' | ForEach-Object {
-                $issue = Test-JsonFile -Path $_.FullName
-                if ($null -ne $issue) {
-                    $failures += "$($issue.File): $($issue.Message)"
+            Get-ChildItem -Path $target -File -Recurse -Filter '*.json' |
+                Where-Object { $_.Name -notlike 'invalid-*.json' } |
+                ForEach-Object {
+                    $issue = Test-JsonFile -Path $_.FullName
+                    if ($null -ne $issue) {
+                        $failures += "$($issue.File): $($issue.Message)"
+                    }
                 }
-            }
         }
 
         $failures | Should -BeNullOrEmpty

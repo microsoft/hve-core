@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
 // @ts-check
 import { themes as prismThemes } from 'prism-react-renderer';
 import remarkGithubAlert from 'remark-github-blockquote-alert';
@@ -55,6 +57,7 @@ const config = {
   },
 
   markdown: {
+    format: 'detect',
     hooks: {
       onBrokenMarkdownLinks: 'throw',
     },

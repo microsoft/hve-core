@@ -3,7 +3,7 @@ title: Contributing Skills to HVE Core
 description: Requirements and standards for contributing skill packages to hve-core
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-03-16
+ms.date: 2026-06-26
 ms.topic: how-to
 keywords:
   - skills
@@ -64,7 +64,7 @@ Skill files are typically organized in a collection subdirectory by convention:
 ├── references/                 # Additional documentation (optional)
 │   └── REFERENCE.md            # Detailed technical reference
 ├── assets/                     # Static resources (optional)
-│   └── templates/              # Document or configuration templates
+├── templates/                  # Document or configuration templates (optional)
 ├── examples/
 │   └── README.md               # Usage examples (recommended)
 └── tests/
@@ -83,7 +83,7 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 * Use lowercase kebab-case for directory names: `video-to-gif`
 * Main definition file MUST be named `SKILL.md`
 * Script names should describe their action: `convert.sh`, `validate.ps1`
-* Only recognized subdirectories are allowed: `scripts`, `references`, `assets`, `examples`, `tests` (the `tests` directory is excluded from extension and CLI outputs)
+* Only recognized subdirectories are allowed: `scripts`, `references`, `assets`, `examples`, `tests`, `templates` (the `tests` directory is excluded from extension and CLI outputs)
 
 ## Frontmatter Requirements
 
@@ -99,18 +99,18 @@ The `scripts/` directory is **optional**. When present, it **MUST** contain at l
 
 **`description`** (string, MANDATORY)
 
-| Property | Value                                                                                                      |
-|----------|------------------------------------------------------------------------------------------------------------|
-| Purpose  | Concise explanation of skill functionality                                                                 |
-| Format   | Single sentence ending with attribution                                                                    |
-| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'` |
+| Property | Value                                                                                             |
+|----------|---------------------------------------------------------------------------------------------------|
+| Purpose  | Concise explanation of skill functionality                                                        |
+| Format   | Single sentence describing the skill; no attribution suffix (added automatically at distribution) |
+| Example  | `'Video-to-GIF conversion skill with FFmpeg two-pass optimization'`                               |
 
 ### Frontmatter Example
 
 ```yaml
 ---
 name: video-to-gif
-description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization - Brought to you by microsoft/hve-core'
+description: 'Video-to-GIF conversion skill with FFmpeg two-pass optimization'
 ---
 ```
 
@@ -194,7 +194,7 @@ Recognized metadata fields:
 ```yaml
 ---
 name: pr-reference
-description: 'Generate PR reference XML files with commit history and diffs for pull request workflows - Brought to you by microsoft/hve-core'
+description: 'Generate PR reference XML files with commit history and diffs for pull request workflows'
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--base-branch=origin/main] [--exclude-markdown]"
@@ -208,7 +208,7 @@ This example demonstrates a skill configured for both automatic semantic loading
 ```yaml
 ---
 name: owasp-llm
-description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base - Brought to you by microsoft/hve-core'
+description: 'OWASP Top 10 for LLM Applications (2025) vulnerability knowledge base'
 license: CC-BY-SA-4.0
 user-invocable: false
 metadata:
@@ -534,7 +534,7 @@ Before submitting your skill, verify:
 * [ ] Directory at `.github/skills/<skill-name>/`
 * [ ] SKILL.md present with valid frontmatter
 * [ ] If `scripts/` directory exists: at least one `.ps1` file present (`.sh` recommended)
-* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`, `tests`)
+* [ ] Only recognized subdirectories used (`scripts`, `references`, `assets`, `examples`, `tests`, `templates`)
 * [ ] Examples README (recommended)
 
 ### Frontmatter

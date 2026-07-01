@@ -1,5 +1,5 @@
 ---
-description: "Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow - Brought to you by microsoft/hve-core"
+description: "Conventions for consuming graphify-out/ knowledge-graph evidence inside the RPI workflow"
 applyTo: '**/graphify-out/**'
 ---
 
@@ -93,5 +93,3 @@ These conventions do not cover:
 * How to install or configure `graphifyy` — see upstream `graphify vscode install` / `graphify copilot install`.
 * How to register the MCP server with Copilot Chat — `graphify vscode install` writes the workspace config.
 * General code-review or refactor practices — graph centrality is not a code-quality signal.
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

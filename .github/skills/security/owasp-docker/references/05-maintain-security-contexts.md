@@ -94,7 +94,3 @@ gains access to the entire environment, affecting all clients' containers.
 * Separate containers by security classification onto distinct hosts or VM boundaries.
 * Document and enforce a host assignment policy based on security context.
 * Audit host assignments on a recurring schedule to detect drift.
-
----
-
-*🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.*

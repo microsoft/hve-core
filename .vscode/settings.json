@@ -28,12 +28,16 @@
     {
       "fileMatch": [".copilot-tracking/rai-plans/*/state.json"],
       "url": "./scripts/linting/schemas/rai-state.schema.json"
+    },
+    {
+      "fileMatch": [".copilot-tracking/accessibility/*/state.json"],
+      "url": "./scripts/linting/schemas/accessibility-state.schema.json"
     }
   ],
   "chat.instructionsFilesLocations": {
+    ".github/instructions/accessibility": true,
     ".github/instructions/ado": true,
     ".github/instructions/coding-standards": true,
-    ".github/instructions/design-thinking": true,
     ".github/instructions/experimental": true,
     ".github/instructions/github": true,
     ".github/instructions/hve-core": true,
@@ -43,8 +47,11 @@
     ".github/instructions/shared": true
   },
   "chat.agentFilesLocations": {
+    ".github/agents/accessibility": true,
+    ".github/agents/accessibility/subagents": true,
     ".github/agents/ado": true,
     ".github/agents/coding-standards": true,
+    ".github/agents/coding-standards/subagents": true,
     ".github/agents/data-science": true,
     ".github/agents/design-thinking": true,
     ".github/agents/experimental": true,
@@ -54,7 +61,9 @@
     ".github/agents/hve-core/subagents": true,
     ".github/agents/jira": true,
     ".github/agents/project-planning": true,
+    ".github/agents/project-planning/subagents": true,
     ".github/agents/rai-planning": true,
+    ".github/agents/rai-planning/subagents": true,
     ".github/agents/security": true,
     ".github/agents/security/subagents": true
   },
@@ -71,11 +80,17 @@
   },
   "chat.agentSkillsLocations": {
     ".github/skills": true,
+    ".github/skills/accessibility": true,
     ".github/skills/coding-standards": true,
+    ".github/skills/design-thinking": true,
     ".github/skills/experimental": true,
     ".github/skills/github": true,
     ".github/skills/gitlab": true,
     ".github/skills/jira": true,
+    ".github/skills/project-planning": true,
+    ".github/skills/rai": true,
+    ".github/skills/rpi": true,
+    ".github/skills/hve-core": true,
     ".github/skills/security": true,
     ".github/skills/shared": true
   },
