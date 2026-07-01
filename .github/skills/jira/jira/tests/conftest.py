@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Shared fixtures for Jira skill tests."""
 
@@ -24,8 +24,9 @@ from test_constants import (
 class FakeHttpResponse:
     """Minimal HTTP response stub for urllib tests."""
 
-    def __init__(self, body: str) -> None:
+    def __init__(self, body: str, content_type: str = "application/json") -> None:
         self._body = body.encode()
+        self.headers = {"Content-Type": content_type} if content_type else {}
 
     def __enter__(self) -> "FakeHttpResponse":
         return self
@@ -97,8 +98,8 @@ def configured_cloud_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 def response_factory() -> ResponseFactory:
     """Return a factory for minimal HTTP response stubs."""
 
-    def _factory(body: str) -> FakeHttpResponse:
-        return FakeHttpResponse(body)
+    def _factory(body: str, content_type: str = "application/json") -> FakeHttpResponse:
+        return FakeHttpResponse(body, content_type=content_type)
 
     return _factory
 

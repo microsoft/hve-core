@@ -231,7 +231,3 @@ These sections in *github-backlog-planning.instructions.md* inform discovery ope
 | Human Review Triggers           | Phase 3         | Additional conditions for pausing execution            |
 | Issue Body Template             | Phase 2         | Standard body structure for new issues                 |
 | Issue Type Strategy             | Phase 2         | Type classification and hierarchy rules                |
-
----
-
-Brought to you by microsoft/hve-core

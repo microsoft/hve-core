@@ -2,7 +2,7 @@
 title: ADO Backlog Manager
 description: Automated work item discovery, triage, sprint planning, and execution for Azure DevOps projects
 author: Microsoft
-ms.date: 2026-02-26
+ms.date: 2026-06-26
 ms.topic: concept
 keywords:
   - azure devops backlog manager
@@ -99,12 +99,12 @@ See the [PR Creation workflow guide](pr-creation.md) for the complete workflow i
 
 The backlog manager automatically detects the appropriate content format for your Azure DevOps environment:
 
-| Environment           | Format   | Detection Method                                                 |
-|-----------------------|----------|------------------------------------------------------------------|
-| Azure DevOps Services | Markdown | URL contains `dev.azure.com` or `visualstudio.com`               |
-| Azure DevOps Server   | HTML     | URL contains an on-premises hostname or uses `_apis` with a port |
+| Environment           | Format   | Detection Method                                                |
+|-----------------------|----------|-----------------------------------------------------------------|
+| Azure DevOps Services | Markdown | Organization URL contains `dev.azure.com`                       |
+| Azure DevOps Server   | HTML     | Organization URL contains a custom domain or `visualstudio.com` |
 
-All interaction templates (work item descriptions, comments, acceptance criteria) exist in both Markdown and HTML variants. The detected format determines which template variant the agent uses for API calls.
+When the format cannot be determined, the agent defaults to Markdown and notes that HTML is available for Azure DevOps Server instances. All interaction templates (work item descriptions, comments, acceptance criteria) exist in both Markdown and HTML variants. The detected format determines which template variant the agent uses for API calls.
 
 ## Autonomy Levels
 

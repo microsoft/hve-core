@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Vally corpus importer.
 
@@ -207,6 +207,7 @@ def safety_check(
         try:
             Path(tmp.name).unlink(missing_ok=True)
         except OSError:
+            # Temp file already removed or inaccessible; nothing to clean up.
             pass
     output = ((result.stdout or "") + (result.stderr or "")).strip()
     match = SAFETY_CATEGORY_RE.search(output)

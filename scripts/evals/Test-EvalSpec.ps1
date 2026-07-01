@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 <#
@@ -50,7 +50,7 @@
     pwsh -File scripts/evals/Test-EvalSpec.ps1
 #>
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(
@@ -139,7 +139,8 @@ function Invoke-EvalSpecValidation {
             $_.Name -notin @('variant.yaml', 'variant.yml', 'AGENTS.yml') -and
             $_.FullName.Replace('\', '/') -notmatch '/surface-signatures/' -and
             $_.FullName.Replace('\', '/') -notmatch '/agent-behavior/stimuli/' -and
-            $_.FullName.Replace('\', '/') -notmatch '/agent-behavior/expectations/'
+            $_.FullName.Replace('\', '/') -notmatch '/agent-behavior/expectations/' -and
+            $_.FullName.Replace('\', '/') -notmatch '/beval/'
         }
     foreach ($file in $specFiles) {
         $relPath = ($file.FullName.Substring($RepoRoot.Length)).TrimStart('\', '/').Replace('\', '/')

@@ -1,5 +1,5 @@
 ---
-description: 'Configurable traceability matrix templates and coverage calculations for requirements-author consumers - Brought to you by microsoft/hve-core'
+description: 'Configurable traceability matrix templates and coverage calculations for requirements-author consumers'
 ---
 
 # Traceability Matrix Template
@@ -114,4 +114,4 @@ Recommended layout:
 * Sibling reference: [traceability-naming.md](traceability-naming.md)
 * Standards registry: [standards-excerpts.md](standards-excerpts.md#isoiecieee-291482018)
 
-> Brought to you by microsoft/hve-core
+

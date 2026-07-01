@@ -3,7 +3,7 @@ title: Export DT Artifacts to Figma
 description: Optional workflow for exporting Design Thinking artifacts from HVE Core to FigJam boards and Figma Design files
 sidebar_position: 8
 author: Microsoft
-ms.date: 2026-03-27
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - design thinking
@@ -135,7 +135,5 @@ The `use_figma` write capability is currently in beta and free during the beta p
 
 * [DT Coach Guide](dt-coach.md): Overview of the coaching agent and session workflow
 * [Design Thinking Guide](README.md): All nine methods and three spaces
-
-> Brought to you by microsoft/hve-core
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.

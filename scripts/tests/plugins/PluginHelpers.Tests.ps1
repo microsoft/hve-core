@@ -522,3 +522,54 @@ Describe 'Repair-PluginSymlinkIndex' {
         }
     }
 }
+
+Describe 'Get-PluginItemName - hook kind' {
+    It 'Returns the filename unchanged for a hook' {
+        Get-PluginItemName -FileName 'telemetry.json' -Kind 'hook' | Should -Be 'telemetry.json'
+    }
+}
+
+Describe 'Get-PluginItemSubpath - hook kind' {
+    It 'Strips the .github/hooks prefix and returns the collection subpath' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/shared/telemetry.json' -Kind 'hook'
+        $result | Should -Be 'shared'
+    }
+
+    It 'Returns the nested subpath for deeper hook layouts' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/shared/telemetry/config.json' -Kind 'hook'
+        $result | Should -Be 'shared/telemetry'
+    }
+
+    It 'Returns empty string for a hook directly under the kind root' {
+        $result = Get-PluginItemSubpath -Path '.github/hooks/telemetry.json' -Kind 'hook'
+        $result | Should -Be ''
+    }
+}
+
+Describe 'Get-PluginSubdirectory - hook kind' {
+    It 'Returns hooks for the hook kind' {
+        Get-PluginSubdirectory -Kind 'hook' | Should -Be 'hooks'
+    }
+}
+
+Describe 'New-PluginManifestContent - hook paths' {
+    It 'Emits a single hooks string for one hook path' {
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0' -HookPaths @('hooks/shared/telemetry.json')
+        $manifest['hooks'] | Should -BeOfType [string]
+        $manifest['hooks'] | Should -Be 'hooks/shared/telemetry.json'
+    }
+
+    It 'Uses the first sorted hook path and warns when multiple are declared' {
+        $warnings = $null
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0' `
+            -HookPaths @('hooks/shared/zeta.json', 'hooks/shared/alpha.json') -WarningVariable warnings -WarningAction SilentlyContinue
+        $manifest['hooks'] | Should -Be 'hooks/shared/alpha.json'
+        $warnings | Should -Not -BeNullOrEmpty
+        ($warnings -join "`n") | Should -Match 'references only one'
+    }
+
+    It 'Omits the hooks key when no hook paths are provided' {
+        $manifest = New-PluginManifestContent -CollectionId 'shared' -Description 'desc' -Version '1.0.0'
+        $manifest.Contains('hooks') | Should -BeFalse
+    }
+}

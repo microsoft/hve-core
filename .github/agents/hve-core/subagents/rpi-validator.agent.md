@@ -15,6 +15,7 @@ Validates a Changes Log against the Implementation Plan, Planning Log, and prima
 
 * Plan file path containing the Implementation Plan and Planning Log.
 * Changes log path documenting completed implementation work.
+* Delegated RPI work may provide a specific phase number and expect a compact validation summary backed by the review log.
 * Research document path with requirements and specifications.
 * Phase number identifying the specific plan through-line to validate.
 * Validation file path `.copilot-tracking/reviews/rpi/{{YYYY-MM-DD}}/{{plan-file-name-without-instructions-md}}-{{three-digit-phase-number}}-validation.md` otherwise determined from inputs.
@@ -73,6 +74,16 @@ Create and update the validation document progressively documenting:
 4. Ensure all plan items for the phase are compared against the changes log.
 5. Cleanup and finalize the validation document, interpret the document for your response RPI Validation Executive Details.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the review log, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/reviews/rpi/2026-02-23/auth-feature-001-validation.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
 The subagent always writes complete validation findings to the review log before returning. The chat response is an executive summary only. Full fidelity lives on disk.
@@ -83,6 +94,6 @@ Initial chat response, emit at most:
 * Up to 7 bullet-point findings (each ≤ 240 chars). Prioritize missing plan-to-change matches, scope-creep changes, and absent-file evidence.
 * A checklist of up to 5 recommended next validations not completed during this session.
 * Up to 3 clarifying questions, only when blocking.
-* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete RPI artifact validation details."
+* 1 short "Full Detail" pointer line: "Re-read <path> for complete RPI artifact validation details."
 
 Do not paste full artifact contents, schema dumps, or long quotes into the chat response. The review log is the source of truth.

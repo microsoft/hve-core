@@ -117,4 +117,4 @@ WCAG success criteria are normative; the axe techniques that surface them are in
 * Resolve framework and phase guidance through this skill instead of duplicating its internal reference paths in agents or instructions.
 * Use the scanner CLI when you need normalized findings from an accessibility scan.
 
-> Brought to you by microsoft/hve-core
+

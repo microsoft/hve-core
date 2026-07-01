@@ -150,7 +150,3 @@ Execution is complete when:
 * All `{{TEMP-N}}` placeholders are resolved to actual issue keys or logged as failed.
 * `handoff-logs.md` contains an entry for every operation in the plan.
 * A completion report has been presented to the user with Jira issue keys.
-
----
-
-Brought to you by microsoft/hve-core

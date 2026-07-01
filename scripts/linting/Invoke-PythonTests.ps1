@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # Invoke-PythonTests.ps1
@@ -7,7 +7,7 @@
 # Purpose: Dynamically discovers and tests Python skills using pytest
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [CmdletBinding()]
 param(

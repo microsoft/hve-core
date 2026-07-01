@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Extract content from an existing PPTX into YAML content and style definitions.
 
@@ -218,6 +218,7 @@ def extract_freeform(shape) -> dict:
         if fill_result is not None:
             elem["fill"] = fill_result
     except (AttributeError, TypeError):
+        # Optional fill is unavailable on this shape; skip it.
         pass
 
     line_props = extract_line(shape)
@@ -566,6 +567,7 @@ def extract_shape(shape) -> dict:
         if shape.adjustments and len(shape.adjustments) > 0:
             elem["corner_radius"] = round(shape.adjustments[0], 5)
     except (AttributeError, TypeError, IndexError):
+        # Shape has no adjustment values; skip corner radius.
         pass
 
     # Extract fill
@@ -574,6 +576,7 @@ def extract_shape(shape) -> dict:
         if fill_result is not None:
             elem["fill"] = fill_result
     except (AttributeError, TypeError):
+        # Optional fill is unavailable on this shape; skip it.
         pass
 
     # Extract line properties
@@ -735,6 +738,7 @@ def detect_global_style(prs) -> dict:
                 bg_colors[fill_result] += 1
                 slide_bg = fill_result
         except (AttributeError, TypeError):
+            # Slide background fill is unavailable; skip color detection.
             pass
 
         for i, shape in enumerate(slide.shapes):
@@ -758,6 +762,7 @@ def detect_global_style(prs) -> dict:
                         fill_colors[fill_result] += 1
                         slide_fill_colors[fill_result] += 1
             except (AttributeError, TypeError):
+                # Shape exposes no fill; skip color collection.
                 pass
 
             # Collect font information
@@ -775,6 +780,7 @@ def detect_global_style(prs) -> dict:
                                 text_colors[color] += 1
                                 slide_text_colors[color] += 1
                         except (AttributeError, TypeError):
+                            # Run font color is unavailable; skip it.
                             pass
 
         # Classify slide brightness
@@ -1011,6 +1017,7 @@ def extract_slide(
         if layout_name:
             content["layout"] = layout_name
     except (AttributeError, TypeError):
+        # Slide has no associated layout name; skip it.
         pass
 
     # Extract slide background
@@ -1020,6 +1027,7 @@ def extract_slide(
             if fill_result is not None:
                 content["background"] = {"fill": fill_result}
     except (AttributeError, TypeError):
+        # Slide background fill is unavailable; skip it.
         pass
 
     # Extract speaker notes (include empty string when notes slide exists)
@@ -1028,6 +1036,7 @@ def extract_slide(
             notes = slide.notes_slide.notes_text_frame.text.strip()
             content["speaker_notes"] = notes
     except (AttributeError, TypeError):
+        # Notes slide or text frame is unavailable; skip notes.
         pass
 
     img_count = 0

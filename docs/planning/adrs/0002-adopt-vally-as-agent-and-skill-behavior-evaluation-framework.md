@@ -3,7 +3,7 @@ id: "0002"
 title: "Adopt Vally as the agent and skill behavior evaluation framework"
 description: "Adopt Vally (@microsoft/vally-cli) with a Copilot-SDK executor and a multi-suite evals/ tree as the standard way to evaluate the behavior of hve-core's authored AI customization artifacts, wired into PR CI and supported by a vally-tests authoring skill and a content-moderation pipeline."
 author: "HVE Core Team"
-ms.date: "2026-05-30"
+ms.date: "2026-06-24"
 ms.topic: "reference"
 status: "accepted"
 proposed_date: "2026-05-30"
@@ -31,7 +31,7 @@ affected_components:
   - "scripts/evals/moderation/"
   - ".github/skills/hve-core/vally-tests/"
   - ".github/agents/hve-core/subagents/vally-test-author.agent.md"
-  - ".github/agents/content-policy-citation.agent.md"
+  - ".github/instructions/shared/content-policy-citation.instructions.md"
   - ".github/workflows/pr-validation.yml"
 supersedes: null
 superseded-by: null
@@ -97,7 +97,7 @@ PowerShell and Python orchestration layer under `scripts/evals/` (including the
 content-moderation pipeline at `scripts/evals/moderation/`), a `vally-tests`
 authoring skill at `.github/skills/hve-core/vally-tests/`, a
 `.github/agents/hve-core/subagents/vally-test-author.agent.md` subagent, a
-`.github/agents/content-policy-citation.agent.md` agent, and CI wiring through
+`.github/instructions/shared/content-policy-citation.instructions.md` shared content-policy instruction, and CI wiring through
 changes to `.github/workflows/pr-validation.yml`. How should hve-core standardize
 behavioral evaluation of its AI artifacts?
 
@@ -317,7 +317,7 @@ flowchart LR
 If this decision is reversed, the rollback path is:
 
 1. Remove the `evals/` suite tree, `.vally.yaml`, and the `scripts/evals/` orchestration and moderation layers.
-2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` agent.
+2. Remove the `.github/skills/hve-core/vally-tests/` skill, the `vally-test-author` subagent, and the `content-policy-citation` shared instruction.
 3. Revert the `evals/`-related changes in `.github/workflows/pr-validation.yml`.
 4. Update any collection manifests that reference the removed skill/agent and re-run `npm run plugin:generate`.
 5. Document the reversal in a superseding ADR that links back to this one and sets `superseded-by` here.
@@ -332,7 +332,7 @@ No data migration is required: removing the framework leaves the underlying AI c
 * scripts/evals/moderation/
 * .github/skills/hve-core/vally-tests/
 * .github/agents/hve-core/subagents/vally-test-author.agent.md
-* .github/agents/content-policy-citation.agent.md
+* .github/instructions/shared/content-policy-citation.instructions.md
 * .github/workflows/pr-validation.yml
 
 ## More Information
@@ -344,7 +344,7 @@ No data migration is required: removing the framework leaves the underlying AI c
 * Moderation pipeline: `scripts/evals/moderation/`
 * Authoring skill: `.github/skills/hve-core/vally-tests/`
 * Test-author subagent: `.github/agents/hve-core/subagents/vally-test-author.agent.md`
-* Content-policy agent: `.github/agents/content-policy-citation.agent.md`
+* Content-policy shared instruction: `.github/instructions/shared/content-policy-citation.instructions.md`
 * PR validation workflow (evaluation matrix gate): `.github/workflows/pr-validation.yml`
 * Complementary runtime framework: [vyta/beval](https://github.com/vyta/beval) (language-agnostic agentic behavioral evaluation; integration in progress via open PRs)
 

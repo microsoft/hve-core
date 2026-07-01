@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 #Requires -Modules Pester
@@ -18,6 +18,26 @@ BeforeAll {
         param([Parameter(Mandatory)][scriptblock]$ScriptBlock)
 
         return @(& $ScriptBlock 6>&1 | ForEach-Object { [string]$_ })
+    }
+}
+
+Describe 'ConvertTo-GitHubActionsEscaped' -Tag 'Unit' {
+    It 'Leaves empty values unchanged' {
+        ConvertTo-GitHubActionsEscaped -Value '' | Should -Be ''
+    }
+
+    It 'Escapes property delimiters when requested' {
+        ConvertTo-GitHubActionsEscaped -Value 'repo:main,1' -ForProperty | Should -Be 'repo%3Amain%2C1'
+    }
+}
+
+Describe 'ConvertTo-AzureDevOpsEscaped' -Tag 'Unit' {
+    It 'Leaves empty values unchanged' {
+        ConvertTo-AzureDevOpsEscaped -Value '' | Should -Be ''
+    }
+
+    It 'Escapes property delimiters when requested' {
+        ConvertTo-AzureDevOpsEscaped -Value 'path;value' -ForProperty | Should -Be 'path%AZP3Bvalue'
     }
 }
 
@@ -654,6 +674,22 @@ Describe 'Write-CIAnnotations' -Tag 'Unit' {
 
             $output = Invoke-HostOutput { Write-CIAnnotations -Summary $summary }
             $output | Should -Match 'line1%0Aline2'
+        }
+
+        It 'Skips blank messages and uses the issue file path when relative path is missing' {
+            $summary = [pscustomobject]@{
+                Results = @(
+                    [pscustomobject]@{
+                        Issues = @(
+                            [pscustomobject]@{ Type = 'Warning'; Message = ''; Line = 3; FilePath = 'README.md' },
+                            [pscustomobject]@{ Type = 'Error'; Message = 'Fallback path'; Line = 2; FilePath = 'docs/guide.md' }
+                        )
+                    }
+                )
+            }
+
+            $output = Invoke-HostOutput { Write-CIAnnotations -Summary $summary }
+            $output | Should -Contain '::error file=docs/guide.md,line=2::Fallback path'
         }
     }
 

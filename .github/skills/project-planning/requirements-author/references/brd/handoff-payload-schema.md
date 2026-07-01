@@ -1,5 +1,5 @@
 ---
-description: 'BRD-author view of the BRD-to-PRD handoff payload contract emitted at Govern exit for PRD Builder consumption - Brought to you by microsoft/hve-core'
+description: 'BRD-author view of the BRD-to-PRD handoff payload contract emitted at Govern exit for PRD Builder consumption'
 ---
 
 # BRD-to-PRD Handoff Payload — BRD Author View
@@ -94,4 +94,4 @@ The brd-author bundle's contribution to the payload is validated by:
 
 This file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The upstream `BRD_TO_PRD_HANDOFF_V1` schema definition lives in the `brd-quality-formats` skill bundle; this file is a brd-author view of that schema and never replaces it.
 
-> Brought to you by microsoft/hve-core
+

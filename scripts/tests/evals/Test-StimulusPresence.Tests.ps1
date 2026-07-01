@@ -1,12 +1,14 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 BeforeAll {
     $script:ModulePath = Join-Path $PSScriptRoot '../../evals/Modules/StimulusIndex.psm1'
+    $script:ArtifactModulePath = Join-Path $PSScriptRoot '../../evals/Modules/ArtifactDetection.psm1'
     $script:ScriptPath = Join-Path $PSScriptRoot '../../evals/Test-StimulusPresence.ps1'
 
     Import-Module $script:ModulePath -Force
+    Import-Module $script:ArtifactModulePath -Force
     if (-not (Get-Module -ListAvailable -Name 'powershell-yaml')) {
         throw "Tests require the 'powershell-yaml' module to be installed."
     }
@@ -115,6 +117,38 @@ stimuli:
             $coverage = Test-StimulusCoverage -Index $index -Kind 'prompt' -ArtifactId 'unknown'
             $coverage.Count | Should -Be 0
         }
+    }
+}
+
+Describe 'ArtifactDetection Test-RepoRootArtifact' -Tag 'Unit' {
+    It 'Returns true for repo-root <Kind> artifacts' -ForEach @(
+        @{ Kind = 'agent'; Path = '.github/agents/example.agent.md' }
+        @{ Kind = 'prompt'; Path = '.github/prompts/example.prompt.md' }
+        @{ Kind = 'instruction'; Path = '.github/instructions/workflows.instructions.md' }
+        @{ Kind = 'skill'; Path = '.github/skills/example/SKILL.md' }
+    ) {
+        Test-RepoRootArtifact -Kind $Kind -Path $Path | Should -BeTrue
+    }
+
+    It 'Returns false for collection-scoped <Kind> artifacts' -ForEach @(
+        @{ Kind = 'agent'; Path = '.github/agents/hve-core/task-research.agent.md' }
+        @{ Kind = 'prompt'; Path = '.github/prompts/hve-core/example.prompt.md' }
+        @{ Kind = 'instruction'; Path = '.github/instructions/coding-standards/powershell/powershell.instructions.md' }
+        @{ Kind = 'skill'; Path = '.github/skills/shared/pr-reference/SKILL.md' }
+    ) {
+        Test-RepoRootArtifact -Kind $Kind -Path $Path | Should -BeFalse
+    }
+
+    It 'Normalizes backslash separators' {
+        Test-RepoRootArtifact -Kind 'instruction' -Path '.github\instructions\workflows.instructions.md' | Should -BeTrue
+    }
+
+    It 'Returns false for unknown kinds' {
+        Test-RepoRootArtifact -Kind 'unknown' -Path '.github/instructions/workflows.instructions.md' | Should -BeFalse
+    }
+
+    It 'Returns false for empty paths' {
+        Test-RepoRootArtifact -Kind 'instruction' -Path '' | Should -BeFalse
     }
 }
 
@@ -233,6 +267,42 @@ stimuli:
         $report.skipped.Count | Should -Be 1
         $report.missing.Count | Should -Be 0
         $report.skipped[0].reason | Should -Be 'deleted'
+    }
+
+    It 'Skips repo-root artifacts without requiring coverage' {
+        $artifacts = @(
+            @{ kind = 'instruction'; artifactId = 'workflows'; path = '.github/instructions/workflows.instructions.md'; status = 'M' }
+        )
+        $spec = "name: empty`nstimuli: []"
+        $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
+        $LASTEXITCODE | Should -Be 0
+
+        $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
+        $report.skipped.Count | Should -Be 1
+        $report.missing.Count | Should -Be 0
+        $report.skipped[0].reason | Should -Be 'repo-specific'
+        $report.skipped[0].artifactId | Should -Be 'workflows'
+    }
+
+    It 'Still requires coverage for collection-scoped artifacts' {
+        $artifacts = @(
+            @{ kind = 'instruction'; artifactId = 'powershell'; path = '.github/instructions/coding-standards/powershell/powershell.instructions.md'; status = 'M' }
+        )
+        $spec = "name: empty`nstimuli: []"
+        $fx = New-PresenceFixture -Artifacts $artifacts -SpecYaml @($spec)
+
+        & pwsh -NoProfile -File $script:ScriptPath `
+            -ManifestPath $fx.ManifestPath -EvalRoot $fx.EvalRoot -OutFile $fx.OutFile `
+            -RepoRoot $fx.Dir *> $null
+        $LASTEXITCODE | Should -Be 1
+
+        $report = Get-Content -LiteralPath $fx.OutFile -Raw | ConvertFrom-Json
+        $report.missing.Count | Should -Be 1
+        $report.missing[0].artifactId | Should -Be 'powershell'
     }
 
     It 'Exits 2 when the manifest does not exist' {

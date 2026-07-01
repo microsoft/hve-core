@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 """Text frame, paragraph, and run property utilities for PowerPoint skill scripts.
 
@@ -375,6 +375,7 @@ def extract_run_properties(run) -> dict:
         if run.hyperlink and run.hyperlink.address:
             props["hyperlink"] = run.hyperlink.address
     except (AttributeError, TypeError):
+        # Run has no hyperlink; skip it.
         pass
     spc = _extract_char_spacing(run.font)
     if spc is not None:

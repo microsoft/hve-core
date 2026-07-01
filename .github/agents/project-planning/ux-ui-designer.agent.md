@@ -169,7 +169,3 @@ Involve a human when:
 * Visual design decisions involve brand identity, typography, or iconography.
 * Usability testing with real users is needed to validate assumptions.
 * Design system decisions affect multiple teams or products.
-
----
-
-Brought to you by microsoft/hve-core

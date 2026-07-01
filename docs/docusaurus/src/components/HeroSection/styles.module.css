@@ -30,6 +30,7 @@
 }
 
 .heroSubtitle {
+  /* 16px regular text: white on the dark hero gradient holds >=7:1 (SC 1.4.3) */
   color: var(--ms-learn-hero-text);
   font-size: 16px;
   line-height: 25.6px;

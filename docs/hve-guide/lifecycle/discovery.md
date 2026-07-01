@@ -3,7 +3,7 @@ title: "Stage 2: Discovery"
 description: Research requirements, gather context, and build foundational documents with AI-assisted exploration
 sidebar_position: 2
 author: Microsoft
-ms.date: 2026-06-17
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - ai-assisted project lifecycle
@@ -112,7 +112,7 @@ Assess the responsible AI risks for this project based on the security plan
 
 ## Stage Outputs and Next Stage
 
-Discovery produces BRDs, research summaries, security plans, data specifications, architecture decision records, supply chain security assessments, and RAI assessments. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/brds/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
+Discovery produces BRDs, research summaries, security plans, data specifications, architecture decision records, supply chain security assessments, and RAI assessments. Transition to [Stage 3: Product Definition](product-definition.md) when the BRD is complete (handoff at `docs/project-planning/`). TPMs who have a sufficient BRD can skip directly to [Stage 4: Decomposition](decomposition.md).
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

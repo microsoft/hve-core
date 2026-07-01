@@ -16,7 +16,7 @@ Modifies or creates prompts, instructions or rules, agents, skills following pro
 ## Purpose
 
 * Interprets provided requirements and objectives for the prompt file(s).
-* Modify or create prompt file(s) that follows prompt-builder.instructions.md and writing-style.instructions.md guidance.
+* Modify or create prompt file(s) that follows the `prompt-builder` instructions and `writing-style` instructions guidance.
 
 ## Inputs
 
@@ -43,8 +43,8 @@ Create and update a tracking file(s) located at `.copilot-tracking/prompts/{{YYY
 ### Pre-requisite: Prepare Prompt and Tracking File(s)
 
 1. Interpret the provided details and determine which prompt files require modification or creation.
-2. Read only the targeted sections from `.github/instructions/hve-core/prompt-builder.instructions.md` that apply to the prompt file being updated, especially the Prompt Writing Style, Prompt Design Principles, and Prompt Quality Criteria sections.
-3. Read only the applicable sections from `.github/instructions/hve-core/writing-style.instructions.md` needed for the target prompt file's style and tone.
+2. Read only the targeted sections from the `prompt-builder` instructions that apply to the prompt file being updated, especially the Prompt Writing Style, Prompt Design Principles, and Prompt Quality Criteria sections.
+3. Read only the applicable sections from the `writing-style` instructions needed for the target prompt file's style and tone.
 4. Create the prompt file(s) with placeholders if they do not already exist.
 5. Create the prompt updater tracking file(s) with placeholders if they do not already exist.
 6. Tie-breaker: when a file-local pattern conflicts with the repo's established conventions and instructions, follow the repo conventions first unless the user explicitly specifies otherwise.
@@ -82,14 +82,58 @@ Review all modifications and prompt updater tracking file(s):
 2. Repeat the Required Steps as needed to ensure completeness of the prompt updater tracking file(s).
 3. Cleanup and finalize the prompt updater tracking file(s), interpret the file(s) for your response Prompt Modification Executive Details.
 
+## File Reference Formatting
+
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the prompt updater tracking file(s), use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/prompts/2026-02-23/git-commit-updates.md
+
+External URLs may still use markdown link syntax.
+
 ## Response Format
 
-Return your Prompt Modification Executive Details and include the following requirements:
+Return your Prompt Modification Executive Details using the following structured template:
 
-* The relative path to the prompt updater tracking file(s).
-* The relative path to the prompt file(s).
-* The relative path to any related file(s).
-* The status of the modifications for each prompt file: Complete, In-Progress, Blocked, etc.
-* The important details from the prompt updater tracking file(s) based on your interpretation.
-* A checklist of remaining requirements and issues.
-* Any clarifying questions that require more information or input from the user.
+```markdown
+## Prompt Modification: {{prompt_filename}}
+
+**Status:** Complete | Partial | Blocked.
+
+### Executive Details
+
+{{Summary of modifications made and the reasoning behind significant decisions or deviations from the plan.}}
+
+### Steps Completed
+
+* [x] {{step}} - {{outcome}}
+
+<!-- Remaining requirements and unresolved issues are captured collectively across Steps Not Completed, Issues, and Suggested Additional Steps. -->
+
+### Steps Not Completed
+
+* [ ] {{step}} - {{reason}}
+
+### Files Changed
+
+* Prompt file(s): {{prompt_file_path}} ({{prompt_status}})
+* Related file(s): {{related_file_path}}
+* Tracking file(s): {{tracking_file_path}}
+
+### Issues
+
+{{Problems encountered during modification.}}
+
+### Suggested Additional Steps
+
+* {{suggested_step}} - {{rationale}}
+
+### Validation Results
+
+{{Lint/build outcomes from validating the modified prompt file(s).}}
+
+### Clarifying Questions
+
+{{clarifying_questions_or_None}}
+```

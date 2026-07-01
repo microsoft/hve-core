@@ -29,4 +29,4 @@ This overlay applies the repository-wide [Licensing Posture](../hve-core/licensi
 * OWASP Top 10: <https://owasp.org/www-project-top-ten/>
 * ISO 42001: <https://www.iso.org/standard/77520.html>
 * ISO 27005: <https://www.iso.org/standard/80585.html>
-* ISO/IEC 42030: <https://www.iso.org/standard/42030>
+* ISO/IEC 42030: <https://www.iso.org/standard/73436.html>

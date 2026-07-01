@@ -1,5 +1,5 @@
 #Requires -Modules Pester
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -61,7 +61,7 @@ Write-Host "Hello World"
         # File missing SPDX
         $missingSpdxContent = @"
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 
 Write-Host "Hello World"
 "@
@@ -76,7 +76,7 @@ Write-Host "Hello World"
         # Valid file with #Requires statement
         $validWithRequiresContent = @"
 #!/usr/bin/env pwsh
-#Requires -Version 7.0
+#Requires -Version 7.4
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
@@ -102,6 +102,35 @@ Write-Host "Hello World"
 
 #endregion
 
+#region Guidance Alignment Tests
+
+Describe 'Test-CopyrightHeaders Guidance Alignment' -Tag 'Unit' {
+    BeforeAll {
+        Import-Module (Join-Path $PSScriptRoot '../../lib/Modules/CopyrightHeader.psm1') -Force
+
+        $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
+        $script:GuidanceFiles = @(
+            (Join-Path $repoRoot '.github/instructions/coding-standards/bash/bash.instructions.md')
+            (Join-Path $repoRoot '.github/instructions/coding-standards/powershell/powershell.instructions.md')
+            (Join-Path $repoRoot '.github/instructions/coding-standards/powershell/pester.instructions.md')
+            (Join-Path $repoRoot '.github/instructions/coding-standards/python-script.instructions.md')
+            (Join-Path $repoRoot 'docs/contributing/copyright-headers.md')
+        )
+        $script:CanonicalHeaderLines = Get-CanonicalHeaderLines -CommentPrefix '#'
+    }
+
+    It 'Keeps contributor guidance aligned with the canonical header literals' {
+        foreach ($filePath in $script:GuidanceFiles) {
+            $content = Get-Content -Path $filePath -Raw
+
+            $content | Should -Match ([regex]::Escape($script:CanonicalHeaderLines[0]))
+            $content | Should -Match ([regex]::Escape($script:CanonicalHeaderLines[1]))
+        }
+    }
+}
+
+#endregion
+
 #region Valid Header Tests
 
 Describe 'Test-CopyrightHeaders Valid Files' -Tag 'Unit' {
@@ -109,7 +138,7 @@ Describe 'Test-CopyrightHeaders Valid Files' -Tag 'Unit' {
         # Ensure fixtures exist
         $validContent = @"
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 Write-Host "Hello World"
@@ -132,11 +161,32 @@ Write-Host "Hello World"
         $validFile.valid | Should -BeTrue
     }
 
+    It 'Detects the canonical 2026 header format' {
+        $canonicalContent = @"
+#!/usr/bin/env pwsh
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+Write-Host "Canonical"
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'canonical.ps1') -Value $canonicalContent
+
+        $outputPath = Join-Path $script:FixturesPath 'results-canonical.json'
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('canonical.ps1') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $validFile = $results.results | Where-Object { $_.file -like '*canonical.ps1' }
+
+        $validFile.hasCopyright | Should -BeTrue
+        $validFile.hasSpdx | Should -BeTrue
+        $validFile.valid | Should -BeTrue
+    }
+
     It 'Handles files with #Requires statement' {
         $validWithRequiresContent = @"
 #!/usr/bin/env pwsh
-#Requires -Version 7.0
-# Copyright (c) Microsoft Corporation.
+#Requires -Version 7.4
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 Write-Host "Hello World"
@@ -149,6 +199,26 @@ Write-Host "Hello World"
         $results = Get-Content $outputPath | ConvertFrom-Json
         $validFile = $results.results | Where-Object { $_.file -like '*valid-with-requires.ps1' }
 
+        $validFile.valid | Should -BeTrue
+    }
+
+    It 'Supports double-slash comment prefixes for source files' {
+        $canonicalContent = @"
+// Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+console.log('Canonical');
+"@
+        Set-Content -Path (Join-Path $script:FixturesPath 'canonical.ts') -Value $canonicalContent
+
+        $outputPath = Join-Path $script:FixturesPath 'results-canonical-ts.json'
+        Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('canonical.ts') -OutputPath $outputPath
+
+        $results = Get-Content $outputPath | ConvertFrom-Json
+        $validFile = $results.results | Where-Object { $_.file -like '*canonical.ts' }
+
+        $validFile.hasCopyright | Should -BeTrue
+        $validFile.hasSpdx | Should -BeTrue
         $validFile.valid | Should -BeTrue
     }
 }
@@ -187,7 +257,7 @@ Write-Host "Hello World"
     It 'Detects missing SPDX line' {
         $content = @"
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 
 Write-Host "Hello World"
 "@
@@ -284,7 +354,7 @@ print("Hello World")
     It 'Detects missing SPDX in Python files' {
         $content = @"
 #!/usr/bin/env python3
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 
 print("Hello World")
 "@
@@ -353,7 +423,7 @@ Describe 'Test-CopyrightHeaders Parameters' -Tag 'Unit' {
         New-Item -ItemType Directory -Path $pythonFixturePath -Force | Out-Null
 
         $content = @"
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 print("Hello World")
@@ -387,6 +457,141 @@ Write-Host "No headers"
         Set-Content -Path (Join-Path $script:FixturesPath 'no-headers.ps1') -Value $content
 
         { Invoke-CopyrightHeaderCheck -Path $script:FixturesPath -FileExtensions @('no-headers.ps1') -OutputPath (Join-Path $script:FixturesPath 'fail-test.json') -FailOnMissing } | Should -Throw '*missing required headers*'
+    }
+}
+
+#endregion
+
+#region Fix Mode Tests
+
+Describe 'Test-CopyrightHeaders Fix Mode' -Tag 'Unit' {
+    BeforeAll {
+        if (-not (Test-Path $script:FixturesPath)) {
+            New-Item -ItemType Directory -Path $script:FixturesPath -Force | Out-Null
+        }
+    }
+
+    It 'Rewrites a non-canonical header to the canonical header' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-rewrite'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'rewrite.ps1'
+        $content = @"
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: MIT
+
+Write-Host "Rewritten"
+"@
+        Set-Content -Path $filePath -Value $content
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('rewrite.ps1') -OutputPath (Join-Path $fixRoot 'rewrite.json') -Fix
+
+        $updated = Get-Content -Path $filePath -Raw
+        $updated | Should -Match ([regex]::Escape('# Copyright (c) 2026 Microsoft Corporation. All rights reserved.'))
+        ($updated -match [regex]::Escape('# Copyright (c) Microsoft Corporation.')) | Should -BeFalse
+    }
+
+    It 'Inserts missing headers when fix mode runs' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-insert'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'insert.ps1'
+        Set-Content -Path $filePath -Value 'Write-Host "Inserted"'
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('insert.ps1') -OutputPath (Join-Path $fixRoot 'insert.json') -Fix
+
+        $updated = Get-Content -Path $filePath -Raw
+        $lines = $updated -split '\r?\n'
+        $lines | Should -Contain '# Copyright (c) 2026 Microsoft Corporation. All rights reserved.'
+        $lines | Should -Contain '# SPDX-License-Identifier: MIT'
+    }
+
+    It 'Inserts headers after a shebang without moving the shebang' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-shebang'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'shebang.ps1'
+        $content = @"
+#!/usr/bin/env pwsh
+Write-Host "Shebang"
+"@
+        Set-Content -Path $filePath -Value $content
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('shebang.ps1') -OutputPath (Join-Path $fixRoot 'shebang.json') -Fix
+
+        $lines = Get-Content -Path $filePath
+        $lines[0] | Should -Be '#!/usr/bin/env pwsh'
+        $lines[1] | Should -Be '# Copyright (c) 2026 Microsoft Corporation. All rights reserved.'
+        $lines[2] | Should -Be '# SPDX-License-Identifier: MIT'
+    }
+
+    It 'Is idempotent when fix runs twice' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-idempotent'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'idempotent.ps1'
+        Set-Content -Path $filePath -Value 'Write-Host "Idempotent"'
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('idempotent.ps1') -OutputPath (Join-Path $fixRoot 'first.json') -Fix
+        $firstPass = Get-Content -Path $filePath -Raw
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('idempotent.ps1') -OutputPath (Join-Path $fixRoot 'second.json') -Fix
+        $secondPass = Get-Content -Path $filePath -Raw
+
+        $secondPass | Should -Be $firstPass
+    }
+
+    It 'Uses double-slash comment prefixes for TypeScript files' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-typescript'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'main.ts'
+        Set-Content -Path $filePath -Value 'console.log("typescript")'
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('main.ts') -OutputPath (Join-Path $fixRoot 'main.json') -Fix
+
+        $updated = Get-Content -Path $filePath -Raw
+        $lines = $updated -split '\r?\n'
+        $lines | Should -Contain '// Copyright (c) 2026 Microsoft Corporation. All rights reserved.'
+        $lines | Should -Contain '// SPDX-License-Identifier: MIT'
+    }
+
+    It 'Accepts a 2027 year during validation but rewrites it to 2026 during fix mode' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-year'
+        New-Item -ItemType Directory -Path $fixRoot -Force | Out-Null
+        $filePath = Join-Path $fixRoot 'year2027.ps1'
+        $content = @"
+# Copyright (c) 2027 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
+
+Write-Host "Year"
+"@
+        Set-Content -Path $filePath -Value $content
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('year2027.ps1') -OutputPath (Join-Path $fixRoot 'year.json')
+
+        $results = Get-Content -Path (Join-Path $fixRoot 'year.json') -Raw | ConvertFrom-Json
+        $result = $results.results | Where-Object { $_.file -like '*year2027.ps1' }
+        $result.valid | Should -BeTrue
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('year2027.ps1') -OutputPath (Join-Path $fixRoot 'year-fixed.json') -Fix
+
+        $updated = Get-Content -Path $filePath -Raw
+        $updated | Should -Match '# Copyright \(c\) 2026 Microsoft Corporation\. All rights reserved\.'
+        $updated | Should -Not -Match '2027'
+    }
+
+    It 'Excludes plugin files from discovery during fix mode' {
+        $fixRoot = Join-Path $script:FixturesPath 'fix-plugins'
+        New-Item -ItemType Directory -Path (Join-Path $fixRoot 'plugins') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $fixRoot 'src') -Force | Out-Null
+        $pluginPath = Join-Path $fixRoot 'plugins/ignored.ps1'
+        $srcPath = Join-Path $fixRoot 'src/kept.ps1'
+        Set-Content -Path $pluginPath -Value 'Write-Host "Ignored"'
+        Set-Content -Path $srcPath -Value 'Write-Host "Kept"'
+
+        Invoke-CopyrightHeaderCheck -Path $fixRoot -FileExtensions @('*.ps1') -ExcludePaths @('plugins') -OutputPath (Join-Path $fixRoot 'plugins.json') -Fix
+
+        $results = Get-Content -Path (Join-Path $fixRoot 'plugins.json') -Raw | ConvertFrom-Json
+        $results.results.Count | Should -Be 1
+        $normalizedFiles = $results.results.file | ForEach-Object { $_ -replace '\\', '/' }
+        ($normalizedFiles | Where-Object { $_ -match '(^|/)src/kept\.ps1$' }).Count | Should -Be 1
+        ($normalizedFiles | Where-Object { $_ -match '(^|/)plugins/ignored\.ps1$' }).Count | Should -Be 0
     }
 }
 
@@ -427,7 +632,7 @@ Write-Host "Missing SPDX"
     It 'Does not call Write-CIAnnotation for passing files' {
         $valid = @"
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 Write-Host "Valid"
 "@
@@ -502,7 +707,7 @@ Describe 'Test-CopyrightHeaders Step Summary' -Tag 'Unit' {
     It 'Calls Write-CIStepSummary when all files pass' {
         $valid = @"
 #!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 Write-Host "Valid"
 "@

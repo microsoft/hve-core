@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 
 # PSScriptAnalyzer Settings for HVE Core
@@ -36,7 +36,7 @@
         # Require explicit parameter types
         PSUseCompatibleSyntax = @{
             Enable = $true
-            TargetVersions = @('5.1', '7.0', '7.2')
+            TargetVersions = @('7.4')
         }
 
         # Enforce proper comment-based help

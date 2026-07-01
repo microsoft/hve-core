@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 #
 # on-create.sh
@@ -48,9 +48,7 @@ main() {
     PSGALLERY_REPO="${PSGALLERY_REPO}" PSGALLERY_SOURCE="${PSGALLERY_SOURCE}" \
       pwsh -NoProfile -Command 'Register-PSRepository -Name $env:PSGALLERY_REPO -SourceLocation $env:PSGALLERY_SOURCE -InstallationPolicy Trusted -ErrorAction SilentlyContinue'
   fi
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PowerShell-Yaml -RequiredVersion 0.4.7 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name PSScriptAnalyzer -RequiredVersion 1.25.0 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
-  PSGALLERY_REPO="${PSGALLERY_REPO}" pwsh -NoProfile -Command 'Install-Module -Name Pester -RequiredVersion 5.7.1 -Force -Scope CurrentUser -Repository $env:PSGALLERY_REPO'
+  pwsh -NoProfile -File scripts/security/Install-PSModules.ps1 -Repository "${PSGALLERY_REPO}"
 
   echo "Installing gitleaks..."
   # Download gitleaks tarball and verify checksum before extracting
@@ -98,6 +96,29 @@ main() {
   fi
   sudo install /tmp/cosign /usr/local/bin/cosign
   rm /tmp/cosign
+
+  echo "Installing osv-scanner..."
+  OSV_SCANNER_VERSION="2.3.8"
+  if [[ "${ARCH}" == "x86_64" ]]; then
+    OSV_ARCH="amd64"
+    OSV_SCANNER_SHA256="bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc"
+  elif [[ "${ARCH}" == "aarch64" ]]; then
+    OSV_ARCH="arm64"
+    OSV_SCANNER_SHA256="8158b18edd2d03b1a30d905ca91b032bc62262167be8f206c27114f08823e27c"
+  else
+    echo "ERROR: Unsupported architecture for osv-scanner: ${ARCH}" >&2
+    exit 1
+  fi
+  curl -sSfL "${GITHUB_RELEASES_URL}/google/osv-scanner/releases/download/v${OSV_SCANNER_VERSION}/osv-scanner_linux_${OSV_ARCH}" -o /tmp/osv-scanner
+
+  echo "Checking osv-scanner binary integrity..."
+  if ! echo "${OSV_SCANNER_SHA256}  /tmp/osv-scanner" | sha256sum -c --quiet -; then
+    echo "ERROR: SHA256 checksum verification failed for osv-scanner binary" >&2
+    rm /tmp/osv-scanner
+    exit 1
+  fi
+  sudo install /tmp/osv-scanner /usr/local/bin/osv-scanner
+  rm /tmp/osv-scanner
 
   echo "Installing uv package manager..."
   # Dependencies are pinned for stability. Dependabot and security workflows manage updates.

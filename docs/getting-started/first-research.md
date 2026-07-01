@@ -3,7 +3,7 @@ title: Your First Research
 description: Use the task-researcher agent to investigate your own codebase
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-02-18
+ms.date: 2026-06-27
 ms.topic: tutorial
 keywords:
   - getting started
@@ -35,10 +35,10 @@ teach methodology; real questions teach methodology and produce useful output.
 ## Run the Research
 
 1. Open GitHub Copilot Chat (`Ctrl+Alt+I`).
-2. Select the **task-researcher** agent.
+2. Select the **Task Researcher** agent or invoke **/task-research** from the prompt surface.
 3. Type your question as a prompt.
 
-The agent creates a research document in `.copilot-tracking/research/` with
+The agent or prompt creates a research document in `.copilot-tracking/research/` with
 findings, file references, and evidence. This takes 2-5 minutes depending on
 the scope of the question.
 

@@ -1,5 +1,5 @@
 ﻿#!/usr/bin/env pwsh
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
@@ -23,7 +23,7 @@
     Base branch for changed-file detection. Defaults to 'origin/main'.
 #>
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '', Justification = 'Parameters consumed via script scope')]
 [CmdletBinding()]

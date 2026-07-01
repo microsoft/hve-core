@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: MIT
 # Docusaurus documentation site deployment
 # Prerequisite: Enable GitHub Pages in repo Settings → Pages → Source: GitHub Actions
 # and allow the target branch in Settings → Environments → github-pages → Deployment branches
@@ -54,6 +56,13 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
+        env:
+          # The site build never launches a browser, but pa11y/puppeteer are dev
+          # dependencies whose postinstall downloads chrome-headless-shell. That
+          # download intermittently fails CI with a corrupt archive ("end of
+          # central directory record signature not found"), so skip it here as
+          # docusaurus-tests.yml already does for its own install step.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Build site
         working-directory: docs/docusaurus

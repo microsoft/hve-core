@@ -1,6 +1,6 @@
 ---
 name: dt-curriculum
-description: Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice - Brought to you by microsoft/hve-core
+description: Design Thinking learning curriculum covering nine progressive modules across the full Problem, Solution, and Implementation Space methods plus a shared manufacturing reference scenario for teaching and practice
 user-invocable: false
 metadata:
   authors: "microsoft/hve-core"
@@ -41,6 +41,3 @@ scenario alongside any module that uses scenario-based checks or exercises.
 * `references/` — the DT curriculum knowledge documents.
   * `curriculum-01-scoping.md` through `curriculum-09-handoff.md` — one module per Design Thinking method.
   * `curriculum-scenario-manufacturing.md` — shared factory-floor reference scenario used across all nine modules.
-
----
-

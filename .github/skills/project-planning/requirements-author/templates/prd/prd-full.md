@@ -362,7 +362,3 @@ Approval date: {{approval_date}}
 * Canonical Template: `requirements-author/templates/prd/prd-full.md`.
 * License: CC-BY 4.0 (Microsoft HVE-Core).
 * Attribution: Microsoft HVE-Core Team.
-
----
-
-> Brought to you by microsoft/hve-core

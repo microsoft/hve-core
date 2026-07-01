@@ -16,6 +16,7 @@ Research specific questions and topics using search tools, read tools, fetch web
 
 * Research topics and/or questions to investigate.
 * Subagent research document file path. If the parent provides a path, use that path. Otherwise place the file under `.copilot-tracking/research/subagents/{{YYYY-MM-DD}}/` and derive the file name from the topic using lowercase, hyphenated, punctuation-stripped text, for example `API Design` becomes `api-design.md`.
+* Delegated RPI work may provide a compact task brief and expect the subagent to write the full evidence to the research file and return only a short executive summary.
 
 ## Subagent Research Document
 
@@ -52,11 +53,11 @@ Read the subagent research document, cleanup and finalize the subagent research 
 
 ## File Reference Formatting
 
-Files under `.copilot-tracking/` are consumed by AI agents, not humans clicking links. When citing workspace files in the subagent research document, use plain-text workspace-relative paths. Do not use markdown links or `#file:` directives for file paths — VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
+Files under .copilot-tracking/ are consumed by AI agents, not humans clicking links. When citing workspace files in the subagent research document, use plain-text workspace-relative paths. Do not use markdown links or #file: directives for file paths. VS Code resolves these and reports errors when targets are missing, flooding the Problems tab.
 
-* `README.md`
-* `.github/copilot-instructions.md`
-* `.copilot-tracking/research/2026-02-23/research.md`
+* README.md
+* .github/copilot-instructions.md
+* .copilot-tracking/research/subagents/2026-02-23/api-design.md
 
 External URLs may still use markdown link syntax.
 
@@ -72,6 +73,6 @@ Initial chat response, emit at most:
 * Up to 7 bullet-point key findings (each ≤ 240 chars). Prioritize findings that directly answer the stated research questions and include source references in the subagent document.
 * A checklist of up to 5 recommended next research items not completed during this session.
 * Up to 3 clarifying questions, only when blocking.
-* 1 short "Full Detail" pointer line: "Re-read `<path>` for complete evidence, code blocks, file/line citations, and rejected alternatives."
+* 1 short "Full Detail" pointer line: "Re-read <path> for complete evidence, code blocks, file/line citations, and rejected alternatives."
 
 Do not paste file contents, code blocks, long quotes, or full evidence tables into the chat response. The subagent file is the source of truth.
