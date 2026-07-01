@@ -2,7 +2,7 @@
 title: Dev Container
 description: Pre-configured development environment for HVE Core with all required tools and extensions
 author: HVE Core Team
-ms.date: 2026-04-13
+ms.date: 2026-06-30
 ms.topic: guide
 keywords:
   - devcontainer
@@ -65,6 +65,7 @@ A pre-configured development environment that includes all tools, extensions, an
 ### Security
 
 * Gitleaks (secret scanning)
+* osv-scanner (dependency vulnerability scanning)
 
 ### PowerShell Modules
 
