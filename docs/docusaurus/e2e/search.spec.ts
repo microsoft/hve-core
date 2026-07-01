@@ -19,10 +19,11 @@ test.describe('Search', () => {
     await searchInput.click();
     await searchInput.fill('getting started');
 
-    // The local search renders a suggestions dropdown anchored to the input;
-    // @easyops-cn/docusaurus-search-local emits hashed `suggestion_*` classes.
-    const results = page.locator('[class*="suggestion_"]').first();
-    await expect(results).toBeVisible({ timeout: 15000 });
+    // The local search renders a listbox of results anchored to the input. Wait
+    // for the actual combobox/listbox structure so the test exercises the
+    // interactive widget instead of a transient class name.
+    await expect(page.locator('[role="listbox"]').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 15000 });
 
     return searchInput;
   }
@@ -38,6 +39,14 @@ test.describe('Search', () => {
       .include('.navbar__search')
       .analyze();
     expect(results.violations).toEqual([]);
+  });
+
+  test('search results are announced via a status region', async ({ page }) => {
+    await openResults(page);
+
+    const status = page.locator('[role="status"]').first();
+    await expect(status).toHaveCount(1);
+    await expect(status).toHaveText(/No results|\d+ results?/i, { timeout: 15000 });
   });
 
   test('the combobox exposes the required APG structure', async ({ page }) => {

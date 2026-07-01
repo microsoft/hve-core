@@ -93,13 +93,6 @@ jobs:
       - name: Install dependencies
         working-directory: docs/docusaurus
         run: npm ci
-        env:
-          # pa11y uses the runner's system Google Chrome (provisioned by the
-          # "Provision system Chrome" step below), so skip the puppeteer
-          # postinstall download. That self-download failed deterministically
-          # in CI by extracting a partial browser tree while still exiting 0,
-          # poisoning ~/.cache/puppeteer.
-          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Lint accessibility
         working-directory: docs/docusaurus
@@ -132,37 +125,26 @@ jobs:
         working-directory: docs/docusaurus
         run: npm run build
 
-      # Both accessibility tools reuse the ubuntu-latest runner's maintained
-      # Google Chrome stable build instead of self-downloading a browser:
-      # pa11y drives it over CDP via puppeteer (honouring
-      # PUPPETEER_EXECUTABLE_PATH because `.pa11yci` sets no `executablePath`),
-      # and Playwright drives it via `channel: 'chrome'` in
-      # playwright.config.ts. Self-downloading failed deterministically in CI:
-      # the archive downloaded in full but extraction silently dropped the
-      # main `chrome` binary while the install still exited 0, so no retry or
-      # disk-space change could recover it. This step is the single source of
-      # the shared Chrome dependency; its presence check and `--version` echo
-      # guard both tools by failing the job loudly here -- with a clear
-      # message -- rather than as an opaque browser-launch error downstream.
+      # Playwright drives the runner's maintained Google Chrome stable build
+      # via `channel: 'chrome'` in playwright.config.ts instead of
+      # self-downloading a bundled Chromium. Self-downloading failed
+      # deterministically in CI: the archive downloaded in full but extraction
+      # silently dropped the main `chrome` binary while the install still
+      # exited 0, so no retry or disk-space change could recover it. This step
+      # is the single source of the shared Chrome dependency; its presence
+      # check and `--version` echo guard the e2e suite by failing the job
+      # loudly here -- with a clear message -- rather than as an opaque
+      # browser-launch error downstream.
       - name: Provision system Chrome
         run: |
           set -u
           chrome_bin="$(command -v google-chrome || command -v google-chrome-stable || true)"
           if [ -z "$chrome_bin" ]; then
-            echo "::error::No system Google Chrome found on the runner; pa11y and Playwright both require it"
+            echo "::error::No system Google Chrome found on the runner; Playwright requires it"
             exit 1
           fi
           echo "Using system Chrome at: $chrome_bin"
           "$chrome_bin" --version
-          echo "PUPPETEER_EXECUTABLE_PATH=$chrome_bin" >> "$GITHUB_ENV"
-
-      # `npm run a11y` wraps the scan in start-server-and-test, which starts
-      # `serve:ci`, waits for it, runs pa11y-ci, then tears the server down --
-      # so this step is self-contained and leaves no background process behind.
-      - name: Accessibility scan (pa11y-ci)
-        working-directory: docs/docusaurus
-        run: npm run a11y
-        continue-on-error: ${{ inputs.soft-fail }}
 
       # Playwright drives Google Chrome stable via `channel: 'chrome'` in
       # playwright.config.ts, reusing the runner's maintained Chrome build
@@ -170,7 +152,8 @@ jobs:
       # or cache step is needed. The "Provision system Chrome" step above is
       # the shared dependency and already fails the job loudly when no system
       # Chrome is present. This step owns its own e2e server (Playwright's
-      # webServer config), independent of the pa11y step above.
+      # webServer config). The full-site accessibility crawl runs as the
+      # site-crawl spec within this suite.
       - name: Accessibility journeys (Playwright)
         working-directory: docs/docusaurus
         run: npm run test:e2e
