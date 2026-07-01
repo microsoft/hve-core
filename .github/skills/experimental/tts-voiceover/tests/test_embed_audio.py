@@ -97,9 +97,7 @@ class TestAddNarrationTiming:
         assert "old-content" not in xml_str
         assert 'spid="10"' in xml_str
 
-    def test_given_template_when_add_timing_then_hardened_parser_passed(
-        self, mocker
-    ):
+    def test_given_template_when_add_timing_then_hardened_parser_passed(self, mocker):
         """_add_narration_timing must pass a hardened XMLParser to etree.fromstring."""
         from lxml import etree
 
