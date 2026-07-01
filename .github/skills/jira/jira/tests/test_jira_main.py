@@ -79,7 +79,7 @@ def test_main_refuses_unconfirmed_write_operations(
             )
 
     monkeypatch.setattr(jira, "create_parser", FakeParser)
-    monkeypatch.setattr(jira.JiraClient, "from_environment", lambda: object())
+    monkeypatch.setattr(jira.JiraClient, "from_environment", object)
 
     result = jira.main()
 
@@ -110,9 +110,7 @@ def test_main_allows_confirmed_write_operations_via_environment(
 
     monkeypatch.setattr(jira, "create_parser", FakeParser)
     sentinel_client = object()
-    monkeypatch.setattr(
-        jira.JiraClient, "from_environment", lambda: sentinel_client
-    )
+    monkeypatch.setattr(jira.JiraClient, "from_environment", lambda: sentinel_client)
     monkeypatch.setenv("JIRA_CONFIRM_WRITES", "1")
     monkeypatch.setattr(jira, "_print_result", lambda _result, _fields: None)
 

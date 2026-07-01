@@ -27,13 +27,13 @@ The gh-code-scanning skill is a read-only reporting wrapper over `gh api`. Its h
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                              |
-|--------------------|------------------------------------------------------------------------------------|
-| Runtime surface    | Local CLI (PowerShell + bash); `gh` CLI subprocess; stdout only; no listener, no writes |
-| Trust buckets      | B1 CLI→gh/GitHub API, B2 untrusted alert-data rendering, B3 caller process/credentials |
+| Dimension          | Value                                                                                        |
+|--------------------|----------------------------------------------------------------------------------------------|
+| Runtime surface    | Local CLI (PowerShell + bash); `gh` CLI subprocess; stdout only; no listener, no writes      |
+| Trust buckets      | B1 CLI→gh/GitHub API, B2 untrusted alert-data rendering, B3 caller process/credentials       |
 | Credentials        | None handled in-script; `gh` owns the token (keyring or `GH_TOKEN`), `security_events` scope |
-| Network egress     | HTTPS to the GitHub REST API via `gh` (read-only GET)                               |
-| Open residual gaps | 3 (SupplyChain-Med: unpinned `gh`/`jq` PATH dependencies)                           |
+| Network egress     | HTTPS to the GitHub REST API via `gh` (read-only GET)                                        |
+| Open residual gaps | 3 (SupplyChain-Med: unpinned `gh`/`jq` PATH dependencies)                                    |
 
 ## Contents
 
@@ -97,27 +97,27 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Workstation / Runner | gh token, output integrity | Strict argument allow-lists; no in-script token handling; stdout-only |
-| GitHub REST API | Request integrity, token | TLS + auth delegated to `gh`; read-only GET; endpoint built from validated inputs |
+| Boundary             | Assets Protected           | Controls Enforced                                                                 |
+|----------------------|----------------------------|-----------------------------------------------------------------------------------|
+| Workstation / Runner | gh token, output integrity | Strict argument allow-lists; no in-script token handling; stdout-only             |
+| GitHub REST API      | Request integrity, token   | TLS + auth delegated to `gh`; read-only GET; endpoint built from validated inputs |
 
 ## Assets
 
-| Id | Asset | Lifetime | Notes |
-|----|-------|----------|-------|
-| A1 | GitHub auth token | Managed by `gh` | Never read by the script; `gh` sources it from its keyring or `GH_TOKEN`; `security_events` scope |
-| A2 | Owner / Repo / Branch arguments | Command lifetime | Caller-supplied; strictly validated before interpolation into the endpoint |
-| A3 | Alert data (descriptions, paths, URLs) | Command lifetime | Returned by the GitHub API; rendered as data, never executed |
-| A4 | `gh` / `jq` binaries | External, PATH-resolved | Unpinned host dependencies (see G-SUP-1) |
+| Id | Asset                                  | Lifetime                | Notes                                                                                             |
+|----|----------------------------------------|-------------------------|---------------------------------------------------------------------------------------------------|
+| A1 | GitHub auth token                      | Managed by `gh`         | Never read by the script; `gh` sources it from its keyring or `GH_TOKEN`; `security_events` scope |
+| A2 | Owner / Repo / Branch arguments        | Command lifetime        | Caller-supplied; strictly validated before interpolation into the endpoint                        |
+| A3 | Alert data (descriptions, paths, URLs) | Command lifetime        | Returned by the GitHub API; rendered as data, never executed                                      |
+| A4 | `gh` / `jq` binaries                   | External, PATH-resolved | Unpinned host dependencies (see G-SUP-1)                                                          |
 
 ## Adversaries
 
-| Id    | Adversary | In-scope mitigations |
-|-------|-----------|----------------------|
-| ADV-a | Caller supplying adversarial Owner/Repo/Branch/severity | Allow-list validation (`^[a-zA-Z0-9._-]+$` / `^[a-zA-Z0-9._/-]+$`, `[ValidateSet]`, severity enum) blocks argument and query injection into `gh api` |
-| ADV-b | Malicious content in alert fields (crafted rule text, path, URL) | Alert fields are emitted as data (`Format-Table`, `ConvertTo-Json`, `jq`); never evaluated or executed |
-| ADV-c | Network attacker on the CLI ↔ GitHub channel | TLS and certificate validation delegated to `gh`; no plaintext fallback |
+| Id    | Adversary                                                        | In-scope mitigations                                                                                                                                 |
+|-------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Caller supplying adversarial Owner/Repo/Branch/severity          | Allow-list validation (`^[a-zA-Z0-9._-]+$` / `^[a-zA-Z0-9._/-]+$`, `[ValidateSet]`, severity enum) blocks argument and query injection into `gh api` |
+| ADV-b | Malicious content in alert fields (crafted rule text, path, URL) | Alert fields are emitted as data (`Format-Table`, `ConvertTo-Json`, `jq`); never evaluated or executed                                               |
+| ADV-c | Network attacker on the CLI ↔ GitHub channel                     | TLS and certificate validation delegated to `gh`; no plaintext fallback                                                                              |
 
 ## Trust Buckets
 
@@ -150,10 +150,10 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Argument/query injection into `gh api` | Low | Med | Low | Mitigated (allow-list validation) |
-| `Branch` allow-list permits `.`/`..`/`/` | Low | Low | Low | Accepted (confined to query value; G-TAM-1) |
+| Threat                                   | Likelihood | Impact | Residual Risk | Status                                      |
+|------------------------------------------|------------|--------|---------------|---------------------------------------------|
+| Argument/query injection into `gh api`   | Low        | Med    | Low           | Mitigated (allow-list validation)           |
+| `Branch` allow-list permits `.`/`..`/`/` | Low        | Low    | Low           | Accepted (confined to query value; G-TAM-1) |
 
 ### Bucket B2: Untrusted alert-data rendering
 
@@ -183,9 +183,9 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Hostile alert field rendered downstream | Low | Low | Low | Mitigated (emitted as data only) |
+| Threat                                  | Likelihood | Impact | Residual Risk | Status                           |
+|-----------------------------------------|------------|--------|---------------|----------------------------------|
+| Hostile alert field rendered downstream | Low        | Low    | Low           | Mitigated (emitted as data only) |
 
 ### Bucket B3: CLI caller process and credentials
 
@@ -215,19 +215,19 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Token leakage via script handling | Low | High | Low | Mitigated (token owned by `gh`, never touched) |
+| Threat                            | Likelihood | Impact | Residual Risk | Status                                         |
+|-----------------------------------|------------|--------|---------------|------------------------------------------------|
+| Token leakage via script handling | Low        | High   | Low           | Mitigated (token owned by `gh`, never touched) |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap | Severity | Status |
-|---------|-----|----------|--------|
-| G-SUP-1 | `gh` and `jq` are external, unpinned dependencies resolved from `PATH`; the skill inherits their integrity and CVE posture. | SupplyChain-Med | Accepted (operator keeps `gh`/`jq` patched) |
-| G-TLS-1 | No certificate pinning for the GitHub API; TLS validation is delegated to `gh` and the system trust store. | InfoDisc-Low | Accepted (operator-acceptable for a managed GitHub endpoint) |
-| G-TAM-1 | The `Branch` allow-list permits `.`, `..`, and `/`; the value is confined to the `ref=` query segment (so it cannot inject query parameters or traverse the REST path) but is not canonicalized. | Tampering-Low | Accepted (defence-in-depth) |
+| Id      | Gap                                                                                                                                                                                              | Severity        | Status                                                       |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------|
+| G-SUP-1 | `gh` and `jq` are external, unpinned dependencies resolved from `PATH`; the skill inherits their integrity and CVE posture.                                                                      | SupplyChain-Med | Accepted (operator keeps `gh`/`jq` patched)                  |
+| G-TLS-1 | No certificate pinning for the GitHub API; TLS validation is delegated to `gh` and the system trust store.                                                                                       | InfoDisc-Low    | Accepted (operator-acceptable for a managed GitHub endpoint) |
+| G-TAM-1 | The `Branch` allow-list permits `.`, `..`, and `/`; the value is confined to the `ref=` query segment (so it cannot inject query parameters or traverse the REST path) but is not canonicalized. | Tampering-Low   | Accepted (defence-in-depth)                                  |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

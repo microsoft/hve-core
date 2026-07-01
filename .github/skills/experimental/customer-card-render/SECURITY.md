@@ -27,13 +27,13 @@ The customer-card-render skill converts untrusted Design Thinking markdown into 
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                              |
-|--------------------|------------------------------------------------------------------------------------|
+| Dimension          | Value                                                                                                            |
+|--------------------|------------------------------------------------------------------------------------------------------------------|
 | Runtime surface    | Local Python CLI; regex parse of untrusted DT markdown; YAML emission; no network, no credentials, no subprocess |
-| Trust buckets      | B1 untrusted markdown parsing, B2 YAML content emission, B3 caller/filesystem + PPTX handoff |
-| Credentials        | None handled or persisted                                                          |
-| Network egress     | None                                                                                |
-| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain and uv bootstrap)          |
+| Trust buckets      | B1 untrusted markdown parsing, B2 YAML content emission, B3 caller/filesystem + PPTX handoff                     |
+| Credentials        | None handled or persisted                                                                                        |
+| Network egress     | None                                                                                                             |
+| Open residual gaps | 2 (SupplyChain-Med: inherited powerpoint build toolchain and uv bootstrap)                                       |
 
 ## Contents
 
@@ -98,27 +98,27 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Workstation / Runner | Output integrity, host process | `yaml_escape` of dynamic values; quoted-placeholder templates; string-partition frontmatter (no YAML loader) |
-| PowerPoint skill runtime | Deck build integrity | Delegated to the powerpoint skill's own model (sandboxed execution, hardened document parsing) |
+| Boundary                 | Assets Protected               | Controls Enforced                                                                                            |
+|--------------------------|--------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Workstation / Runner     | Output integrity, host process | `yaml_escape` of dynamic values; quoted-placeholder templates; string-partition frontmatter (no YAML loader) |
+| PowerPoint skill runtime | Deck build integrity           | Delegated to the powerpoint skill's own model (sandboxed execution, hardened document parsing)               |
 
 ## Assets
 
-| Id | Asset | Lifetime | Notes |
-|----|-------|----------|-------|
-| A1 | Canonical DT markdown | Read-only during render | Untrusted prose; may contain confidential product/customer content |
-| A2 | `content.yaml` templates | Read-only | Ship with the skill; every placeholder is double-quoted |
-| A3 | Rendered `content.yaml` | Persisted | Written under the operator-chosen output directory |
-| A4 | Downstream powerpoint runtime | External | Out-of-process build; inherits the powerpoint skill's residual risk (G-SUP-1) |
+| Id | Asset                         | Lifetime                | Notes                                                                         |
+|----|-------------------------------|-------------------------|-------------------------------------------------------------------------------|
+| A1 | Canonical DT markdown         | Read-only during render | Untrusted prose; may contain confidential product/customer content            |
+| A2 | `content.yaml` templates      | Read-only               | Ship with the skill; every placeholder is double-quoted                       |
+| A3 | Rendered `content.yaml`       | Persisted               | Written under the operator-chosen output directory                            |
+| A4 | Downstream powerpoint runtime | External                | Out-of-process build; inherits the powerpoint skill's residual risk (G-SUP-1) |
 
 ## Adversaries
 
-| Id    | Adversary | In-scope mitigations |
-|-------|-----------|----------------------|
+| Id    | Adversary                                                       | In-scope mitigations                                                                                                                       |
+|-------|-----------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
 | ADV-a | Hostile or malformed DT markdown (crafted to break out of YAML) | `yaml_escape` escapes `\`, `"`, and newlines; templates quote every placeholder; frontmatter parsed by string partition, not a YAML loader |
-| ADV-b | Caller supplying an adversarial output path | Output path is operator-controlled; the script only writes `slide-NNN/content.yaml` beneath it |
-| ADV-c | Attacker targeting the downstream deck build | Build is delegated out-of-process to the powerpoint skill and governed by its model (G-SUP-1) |
+| ADV-b | Caller supplying an adversarial output path                     | Output path is operator-controlled; the script only writes `slide-NNN/content.yaml` beneath it                                             |
+| ADV-c | Attacker targeting the downstream deck build                    | Build is delegated out-of-process to the powerpoint skill and governed by its model (G-SUP-1)                                              |
 
 ## Trust Buckets
 
@@ -150,9 +150,9 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Malicious frontmatter/section triggers unsafe parse | Low | Low | Low | Mitigated (string partition; no YAML loader) |
+| Threat                                              | Likelihood | Impact | Residual Risk | Status                                       |
+|-----------------------------------------------------|------------|--------|---------------|----------------------------------------------|
+| Malicious frontmatter/section triggers unsafe parse | Low        | Low    | Low           | Mitigated (string partition; no YAML loader) |
 
 ### Bucket B2: YAML content emission
 
@@ -182,10 +182,10 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| YAML breakout via artifact prose | Low | Med | Low | Mitigated (`yaml_escape` + quoted placeholders) |
-| Confidential prose emitted without classification gate | Med | Low | Low | By design (G-INF-1) |
+| Threat                                                 | Likelihood | Impact | Residual Risk | Status                                          |
+|--------------------------------------------------------|------------|--------|---------------|-------------------------------------------------|
+| YAML breakout via artifact prose                       | Low        | Med    | Low           | Mitigated (`yaml_escape` + quoted placeholders) |
+| Confidential prose emitted without classification gate | Med        | Low    | Low           | By design (G-INF-1)                             |
 
 ### Bucket B3: CLI caller process and PowerPoint handoff
 
@@ -215,18 +215,18 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Downstream build executes untrusted content | Low | Med | Low | Deferred to powerpoint model (G-SUP-1) |
+| Threat                                      | Likelihood | Impact | Residual Risk | Status                                 |
+|---------------------------------------------|------------|--------|---------------|----------------------------------------|
+| Downstream build executes untrusted content | Low        | Med    | Low           | Deferred to powerpoint model (G-SUP-1) |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap | Severity | Status |
-|---------|-----|----------|--------|
+| Id      | Gap                                                                                                                                                                                                                                                                                                                     | Severity        | Status                                                                                                                   |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------|
 | G-SUP-1 | The deck build is delegated out-of-process to the experimental powerpoint skill (`Invoke-PptxPipeline.ps1`) and inherits that skill's residual risk (sandboxed `content-extra.py` execution, LibreOffice/MuPDF document parsing). The documented `uv` toolchain bootstrap uses a `curl \| sh` / `irm \| iex` installer. | SupplyChain-Med | Accepted; see the [powerpoint security model](../powerpoint/SECURITY.md) and pin the `uv` installer to a vetted release. |
-| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate. | InfoDisc-Low | By design; operators must avoid rendering regulated content and control the output directory. |
+| G-INF-1 | Canonical DT artifacts may contain confidential product or customer prose; that content flows verbatim (escaped) into the emitted `content.yaml` and any downstream deck. There is no data-classification gate.                                                                                                         | InfoDisc-Low    | By design; operators must avoid rendering regulated content and control the output directory.                            |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

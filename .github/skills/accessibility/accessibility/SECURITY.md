@@ -27,13 +27,13 @@ The accessibility skill runs an external Node scanner (`@axe-core/cli`, version-
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                          |
-|--------------------|--------------------------------------------------------------------------------|
-| Runtime surface    | Python wrapper spawning `npx --yes @axe-core/cli@4.12.1` (headless browser)     |
+| Dimension          | Value                                                                            |
+|--------------------|----------------------------------------------------------------------------------|
+| Runtime surface    | Python wrapper spawning `npx --yes @axe-core/cli@4.12.1` (headless browser)      |
 | Trust buckets      | B1 scan-target egress, B2 toolchain supply chain, B3 untrusted output, B4 caller |
-| Credentials        | None handled; no listener                                                       |
+| Credentials        | None handled; no listener                                                        |
 | Network egress     | Scanner fetches the operator-supplied target (no allow-list); npx package fetch  |
-| Open residual gaps | 4 (InfoDisc-Med: SSRF with no egress allow-list)                                |
+| Open residual gaps | 4 (InfoDisc-Med: SSRF with no egress allow-list)                                 |
 
 ## Contents
 
@@ -100,29 +100,29 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Operator Workstation / Runner | Output integrity, host process | Argument list (no shell); typed errors; default-perm output path |
-| npm registry | Scanner toolchain integrity | Version pin `@axe-core/cli@4.12.1` (no lockfile/integrity hash — G-SUP-1) |
-| Scan Target | None (target is untrusted) | No allow-list (G-INF-1); rendering isolated to upstream browser |
+| Boundary                      | Assets Protected               | Controls Enforced                                                         |
+|-------------------------------|--------------------------------|---------------------------------------------------------------------------|
+| Operator Workstation / Runner | Output integrity, host process | Argument list (no shell); typed errors; default-perm output path          |
+| npm registry                  | Scanner toolchain integrity    | Version pin `@axe-core/cli@4.12.1` (no lockfile/integrity hash — G-SUP-1) |
+| Scan Target                   | None (target is untrusted)     | No allow-list (G-INF-1); rendering isolated to upstream browser           |
 
 ## Assets
 
-| Id | Asset                          | Lifetime         | Notes                                                                                                                                |
-|----|--------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| A1 | Scan target (URL or file)      | Command lifetime | Operator-supplied argument. When a URL, the scanner's headless browser fetches and renders it, generating outbound network traffic.  |
-| A2 | `@axe-core/cli` toolchain      | Per-invocation   | Resolved and executed via `npx --yes @axe-core/cli@4.12.1`, which fetches the pinned package version at runtime when not already cached. |
-| A3 | Scanner JSON output            | Command lifetime | Untrusted: derived from the rendered target page; normalized and forwarded to the caller / consuming agent.                          |
-| A4 | Normalized output file         | Command lifetime | Written to the operator-chosen `--output` path.                                                                                      |
+| Id | Asset                     | Lifetime         | Notes                                                                                                                                    |
+|----|---------------------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| A1 | Scan target (URL or file) | Command lifetime | Operator-supplied argument. When a URL, the scanner's headless browser fetches and renders it, generating outbound network traffic.      |
+| A2 | `@axe-core/cli` toolchain | Per-invocation   | Resolved and executed via `npx --yes @axe-core/cli@4.12.1`, which fetches the pinned package version at runtime when not already cached. |
+| A3 | Scanner JSON output       | Command lifetime | Untrusted: derived from the rendered target page; normalized and forwarded to the caller / consuming agent.                              |
+| A4 | Normalized output file    | Command lifetime | Written to the operator-chosen `--output` path.                                                                                          |
 
 ## Adversaries
 
-| Id    | Adversary                                              | In-scope mitigations                                                                                                                                       |
-|-------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Hostile or malicious scan target                       | The target is rendered by `@axe-core/cli`'s headless browser, **not** by the Python wrapper. Browser/engine hardening is upstream; the wrapper only parses JSON. |
-| ADV-b | Compromised or substituted scanner package             | **Largely defended.** `npx --yes @axe-core/cli@4.12.1` pins the scanner **version**; runtime integrity is still best-effort because npx resolves without a lockfile — see Enterprise Readiness Gaps (G-SUP-1). |
-| ADV-c | Hostile or malformed scanner output                    | Output is parsed with `json.loads`; non-dict and non-list payloads are coerced to a safe empty-summary shape; field extraction is type-guarded.             |
-| ADV-d | Hostile caller process controlling argv                | The subprocess is invoked with an **argument list (no shell)**; the target is passed as a single argv element, so shell metacharacters are not interpreted. |
+| Id    | Adversary                                  | In-scope mitigations                                                                                                                                                                                           |
+|-------|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Hostile or malicious scan target           | The target is rendered by `@axe-core/cli`'s headless browser, **not** by the Python wrapper. Browser/engine hardening is upstream; the wrapper only parses JSON.                                               |
+| ADV-b | Compromised or substituted scanner package | **Largely defended.** `npx --yes @axe-core/cli@4.12.1` pins the scanner **version**; runtime integrity is still best-effort because npx resolves without a lockfile — see Enterprise Readiness Gaps (G-SUP-1). |
+| ADV-c | Hostile or malformed scanner output        | Output is parsed with `json.loads`; non-dict and non-list payloads are coerced to a safe empty-summary shape; field extraction is type-guarded.                                                                |
+| ADV-d | Hostile caller process controlling argv    | The subprocess is invoked with an **argument list (no shell)**; the target is passed as a single argv element, so shell metacharacters are not interpreted.                                                    |
 
 ## Bucket B1: Scan-target egress
 
@@ -153,10 +153,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| SSRF to internal / cloud-metadata endpoint | Med | High | Med | Accepted (G-INF-1) |
-| Hostile target resource exhaustion | Low | Med | Low | Partially Mitigated (operator-scoped) |
+| Threat                                     | Likelihood | Impact | Residual Risk | Status                                |
+|--------------------------------------------|------------|--------|---------------|---------------------------------------|
+| SSRF to internal / cloud-metadata endpoint | Med        | High   | Med           | Accepted (G-INF-1)                    |
+| Hostile target resource exhaustion         | Low        | Med    | Low           | Partially Mitigated (operator-scoped) |
 
 ## Bucket B2: Scanner toolchain supply chain
 
@@ -187,11 +187,11 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Compromised / substituted scanner package | Low | High | Med | Partially Mitigated (G-SUP-1) |
-| Command injection via target argument | Low | High | Low | Mitigated (argv, no shell) |
-| Headless-browser parser exploitation | Low | High | Med | Accepted upstream (G-TAM-1) |
+| Threat                                    | Likelihood | Impact | Residual Risk | Status                        |
+|-------------------------------------------|------------|--------|---------------|-------------------------------|
+| Compromised / substituted scanner package | Low        | High   | Med           | Partially Mitigated (G-SUP-1) |
+| Command injection via target argument     | Low        | High   | Low           | Mitigated (argv, no shell)    |
+| Headless-browser parser exploitation      | Low        | High   | Med           | Accepted upstream (G-TAM-1)   |
 
 ## Bucket B3: Untrusted scanner output
 
@@ -222,10 +222,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Malformed / hostile scanner JSON | Med | Low | Low | Mitigated (type-guarded) |
-| Attacker page text echoed to consumers | Med | Low | Low | By design (G-INF-2) |
+| Threat                                 | Likelihood | Impact | Residual Risk | Status                   |
+|----------------------------------------|------------|--------|---------------|--------------------------|
+| Malformed / hostile scanner JSON       | Med        | Low    | Low           | Mitigated (type-guarded) |
+| Attacker page text echoed to consumers | Med        | Low    | Low           | By design (G-INF-2)      |
 
 ## Bucket B4: CLI caller process and filesystem
 
@@ -255,20 +255,20 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Output path overwrite / unintended write | Low | Low | Low | Operator-controlled |
+| Threat                                   | Likelihood | Impact | Residual Risk | Status              |
+|------------------------------------------|------------|--------|---------------|---------------------|
+| Output path overwrite / unintended write | Low        | Low    | Low           | Operator-controlled |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                       | Severity        | Status                                                                                                    |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------------|
+| Id      | Gap                                                                                                                                                                                                       | Severity        | Status                                                                                                                               |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | G-SUP-1 | `npx --yes @axe-core/cli@4.12.1` pins the scanner **version**, but npx still resolves it without an integrity hash or lockfile, so runtime substitution is only **partially** mitigated. (audit: A-SUP-1) | SupplyChain-Low | Version pinned to `@axe-core/cli@4.12.1`; review upgrades before bumping. Full integrity/lockfile pinning is tracked as future work. |
-| G-INF-1 | The scanner fetches arbitrary target URLs from the host with **no egress allow-list**; a crafted URL could reach internal or cloud-metadata endpoints. (audit: A-SSRF-1) | InfoDisc-Med    | Operators should restrict targets to intended hosts and run scans from a network position without sensitive internal reachability. |
-| G-TAM-1 | The scan target is rendered by a headless browser engine inside `@axe-core/cli`; that engine's parsing/rendering attack surface is outside this skill's control. (audit: A-BRWS-1) | Tampering-Med   | Keep the Node toolchain and browser engine patched; prefer scanning trusted targets or run in an isolated container. |
-| G-INF-2 | Normalized output reproduces attacker-influenced page text (rule descriptions, ids); it is forwarded without redaction. (audit: A-INF-1) | InfoDisc-Low    | Consumers must treat scanner output as untrusted data, not instructions. |
+| G-INF-1 | The scanner fetches arbitrary target URLs from the host with **no egress allow-list**; a crafted URL could reach internal or cloud-metadata endpoints. (audit: A-SSRF-1)                                  | InfoDisc-Med    | Operators should restrict targets to intended hosts and run scans from a network position without sensitive internal reachability.   |
+| G-TAM-1 | The scan target is rendered by a headless browser engine inside `@axe-core/cli`; that engine's parsing/rendering attack surface is outside this skill's control. (audit: A-BRWS-1)                        | Tampering-Med   | Keep the Node toolchain and browser engine patched; prefer scanning trusted targets or run in an isolated container.                 |
+| G-INF-2 | Normalized output reproduces attacker-influenced page text (rule descriptions, ids); it is forwarded without redaction. (audit: A-INF-1)                                                                  | InfoDisc-Low    | Consumers must treat scanner output as untrusted data, not instructions.                                                             |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

@@ -27,13 +27,13 @@ The powerpoint skill builds decks from YAML, optionally **executes author-suppli
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                                |
-|--------------------|--------------------------------------------------------------------------------------|
-| Runtime surface    | Author-Python execution (denylist); LibreOffice + PyMuPDF subprocess/parsing          |
-| Trust buckets      | B1 content-extra exec, B2 converter subprocess, B3 document parsing, B4 caller         |
-| Credentials        | None handled; no network listener; no first-party egress                              |
-| Network egress     | None (first-party); LibreOffice/MuPDF operate on local files                          |
-| Open residual gaps | 4 (EoP-Med: denylist confinement is not an OS-level sandbox)                          |
+| Dimension          | Value                                                                          |
+|--------------------|--------------------------------------------------------------------------------|
+| Runtime surface    | Author-Python execution (denylist); LibreOffice + PyMuPDF subprocess/parsing   |
+| Trust buckets      | B1 content-extra exec, B2 converter subprocess, B3 document parsing, B4 caller |
+| Credentials        | None handled; no network listener; no first-party egress                       |
+| Network egress     | None (first-party); LibreOffice/MuPDF operate on local files                   |
+| Open residual gaps | 4 (EoP-Med: denylist confinement is not an OS-level sandbox)                   |
 
 ## Contents
 
@@ -105,31 +105,31 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Operator Workstation / Runner | Host process, outputs | Denylist-confined author exec; argv (no shell); tempfile outputs |
-| External parsers | Host process integrity | `pdf_safety` bounds before MuPDF; python-pptx entity resolution disabled; no shell |
-| Inputs | Build integrity | Denylist validation of `content-extra.py`; type-checked YAML; bounded PDF |
+| Boundary                      | Assets Protected       | Controls Enforced                                                                  |
+|-------------------------------|------------------------|------------------------------------------------------------------------------------|
+| Operator Workstation / Runner | Host process, outputs  | Denylist-confined author exec; argv (no shell); tempfile outputs                   |
+| External parsers              | Host process integrity | `pdf_safety` bounds before MuPDF; python-pptx entity resolution disabled; no shell |
+| Inputs                        | Build integrity        | Denylist validation of `content-extra.py`; type-checked YAML; bounded PDF          |
 
 ## Assets
 
-| Id | Asset                              | Lifetime         | Notes                                                                                                                              |
-|----|------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| A1 | `content-extra.py` author script   | Command lifetime | Author-supplied Python executed by the deck builder to inject advanced content. Constrained by an import/builtin denylist.         |
-| A2 | Input PPTX / YAML content          | Command lifetime | Parsed by python-pptx (lxml) and PyYAML; may originate from an upstream pipeline fed by untrusted material.                        |
-| A3 | Intermediate / input PDF           | Command lifetime | Parsed by PyMuPDF (MuPDF C library) during export and image rendering. MuPDF has a non-trivial CVE history.                        |
-| A4 | LibreOffice / soffice binary       | Per-invocation   | Located via `shutil.which` and platform default paths; spawned headless to convert PPTX to PDF.                                    |
-| A5 | Output files (PDF/SVG/PNG/PPTX)    | Command lifetime | Written to operator-chosen output paths.                                                                                          |
+| Id | Asset                            | Lifetime         | Notes                                                                                                                      |
+|----|----------------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------|
+| A1 | `content-extra.py` author script | Command lifetime | Author-supplied Python executed by the deck builder to inject advanced content. Constrained by an import/builtin denylist. |
+| A2 | Input PPTX / YAML content        | Command lifetime | Parsed by python-pptx (lxml) and PyYAML; may originate from an upstream pipeline fed by untrusted material.                |
+| A3 | Intermediate / input PDF         | Command lifetime | Parsed by PyMuPDF (MuPDF C library) during export and image rendering. MuPDF has a non-trivial CVE history.                |
+| A4 | LibreOffice / soffice binary     | Per-invocation   | Located via `shutil.which` and platform default paths; spawned headless to convert PPTX to PDF.                            |
+| A5 | Output files (PDF/SVG/PNG/PPTX)  | Command lifetime | Written to operator-chosen output paths.                                                                                   |
 
 ## Adversaries
 
-| Id    | Adversary                                              | In-scope mitigations                                                                                                                                                  |
-|-------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Hostile `content-extra.py` author content              | **Partially defended.** A denylist blocks dangerous stdlib modules (`os`, `subprocess`, `socket`, `urllib`, `ctypes`, `pickle`, `multiprocessing`, and more), dangerous builtins (`eval`, `exec`, `compile`, `__import__`, `breakpoint`), and indirect-bypass builtins (`getattr`/`setattr`/`globals`/`locals`/`vars`/`delattr`). See G-EOP-1. |
-| ADV-b | Hostile or malformed input PDF                         | `pdf_safety.validate_pdf_path` enforces a regular-file check, a 100 MB size ceiling, the `%PDF-` magic-byte prefix, and a 1000-page ceiling before any MuPDF parsing; C-level failures are wrapped in typed `PdfSafetyError` subclasses. |
-| ADV-c | Hostile or malformed input PPTX                        | Parsed through python-pptx, which disables external-entity resolution in its OOXML parser. Inline timing/transition XML is built from hardcoded templates.            |
-| ADV-d | Hostile or substituted LibreOffice binary              | Located via `shutil.which` and known platform paths; invoked with an argument list (no shell). Trust in the installed binary is an operator responsibility.          |
-| ADV-e | Hostile caller process controlling argv                | All converter subprocesses use argument lists (no shell); output paths are operator-controlled.                                                                      |
+| Id    | Adversary                                 | In-scope mitigations                                                                                                                                                                                                                                                                                                                           |
+|-------|-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Hostile `content-extra.py` author content | **Partially defended.** A denylist blocks dangerous stdlib modules (`os`, `subprocess`, `socket`, `urllib`, `ctypes`, `pickle`, `multiprocessing`, and more), dangerous builtins (`eval`, `exec`, `compile`, `__import__`, `breakpoint`), and indirect-bypass builtins (`getattr`/`setattr`/`globals`/`locals`/`vars`/`delattr`). See G-EOP-1. |
+| ADV-b | Hostile or malformed input PDF            | `pdf_safety.validate_pdf_path` enforces a regular-file check, a 100 MB size ceiling, the `%PDF-` magic-byte prefix, and a 1000-page ceiling before any MuPDF parsing; C-level failures are wrapped in typed `PdfSafetyError` subclasses.                                                                                                       |
+| ADV-c | Hostile or malformed input PPTX           | Parsed through python-pptx, which disables external-entity resolution in its OOXML parser. Inline timing/transition XML is built from hardcoded templates.                                                                                                                                                                                     |
+| ADV-d | Hostile or substituted LibreOffice binary | Located via `shutil.which` and known platform paths; invoked with an argument list (no shell). Trust in the installed binary is an operator responsibility.                                                                                                                                                                                    |
+| ADV-e | Hostile caller process controlling argv   | All converter subprocesses use argument lists (no shell); output paths are operator-controlled.                                                                                                                                                                                                                                                |
 
 ## Bucket B1: Sandboxed `content-extra.py` execution
 
@@ -160,10 +160,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Sandbox escape via author Python | Med | High | Med | Partially Mitigated (G-EOP-1) |
-| Host data exfiltration from author script | Low | High | Med | Partially Mitigated (denylist) |
+| Threat                                    | Likelihood | Impact | Residual Risk | Status                         |
+|-------------------------------------------|------------|--------|---------------|--------------------------------|
+| Sandbox escape via author Python          | Med        | High   | Med           | Partially Mitigated (G-EOP-1)  |
+| Host data exfiltration from author script | Low        | High   | Med           | Partially Mitigated (denylist) |
 
 ## Bucket B2: External converter subprocess
 
@@ -193,10 +193,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Converter parser exploitation on untrusted deck | Low | High | Med | Accepted (G-TAM-1) |
-| Substituted / hostile soffice binary | Low | High | Low | Operator-controlled |
+| Threat                                          | Likelihood | Impact | Residual Risk | Status              |
+|-------------------------------------------------|------------|--------|---------------|---------------------|
+| Converter parser exploitation on untrusted deck | Low        | High   | Med           | Accepted (G-TAM-1)  |
+| Substituted / hostile soffice binary            | Low        | High   | Low           | Operator-controlled |
 
 ## Bucket B3: Untrusted document parsing
 
@@ -226,10 +226,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| MuPDF memory-safety exploitation | Low | High | Med | Partially Mitigated (G-TAM-2) |
-| XXE via PPTX | Low | Med | Low | Mitigated (entity resolution disabled) |
+| Threat                           | Likelihood | Impact | Residual Risk | Status                                 |
+|----------------------------------|------------|--------|---------------|----------------------------------------|
+| MuPDF memory-safety exploitation | Low        | High   | Med           | Partially Mitigated (G-TAM-2)          |
+| XXE via PPTX                     | Low        | Med    | Low           | Mitigated (entity resolution disabled) |
 
 ## Bucket B4: CLI caller process and filesystem
 
@@ -261,20 +261,20 @@ The caller controls argv, stdout, and stderr; the CLI treats that process as ope
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Output path overwrite / unintended write | Low | Low | Low | Operator-controlled |
+| Threat                                   | Likelihood | Impact | Residual Risk | Status              |
+|------------------------------------------|------------|--------|---------------|---------------------|
+| Output path overwrite / unintended write | Low        | Low    | Low           | Operator-controlled |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                             | Severity        | Status                                                                                                          |
-|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------------------------------------------------------------------------------------------------------|
-| G-EOP-1 | `content-extra.py` execution is confined by an import/builtin **denylist**, not an OS-level sandbox. Denylist confinement of in-process Python is hard to make airtight. (audit: A-EXEC-1) | EoP-Med         | Treat `content-extra.py` as trusted, reviewed input; for untrusted authors, run the build in an isolated container or restricted account. |
-| G-TAM-1 | LibreOffice/soffice is a large external document parser executed on the input deck with no container/seccomp isolation provided by the skill. (audit: A-CONV-1)                | Tampering-Med   | Keep LibreOffice patched; run conversions in an isolated environment when inputs are not fully trusted.        |
-| G-TAM-2 | PyMuPDF wraps the MuPDF C library, which has a non-trivial memory-safety CVE history. `pdf_safety` bounds the input but cannot eliminate parser exposure. (audit: A-PDF-1)      | Tampering-Med   | Keep PyMuPDF pinned to a vetted range and monitor MuPDF CVE feeds; avoid parsing untrusted PDFs in long-lived processes. |
-| G-SUP-1 | Runtime dependencies (python-pptx, lxml, PyMuPDF) are declared in `pyproject.toml` and hash-pinned via `uv.lock`; the external LibreOffice binary is operator-installed and unpinned. (audit: A-SUP-1) | SupplyChain-Med | Pin Python dependencies to vetted ranges; manage the LibreOffice version through the host's package controls.  |
+| Id      | Gap                                                                                                                                                                                                    | Severity        | Status                                                                                                                                    |
+|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| G-EOP-1 | `content-extra.py` execution is confined by an import/builtin **denylist**, not an OS-level sandbox. Denylist confinement of in-process Python is hard to make airtight. (audit: A-EXEC-1)             | EoP-Med         | Treat `content-extra.py` as trusted, reviewed input; for untrusted authors, run the build in an isolated container or restricted account. |
+| G-TAM-1 | LibreOffice/soffice is a large external document parser executed on the input deck with no container/seccomp isolation provided by the skill. (audit: A-CONV-1)                                        | Tampering-Med   | Keep LibreOffice patched; run conversions in an isolated environment when inputs are not fully trusted.                                   |
+| G-TAM-2 | PyMuPDF wraps the MuPDF C library, which has a non-trivial memory-safety CVE history. `pdf_safety` bounds the input but cannot eliminate parser exposure. (audit: A-PDF-1)                             | Tampering-Med   | Keep PyMuPDF pinned to a vetted range and monitor MuPDF CVE feeds; avoid parsing untrusted PDFs in long-lived processes.                  |
+| G-SUP-1 | Runtime dependencies (python-pptx, lxml, PyMuPDF) are declared in `pyproject.toml` and hash-pinned via `uv.lock`; the external LibreOffice binary is operator-installed and unpinned. (audit: A-SUP-1) | SupplyChain-Med | Pin Python dependencies to vetted ranges; manage the LibreOffice version through the host's package controls.                             |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

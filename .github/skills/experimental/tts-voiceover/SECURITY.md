@@ -27,13 +27,13 @@ The tts-voiceover skill synthesizes narration by sending speaker-notes text to t
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                              |
-|--------------------|------------------------------------------------------------------------------------|
-| Runtime surface    | Python CLI; Azure Speech SDK (TLS); SSML + PPTX parsing; no local listener          |
-| Trust buckets      | B1 CLI→Azure Speech, B2 env/Entra credentials, B3 untrusted inputs, B4 caller        |
-| Credentials        | `SPEECH_KEY` or Entra token via `DefaultAzureCredential`; never persisted to disk    |
-| Network egress     | HTTPS to the configured Azure Speech region endpoint                                 |
-| Open residual gaps | 5 (InfoDisc-Med: speaker-notes content egress to the Azure region)                  |
+| Dimension          | Value                                                                             |
+|--------------------|-----------------------------------------------------------------------------------|
+| Runtime surface    | Python CLI; Azure Speech SDK (TLS); SSML + PPTX parsing; no local listener        |
+| Trust buckets      | B1 CLI→Azure Speech, B2 env/Entra credentials, B3 untrusted inputs, B4 caller     |
+| Credentials        | `SPEECH_KEY` or Entra token via `DefaultAzureCredential`; never persisted to disk |
+| Network egress     | HTTPS to the configured Azure Speech region endpoint                              |
+| Open residual gaps | 5 (InfoDisc-Med: speaker-notes content egress to the Azure region)                |
 
 ## Contents
 
@@ -103,31 +103,31 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Operator Workstation / Runner | Credentials, output files | Per-invocation credential resolution (no disk persistence); output path forced to differ from input |
-| Azure Speech | Synthesis request integrity, bearer token | TLS via SDK (system trust store); credentials sent only to the SDK |
-| Inputs | Host process integrity | `yaml.safe_load`; SSML XML-escaping/`quoteattr`; python-pptx OOXML external-entity resolution disabled; raw lxml timing-template parse hardening tracked (#1056/#1695) |
+| Boundary                      | Assets Protected                          | Controls Enforced                                                                                                                                                      |
+|-------------------------------|-------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Operator Workstation / Runner | Credentials, output files                 | Per-invocation credential resolution (no disk persistence); output path forced to differ from input                                                                    |
+| Azure Speech                  | Synthesis request integrity, bearer token | TLS via SDK (system trust store); credentials sent only to the SDK                                                                                                     |
+| Inputs                        | Host process integrity                    | `yaml.safe_load`; SSML XML-escaping/`quoteattr`; python-pptx OOXML external-entity resolution disabled; raw lxml timing-template parse hardening tracked (#1056/#1695) |
 
 ## Assets
 
-| Id | Asset                              | Lifetime         | Notes                                                                                                                                                |
-|----|------------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| A1 | `SPEECH_KEY` subscription key      | Operator-managed | Read from `SPEECH_KEY` env at invocation. Passed to the Speech SDK and sent to the Azure region endpoint over TLS.                                   |
-| A2 | Entra ID access token              | Command lifetime | Minted by `DefaultAzureCredential` for `https://cognitiveservices.azure.com/.default`; embedded as `aad#{resource_id}#{token}` and refreshed near expiry. |
-| A3 | Speaker-notes content              | Command lifetime | Read from `content.yaml`; **leaves the trust boundary** to the Azure Speech endpoint for synthesis. May contain confidential narration.              |
-| A4 | Input PPTX / lexicon YAML          | Command lifetime | Operator-supplied but potentially produced by an upstream pipeline from untrusted material; parsed by python-pptx (lxml) and PyYAML.                  |
-| A5 | Output WAV / narrated PPTX files   | Command lifetime | Written to the operator-chosen output directory.                                                                                                    |
+| Id | Asset                            | Lifetime         | Notes                                                                                                                                                     |
+|----|----------------------------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A1 | `SPEECH_KEY` subscription key    | Operator-managed | Read from `SPEECH_KEY` env at invocation. Passed to the Speech SDK and sent to the Azure region endpoint over TLS.                                        |
+| A2 | Entra ID access token            | Command lifetime | Minted by `DefaultAzureCredential` for `https://cognitiveservices.azure.com/.default`; embedded as `aad#{resource_id}#{token}` and refreshed near expiry. |
+| A3 | Speaker-notes content            | Command lifetime | Read from `content.yaml`; **leaves the trust boundary** to the Azure Speech endpoint for synthesis. May contain confidential narration.                   |
+| A4 | Input PPTX / lexicon YAML        | Command lifetime | Operator-supplied but potentially produced by an upstream pipeline from untrusted material; parsed by python-pptx (lxml) and PyYAML.                      |
+| A5 | Output WAV / narrated PPTX files | Command lifetime | Written to the operator-chosen output directory.                                                                                                          |
 
 ## Adversaries
 
-| Id    | Adversary                                              | In-scope mitigations                                                                                                                                          |
-|-------|--------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ADV-a | Same-uid malware on the operator workstation           | **Not defended.** A process running as the operator can read `SPEECH_KEY` from the environment or invoke the same credential chain. Workstation hygiene is the controlling defense. |
-| ADV-b | Network attacker on the CLI ↔ Azure Speech channel     | TLS provided by the Azure Speech SDK with system-trust-store certificate validation. The skill performs no plaintext fallback.                                |
-| ADV-c | Hostile or malformed `content.yaml` / lexicon          | `yaml.safe_load` (no arbitrary object construction); speaker notes XML-escaped via `xml.sax.saxutils.escape`; voice/rate/acronym aliases via `quoteattr`; XML-special acronym keys warned and skipped. |
-| ADV-d | Hostile or malformed input PPTX                        | Parsed through python-pptx, which disables external entity resolution in its OOXML parser. The inline timing XML is a hardcoded constant parsed via a raw `etree.fromstring`; because that input is a trusted literal it is not an exploitable XXE, but the call uses lxml's default parser and is being hardened as defence-in-depth (`XMLParser(resolve_entities=False, no_network=True)`) per issue #1056 / PR #1695. |
-| ADV-e | Hostile caller process controlling argv / env          | Argument paths constrained to declared options; output path forced to differ from input to prevent in-place overwrite; partial WAV files removed on synthesis failure. |
+| Id    | Adversary                                          | In-scope mitigations                                                                                                                                                                                                                                                                                                                                                                                                     |
+|-------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Same-uid malware on the operator workstation       | **Not defended.** A process running as the operator can read `SPEECH_KEY` from the environment or invoke the same credential chain. Workstation hygiene is the controlling defense.                                                                                                                                                                                                                                      |
+| ADV-b | Network attacker on the CLI ↔ Azure Speech channel | TLS provided by the Azure Speech SDK with system-trust-store certificate validation. The skill performs no plaintext fallback.                                                                                                                                                                                                                                                                                           |
+| ADV-c | Hostile or malformed `content.yaml` / lexicon      | `yaml.safe_load` (no arbitrary object construction); speaker notes XML-escaped via `xml.sax.saxutils.escape`; voice/rate/acronym aliases via `quoteattr`; XML-special acronym keys warned and skipped.                                                                                                                                                                                                                   |
+| ADV-d | Hostile or malformed input PPTX                    | Parsed through python-pptx, which disables external entity resolution in its OOXML parser. The inline timing XML is a hardcoded constant parsed via a raw `etree.fromstring`; because that input is a trusted literal it is not an exploitable XXE, but the call uses lxml's default parser and is being hardened as defence-in-depth (`XMLParser(resolve_entities=False, no_network=True)`) per issue #1056 / PR #1695. |
+| ADV-e | Hostile caller process controlling argv / env      | Argument paths constrained to declared options; output path forced to differ from input to prevent in-place overwrite; partial WAV files removed on synthesis failure.                                                                                                                                                                                                                                                   |
 
 ## Bucket B1: CLI → Azure Speech API
 
@@ -158,10 +158,10 @@ flowchart TD
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Speaker-notes content egress to Azure region | Med | Med | Med | By design (G-INF-1) |
-| Credential leakage into logs | Low | High | Low | Mitigated |
+| Threat                                       | Likelihood | Impact | Residual Risk | Status              |
+|----------------------------------------------|------------|--------|---------------|---------------------|
+| Speaker-notes content egress to Azure region | Med        | Med    | Med           | By design (G-INF-1) |
+| Credential leakage into logs                 | Low        | High   | Low           | Mitigated           |
 
 ## Bucket B2: Environment and Entra credentials
 
@@ -193,9 +193,9 @@ Credentials are resolved per invocation. `SPEECH_KEY` is read from the environme
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Broad credential chain binds unintended identity | Low | Med | Low | Partially Mitigated (G-EOP-1) |
+| Threat                                           | Likelihood | Impact | Residual Risk | Status                        |
+|--------------------------------------------------|------------|--------|---------------|-------------------------------|
+| Broad credential chain binds unintended identity | Low        | Med    | Low           | Partially Mitigated (G-EOP-1) |
 
 ## Bucket B3: Untrusted content inputs
 
@@ -227,11 +227,11 @@ Credentials are resolved per invocation. `SPEECH_KEY` is read from the environme
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| SSML injection via speaker notes / aliases | Low | Med | Low | Mitigated (escape / quoteattr) |
-| Hostile PPTX / XXE | Low | Med | Low | Mitigated (entity resolution disabled) |
-| Raw lxml parse of hardcoded timing template (defence-in-depth) | Low | Low | Low | Tracked (G-TAM-1, #1056/#1695) |
+| Threat                                                         | Likelihood | Impact | Residual Risk | Status                                 |
+|----------------------------------------------------------------|------------|--------|---------------|----------------------------------------|
+| SSML injection via speaker notes / aliases                     | Low        | Med    | Low           | Mitigated (escape / quoteattr)         |
+| Hostile PPTX / XXE                                             | Low        | Med    | Low           | Mitigated (entity resolution disabled) |
+| Raw lxml parse of hardcoded timing template (defence-in-depth) | Low        | Low    | Low           | Tracked (G-TAM-1, #1056/#1695)         |
 
 ## Bucket B4: CLI caller process and filesystem
 
@@ -263,22 +263,22 @@ The caller controls argv, environment, stdin, stdout, and stderr; the CLI treats
 
 ### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| In-place overwrite of input deck | Low | Low | Low | Mitigated (output ≠ input) |
-| Corrupt partial WAV embedded | Low | Low | Low | Mitigated (cleanup on failure) |
+| Threat                           | Likelihood | Impact | Residual Risk | Status                         |
+|----------------------------------|------------|--------|---------------|--------------------------------|
+| In-place overwrite of input deck | Low        | Low    | Low           | Mitigated (output ≠ input)     |
+| Corrupt partial WAV embedded     | Low        | Low    | Low           | Mitigated (cleanup on failure) |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap                                                                                                                                                                     | Severity        | Status                                                                                              |
-|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------------------------------------------------|
-| G-INF-1 | Speaker-notes content is transmitted to the configured Azure Speech region for synthesis. There is no data-classification gate; confidential narration leaves the boundary (data-dependent severity). (audit: T-INF-1) | InfoDisc-Med    | By design; operators must pin `SPEECH_REGION` to an approved region and avoid sending regulated content. |
-| G-EOP-1 | `DefaultAzureCredential` walks a broad credential chain (env, managed identity, Azure CLI, and more). In CI it may bind an unintended identity. (audit: T-IAM-1)        | EoP-Low         | Prefer a scoped `SPEECH_KEY` or an explicit credential on shared runners.                            |
-| G-TLS-1 | No certificate pinning for the Azure Speech endpoint; TLS validation depends on the SDK and the system trust store. (audit: T-TLS-1)                                   | InfoDisc-Low    | Operator-acceptable for a managed Azure endpoint.                                                    |
-| G-SUP-1 | Runtime dependencies (Azure Speech SDK, python-pptx, lxml, PyYAML) are floor-pinned in `pyproject.toml` and hash-pinned via `uv.lock`, but untrusted PPTX parsing relies on upstream python-pptx/lxml hardening. (audit: T-SUP-1) | SupplyChain-Med | Keep dependencies pinned to vetted ranges and monitor CVE feeds for lxml and python-pptx.            |
-| G-TAM-1 | `_add_narration_timing` in `embed_audio.py` parses a hardcoded `_TIMING_TEMPLATE` constant via a raw `etree.fromstring` using lxml's default parser. Input is a trusted literal (not an exploitable XXE), but the site does not yet match the repo's `XMLParser(resolve_entities=False, no_network=True)` idiom. (audit: T-TAM-1) | Tampering-Low | Defence-in-depth; hardening tracked in issue #1056 / PR #1695 (matches powerpoint `extract_content.py`). |
+| Id      | Gap                                                                                                                                                                                                                                                                                                                               | Severity        | Status                                                                                                   |
+|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------------------------------------------------------------------------------------------------|
+| G-INF-1 | Speaker-notes content is transmitted to the configured Azure Speech region for synthesis. There is no data-classification gate; confidential narration leaves the boundary (data-dependent severity). (audit: T-INF-1)                                                                                                            | InfoDisc-Med    | By design; operators must pin `SPEECH_REGION` to an approved region and avoid sending regulated content. |
+| G-EOP-1 | `DefaultAzureCredential` walks a broad credential chain (env, managed identity, Azure CLI, and more). In CI it may bind an unintended identity. (audit: T-IAM-1)                                                                                                                                                                  | EoP-Low         | Prefer a scoped `SPEECH_KEY` or an explicit credential on shared runners.                                |
+| G-TLS-1 | No certificate pinning for the Azure Speech endpoint; TLS validation depends on the SDK and the system trust store. (audit: T-TLS-1)                                                                                                                                                                                              | InfoDisc-Low    | Operator-acceptable for a managed Azure endpoint.                                                        |
+| G-SUP-1 | Runtime dependencies (Azure Speech SDK, python-pptx, lxml, PyYAML) are floor-pinned in `pyproject.toml` and hash-pinned via `uv.lock`, but untrusted PPTX parsing relies on upstream python-pptx/lxml hardening. (audit: T-SUP-1)                                                                                                 | SupplyChain-Med | Keep dependencies pinned to vetted ranges and monitor CVE feeds for lxml and python-pptx.                |
+| G-TAM-1 | `_add_narration_timing` in `embed_audio.py` parses a hardcoded `_TIMING_TEMPLATE` constant via a raw `etree.fromstring` using lxml's default parser. Input is a trusted literal (not an exploitable XXE), but the site does not yet match the repo's `XMLParser(resolve_entities=False, no_network=True)` idiom. (audit: T-TAM-1) | Tampering-Low   | Defence-in-depth; hardening tracked in issue #1056 / PR #1695 (matches powerpoint `extract_content.py`). |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

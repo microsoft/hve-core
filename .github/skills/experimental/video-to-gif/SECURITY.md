@@ -27,13 +27,13 @@ The video-to-gif skill converts an untrusted local video into a GIF by shelling 
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                              |
-|--------------------|------------------------------------------------------------------------------------|
+| Dimension          | Value                                                                                   |
+|--------------------|-----------------------------------------------------------------------------------------|
 | Runtime surface    | Local CLI (bash + PowerShell twins); FFmpeg/ffprobe subprocess; no network, no listener |
-| Trust buckets      | B1 CLI→FFmpeg subprocess, B2 untrusted media parsing, B3 caller process/filesystem   |
-| Credentials        | None handled or persisted                                                          |
-| Network egress     | None (operates on local files only)                                                |
-| Open residual gaps | 2 (SupplyChain-Med: inherited FFmpeg decoder CVE exposure on untrusted media)       |
+| Trust buckets      | B1 CLI→FFmpeg subprocess, B2 untrusted media parsing, B3 caller process/filesystem      |
+| Credentials        | None handled or persisted                                                               |
+| Network egress     | None (operates on local files only)                                                     |
+| Open residual gaps | 2 (SupplyChain-Med: inherited FFmpeg decoder CVE exposure on untrusted media)           |
 
 ## Contents
 
@@ -101,27 +101,27 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| Workstation / Runner | Filesystem, temp palette, output integrity | Numeric validation, allow-listed algorithms, private temp dir, cleanup traps |
-| FFmpeg subprocess | Argument integrity, availability | Array/`ArgumentList` argument passing (no shell), wall-clock timeout, `UseShellExecute=$false` |
+| Boundary             | Assets Protected                           | Controls Enforced                                                                              |
+|----------------------|--------------------------------------------|------------------------------------------------------------------------------------------------|
+| Workstation / Runner | Filesystem, temp palette, output integrity | Numeric validation, allow-listed algorithms, private temp dir, cleanup handlers                |
+| FFmpeg subprocess    | Argument integrity, availability           | Array/`ArgumentList` argument passing (no shell), wall-clock timeout, `UseShellExecute=$false` |
 
 ## Assets
 
-| Id | Asset | Lifetime | Notes |
-|----|-------|----------|-------|
-| A1 | Input video file | Read-only during conversion | Untrusted data parsed by FFmpeg; never modified |
-| A2 | Intermediate palette | Transient (two-pass only) | Written to a private 0700 temp dir; removed on exit/failure |
-| A3 | Output GIF | Persisted | Written to caller-chosen or derived path; overwritten with `-y` |
-| A4 | FFmpeg/ffprobe binaries | External, PATH-resolved | Unpinned host dependency (see G-SUP-1) |
+| Id | Asset                   | Lifetime                    | Notes                                                           |
+|----|-------------------------|-----------------------------|-----------------------------------------------------------------|
+| A1 | Input video file        | Read-only during conversion | Untrusted data parsed by FFmpeg; never modified                 |
+| A2 | Intermediate palette    | Transient (two-pass only)   | Written to a private 0700 temp dir; removed on exit/failure     |
+| A3 | Output GIF              | Persisted                   | Written to caller-chosen or derived path; overwritten with `-y` |
+| A4 | FFmpeg/ffprobe binaries | External, PATH-resolved     | Unpinned host dependency (see G-SUP-1)                          |
 
 ## Adversaries
 
-| Id    | Adversary | In-scope mitigations |
-|-------|-----------|----------------------|
-| ADV-a | Malicious media author (crafts a hostile video to exploit a decoder) | Wall-clock timeout bounds runaway decode; memory-safety inherited from FFmpeg (G-SUP-1) |
-| ADV-b | Caller supplying adversarial CLI parameters | Numeric range validation, dither/tonemap allow-lists, array argument passing prevent filtergraph/argument injection |
-| ADV-c | Local attacker racing the temp palette path | Private unpredictable temp directory (mkdtemp/random, 0700) with guaranteed cleanup |
+| Id    | Adversary                                                            | In-scope mitigations                                                                                                |
+|-------|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| ADV-a | Malicious media author (crafts a hostile video to exploit a decoder) | Wall-clock timeout bounds runaway decode; memory-safety inherited from FFmpeg (G-SUP-1)                             |
+| ADV-b | Caller supplying adversarial CLI parameters                          | Numeric range validation, dither/tonemap allow-lists, array argument passing prevent filtergraph/argument injection |
+| ADV-c | Local attacker racing the temp palette path                          | Private unpredictable temp directory (mkdtemp/random, 0700) with guaranteed cleanup                                 |
 
 ## Trust Buckets
 
@@ -155,11 +155,11 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Filtergraph/argument injection via CLI parameters | Low | High | Low | Mitigated (V-INJ-1) |
-| Unbounded FFmpeg run exhausts resources | Low | Med | Low | Mitigated (V-DOS-1) |
-| PATH-resolved FFmpeg binary substitution | Low | High | Low | Accepted (operator environment) |
+| Threat                                            | Likelihood | Impact | Residual Risk | Status                          |
+|---------------------------------------------------|------------|--------|---------------|---------------------------------|
+| Filtergraph/argument injection via CLI parameters | Low        | High   | Low           | Mitigated (V-INJ-1)             |
+| Unbounded FFmpeg run exhausts resources           | Low        | Med    | Low           | Mitigated (V-DOS-1)             |
+| PATH-resolved FFmpeg binary substitution          | Low        | High   | Low           | Accepted (operator environment) |
 
 ### Bucket B2: Untrusted media input parsing
 
@@ -189,10 +189,10 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Hostile media triggers FFmpeg decoder CVE | Low | High | Med | Partially Mitigated (G-SUP-1) |
-| Malformed input stalls decoding | Low | Med | Low | Mitigated (V-DOS-1) |
+| Threat                                    | Likelihood | Impact | Residual Risk | Status                        |
+|-------------------------------------------|------------|--------|---------------|-------------------------------|
+| Hostile media triggers FFmpeg decoder CVE | Low        | High   | Med           | Partially Mitigated (G-SUP-1) |
+| Malformed input stalls decoding           | Low        | Med    | Low           | Mitigated (V-DOS-1)           |
 
 ### Bucket B3: CLI caller process and filesystem
 
@@ -202,7 +202,7 @@ flowchart TD
 
 #### Tampering
 
-* The intermediate palette is written inside a private, unpredictable temporary directory (bash `mktemp -d ... 0700`, PowerShell random directory under the system temp path) rather than a predictable `/tmp/palette_$$.png` or `%TEMP%\palette_$PID.png`, closing a symlink/pre-creation race on a shared temp location (V-TMP-1, mitigated). Cleanup runs via a `trap ... EXIT` (bash) or `finally` (PowerShell) so the directory is removed even on failure or timeout.
+* The intermediate palette is written inside a private, unpredictable temporary directory (bash `mktemp -d ... 0700`, PowerShell random directory under the system temp path) rather than a predictable `/tmp/palette_$$.png` or `%TEMP%\palette_$PID.png`, closing a symlink/pre-creation race on a shared temp location (V-TMP-1, mitigated). Cleanup runs on process exit (a bash `EXIT` handler; PowerShell `finally`) so the directory is removed even on failure or timeout.
 
 #### Repudiation
 
@@ -222,20 +222,20 @@ flowchart TD
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
-| Predictable temp palette symlink/race | Low | Med | Low | Mitigated (V-TMP-1) |
-| Bare-filename search resolves unintended file | Low | Low | Low | Accepted (G-INF-1) |
-| Destination overwrite via `-y` | Low | Low | Low | Accepted (documented behavior) |
+| Threat                                        | Likelihood | Impact | Residual Risk | Status                         |
+|-----------------------------------------------|------------|--------|---------------|--------------------------------|
+| Predictable temp palette symlink/race         | Low        | Med    | Low           | Mitigated (V-TMP-1)            |
+| Bare-filename search resolves unintended file | Low        | Low    | Low           | Accepted (G-INF-1)             |
+| Destination overwrite via `-y`                | Low        | Low    | Low           | Accepted (documented behavior) |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap | Severity | Status |
-|---------|-----|----------|--------|
+| Id      | Gap                                                                                                                                                                                                                                             | Severity        | Status                                   |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|------------------------------------------|
 | G-SUP-1 | `ffmpeg`/`ffprobe` are external, unpinned dependencies resolved from `PATH`; the skill inherits FFmpeg's decoder CVE exposure when parsing untrusted media. The wall-clock timeout bounds denial of service but not memory-safety exploitation. | SupplyChain-Med | Accepted (operator keeps FFmpeg patched) |
-| G-INF-1 | The convenience file search spans the working directory, workspace root, and several home-directory locations, so a bare filename could resolve to an unintended file in a lower-priority location. | InfoDisc-Low | Accepted |
+| G-INF-1 | The convenience file search spans the working directory, workspace root, and several home-directory locations, so a bare filename could resolve to an unintended file in a lower-priority location.                                             | InfoDisc-Low    | Accepted                                 |
 
 For an active issue tracker entry covering these gaps, see the [hve-core issues list](https://github.com/microsoft/hve-core/issues).
 

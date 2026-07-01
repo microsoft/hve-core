@@ -26,7 +26,7 @@ This template mirrors `docs/security/security-model.md` so per-skill models reac
 {{One-paragraph intro: name the runtime files, the trust-bucket decomposition, and state
 "Each bucket enumerates all six STRIDE categories with the in-code mitigations that address them."}}
 
-> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model at [`docs/security/security-model.md`](../../../../docs/security/security-model.md) and is registered in its [Skill Security Models](../../../../docs/security/security-model.md#skill-security-models) section.
+> **See also: repo-wide STRIDE model.** This skill participates in the repository-wide threat model recorded in `docs/security/security-model.md` and is registered in its Skill Security Models section. In the copied `SECURITY.md`, link to the repo model with a relative path such as `../../../../docs/security/security-model.md`.
 
 ## Executive Summary
 
@@ -34,13 +34,13 @@ This template mirrors `docs/security/security-model.md` so per-skill models reac
 
 ### Security Posture Overview
 
-| Dimension          | Value                                                                 |
-|--------------------|-----------------------------------------------------------------------|
-| Runtime surface    | {{e.g., REST CLI; environment credentials; subprocess}}               |
+| Dimension          | Value                                                                    |
+|--------------------|--------------------------------------------------------------------------|
+| Runtime surface    | {{e.g., REST CLI; environment credentials; subprocess}}                  |
 | Trust buckets      | {{count and one-line list, e.g., B1 CLI→API, B2 credentials, B3 caller}} |
-| Credentials        | {{what secrets are handled and how}}                                  |
-| Network egress     | {{endpoints reached, transport}}                                      |
-| Open residual gaps | {{count}} ({{highest severity}})                                      |
+| Credentials        | {{what secrets are handled and how}}                                     |
+| Network egress     | {{endpoints reached, transport}}                                         |
+| Open residual gaps | {{count}} ({{highest severity}})                                         |
 
 ## Contents
 
@@ -65,13 +65,13 @@ This template mirrors `docs/security/security-model.md` so per-skill models reac
 flowchart TD
     subgraph HOST["Operator Workstation / Runner (trust zone)"]
         CLI["{{skill}} CLI"]
-        ENVCRED["Credentials<br/>(env / token store)"]
+        Credentials["Credentials<br/>(env / token store)"]
         OUT["Output files"]
     end
     subgraph EXT["External Service / Tool (network boundary)"]
         API["{{external API or tool}}"]
     end
-    CLI -->|"reads"| ENVCRED
+    CLI -->|"reads"| Credentials
     CLI -->|"request (HTTPS/TLS)"| API
     API -->|"response (untrusted)"| CLI
     CLI -->|"writes"| OUT
@@ -100,22 +100,22 @@ flowchart TD
 
 ### Boundary Descriptions
 
-| Boundary | Assets Protected | Controls Enforced |
-|----------|------------------|-------------------|
-| {{Workstation/Runner}} | {{credentials, outputs}} | {{env handling, file perms}} |
-| {{External Service}} | {{request/response integrity}} | {{TLS, no-redirect opener, response caps}} |
+| Boundary               | Assets Protected               | Controls Enforced                          |
+|------------------------|--------------------------------|--------------------------------------------|
+| {{Workstation/Runner}} | {{credentials, outputs}}       | {{env handling, file perms}}               |
+| {{External Service}}   | {{request/response integrity}} | {{TLS, no-redirect opener, response caps}} |
 
 ## Assets
 
-| Id | Asset | Lifetime | Notes |
-|----|-------|----------|-------|
+| Id | Asset     | Lifetime     | Notes     |
+|----|-----------|--------------|-----------|
 | A1 | {{asset}} | {{lifetime}} | {{notes}} |
 
 ## Adversaries
 
-| Id    | Adversary | In-scope mitigations |
-|-------|-----------|----------------------|
-| ADV-a | {{adversary}} | {{mitigations}} |
+| Id    | Adversary     | In-scope mitigations |
+|-------|---------------|----------------------|
+| ADV-a | {{adversary}} | {{mitigations}}      |
 
 ## Trust Buckets
 
@@ -152,16 +152,16 @@ End each bucket with a Risk Rating summary table. -->
 
 #### Risk Rating
 
-| Threat | Likelihood | Impact | Residual Risk | Status |
-|--------|------------|--------|---------------|--------|
+| Threat     | Likelihood       | Impact           | Residual Risk    | Status                                         |
+|------------|------------------|------------------|------------------|------------------------------------------------|
 | {{threat}} | {{Low/Med/High}} | {{Low/Med/High}} | {{Low/Med/High}} | {{Mitigated / Partially Mitigated / Accepted}} |
 
 ## Enterprise Readiness Gaps
 
 The following are known limitations recorded so operators can make informed deployment decisions. Severity ratings are the project's own assessment and are not equivalent to a CVSS score.
 
-| Id      | Gap | Severity | Status |
-|---------|-----|----------|--------|
+| Id          | Gap     | Severity                               | Status          |
+|-------------|---------|----------------------------------------|-----------------|
 | G-{{CAT}}-1 | {{gap}} | {{Category-Level, e.g., InfoDisc-Med}} | {{disposition}} |
 
 <!-- Gap IDs are per-file-scoped: G-{STRIDE-token}-{N}. Tokens: SPF, TAM, REP, INF, DOS, EOP,
@@ -175,6 +175,6 @@ For an active issue tracker entry covering these gaps, see the [hve-core issues 
 * [STRIDE Threat Model](https://learn.microsoft.com/azure/security/develop/threat-modeling-tool-threats)
 * {{relevant OWASP list, e.g., OWASP Top 10 / LLM Top 10}}
 * {{the skill's external API/tool security docs}}
-* [Repository security model](../../../../docs/security/security-model.md)
+* Repository security model — `docs/security/security-model.md`
 
 🤖 Crafted with precision by ✨Copilot following brilliant human instruction, then carefully refined by our team of discerning human reviewers.
