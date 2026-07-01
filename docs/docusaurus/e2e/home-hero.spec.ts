@@ -10,7 +10,8 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 // regions that the static axe scan must keep >= AA in light and dark themes.
 test.describe('Homepage hero accessibility', () => {
   test('hero and search contrast pass an axe scan', async ({ page }) => {
-    await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
+    await page.goto('/hve-core/', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle', { timeout: 60000 });
 
     await expect(page.getByRole('heading', { level: 1, name: 'HVE Core' })).toBeVisible();
 
@@ -24,7 +25,8 @@ test.describe('Homepage hero accessibility', () => {
 
   test('hero contrast passes in dark theme', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
-    await page.goto('/hve-core/', { waitUntil: 'domcontentloaded' });
+    await page.goto('/hve-core/', { waitUntil: 'commit' });
+    await page.waitForLoadState('networkidle', { timeout: 60000 });
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     await expect(page.getByRole('heading', { level: 1, name: 'HVE Core' })).toBeVisible();

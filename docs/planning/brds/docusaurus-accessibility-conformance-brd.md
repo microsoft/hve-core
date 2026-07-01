@@ -3,7 +3,7 @@ title: "Docusaurus Accessibility Conformance - Business Requirements Document"
 description: "Business requirements for achieving and continuously verifying WCAG 2.1 AA accessibility conformance on the HVE-Core documentation site"
 sidebar_position: 2
 author: "HVE-Core Maintainers"
-ms.date: 2026-06-13
+ms.date: 2026-06-30
 ms.topic: reference
 ---
 
@@ -104,8 +104,8 @@ Beyond simply being compliant, the deeper goal is for HVE-Core to serve as a lig
 
 | KPI                                           | Baseline                | Target          | Timeframe                  | Data Source             | Notes                                                                                 |
 |-----------------------------------------------|-------------------------|-----------------|----------------------------|-------------------------|---------------------------------------------------------------------------------------|
-| Page types in general WCAG 2.1 AA conformance | 0 of 4 (none conformed) | 4 of 4 (100%)   | At merge of this changeset | pa11y-ci CI scan        | North-star metric; scope = enumerated page types (hub, doc article, search, homepage) |
-| Automated a11y violations (pa11y-ci)          | TODO (pre-fix count)    | 0 (threshold 0) | At merge                   | pa11y-ci CI run         | `.pa11yci` threshold = 0                                                              |
+| Page types in general WCAG 2.1 AA conformance | 0 of 4 (none conformed) | 4 of 4 (100%)   | At merge of this changeset | Playwright `@axe-core/playwright` site-crawl spec | North-star metric; scope = enumerated page types (hub, doc article, search, homepage) |
+| Automated a11y violations (site-crawl)        | TODO (pre-fix count)    | 0 (threshold 0) | At merge                   | Playwright site-crawl run | WCAG 2.x A/AA + `wcag22aa` + `best-practice`, threshold 0                         |
 | axe-core violations in component tests        | TODO (pre-fix count)    | 0               | At merge                   | Jest + @axe-core tests  | BoxCard axe test                                                                      |
 | Keyboard/focus e2e checks passing             | TODO (pre-fix count)    | 100% pass       | At merge                   | Playwright e2e suite    | 8 e2e specs                                                                           |
 | Test coverage (docs components)               | TODO                    | TODO            | At merge                   | Jest coverage / Codecov | Codecov flag `docusaurus`                                                             |
@@ -150,7 +150,7 @@ Beyond simply being compliant, the deeper goal is for HVE-Core to serve as a lig
 * Automated accessibility and quality guardrails in CI:
   * Component-level accessibility tests (Jest + axe-core).
   * End-to-end accessibility/keyboard/focus checks (Playwright e2e suite).
-  * Site-level accessibility scanning (pa11y-ci, WCAG2AA, threshold 0).
+  * Site-level accessibility scanning (Playwright `@axe-core/playwright` site-crawl spec, WCAG 2.x A/AA + `wcag22aa` + `best-practice`, threshold 0).
   * Static accessibility linting (eslint-plugin-jsx-a11y).
   * Test coverage reporting (Jest coverage uploaded to Codecov via OIDC).
 * Treating the documentation site as the **pilot** implementation of a repeatable accessibility pattern.
@@ -165,7 +165,7 @@ Beyond simply being compliant, the deeper goal is for HVE-Core to serve as a lig
 
 ### 5.3 Boundaries & Interfaces
 
-The initiative is bounded to the HVE-Core Docusaurus site and its CI workflow (`.github/workflows/docusaurus-tests.yml`). Interfaces include the Codecov service (coverage upload via OIDC) and the CI runner environment that executes pa11y-ci, Playwright, and Jest.
+The initiative is bounded to the HVE-Core Docusaurus site and its CI workflow (`.github/workflows/docusaurus-tests.yml`). Interfaces include the Codecov service (coverage upload via OIDC) and the CI runner environment that executes static jsx-a11y linting, Playwright, Jest, and the axe site-crawl spec.
 
 ---
 
@@ -182,14 +182,14 @@ Every change to the docs site triggers automated accessibility verification in C
 1. Static accessibility linting (eslint-plugin-jsx-a11y) runs on component source.
 2. Component-level accessibility tests (Jest + axe-core) run against rendered components.
 3. End-to-end focus/keyboard checks (Playwright) validate interactive behavior.
-4. Site-level accessibility scanning (pa11y-ci, WCAG2AA, threshold 0) runs against the rendered site.
+4. Site-level accessibility scanning (Playwright `@axe-core/playwright` site-crawl spec, WCAG 2.x A/AA + `wcag22aa` + `best-practice`, threshold 0) runs against the rendered site.
 5. Test coverage is generated and uploaded to Codecov.
 
 Any violation fails the pipeline and blocks merge, so regressions are caught before they reach the public site and conformance is demonstrated continuously.
 
 ### 6.3 Business Rules
 
-* The pa11y-ci accessibility threshold is 0, meaning no violations are tolerated on the scanned pages.
+* The Playwright site-crawl accessibility threshold is 0, meaning no violations are tolerated on the scanned pages.
 * CI accessibility checks must pass before a change to the docs site can merge.
 * New or changed docs components should be covered by the automated accessibility checks (component axe test and/or e2e check) appropriate to their interaction surface.
 
@@ -217,7 +217,7 @@ Any violation fails the pipeline and blocks merge, so regressions are caught bef
 
 | Data Domain        | Description                          | Source System(s) | Consumer(s)      | Quality Expectations          |
 |--------------------|--------------------------------------|------------------|------------------|-------------------------------|
-| Accessibility scan | Violations per scanned page          | pa11y-ci         | Maintainers / CI | Threshold 0 (no violations)   |
+| Accessibility scan | Violations per scanned page          | Playwright site-crawl spec | Maintainers / CI | Threshold 0 (no violations)   |
 | Test coverage      | Coverage metrics for docs components | Jest / Codecov   | Maintainers      | Reported on every docs change |
 
 ### 8.2 Reporting & Analytics
@@ -237,7 +237,7 @@ Any violation fails the pipeline and blocks merge, so regressions are caught bef
 
 | ID  | Assumption                                                                     | Impact if False                                              | Owner            |
 |-----|--------------------------------------------------------------------------------|--------------------------------------------------------------|------------------|
-| A-1 | CI runners can build the site and run headless browsers (Playwright, pa11y-ci) | Accessibility gate cannot run in CI                          | Core Maintainers |
+| A-1 | CI runners can build the site and run headless browsers for Playwright and the axe site-crawl gate | Accessibility gate cannot run in CI                          | Core Maintainers |
 | A-2 | Codecov (OIDC) remains available for coverage upload                           | Coverage reporting signal is lost                            | Core Maintainers |
 | A-3 | The four enumerated page types represent the site's templates                  | Conformance claim does not generalize to uncovered templates | Core Maintainers |
 
@@ -246,14 +246,14 @@ Any violation fails the pipeline and blocks merge, so regressions are caught bef
 | Dependency       | Type     | Criticality | Owner            | Notes                           |
 |------------------|----------|-------------|------------------|---------------------------------|
 | Codecov (OIDC)   | External | Medium      | Core Maintainers | Coverage upload via OIDC token  |
-| CI runner / Node | Tooling  | High        | Core Maintainers | Runs pa11y-ci, Playwright, Jest |
+| CI runner / Node | Tooling  | High        | Core Maintainers | Runs the axe site-crawl spec, Playwright, Jest, and static a11y linting |
 
 ### 9.3 Constraints
 
 | Constraint  | Category | Description                                         | Implication                    |
 |-------------|----------|-----------------------------------------------------|--------------------------------|
 | WCAG 2.1 AA | Standard | Conformance target is AA, not AAA                   | Defines the bar for "done"     |
-| Threshold 0 | Quality  | pa11y-ci tolerates zero violations on scanned pages | Any new violation blocks merge |
+| Threshold 0 | Quality  | The Playwright axe site-crawl gate tolerates zero violations on scanned pages | Any new violation blocks merge |
 
 ---
 
@@ -264,7 +264,7 @@ Any violation fails the pipeline and blocks merge, so regressions are caught bef
 | Risk ID | Description                                                 | Cause                                         | Impact                                            | Likelihood | Severity | Mitigation                                                          | Owner            | Status |
 |---------|-------------------------------------------------------------|-----------------------------------------------|---------------------------------------------------|------------|----------|---------------------------------------------------------------------|------------------|--------|
 | RSK-1   | Automated checks flake and falsely block merges             | Timing/selector fragility in e2e or site scan | Contributor friction; pressure to weaken the gate | Medium     | Medium   | Stabilize selectors, add retries, keep scans deterministic          | Core Maintainers | Open   |
-| RSK-2   | New page types added without scan coverage                  | Scan set not updated when templates change    | Conformance claim silently stops generalizing     | Medium     | High     | Review the pa11y-ci scan set whenever a page template is added      | Core Maintainers | Open   |
+| RSK-2   | New page types added without scan coverage                  | Scan set not updated when templates change    | Conformance claim silently stops generalizing     | Medium     | High     | Review the axe site-crawl PAGES set whenever a page template is added      | Core Maintainers | Open   |
 | RSK-3   | "General conformance" mistaken for full per-page-type audit | Wording ambiguity in KPIs                     | Overstated conformance posture                    | Medium     | Medium   | Distinguish identified-gap closure from full audit; track via OBJ-4 | Core Maintainers | Open   |
 
 ### 10.2 Known Issues (Pre-Existing)
@@ -279,7 +279,7 @@ Any violation fails the pipeline and blocks merge, so regressions are caught bef
 
 ### 11.1 Implementation Approach (High-Level)
 
-The changeset delivers both the one-time conformance fixes (decorative-icon handling, link styling, focus indicators, contrast) and the ongoing CI guardrail infrastructure (lint, axe component tests, Playwright e2e, pa11y-ci scan, coverage upload) together, so that the site is brought to conformance and protected against regression in a single coherent effort.
+The changeset delivers both the one-time conformance fixes (decorative-icon handling, link styling, focus indicators, contrast) and the ongoing CI guardrail infrastructure (lint, axe component tests, Playwright e2e including the axe site-crawl, coverage upload) together, so that the site is brought to conformance and protected against regression in a single coherent effort.
 
 ### 11.2 Phasing & Milestones
 
@@ -293,7 +293,7 @@ The changeset delivers both the one-time conformance fixes (decorative-icon hand
 | Audience     | Change Impact                                      | Training Needs                                         | Channel                          | Timing         |
 |--------------|----------------------------------------------------|--------------------------------------------------------|----------------------------------|----------------|
 | Contributors | Must keep the accessibility CI gate green to merge | Awareness of the gate and how to read failures         | Contributing guide / PR feedback | At/after merge |
-| Maintainers  | Own the scan set and triage accessibility failures | Familiarity with pa11y-ci, axe, and Playwright outputs | Repo docs                        | Ongoing        |
+| Maintainers  | Own the scan set and triage accessibility failures | Familiarity with the axe site-crawl spec, component axe tests, and Playwright outputs | Repo docs                        | Ongoing        |
 
 ---
 
@@ -322,7 +322,7 @@ Incremental cost is limited to CI execution time for the added accessibility and
 | Q ID | Question                                                                                       | Owner            | Due Date | Status |
 |------|------------------------------------------------------------------------------------------------|------------------|----------|--------|
 | OQ-1 | What are the pre-fix KPI baselines (pa11y/axe/e2e) and the full-conformance timeframe (OBJ-4)? | Core Maintainers | TODO     | Open   |
-| OQ-2 | Which pages define the canonical pa11y-ci scan set long term?                                  | Core Maintainers | TODO     | Open   |
+| OQ-2 | Which pages define the canonical axe site-crawl scan set long term?                            | Core Maintainers | TODO     | Open   |
 | OQ-3 | Does the north-star KPI reflect closure of identified gaps, or a full per-page-type audit?     | Core Maintainers | TODO     | Open   |
 
 ### 13.2 Key Decisions
@@ -343,9 +343,9 @@ Incremental cost is limited to CI execution time for the added accessibility and
 | REF-1  | Code     | Hub card decorative icon fix              | `docs/docusaurus/src/components/Cards/BoxCard.tsx` | SC 1.1.1                       |
 | REF-2  | Code     | Link/focus/contrast styles (WI-06, WI-07) | `docs/docusaurus/src/css/custom.css`               | SC 1.4.1, 2.4.7, 1.4.3, 1.4.11 |
 | REF-3  | Code     | Search contrast theme override            | `docs/docusaurus/src/theme/SearchBar/index.jsx`    | Search results contrast        |
-| REF-4  | Config   | Site accessibility scan configuration     | `docs/docusaurus/.pa11yci`                         | WCAG2AA, threshold 0           |
+| REF-4  | Config   | Site accessibility scan configuration     | `docs/docusaurus/e2e/site-crawl.spec.ts`          | WCAG 2.x A/AA + `wcag22aa` + `best-practice`, threshold 0 |
 | REF-5  | Config   | End-to-end test configuration             | `docs/docusaurus/playwright.config.ts`             | 8 e2e specs                    |
-| REF-6  | Workflow | CI accessibility + coverage pipeline      | `.github/workflows/docusaurus-tests.yml`           | pa11y, Playwright, Codecov     |
+| REF-6  | Workflow | CI accessibility + coverage pipeline      | `.github/workflows/docusaurus-tests.yml`           | site-crawl, Playwright, Codecov |
 
 ### 14.2 Glossary
 
@@ -353,8 +353,7 @@ Incremental cost is limited to CI execution time for the added accessibility and
 |-------------|-----------------------------------------------------------------------|
 | WCAG 2.1 AA | Web Content Accessibility Guidelines 2.1, conformance level AA        |
 | axe-core    | Automated accessibility testing engine used in component tests        |
-| pa11y-ci    | Command-line accessibility scanner run in CI against rendered pages   |
-| Playwright  | Browser automation framework used for end-to-end accessibility checks |
+| Axe site-crawl spec | Playwright-based `@axe-core/playwright` scan that evaluates representative page templates against WCAG 2.x A/AA and `wcag22aa` at threshold 0 |
 
 ### 14.3 Additional Notes
 
