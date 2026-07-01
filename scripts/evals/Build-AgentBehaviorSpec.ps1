@@ -288,72 +288,104 @@ function Get-LineDiff {
 
 #endregion Functions
 
+function Invoke-AgentBehaviorSpecCore {
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([pscustomobject])]
+    param(
+        [string]$RepoRoot,
+
+        [string]$PartialsDir,
+
+        [string]$OutputPath,
+
+        [string]$DriftDiffPath,
+
+        [switch]$Force
+    )
+
+    $resolvedRoot = Resolve-RepoRoot -Override $RepoRoot
+    if (-not $PartialsDir) {
+        $PartialsDir = Join-Path $resolvedRoot 'evals/agent-behavior/stimuli'
+    }
+    if (-not $OutputPath) {
+        $OutputPath = Join-Path $resolvedRoot 'evals/agent-behavior/eval.yaml'
+    }
+    if (-not $DriftDiffPath) {
+        $DriftDiffPath = Join-Path $resolvedRoot 'logs/agent-behavior-spec-drift.diff'
+    }
+
+    Import-YamlModule
+
+    $partials = Get-PartialFiles -PartialsDir $PartialsDir
+    $allStimuli = [System.Collections.Generic.List[object]]::new()
+    foreach ($partial in $partials) {
+        $slug = $partial.BaseName
+        foreach ($stimulus in (Read-PartialStimuli -Path $partial.FullName -Slug $slug)) {
+            $allStimuli.Add($stimulus)
+        }
+    }
+
+    $existingText = if (Test-Path -LiteralPath $OutputPath) {
+        [System.IO.File]::ReadAllText($OutputPath) -replace "`r`n", "`n"
+    }
+    else {
+        ''
+    }
+
+    $rendered = Get-RenderedSpec -ExistingText $existingText -Stimuli $allStimuli
+    # ConvertTo-Yaml emits CRLF on Windows; normalize to LF so on-disk content
+    # stays platform-stable and drift comparisons are byte-accurate.
+    $rendered = $rendered -replace "`r`n", "`n"
+
+    if ($WhatIfPreference) {
+        if ($existingText -eq $rendered) {
+            Write-Host "no drift: $OutputPath" -ForegroundColor Green
+            return [pscustomobject]@{ Outcome = 'NoDrift'; OutputPath = $OutputPath; DiffPath = $null }
+        }
+        $diffDir = Split-Path -Parent $DriftDiffPath
+        if ($diffDir -and -not (Test-Path -LiteralPath $diffDir)) {
+            # -WhatIf:$false bypasses inherited WhatIfPreference so the diff dir is
+            # always materialized during drift detection runs.
+            New-Item -ItemType Directory -Path $diffDir -Force -WhatIf:$false | Out-Null
+        }
+        $diffText = Get-LineDiff -Expected $rendered -Actual $existingText -Path $OutputPath
+        [System.IO.File]::WriteAllText($DriftDiffPath, $diffText)
+        Write-Host "drift detected; diff written to $DriftDiffPath" -ForegroundColor Yellow
+        return [pscustomobject]@{ Outcome = 'Drift'; OutputPath = $OutputPath; DiffPath = $DriftDiffPath }
+    }
+
+    if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) {
+        if ($existingText -eq $rendered) {
+            Write-Host "skipped (no changes): $OutputPath" -ForegroundColor Gray
+            return [pscustomobject]@{ Outcome = 'Skipped'; OutputPath = $OutputPath; DiffPath = $null }
+        }
+        throw "Output file already exists and differs from rendered content. Re-run with -Force to overwrite: $OutputPath"
+    }
+
+    $outputDir = Split-Path -Parent $OutputPath
+    if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
+        New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    }
+    [System.IO.File]::WriteAllText($OutputPath, $rendered)
+    Write-Host "wrote: $OutputPath" -ForegroundColor Green
+    return [pscustomobject]@{ Outcome = 'Wrote'; OutputPath = $OutputPath; DiffPath = $null }
+}
+
 #region Main Execution
 
-$resolvedRoot = Resolve-RepoRoot -Override $RepoRoot
-if (-not $PartialsDir) {
-    $PartialsDir = Join-Path $resolvedRoot 'evals/agent-behavior/stimuli'
-}
-if (-not $OutputPath) {
-    $OutputPath = Join-Path $resolvedRoot 'evals/agent-behavior/eval.yaml'
-}
-if (-not $DriftDiffPath) {
-    $DriftDiffPath = Join-Path $resolvedRoot 'logs/agent-behavior-spec-drift.diff'
-}
-
-Import-YamlModule
-
-$partials = Get-PartialFiles -PartialsDir $PartialsDir
-$allStimuli = [System.Collections.Generic.List[object]]::new()
-foreach ($partial in $partials) {
-    $slug = $partial.BaseName
-    foreach ($stimulus in (Read-PartialStimuli -Path $partial.FullName -Slug $slug)) {
-        $allStimuli.Add($stimulus)
-    }
-}
-
-$existingText = if (Test-Path -LiteralPath $OutputPath) {
-    [System.IO.File]::ReadAllText($OutputPath) -replace "`r`n", "`n"
-} else {
-    ''
-}
-
-$rendered = Get-RenderedSpec -ExistingText $existingText -Stimuli $allStimuli
-# ConvertTo-Yaml emits CRLF on Windows; normalize to LF so on-disk content
-# stays platform-stable and drift comparisons are byte-accurate.
-$rendered = $rendered -replace "`r`n", "`n"
-
-if ($WhatIfPreference) {
-    if ($existingText -eq $rendered) {
-        Write-Host "no drift: $OutputPath" -ForegroundColor Green
+if ($MyInvocation.InvocationName -ne '.') {
+    try {
+        $result = Invoke-AgentBehaviorSpecCore @PSBoundParameters
+        if ($result.Outcome -eq 'Drift') { exit 1 }
+        # Preserve the pre-refactor CLI contract: write/skip runs emitted the
+        # resolved output path on stdout.
+        if ($result.Outcome -in 'Wrote', 'Skipped') { $result.OutputPath }
         exit 0
     }
-    $diffDir = Split-Path -Parent $DriftDiffPath
-    if ($diffDir -and -not (Test-Path -LiteralPath $diffDir)) {
-        # -WhatIf:$false bypasses inherited WhatIfPreference so the diff dir is
-        # always materialized during drift detection runs.
-        New-Item -ItemType Directory -Path $diffDir -Force -WhatIf:$false | Out-Null
+    catch {
+        Write-Error -ErrorAction Continue "Build-AgentBehaviorSpec failed: $($_.Exception.Message)"
+        exit 1
     }
-    $diffText = Get-LineDiff -Expected $rendered -Actual $existingText -Path $OutputPath
-    [System.IO.File]::WriteAllText($DriftDiffPath, $diffText)
-    Write-Host "drift detected; diff written to $DriftDiffPath" -ForegroundColor Yellow
-    exit 1
 }
-
-if ((Test-Path -LiteralPath $OutputPath) -and -not $Force) {
-    if ($existingText -eq $rendered) {
-        Write-Host "skipped (no changes): $OutputPath" -ForegroundColor Gray
-        return $OutputPath
-    }
-    throw "Output file already exists and differs from rendered content. Re-run with -Force to overwrite: $OutputPath"
-}
-
-$outputDir = Split-Path -Parent $OutputPath
-if ($outputDir -and -not (Test-Path -LiteralPath $outputDir)) {
-    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-}
-[System.IO.File]::WriteAllText($OutputPath, $rendered)
-Write-Host "wrote: $OutputPath" -ForegroundColor Green
-return $OutputPath
 
 #endregion Main Execution

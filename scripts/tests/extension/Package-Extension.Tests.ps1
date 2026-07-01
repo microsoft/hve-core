@@ -10,12 +10,30 @@ BeforeAll {
 
 Describe 'Test-VsceAvailable' {
     It 'Returns hashtable with IsAvailable property' {
+        Mock Get-Command {
+            param($Name, $ErrorAction)
+            $null = $ErrorAction  # Suppress PSScriptAnalyzer warning
+            if ($Name -eq 'vsce') {
+                return [PSCustomObject]@{ Source = 'C:\bin\vsce.cmd' }
+            }
+            return $null
+        }
+
         $result = Test-VsceAvailable
         $result | Should -BeOfType [hashtable]
         $result.Keys | Should -Contain 'IsAvailable'
     }
 
     It 'Returns CommandType when available' {
+        Mock Get-Command {
+            param($Name, $ErrorAction)
+            $null = $ErrorAction  # Suppress PSScriptAnalyzer warning
+            if ($Name -eq 'vsce') {
+                return [PSCustomObject]@{ Source = 'C:\bin\vsce.cmd' }
+            }
+            return $null
+        }
+
         $result = Test-VsceAvailable
         if ($result.IsAvailable) {
             $result.CommandType | Should -BeIn @('npx', 'vsce')
@@ -833,7 +851,11 @@ Describe 'Get-PackagingDirectorySpec' {
     }
 }
 
-Describe 'Invoke-VsceCommand' {
+# Invoke-VsceCommand is the process-execution boundary: it spawns a real child
+# process to run vsce/npx. These end-to-end cases carry the Integration tag so
+# the default fast run (which excludes Integration/Slow) does not pay per-test
+# process-startup cost; run them explicitly with -Tag Integration.
+Describe 'Invoke-VsceCommand' -Tag 'Integration' {
     BeforeAll {
         $script:testDir = Join-Path ([System.IO.Path]::GetTempPath()) "vsce-cmd-test-$([guid]::NewGuid().ToString('N').Substring(0,8))"
     }
