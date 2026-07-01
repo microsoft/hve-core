@@ -2,7 +2,7 @@
 title: GitHub Copilot Custom Agents
 description: Specialized AI agents for planning, research, prompt engineering, documentation, and code review workflows
 author: HVE Core Team
-ms.date: 2026-06-25
+ms.date: 2026-06-28
 ms.topic: guide
 keywords:
   - copilot
@@ -200,7 +200,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Creates:** Product requirements documents with session state:
 
-* `docs/prds/<kebab-case-name>.md` (PRD document with requirements)
+* `docs/project-planning/<kebab-case-name>.md` (PRD document with requirements)
 * `.copilot-tracking/prd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Build → Integrate → Validate → Finalize
@@ -211,7 +211,7 @@ Each phase has two entry points: the `/task-*` prompt commands (`/task-research`
 
 **Creates:** Business requirements documents with session state:
 
-* `docs/brds/<kebab-case-name>-brd.md` (BRD document with business objectives)
+* `docs/project-planning/<kebab-case-name>-brd.md` (BRD document with business objectives)
 * `.copilot-tracking/brd-sessions/<kebab-case-name>.state.json` (session state for resume capability)
 
 **Workflow:** Assess → Discover → Create → Elicit → Integrate → Validate → Finalize

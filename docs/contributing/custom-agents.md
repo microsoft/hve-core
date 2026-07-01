@@ -3,7 +3,7 @@ title: 'Contributing Agents to HVE Core'
 description: 'Requirements and standards for contributing GitHub Copilot agent files to hve-core'
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-19
+ms.date: 2026-06-28
 ms.topic: how-to
 ---
 
@@ -415,13 +415,7 @@ before they're merged into the library.
 
 #### 6. Attribution Footer
 
-Include at end of file (MANDATORY):
-
-```markdown
----
-
-Brought to you by microsoft/hve-core
-```
+Source artifacts carry no attribution footer.
 
 ### XML-Style Block Requirements
 

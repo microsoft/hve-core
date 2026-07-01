@@ -1,6 +1,6 @@
 ---
 name: adr-author
-description: Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation - Brought to you by microsoft/hve-core.
+description: Authoring skill for Architecture Decision Records (ADRs) supporting capture, from-planner-handoff, and adopt-template entry modes with selectable Y-Statement or MADR v4.0.0 output templates, supersession lineage, and ASR trigger evaluation.
 ---
 
 # adr-author
@@ -173,7 +173,3 @@ The ADR Creator agent enforces a phase→section load contract per `adr-identity
 | Govern | `#govern`      | `adr-author#govern`                |
 
 The agent loads sections via `read_file` against this skill file and records the entry in `state.phaseSkillsLoaded` before any phase work executes. Re-entering a previously loaded phase does not require reloading; the agent checks `phaseSkillsLoaded` first.
-
----
-
-> Brought to you by microsoft/hve-core

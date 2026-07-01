@@ -45,7 +45,3 @@ Do not invent severity levels, verdicts, or output fields the skill does not def
 4. **Write the orientation artifact.** Write `<findingsFolder>/orientation-walkthrough.md` containing the narrative and the appendices. Do not write a findings JSON file and do not grade severity. Return a one-line summary of the changed-area count and the artifact path.
 
 If clarification is genuinely required before the walkthrough can proceed, return the questions instead of the walkthrough rather than guessing.
-
----
-
-Brought to you by microsoft/hve-core

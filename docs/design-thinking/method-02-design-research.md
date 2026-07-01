@@ -3,7 +3,7 @@ title: "Method 2: Design Research"
 description: "Investigate user needs, behaviors, and environmental conditions through curiosity-driven research that builds an evidence base for synthesis."
 sidebar_position: 6
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: tutorial
 keywords: [design thinking, method-02, design-research]
 estimated_reading_time: 5
@@ -81,8 +81,6 @@ When you have sufficient research across user tiers and confidence in your evide
 * [Method 1: Scope Conversations](method-01-scope-conversations.md)
 * [Method 3: Input Synthesis](method-03-input-synthesis.md)
 * [Design Thinking Overview](README.md)
-
-> Brought to you by microsoft/hve-core
 
 <!-- markdownlint-disable MD036 -->
 *🤖 Crafted with precision by ✨Copilot following brilliant human instruction,

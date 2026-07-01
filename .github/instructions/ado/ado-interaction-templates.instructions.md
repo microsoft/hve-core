@@ -390,7 +390,3 @@ Template conventions:
 * Agents select the appropriate template based on work item type and operation context.
 * PR descriptions are excluded from this file; see `ado-create-pull-request.instructions.md` for PR content templates.
 * PR comment templates are excluded; no `mcp_ado_repo_add_pr_comment` tool exists in the current tooling.
-
----
-
-Brought to you by microsoft/hve-core

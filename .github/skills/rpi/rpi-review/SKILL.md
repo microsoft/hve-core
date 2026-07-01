@@ -49,4 +49,4 @@ Produce an evidence-backed review result with validator dispatch, review-log syn
 
 After the review completes, offer the next phase command as a recommendation unless the user explicitly requested a handoff.
 
-> Brought to you by microsoft/hve-core
+

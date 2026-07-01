@@ -2,7 +2,7 @@
 title: HVE Core
 description: Hypervelocity Engineering prompt library for GitHub Copilot with convention-driven AI workflows and validated artifacts
 author: Microsoft
-ms.date: 2026-05-04
+ms.date: 2026-06-30
 ms.topic: overview
 keywords:
   - hypervelocity engineering
@@ -80,16 +80,16 @@ Use HVE Core when you want AI-assisted work to be repeatable, standards-aligned,
 
 Full documentation is available at **<https://microsoft.github.io/hve-core/>**.
 
-| Guide                                                            | Description                                     |
-|------------------------------------------------------------------|-------------------------------------------------|
-| [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial               |
-| [Collections](docs/getting-started/collections.md)               | Available bundles and selection guide           |
-| [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement        |
-| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts |
-| [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                            |
-| [Instructions Reference](.github/instructions/README.md)         | All coding instructions                         |
-| [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types |
-| [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates     |
+| Guide                                                            | Description                                      |
+|------------------------------------------------------------------|--------------------------------------------------|
+| [Getting Started](docs/getting-started/README.md)                | Setup and first workflow tutorial                |
+| [Collections](docs/getting-started/collections.md)               | Available bundles and selection guide            |
+| [RPI Workflow](docs/rpi/README.md)                               | Deep dive into Research, Plan, Implement, Review |
+| [Contributing](docs/contributing/README.md)                      | Create custom agents, instructions, and prompts  |
+| [Agents Reference](.github/CUSTOM-AGENTS.md)                     | All available agents                             |
+| [Instructions Reference](.github/instructions/README.md)         | All coding instructions                          |
+| [AI Artifacts Architecture](docs/architecture/ai-artifacts.md)   | Prompt engineering framework and artifact types  |
+| [Validation Standards](docs/contributing/ai-artifacts-common.md) | CI/CD validation pipeline and quality gates      |
 
 ## Label Management
 

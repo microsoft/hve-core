@@ -1,5 +1,5 @@
 ---
-description: 'Cite-only reference naming the nine ISO/IEC/IEEE 29148:2018 individual-requirement characteristic names with original Microsoft review criteria - Brought to you by microsoft/hve-core'
+description: 'Cite-only reference naming the nine ISO/IEC/IEEE 29148:2018 individual-requirement characteristic names with original Microsoft review criteria'
 ---
 
 # ISO/IEC/IEEE 29148 Individual-Requirement Quality Characteristics
@@ -68,4 +68,4 @@ Citation policy: this file references ISO/IEC/IEEE 29148:2018 by name, designato
 
 This pointer file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). ISO/IEC/IEEE 29148:2018 is the property of ISO, IEC, and IEEE and is subject to the publisher's terms at the upstream sources listed above.
 
-> Brought to you by microsoft/hve-core
+

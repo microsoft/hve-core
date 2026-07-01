@@ -3,7 +3,7 @@ title: TPM Guide
 description: HVE Core support for technical program managers driving requirements, backlog management, and delivery coordination
 sidebar_position: 5
 author: Microsoft
-ms.date: 2026-06-26
+ms.date: 2026-06-28
 ms.topic: how-to
 keywords:
   - TPM
@@ -65,7 +65,7 @@ for existing SSO and billing systems and SOC 2 Type II compliance constraints.
 Select **prd-builder** agent:
 
 ```text
-Generate a PRD from the BRD at docs/brds/customer-onboarding-v2.md.
+Generate a PRD from the BRD at docs/project-planning/customer-onboarding-v2.md.
 Focus on the self-service registration flow with acceptance criteria for
 each user story, non-functional requirements for sub-200ms API responses,
 and a data migration plan from the legacy system.
@@ -88,7 +88,7 @@ and testable.
 Select **ado-prd-to-wit** agent:
 
 ```text
-Convert the PRD at docs/prds/notification-service-v3.md to Azure DevOps
+Convert the PRD at docs/project-planning/notification-service-v3.md to Azure DevOps
 work items. Map each functional requirement to a user story and each
 non-functional requirement to a task under the "Platform Quality" epic.
 Set iteration path to Sprint 24.

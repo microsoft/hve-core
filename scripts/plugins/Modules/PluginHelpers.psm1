@@ -6,7 +6,7 @@
 # Purpose: Shared functions for the Copilot CLI plugin generation pipeline.
 # Author: HVE Core Team
 
-#Requires -Version 7.0
+#Requires -Version 7.4
 
 Import-Module (Join-Path $PSScriptRoot '../../collections/Modules/CollectionHelpers.psm1') -Force
 

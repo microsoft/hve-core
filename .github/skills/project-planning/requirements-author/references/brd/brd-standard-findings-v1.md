@@ -1,5 +1,5 @@
 ---
-description: 'BRD_STANDARD_FINDINGS_V1 schema - detailed findings output emitted by BRD Quality Reviewer with ISO 29148, ISO 25010, SMART, and coverage evidence - Brought to you by microsoft/hve-core'
+description: 'BRD_STANDARD_FINDINGS_V1 schema - detailed findings output emitted by BRD Quality Reviewer with ISO 29148, ISO 25010, SMART, and coverage evidence'
 ---
 
 # BRD Standard Findings — `BRD_STANDARD_FINDINGS_V1`
@@ -296,4 +296,4 @@ fr_ac_coverage:
 notes: Partition `claims-intake` reviewed in isolation; cross-partition NFRs (residency, retention) deferred to the BRD-level aggregate run.
 ```
 
-> Brought to you by microsoft/hve-core
+

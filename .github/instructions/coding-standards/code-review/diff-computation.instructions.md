@@ -114,7 +114,3 @@ If the pr-reference skill scripts are not found or fail, compute the diff manual
 4. For uncommitted changes, supplement with `git diff HEAD`, `git diff --cached`, and `git ls-files --others --exclude-standard`
 
 Apply the Non-Source Artifact Skip List and Large Diff Handling rules to the manual output.
-
----
-
-Brought to you by microsoft/hve-core

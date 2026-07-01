@@ -1,5 +1,5 @@
 ---
-description: 'BRD quality scoring rubric overlay for BRD Quality Reviewer findings, gates, and drift checks - Brought to you by microsoft/hve-core'
+description: 'BRD quality scoring rubric overlay for BRD Quality Reviewer findings, gates, and drift checks'
 ---
 
 # HVE-Core BRD Quality Rubric
@@ -146,4 +146,4 @@ Full citations for the standards referenced by this rubric live in the per-sourc
 
 This rubric is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Third-party standards referenced above are cited by name only and remain the property of their respective rights holders; see the per-source pointer files for upstream links and licensing terms.
 
-> Brought to you by microsoft/hve-core
+

@@ -296,7 +296,3 @@ Triage is complete when:
 * Confirmed recommendations have been executed via consolidated API calls (labels assigned, milestones set, `needs-triage` removed from classified issues, duplicates closed).
 * planning-log.md reflects the final state of all operations with checkboxes marking completion.
 * Any failed operations have been logged and either retried or flagged for manual follow-up.
-
----
-
-Brought to you by microsoft/hve-core

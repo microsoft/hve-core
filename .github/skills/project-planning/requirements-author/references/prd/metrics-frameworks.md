@@ -1,5 +1,5 @@
 ---
-description: 'PRD metrics-frameworks reference - cite-only registry of HEART, AARRR, North Star, ICE/RICE, and JTBD measurement frameworks naming publisher, year, and URL per entry, with original guidance on selecting PRD success metrics; no upstream framework prose redistributed - Brought to you by microsoft/hve-core'
+description: 'PRD metrics-frameworks reference - cite-only registry of HEART, AARRR, North Star, ICE/RICE, and JTBD measurement frameworks naming publisher, year, and URL per entry, with original guidance on selecting PRD success metrics; no upstream framework prose redistributed'
 ---
 
 # PRD Metrics Frameworks
@@ -55,4 +55,4 @@ This document is the cite-only registry the PRD Builder points at when selecting
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The metric-selection guidance is HVE-Core IP and may be reused under the same license. The frameworks named in the registry remain the property of their respective authors and publishers; their prose is accessed by the reader through the cited URLs and is never redistributed here.
 
-> Brought to you by microsoft/hve-core
+

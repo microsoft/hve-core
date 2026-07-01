@@ -41,7 +41,3 @@ Do not invent severity levels, categories, or output fields the skill does not d
 2. **Dispatch to research.** Invoke the generic Researcher Subagent with the board item question and a research document path inside the review folder. Use `researchDocumentPath` when provided; otherwise default to `<findingsFolder>/walkback/<boardItemId>-research.md` so the researcher writes into the review folder rather than the default `.copilot-tracking/research/subagents/` location. Do not re-implement the research protocol; delegate it.
 3. **Anchor the result.** Read the researcher output once it is written, then create or update a Register 2 artifact in the review folder for that board item. Include the board item id, the research question, the evidence summary, references, and any follow-on questions. Preserve the links and selectable symbols for later board merge.
 4. **Return a concise summary.** Return the artifact path and a short status note. If the research is blocked, capture the blocker plainly and stop rather than filling the artifact with speculation.
-
----
-
-Brought to you by microsoft/hve-core

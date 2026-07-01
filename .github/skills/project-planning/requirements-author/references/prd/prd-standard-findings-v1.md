@@ -1,5 +1,5 @@
 ---
-description: 'PRD_STANDARD_FINDINGS_V1 schema - detailed findings output emitted by PRD Quality Reviewer with ISO 29148, NIST SP 800-160 NFR, SMART, and acceptance-coverage evidence - Brought to you by microsoft/hve-core'
+description: 'PRD_STANDARD_FINDINGS_V1 schema - detailed findings output emitted by PRD Quality Reviewer with ISO 29148, NIST SP 800-160 NFR, SMART, and acceptance-coverage evidence'
 ---
 
 # PRD Standard Findings — `PRD_STANDARD_FINDINGS_V1`
@@ -305,4 +305,4 @@ notes: Partition `checkout-redesign` reviewed in isolation; cross-partition NFRs
 
 This reference file is original Microsoft content licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The schema definition and validation rules are HVE-Core IP and may be reused under the same license.
 
-> Brought to you by microsoft/hve-core
+

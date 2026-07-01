@@ -201,7 +201,3 @@ If every selected subagent was skipped, inform the human that no review could be
 * If a subagent returns malformed output, re-invoke it once targeting only files whose paths suggest elevated risk (`security`, `auth`, `cred`, `token`, `payment`, `secret`, `api`, `route`, `middleware`, `schema`, `migration`). If malformed output persists, present that perspective's findings file verbatim, prepend "⚠️ Merged report could not be produced — subagent output shown separately.", and note which merge rules were partially applied.
 * If artifact persistence fails, present the merged report in the conversation and note: "Artifact persistence failed; review was not saved to `.copilot-tracking/`."
 * If all selected subagents return only clarifying questions after two invocations each, stop and surface all outstanding questions to the human.
-
----
-
-Brought to you by microsoft/hve-core

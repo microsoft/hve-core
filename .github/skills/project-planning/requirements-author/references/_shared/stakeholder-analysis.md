@@ -1,5 +1,5 @@
 ---
-description: 'Stakeholder identification and engagement vocabulary for the BRD Builder - Mendelow Power/Interest grid and RACI accountability variants - Brought to you by microsoft/hve-core'
+description: 'Stakeholder identification and engagement vocabulary for the BRD Builder - Mendelow Power/Interest grid and RACI accountability variants'
 ---
 
 # Stakeholder Analysis — Skill Entry
@@ -104,4 +104,4 @@ External (cite-only, no embedded text):
 
 Original content in this skill is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright (C) Microsoft Corporation. Third-party frameworks listed in the [cite-only registry](#cite-only-registry) are referenced by name only and remain the property of their respective rights holders.
 
-> Brought to you by microsoft/hve-core
+

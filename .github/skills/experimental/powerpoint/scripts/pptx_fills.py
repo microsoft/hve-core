@@ -171,6 +171,7 @@ def extract_fill(fill) -> dict | str | None:
                             "alpha": round(alpha_val / 1000, 1),
                         }
             except (AttributeError, TypeError):
+                # Solid fill has no alpha element; return the base color.
                 pass
             return color
 
@@ -193,6 +194,7 @@ def extract_fill(fill) -> dict | str | None:
             try:
                 result["angle"] = fill.gradient_angle
             except ValueError:
+                # Gradient angle is undefined for this fill; omit it.
                 pass
             return result
 
@@ -207,6 +209,7 @@ def extract_fill(fill) -> dict | str | None:
                         pattern_name = attr.lower()
                         break
                 except (AttributeError, TypeError):
+                    # Enum member is not comparable; try the next one.
                     pass
             result = {
                 "type": "pattern",
@@ -235,9 +238,11 @@ def extract_fill(fill) -> dict | str | None:
                                 int(alpha_el.get("val", "100000")) / 1000, 1
                             )
             except (AttributeError, TypeError):
+                # Pattern fore/back alpha is unavailable; skip it.
                 pass
             return result
     except (AttributeError, TypeError):
+        # Fill type is unsupported or absent; return no fill.
         pass
 
     return None
@@ -274,6 +279,7 @@ def extract_line(shape) -> dict:
         if line.dash_style and line.dash_style != MSO_LINE_DASH_STYLE.SOLID:
             result["dash_style"] = DASH_STYLE_REVERSE.get(line.dash_style, "solid")
     except (AttributeError, TypeError):
+        # Shape exposes no line properties; return what was found.
         pass
     return result
 
