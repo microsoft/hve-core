@@ -29,7 +29,7 @@ Always understand the target through subagents before narrating it, and capture 
 * Dispatch a generic exploration subagent (`Explore`, or `runSubagent` with no named agent) to trace how the code, UI, UX, feature, or artifact actually works: entry points, call paths, data flow, connected files, and the decisions or evidence recorded inside `.copilot-tracking` artifacts.
 * Dispatch `Researcher Subagent` when the explanation depends on an external library, framework, standard, or anything that benefits from web or repository research with citations.
 * Scale the review to `detail`: a focused single pass for `brief`, a normal pass for `normal`, and a thorough multi-pass review with cross-references for `deep`.
-* Record the results in the walkthrough artifact as the evidence map and system of record: for each planned segment capture the target reference (file and line range or artifact section), what it does, why it is this way, and the supporting evidence paths and lines. Keep lightweight working notes in session memory with the `memory` tool, and use `resolve_memory_file_uri` to resolve a memory file's URI when you need to reference it.
+* Record the results in the walkthrough artifact as the evidence map and system of record: for each planned segment capture the target reference (file and line range or artifact section), what it does, why it is this way, and the supporting evidence paths and lines. Keep any lightweight working or scratch notes in that same artifact so it stays the single system of record and the walkthrough can resume after an interruption.
 * When dispatch tooling is unavailable, perform the equivalent review inline and record the fallback and its reason in the walkthrough artifact.
 
 ## Segment planning
@@ -47,9 +47,9 @@ Record the segment list in the walkthrough artifact before starting segment one 
 Use well-formatted markdown in every walkthrough turn.
 
 * Start each segment with a segment header such as `### Segment 1: ...` before any narrative explanation.
-* Before the first segment explanation, render an overview mermaid diagram that shows the overall flow or structure of the target and the planned segment sequence.
-* For each segment, render a compact zoomed mermaid diagram that shows only the previous segment, the current segment, and the next segment, and visually highlight the current segment node.
-* Use a mermaid pattern like this for each zoom diagram:
+* Before the first segment explanation, render an overview mermaid diagram that shows the overall flow or structure of the target and the planned segment sequence. Color-code its nodes with the same state classes as the zoom diagram below (done in green, current in gold, upcoming in blue), marking the first segment current and the rest upcoming. Render the overview once as a map; the per-segment zoom diagram is what tracks progress as the walkthrough advances.
+* For each segment, render a compact zoomed mermaid diagram that shows only the previous segment, the current segment, and the next segment, and color the nodes by the same states so the current one stands out.
+* Use a mermaid pattern like this for each zoom diagram, styling the previous node as done, the current node as current, and the next node as upcoming:
 
 ```mermaid
 flowchart LR
@@ -57,10 +57,15 @@ flowchart LR
     current[Current segment]
     next[Next segment]
     prev --> current --> next
+    classDef done fill:#dcfce7,stroke:#166534,stroke-width:1px;
     classDef current fill:#fef3c7,stroke:#92400e,stroke-width:2px;
+    classDef upcoming fill:#dbeafe,stroke:#1e40af,stroke-width:1px;
+    class prev done;
     class current current;
+    class next upcoming;
 ```
 
+* For the first segment omit the previous node, and for the last segment omit the next node, keeping the current node styled as current in both cases.
 * Keep the prose scannable. Each sentence or paragraph that discusses a file, line range, block, or artifact must include a nearby markdown link to that reference, rather than relying only on the reference table.
 * Keep the reference table requirement. Render it near the bottom of each segment turn, immediately before the questions.
 
@@ -69,12 +74,12 @@ flowchart LR
 Run this loop once per segment, and never advance more than one segment per turn:
 
 1. Explain the segment in the conversation. Start with the segment header, then move from what it does to how it connects to the rest of the target and why it is this way, without labeling those parts. Match the depth to `detail`. Keep the writing scannable: short paragraphs, a tight bullet list when it helps, and bold only for the few terms that carry the idea, and follow the "Writing the explanation for human eyes" section in this reference. Do not paste large code blocks; describe the code and point to it.
-2. Render the overview diagram before the first segment explanation, and then render a compact zoomed mermaid diagram for every segment. Each zoomed diagram should show only the previous segment, the current segment, and the next segment, with the current segment visually highlighted.
+2. Render the overview diagram before the first segment explanation, and then render a compact zoomed mermaid diagram for every segment. Each zoomed diagram shows only the previous segment, the current segment, and the next segment, color-coded by state so the current one stands out.
 3. Add inline markdown links beside the explanatory prose for any file, block, or artifact being discussed. Do not rely only on the reference table for navigation.
 4. Render the reference table for the segment (see Reference table format) so the user can navigate to every place being discussed.
-5. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment. Always render the segment header, diagrams, inline links, and the reference table before this call and before yielding control.
+5. Call `vscode_askQuestions` with one or two clear questions written in the same plain voice, with no praise or filler. The first offers more detail or a why on the current segment; the second continues to the next segment.
 
-Render the reference table immediately before every `vscode_askQuestions` call and before any hand back of control, including mid-segment pauses.
+Write the full segment turn as visible chat text before this call: the segment header, diagrams, inline links, and reference table must already be in the response, and the questions come last in that same turn. Do not go straight from internal reasoning to the question tool with nothing rendered for the user; the failure mode is a bare `vscode_askQuestions` prompt that arrives before the explanation that sets it up. This gate holds before every `vscode_askQuestions` call and before any hand back of control, including mid-segment pauses.
 
 ## Writing the explanation for human eyes
 
@@ -178,6 +183,6 @@ Close with a concise summary that contains:
 
 ## Re-entry
 
-When the user returns to an existing walkthrough, read the walkthrough artifact and session memory, resume at the next uncovered segment, and re-review only the segments whose depth or target the user changed.
+When the user returns to an existing walkthrough, read the walkthrough artifact, resume at the next uncovered segment, and re-review only the segments whose depth or target the user changed.
 
 > Brought to you by microsoft/hve-core
