@@ -56,6 +56,11 @@ safe-outputs:
   create-pull-request:
     max: 1
     labels: [security, automated, needs-triage]
+    # Pin the PR target (and the safe_outputs checkout ref) to the trusted
+    # default branch. This workflow runs under the privileged workflow_run
+    # trigger, so the checkout ref must never derive from agent output
+    # (Scorecard Dangerous-Workflow / untrusted code checkout).
+    base-branch: main
   noop:
     max: 1
     report-as-issue: false
