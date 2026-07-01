@@ -18,7 +18,7 @@ HVE Core gives your team production-ready agents, reusable prompts, coding instr
 
 ## Choose Your Extension
 
-|              | HVE Core All                                                                                                | HVE Installer                                                                                                 |
+| Option       | HVE Core All                                                                                                | HVE Installer                                                                                                 |
 |--------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | What you get | Every agent, prompt, instruction, and skill in the framework                                                | Pick only the collections you need                                                                            |
 | Best for     | Teams that want the full toolkit out of the box                                                             | Teams that prefer a curated, lightweight setup                                                                |

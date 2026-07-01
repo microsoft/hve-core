@@ -495,3 +495,6 @@ docs/docusaurus/node_modules/
 
 # Beval evaluation results
 evals/beval/**/results/
+
+# Playwright test output
+test-results/
