@@ -239,6 +239,35 @@ def _probe_keyring_availability() -> tuple[bool, str | None, str | None]:
     return _keyring_probe_cache
 
 
+def _backend_has_credentials(
+    backend: CredentialBackend,
+    service: str,
+    *,
+    enforce_file_perms: bool = False,
+    file_env: Mapping[str, str] | None = None,
+) -> bool:
+    """Return True when ``backend`` holds any non-empty credential value.
+
+    FileBackend probes can optionally enforce the credential file permission
+    contract before reading so callers may choose between strict resolve-time
+    validation and best-effort warning-only inspection.
+    """
+    if isinstance(backend, _pkg().FileBackend):
+        if not backend._path.exists():
+            return False
+        if enforce_file_perms:
+            _pkg()._check_credential_file_perms(
+                backend._path,
+                file_env if file_env is not None else os.environ,
+            )
+        entries = backend._read_all()
+        return any(entries.get(key) for key in _KNOWN_CREDENTIAL_KEYS)
+    for key in _KNOWN_CREDENTIAL_KEYS:
+        if backend.get(service, key):
+            return True
+    return False
+
+
 def _maybe_warn_concurrent_state(
     profile: str,
     selected: CredentialBackend,
@@ -253,24 +282,19 @@ def _maybe_warn_concurrent_state(
     dedup_key = (profile, selected.name)
     if dedup_key in _pkg()._state.seen_concurrent_warn():
         return
-    keyring_populated = False
-    file_populated = False
     service = _service_name_for(profile)
     try:
         probe_keyring = _pkg().KeyringBackend()
-        for key in _KNOWN_CREDENTIAL_KEYS:
-            value = probe_keyring.get(service, key)
-            if value:
-                keyring_populated = True
-                break
+        keyring_populated = _backend_has_credentials(probe_keyring, service)
     except _KeyringUnavailable:
         keyring_populated = False
     except Exception:  # noqa: BLE001 - probe must never raise
         keyring_populated = False
     try:
-        if file_path.exists():
-            entries = _pkg().FileBackend(file_path)._read_all()
-            file_populated = any(entries.get(k) for k in _KNOWN_CREDENTIAL_KEYS)
+        file_populated = _backend_has_credentials(
+            _pkg().FileBackend(file_path),
+            service,
+        )
     except Exception:  # noqa: BLE001 - probe must never raise
         file_populated = False
     if keyring_populated and file_populated:
