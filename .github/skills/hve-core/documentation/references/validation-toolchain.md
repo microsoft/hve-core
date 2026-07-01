@@ -17,7 +17,7 @@ validation work.
 - `npm run format:tables` — Table formatting cleanup.
 - `npm run docs:build` — Docusaurus site build.
 - `npm run docs:test` — Docusaurus test suite.
-- `npm run docs:a11y` — Accessibility checks for the docs site.
+- `npm run docs:test:e2e` — Playwright accessibility journeys and full-site axe crawl for the docs site.
 - `npm run docs:lint` — Docs lint workflow.
 - `npm run docs:typecheck` — Type checking for the docs site.
 - `npm run lint:docs-site` — Aggregated docs-site validation.
