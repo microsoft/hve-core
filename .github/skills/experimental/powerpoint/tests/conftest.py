@@ -84,10 +84,7 @@ def _set_theme_colors(prs: Presentation) -> None:
             break
 
     if theme_part is None:
-        raise ValueError(
-            "Could not find theme part"
-            " in slide master relationships."
-        )
+        raise ValueError("Could not find theme part in slide master relationships.")
 
     theme_element = etree.fromstring(theme_part.blob)
 
@@ -102,8 +99,7 @@ def _set_theme_colors(prs: Presentation) -> None:
                 node.remove(child)
             srgb = etree.SubElement(
                 node,
-                "{http://schemas.openxmlformats.org/"
-                "drawingml/2006/main}srgbClr",
+                "{http://schemas.openxmlformats.org/drawingml/2006/main}srgbClr",
             )
             srgb.set("val", hex_val)
 
@@ -130,9 +126,7 @@ def generate_minimal_fixture(output_path: Path) -> None:
     slide_layout_1 = prs.slide_layouts[0]
     slide1 = prs.slides.add_slide(slide_layout_1)
     slide1.placeholders[0].text = "Test Fixture Presentation"
-    slide1.placeholders[1].text = (
-        "Slide with theme colors and notes"
-    )
+    slide1.placeholders[1].text = "Slide with theme colors and notes"
 
     title_shape = slide1.placeholders[0]
     for paragraph in title_shape.text_frame.paragraphs:
@@ -140,9 +134,7 @@ def generate_minimal_fixture(output_path: Path) -> None:
             run.font.color.rgb = RGBColor(0x00, 0x66, 0xCC)
 
     notes_slide = slide1.notes_slide
-    notes_slide.notes_text_frame.text = (
-        "This is a speaker note for slide 1."
-    )
+    notes_slide.notes_text_frame.text = "This is a speaker note for slide 1."
 
     slide_layout_2 = prs.slide_layouts[1]
     slide2 = prs.slides.add_slide(slide_layout_2)
@@ -150,9 +142,7 @@ def generate_minimal_fixture(output_path: Path) -> None:
     slide2.placeholders[1].text = "Below is an embedded image."
     _ = slide2.notes_slide  # ensure notes part exists
     image_stream = io.BytesIO(_minimal_png_bytes())
-    slide2.shapes.add_picture(
-        image_stream, Inches(1), Inches(2), width=Inches(2)
-    )
+    slide2.shapes.add_picture(image_stream, Inches(1), Inches(2), width=Inches(2))
 
     prs.save(str(output_path))
 
@@ -176,9 +166,7 @@ def blank_slide(blank_presentation):
 @pytest.fixture()
 def sample_textbox(blank_slide):
     """Slide with a textbox containing known text and formatting."""
-    txBox = blank_slide.shapes.add_textbox(
-        Inches(1), Inches(1), Inches(4), Inches(1)
-    )
+    txBox = blank_slide.shapes.add_textbox(Inches(1), Inches(1), Inches(4), Inches(1))
     tf = txBox.text_frame
     tf.text = "Sample Text"
     tf.paragraphs[0].runs[0].font.size = Pt(18)

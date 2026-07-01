@@ -119,8 +119,7 @@ def test_main_resolves_theme_colors_for_real_fixture(
     assert EXPECTED_FIXTURE["theme_colors"].items() <= style["theme_colors"].items()
     assert slide_1["elements"][0]["font_color"].startswith("#")
     assert (
-        slide_1["elements"][0]["font_color"]
-        == EXPECTED_FIXTURE["slide_1_font_color"]
+        slide_1["elements"][0]["font_color"] == EXPECTED_FIXTURE["slide_1_font_color"]
     )
 
 
@@ -134,6 +133,4 @@ def test_generated_fixture_passes_validate_deck(
     results = validate_deck(minimal_test_fixture_path)
     severity = max_severity(results)
 
-    assert severity in ("info", "none"), (
-        f"validate_deck reported {severity}: {results}"
-    )
+    assert severity in ("info", "none"), f"validate_deck reported {severity}: {results}"
